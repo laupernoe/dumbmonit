@@ -15,6 +15,13 @@ instance to look at.
  └──────────────────┘                     └──────────────────────────────┘
 ```
 
+!!! info "Encrypted channel with an agent certificate"
+    The relay, like every agent, talks to the server over TLS 1.3 with its own
+    agent certificate (mutual TLS). Open **TCP 8443** (the agent port) from the
+    remote site to the server: the relay always connects out, nothing has to
+    reach it. This is the only port needed to monitor from another site. See
+    [Agent channel security](agent-security.md).
+
 ## 1. Publish the server over HTTPS
 
 The relay fetches its jobs from the server: the server must be reachable from

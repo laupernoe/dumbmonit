@@ -1,5 +1,8 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"agent_channel_note_open": "Ouvrez le port TCP 8443 (le port des agents) de l'agent vers ce serveur. L'agent se connecte toujours vers l'extérieur : rien n'a besoin de l'atteindre. C'est pareil pour surveiller depuis un autre site : seul ce port doit être joignable.",
+	"agent_channel_note_text": "L'agent parle à ce serveur en TLS 1.3 avec son propre certificat client (mTLS), délivré à son inscription.",
+	"agent_channel_note_title": "Canal chiffré avec certificat d'agent",
 	"agent_events_add": "Ajouter une règle",
 	"agent_events_any_id": "tout ID",
 	"agent_events_any_source": "toute source",
@@ -6038,6 +6041,9 @@
 	"settings_agents_ad_days_help": "Passé ce délai, plus aucun serveur ne peut s'inscrire.",
 	"settings_agents_ad_dcs": "Inclure les contrôleurs de domaine",
 	"settings_agents_ad_description": "Installez l'agent sur tous les serveurs Windows de votre domaine grâce à une stratégie de groupe (GPO).",
+	"settings_agents_ad_dns_server": "Serveur DNS (facultatif)",
+	"settings_agents_ad_dns_server_help": "Adresse IP d'un serveur DNS qui résout ce nom, utilisé par les serveurs qui n'y parviennent pas.",
+	"settings_agents_ad_dns_server_invalid": "Saisissez l'adresse IP d'un serveur DNS, par exemple 10.0.0.2.",
 	"settings_agents_ad_docs": "Lire le guide complet",
 	"settings_agents_ad_domain": "Domaine Active Directory",
 	"settings_agents_ad_domain_help": "Le nom DNS de votre domaine.",
@@ -6062,6 +6068,9 @@
 	"settings_agents_ad_run_preview": "1. Simuler, ne modifie rien",
 	"settings_agents_ad_run_timing": "Les serveurs installent l'agent à leur prochain rafraîchissement des stratégies, sous 90 minutes. Pour aller plus vite, lancez gpupdate /force sur un serveur.",
 	"settings_agents_ad_secret_warning": "Traitez le script comme un mot de passe : il contient le jeton. Gardez-le privé et supprimez-le une fois le déploiement terminé.",
+	"settings_agents_ad_server_host": "Nom du serveur contacté par les agents",
+	"settings_agents_ad_server_host_help": "Nom DNS (FQDN) ou adresse de ce serveur, avec un :port facultatif. Vide : {origin}.",
+	"settings_agents_ad_server_host_invalid": "Saisissez un nom DNS ou une adresse IPv4, éventuellement suivi de :port, sans http:// ni chemin.",
 	"settings_agents_ad_step": "Étape {n} sur 4",
 	"settings_agents_ad_step1": "Créer le jeton",
 	"settings_agents_ad_step2": "Télécharger le script",
@@ -6071,6 +6080,9 @@
 	"settings_agents_ad_stop_error": "Impossible d'arrêter les inscriptions",
 	"settings_agents_ad_stop_help": "Le jeton n'accepte plus de nouveaux serveurs. Ceux déjà inscrits continuent de remonter.",
 	"settings_agents_ad_stopped": "Inscriptions arrêtées",
+	"settings_agents_ad_summary_dns": "Serveur DNS :",
+	"settings_agents_ad_summary_dns_none": "celui du système",
+	"settings_agents_ad_summary_server": "Les agents contactent :",
 	"settings_agents_ad_sysvol": "Copier l'agent dans SYSVOL",
 	"settings_agents_ad_sysvol_help": "Pour les serveurs sans accès à internet ni à ce serveur.",
 	"settings_agents_ad_title": "Déployer avec Active Directory",
@@ -8869,6 +8881,8 @@
 	"whatsnew_dialog_ok": "Compris",
 	"whatsnew_dialog_title": "Nouveautés de la v{version}",
 	"whatsnew_dialog_updated": "Mis à jour · {date}",
+	"wizard_monitors_ad": "Active Directory",
+	"wizard_monitors_ad_text": "Installez l'agent sur chaque serveur du domaine avec une stratégie de groupe.",
 	"worldmap_cluster_label": [
 		{
 			"declarations": [

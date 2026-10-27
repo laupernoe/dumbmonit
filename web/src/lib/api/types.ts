@@ -1510,6 +1510,10 @@ export interface AdKitPayload {
 	security_group?: string | null;
 	/** Also copy the agent binary into SYSVOL, for servers without outbound access. */
 	sysvol_binary?: boolean;
+	/** DNS name (FQDN) or IPv4 address of this server that agents contact, optional `:port`. */
+	server_host?: string | null;
+	/** IP address of a DNS server that resolves `server_host` on machines that cannot. */
+	dns_server?: string | null;
 }
 
 /** Response of `POST /api/agent/ad-kit`: the only chance to see the token and script. */
@@ -1523,6 +1527,10 @@ export interface CreatedAdKit {
 	/** `group_name` of the targets this deployment enrols. */
 	folder: string;
 	install_windows: string;
+	/** URL the agents contact, as written in the kit. */
+	server_url: string;
+	/** DNS server written in the kit, if any. */
+	dns_server: string | null;
 }
 
 /**

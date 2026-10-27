@@ -1,5 +1,8 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"agent_channel_note_open": "Öffnen Sie den TCP-Port 8443 (den Agentenport) vom Agenten zu diesem Server. Der Agent baut die Verbindung immer nach außen auf, nichts muss ihn erreichen. Dasselbe gilt für die Überwachung von einem anderen Standort aus: Nur dieser Port muss erreichbar sein.",
+	"agent_channel_note_text": "Der Agent spricht mit diesem Server über TLS 1.3 mit seinem eigenen Clientzertifikat (mTLS), das bei der Registrierung ausgestellt wird.",
+	"agent_channel_note_title": "Verschlüsselter Kanal mit Agentenzertifikat",
 	"agent_events_add": "Regel hinzufügen",
 	"agent_events_any_id": "jede ID",
 	"agent_events_any_source": "jede Quelle",
@@ -6038,6 +6041,9 @@
 	"settings_agents_ad_days_help": "Danach kann sich kein neuer Server mehr anmelden.",
 	"settings_agents_ad_dcs": "Domänencontroller einbeziehen",
 	"settings_agents_ad_description": "Installieren Sie den Agenten per Gruppenrichtlinie (GPO) auf allen Windows-Servern Ihrer Domäne.",
+	"settings_agents_ad_dns_server": "DNS-Server (optional)",
+	"settings_agents_ad_dns_server_help": "IP-Adresse eines DNS-Servers, der diesen Namen auflöst; wird von Servern genutzt, die es selbst nicht können.",
+	"settings_agents_ad_dns_server_invalid": "Geben Sie die IP-Adresse eines DNS-Servers ein, zum Beispiel 10.0.0.2.",
 	"settings_agents_ad_docs": "Vollständige Anleitung lesen",
 	"settings_agents_ad_domain": "Active-Directory-Domäne",
 	"settings_agents_ad_domain_help": "Der DNS-Name Ihrer Domäne.",
@@ -6062,6 +6068,9 @@
 	"settings_agents_ad_run_preview": "1. Simulieren, ändert nichts",
 	"settings_agents_ad_run_timing": "Die Server installieren den Agenten bei der nächsten Aktualisierung der Richtlinien, innerhalb von 90 Minuten. Schneller geht es mit gpupdate /force auf einem Server.",
 	"settings_agents_ad_secret_warning": "Behandeln Sie das Skript wie ein Passwort: Es enthält das Token. Halten Sie es privat und löschen Sie es nach dem Rollout.",
+	"settings_agents_ad_server_host": "Servername, den die Agenten kontaktieren",
+	"settings_agents_ad_server_host_help": "DNS-Name (FQDN) oder Adresse dieses Servers, optional mit :Port. Leer: {origin}.",
+	"settings_agents_ad_server_host_invalid": "Geben Sie einen DNS-Namen oder eine IPv4-Adresse ein, optional mit :Port, ohne http:// und Pfad.",
 	"settings_agents_ad_step": "Schritt {n} von 4",
 	"settings_agents_ad_step1": "Token erstellen",
 	"settings_agents_ad_step2": "Skript herunterladen",
@@ -6071,6 +6080,9 @@
 	"settings_agents_ad_stop_error": "Registrierungen konnten nicht beendet werden",
 	"settings_agents_ad_stop_help": "Das Token nimmt keine neuen Server mehr an. Bereits registrierte Server melden weiter.",
 	"settings_agents_ad_stopped": "Registrierungen beendet",
+	"settings_agents_ad_summary_dns": "DNS-Server:",
+	"settings_agents_ad_summary_dns_none": "Systemstandard",
+	"settings_agents_ad_summary_server": "Agenten kontaktieren:",
 	"settings_agents_ad_sysvol": "Agenten in SYSVOL kopieren",
 	"settings_agents_ad_sysvol_help": "Für Server ohne Internetzugang oder ohne direkten Zugriff auf diesen Server.",
 	"settings_agents_ad_title": "Mit Active Directory ausrollen",
@@ -8869,6 +8881,8 @@
 	"whatsnew_dialog_ok": "Verstanden",
 	"whatsnew_dialog_title": "Neu in v{version}",
 	"whatsnew_dialog_updated": "Aktualisiert · {date}",
+	"wizard_monitors_ad": "Active Directory",
+	"wizard_monitors_ad_text": "Installieren Sie den Agenten per Gruppenrichtlinie auf jedem Server der Domäne.",
 	"worldmap_cluster_label": [
 		{
 			"declarations": [

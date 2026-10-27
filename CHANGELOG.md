@@ -5,6 +5,26 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- A monitor's page no longer prints a whole certificate (the Active Directory
+  `ca_cert` option) over its header: option chips show one line, cut with an
+  ellipsis and the value on hover, a PEM as "PEM". `credential_public` also drops
+  any long, multi-line or PEM value.
+
+### Added
+
+- **Deploy with Active Directory** takes the name (FQDN) or address of the
+  DumbMonit server the agents contact and, optionally, a DNS server that resolves
+  it. Both are validated, written into the kit (servers that cannot resolve the
+  name get it from that DNS server) and shown in the summary.
+- The setup wizard offers **Deploy with Active Directory** directly in the first
+  monitors step.
+- Every agent install page (install command, relay, Active Directory) now states
+  that agents talk to the server over the encrypted channel with an agent
+  certificate (mTLS, TLS 1.3), and which port to open (TCP 8443, agent to server,
+  also from another site).
+
 ## 0.14.0 — 2026-10-28
 
 ### Added

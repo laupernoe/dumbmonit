@@ -13,6 +13,12 @@ tout ce dont l'agent a besoin.
 
 ## Ports à ouvrir
 
+Chaque page d'installation d'agent (commande d'installation, relais, Deploy
+with Active Directory) dit la même chose : l'agent parle au serveur par le canal
+chiffré, TLS 1.3 avec son propre certificat d'agent (TLS mutuel), et il lui
+suffit de joindre le serveur sur le port des agents, y compris depuis un autre
+site.
+
 | Où | Port | Pourquoi |
 |----|------|----------|
 | Serveur, entrant | **TCP 8443** | Canal chiffré des agents. Le seul port nécessaire aux agents d'autres réseaux. |
