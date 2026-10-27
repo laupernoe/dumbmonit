@@ -1996,6 +1996,56 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/instance:
+    get:
+      operationId: getInstance
+      tags: [Onboarding]
+      summary: Product mode and whether the setup wizard is done
+      description: Public, so the interface can pick its layout before sign-in. Nothing else about the instance is disclosed here.
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: Product mode and setup state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublicInstance" }
+
+  /api/instance/settings:
+    get:
+      operationId: getInstanceSettings
+      tags: [Onboarding]
+      summary: Instance settings chosen in the setup wizard
+      x-token-scope: read
+      responses:
+        "200":
+          description: Instance settings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InstanceSettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: putInstanceSettings
+      tags: [Onboarding]
+      summary: Change the product mode, name, language or time zone, or finish the wizard
+      description: An omitted field keeps its stored value. Switching the product mode only changes the interface; nothing is deleted.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InstancePatch" }
+      responses:
+        "200":
+          description: Instance settings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InstanceSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/targets:
     get:
       operationId: listTargets
@@ -11094,6 +11144,34 @@ components:
         dismissed:
           type: array
           items: { type: string, enum: [device, channel, test] }
+    ProductMode:
+      type: string
+      enum: [homelab, enterprise]
+      description: "`homelab`: a simpler interface. `enterprise`: the dense dark interface with advanced options in view. Presentation only."
+    PublicInstance:
+      type: object
+      required: [product_mode, setup_completed]
+      properties:
+        product_mode: { $ref: "#/components/schemas/ProductMode" }
+        setup_completed: { type: boolean }
+    InstanceSettings:
+      type: object
+      required: [product_mode, setup_completed, name, language, timezone]
+      properties:
+        product_mode: { $ref: "#/components/schemas/ProductMode" }
+        setup_completed: { type: boolean }
+        setup_completed_at: { type: [string, "null"], description: UTC without suffix. }
+        name: { type: string, maxLength: 80, description: Empty shows "DumbMonit". }
+        language: { type: string, description: "Default interface language (`en`, `fr`, `de`, `es`, `it`, `pt`, `pt-BR`, `ru`, `zh-Hans`); empty follows the browser." }
+        timezone: { type: string, description: IANA time zone; empty means UTC. }
+    InstancePatch:
+      type: object
+      properties:
+        product_mode: { $ref: "#/components/schemas/ProductMode" }
+        setup_completed: { type: boolean }
+        name: { type: string, maxLength: 80 }
+        language: { type: string }
+        timezone: { type: string }
 
     # ---------------------------------------------------------- équipements
     Target:

@@ -201,6 +201,7 @@ nav:
       - Runbooks and remediation: alerting/remediation.md
       - Notification channels: notifications.md
   - Using DumbMonit:
+      - Product modes and setup wizard: using/product-modes.md
       - Overview page: using/overview.md
       - Network discovery: using/discovery.md
       - Wall mode and music: using/wall.md

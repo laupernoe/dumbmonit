@@ -89,6 +89,7 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         } else {
             Vec::new()
         },
+        instance: crate::instance::stored(pool).await?,
     })
 }
 
@@ -861,6 +862,7 @@ pub fn sections() -> BTreeMap<&'static str, &'static str> {
             "netconfig_versions",
             "Network configuration versions, only when you include them: they hold device secrets.",
         ),
+        ("instance", "Instance name, language, time zone and product mode."),
     ])
 }
 

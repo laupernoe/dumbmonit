@@ -11,6 +11,7 @@
 	import { Panel } from '#lib/ui/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import LanguageSelect from '#lib/components/LanguageSelect.svelte';
+	import { mode } from '#lib/stores/mode.svelte.js';
 
 	interface Option {
 		value: ThemePreference;
@@ -63,6 +64,9 @@
 		<LanguageSelect id="settings-language" class="w-full max-sm:w-auto max-sm:min-w-0 max-sm:flex-1 sm:w-auto sm:min-w-56" />
 	</div>
 	<p class="mb-2 text-sm font-semibold text-ink">{m.settings_appearance_theme()}</p>
+	{#if mode.enterprise}
+		<p class="mb-3 text-[0.8125rem] text-ink-2">{m.settings_appearance_enterprise_dark()}</p>
+	{/if}
 	<!-- Phones: three small swatches side by side, the name under each. -->
 	<div class="grid gap-2 max-sm:grid-cols-3 sm:grid-cols-3" role="radiogroup" aria-label={m.settings_appearance_theme()}>
 		{#each OPTIONS as option, i (option.value)}
