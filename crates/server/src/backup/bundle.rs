@@ -185,6 +185,9 @@ pub struct Bundle {
     /// chiffré par la phrase de passe). Seulement sur demande à l'export.
     #[serde(default)]
     pub netconfig_versions: Vec<BundleNetconfigVersion>,
+    /// Réglages d'instance : mode produit, nom, langue, fuseau (migration 0180).
+    #[serde(default)]
+    pub instance: Option<crate::instance::InstanceSettings>,
 }
 
 impl Bundle {
