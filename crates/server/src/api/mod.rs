@@ -13,6 +13,7 @@ mod backends;
 mod backup;
 mod blacklist;
 mod channels;
+pub(crate) mod clients;
 mod collectors;
 mod cves;
 pub mod dashboards;
@@ -22,6 +23,7 @@ mod gitops;
 mod health;
 mod ical;
 mod ingest;
+mod instance;
 mod integrations;
 mod kuma_db;
 mod kuma_import;
@@ -348,6 +350,10 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(teams::routes())
         // Procédures, actions de remédiation, politiques et journal (`remediation.rs`).
         .merge(remediation::routes())
+        // Réglages d'instance : mode produit, assistant de démarrage (`instance.rs`).
+        .merge(instance::routes())
+        // Mode multi-clients (MSP) : clients, appartenance, logo (`clients.rs`).
+        .merge(clients::routes())
         // `route_layer` plutôt que `layer` : le garde ne s'applique qu'aux routes
         // effectivement déclarées ici, jamais au repli qui sert l'interface.
         // Objets « gérés par fichier » : refus de les modifier à la main. Posé avant
@@ -367,6 +373,9 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/health", get(health::health))
         // La spécification OpenAPI de tout ce qui suit : publique, sans secret.
         .route("/openapi.json", get(openapi::spec))
+        // Mode produit et fin de l'assistant : l'interface choisit son habillage
+        // avant la connexion (`instance.rs`).
+        .merge(instance::public_routes())
         .route("/auth/status", get(auth::status))
         .route("/auth/setup", post(auth::setup))
         .route("/auth/login", post(auth::login))

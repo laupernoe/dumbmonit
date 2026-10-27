@@ -84,6 +84,16 @@ const ACTOR: &str = "scim";
 /// (caractère de contrôle), pour ne jamais partager le seau d'une connexion.
 const LIMITER_KEY: &str = "\u{0}scim";
 
+/// Mode MSP : après toute écriture d'un groupe, les clients des comptes
+/// provisionnés suivent leurs groupes SCIM (voir
+/// [`crate::auth::clients::sync_scim_clients`]). Un échec n'annule pas
+/// l'écriture SCIM, déjà validée : il est journalisé et rattrapé à la suivante.
+async fn resync_clients(state: &AppState) {
+    if let Err(error) = crate::auth::clients::sync_scim_clients(&state.pool).await {
+        tracing::warn!(%error, "SCIM: client memberships not synchronised");
+    }
+}
+
 /// Routes SCIM, sous leur propre garde.
 pub fn routes(state: &AppState) -> Router<AppState> {
     Router::new()
@@ -1581,6 +1591,7 @@ async fn create_group(
         add_members(&mut tx, team_id, &ids).await?;
     }
     tx.commit().await?;
+    resync_clients(&state).await;
 
     let team = load_team_by_id(&state.pool, team_id).await?;
     let members = team_members(&state.pool, team.id).await?;
@@ -1609,6 +1620,7 @@ async fn replace_group(
         replace_members(&mut tx, team.id, &ids).await?;
     }
     tx.commit().await?;
+    resync_clients(&state).await;
 
     let after = load_team_by_id(&state.pool, team.id).await?;
     let members = team_members(&state.pool, team.id).await?;
@@ -1641,6 +1653,7 @@ async fn patch_group(
         }
     }
     tx.commit().await?;
+    resync_clients(&state).await;
     audit::record(&state.pool, Some(ACTOR), "scim.group.updated", Some(&team.name), ip).await;
     Ok(StatusCode::NO_CONTENT.into_response())
 }
@@ -1749,6 +1762,7 @@ async fn delete_group(
         "scim.group.unlinked"
     };
     tx.commit().await?;
+    resync_clients(&state).await;
     audit::record(&state.pool, Some(ACTOR), action, Some(&team.name), ip).await;
     tracing::info!(team = %team.name, action, "SCIM provisioning");
     Ok(StatusCode::NO_CONTENT.into_response())

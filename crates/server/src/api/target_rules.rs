@@ -87,9 +87,14 @@ pub async fn list(
         .map(|alert| alert.rule_uid)
         .collect();
 
+    // Mode MSP : une règle d'un autre client ne s'applique pas ici.
+    let target_client = crate::auth::clients::target_client(&state.pool, id).await?;
+    let rule_clients =
+        crate::auth::clients::owners(&state.pool, crate::auth::clients::Kind::Rule).await?;
     let mut rules: Vec<TargetRule> = db::alerts::list_rules(&state.pool)
         .await?
         .into_iter()
+        .filter(|rule| rule_clients.get(&rule.id).is_none_or(|c| Some(*c) == target_client))
         .filter(|rule| rule.selector.matches(Some(&node)))
         .filter(|rule| reads_any(&rule.query, &index))
         .map(|rule| {

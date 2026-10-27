@@ -5,6 +5,7 @@
 	 * needs no UI change). Secrets are write-only: the page only knows that
 	 * one is stored.
 	 */
+	import ClientAssign from '#lib/components/ClientAssign.svelte';
 	import { onMount } from 'svelte';
 	import { Plus, X } from 'lucide-svelte';
 	import type { RemediationAction, RemediationKind, Target } from '#lib/api/index.js';
@@ -261,6 +262,7 @@
 						<span class="block truncate font-medium text-ink">{action.name}</span>
 						<span class="block truncate text-[0.8125rem] text-ink-2">{kindLabel(action.kind)} · {targetName(action.target_id)}</span>
 					</span>
+					<ClientAssign kind="remediation_action" id={action.id} />
 					{#if auth.isAdmin}
 						<Button size="sm" variant="ghost" onclick={() => edit(action)}>{m.remediation_edit()}</Button>
 					{/if}

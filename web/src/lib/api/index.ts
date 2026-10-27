@@ -25,6 +25,7 @@ import type {
 	Silence,
 	SilencePayload,
 	AccessInfo,
+	MspAccess,
 	AuthState,
 	Channel,
 	ChannelKindInfo,
@@ -92,7 +93,15 @@ export * from './types';
 export * from './oncall';
 export { onMutation } from './mutations';
 export * from './teams';
-export { ApiError, toApiError, setUnauthorizedHandler, setDemoRefusalHandler } from './client';
+export * from './clients';
+export {
+	ApiError,
+	toApiError,
+	setUnauthorizedHandler,
+	setDemoRefusalHandler,
+	setClientView,
+	getClientView
+} from './client';
 
 // --- Health -----------------------------------------------------------------
 
@@ -1017,12 +1026,20 @@ export function updateOnboarding(patch: OnboardingPatch): Promise<OnboardingStat
  * the account is then treated as unrestricted. Never throws (but an abort).
  */
 export async function getMyAccess(signal?: AbortSignal): Promise<AccessInfo | null> {
+	return (await getMyRights(signal)).access;
+}
+
+/**
+ * Team rights and MSP clients of the current account, in one call. Older
+ * servers send neither: unrestricted, MSP off. Never throws (but an abort).
+ */
+export async function getMyRights(signal?: AbortSignal): Promise<{ access: AccessInfo | null; msp: MspAccess | null }> {
 	try {
-		const me = await request<{ access?: AccessInfo }>('/auth/me', { signal, anticipated: true });
-		return me?.access ?? null;
+		const me = await request<{ access?: AccessInfo; msp?: MspAccess }>('/auth/me', { signal, anticipated: true });
+		return { access: me?.access ?? null, msp: me?.msp ?? null };
 	} catch (cause) {
 		if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
-		return null;
+		return { access: null, msp: null };
 	}
 }
 

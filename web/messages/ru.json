@@ -9133,5 +9133,446 @@
 	"worldmap_verdict_idle": "Не опрошено",
 	"worldmap_verdict_ok": "Всё работает",
 	"worldmap_verdict_warn": "Требует внимания",
-	"worldmap_view_world": "Мир"
+	"worldmap_view_world": "Мир",
+	"console_breadcrumb": "Навигационная цепочка",
+	"console_col_address": "Адрес",
+	"console_col_checked": "Проверено",
+	"console_col_folder": "Папка",
+	"console_col_latency": "Задержка · {range}",
+	"console_col_latency_short": "Задержка",
+	"console_col_name": "Имя",
+	"console_col_p95": "p95",
+	"console_col_status": "Статус",
+	"console_col_type": "Тип",
+	"console_col_uptime": "Доступность 30 д",
+	"console_columns": "Столбцы",
+	"console_egg": "// {count} проверок в минуту. Иди спать, мы присмотрим.",
+	"console_filter_all": "Все",
+	"console_filter_degraded": "С проблемами",
+	"console_filter_down": "Недоступны",
+	"console_filter_kind": "Тип",
+	"console_filter_kind_all": "Все типы",
+	"console_filter_label": "Фильтр по состоянию",
+	"console_filter_paused": "Приостановлены",
+	"console_filter_search": "Фильтр мониторов",
+	"console_kpi_alerts": "Открытые оповещения",
+	"console_kpi_alerts_note": "Критические: {critical}, предупреждения: {warning}",
+	"console_kpi_availability": "Доступность 30 д",
+	"console_kpi_availability_note": "Измерено мониторов: {count}",
+	"console_kpi_mttr": "MTTR 30 д",
+	"console_kpi_mttr_note": "Решено: {count}",
+	"console_kpi_none": "Данных пока нет",
+	"console_kpi_p95": "Ответ p95",
+	"console_kpi_p95_note": "Период: {range}",
+	"console_kpi_up": "Мониторы в норме",
+	"console_kpi_up_note": "Недоступны: {down}, приостановлены: {paused}",
+	"console_kpi_up_unit": "/ {total}",
+	"console_live": "ОНЛАЙН",
+	"console_live_off": "Обновления приостановлены. Нажмите, чтобы продолжить.",
+	"console_live_on": "Обновления включены. Нажмите, чтобы приостановить.",
+	"console_new_monitor": "Новый монитор",
+	"console_panel": "Контекст",
+	"console_panel_attention": "Требует внимания",
+	"console_panel_attention_all": "Показать все ({count})",
+	"console_panel_attention_none": "Сейчас ничего не требует внимания.",
+	"console_panel_check_now": "Проверить",
+	"console_panel_checked": "Проверка запрошена. Результат появится при следующем обновлении.",
+	"console_panel_close": "Закрыть панель контекста",
+	"console_panel_edit": "Изменить",
+	"console_panel_forecast": "Прогноз",
+	"console_panel_forecast_none": "Ни один прогноз не пересекает порог.",
+	"console_panel_forecast_open": "Открыть прогнозы в оповещениях",
+	"console_panel_more": "Другие действия",
+	"console_panel_oncall": "Дежурство",
+	"console_panel_oncall_hint": "Кого оповещать: настройки уведомлений",
+	"console_panel_oncall_you": "Вы",
+	"console_panel_open": "Открыть",
+	"console_panel_picked": "Выбранный монитор",
+	"console_panel_picked_none": "Выберите строку в таблице, чтобы увидеть её здесь.",
+	"console_panel_silence": "Тишина на 1 ч",
+	"console_panel_silenced": "Оповещения отключены на час.",
+	"console_panel_suppressed_by": "Скрыто: {name} недоступен",
+	"console_panel_toggle": "Показать или скрыть панель контекста",
+	"console_panel_uptime": "Доступность",
+	"console_paused": "ПАУЗА",
+	"console_range": "Период",
+	"console_river_empty": "За этот период измерений пока нет.",
+	"console_river_hint": "Каждый монитор, ячейка на {slot}, за {range}",
+	"console_river_legend": "Легенда",
+	"console_river_more": "Ещё мониторы в таблице ниже: {count}",
+	"console_river_no_data": "Нет данных",
+	"console_river_now": "сейчас",
+	"console_river_title": "Лента здоровья",
+	"console_search_placeholder": "Поиск или команда",
+	"console_shortcut_next": "Следующая строка таблицы",
+	"console_shortcut_open": "Открыть выбранный монитор",
+	"console_shortcut_panel": "Показать или скрыть панель контекста",
+	"console_shortcut_prev": "Предыдущая строка таблицы",
+	"console_status_config": "Настройка",
+	"console_status_degraded": "Проблемы",
+	"console_status_down": "Недоступен",
+	"console_status_paused": "Пауза",
+	"console_status_up": "В норме",
+	"console_status_waiting": "Ожидание",
+	"console_table_empty": "Нет мониторов, подходящих под фильтры.",
+	"console_table_hint": "Сначала худшие. Выберите строку для просмотра.",
+	"console_table_keys": "j / k — перемещение, Enter — просмотр, o — открыть",
+	"console_table_title": "Мониторы",
+	"mode_enterprise_point_nav": "Панель значков, панель контекста и палитра команд везде",
+	"mode_enterprise_point_table": "Плотные таблицы с доп. столбцами, фильтрами и горячими клавишами",
+	"mode_enterprise_point_team": "Команды, единый вход, дежурства и журналы на виду",
+	"mode_enterprise_text": "Плотная, очень тёмная консоль для команд, все настройки на виду.",
+	"mode_enterprise_title": "Предприятие",
+	"mode_homelab_point_forms": "Короткие формы с разумными значениями, расширенные настройки свёрнуты",
+	"mode_homelab_point_nav": "Четыре раздела на виду, остальное в «Ещё»",
+	"mode_homelab_point_theme": "Сводка-погода и стойка, в светлой или тёмной теме",
+	"mode_homelab_text": "Спокойный интерфейс, всё главное на виду. Любая функция — в один клик.",
+	"mode_homelab_title": "Домашняя лаборатория",
+	"mode_picker_label": "Режим продукта",
+	"mode_picker_selected": "Выбрано",
+	"mode_switch_keeps": "Переключение меняет только интерфейс. Ничего не удаляется.",
+	"settings_advanced_summary": "Разделов: {count}",
+	"settings_advanced_title": "Дополнительно",
+	"settings_appearance_enterprise_dark": "Режим «Предприятие» всегда использует тёмную консоль. Для светлой и тёмной темы выберите «Домашняя лаборатория» в Настройки → Общие.",
+	"settings_general_instance_text": "Имя отображается в заголовке. Язык и часовой пояс — значения по умолчанию для новых браузеров и отчётов.",
+	"settings_general_instance_title": "Экземпляр",
+	"settings_general_mode_saving": "Переключение…",
+	"settings_general_mode_text": "«Домашняя лаборатория» — просто. «Предприятие» показывает все настройки в плотной тёмной консоли.",
+	"settings_general_mode_title": "Режим интерфейса",
+	"settings_general_readonly": "Изменять эти настройки могут только администраторы.",
+	"settings_general_save": "Сохранить",
+	"settings_general_saved": "Сохранено",
+	"settings_general_wizard_run": "Запустить мастер настройки",
+	"settings_general_wizard_text": "Пройдите шаги первого запуска заново: режим, имя, уведомления, мониторы, агент.",
+	"settings_general_wizard_title": "Мастер настройки",
+	"settings_search_kw_general": "режим домашняя лаборатория предприятие интерфейс имя язык часовой пояс мастер настройка",
+	"settings_tab_general": "Общие",
+	"wizard_agent_text": "Агент передаёт данные о процессоре, памяти, дисках, контейнерах и службах. Выполните команду на машине, за которой нужно следить.",
+	"wizard_agent_title": "Установить агент",
+	"wizard_back": "Назад",
+	"wizard_channel_add": "Добавить канал",
+	"wizard_channel_list": "Каналы уведомлений",
+	"wizard_channel_test": "Отправить тест",
+	"wizard_channel_test_failed": "Тест не прошёл: {error}",
+	"wizard_channel_test_ok": "Тест отправлен в {name}. Проверьте, что он пришёл.",
+	"wizard_channel_text": "Подключите способ получать оповещения о сбоях и отправьте тест, чтобы убедиться, что он доходит.",
+	"wizard_channel_title": "Получать оповещения",
+	"wizard_finish": "Готово",
+	"wizard_instance_language": "Язык",
+	"wizard_instance_language_auto": "Как в браузере",
+	"wizard_instance_name": "Имя экземпляра",
+	"wizard_instance_name_help": "Показывается в заголовке. Оставьте пустым для DumbMonit.",
+	"wizard_instance_name_placeholder": "Домашняя лаборатория",
+	"wizard_instance_text": "Имя отображается в заголовке. Язык и часовой пояс — значения по умолчанию для новых браузеров и отчётов.",
+	"wizard_instance_timezone": "Часовой пояс",
+	"wizard_instance_title": "Назовите экземпляр",
+	"wizard_intro": "Любой шаг можно пропустить и изменить позже в настройках.",
+	"wizard_mode_text": "Выберите интерфейс под тех, кто им пользуется. Его можно сменить в любой момент в Настройки → Общие.",
+	"wizard_mode_title": "Выберите вид DumbMonit",
+	"wizard_monitors_count": "Мониторов сейчас: {count}",
+	"wizard_monitors_import": "Импорт",
+	"wizard_monitors_import_text": "Из Uptime Kuma, UptimeRobot, Gatus, Healthchecks или списка сайтов.",
+	"wizard_monitors_manual": "Добавить вручную",
+	"wizard_monitors_manual_text": "Сайт, сервер, NAS — любой поддерживаемый тип.",
+	"wizard_monitors_new_tab": "Импорт и ручное добавление открываются в новой вкладке. Вернитесь сюда, когда закончите.",
+	"wizard_monitors_refresh": "Обновить",
+	"wizard_monitors_scan": "Сканировать сеть",
+	"wizard_monitors_scan_text": "Находит устройства, отвечающие в ваших подсетях.",
+	"wizard_monitors_text": "Просканируйте сеть, перенесите мониторы из другого инструмента или добавьте вручную.",
+	"wizard_monitors_title": "Добавьте первые мониторы",
+	"wizard_next": "Далее",
+	"wizard_oncall_policy": "Политика уведомлений",
+	"wizard_oncall_policy_text": "Группировка, тихие часы и повторы: кого и когда оповещать.",
+	"wizard_oncall_team": "Команда и роли",
+	"wizard_oncall_team_text": "Учётные записи, работающие с оповещениями: операторы подтверждают, администраторы настраивают.",
+	"wizard_oncall_text": "Первая еженедельная ротация и политика эскалации, которая вызывает дежурного. Остальное — в разделе Оповещения → Дежурства.",
+	"wizard_oncall_title": "Дежурства",
+	"wizard_optional": "Необязательно",
+	"wizard_retention_text": "Сколько хранить метрики и журналы. Значения по умолчанию подходят большинству команд.",
+	"wizard_retention_title": "Хранение данных",
+	"wizard_skip_all": "Пропустить настройку",
+	"wizard_skip_step": "Пропустить шаг",
+	"wizard_sso_text": "Разрешите вход через ваш поставщик удостоверений и назначьте каждой учётной записи роль.",
+	"wizard_sso_title": "Единый вход и команды",
+	"wizard_step_of": "Шаг {current} из {total}",
+	"wizard_steps_label": "Шаги настройки",
+	"wizard_title": "Настройка DumbMonit",
+	"deviceform_form_client_label": "Клиент",
+	"deviceform_form_client_help": "Клиент, которому принадлежит устройство. Видят его только участники клиента.",
+	"deviceform_form_client_help_edit": "При переносе устройства к другому клиенту зависящие от него устройства переносятся вместе с ним.",
+	"deviceform_form_client_default": "По умолчанию для этого вида",
+	"msp_assign_label": "Клиент",
+	"msp_assign_shared": "Все клиенты",
+	"msp_nav_clients": "Клиенты",
+	"msp_switcher_label": "Показываемый клиент",
+	"msp_switcher_title": "Показать страницы одного клиента",
+	"msp_switcher_all": "Все клиенты",
+	"msp_overview_title": "Клиенты",
+	"msp_overview_description_admin": "Все клиенты с первого взгляда. Откройте клиента, чтобы видеть только его устройства, оповещения и страницы.",
+	"msp_overview_description_member": "Клиенты, с которыми вы работаете, и их отчёт о доступности за прошлый месяц.",
+	"msp_overview_empty_title": "Клиентов пока нет",
+	"msp_overview_empty_body": "Создайте клиентов в настройках и назначьте каждому устройства и участников.",
+	"msp_overview_load_error": "Не удалось загрузить клиентов.",
+	"msp_overview_none_title": "Вы не входите ни в одного клиента",
+	"msp_overview_none_body": "Попросите администратора MSP добавить вашу учётную запись к клиенту.",
+	"msp_overview_off_title": "Многоклиентский режим выключен",
+	"msp_overview_off_body": "Включите его в настройках, чтобы разделить устройства, оповещения и отчёты каждого клиента.",
+	"msp_overview_off_action": "Открыть настройки клиентов",
+	"msp_overview_open": "Открыть",
+	"msp_overview_report": "Прошлый месяц (PDF)",
+	"msp_overview_report_title": "Скачать отчёт о доступности за прошлый месяц",
+	"msp_overview_report_error": "Не удалось сформировать отчёт.",
+	"msp_overview_quota_label": "Использованная квота устройств",
+	"msp_overview_state_empty": "Устройств пока нет",
+	"msp_overview_state_ok": "Всё в порядке",
+	"settings_agents_client_badge": "Клиент: {name}",
+	"settings_clients_title": "Клиенты",
+	"settings_clients_description": "Многоклиентский режим (MSP): устройства, оповещения, страницы и отчёты каждого клиента раздельно.",
+	"settings_clients_search_kw": "msp арендатор клиент изоляция квота логотип",
+	"settings_clients_add": "Добавить клиента",
+	"settings_clients_load_error": "Не удалось загрузить клиентов.",
+	"settings_clients_save_error": "Не удалось сохранить.",
+	"settings_clients_delete_error": "Не удалось удалить клиента.",
+	"settings_clients_delete_confirm": "Удалить клиента",
+	"settings_clients_mode": "Многоклиентский режим",
+	"settings_clients_mode_off_help": "Выключен: каждая учётная запись видит то, что позволяют роль и команды, как раньше. При включении существующие учётные записи остаются в клиенте по умолчанию.",
+	"settings_clients_mode_on_help": "Включён: учётная запись видит только своих клиентов. Администраторы управляют всеми клиентами и выбирают клиента в заголовке.",
+	"settings_clients_empty_title": "Клиентов пока нет",
+	"settings_clients_empty_body": "Добавьте клиента и перенесите к нему его устройства.",
+	"settings_clients_note": "Устройства, страницы статуса и токены агентов всегда принадлежат клиенту. Каналы, правила оповещений, окна обслуживания и отчёты могут быть общими. Клиента с устройствами удалить нельзя.",
+	"settings_clients_new_title": "Новый клиент",
+	"settings_clients_edit_title": "Изменить {name}",
+	"settings_clients_name": "Название",
+	"settings_clients_description_label": "Описание",
+	"settings_clients_err_name": "Введите название клиента.",
+	"settings_clients_err_quota": "Введите целое число или оставьте пустым без ограничения.",
+	"settings_clients_quota": "Квота устройств",
+	"settings_clients_quota_help": "Максимум устройств клиента, включая агентов.",
+	"settings_clients_quota_none": "Без ограничения",
+	"settings_clients_idp_groups": "Группы поставщика удостоверений",
+	"settings_clients_idp_groups_help": "Участники этих групп SSO (OIDC, LDAP, SAML) входят в клиента при входе в систему. Разделяйте запятыми.",
+	"settings_clients_contacts": "Контакты",
+	"settings_clients_contacts_help": "Адреса, получающие ежемесячный отчёт о доступности, по одному в строке.",
+	"settings_clients_report_legend": "Ежемесячный отчёт о доступности",
+	"settings_clients_report_toggle": "Отправлять контактам",
+	"settings_clients_report_help": "1-го числа в 8:00 по часовому поясу клиента PDF и CSV за прошлый месяц уходят по почте с названием и логотипом клиента.",
+	"settings_clients_objective": "Цель доступности (%)",
+	"settings_clients_objective_help": "Необязательно. Каждое устройство отмечается как соответствующее или нет.",
+	"settings_clients_timezone": "Часовой пояс",
+	"settings_clients_report_last": "Последний отправленный отчёт: {month}.",
+	"settings_clients_report_failing": "Ошибка ежемесячного отчёта",
+	"settings_clients_logo": "Логотип",
+	"settings_clients_logo_alt": "Логотип {name}",
+	"settings_clients_logo_upload": "Загрузить логотип",
+	"settings_clients_logo_replace": "Заменить логотип",
+	"settings_clients_logo_remove": "Удалить",
+	"settings_clients_logo_help": "PNG, JPEG или WebP, не более 256 КиБ. Показывается в отчётах и на страницах статуса клиента; PNG и JPEG также в PDF.",
+	"settings_clients_logo_too_big": "Файл больше 256 КиБ.",
+	"settings_clients_logo_error": "Не удалось сохранить логотип.",
+	"settings_clients_members": "Участники",
+	"settings_clients_members_help": "Участники видят только этого клиента в пределах своей роли и команд. Администраторы видят всех клиентов.",
+	"settings_clients_save": "Сохранить",
+	"settings_clients_create": "Создать клиента",
+	"msp_overview_state_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} устройство в критическом состоянии",
+				"countPlural=few": "{count} устройства в критическом состоянии",
+				"countPlural=many": "{count} устройств в критическом состоянии",
+				"countPlural=other": "{count} устройства в критическом состоянии"
+			}
+		}
+	],
+	"msp_overview_state_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} устройство с оповещением",
+				"countPlural=few": "{count} устройства с оповещениями",
+				"countPlural=many": "{count} устройств с оповещениями",
+				"countPlural=other": "{count} устройства с оповещениями"
+			}
+		}
+	],
+	"msp_overview_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} критическое",
+				"countPlural=few": "{count} критических",
+				"countPlural=many": "{count} критических",
+				"countPlural=other": "{count} критических"
+			}
+		}
+	],
+	"msp_overview_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} предупреждение",
+				"countPlural=few": "{count} предупреждения",
+				"countPlural=many": "{count} предупреждений",
+				"countPlural=other": "{count} предупреждения"
+			}
+		}
+	],
+	"msp_overview_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} на паузе",
+				"countPlural=few": "{count} на паузе",
+				"countPlural=many": "{count} на паузе",
+				"countPlural=other": "{count} на паузе"
+			}
+		}
+	],
+	"msp_overview_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} устройство",
+				"countPlural=few": "{count} устройства",
+				"countPlural=many": "{count} устройств",
+				"countPlural=other": "{count} устройства"
+			}
+		}
+	],
+	"msp_overview_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} из {quota} устройств",
+				"countPlural=few": "{count} из {quota} устройств",
+				"countPlural=many": "{count} из {quota} устройств",
+				"countPlural=other": "{count} из {quota} устройств"
+			}
+		}
+	],
+	"settings_clients_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} устройство",
+				"countPlural=few": "{count} устройства",
+				"countPlural=many": "{count} устройств",
+				"countPlural=other": "{count} устройства"
+			}
+		}
+	],
+	"settings_clients_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} из {quota} устройств",
+				"countPlural=few": "{count} из {quota} устройств",
+				"countPlural=many": "{count} из {quota} устройств",
+				"countPlural=other": "{count} из {quota} устройств"
+			}
+		}
+	],
+	"settings_clients_report_on": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Ежемесячный отчёт {count} контакту",
+				"countPlural=few": "Ежемесячный отчёт {count} контактам",
+				"countPlural=many": "Ежемесячный отчёт {count} контактам",
+				"countPlural=other": "Ежемесячный отчёт {count} контактам"
+			}
+		}
+	],
+	"settings_clients_unassigned": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} учётная запись без клиента ничего не видит:",
+				"countPlural=few": "{count} учётные записи без клиента ничего не видят:",
+				"countPlural=many": "{count} учётных записей без клиента ничего не видят:",
+				"countPlural=other": "{count} учётные записи без клиента ничего не видят:"
+			}
+		}
+	],
+	"console_panel_oncall_unknown": "Кто-то",
+	"console_panel_oncall_until": "{schedule}, до {time}",
+	"console_panel_oncall_open": "Открыть дежурства",
+	"console_panel_oncall_setup": "Настроить графики дежурств",
+	"wizard_oncall_default_name": "Основной",
+	"wizard_oncall_policy_name": "{name}: эскалация",
+	"wizard_oncall_existing": "Уже настроено графиков: {count}",
+	"wizard_oncall_now": "Сейчас дежурит: {name}",
+	"wizard_oncall_nobody": "Сейчас никто не дежурит",
+	"wizard_oncall_name": "Название графика",
+	"wizard_oncall_people": "Кто дежурит по очереди",
+	"wizard_oncall_people_help": "По неделе каждому, смена по понедельникам в 09:00 по часовому поясу экземпляра.",
+	"wizard_oncall_create": "Создать ротацию",
+	"wizard_oncall_open": "Дежурства подробно",
+	"wizard_oncall_open_text": "Слои, замены, календарь и канал «Дежурство DumbMonit», который подключает политику к маршрутизации оповещений."
 }

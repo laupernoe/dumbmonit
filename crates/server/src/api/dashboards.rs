@@ -14,6 +14,12 @@
 //!   administrateurs (ou un jeton `write`), seuls à pouvoir aussi en créer ou
 //!   en retirer le partage.
 //!
+//! Mode MSP : un tableau partagé appartient à un client ou à l'instance. Un
+//! compte restreint à ses clients ne voit que les tableaux partagés de ses
+//! clients (la définition d'un tableau de l'instance peut nommer d'autres
+//! clients) ; la vue d'un administrateur limitée à un client y ajoute ceux de
+//! l'instance. Un tableau partagé créé dans cette vue tombe dans le client.
+//!
 //! La grille est stockée en JSON ; le serveur en valide la forme ([`validate`])
 //! et ne garde que les clés connues de chaque type de widget.
 
@@ -26,7 +32,9 @@ use serde_json::{Map, Value};
 use sqlx::{Row, SqlitePool};
 
 use crate::api::{ApiError, ApiResult};
+use crate::auth::clients;
 use crate::auth::middleware::{Identity, Principal};
+use crate::auth::teams::{Access, TeamAccess};
 use crate::state::AppState;
 
 pub fn routes() -> Router<AppState> {
@@ -284,6 +292,7 @@ struct Record {
     shared: bool,
     owner_id: Option<i64>,
     owner: Option<String>,
+    client_id: Option<i64>,
     range_secs: i64,
     refresh_secs: i64,
     widgets: String,
@@ -292,8 +301,12 @@ struct Record {
 }
 
 impl Record {
-    fn visible_to(&self, who: &Who) -> bool {
-        self.shared || (who.user_id.is_some() && self.owner_id == who.user_id)
+    fn visible_to(&self, who: &Who, access: &Access) -> bool {
+        if self.shared {
+            clients::visible_owner(access, self.client_id, !access.is_scoped())
+        } else {
+            who.user_id.is_some() && self.owner_id == who.user_id
+        }
     }
 
     fn editable_by(&self, who: &Who) -> bool {
@@ -321,7 +334,7 @@ impl Record {
 macro_rules! select {
     ($tail:literal) => {
         concat!(
-            "SELECT d.id, d.name, d.shared, d.owner_id, u.username AS owner,
+            "SELECT d.id, d.name, d.shared, d.owner_id, u.username AS owner, d.client_id,
                 d.range_secs, d.refresh_secs, d.widgets, d.created_at, d.updated_at
              FROM dashboards d LEFT JOIN users u ON u.id = d.owner_id ",
             $tail
@@ -336,6 +349,7 @@ fn row_of(row: &sqlx::sqlite::SqliteRow) -> Result<Record, sqlx::Error> {
         shared: row.try_get::<i64, _>("shared")? != 0,
         owner_id: row.try_get("owner_id")?,
         owner: row.try_get("owner")?,
+        client_id: row.try_get("client_id")?,
         range_secs: row.try_get("range_secs")?,
         refresh_secs: row.try_get("refresh_secs")?,
         widgets: row.try_get("widgets")?,
@@ -359,12 +373,22 @@ fn not_found(id: DashboardId) -> ApiError {
 
 /// Le tableau, s'il existe et que ce porteur le voit (sinon 404, sans révéler
 /// l'existence d'un tableau personnel d'autrui).
-async fn visible(pool: &SqlitePool, id: DashboardId, who: &Who) -> ApiResult<Record> {
-    load(pool, id).await?.filter(|row| row.visible_to(who)).ok_or_else(|| not_found(id))
+async fn visible(
+    pool: &SqlitePool,
+    id: DashboardId,
+    who: &Who,
+    access: &Access,
+) -> ApiResult<Record> {
+    load(pool, id).await?.filter(|row| row.visible_to(who, access)).ok_or_else(|| not_found(id))
 }
 
-async fn editable(pool: &SqlitePool, id: DashboardId, who: &Who) -> ApiResult<Record> {
-    let row = visible(pool, id, who).await?;
+async fn editable(
+    pool: &SqlitePool,
+    id: DashboardId,
+    who: &Who,
+    access: &Access,
+) -> ApiResult<Record> {
+    let row = visible(pool, id, who, access).await?;
     if !row.editable_by(who) {
         return Err(ApiError::Forbidden(
             "Only administrators can change a shared dashboard.".into(),
@@ -379,6 +403,7 @@ async fn editable(pool: &SqlitePool, id: DashboardId, who: &Who) -> ApiResult<Re
 async fn list(
     State(state): State<AppState>,
     Identity(principal): Identity,
+    TeamAccess(access): TeamAccess,
 ) -> ApiResult<Json<Vec<DashboardView>>> {
     let who = who(&principal);
     let rows = sqlx::query(select!(
@@ -390,11 +415,13 @@ async fn list(
     .fetch_all(&state.pool)
     .await
     .map_err(anyhow::Error::from)?;
-    let views = rows
-        .iter()
-        .map(|r| row_of(r).map(|row| row.view(&who)))
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(anyhow::Error::from)?;
+    let records =
+        rows.iter().map(row_of).collect::<Result<Vec<_>, _>>().map_err(anyhow::Error::from)?;
+    let views = records
+        .into_iter()
+        .filter(|row| row.visible_to(&who, &access))
+        .map(|row| row.view(&who))
+        .collect();
     Ok(Json(views))
 }
 
@@ -402,10 +429,11 @@ async fn list(
 async fn get_one(
     State(state): State<AppState>,
     Identity(principal): Identity,
+    TeamAccess(access): TeamAccess,
     Path(id): Path<DashboardId>,
 ) -> ApiResult<Json<DashboardView>> {
     let who = who(&principal);
-    Ok(Json(visible(&state.pool, id, &who).await?.view(&who)))
+    Ok(Json(visible(&state.pool, id, &who, &access).await?.view(&who)))
 }
 
 fn check_may_write(who: &Who, shared: bool) -> ApiResult<()> {
@@ -434,6 +462,7 @@ fn conflict(error: sqlx::Error, name: &str) -> ApiError {
 async fn create(
     State(state): State<AppState>,
     Identity(principal): Identity,
+    TeamAccess(access): TeamAccess,
     Json(payload): Json<DashboardPayload>,
 ) -> ApiResult<(StatusCode, Json<DashboardView>)> {
     let who = who(&principal);
@@ -466,7 +495,10 @@ async fn create(
     .await
     .map_err(|e| conflict(e, &input.name))?
     .last_insert_rowid();
-    Ok((StatusCode::CREATED, Json(visible(&state.pool, id, &who).await?.view(&who))))
+    if input.shared {
+        clients::adopt(&state.pool, &access, clients::Kind::Dashboard, id).await?;
+    }
+    Ok((StatusCode::CREATED, Json(visible(&state.pool, id, &who, &access).await?.view(&who))))
 }
 
 /// `PUT /api/dashboards/{id}` — remplace le tableau. Partager ou retirer le
@@ -474,12 +506,13 @@ async fn create(
 async fn update(
     State(state): State<AppState>,
     Identity(principal): Identity,
+    TeamAccess(access): TeamAccess,
     Path(id): Path<DashboardId>,
     Json(payload): Json<DashboardPayload>,
 ) -> ApiResult<Json<DashboardView>> {
     let who = who(&principal);
     let input = validate(payload)?;
-    let current = editable(&state.pool, id, &who).await?;
+    let current = editable(&state.pool, id, &who, &access).await?;
     if input.shared != current.shared {
         if !who.admin {
             return Err(ApiError::Forbidden("Only administrators can change sharing.".into()));
@@ -503,17 +536,28 @@ async fn update(
     .execute(&state.pool)
     .await
     .map_err(|e| conflict(e, &input.name))?;
-    Ok(Json(visible(&state.pool, id, &who).await?.view(&who)))
+    if input.shared && !current.shared {
+        clients::adopt(&state.pool, &access, clients::Kind::Dashboard, id).await?;
+    } else if !input.shared && current.client_id.is_some() {
+        // Redevenu personnel : il n'appartient plus qu'à son propriétaire.
+        sqlx::query("UPDATE dashboards SET client_id = NULL WHERE id = ?")
+            .bind(id)
+            .execute(&state.pool)
+            .await
+            .map_err(anyhow::Error::from)?;
+    }
+    Ok(Json(visible(&state.pool, id, &who, &access).await?.view(&who)))
 }
 
 /// `DELETE /api/dashboards/{id}`
 async fn remove(
     State(state): State<AppState>,
     Identity(principal): Identity,
+    TeamAccess(access): TeamAccess,
     Path(id): Path<DashboardId>,
 ) -> ApiResult<StatusCode> {
     let who = who(&principal);
-    editable(&state.pool, id, &who).await?;
+    editable(&state.pool, id, &who, &access).await?;
     sqlx::query("DELETE FROM dashboards WHERE id = ?")
         .bind(id)
         .execute(&state.pool)

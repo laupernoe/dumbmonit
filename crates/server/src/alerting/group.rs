@@ -262,6 +262,10 @@ pub struct AlertGroup {
     pub items: Vec<GroupItem>,
     /// Union des canaux demandés par les règles du groupe. Vide = tous les canaux.
     pub channels: Vec<i64>,
+    /// Mode MSP : client de l'équipement, renseigné par le moteur avant la
+    /// politique de notification. `None` : série sans équipement (seuls les
+    /// canaux de l'instance en parlent).
+    pub client_id: Option<i64>,
     pub at: DateTime<Utc>,
 }
 
@@ -325,6 +329,7 @@ pub fn group(outcomes: &[AlertOutcome], now: DateTime<Utc>) -> Vec<AlertGroup> {
             severity: Severity::Info,
             items: Vec::new(),
             channels: Vec::new(),
+            client_id: None,
             at: now,
         });
         group.severity = group.severity.max(severity);

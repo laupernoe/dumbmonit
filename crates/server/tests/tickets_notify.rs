@@ -137,6 +137,7 @@ fn digest(reason: NotifyReason) -> Digest {
             severity: item.severity,
             items: vec![item],
             channels: vec![],
+            client_id: None,
             at,
         }],
         resolved_meanwhile: vec![],

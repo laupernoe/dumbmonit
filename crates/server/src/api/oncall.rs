@@ -23,7 +23,9 @@ use crate::alerting::model::Severity;
 use crate::alerting::silence::Schedule;
 use crate::api::channels::ChannelPayload;
 use crate::api::{ApiError, ApiResult};
+use crate::auth::clients;
 use crate::auth::middleware::{Authenticated, OperatorIdentity};
+use crate::auth::teams::{Access, TeamAccess};
 use crate::auth::users::{self, User};
 use crate::db;
 use crate::notify::{self, ChannelConfig};
@@ -208,9 +210,12 @@ fn schedule_view(
 }
 
 /// `GET /api/oncall/schedules`
-pub async fn list_schedules(State(state): State<AppState>) -> ApiResult<Json<Vec<ScheduleView>>> {
+pub async fn list_schedules(
+    State(state): State<AppState>,
+    TeamAccess(access): TeamAccess,
+) -> ApiResult<Json<Vec<ScheduleView>>> {
     let now = Utc::now();
-    let schedules = runner::load_schedules(&state.pool, now).await?;
+    let schedules = visible_schedules(&state, &access, now).await?;
     Ok(Json(
         schedules.into_iter().map(|(row, overrides)| schedule_view(row, &overrides, now)).collect(),
     ))
@@ -274,12 +279,14 @@ fn schedule_not_found(id: i64) -> ApiError {
 /// `POST /api/oncall/schedules`
 pub async fn create_schedule(
     State(state): State<AppState>,
+    TeamAccess(access): TeamAccess,
     Json(payload): Json<SchedulePayload>,
 ) -> ApiResult<(StatusCode, Json<ScheduleView>)> {
     let (name, description, definition) = payload.validate(&state).await?;
     let id = store::save_schedule(&state.pool, None, &name, &description, &definition)
         .await
         .map_err(|e| duplicate_name(e, "schedule"))?;
+    clients::adopt(&state.pool, &access, clients::Kind::Schedule, id).await?;
     Ok((StatusCode::CREATED, Json(one_schedule(&state, id).await?)))
 }
 
@@ -520,10 +527,33 @@ fn entries(
 }
 
 /// `GET /api/oncall/now`
-pub async fn now_on_call(State(state): State<AppState>) -> ApiResult<Json<Vec<OnCallEntry>>> {
+pub async fn now_on_call(
+    State(state): State<AppState>,
+    TeamAccess(access): TeamAccess,
+) -> ApiResult<Json<Vec<OnCallEntry>>> {
     let now = Utc::now();
-    let schedules = runner::load_schedules(&state.pool, now).await?;
+    let schedules = visible_schedules(&state, &access, now).await?;
     Ok(Json(entries(&schedules, now)))
+}
+
+/// Mode MSP : les plannings que ces droits laissent voir (ceux du client de la
+/// vue et ceux de l'instance ; tous sans restriction de client).
+async fn visible_schedules(
+    state: &AppState,
+    access: &Access,
+    now: DateTime<Utc>,
+) -> ApiResult<Vec<(store::ScheduleRow, Vec<crate::oncall::schedule::Override>)>> {
+    let mut schedules = runner::load_schedules(&state.pool, now).await?;
+    clients::retain_visible(
+        &state.pool,
+        access,
+        clients::Kind::Schedule,
+        &mut schedules,
+        |(row, _)| row.id,
+        true,
+    )
+    .await?;
+    Ok(schedules)
 }
 
 // --------------------------------------------------------------------------
@@ -630,19 +660,34 @@ impl PolicyPayload {
 }
 
 /// `GET /api/oncall/policies`
-pub async fn list_policies(State(state): State<AppState>) -> ApiResult<Json<Vec<PolicyView>>> {
-    Ok(Json(policy_views(&state).await?))
+pub async fn list_policies(
+    State(state): State<AppState>,
+    TeamAccess(access): TeamAccess,
+) -> ApiResult<Json<Vec<PolicyView>>> {
+    let mut views = policy_views(&state).await?;
+    clients::retain_visible(
+        &state.pool,
+        &access,
+        clients::Kind::EscalationPolicy,
+        &mut views,
+        |view| view.id,
+        true,
+    )
+    .await?;
+    Ok(Json(views))
 }
 
 /// `POST /api/oncall/policies`
 pub async fn create_policy(
     State(state): State<AppState>,
+    TeamAccess(access): TeamAccess,
     Json(payload): Json<PolicyPayload>,
 ) -> ApiResult<(StatusCode, Json<PolicyView>)> {
     let (name, description, definition) = payload.validate(&state).await?;
     let id = store::save_policy(&state.pool, None, &name, &description, &definition)
         .await
         .map_err(|e| duplicate_name(e, "policy"))?;
+    clients::adopt(&state.pool, &access, clients::Kind::EscalationPolicy, id).await?;
     Ok((StatusCode::CREATED, Json(one_policy(&state, id).await?)))
 }
 

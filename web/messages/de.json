@@ -8947,5 +8947,424 @@
 	"worldmap_verdict_idle": "Nicht abgefragt",
 	"worldmap_verdict_ok": "Alles in Ordnung",
 	"worldmap_verdict_warn": "Prüfen",
-	"worldmap_view_world": "Welt"
+	"worldmap_view_world": "Welt",
+	"console_breadcrumb": "Brotkrumen",
+	"console_col_address": "Adresse",
+	"console_col_checked": "Geprüft",
+	"console_col_folder": "Ordner",
+	"console_col_latency": "Latenz · {range}",
+	"console_col_latency_short": "Latenz",
+	"console_col_name": "Name",
+	"console_col_p95": "p95",
+	"console_col_status": "Status",
+	"console_col_type": "Typ",
+	"console_col_uptime": "Verfügbarkeit 30 T",
+	"console_columns": "Spalten",
+	"console_egg": "// {count} Prüfungen pro Minute. Geh schlafen, wir haben das im Griff.",
+	"console_filter_all": "Alle",
+	"console_filter_degraded": "Beeinträchtigt",
+	"console_filter_down": "Ausgefallen",
+	"console_filter_kind": "Typ",
+	"console_filter_kind_all": "Alle Typen",
+	"console_filter_label": "Nach Zustand filtern",
+	"console_filter_paused": "Pausiert",
+	"console_filter_search": "Monitore filtern",
+	"console_kpi_alerts": "Offene Alarme",
+	"console_kpi_alerts_note": "Kritisch: {critical}, Warnung: {warning}",
+	"console_kpi_availability": "Verfügbarkeit 30 T",
+	"console_kpi_availability_note": "Gemessene Monitore: {count}",
+	"console_kpi_mttr": "MTTR 30 T",
+	"console_kpi_mttr_note": "Behoben: {count}",
+	"console_kpi_none": "Noch keine Daten",
+	"console_kpi_p95": "p95-Antwortzeit",
+	"console_kpi_p95_note": "Zeitraum: {range}",
+	"console_kpi_up": "Monitore online",
+	"console_kpi_up_note": "Ausgefallen: {down}, pausiert: {paused}",
+	"console_kpi_up_unit": "/ {total}",
+	"console_live": "LIVE",
+	"console_live_off": "Live-Aktualisierung pausiert. Zum Fortsetzen auswählen.",
+	"console_live_on": "Live-Aktualisierung aktiv. Zum Pausieren auswählen.",
+	"console_new_monitor": "Neuer Monitor",
+	"console_panel": "Kontext",
+	"console_panel_attention": "Braucht Aufmerksamkeit",
+	"console_panel_attention_all": "Alle anzeigen ({count})",
+	"console_panel_attention_none": "Gerade braucht nichts deine Aufmerksamkeit.",
+	"console_panel_check_now": "Jetzt prüfen",
+	"console_panel_checked": "Prüfung angefordert. Das Ergebnis erscheint bei der nächsten Aktualisierung.",
+	"console_panel_close": "Kontextbereich schließen",
+	"console_panel_edit": "Bearbeiten",
+	"console_panel_forecast": "Prognose",
+	"console_panel_forecast_none": "Keine Prognose überschreitet einen Schwellenwert.",
+	"console_panel_forecast_open": "Prognosen in Alarmen öffnen",
+	"console_panel_more": "Weitere Aktionen",
+	"console_panel_oncall": "Bereitschaft",
+	"console_panel_oncall_hint": "Wer benachrichtigt wird: Benachrichtigungseinstellungen",
+	"console_panel_oncall_you": "Du",
+	"console_panel_open": "Öffnen",
+	"console_panel_picked": "Ausgewählter Monitor",
+	"console_panel_picked_none": "Wähle eine Tabellenzeile, um sie hier zu sehen.",
+	"console_panel_silence": "1 Std. stumm",
+	"console_panel_silenced": "Für eine Stunde stummgeschaltet.",
+	"console_panel_suppressed_by": "Unterdrückt: {name} ist ausgefallen",
+	"console_panel_toggle": "Kontextbereich ein- oder ausblenden",
+	"console_panel_uptime": "Verfügbarkeit",
+	"console_paused": "PAUSIERT",
+	"console_range": "Zeitraum",
+	"console_river_empty": "Noch keine Messwerte in diesem Zeitraum.",
+	"console_river_hint": "Jeder Monitor, ein Feld pro {slot}, letzte {range}",
+	"console_river_legend": "Legende",
+	"console_river_more": "Weitere Monitore in der Tabelle unten: {count}",
+	"console_river_no_data": "Keine Daten",
+	"console_river_now": "jetzt",
+	"console_river_title": "Gesundheitsverlauf",
+	"console_search_placeholder": "Suchen oder Befehl ausführen",
+	"console_shortcut_next": "Nächste Tabellenzeile",
+	"console_shortcut_open": "Fokussierten Monitor öffnen",
+	"console_shortcut_panel": "Kontextbereich ein- oder ausblenden",
+	"console_shortcut_prev": "Vorherige Tabellenzeile",
+	"console_status_config": "Konfig",
+	"console_status_degraded": "Beeinträchtigt",
+	"console_status_down": "Ausgefallen",
+	"console_status_paused": "Pausiert",
+	"console_status_up": "Online",
+	"console_status_waiting": "Wartet",
+	"console_table_empty": "Kein Monitor entspricht diesen Filtern.",
+	"console_table_hint": "Schlimmste zuerst. Zeile auswählen, um sie zu prüfen.",
+	"console_table_keys": "j / k zum Bewegen, Enter zum Prüfen, o zum Öffnen",
+	"console_table_title": "Monitore",
+	"mode_enterprise_point_nav": "Symbolleiste, Kontextbereich und Befehlspalette überall",
+	"mode_enterprise_point_table": "Dichte Tabellen mit zusätzlichen Spalten, Filtern und Tastenkürzeln",
+	"mode_enterprise_point_team": "Teams, Single Sign-on, Bereitschaft und Logs im Vordergrund",
+	"mode_enterprise_text": "Eine dichte, sehr dunkle Konsole für Teams, mit allen Optionen im Blick.",
+	"mode_enterprise_title": "Unternehmen",
+	"mode_homelab_point_forms": "Kurze Formulare mit sinnvollen Vorgaben, erweiterte Einstellungen eingeklappt",
+	"mode_homelab_point_nav": "Vier Ziele im Blick, alles andere unter Mehr",
+	"mode_homelab_point_theme": "Wetterbericht und Rack, hell oder dunkel",
+	"mode_homelab_text": "Eine ruhige Oberfläche mit dem Wesentlichen im Blick. Jede Funktion bleibt einen Klick entfernt.",
+	"mode_homelab_title": "Homelab",
+	"mode_picker_label": "Produktmodus",
+	"mode_picker_selected": "Ausgewählt",
+	"mode_switch_keeps": "Ein Wechsel ändert nur die Oberfläche. Es wird nichts gelöscht.",
+	"settings_advanced_summary": "Abschnitte: {count}",
+	"settings_advanced_title": "Erweitert",
+	"settings_appearance_enterprise_dark": "Der Unternehmensmodus nutzt immer seine dunkle Konsole. Wechsle unter Einstellungen → Allgemein zu Homelab für helles und dunkles Design.",
+	"settings_general_instance_text": "Der Name erscheint in der Kopfzeile. Sprache und Zeitzone sind die Vorgaben für neue Browser und Berichte.",
+	"settings_general_instance_title": "Instanz",
+	"settings_general_mode_saving": "Wird umgestellt…",
+	"settings_general_mode_text": "Homelab hält es einfach. Unternehmen zeigt alle Optionen in einer dichten, dunklen Konsole.",
+	"settings_general_mode_title": "Oberflächenmodus",
+	"settings_general_readonly": "Nur Administratoren können diese Einstellungen ändern.",
+	"settings_general_save": "Speichern",
+	"settings_general_saved": "Gespeichert",
+	"settings_general_wizard_run": "Einrichtungsassistent starten",
+	"settings_general_wizard_text": "Gehe die Schritte des ersten Starts erneut durch: Modus, Name, Benachrichtigungen, Monitore, Agent.",
+	"settings_general_wizard_title": "Einrichtungsassistent",
+	"settings_search_kw_general": "Modus Homelab Unternehmen Oberfläche Name Sprache Zeitzone Assistent Einrichtung",
+	"settings_tab_general": "Allgemein",
+	"wizard_agent_text": "Der Agent meldet CPU, Speicher, Festplatten, Container und Dienste einer Maschine. Führe den Befehl auf der zu überwachenden Maschine aus.",
+	"wizard_agent_title": "Agent installieren",
+	"wizard_back": "Zurück",
+	"wizard_channel_add": "Kanal hinzufügen",
+	"wizard_channel_list": "Benachrichtigungskanäle",
+	"wizard_channel_test": "Test senden",
+	"wizard_channel_test_failed": "Der Test ist fehlgeschlagen: {error}",
+	"wizard_channel_test_ok": "Test an {name} gesendet. Prüfe, ob er angekommen ist.",
+	"wizard_channel_text": "Verbinde einen Weg, um bei Störungen benachrichtigt zu werden, und sende einen Test, um sicherzugehen.",
+	"wizard_channel_title": "Benachrichtigt werden",
+	"wizard_finish": "Fertig",
+	"wizard_instance_language": "Sprache",
+	"wizard_instance_language_auto": "Wie der Browser",
+	"wizard_instance_name": "Name der Instanz",
+	"wizard_instance_name_help": "Wird in der Kopfzeile angezeigt. Leer lassen für DumbMonit.",
+	"wizard_instance_name_placeholder": "Heimlabor",
+	"wizard_instance_text": "Der Name erscheint in der Kopfzeile. Sprache und Zeitzone sind die Vorgaben für neue Browser und Berichte.",
+	"wizard_instance_timezone": "Zeitzone",
+	"wizard_instance_title": "Instanz benennen",
+	"wizard_intro": "Jeder Schritt kann übersprungen und später in den Einstellungen geändert werden.",
+	"wizard_mode_text": "Wähle die Oberfläche, die zu den Menschen passt, die sie nutzen. Du kannst jederzeit unter Einstellungen → Allgemein wechseln.",
+	"wizard_mode_title": "Aussehen von DumbMonit wählen",
+	"wizard_monitors_count": "Bisherige Monitore: {count}",
+	"wizard_monitors_import": "Importieren",
+	"wizard_monitors_import_text": "Aus Uptime Kuma, UptimeRobot, Gatus, Healthchecks oder einer Liste von Websites.",
+	"wizard_monitors_manual": "Manuell hinzufügen",
+	"wizard_monitors_manual_text": "Eine Website, ein Server, ein NAS: jeder unterstützte Typ.",
+	"wizard_monitors_new_tab": "Importieren und manuelles Hinzufügen öffnen sich in einem neuen Tab. Komm danach hierher zurück.",
+	"wizard_monitors_refresh": "Aktualisieren",
+	"wizard_monitors_scan": "Mein Netzwerk scannen",
+	"wizard_monitors_scan_text": "Findet die Geräte, die in deinen Subnetzen antworten.",
+	"wizard_monitors_text": "Scanne dein Netzwerk, übernimm Monitore aus einem anderen Tool oder füge einen manuell hinzu.",
+	"wizard_monitors_title": "Erste Monitore hinzufügen",
+	"wizard_next": "Weiter",
+	"wizard_oncall_policy": "Benachrichtigungsrichtlinie",
+	"wizard_oncall_policy_text": "Gruppierung, Ruhezeiten und Wiederholungen: wer wann benachrichtigt wird.",
+	"wizard_oncall_team": "Team und Rollen",
+	"wizard_oncall_team_text": "Die Konten, die Alarme bearbeiten: Operatoren bestätigen, Administratoren konfigurieren.",
+	"wizard_oncall_text": "Eine erste wöchentliche Rotation und die Eskalationsrichtlinie, die die diensthabende Person anruft. Der Rest liegt unter Alarme → Bereitschaft.",
+	"wizard_oncall_title": "Bereitschaft",
+	"wizard_optional": "Optional",
+	"wizard_retention_text": "Wie lange Metriken und Logs aufbewahrt werden. Die Vorgaben passen für die meisten Teams.",
+	"wizard_retention_title": "Aufbewahrung",
+	"wizard_skip_all": "Einrichtung überspringen",
+	"wizard_skip_step": "Schritt überspringen",
+	"wizard_sso_text": "Lass Personen sich über deinen Identitätsanbieter anmelden und gib jedem Konto eine Rolle.",
+	"wizard_sso_title": "Single Sign-on und Teams",
+	"wizard_step_of": "Schritt {current} von {total}",
+	"wizard_steps_label": "Einrichtungsschritte",
+	"wizard_title": "DumbMonit einrichten",
+	"deviceform_form_client_label": "Kunde",
+	"deviceform_form_client_help": "Der Kunde, zu dem dieses Gerät gehört. Nur seine Mitglieder sehen es.",
+	"deviceform_form_client_help_edit": "Wird ein Gerät zu einem anderen Kunden verschoben, ziehen die abhängigen Geräte mit.",
+	"deviceform_form_client_default": "Standard dieser Ansicht",
+	"msp_assign_label": "Kunde",
+	"msp_assign_shared": "Alle Kunden",
+	"msp_nav_clients": "Kunden",
+	"msp_switcher_label": "Angezeigter Kunde",
+	"msp_switcher_title": "Seiten für einen Kunden anzeigen",
+	"msp_switcher_all": "Alle Kunden",
+	"msp_overview_title": "Kunden",
+	"msp_overview_description_admin": "Alle Kunden auf einen Blick. Öffnen Sie einen, um nur seine Geräte, Alarme und Seiten zu sehen.",
+	"msp_overview_description_member": "Die Kunden, für die Sie arbeiten, und ihr Verfügbarkeitsbericht des letzten Monats.",
+	"msp_overview_empty_title": "Noch kein Kunde",
+	"msp_overview_empty_body": "Legen Sie Kunden in den Einstellungen an und geben Sie jedem seine Geräte und Mitglieder.",
+	"msp_overview_load_error": "Die Kunden konnten nicht geladen werden.",
+	"msp_overview_none_title": "Sie gehören zu keinem Kunden",
+	"msp_overview_none_body": "Bitten Sie Ihren MSP-Administrator, Ihr Konto einem Kunden hinzuzufügen.",
+	"msp_overview_off_title": "Der Mehrkundenmodus ist aus",
+	"msp_overview_off_body": "Schalten Sie ihn in den Einstellungen ein, um Geräte, Alarme und Berichte jedes Kunden zu trennen.",
+	"msp_overview_off_action": "Kundeneinstellungen öffnen",
+	"msp_overview_open": "Öffnen",
+	"msp_overview_report": "Letzter Monat (PDF)",
+	"msp_overview_report_title": "Verfügbarkeitsbericht des letzten Monats herunterladen",
+	"msp_overview_report_error": "Der Bericht konnte nicht erstellt werden.",
+	"msp_overview_quota_label": "Genutztes Gerätekontingent",
+	"msp_overview_state_empty": "Noch kein Gerät",
+	"msp_overview_state_ok": "Alles in Ordnung",
+	"settings_agents_client_badge": "Kunde: {name}",
+	"settings_clients_title": "Kunden",
+	"settings_clients_description": "Mehrkundenmodus (MSP): Geräte, Alarme, Seiten und Berichte jedes Kunden getrennt halten.",
+	"settings_clients_search_kw": "msp mandant kunde isolation kontingent logo",
+	"settings_clients_add": "Kunde hinzufügen",
+	"settings_clients_load_error": "Die Kunden konnten nicht geladen werden.",
+	"settings_clients_save_error": "Speichern nicht möglich.",
+	"settings_clients_delete_error": "Der Kunde konnte nicht gelöscht werden.",
+	"settings_clients_delete_confirm": "Diesen Kunden löschen",
+	"settings_clients_mode": "Mehrkundenmodus",
+	"settings_clients_mode_off_help": "Aus: Jedes Konto sieht, was Rolle und Teams erlauben, wie bisher. Beim Einschalten bleiben bestehende Konten im Standardkunden.",
+	"settings_clients_mode_on_help": "An: Ein Konto sieht nur die Kunden, denen es angehört. Administratoren verwalten alle Kunden und wählen einen in der Kopfzeile.",
+	"settings_clients_empty_title": "Noch kein Kunde",
+	"settings_clients_empty_body": "Fügen Sie einen Kunden hinzu und verschieben Sie seine Geräte dorthin.",
+	"settings_clients_note": "Geräte, Statusseiten und Agent-Token gehören immer zu einem Kunden. Kanäle, Alarmregeln, Wartungsfenster und Berichte können allen Kunden gemeinsam sein. Ein Kunde mit Geräten kann nicht gelöscht werden.",
+	"settings_clients_new_title": "Neuer Kunde",
+	"settings_clients_edit_title": "{name} bearbeiten",
+	"settings_clients_name": "Name",
+	"settings_clients_description_label": "Beschreibung",
+	"settings_clients_err_name": "Geben Sie einen Kundennamen ein.",
+	"settings_clients_err_quota": "Geben Sie eine ganze Zahl ein oder lassen Sie das Feld für kein Limit leer.",
+	"settings_clients_quota": "Gerätekontingent",
+	"settings_clients_quota_help": "Höchstzahl an Geräten des Kunden, Agenten eingeschlossen.",
+	"settings_clients_quota_none": "Kein Limit",
+	"settings_clients_idp_groups": "Gruppen des Identitätsanbieters",
+	"settings_clients_idp_groups_help": "Mitglieder dieser SSO-Gruppen (OIDC, LDAP, SAML) treten dem Kunden bei der Anmeldung bei. Mit Kommas trennen.",
+	"settings_clients_contacts": "Kontakte",
+	"settings_clients_contacts_help": "E-Mail-Adressen, die den monatlichen Verfügbarkeitsbericht erhalten, eine pro Zeile.",
+	"settings_clients_report_legend": "Monatlicher Verfügbarkeitsbericht",
+	"settings_clients_report_toggle": "An die Kontakte senden",
+	"settings_clients_report_help": "Am 1. um 8:00 Uhr in der Zeitzone des Kunden gehen PDF und CSV des Vormonats per E-Mail raus, mit Name und Logo des Kunden.",
+	"settings_clients_objective": "Verfügbarkeitsziel (%)",
+	"settings_clients_objective_help": "Optional. Jedes Gerät wird als erfüllt oder nicht markiert.",
+	"settings_clients_timezone": "Zeitzone",
+	"settings_clients_report_last": "Letzter Bericht gesendet: {month}.",
+	"settings_clients_report_failing": "Monatsbericht fehlgeschlagen",
+	"settings_clients_logo": "Logo",
+	"settings_clients_logo_alt": "Logo von {name}",
+	"settings_clients_logo_upload": "Logo hochladen",
+	"settings_clients_logo_replace": "Logo ersetzen",
+	"settings_clients_logo_remove": "Entfernen",
+	"settings_clients_logo_help": "PNG, JPEG oder WebP, höchstens 256 KiB. Auf Berichten und Statusseiten des Kunden; PNG und JPEG auch im PDF.",
+	"settings_clients_logo_too_big": "Diese Datei ist größer als 256 KiB.",
+	"settings_clients_logo_error": "Das Logo konnte nicht gespeichert werden.",
+	"settings_clients_members": "Mitglieder",
+	"settings_clients_members_help": "Mitglieder sehen nur diesen Kunden, im Rahmen ihrer Rolle und Teams. Administratoren sehen alle Kunden.",
+	"settings_clients_save": "Speichern",
+	"settings_clients_create": "Kunden anlegen",
+	"msp_overview_state_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Gerät kritisch",
+				"countPlural=other": "{count} Geräte kritisch"
+			}
+		}
+	],
+	"msp_overview_state_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Gerät mit Alarm",
+				"countPlural=other": "{count} Geräte mit Alarm"
+			}
+		}
+	],
+	"msp_overview_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} kritisch",
+				"countPlural=other": "{count} kritisch"
+			}
+		}
+	],
+	"msp_overview_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Warnung",
+				"countPlural=other": "{count} Warnungen"
+			}
+		}
+	],
+	"msp_overview_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} pausiert",
+				"countPlural=other": "{count} pausiert"
+			}
+		}
+	],
+	"msp_overview_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Gerät",
+				"countPlural=other": "{count} Geräte"
+			}
+		}
+	],
+	"msp_overview_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} von {quota} Geräten",
+				"countPlural=other": "{count} von {quota} Geräten"
+			}
+		}
+	],
+	"settings_clients_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Gerät",
+				"countPlural=other": "{count} Geräte"
+			}
+		}
+	],
+	"settings_clients_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} von {quota} Geräten",
+				"countPlural=other": "{count} von {quota} Geräten"
+			}
+		}
+	],
+	"settings_clients_report_on": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Monatsbericht an {count} Kontakt",
+				"countPlural=other": "Monatsbericht an {count} Kontakte"
+			}
+		}
+	],
+	"settings_clients_unassigned": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Konto ohne Kunde sieht nichts:",
+				"countPlural=other": "{count} Konten ohne Kunde sehen nichts:"
+			}
+		}
+	],
+	"console_panel_oncall_unknown": "Jemand",
+	"console_panel_oncall_until": "{schedule}, bis {time}",
+	"console_panel_oncall_open": "Bereitschaft öffnen",
+	"console_panel_oncall_setup": "Bereitschaftspläne einrichten",
+	"wizard_oncall_default_name": "Primär",
+	"wizard_oncall_policy_name": "{name}: Eskalation",
+	"wizard_oncall_existing": "Bereits eingerichtete Pläne: {count}",
+	"wizard_oncall_now": "Jetzt in Bereitschaft: {name}",
+	"wizard_oncall_nobody": "Gerade niemand in Bereitschaft",
+	"wizard_oncall_name": "Name des Plans",
+	"wizard_oncall_people": "Wer sich abwechselt",
+	"wizard_oncall_people_help": "Je eine Woche, Übergabe montags um 09:00 in der Zeitzone der Instanz.",
+	"wizard_oncall_create": "Rotation erstellen",
+	"wizard_oncall_open": "Bereitschaft im Detail",
+	"wizard_oncall_open_text": "Ebenen, Vertretungen, Kalender und der Kanal DumbMonit-Bereitschaft, der eine Richtlinie in das Alarm-Routing einbindet."
 }

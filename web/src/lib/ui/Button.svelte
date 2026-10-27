@@ -42,7 +42,7 @@
 	};
 	const variants = {
 		primary:
-			'bg-signal text-on-signal shadow-lift hover:brightness-110 hover:shadow-float overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:transition-transform before:duration-700 hover:before:translate-x-full',
+			'bg-primary text-on-primary shadow-lift hover:brightness-110 hover:shadow-float overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:transition-transform before:duration-700 hover:before:translate-x-full',
 		secondary:
 			'border border-line-strong bg-surface text-ink shadow-lift hover:border-ink-3 hover:shadow-float',
 		ghost: 'text-ink-2 hover:bg-surface-2 hover:text-ink',

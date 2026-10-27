@@ -1,45 +1,56 @@
 <script lang="ts">
 	/**
-	 * Top bar on desktop, bottom tab bar on phones. The active link carries a
-	 * sliding pill that springs between items (the gooey nav, tamed). The
-	 * right-hand cluster holds the command palette, the documentation (Read the
-	 * Docs, new tab), the GitHub repository, wall mode, the theme and the
-	 * account menu (avatar). Phones get the four destinations only. The version number lives in `VersionTag.svelte`, fixed at a
-	 * page corner, not here: a nav is not the place for a build hash.
+	 * Homelab shell. Top bar on desktop, bottom tab bar on phones. The active
+	 * link carries a sliding pill that springs between items (the gooey nav,
+	 * tamed). The bar holds the essentials only — Overview, Monitors, Alerts,
+	 * Settings; every other page (security, map, logs, status pages, wall
+	 * mode, documentation, GitHub) sits under "More" and in the command
+	 * palette. The right-hand cluster keeps the palette, the theme and the
+	 * account menu. Phones get the four destinations only. The version number
+	 * lives in `VersionTag.svelte`, fixed at a page corner, not here.
 	 */
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import { scale } from 'svelte/transition';
-	import { Gauge, Server, BellRing, Settings2, ShieldAlert, Search, BookOpen, Tv, LayoutGrid, Wrench } from 'lucide-svelte';
+	import { Search, BookOpen, ChevronDown } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { RollingNumber, bump, calmMotion } from '#lib/ui/index.js';
+	import { Menu, RollingNumber, bump, calmMotion } from '#lib/ui/index.js';
+	import { NAV, isActive as entryActive, visible } from './shell/nav.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { palette } from '#lib/stores/palette.svelte.js';
 	import Logo from './Logo.svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
 	import UserMenu from './UserMenu.svelte';
+	import ClientSwitcher from './ClientSwitcher.svelte';
 
 	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/';
 	const GITHUB_URL = 'https://github.com/laupernoe/dumbmonit';
 
 	// A function: the labels follow the active language at render time.
-	const links = () => allLinks().filter((link) => !auth.scoped || link.href !== '/');
+	const links = () =>
+		NAV.filter((entry) => entry.essential && visible(entry)).map((entry) => ({
+			href: entry.href,
+			label: entry.label(),
+			icon: entry.icon,
+			exact: entry.exact ?? false,
+			phone: entry.phone ?? false
+		}));
+	/** Everything else: one click away under "More", and in the command palette. */
+	const more = () => NAV.filter((entry) => !entry.essential && visible(entry));
 	const phoneLinks = $derived(links().filter((link) => link.phone));
-	const allLinks = () => [
-		{ href: '/', label: m.misc_nav_overview(), icon: Gauge, exact: true, phone: true },
-		{ href: '/targets', label: m.misc_nav_devices(), icon: Server, exact: false, phone: true },
-		{ href: '/alerts', label: m.misc_nav_alerts(), icon: BellRing, exact: false, phone: true },
-		{ href: '/dashboards', label: m.misc_nav_dashboards(), icon: LayoutGrid, exact: false, phone: false },
-		{ href: '/security', label: m.misc_nav_security(), icon: ShieldAlert, exact: false, phone: false },
-		{ href: '/actions', label: m.remediation_page_title(), icon: Wrench, exact: false, phone: false },
-		{ href: '/settings', label: m.misc_nav_settings(), icon: Settings2, exact: false, phone: true }
-	];
+	/** MSP mode with something to pick: same rule as `ClientSwitcher`. */
+	const switchable = $derived.by(() => {
+		const count = auth.msp?.clients.length ?? 0;
+		return auth.mspOn && (auth.msp?.admin ? count > 0 : count > 1);
+	});
 
 	function isActive(href: string, exact: boolean): boolean {
 		const path = page.url.pathname;
+		if (href === '/settings' && path.startsWith('/settings/status')) return false;
 		return exact ? path === href : path.startsWith(href);
 	}
+	const moreActive = $derived(more().some((entry) => entryActive(entry, page.url.pathname)));
 
 	let list = $state<HTMLUListElement | null>(null);
 	let pill = $state({ x: 0, w: 0, ready: false });
@@ -93,6 +104,13 @@
 	});
 </script>
 
+<!-- Phones have no top bar: the client switcher gets a strip of its own. -->
+{#if switchable}
+	<div class="sticky top-0 z-30 border-b border-line bg-canvas px-4 pt-[var(--safe-top)] sm:hidden">
+		<div class="py-1.5"><ClientSwitcher wide id="client-switcher-phone" /></div>
+	</div>
+{/if}
+
 <header class="vt-nav-top sticky top-0 z-30 hidden border-b pt-[var(--safe-top)] border-line bg-canvas/85 backdrop-blur-md sm:block">
 	<div class="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4 sm:px-6">
 		<div class="flex shrink-0 items-center gap-2">
@@ -131,7 +149,48 @@
 			</ul>
 		</nav>
 
+		<Menu label={m.misc_nav_more()} align="left">
+			{#snippet trigger({ toggle, open })}
+				<button
+					type="button"
+					onclick={toggle}
+					aria-expanded={open}
+					aria-haspopup="menu"
+					data-tour="nav-wall"
+					class={`flex h-9 items-center gap-1 rounded-lg px-3 text-sm font-semibold transition-colors hover:bg-surface-2 ${moreActive ? 'text-ink' : 'text-ink-2 hover:text-ink'}`}
+				>
+					{m.misc_nav_more()}
+					<ChevronDown class={`size-3.5 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+				</button>
+			{/snippet}
+			{#snippet children({ close })}
+				<div class="grid min-w-56 p-1">
+					{#each more() as entry (entry.href)}
+						<a
+							role="menuitem"
+							href={entry.href}
+							onclick={close}
+							aria-current={entryActive(entry, page.url.pathname) ? 'page' : undefined}
+							class="flex min-h-10 items-center gap-2.5 rounded-md px-2.5 text-sm text-ink hover:bg-surface-2"
+						>
+							<entry.icon class="size-4 text-ink-2" aria-hidden="true" />{entry.label()}
+						</a>
+					{/each}
+					<div class="my-1 border-t border-line" role="separator"></div>
+					<a role="menuitem" href={DOCS_URL} target="_blank" rel="noopener" onclick={close} class="flex min-h-10 items-center gap-2.5 rounded-md px-2.5 text-sm text-ink hover:bg-surface-2" title={m.misc_nav_docs_title()}>
+						<BookOpen class="size-4 text-ink-2" aria-hidden="true" />{m.misc_nav_docs()}
+					</a>
+					<a role="menuitem" href={GITHUB_URL} target="_blank" rel="noopener" onclick={close} class="flex min-h-10 items-center gap-2.5 rounded-md px-2.5 text-sm text-ink hover:bg-surface-2" title={m.misc_nav_github_title()}>
+						<!-- GitHub mark from Simple Icons (CC0-1.0): lucide no longer ships brand icons. -->
+						<svg viewBox="0 0 24 24" fill="currentColor" class="size-4 text-ink-2" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+						GitHub
+					</a>
+				</div>
+			{/snippet}
+		</Menu>
+
 		<div class="ml-auto flex items-center gap-1">
+			<ClientSwitcher />
 			<button
 				type="button"
 				class="inline-flex size-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
@@ -141,38 +200,6 @@
 			>
 				<Search class="size-4" aria-hidden="true" />
 			</button>
-			<a
-				href={DOCS_URL}
-				target="_blank"
-				rel="noopener"
-				class="inline-flex size-10 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
-				title={m.misc_nav_docs_title()}
-				aria-label={m.misc_nav_docs_sr()}
-			>
-				<BookOpen class="size-4" aria-hidden="true" />
-			</a>
-			<a
-				href={GITHUB_URL}
-				target="_blank"
-				rel="noopener"
-				class="inline-flex size-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
-				aria-label={m.misc_nav_github()}
-				title={m.misc_nav_github_title()}
-			>
-				<!-- GitHub mark from Simple Icons (CC0-1.0): lucide no longer ships brand icons. -->
-				<svg viewBox="0 0 24 24" fill="currentColor" class="size-4" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
-			</a>
-			{#if !auth.scoped}
-			<a
-				href="/wall"
-				data-tour="nav-wall"
-				class="inline-flex size-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
-				aria-label={m.misc_nav_wall()}
-				title={m.misc_nav_wall_title()}
-			>
-				<Tv class="size-[18px]" aria-hidden="true" />
-			</a>
-			{/if}
 			<ThemeToggle />
 			<UserMenu />
 		</div>
