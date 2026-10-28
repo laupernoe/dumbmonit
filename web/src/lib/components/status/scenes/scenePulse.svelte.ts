@@ -1,16 +1,11 @@
 import { tick, untrack } from 'svelte';
-
-export type ScenePulse = { kind: 'down' | 'up' | 'resolved'; at: number } | null;
-export type SceneMood = 'ok' | 'warn' | 'critical' | 'calm' | 'clouded' | 'storm';
-
-/** 0 = clear, 1 = clouded, 2 = storm. */
-export function moodLevel(m: SceneMood | undefined): 0 | 1 | 2 {
-	return m === 'warn' || m === 'clouded' ? 1 : m === 'critical' || m === 'storm' ? 2 : 0;
-}
+import type { ScenePulse } from './nightScene';
 
 /**
- * Rejoue un geste à chaque changement de `pulse.at` (pas pour un pouls déjà
- * présent au montage). À appeler pendant l'initialisation du composant.
+ * Plays a landmark gesture each time `pulse.at` changes (not for a pulse
+ * already there at mount). `active` is the gesture playing, null when idle;
+ * `key` changes on every play so `{#key}` blocks restart. Call during
+ * component initialisation.
  */
 export function createPulse(get: () => ScenePulse, ms = { down: 6000, up: 4500, resolved: 6500 }) {
 	let active = $state<'down' | 'up' | 'resolved' | null>(null);

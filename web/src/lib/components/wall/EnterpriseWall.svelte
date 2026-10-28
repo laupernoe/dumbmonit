@@ -1,16 +1,22 @@
 <script lang="ts">
 	/**
 	 * Wall mode, Enterprise edition: a room monitor in the console's own voice.
-	 * Black ground, Geist, no scenery. From the top: the verdict in a few words
+	 * Black ground, Geist. From the top: the verdict in a few words
 	 * and the clock, the five fleet figures, the health river (the one big
 	 * picture of the board), then what is open right now and who is on call.
 	 *
 	 * Reads the same stores as the console (monitors, probes and alerts every
 	 * 30 s; the river and the figures from the fleet store). Escape or Exit
 	 * goes back to the console. The screen stays awake while the wall is open.
+	 *
+	 * Optional backdrop (off by default, chosen under "Backdrop"): one of the
+	 * status pages' night cities as a band behind the verdict and the clock,
+	 * its weather following the verdict. The text over it keeps the night
+	 * tokens; on a phone or a hidden tab the city holds still.
 	 */
-	import { untrack, type Snippet } from 'svelte';
+	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { AlertTriangle, CircleAlert, CircleCheck, CircleDashed, X } from 'lucide-svelte';
 	import { getOnCallNow, listAlertRules, listOnCallPeople, type AlertRule, type OnCallEntry, type Person } from '#lib/api/index.js';
 	import { countAlertsByTarget, countsAsProblem } from '#lib/alerts-attention.js';
@@ -28,13 +34,17 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { instanceStore } from '#lib/stores/instance.svelte.js';
 	import { consoleState } from '#lib/stores/console.svelte.js';
-	import { Button, calmMotion } from '#lib/ui/index.js';
-
-	interface Props {
-		/** Optional backdrop under the board (e.g. a night scene); none by default. */
-		scene?: Snippet;
-	}
-	let { scene }: Props = $props();
+	import { Button, calmMotion, isPhone } from '#lib/ui/index.js';
+	import SceneDefs from '#lib/components/status/scenes/SceneDefs.svelte';
+	import { SCENE_COMPONENTS } from '#lib/components/status/scenes/registry.js';
+	import WallSceneControl from '#lib/components/wall/WallSceneControl.svelte';
+	import {
+		parseForcedWallScene,
+		readWallScene,
+		resolveWallScene,
+		writeWallScene,
+		type WallSceneChoice
+	} from '#lib/components/wall/wallScene.js';
 
 	const ALERT_ROWS = 7;
 
@@ -262,18 +272,42 @@
 	);
 
 	const animate = !calmMotion();
+
+	// --- The backdrop ----------------------------------------------------------
+	let sceneChoice = $state<WallSceneChoice>(readWallScene());
+	const forcedScene = $derived(parseForcedWallScene(page.url.searchParams.get('city')));
+	const sceneCity = $derived(resolveWallScene(forcedScene ?? sceneChoice));
+	const SceneCity = $derived(sceneCity ? SCENE_COMPONENTS[sceneCity] : null);
+	function setScene(choice: WallSceneChoice) {
+		sceneChoice = choice;
+		writeWallScene(choice);
+	}
+	const sceneMood = $derived(verdict.tone === 'warning' ? 'critical' : verdict.tone === 'advisory' ? 'warn' : 'ok');
+	// The Eiffel Tower sparkles for the first five minutes of every hour.
+	const onTheHour = $derived(now.getMinutes() < 5);
+	let tabHidden = $state(false);
+	$effect(() => {
+		const sync = () => (tabHidden = document.visibilityState !== 'visible');
+		sync();
+		document.addEventListener('visibilitychange', sync);
+		return () => document.removeEventListener('visibilitychange', sync);
+	});
+	const sceneStill = $derived(tabHidden || isPhone());
 </script>
 
 <svelte:head><title>{m.wall_page_title()}</title></svelte:head>
 <svelte:window onkeydown={onKeydown} />
 
 <div class="ent-wall fixed inset-0 z-[60] box-border overflow-y-auto bg-canvas pt-[var(--safe-top)] pr-[var(--safe-right)] pb-[var(--safe-bottom)] pl-[var(--safe-left)] text-ink">
-	{#if scene}
-		<!-- Hook for a backdrop (a night scene), drawn under the board. -->
-		<div class="pointer-events-none fixed inset-0" aria-hidden="true">{@render scene()}</div>
+	{#if SceneCity}
+		<div class="wall-scene pointer-events-none absolute inset-x-0 top-0 h-[52vh] min-h-72" aria-hidden="true">
+			<SceneDefs />
+			<SceneCity mood={sceneMood} paused={sceneStill} sparkle={sceneCity === 'paris' && onTheHour} />
+			<div class="wall-scene-fade"></div>
+		</div>
 	{/if}
 	<div class="relative mx-auto flex min-h-full w-full max-w-[120rem] flex-col gap-5 px-5 py-5 lg:gap-6 lg:px-10 lg:py-8">
-		<header class="flex flex-wrap items-start justify-between gap-x-10 gap-y-3">
+		<header class={`flex flex-wrap items-start justify-between gap-x-10 gap-y-3 ${SceneCity ? 'tokens-night wall-scene-text' : ''}`}>
 			<div class="min-w-0">
 				<p class="m-0 truncate text-sm text-ink-2 lg:text-base">{instanceStore.displayName}</p>
 				<div class={`mt-2 flex items-center gap-3 lg:gap-5 ${VERDICT_TEXT[verdict.tone]}`} aria-live="polite">
@@ -364,7 +398,8 @@
 	</div>
 
 	<!-- Exit: out of sight on a display nobody touches, there on hover, focus or touch. -->
-	<div class="ent-wall-exit fixed top-3 right-3 z-10">
+	<div class={`ent-wall-exit fixed top-3 right-3 z-10 flex items-start gap-1 ${SceneCity ? 'tokens-night' : ''}`}>
+		<WallSceneControl value={sceneChoice} forced={forcedScene !== null} onchange={setScene} />
 		<Button variant="ghost" size="sm" onclick={exit} aria-label={m.wall_exit_aria()} class="min-h-10">
 			<X class="size-4" aria-hidden="true" />
 			{m.wall_exit()}
@@ -374,12 +409,25 @@
 </div>
 
 <style>
+	/* The city sinks into the canvas under the figures. */
+	.wall-scene-fade {
+		position: absolute;
+		inset-inline: 0;
+		bottom: 0;
+		height: 45%;
+		background: linear-gradient(180deg, transparent, var(--c-canvas));
+	}
+	/* A dark halo under the words over the city: legible above any light. */
+	.wall-scene-text {
+		text-shadow: 0 1px 12px rgb(2 4 10 / 0.85);
+	}
 	.ent-wall-exit {
 		opacity: 0;
 		transition: opacity 200ms ease;
 	}
 	.ent-wall:hover .ent-wall-exit,
-	.ent-wall-exit:focus-within {
+	.ent-wall-exit:focus-within,
+	.ent-wall-exit:has([aria-expanded='true']) {
 		opacity: 1;
 	}
 	@media (hover: none) {

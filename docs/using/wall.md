@@ -23,17 +23,23 @@ text.
 
 The wall follows the app's theme, or forces **Day** or **Night** for that display
 (the *Theme* button, or `?theme=`). The true-black OLED theme was retired: a
-saved or linked `oled` now reads as Night. The Homelab wall draws one of four
-backdrops: Paris, New York, Tokyo or Zermatt (*Auto* picks the closest to the
-browser's time zone). The other backdrops were retired, and a saved or linked
-`?city=` that names one lands on the nearest of the four.
+saved or linked `oled` now reads as Night.
+
+The **Backdrop** button (top right, next to Exit) can draw one of the status
+pages' night cities behind the verdict and the clock: Paris, New York, Tokyo or
+Dubai, or *Auto* for the closest to the browser's time zone. It is off by
+default and remembered per browser; `?city=paris` (or `newyork`, `tokyo`,
+`dubai`, `none`) on a link chooses it for that display only. The sky follows
+the board: stars when all is well, clouds on an advisory, a storm on a
+warning. On a phone, or while the tab is hidden, the city holds still. A saved
+or linked `zermatt` now lands on Dubai.
 
 ## Enterprise wall
 
 When the instance is in Enterprise mode, `/wall` shows a different board: a
 black ground in the console's own type, the verdict and the clock, the five
 fleet figures, the health river, the open alerts and who is on call. It has no
-scenery, no music and no widgets; ++esc++ or **Exit** returns to the console.
+music and no widgets, and only the optional backdrop above; ++esc++ or **Exit** returns to the console.
 
 ## News on the wall
 
