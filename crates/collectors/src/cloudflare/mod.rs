@@ -12,7 +12,8 @@
 //! * **le trafic** (`Zone → Analytics → Read`, GraphQL) : requêtes et réponses
 //!   5xx de la dernière heure complète et de l'heure en cours, par zone, et les
 //!   menaces arrêtées par pays d'origine (`countryMap`), toutes zones réunies,
-//!   pour la carte des menaces ;
+//!   pour la carte des menaces. Les pays sont lus par une requête à part : si
+//!   le schéma ou l'offre la refuse, seul le relevé des menaces manque ;
 //! * **les répartiteurs de charge** (`Account → Load Balancing: Monitors And
 //!   Pools → Read`) : santé de chaque groupe d'origines (« pool »).
 //!
@@ -62,8 +63,15 @@ const MIN_REQUESTS: f64 = 100.0;
 const TRAFFIC_QUERY: &str = "query ($zones: [string!], $since: Time!, $until: Time!) { \
 viewer { zones(filter: {zoneTag_in: $zones}) { zoneTag \
 httpRequests1hGroups(limit: 10, filter: {datetime_geq: $since, datetime_lt: $until}) { \
-sum { requests responseStatusMap { edgeResponseStatus requests } \
-countryMap { clientCountryName threats } } } } } }";
+sum { requests responseStatusMap { edgeResponseStatus requests } } } } } }";
+
+/// Menaces par pays, sur le même jeu de données (`httpRequests1hGroups`,
+/// `sum.countryMap`), interrogées à part : une erreur GraphQL sur ce champ rend
+/// `data: null` pour toute la requête, et ne doit pas emporter le trafic.
+const THREATS_QUERY: &str = "query ($zones: [string!], $since: Time!, $until: Time!) { \
+viewer { zones(filter: {zoneTag_in: $zones}) { zoneTag \
+httpRequests1hGroups(limit: 10, filter: {datetime_geq: $since, datetime_lt: $until}) { \
+sum { countryMap { clientCountryName threats } } } } } }";
 
 #[derive(Default)]
 pub struct CloudflareCollector;
@@ -360,10 +368,6 @@ pub fn traffic_samples(
             }
         }
         let named = |sample: Sample| sample.with_label("zone", name.as_str());
-        for (country, count) in country_threats(entry) {
-            let sample = gauge("cloudflare_country_threats", count, ts_ms);
-            out.push(sample.with_label("country", country));
-        }
         out.push(named(gauge("cloudflare_zone_http_requests", requests, ts_ms)));
         out.push(named(gauge("cloudflare_zone_http_5xx", errors, ts_ms)));
         if requests >= MIN_REQUESTS {
@@ -372,6 +376,29 @@ pub fn traffic_samples(
                 errors / requests * 100.0,
                 ts_ms,
             )));
+        }
+    }
+    Some(out)
+}
+
+/// Menaces par pays de la réponse à `THREATS_QUERY`, une série par zone et par
+/// pays (`merge_country_threats` les additionne ensuite) ; `None` quand la
+/// réponse n'a pas la forme attendue.
+pub fn threat_samples(
+    reply: &Value,
+    zones: &[(String, String)],
+    ts_ms: i64,
+) -> Option<Vec<Sample>> {
+    let entries = reply.pointer("/data/viewer/zones").and_then(Value::as_array)?;
+    let mut out = Vec::new();
+    for entry in entries {
+        let Some(zone_tag) = text(entry, "zoneTag") else { continue };
+        if !zones.iter().any(|(id, _)| id == zone_tag) {
+            continue;
+        }
+        for (country, count) in country_threats(entry) {
+            let sample = gauge("cloudflare_country_threats", count, ts_ms);
+            out.push(sample.with_label("country", country));
         }
     }
     Some(out)
@@ -586,13 +613,7 @@ async fn gather(
                 "query": TRAFFIC_QUERY,
                 "variables": {"zones": ids, "since": since, "until": until},
             });
-            let path = format!("{API}/graphql");
-            let parsed = match client.post_json(&path, &body).await {
-                Ok((status, raw)) if status.is_success() => {
-                    serde_json::from_str::<Value>(&raw).ok()
-                }
-                _ => None,
-            };
+            let parsed = graphql(client, &body).await;
             match parsed.and_then(|reply| traffic_samples(&reply, chunk, ts_ms)) {
                 Some(samples) => {
                     for sample in &samples {
@@ -605,6 +626,16 @@ async fn gather(
                     out.extend(samples);
                 }
                 None => analytics_ok = false,
+            }
+            // Les pays, à part : un refus ici ne touche ni le trafic ni sa série
+            // `analytics_readable`, la carte des menaces reste simplement vide.
+            let body = json!({
+                "query": THREATS_QUERY,
+                "variables": {"zones": ids, "since": since, "until": until},
+            });
+            let threats = graphql(client, &body).await;
+            if let Some(samples) = threats.and_then(|reply| threat_samples(&reply, chunk, ts_ms)) {
+                out.extend(samples);
             }
         }
         out = merge_country_threats(out);
@@ -651,6 +682,14 @@ async fn gather(
     }
     out.push(readable("lb", balancers_ok, ts_ms));
     Ok(out)
+}
+
+/// Une requête GraphQL ; `None` sur un refus HTTP ou une réponse illisible.
+async fn graphql(client: &RestClient, body: &Value) -> Option<Value> {
+    match client.post_json(&format!("{API}/graphql"), body).await {
+        Ok((status, raw)) if status.is_success() => serde_json::from_str::<Value>(&raw).ok(),
+        _ => None,
+    }
 }
 
 async fn zones_of(client: &RestClient) -> Result<Vec<Value>, ProbeError> {
@@ -781,8 +820,10 @@ mod tests {
             find(&s, "cloudflare_zone_http_5xx_percent", &[("zone", "shop.example.com")]).is_none(),
             "forty requests are too few for a percentage"
         );
+        assert!(find(&s, "cloudflare_country_threats", &[]).is_none(), "read apart");
         // Menaces par pays : additionnées sur les zones, une série par pays.
-        let merged = merge_country_threats(s.clone());
+        let threats = threat_samples(&reply, &zones, now()).unwrap();
+        let merged = merge_country_threats(threats);
         assert_eq!(value(&merged, "cloudflare_country_threats", &[("country", "CN")]), 35.0);
         assert_eq!(value(&merged, "cloudflare_country_threats", &[("country", "US")]), 12.0);
         let countries: Vec<&str> = merged
@@ -797,6 +838,7 @@ mod tests {
         let failed: Value =
             serde_json::from_str(r#"{"data":null,"errors":[{"message":"denied"}]}"#).unwrap();
         assert!(traffic_samples(&failed, &zones, now()).is_none());
+        assert!(threat_samples(&failed, &zones, now()).is_none());
     }
 
     #[test]
