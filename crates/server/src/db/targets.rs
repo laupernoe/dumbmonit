@@ -409,10 +409,15 @@ fn decrypt_credential(cipher: &Cipher, data: Option<&[u8]>) -> Result<Credential
 /// serveur, et les collecteurs — qu'ils tournent ici ou sur l'agent — n'ont pas à
 /// le connaître.
 pub async fn relay_map(pool: &SqlitePool) -> Result<HashMap<TargetId, TargetId>> {
-    let rows = sqlx::query("SELECT id, via_agent FROM targets WHERE via_agent IS NOT NULL")
-        .fetch_all(pool)
-        .await
-        .context("lecture des relais")?;
+    // Une machine à agent derrière un relais (`via_agent` rangé par le serveur
+    // quand elle se connecte par sa passerelle) pousse ses propres mesures : il
+    // n'y a rien à interroger pour elle.
+    let rows = sqlx::query(
+        "SELECT id, via_agent FROM targets WHERE via_agent IS NOT NULL AND kind <> 'agent'",
+    )
+    .fetch_all(pool)
+    .await
+    .context("lecture des relais")?;
     rows.into_iter().map(|row| Ok((row.try_get("id")?, row.try_get("via_agent")?))).collect()
 }
 

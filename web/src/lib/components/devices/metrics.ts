@@ -9,7 +9,11 @@ import { m } from '#lib/paraglide/messages.js';
  * `keep_metric_names`, so the two answers fold back into one list of groups.
  */
 import { queryRange, type MetricSeries, type TargetId } from '#lib/api/index.js';
+import { COUNTER_SELECTOR, unitFor } from '#lib/viz/infer.js';
 import type { Serie } from '#lib/components/Chart.svelte';
+import { isVirtualInterface } from './catalog.js';
+
+export { isVirtualInterface };
 
 /** A curve with the labels it came from, so sections can sort it by label. */
 export interface DeviceSerie extends Serie {
@@ -25,41 +29,9 @@ export interface DeviceMetricGroup {
 	series: DeviceSerie[];
 }
 
-/**
- * Families that only ever grow: charted as a per-second rate.
- *
- * The query API does not carry the sample kind, so the counters are named
- * here explicitly — the ones the agent and the SNMP profiles emit as such. A
- * `_total` suffix is not a hint: Proxmox and PBS totals ("backup guests
- * total") are plain gauges.
- */
-const COUNTER =
-	/_(octets|packets|errors|discards)_(in|out)$|^dumbmonit_(disk_(read|written)_bytes|printer_pages_printed|ups_input_line_bads|agent_dropped_samples)$|^dumbmonit_(victoriametrics|victorialogs|loki|graylog)_\w+_total$/;
-const COUNTER_SELECTOR =
-	'dumbmonit_(.+_(octets|packets|errors|discards)_(in|out)|disk_(read|written)_bytes|printer_pages_printed|ups_input_line_bads|agent_dropped_samples|(victoriametrics|victorialogs|loki|graylog)_.+_total)';
-
 /** About 300 points per chart, as in `#lib/metrics.js`. */
 function stepFor(seconds: number): number {
 	return Math.max(10, Math.round(seconds / 300));
-}
-
-function unitFor(name: string): string {
-	if (COUNTER.test(name)) {
-		if (/_octets_|_bytes$|_bytes(_ingested)?_total$/.test(name)) return 'B/s';
-		if (/_packets_/.test(name)) return 'pkt/s';
-		if (/_errors_/.test(name)) return 'err/s';
-		if (/_discards_/.test(name)) return 'pkt/s';
-		if (/_pages_/.test(name)) return 'pages/s';
-		return '/s';
-	}
-	if (name.endsWith('_percent')) return '%';
-	if (name.endsWith('_bytes')) return 'B';
-	if (name.endsWith('_bytes_per_second')) return 'B/s';
-	if (name.endsWith('_seconds')) return 's';
-	if (name.endsWith('_celsius')) return '°C';
-	if (name.endsWith('_volts')) return 'V';
-	if (name.endsWith('_watts')) return 'W';
-	return '';
 }
 
 /** "Cpu usage percent" from `dumbmonit_cpu_usage_percent`; "Interface octets in" from `dumbmonit_if_octets_in`. */
@@ -122,22 +94,47 @@ function group(series: MetricSeries[]): Map<string, DeviceMetricGroup> {
 /**
  * Loads every family of a device over the range: gauges as they are, counters
  * as a per-second rate. Two queries, in parallel, one list back.
+ *
+ * `rated`: more families to ask as rates, full names — the counters the kind's
+ * catalogue charts (`ratedFamilies` in `catalog.ts`).
  */
 export async function loadDeviceMetrics(
 	targetId: TargetId,
 	rangeSeconds: number,
-	signal?: AbortSignal
+	signal?: AbortSignal,
+	rated: readonly string[] = []
 ): Promise<DeviceMetricGroup[]> {
 	const end = Date.now();
-	const start = end - rangeSeconds * 1000;
+	return loadDeviceMetricsBetween(targetId, end - rangeSeconds * 1000, end, rangeSeconds, signal);
+}
+
+/** Same families over a past window (seconds in), for the charts' "last week" overlay. */
+export function loadDeviceMetricsWindow(
+	targetId: TargetId,
+	window: { start: number; end: number },
+	signal?: AbortSignal
+): Promise<DeviceMetricGroup[]> {
+	const span = Math.max(window.end - window.start, 1);
+	return loadDeviceMetricsBetween(targetId, window.start * 1000, window.end * 1000, span, signal);
+}
+
+async function loadDeviceMetricsBetween(
+	targetId: TargetId,
+	start: number,
+	end: number,
+	rangeSeconds: number,
+	signal?: AbortSignal
+): Promise<DeviceMetricGroup[]> {
 	const step = stepFor(rangeSeconds);
 	// The rate window must cover at least two samples at the slowest cadence
 	// and at least one step, or the curve is full of holes.
 	const window = Math.max(120, step * 2);
+	const extra = rated.filter((name) => /^dumbmonit_[a-z0-9_]+$/.test(name));
+	const selector = extra.length > 0 ? `${COUNTER_SELECTOR}|${extra.join('|')}` : COUNTER_SELECTOR;
 	const [gauges, counters] = await Promise.all([
 		queryRange(
 			{
-				query: `{__name__=~"dumbmonit_.+", __name__!~"${COUNTER_SELECTOR}", target="${targetId}"}`,
+				query: `{__name__=~"dumbmonit_.+", __name__!~"${selector}", target="${targetId}"}`,
 				start,
 				end,
 				step
@@ -146,7 +143,7 @@ export async function loadDeviceMetrics(
 		),
 		queryRange(
 			{
-				query: `rate({__name__=~"${COUNTER_SELECTOR}", target="${targetId}"}[${window}s]) keep_metric_names`,
+				query: `rate({__name__=~"${selector}", target="${targetId}"}[${window}s]) keep_metric_names`,
 				start,
 				end,
 				step
@@ -198,13 +195,8 @@ export interface MetricSections {
 	containers: Map<string, DeviceMetricGroup[]>;
 	interfaces: MetricRow[];
 	other: DeviceMetricGroup[];
-}
-
-/** Interfaces Docker and the kernel make up: shown, but not in the essentials. */
-const VIRTUAL_IF = /^(lo|veth.*|br-.*|docker\d*|virbr\d*|vnet\d*|tap\d*|cni\d*|flannel.*|dummy\d*)$/;
-
-export function isVirtualInterface(name: string): boolean {
-	return VIRTUAL_IF.test(name);
+	/** Every family outside containers and interfaces, essentials included: "All measurements". */
+	rest: DeviceMetricGroup[];
 }
 
 function pick(groups: DeviceMetricGroup[], name: string): DeviceMetricGroup | undefined {
@@ -218,6 +210,18 @@ function withSeries(
 ): DeviceMetricGroup {
 	return { ...base, ...override, series };
 }
+
+/**
+ * Backup integrations without a panel of their own curves: the one family each
+ * is read by, pinned in the essentials when the device has it (a Veeam repository
+ * filling up, the size of what Kopia and Duplicati keep).
+ */
+const PINNED_BACKUP: { name: string; title: () => string }[] = [
+	{ name: 'dumbmonit_veeam_repository_used_percent', title: () => m.devices_metrics_veeam_repositories() },
+	{ name: 'dumbmonit_kopia_source_last_snapshot_bytes', title: () => m.devices_metrics_kopia_snapshot_size() },
+	{ name: 'dumbmonit_duplicati_backup_target_bytes', title: () => m.devices_metrics_duplicati_target_size() },
+	{ name: 'dumbmonit_duplicati_backup_source_bytes', title: () => m.devices_metrics_duplicati_source_size() }
+];
 
 /**
  * The essentials: cpu, load, memory, filesystems, throughput. Each is built
@@ -261,6 +265,11 @@ function essentialsOf(groups: DeviceMetricGroup[]): DeviceMetricGroup[] {
 			label: `${s.label} ${s.labels.__name__?.endsWith('_out') ? m.devices_metrics_out() : m.devices_metrics_in()}`
 		}));
 		charts.push({ name: 'dumbmonit_if_octets', title: m.devices_metrics_net(), unit: 'B/s', series });
+	}
+
+	for (const pinned of PINNED_BACKUP) {
+		const group = pick(groups, pinned.name);
+		if (group) charts.push(withSeries(group, group.series, { title: pinned.title() }));
 	}
 
 	return charts;
@@ -346,14 +355,19 @@ export function sectionize(groups: DeviceMetricGroup[]): MetricSections {
 		'dumbmonit_filesystem_used_percent',
 		'dumbmonit_load_average_1',
 		'dumbmonit_load_average_5',
-		'dumbmonit_load_average_15'
+		'dumbmonit_load_average_15',
+		...PINNED_BACKUP.map((p) => p.name)
 	]);
 	// `*_info` families carry their meaning in labels, not in the value 1.
 	const other = groups
 		.filter((g) => !used.has(g.name) && !g.name.endsWith('_info'))
 		.sort((a, b) => a.title.localeCompare(b.title, 'en'));
+	const elsewhere = new Set([...containerGroups, ...interfaceGroups].map((g) => g.name));
+	const rest = groups
+		.filter((g) => !elsewhere.has(g.name) && !g.name.endsWith('_info'))
+		.sort((a, b) => a.title.localeCompare(b.title, 'en'));
 
-	return { essentials, containers, interfaces, other };
+	return { essentials, containers, interfaces, other, rest };
 }
 
 /** Last value of a series, or `null` when it holds none. */

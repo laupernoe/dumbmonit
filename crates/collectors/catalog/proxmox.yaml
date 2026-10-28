@@ -1,0 +1,293 @@
+# Mesures et vues du type « proxmox » (format : crates/collectors/src/catalog.rs).
+source: proxmox
+prefixes: [proxmox_]
+metrics:
+  - { name: proxmox_node_cpu_percent, label: "Node CPU", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: proxmox_node_cpu_iowait_percent, label: "Node CPU I/O wait", unit: "%", min: 0, max: 100 }
+  - { name: proxmox_node_memory_percent, label: "Node memory", unit: "%", min: 0, max: 100 }
+  - { name: proxmox_node_swap_used_bytes, label: "Node swap used", unit: "B" }
+  - { name: proxmox_node_rootfs_percent, label: "Node root FS", unit: "%", entity: "node", min: 0, max: 100 }
+  - { name: proxmox_storage_used_percent, label: "Storage used", unit: "%", better: "lower", entity: "storage", min: 0, max: 100 }
+  - { name: proxmox_node_zfs_pool_used_percent, label: "Node ZFS pool used", unit: "%", better: "lower", entity: "pool", min: 0, max: 100 }
+  - { name: proxmox_node_lvm_vg_used_percent, label: "Node LVM vg used", unit: "%", better: "lower", entity: "vg", min: 0, max: 100 }
+  - { name: proxmox_node_thinpool_used_percent, label: "Node thinpool used", unit: "%", better: "lower", entity: "pool", min: 0, max: 100 }
+  - { name: proxmox_node_thinpool_metadata_used_percent, label: "Node thinpool metadata used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: proxmox_ceph_used_percent, label: "Ceph used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: proxmox_node_disk_temperature_celsius, label: "Node disk temperature", unit: "°C" }
+  - { name: proxmox_node_cpu_count, label: "Node CPU count" }
+  - { name: proxmox_node_memory_total_bytes, label: "Node memory total", unit: "B" }
+  - { name: proxmox_node_memory_used_bytes, label: "Node memory used", unit: "B" }
+  - { name: proxmox_node_swap_total_bytes, label: "Node swap total", unit: "B" }
+  - { name: proxmox_node_rootfs_used_bytes, label: "Node root FS used", unit: "B" }
+  - { name: proxmox_node_rootfs_total_bytes, label: "Node root FS total", unit: "B" }
+  - { name: proxmox_node_rootfs_avail_bytes, label: "Node root FS avail", unit: "B" }
+  - { name: proxmox_node_ksm_shared_bytes, label: "Node KSM shared", unit: "B" }
+  - { name: proxmox_node_uptime_seconds, label: "Node uptime", unit: "s" }
+  - { name: proxmox_node_version_info, label: "Node version", kind: info }
+  - { name: proxmox_node_up, label: "Node up", unit: "bool" }
+  - { name: proxmox_node_certificate_expiry_days, label: "Node certificate expiry days", unit: "days" }
+  - { name: proxmox_node_updates_pending, label: "Node updates pending" }
+  - { name: proxmox_node_updates_security_pending, label: "Node updates security pending" }
+  - { name: proxmox_node_pve_packages_upgradable, label: "Node PVE packages upgradable" }
+  - { name: proxmox_node_package_info, label: "Node package", kind: info }
+  - { name: proxmox_node_reboot_required, label: "Node reboot required", unit: "bool" }
+  - { name: proxmox_node_repository_enabled, label: "Node repository enabled", unit: "bool" }
+  - { name: proxmox_node_repository_errors, label: "Node repository errors", better: "lower" }
+  - { name: proxmox_node_repository_warnings, label: "Node repository warnings" }
+  - { name: proxmox_node_subscription_active, label: "Node subscription active", unit: "bool" }
+  - { name: proxmox_node_subscription_info, label: "Node subscription", kind: info }
+  - { name: proxmox_node_service_running, label: "Node service running", unit: "bool" }
+  - { name: proxmox_node_service_state_info, label: "Node service state", kind: info }
+  - { name: proxmox_node_services_failed, label: "Node services failed", better: "lower" }
+  - { name: proxmox_node_core_services_down, label: "Node core services down", better: "lower" }
+  - { name: proxmox_node_pve_version_info, label: "Node PVE version", kind: info }
+  - { name: proxmox_node_interface_active, label: "Node interface active", unit: "bool" }
+  - { name: proxmox_node_interface_exists, label: "Node interface exists", unit: "bool" }
+  - { name: proxmox_node_interface_autostart, label: "Node interface autostart", unit: "bool" }
+  - { name: proxmox_node_interface_mtu, label: "Node interface mtu" }
+  - { name: proxmox_node_interface_offline, label: "Node interface offline", unit: "bool", better: "lower" }
+  - { name: proxmox_node_interfaces_offline, label: "Node interfaces offline", better: "lower" }
+  - { name: proxmox_node_lvm_vg_size_bytes, label: "Node LVM vg size", unit: "B" }
+  - { name: proxmox_node_lvm_vg_free_bytes, label: "Node LVM vg free", unit: "B", better: "higher" }
+  - { name: proxmox_node_lvm_vg_physical_volumes, label: "Node LVM vg physical volumes" }
+  - { name: proxmox_node_thinpool_size_bytes, label: "Node thinpool size", unit: "B" }
+  - { name: proxmox_node_thinpool_used_bytes, label: "Node thinpool used", unit: "B" }
+  - { name: proxmox_node_thinpool_metadata_size_bytes, label: "Node thinpool metadata size", unit: "B" }
+  - { name: proxmox_node_directory_mount_info, label: "Node directory mount", kind: info }
+  - { name: proxmox_node_directory_mounts, label: "Node directory mounts" }
+  - { name: proxmox_node_disk_size_bytes, label: "Node disk size", unit: "B" }
+  - { name: proxmox_node_disk_smart_failed, label: "Node disk SMART failed", unit: "bool", better: "lower" }
+  - { name: proxmox_node_disk_health_info, label: "Node disk health", kind: info }
+  - { name: proxmox_node_disk_wearout_percent, label: "Node disk wearout", unit: "%", min: 0, max: 100 }
+  - { name: proxmox_node_zfs_pool_degraded, label: "Node ZFS pool degraded", unit: "bool", better: "lower" }
+  - { name: proxmox_node_zfs_pool_health_info, label: "Node ZFS pool health", kind: info }
+  - { name: proxmox_node_zfs_pool_size_bytes, label: "Node ZFS pool size", unit: "B" }
+  - { name: proxmox_node_zfs_pool_alloc_bytes, label: "Node ZFS pool alloc", unit: "B" }
+  - { name: proxmox_node_zfs_pool_free_bytes, label: "Node ZFS pool free", unit: "B", better: "higher" }
+  - { name: proxmox_node_zfs_pool_fragmentation_percent, label: "Node ZFS pool fragmentation", unit: "%", min: 0, max: 100 }
+  - { name: proxmox_guest_cpu_count, label: "Guest CPU count" }
+  - { name: proxmox_guest_cpu_percent, label: "Guest CPU", unit: "%", better: "lower", entity: "name", min: 0, max: 100 }
+  - { name: proxmox_guest_memory_percent, label: "Guest memory", unit: "%", entity: "name", min: 0, max: 100 }
+  - { name: proxmox_guest_memory_total_bytes, label: "Guest memory total", unit: "B" }
+  - { name: proxmox_guest_memory_used_bytes, label: "Guest memory used", unit: "B" }
+  - { name: proxmox_guest_memory_host_bytes, label: "Guest memory host", unit: "B" }
+  - { name: proxmox_guest_disk_total_bytes, label: "Guest disk total", unit: "B" }
+  - { name: proxmox_guest_disk_used_bytes, label: "Guest disk used", unit: "B" }
+  - { name: proxmox_guest_disk_used_percent, label: "Guest disk used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: proxmox_guest_uptime_seconds, label: "Guest uptime", unit: "s" }
+  - { name: proxmox_guest_running, label: "Guest running", unit: "bool" }
+  - { name: proxmox_guest_status_info, label: "Guest status", kind: info }
+  - { name: proxmox_guest_locked, label: "Guest locked", unit: "bool" }
+  - { name: proxmox_guest_pool_info, label: "Guest pool", kind: info }
+  - { name: proxmox_pool_guests, label: "Pool guests" }
+  - { name: proxmox_cluster_guests_total, label: "Cluster guests" }
+  - { name: proxmox_cluster_guests_running, label: "Cluster guests running" }
+  - { name: proxmox_cluster_templates_total, label: "Cluster templates" }
+  - { name: proxmox_cluster_quorate, label: "Cluster quorate", unit: "bool" }
+  - { name: proxmox_cluster_nodes, label: "Cluster nodes" }
+  - { name: proxmox_cluster_nodes_online, label: "Cluster nodes online" }
+  - { name: proxmox_cluster_member_online, label: "Cluster member online", unit: "bool" }
+  - { name: proxmox_version_info, label: "Version", kind: info }
+  - { name: proxmox_feature_skipped_info, label: "Feature skipped", kind: info }
+  - { name: proxmox_storage_total_bytes, label: "Storage total", unit: "B" }
+  - { name: proxmox_storage_avail_bytes, label: "Storage avail", unit: "B" }
+  - { name: proxmox_storage_used_bytes, label: "Storage used", unit: "B" }
+  - { name: proxmox_storage_active, label: "Storage active", unit: "bool" }
+  - { name: proxmox_storage_enabled, label: "Storage enabled", unit: "bool" }
+  - { name: proxmox_storage_pbs_info, label: "Storage PBS", kind: info }
+  - { name: proxmox_backup_jobs_total, label: "Backup jobs" }
+  - { name: proxmox_backup_job_runs, label: "Backup job runs", kind: counter }
+  - { name: proxmox_backup_job_failures, label: "Backup job failures", kind: counter, better: "lower" }
+  - { name: proxmox_backup_job_last_ok, label: "Backup job last ok", unit: "bool" }
+  - { name: proxmox_backup_job_last_age_seconds, label: "Backup job last age", unit: "s" }
+  - { name: proxmox_backup_job_last_run_age_seconds, label: "Backup job last run age", unit: "s" }
+  - { name: proxmox_backup_job_last_timestamp_seconds, label: "Backup job last timestamp", unit: "timestamp" }
+  - { name: proxmox_backup_job_last_duration_seconds, label: "Backup job last duration", unit: "s", better: "lower" }
+  - { name: proxmox_backup_last_size_bytes, label: "Backup last size", unit: "B" }
+  - { name: proxmox_backup_job_enabled, label: "Backup job enabled", unit: "bool" }
+  - { name: proxmox_backup_job_next_run_seconds, label: "Backup job next run", unit: "s" }
+  - { name: proxmox_backup_job_guests, label: "Backup job guests" }
+  - { name: proxmox_backup_job_volumes_included, label: "Backup job volumes included" }
+  - { name: proxmox_backup_job_volumes_excluded, label: "Backup job volumes excluded" }
+  - { name: proxmox_backup_job_guest_excluded_volumes, label: "Backup job guest excluded volumes" }
+  - { name: proxmox_backup_count, label: "Backup count" }
+  - { name: proxmox_backup_covered, label: "Backup covered" }
+  - { name: proxmox_backup_present, label: "Backup present", unit: "bool" }
+  - { name: proxmox_backup_last_age_seconds, label: "Backup last age", unit: "s" }
+  - { name: proxmox_backup_last_timestamp_seconds, label: "Backup last timestamp", unit: "timestamp" }
+  - { name: proxmox_backup_guests_total, label: "Backup guests" }
+  - { name: proxmox_backup_guests_not_covered, label: "Backup guests not covered" }
+  - { name: proxmox_backup_guests_without_backup, label: "Backup guests without backup" }
+  - { name: proxmox_ceph_health, label: "Ceph health", unit: "bool" }
+  - { name: proxmox_ceph_health_info, label: "Ceph health", kind: info }
+  - { name: proxmox_ceph_health_mute_info, label: "Ceph health mute", kind: info }
+  - { name: proxmox_ceph_health_mutes, label: "Ceph health mutes" }
+  - { name: proxmox_ceph_bytes_total, label: "Ceph bytes", unit: "B" }
+  - { name: proxmox_ceph_bytes_used, label: "Ceph bytes used" }
+  - { name: proxmox_ceph_pgs_total, label: "Ceph PGs" }
+  - { name: proxmox_ceph_mons_total, label: "Ceph mons" }
+  - { name: proxmox_ceph_osds_down, label: "Ceph OSDs down", better: "lower" }
+  - { name: proxmox_ceph_osds_out, label: "Ceph OSDs out" }
+  - { name: proxmox_ceph_osd_up, label: "Ceph OSD up", unit: "bool" }
+  - { name: proxmox_ceph_osd_in, label: "Ceph OSD in", unit: "bool" }
+  - { name: proxmox_ceph_flag, label: "Ceph flag", unit: "bool" }
+  - { name: proxmox_ceph_flags_set, label: "Ceph flags set" }
+  - { name: proxmox_ceph_pool_info, label: "Ceph pool", kind: info }
+  - { name: proxmox_ceph_pool_used_percent, label: "Ceph pool used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: proxmox_ceph_pools_total, label: "Ceph pools" }
+  - { name: proxmox_ceph_fs_info, label: "Ceph fs", kind: info }
+  - { name: proxmox_ceph_fs_total, label: "Ceph fs" }
+  - { name: proxmox_ha_quorum_ok, label: "HA quorum ok", unit: "bool" }
+  - { name: proxmox_ha_fencing_armed, label: "HA fencing armed", unit: "bool" }
+  - { name: proxmox_ha_master_active, label: "HA master active", unit: "bool" }
+  - { name: proxmox_ha_master_info, label: "HA master", kind: info }
+  - { name: proxmox_ha_lrm_active, label: "HA LRM active", unit: "bool" }
+  - { name: proxmox_ha_lrm_mode_info, label: "HA LRM mode", kind: info }
+  - { name: proxmox_ha_lrm_age_seconds, label: "HA LRM age", unit: "s" }
+  - { name: proxmox_ha_lrm_stale, label: "HA LRM stale", unit: "bool" }
+  - { name: proxmox_ha_manager_age_seconds, label: "HA manager age", unit: "s" }
+  - { name: proxmox_ha_node_online, label: "HA node online", unit: "bool" }
+  - { name: proxmox_ha_node_status_info, label: "HA node status", kind: info }
+  - { name: proxmox_ha_resource_started, label: "HA resource started", unit: "bool" }
+  - { name: proxmox_ha_resource_error, label: "HA resource error", unit: "bool" }
+  - { name: proxmox_ha_resource_state_info, label: "HA resource state", kind: info }
+  - { name: proxmox_ha_resources_total, label: "HA resources" }
+  - { name: proxmox_replication_job_enabled, label: "Replication job enabled", unit: "bool" }
+  - { name: proxmox_replication_job_error, label: "Replication job error", unit: "bool" }
+  - { name: proxmox_replication_job_fail_count, label: "Replication job fail count" }
+  - { name: proxmox_replication_job_last_sync_age_seconds, label: "Replication job last sync age", unit: "s" }
+  - { name: proxmox_replication_job_next_sync_seconds, label: "Replication job next sync", unit: "s" }
+  - { name: proxmox_replication_job_duration_seconds, label: "Replication job duration", unit: "s", better: "lower" }
+  - { name: proxmox_guest_snapshot_count, label: "Guest snapshot count" }
+  - { name: proxmox_guest_snapshot_oldest_age_seconds, label: "Guest snapshot oldest age", unit: "s" }
+  - { name: proxmox_guest_snapshot_newest_age_seconds, label: "Guest snapshot newest age", unit: "s" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - proxmox_cluster_quorate
+      - proxmox_cluster_nodes_online
+      - proxmox_cluster_guests_running
+      - proxmox_cluster_guests_total
+      - proxmox_backup_guests_not_covered
+      - proxmox_node_services_failed
+      - proxmox_node_updates_pending
+      - proxmox_ceph_health
+      - proxmox_node_disk_temperature_celsius
+      - proxmox_node_cpu_count
+      - proxmox_node_memory_total_bytes
+      - proxmox_node_swap_total_bytes
+      - proxmox_node_rootfs_total_bytes
+      - proxmox_node_uptime_seconds
+      - proxmox_node_version_info
+      - proxmox_node_certificate_expiry_days
+      - proxmox_node_updates_security_pending
+      - proxmox_node_pve_packages_upgradable
+      - proxmox_node_reboot_required
+      - proxmox_node_repository_enabled
+      - proxmox_node_repository_errors
+      - proxmox_node_repository_warnings
+      - proxmox_node_subscription_active
+      - proxmox_node_service_running
+      - proxmox_node_core_services_down
+      - proxmox_node_interface_active
+      - proxmox_node_interface_exists
+      - proxmox_node_interface_autostart
+      - proxmox_node_interface_offline
+      - proxmox_node_interfaces_offline
+      - proxmox_node_lvm_vg_size_bytes
+      - proxmox_node_lvm_vg_free_bytes
+      - proxmox_node_thinpool_size_bytes
+      - proxmox_node_directory_mounts
+      - proxmox_node_disk_size_bytes
+      - proxmox_node_disk_smart_failed
+      - proxmox_node_disk_wearout_percent
+      - proxmox_node_zfs_pool_degraded
+      - proxmox_node_zfs_pool_size_bytes
+      - proxmox_node_zfs_pool_fragmentation_percent
+      - proxmox_guest_cpu_count
+      - proxmox_guest_memory_percent
+      - proxmox_guest_memory_total_bytes
+      - proxmox_guest_memory_host_bytes
+      - proxmox_guest_disk_total_bytes
+      - proxmox_guest_disk_used_percent
+      - proxmox_guest_uptime_seconds
+      - proxmox_guest_running
+      - proxmox_guest_locked
+      - proxmox_pool_guests
+      - proxmox_cluster_templates_total
+      - proxmox_cluster_nodes
+      - proxmox_cluster_member_online
+      - proxmox_version_info
+      - proxmox_storage_total_bytes
+      - proxmox_storage_active
+      - proxmox_storage_enabled
+      - proxmox_backup_jobs_total
+      - proxmox_backup_job_runs
+      - proxmox_backup_job_failures
+      - proxmox_backup_job_last_ok
+      - proxmox_backup_job_last_age_seconds
+      - proxmox_backup_job_last_duration_seconds
+      - proxmox_backup_last_size_bytes
+      - proxmox_backup_job_enabled
+      - proxmox_backup_job_next_run_seconds
+      - proxmox_backup_job_guests
+      - proxmox_backup_job_volumes_included
+      - proxmox_backup_job_volumes_excluded
+      - proxmox_backup_job_guest_excluded_volumes
+      - proxmox_backup_count
+      - proxmox_backup_covered
+      - proxmox_backup_present
+      - proxmox_backup_last_age_seconds
+      - proxmox_backup_guests_total
+      - proxmox_backup_guests_without_backup
+      - proxmox_ceph_health_mutes
+      - proxmox_ceph_bytes_total
+      - proxmox_ceph_pgs_total
+      - proxmox_ceph_mons_total
+      - proxmox_ceph_osds_down
+      - proxmox_ceph_osds_out
+      - proxmox_ceph_osd_up
+      - proxmox_ceph_osd_in
+      - proxmox_ceph_flag
+      - proxmox_ceph_flags_set
+      - proxmox_ceph_pool_used_percent
+      - proxmox_ceph_pools_total
+      - proxmox_ceph_fs_total
+      - proxmox_ha_quorum_ok
+      - proxmox_ha_fencing_armed
+      - proxmox_ha_master_active
+      - proxmox_ha_lrm_active
+      - proxmox_ha_lrm_age_seconds
+      - proxmox_ha_lrm_stale
+      - proxmox_ha_manager_age_seconds
+      - proxmox_ha_node_online
+      - proxmox_ha_resource_started
+      - proxmox_ha_resource_error
+      - proxmox_ha_resources_total
+      - proxmox_replication_job_enabled
+      - proxmox_replication_job_error
+      - proxmox_replication_job_fail_count
+      - proxmox_replication_job_last_sync_age_seconds
+      - proxmox_replication_job_duration_seconds
+      - proxmox_guest_snapshot_count
+      - proxmox_guest_snapshot_oldest_age_seconds
+      - proxmox_guest_snapshot_newest_age_seconds
+      - proxmox_node_swap_used_bytes
+  - view: timeseries
+    title: "Node CPU"
+    metrics: [proxmox_node_cpu_percent, proxmox_node_cpu_iowait_percent]
+  - view: timeseries
+    title: "Node memory"
+    metrics: [proxmox_node_memory_percent]
+  - view: topn
+    title: "Storage used"
+    metrics: [proxmox_storage_used_percent, proxmox_node_rootfs_percent, proxmox_node_zfs_pool_used_percent, proxmox_node_lvm_vg_used_percent, proxmox_node_thinpool_used_percent, proxmox_ceph_used_percent]
+    options:
+      limit: "10"
+  - view: topn
+    title: "Busiest guests"
+    metrics: [proxmox_guest_cpu_percent]
+    group_by: name
+    options:
+      limit: "10"

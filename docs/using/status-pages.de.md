@@ -56,22 +56,25 @@ ohne sie für beliebigen Code zu öffnen:
 
 ### Scene
 
-Die Einstellung **Scene** zeichnet eine Stadtsilhouette hinter dem
-Banner. Neue Seiten starten mit Paris, und bestehende Seiten ohne
-Scene zeigen sie jetzt auch; entfernen Sie das Häkchen für ein
-schlichtes Banner, oder aktivieren Sie **Simple mode**, um Scenes
-ganz fallen zu lassen. Wählen Sie so viele Sie wollen, in der
-gewünschten Reihenfolge. Städte: Venedig, Paris, Tokio, New York,
-London, Rom, Sydney, Dubai, San Francisco, Barcelona, Amsterdam,
-Istanbul und Rio de Janeiro. Die neuen sieben Weltwunder: Chichén
-Itzá, Machu Picchu, die Große Mauer, Petra und der Taj Mahal (Rios
-Christus-Statue ist in der Rio-Scene). Die antiken Weltwunder: Gizeh,
-Babylon, Ephesus, Olympia, Halikarnassos, Rhodos und Alexandria,
-plus die Athener Akropolis. Mit mehr als einer entscheidet
-**Rotation**, wann die Seite zur nächsten wechselt: bei jedem Besuch
-(Standard), jede Minute, alle zehn Minuten oder jede Stunde. Die
-Scenes sind eine geschlossene Menge von Zeichnungen, mit DumbMonit
-mitgeliefert — nichts wird hochgeladen oder interpretiert.
+Die Einstellung **Scene** zeichnet eine Stadtsilhouette hinter dem Banner. Neue
+Seiten starten mit Paris; entfernen Sie das Häkchen für ein schlichtes Banner,
+oder aktivieren Sie **Simple mode**, um Scenes ganz fallen zu lassen. Wählen Sie
+so viele Sie wollen, in der gewünschten Reihenfolge. Vier Scenes werden
+mitgeliefert, vier Städte bei Nacht unter Mond und Sternen, ihr Wahrzeichen
+beleuchtet: Paris (der Eiffelturm), Tokio (der Tokyo Tower), New York (das
+Empire State und das Chrysler Building) und Dubai (der Burj Khalifa). Das
+Wetter folgt der Seite: Sternenhimmel, wenn alles in Ordnung ist, Wolken bei
+einer Warnung, Gewitter, wenn etwas ausgefallen ist. Da es Nachtszenen sind,
+nutzen Titel und Status darüber immer die dunklen Farben, unabhängig vom Theme
+der Seite. Dubai ersetzt das Matterhorn, und Seiten mit einer entfernten Scene
+wurden auf die nächstgelegene der vier umgestellt (europäische Städte und die
+Antike auf Paris, Asien, Meer und Weltraum auf Tokio, die Amerikas auf New York,
+die Alpen und der Norden auf Dubai), Sicherungen und API-Aufrufe eingeschlossen.
+Mit mehr als einer entscheidet **Rotation**, wann die Seite zur nächsten
+wechselt: bei jedem Besuch (Standard), jede Minute, alle zehn Minuten oder jede
+Stunde. Die Scenes sind eine geschlossene Menge von Zeichnungen, mit DumbMonit
+mitgeliefert — nichts wird hochgeladen oder interpretiert. Dieselben vier
+Städte können auch hinter dem Urteil der [Wand](wall.md) stehen.
 
 Es gibt absichtlich kein benutzerdefiniertes CSS oder HTML: Eine
 Statusseite ist öffentlich und lebt auf derselben Origin wie Ihre

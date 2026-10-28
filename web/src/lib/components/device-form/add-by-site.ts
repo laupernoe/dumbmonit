@@ -171,13 +171,16 @@ export function discoveredFor(
 	return out.sort((a, b) => Number(a.device.known) - Number(b.device.known) || a.device.ip.localeCompare(b.device.ip, 'en', { numeric: true }));
 }
 
+/** Kinds never probed through a relay (pushed, or checked on the server); mirrors `relayable` in `api/relay.ts`. */
+const NEVER_RELAYED = new Set(['agent', 'agent_service', 'push', 'website', 'webchange']);
+
 /** Payload that creates a discovered device with the site's defaults. */
 export function payloadFor(found: Discovered, defaults: SiteDefaults): TargetPayload {
 	return {
 		name: found.label,
 		address: found.address,
 		kind: found.kind,
-		via_agent: defaults.via_agent,
+		via_agent: NEVER_RELAYED.has(found.kind) ? null : defaults.via_agent,
 		location_id: defaults.location_id,
 		group_name: defaults.folder
 	};

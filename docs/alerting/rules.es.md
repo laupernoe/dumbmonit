@@ -291,7 +291,9 @@ Reportado por el agente; consulta [Agente](../devices/agent.md).
 | Synology SSD wearing out | Un SSD tiene menos del 10 % de su vida nominal restante (`dumbmonit_synology_disk_remaining_life_percent`); se limpia por encima del 12 %. | < 10 % | 1 h | Advisory (`warning`) | 7 d |
 | Synology volume degraded | Un volumen está degraded o crashed: su redundancia desapareció (`dumbmonit_synology_volume_status`). | ≥ 2 | 5 min | Warning (`critical`) | 6 h |
 | Synology storage pool degraded | Un pool de almacenamiento o caché SSD está degraded o crashed: falló un disco y la redundancia desapareció o se está reconstruyendo (`dumbmonit_synology_pool_status or dumbmonit_synology_ssd_cache_status`). | ≥ 2 | 5 min | Warning (`critical`) | 6 h |
-| Synology volume almost full | Un volumen está al 90 % lleno o más (`dumbmonit_synology_volume_used_percent`); se limpia por debajo del 88 %. | ≥ 90 % | 15 min | Advisory (`warning`), escala tras 24 h | 6 h |
+| Synology volume almost full | Un volumen está al 90 % lleno o más, sin contar el espacio reservado por los LUN iSCSI con aprovisionamiento grueso (`dumbmonit_synology_volume_effective_used_percent`, igual a la ocupación bruta sin LUN); se limpia por debajo del 88 %. Un volumen lleno por un LUN grueso está lleno por diseño y no alerta. | ≥ 90 % | 15 min | Advisory (`warning`), escala tras 24 h | 6 h |
+| Synology thin LUN over-allocation | A los LUN finos de un volumen se les prometió más espacio del que le queda libre (`dumbmonit_synology_volume_thin_overcommit_percent`: espacio prometido y no escrito, en porcentaje del espacio libre); se limpia por debajo del 95 %. | ≥ 100 % | 1 h | Advisory (`warning`) | 24 h |
+| Synology thin LUN almost full | Un LUN fino tiene escrito el 95 % o más de su tamaño (`dumbmonit_synology_lun_used_percent`). Un LUN grueso es opaco desde el NAS: alertan las reglas del monitor que lo usa (datastore, sistema de archivos). | ≥ 95 % | 30 min | Advisory (`warning`) | 24 h |
 | Synology temperature high | Un disco está por encima de 55 °C, o DSM lanzó su propio aviso de temperatura (`dumbmonit_synology_disk_temperature_celsius`, `dumbmonit_synology_temperature_warning`); se limpia por debajo de 52 °C. | > 55 °C | 15 min | Advisory (`warning`) | 6 h |
 | Synology memory high | Uso de memoria del NAS por encima del 95 % (`dumbmonit_synology_memory_usage_percent`); se limpia por debajo del 90 %. | > 95 % | 15 min | Advisory (`warning`) | 6 h |
 | Active Backup task failed | La última ejecución de una tarea Active Backup for Business falló, o solo respaldó parte de sus dispositivos (`dumbmonit_abb_task_last_status == bool 0`). La notificación nombra la tarea. | > 0 | 10 min | Warning (`critical`) | 24 h |
@@ -567,6 +569,9 @@ Las series llevan `router`, `service`, `server`, `upstream`, `proxy_host` o
 | Domain about to expire | El dominio caduca en menos de 7 días, o ya caducó (`dumbmonit_domain_expiry_days`). | < 7 d | 1 h | Warning (`critical`) | 12 h |
 | Domain on hold | El registro puso el dominio en `clientHold` o `serverHold`: está fuera del DNS (`dumbmonit_domain_on_hold`). | > 0 | 30 min | Warning (`critical`) | 6 h |
 | Domain in redemption | El dominio está en `redemptionPeriod`, `pendingDelete` o `pendingRestore`: ha caducado (`dumbmonit_domain_redemption`). | > 0 | 30 min | Warning (`critical`) | 12 h |
+| Domain name servers changed | Los servidores de nombres de la delegación difieren de la lectura anterior (`changes_prometheus(dumbmonit_domain_nameservers_fingerprint[1d])`). Se resuelve por sí misma un día después. | > 0 | 1 min | Advisory (`warning`) | 24 h |
+| Domain registrar changed | El registrador difiere de la lectura anterior: hubo una transferencia (`changes_prometheus(dumbmonit_domain_registrar_fingerprint[1d])`). | > 0 | 1 min | Advisory (`warning`) | 24 h |
+| Domain DNSSEC lost | DNSSEC estaba firmado en los últimos 7 días y ya no lo está (`dumbmonit_domain_dnssec`). | < 1 | 1 h | Advisory (`warning`) | 24 h |
 | DNS answer changed | La respuesta de una comprobación DNS con *Alert when the answer changes* difiere de la anterior (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Se resuelve por sí misma una hora después. | > 0 | 1 min | Advisory (`warning`) | 24 h |
 
 ### Listas de bloqueo DNS {#dns-blocklists}
@@ -661,6 +666,218 @@ se etiquetan `job` y `type`, los repositorios `repository`.
 |---|---|---|---|---|---|
 | Veeam job failed | La última ejecución de un job Veeam activado falló: lo que protege no tiene ningún punto de restauración nuevo (`dumbmonit_veeam_job_failed`). | > 0 | 5 min | Warning (`critical`) | 1 d |
 | Veeam job ended with a warning | La última ejecución de un job Veeam activado terminó con un aviso: algunos objetos pueden no estar protegidos (`dumbmonit_veeam_job_warning`). | > 0 | 5 min | Advisory (`warning`) | 1 d |
+|
+ 
+V
+e
+e
+a
+m
+ 
+b
+a
+c
+k
+u
+p
+ 
+t
+o
+o
+ 
+o
+l
+d
+ 
+|
+ 
+N
+i
+n
+g
+u
+n
+a
+ 
+e
+j
+e
+c
+u
+c
+i
+ó
+n
+ 
+c
+o
+r
+r
+e
+c
+t
+a
+ 
+d
+e
+ 
+u
+n
+ 
+j
+o
+b
+ 
+p
+r
+o
+g
+r
+a
+m
+a
+d
+o
+ 
+a
+l
+ 
+m
+e
+n
+o
+s
+ 
+a
+ 
+d
+i
+a
+r
+i
+o
+ 
+d
+e
+s
+d
+e
+ 
+h
+a
+c
+e
+ 
+m
+á
+s
+ 
+d
+e
+ 
+d
+o
+s
+ 
+d
+í
+a
+s
+ 
+(
+`
+d
+u
+m
+b
+m
+o
+n
+i
+t
+_
+v
+e
+e
+a
+m
+_
+j
+o
+b
+_
+l
+a
+s
+t
+_
+s
+u
+c
+c
+e
+s
+s
+_
+a
+g
+e
+_
+s
+e
+c
+o
+n
+d
+s
+`
+)
+.
+ 
+|
+ 
+>
+ 
+2
+ 
+d
+ 
+|
+ 
+1
+ 
+h
+ 
+|
+ 
+A
+d
+v
+i
+s
+o
+r
+y
+ 
+(
+`
+w
+a
+r
+n
+i
+n
+g
+`
+)
+ 
+|
+ 
+1
+ 
+d
+ 
+|
 | Veeam repository nearly full | Un repositorio de copia Veeam está más del 90 % lleno: los próximos jobs fallarán por falta de espacio (`dumbmonit_veeam_repository_used_percent`). | > 90 % | 30 min | Advisory (`warning`) | 1 d |
 | Veeam license expiring | La licencia Veeam caduca en menos de 30 días: los jobs se detienen al final del período de gracia (`dumbmonit_veeam_license_expiry_seconds`). | < 30 d | 1 h | Advisory (`warning`) | 1 d |
 
@@ -754,6 +971,16 @@ seguridad](../using/security-score.md).
 |---|---|---|---|---|---|
 | Security score dropped | La puntuación cayó 10 puntos o más frente a su mejor valor de las últimas 24 horas (`max_over_time(dumbmonit_security_score[1d]) - dumbmonit_security_score`): una comprobación empezó a fallar. | ≥ 10 pts | 30 min | Advisory (`warning`) | 24 h |
 | Security score low | La puntuación está por debajo de 40, nota F (`dumbmonit_security_score`). Sube o baja el umbral para ajustarlo a tu propio listón. | < 40 | 1 h | Info (`info`) | 7 d |
+
+### Inventario de red {#network-inventory}
+
+Las disparan los escaneos de red programados y su inventario (consulta [Escaneos programados e inventario](../using/discovery.md#scheduled-scans-and-inventory)). **Las tres reglas están desactivadas por defecto**; las dos primeras tienen gravedad `info`, la del cambio de MAC `warning`: actívalas en la lista de reglas cuando las quieras. Hay una serie, y por tanto una alerta, por cada dispositivo o puerto nuevo; sigue abierta hasta que el elemento se marca como conocido (la métrica se detiene, la alerta se resuelve en unos minutos) y no tiene recordatorio. El primer escaneo de una red nunca dispara nada.
+
+| Regla | Qué | Umbral por defecto | Espera | Gravedad | Recordatorio |
+|---|---|---|---|---|---|
+| New device on the network | Un escaneo programado encontró un dispositivo que no está en el inventario (`dumbmonit_netscan_unknown_device`). | > 0 | ninguna | Info (`info`), **desactivada** | ninguno |
+| New open port on the network | Un escaneo programado encontró un puerto abierto nuevo en un dispositivo conocido (`dumbmonit_netscan_unknown_port`). | > 0 | ninguna | Info (`info`), **desactivada** | ninguno |
+| MAC address changed for an IP | Un dispositivo nuevo tomó la dirección de uno conocido con otra dirección MAC: suplantación o hardware sustituido (`dumbmonit_netscan_mac_change`). Abierta hasta que se marca como conocido o ignorado. | > 0 | ninguna | Advisory (`warning`), **desactivada** | ninguno |
 
 ### El propio DumbMonit {#dumbmonit-itself}
 

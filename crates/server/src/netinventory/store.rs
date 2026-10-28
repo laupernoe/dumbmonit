@@ -223,6 +223,8 @@ pub struct Applied {
     pub initialized: bool,
     pub new_devices: usize,
     pub new_ports: usize,
+    /// Appareils nouveaux qui occupent l'IP d'un appareil connu sous une autre MAC.
+    pub mac_changes: usize,
 }
 
 /// Range le résultat d'un balayage terminé dans l'inventaire du scan `id`.
@@ -293,11 +295,14 @@ pub async fn apply_scan(pool: &SqlitePool, id: i64, hosts: &[DiscoveredHost]) ->
             }
             None => {
                 applied.new_devices += usize::from(!first_scan);
+                // Au premier balayage tout est connu : aucun changement à signaler.
+                let mac_change_from = planned.replaced_mac.as_deref().filter(|_| !first_scan);
+                applied.mac_changes += usize::from(mac_change_from.is_some());
                 sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
                     "INSERT INTO netscan_devices
-                         (schedule_id, ident, mac, ip, hostname, vendor, known, first_seen,
-                          last_seen)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, {NOW}, {NOW}) RETURNING id"
+                         (schedule_id, ident, mac, ip, hostname, vendor, known, mac_change_from,
+                          first_seen, last_seen)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, {NOW}, {NOW}) RETURNING id"
                 )))
                 .bind(id)
                 .bind(&planned.ident)
@@ -306,6 +311,7 @@ pub async fn apply_scan(pool: &SqlitePool, id: i64, hosts: &[DiscoveredHost]) ->
                 .bind(&planned.hostname)
                 .bind(&planned.vendor)
                 .bind(known_flag)
+                .bind(mac_change_from)
                 .fetch_one(&mut *tx)
                 .await?
             }
@@ -372,12 +378,19 @@ pub struct PortView {
 #[derive(Debug, Clone, Serialize)]
 pub struct DeviceView {
     pub id: i64,
+    /// Identité interne (`mac:…` ou `ip:…`) : pour la sauvegarde, pas pour l'API.
+    #[serde(skip)]
+    pub ident: String,
     pub schedule_id: i64,
     pub ip: String,
     pub mac: Option<String>,
     pub hostname: Option<String>,
     pub vendor: Option<String>,
     pub known: bool,
+    /// Ignoré par l'administrateur (compte aussi comme `known`).
+    pub ignored: bool,
+    /// MAC qu'avait l'IP avant cet appareil nouveau : usurpation ou remplacement.
+    pub mac_change_from: Option<String>,
     pub first_seen: String,
     pub last_seen: String,
     pub ports: Vec<PortView>,
@@ -386,7 +399,8 @@ pub struct DeviceView {
 /// L'inventaire (d'un scan, ou de tous), les éléments inconnus d'abord.
 pub async fn inventory(pool: &SqlitePool, schedule_id: Option<i64>) -> Result<Vec<DeviceView>> {
     let rows = sqlx::query(
-        "SELECT id, schedule_id, ip, mac, hostname, vendor, known, first_seen, last_seen
+        "SELECT id, ident, schedule_id, ip, mac, hostname, vendor, known, ignored, mac_change_from,
+                first_seen, last_seen
          FROM netscan_devices WHERE (?1 IS NULL OR schedule_id = ?1)
          ORDER BY known, first_seen DESC, id DESC",
     )
@@ -397,12 +411,15 @@ pub async fn inventory(pool: &SqlitePool, schedule_id: Option<i64>) -> Result<Ve
     for row in &rows {
         devices.push(DeviceView {
             id: row.try_get("id")?,
+            ident: row.try_get("ident")?,
             schedule_id: row.try_get("schedule_id")?,
             ip: row.try_get("ip")?,
             mac: row.try_get("mac")?,
             hostname: row.try_get("hostname")?,
             vendor: row.try_get("vendor")?,
             known: row.try_get::<i64, _>("known")? != 0,
+            ignored: row.try_get::<i64, _>("ignored")? != 0,
+            mac_change_from: row.try_get("mac_change_from")?,
             first_seen: row.try_get("first_seen")?,
             last_seen: row.try_get("last_seen")?,
             ports: Vec::new(),
@@ -434,18 +451,23 @@ pub async fn inventory(pool: &SqlitePool, schedule_id: Option<i64>) -> Result<Ve
     Ok(devices)
 }
 
-/// Décomptes d'un scan : appareils, appareils inconnus, ports inconnus.
+/// Décomptes d'un scan : appareils, appareils inconnus, ignorés, changements
+/// de MAC en attente, ports inconnus.
 #[derive(Debug, Clone, Copy, Default, Serialize)]
 pub struct Counts {
     pub devices: i64,
     pub unknown_devices: i64,
+    pub ignored_devices: i64,
+    pub mac_changes: i64,
     pub unknown_ports: i64,
 }
 
 pub async fn counts(pool: &SqlitePool) -> Result<std::collections::HashMap<i64, Counts>> {
     let mut out: std::collections::HashMap<i64, Counts> = std::collections::HashMap::new();
     let devices = sqlx::query(
-        "SELECT schedule_id, COUNT(*) AS total, COALESCE(SUM(known = 0), 0) AS unknown
+        "SELECT schedule_id, COUNT(*) AS total, COALESCE(SUM(known = 0), 0) AS unknown,
+                COALESCE(SUM(ignored = 1), 0) AS ignored,
+                COALESCE(SUM(mac_change_from IS NOT NULL AND known = 0), 0) AS mac_changes
          FROM netscan_devices GROUP BY schedule_id",
     )
     .fetch_all(pool)
@@ -454,11 +476,13 @@ pub async fn counts(pool: &SqlitePool) -> Result<std::collections::HashMap<i64, 
         let entry = out.entry(row.try_get("schedule_id")?).or_default();
         entry.devices = row.try_get("total")?;
         entry.unknown_devices = row.try_get("unknown")?;
+        entry.ignored_devices = row.try_get("ignored")?;
+        entry.mac_changes = row.try_get("mac_changes")?;
     }
     let ports = sqlx::query(
         "SELECT d.schedule_id, COUNT(*) AS unknown FROM netscan_ports p
          JOIN netscan_devices d ON d.id = p.device_id
-         WHERE p.known = 0 AND d.known = 1 GROUP BY d.schedule_id",
+         WHERE p.known = 0 AND d.known = 1 AND d.ignored = 0 GROUP BY d.schedule_id",
     )
     .fetch_all(pool)
     .await?;
@@ -469,13 +493,27 @@ pub async fn counts(pool: &SqlitePool) -> Result<std::collections::HashMap<i64, 
     Ok(out)
 }
 
-/// Marque un appareil, et ses ports, comme connus. `false` : introuvable.
+/// Marque un appareil, et ses ports, comme connus : il cesse d'être ignoré, et
+/// son éventuel changement de MAC est acquitté. `false` : introuvable.
 pub async fn mark_device_known(pool: &SqlitePool, id: i64) -> Result<bool> {
+    set_device_state(pool, id, false).await
+}
+
+/// Ignore un appareil : connu pour tout le reste, plus aucune alerte (appareil,
+/// changement de MAC, ports nouveaux). `false` : introuvable.
+pub async fn mark_device_ignored(pool: &SqlitePool, id: i64) -> Result<bool> {
+    set_device_state(pool, id, true).await
+}
+
+async fn set_device_state(pool: &SqlitePool, id: i64, ignored: bool) -> Result<bool> {
     let mut tx = pool.begin().await?;
-    let done = sqlx::query("UPDATE netscan_devices SET known = 1 WHERE id = ?")
-        .bind(id)
-        .execute(&mut *tx)
-        .await?;
+    let done = sqlx::query(
+        "UPDATE netscan_devices SET known = 1, ignored = ?, mac_change_from = NULL WHERE id = ?",
+    )
+    .bind(ignored)
+    .bind(id)
+    .execute(&mut *tx)
+    .await?;
     sqlx::query("UPDATE netscan_ports SET known = 1 WHERE device_id = ?")
         .bind(id)
         .execute(&mut *tx)
@@ -505,7 +543,7 @@ pub async fn mark_all_known(pool: &SqlitePool, schedule_id: Option<i64>) -> Resu
     .execute(&mut *tx)
     .await?;
     let devices = sqlx::query(
-        "UPDATE netscan_devices SET known = 1
+        "UPDATE netscan_devices SET known = 1, mac_change_from = NULL
          WHERE known = 0 AND (?1 IS NULL OR schedule_id = ?1)",
     )
     .bind(schedule_id)
@@ -518,8 +556,25 @@ pub async fn mark_all_known(pool: &SqlitePool, schedule_id: Option<i64>) -> Resu
 /// Un élément encore inconnu, pour la mesure qui porte l'alerte.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Unknown {
-    Device { schedule_id: i64, cidr: String, ident: String },
-    Port { schedule_id: i64, cidr: String, ident: String, port: u16, protocol: String },
+    Device {
+        schedule_id: i64,
+        cidr: String,
+        ident: String,
+    },
+    Port {
+        schedule_id: i64,
+        cidr: String,
+        ident: String,
+        port: u16,
+        protocol: String,
+    },
+    /// Appareil nouveau sur l'IP d'un appareil connu sous une autre MAC.
+    MacChange {
+        schedule_id: i64,
+        cidr: String,
+        ident: String,
+        previous_mac: String,
+    },
 }
 
 /// Appareils inconnus, et ports inconnus des appareils déjà connus (ceux d'un
@@ -543,7 +598,7 @@ pub async fn unknown_items(pool: &SqlitePool) -> Result<Vec<Unknown>> {
         "SELECT d.schedule_id, s.cidr, d.ident, p.port, p.protocol FROM netscan_ports p
          JOIN netscan_devices d ON d.id = p.device_id
          JOIN netscan_schedules s ON s.id = d.schedule_id
-         WHERE p.known = 0 AND d.known = 1",
+         WHERE p.known = 0 AND d.known = 1 AND d.ignored = 0",
     )
     .fetch_all(pool)
     .await?;
@@ -554,6 +609,21 @@ pub async fn unknown_items(pool: &SqlitePool) -> Result<Vec<Unknown>> {
             ident: row.try_get("ident")?,
             port: u16::try_from(row.try_get::<i64, _>("port")?).unwrap_or(0),
             protocol: row.try_get("protocol")?,
+        });
+    }
+    let changes = sqlx::query(
+        "SELECT d.schedule_id, s.cidr, d.ident, d.mac_change_from FROM netscan_devices d
+         JOIN netscan_schedules s ON s.id = d.schedule_id
+         WHERE d.known = 0 AND d.mac_change_from IS NOT NULL",
+    )
+    .fetch_all(pool)
+    .await?;
+    for row in &changes {
+        out.push(Unknown::MacChange {
+            schedule_id: row.try_get("schedule_id")?,
+            cidr: row.try_get("cidr")?,
+            ident: row.try_get("ident")?,
+            previous_mac: row.try_get("mac_change_from")?,
         });
     }
     Ok(out)

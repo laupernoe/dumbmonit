@@ -1,28 +1,27 @@
 <script lang="ts">
 	/**
 	 * Setup wizard, after the first administrator signs in (and again from
-	 * Settings → General): mode, name and language, a notification channel
-	 * with a test, first monitors, an agent — and, in Enterprise mode, three
-	 * optional steps more (single sign-on and teams, on-call, retention).
+	 * Settings → General): name and language, a notification channel with a
+	 * test, first monitors, an agent, then three optional steps (single
+	 * sign-on and teams, on-call, retention).
 	 *
 	 * Every step can be skipped; "Skip setup" ends it at once. The step lives
 	 * in the URL (`?step=channel`), so Back works and a language change, which
 	 * reloads the page, lands on the next step. Finishing marks the wizard done
 	 * on the server, for every browser.
 	 */
-	import { tick, untrack } from 'svelte';
+	import { tick } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { Check } from 'lucide-svelte';
 	import { getInstanceSettings, updateInstanceSettings } from '#lib/api/instance.js';
-	import { updateOnboarding, type ProductMode } from '#lib/api/index.js';
+	import { updateOnboarding } from '#lib/api/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getLocale, setLocale, type Locale } from '#lib/paraglide/runtime.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { mode } from '#lib/stores/mode.svelte.js';
+	import { instanceStore } from '#lib/stores/instance.svelte.js';
 	import { Button, ErrorNotice } from '#lib/ui/index.js';
 	import Logo from '#lib/components/Logo.svelte';
-	import ModePicker from '#lib/components/modes/ModePicker.svelte';
 	import InstanceFields from '#lib/components/modes/InstanceFields.svelte';
 	import { browserTimeZone } from '#lib/components/modes/timezones.js';
 	import WizardChannel from '#lib/components/wizard/WizardChannel.svelte';
@@ -33,7 +32,7 @@
 	import UsersSection from '#lib/components/settings/UsersSection.svelte';
 	import StorageSection from '#lib/components/settings/StorageSection.svelte';
 
-	type StepId = 'mode' | 'instance' | 'channel' | 'monitors' | 'agent' | 'sso' | 'oncall' | 'retention';
+	type StepId = 'instance' | 'channel' | 'monitors' | 'agent' | 'sso' | 'oncall' | 'retention';
 	interface Step {
 		id: StepId;
 		title: () => string;
@@ -41,21 +40,17 @@
 		optional?: boolean;
 	}
 
-	const BASE: Step[] = [
-		{ id: 'mode', title: () => m.wizard_mode_title(), text: () => m.wizard_mode_text() },
+	const STEPS: Step[] = [
 		{ id: 'instance', title: () => m.wizard_instance_title(), text: () => m.wizard_instance_text() },
 		{ id: 'channel', title: () => m.wizard_channel_title(), text: () => m.wizard_channel_text() },
 		{ id: 'monitors', title: () => m.wizard_monitors_title(), text: () => m.wizard_monitors_text() },
-		{ id: 'agent', title: () => m.wizard_agent_title(), text: () => m.wizard_agent_text() }
-	];
-	const ENTERPRISE: Step[] = [
+		{ id: 'agent', title: () => m.wizard_agent_title(), text: () => m.wizard_agent_text() },
 		{ id: 'sso', title: () => m.wizard_sso_title(), text: () => m.wizard_sso_text(), optional: true },
 		{ id: 'oncall', title: () => m.wizard_oncall_title(), text: () => m.wizard_oncall_text(), optional: true },
 		{ id: 'retention', title: () => m.wizard_retention_title(), text: () => m.wizard_retention_text(), optional: true }
 	];
 
-	let chosen = $state<ProductMode>(untrack(() => mode.current));
-	const steps = $derived(chosen === 'enterprise' ? [...BASE, ...ENTERPRISE] : BASE);
+	const steps = STEPS;
 	const asked = $derived(page.url.searchParams.get('step'));
 	const index = $derived(Math.max(0, steps.findIndex((s) => s.id === asked)));
 	const step = $derived(steps[index]);
@@ -71,7 +66,6 @@
 	$effect(() => {
 		getInstanceSettings()
 			.then((settings) => {
-				chosen = settings.product_mode;
 				name = settings.name;
 				language = settings.language;
 				timezone = settings.timezone || browserTimeZone();
@@ -104,14 +98,9 @@
 		busy = true;
 		error = null;
 		try {
-			if (step.id === 'mode') {
-				if (chosen !== mode.current) {
-					const settings = await updateInstanceSettings({ product_mode: chosen });
-					mode.set(settings.product_mode);
-				}
-			} else if (step.id === 'instance') {
+			if (step.id === 'instance') {
 				const settings = await updateInstanceSettings({ name: name.trim(), language, timezone });
-				mode.name = settings.name;
+				instanceStore.name = settings.name;
 				if (settings.language && settings.language !== getLocale()) {
 					// A new language reloads the page: land on the next step.
 					await goto(`/welcome?step=${steps[index + 1].id}`, { replace: true });
@@ -134,7 +123,7 @@
 		error = null;
 		try {
 			await updateInstanceSettings({ setup_completed: true });
-			mode.setupCompleted = true;
+			instanceStore.setupCompleted = true;
 			await updateOnboarding({ skipped: true }).catch(() => {});
 			await goto('/', { replace: true });
 		} catch (cause) {
@@ -198,10 +187,7 @@
 					<p class="mt-2 max-w-[65ch] text-ink-2">{step.text()}</p>
 
 					<div class="mt-6 min-w-0">
-						{#if step.id === 'mode'}
-							<ModePicker bind:value={chosen} name="wizard-product-mode" />
-							<p class="mt-3 text-[0.8125rem] text-ink-2">{m.mode_switch_keeps()}</p>
-						{:else if step.id === 'instance'}
+						{#if step.id === 'instance'}
 							<InstanceFields bind:name bind:language bind:timezone idPrefix="wizard-instance" />
 						{:else if step.id === 'channel'}
 							<WizardChannel />

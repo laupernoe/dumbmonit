@@ -99,8 +99,7 @@ mod tests {
     ///   serveur, authentifié par un jeton d'enregistrement, que nul client n'a
     ///   à appeler ;
     /// - les redirections de la connexion OIDC (`/api/auth/oidc/start` et
-    ///   `/callback`) et SAML (`/api/auth/saml/start`, `/acs`, `/complete`), et
-    ///   le retour de Spotify (`/api/music/spotify/callback`) :
+    ///   `/callback`) et SAML (`/api/auth/saml/start`, `/acs`, `/complete`) :
     ///   des pages qu'un navigateur traverse, pas une API ;
     /// - la distribution de l'agent (`/install.sh`, `/install.ps1`,
     ///   `/download/{name}`) : des fichiers, pas du JSON ;
@@ -119,7 +118,6 @@ mod tests {
         "/api/auth/saml/start",
         "/api/auth/saml/acs",
         "/api/auth/saml/complete",
-        "/api/music/spotify/callback",
         "/install.sh",
         "/install.ps1",
         "/download/{name}",
@@ -155,23 +153,12 @@ mod tests {
     }
 
     /// Routes fermées à tout jeton d'API : celles du garde, plus les sauvegardes
-    /// et la connexion à Spotify et son jeton pour le mur (refusées par leur
-    /// gestionnaire, qui exige une session), et le provisionnement SCIM, qui
-    /// n'accepte que le jeton dédié du fournisseur d'identité.
+    /// (refusées par leur gestionnaire, qui exige une session), et le
+    /// provisionnement SCIM, qui n'accepte que le jeton dédié du fournisseur
+    /// d'identité.
     fn is_session_only(path: &str) -> bool {
         let Some(rest) = path.strip_prefix("/api") else { return false };
-        const BY_HANDLER: &[&str] = &[
-            "/backup",
-            "/scim",
-            "/logs",
-            "/music/spotify/authorize",
-            "/music/spotify/complete",
-            "/music/spotify/token",
-            "/music/speaker/report",
-            "/music/speaker/play",
-            "/system/storage",
-            "/webpush",
-        ];
+        const BY_HANDLER: &[&str] = &["/backup", "/scim", "/logs", "/system/storage", "/webpush"];
         TOKEN_DENIED.iter().chain(BY_HANDLER.iter()).any(|prefix| {
             rest == *prefix || rest.strip_prefix(prefix).is_some_and(|r| r.starts_with('/'))
         })

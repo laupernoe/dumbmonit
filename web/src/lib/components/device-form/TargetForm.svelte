@@ -29,7 +29,7 @@
 	import { knownFolders } from '#lib/components/devices/folders.js';
 	import { guessAgent } from '#lib/components/devices/mdaemon/agent-link.js';
 	import { groupOptions } from './option-groups';
-	import { listRelays } from '#lib/api/relay.js';
+	import { listRelayKinds, listRelays, relayable } from '#lib/api/relay.js';
 	import { listLocations } from '#lib/api/locations.js';
 	import type { MapLocation } from '#lib/api/types.js';
 	import { isMultisiteKind } from '#lib/format.js';
@@ -56,7 +56,6 @@
 	import { DEFAULT_INTERVAL, INTERVALS, SNMP_KIND, suggestName } from './kinds';
 	import { firstReason, identitySummary, testBlocker } from './test-connection';
 	import { seedFromPrefill, type Prefill } from './discovery-prefill';
-	import { mode } from '#lib/stores/mode.svelte.js';
 
 	interface Props {
 		collector: CollectorInfo;
@@ -160,28 +159,9 @@
 	let saving = $state(false);
 	let serverError = $state<unknown>(null);
 
-	// Homelab keeps the form short: required settings and the first one; the
-	// rest waits behind "More options". Enterprise shows three up front and
-	// opens "More options" from the start.
-	const PRIMARY_COUNT = untrack(() => (mode.enterprise ? 3 : 1));
-
-	// "More options" opens by itself when an edited device already uses one.
-	let more = $state(
-		untrack(
-			() =>
-				mode.enterprise ||
-				(!target && collector.options.some((o, i) => !(o.required || i < PRIMARY_COUNT) && o.key in seed.tags)) ||
-				(!!target &&
-				(target.parent_id !== null ||
-					target.via_agent !== null ||
-					target.multisite !== null ||
-					target.interval_secs !== DEFAULT_INTERVAL ||
-					!target.enabled ||
-					target.group_name !== '' ||
-					(target.location_id ?? null) !== null ||
-					Object.keys(target.tags).some((key) => !collector.options.some((o) => o.key === key))))
-		)
-	);
+	// Three settings up front; "More options" is open from the start.
+	const PRIMARY_COUNT = 3;
+	let more = $state(true);
 
 	function touch(field: string) {
 		if (!touched.has(field)) touched = new Set(touched).add(field);
@@ -318,8 +298,18 @@
 	);
 
 	// --- Reached through (relay agents) --------------------------------------
-	// Agents are not relays for themselves: their metrics are pushed, not probed.
-	const canRelay = $derived(collector.kind !== 'agent');
+	// Agents push their metrics, heartbeats are called, website checks run on the
+	// server: only the kinds a relay knows are offered (`GET /relays/kinds`). A
+	// relay already set on an edited monitor stays visible.
+	let relayKinds = $state<string[] | null>(null);
+	$effect(() => {
+		const controller = new AbortController();
+		listRelayKinds(controller.signal)
+			.then((kinds) => (relayKinds = kinds))
+			.catch(() => (relayKinds = null));
+		return () => controller.abort();
+	});
+	const canRelay = $derived(relayable(collector.kind, relayKinds) || (target?.via_agent ?? null) !== null);
 	let relays = $state<RelayAgent[]>([]);
 	/** Set once the list came back, so the "no relay yet" hint never flashes before it. */
 	let relaysRead = $state(false);

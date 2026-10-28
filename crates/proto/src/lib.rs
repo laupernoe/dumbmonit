@@ -32,8 +32,9 @@ pub use credential::{
     SnmpV3Privacy, SnmpV3PrivacyInput, SnmpV3PrivacyProtocol,
 };
 pub use description::{
-    CredentialDescription, CredentialFieldDescription, KindDescription, OptionColumn,
-    OptionDescription, OptionItem, PortDescription, Requirement, SetupDescription, Text,
+    CredentialDescription, CredentialFieldDescription, KindDescription, Measures,
+    MetricDescription, OptionColumn, OptionDescription, OptionItem, PortDescription, Requirement,
+    SetupDescription, StateMap, Text, ViewDescription,
 };
 pub use discovery::{
     AddressForm, CMD_DISCOVERY_SCAN, Confidence, DISCOVERY_REPORT_PATH, DiscoveredHost,
@@ -68,7 +69,8 @@ pub use target::{
 };
 pub use tls::{
     AGENT_TLS_HEADER, AGENT_TLS_SERVER_NAME, CERT_REFUSED, CLIENT_CERT_DAYS,
-    DEFAULT_AGENT_TLS_PORT, MTLS_REQUIRED, RENEW_BEFORE_DAYS, TLS_ENROL_PATH, TLS_RENEW_PATH,
+    DEFAULT_AGENT_TLS_PORT, DEFAULT_RELAY_GATEWAY_PORT, MTLS_REQUIRED, RELAY_FILES_PATH,
+    RELAY_TUNNEL_PATH, RELAY_TUNNEL_PROTOCOL, RENEW_BEFORE_DAYS, TLS_ENROL_PATH, TLS_RENEW_PATH,
     TlsCertificate, TlsEnrolRequest, TlsOffer, TlsRenewRequest, agent_channel_url, is_pin,
     normalise_pin,
 };

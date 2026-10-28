@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 220" role="img" aria-label="DumbMonit">
+  <rect width="1200" height="220" rx="12" fill="#07080a"/>
+  <rect x="0.5" y="0.5" width="1199" height="219" rx="11.5" fill="none" stroke="#23272e"/>
+  <g stroke="#16191e" stroke-width="1">
+    <path d="M0 55H1200M0 110H1200M0 165H1200"/>
+  </g>
+  <g transform="translate(64 66)">
+    <rect width="88" height="88" rx="22" fill="#6f83a3"/>
+    <circle cx="33" cy="41" r="19" fill="#fff" stroke="#1e2640" stroke-width="5.5"/>
+    <circle cx="62" cy="41" r="15" fill="#fff" stroke="#1e2640" stroke-width="5.5"/>
+    <circle cx="27.5" cy="37" r="7" fill="#1e2640"/>
+    <circle cx="66" cy="37" r="5.5" fill="#1e2640"/>
+    <path d="M37 55c4-4 15-4 19 0l-9.500 16z" fill="#e97b3a" stroke="#1e2640" stroke-width="4" stroke-linejoin="round"/>
+  </g>
+  <text x="180" y="108" font-family="Geist, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="46" font-weight="600" letter-spacing="-1" fill="#eceef1">DumbMonit</text>
+  <text x="182" y="140" font-family="Geist, 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="19" fill="#8a919c">Self-hosted monitoring and alerting. One container.</text>
+  <g font-family="'Geist Mono', ui-monospace, Menlo, Consolas, monospace" font-size="13" fill="#8a919c">
+    <circle cx="760" cy="62" r="4" fill="#2fd17c"/><text x="772" y="66">operational</text>
+  </g>
+  <polyline fill="none" stroke="#7da9ff" stroke-width="2" stroke-linejoin="round" points="760,160 800,150 840,154 880,128 920,136 960,108 1000,118 1040,92 1080,100 1136,76"/>
+  <polyline fill="none" stroke="#2fd17c" stroke-width="2" stroke-linejoin="round" opacity="0.7" points="760,182 800,178 840,180 880,170 920,174 960,166 1000,170 1040,160 1080,164 1136,156"/>
+</svg>

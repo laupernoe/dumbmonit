@@ -50,6 +50,21 @@ pub const VM_SLOW_INSERTS_QUERY: &str = "(100 \
 pub const SERVICE_SLOW_QUERY: &str =
     "dumbmonit_probe_duration_seconds and dumbmonit_probe_success == 1";
 
+/// `uid` de la règle livrée de prévision de remplissage : la route
+/// `GET /api/targets/{id}/forecasts` reprend ses réglages (profondeur, paliers).
+pub const RULE_CAPACITY_FORECAST: &str = "capacity_forecast";
+
+/// Part de réponses 5xx, en pourcentage, des proxys (avec un plancher de
+/// cinquante requêtes sur dix minutes) et des zones Cloudflare.
+pub const HTTP_5XX_PERCENT: &str = "(100 \
+     * increase_prometheus(dumbmonit_traefik_requests_5xx_total[10m]) \
+     / increase_prometheus(dumbmonit_traefik_requests_total[10m]) \
+     and increase_prometheus(dumbmonit_traefik_requests_total[10m]) >= 50) \
+     or (100 * increase_prometheus(dumbmonit_caddy_requests_5xx_total[10m]) \
+     / increase_prometheus(dumbmonit_caddy_requests_total[10m]) \
+     and increase_prometheus(dumbmonit_caddy_requests_total[10m]) >= 50) \
+     or dumbmonit_cloudflare_zone_http_5xx_percent";
+
 /// Pod en boucle de redémarrage : le drapeau du collecteur, tenu par un compteur
 /// de redémarrages qui progresse encore (voir la règle `k8s_pod_crashlooping`).
 pub const K8S_CRASHLOOP_QUERY: &str = "max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) \
@@ -197,6 +212,65 @@ pub fn builtin_rules() -> Vec<Rule> {
             severity: Severity::Info,
             unit: "%".to_string(),
             ..base("cpu_anomaly", "Unusual CPU", RuleKind::Anomaly, CPU_PERCENT)
+        },
+        // Prévision de remplissage, commune à toutes les intégrations : disques,
+        // datastores, pools, volumes, licences, autonomie des onduleurs (voir
+        // `capacity.rs`). Information sous trente jours, avertissement sous
+        // quatorze, critique sous sept : la sévérité monte d'elle-même avec les
+        // paliers et l'alerte reparle à chaque franchissement.
+        Rule {
+            description: "At the current growth rate, this storage (disk, datastore, pool, \
+                          volume, licences…) will be full within thirty days."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 30.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            unit: "d".to_string(),
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(RULE_CAPACITY_FORECAST, "Storage filling up", RuleKind::Forecast, "*")
+        },
+        // Dérive de la latence des sondes réussies (HTTP, ping, TCP, DNS…) par
+        // rapport à la même heure des quatre semaines précédentes. Trois fois la
+        // normale, pendant quinze minutes, et au moins 50 ms d'écart : une
+        // latence qui passe de 2 à 6 ms ne réveille personne.
+        Rule {
+            description: "Response time three times higher than usual for this time of day \
+                          and day of the week."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 3.0,
+            clear_threshold: Some(2.0),
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "×".to_string(),
+            params: AnomalyParams {
+                drift_min_value: 0.05,
+                drift_min_delta: 0.05,
+                ..AnomalyParams::default()
+            },
+            ..base("latency_drift", "Response time drifting", RuleKind::Drift, SERVICE_SLOW_QUERY)
+        },
+        // Dérive du taux de réponses 5xx d'un proxy ou d'une zone Cloudflare :
+        // le seuil fixe de `proxy_5xx_rate` rate le site qui passe de 0,1 à 4 %.
+        // Au moins un point de pourcentage d'écart, et le plancher de cinquante
+        // requêtes de la requête elle-même.
+        Rule {
+            description: "The share of 5xx answers is three times higher than usual for this \
+                          time of day."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 3.0,
+            clear_threshold: Some(2.0),
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "×".to_string(),
+            params: AnomalyParams {
+                drift_min_value: 1.0,
+                drift_min_delta: 1.0,
+                ..AnomalyParams::default()
+            },
+            ..base("http_5xx_drift", "5xx errors drifting", RuleKind::Drift, HTTP_5XX_PERCENT)
         },
         // Batterie d'onduleur en fin de vie ou déchargée. Distincte de « sur
         // batterie » : une coupure brève est normale, une batterie basse annonce un
@@ -4586,8 +4660,15 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_synology_pool_status or dumbmonit_synology_ssd_cache_status",
             )
         },
+        // L'occupation effective, sans les réservations des LUN iSCSI épais : un
+        // volume rempli par un LUN épais est plein par construction, et seul ce
+        // qui reste à côté peut déborder (`collectors/synology/iscsi.rs`). Sans
+        // LUN, elle vaut l'occupation brute ; la brute ne sert que de repli avant
+        // la première collecte d'un collecteur à jour.
         Rule {
-            description: "Volume 90% full or more.".to_string(),
+            description: "Volume 90% full or more, not counting the space reserved by \
+                          thick-provisioned iSCSI LUNs."
+                .to_string(),
             operator: Operator::Ge,
             threshold: 90.0,
             clear_threshold: Some(88.0),
@@ -4599,7 +4680,51 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "synology_volume_almost_full",
                 "Synology volume almost full",
                 RuleKind::Threshold,
-                "dumbmonit_synology_volume_used_percent",
+                "dumbmonit_synology_volume_effective_used_percent \
+                 or dumbmonit_synology_volume_used_percent",
+            )
+        },
+        // Sur-allocation fine : les LUN fins du volume ont reçu la promesse de
+        // plus d'espace qu'il n'en reste de libre. La valeur est l'espace promis
+        // et pas encore écrit, en pourcentage de l'espace libre : à 100 %, le
+        // prochain octet écrit dans un LUN peut ne plus trouver de place, et
+        // l'hôte iSCSI voit alors son disque passer en lecture seule.
+        Rule {
+            description: "Thin over-allocation: the thin iSCSI LUNs of this volume were \
+                          promised more space than the volume still has free (value = \
+                          promised and unwritten space, as a percentage of the free space)."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 100.0,
+            clear_threshold: Some(95.0),
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "synology_thin_overcommit",
+                "Synology thin LUN over-allocation",
+                RuleKind::Threshold,
+                "dumbmonit_synology_volume_thin_overcommit_percent",
+            )
+        },
+        // Un LUN fin dont l'allocation approche sa taille. Un LUN épais n'a pas
+        // de série : son remplissage se lit chez l'équipement qui l'utilise
+        // (datastore, disque d'un agent), dont les règles alertent déjà.
+        Rule {
+            description: "This thin iSCSI LUN has 95% or more of its size written.".to_string(),
+            operator: Operator::Ge,
+            threshold: 95.0,
+            clear_threshold: Some(93.0),
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "synology_lun_almost_full",
+                "Synology thin LUN almost full",
+                RuleKind::Threshold,
+                "dumbmonit_synology_lun_used_percent",
             )
         },
         // 55 °C est le seuil à partir duquel les fabricants de disques mécaniques
@@ -5318,6 +5443,40 @@ pub fn builtin_rules() -> Vec<Rule> {
             repeat_interval: Some(Duration::from_secs(12 * 3600)),
             ..base("domain_redemption", "Domain in redemption", RuleKind::Threshold, "dumbmonit_domain_redemption")
         },
+        // Changements de délégation (`collectors/domain`) : les empreintes ne
+        // bougent que si la liste change, et `changes_prometheus` ignore la
+        // première valeur d'une série neuve. Un jour de fenêtre : l'alerte se
+        // résout seule ensuite.
+        Rule {
+            description: "The name servers of the domain changed: expected after a migration, a sign of hijacking otherwise."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("domain_nameservers_changed", "Domain name servers changed", RuleKind::Threshold, "changes_prometheus(dumbmonit_domain_nameservers_fingerprint[1d])")
+        },
+        Rule {
+            description: "The registrar of the domain changed: a transfer happened. Check that it was yours."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("domain_registrar_changed", "Domain registrar changed", RuleKind::Threshold, "changes_prometheus(dumbmonit_domain_registrar_fingerprint[1d])")
+        },
+        Rule {
+            description: "DNSSEC was active on the domain in the last seven days and is not any more: validating resolvers may refuse the domain, or the signature was stripped."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("domain_dnssec_lost", "Domain DNSSEC lost", RuleKind::Threshold, "(dumbmonit_domain_dnssec == 0) and (max_over_time(dumbmonit_domain_dnssec[7d]) == 1)")
+        },
         // --- Listes noires DNS (`collectors/blacklist`) ---
         // Un passage n'a lieu que toutes les six heures et son résultat est
         // réécrit à chaque sonde : la durée minimale ne sert qu'à laisser passer
@@ -6000,6 +6159,28 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "Veeam job ended with a warning",
                 RuleKind::Threshold,
                 "dumbmonit_veeam_job_warning",
+            )
+        },
+        // Aucune sauvegarde réussie depuis deux jours. La série n'existe que pour un
+        // travail dont la dernière exécution a réussi (ou fini en avertissement) :
+        // un travail en échec dit déjà `veeam_job_failed`. Le filtre sur la
+        // prochaine exécution (moins de 36 h) écarte les travaux hebdomadaires ou
+        // mensuels, dont deux jours sans exécution sont normaux.
+        Rule {
+            description: "No successful Veeam run for this job for more than two days, \
+                          although it is scheduled at least daily."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 2.0 * 24.0 * 3600.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "veeam_job_old",
+                "Veeam backup too old",
+                RuleKind::Threshold,
+                "dumbmonit_veeam_job_last_success_age_seconds and on (target, job) dumbmonit_veeam_job_next_run_seconds < 129600",
             )
         },
         Rule {
@@ -7397,6 +7578,24 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_netscan_unknown_port",
             )
         },
+        Rule {
+            description: "A device appeared on the address of a known device, under another MAC \
+                          address: spoofing, or replaced hardware. It stays reported until it \
+                          is marked as known or ignored."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(60),
+            severity: Severity::Warning,
+            repeat_interval: None,
+            enabled: false,
+            ..base(
+                RULE_NETSCAN_MAC_CHANGE,
+                "MAC address changed for an IP",
+                RuleKind::Threshold,
+                "dumbmonit_netscan_mac_change",
+            )
+        },
     ];
     // Intégrations en nuage, un fichier par produit (`rules/cloud/`).
     rules.extend(cloud::rules());
@@ -7821,6 +8020,7 @@ fn apps_rules() -> Vec<Rule> {
 /// `uid` des règles d'inventaire du réseau, livrées désactivées.
 pub const RULE_NETSCAN_NEW_DEVICE: &str = "netscan_new_device";
 pub const RULE_NETSCAN_NEW_PORT: &str = "netscan_new_port";
+pub const RULE_NETSCAN_MAC_CHANGE: &str = "netscan_mac_change";
 
 /// Construit une requête prédictive « ce système de fichiers sera plein dans moins
 /// de `days` jours », pour l'assistant de création de règle de l'interface.
@@ -7911,6 +8111,9 @@ pub(crate) const PRODUITES: &[&str] = &[
     "dumbmonit_synology_pool_status",
     "dumbmonit_synology_ssd_cache_status",
     "dumbmonit_synology_volume_used_percent",
+    "dumbmonit_synology_volume_effective_used_percent",
+    "dumbmonit_synology_volume_thin_overcommit_percent",
+    "dumbmonit_synology_lun_used_percent",
     "dumbmonit_synology_disk_temperature_celsius",
     "dumbmonit_synology_temperature_warning",
     "dumbmonit_synology_memory_usage_percent",
@@ -8203,6 +8406,9 @@ pub(crate) const PRODUITES: &[&str] = &[
     "dumbmonit_domain_expiry_days",
     "dumbmonit_domain_on_hold",
     "dumbmonit_domain_redemption",
+    "dumbmonit_domain_dnssec",
+    "dumbmonit_domain_nameservers_fingerprint",
+    "dumbmonit_domain_registrar_fingerprint",
     // Listes noires DNS (`collectors/blacklist/scan.rs`).
     "dumbmonit_blacklist_listed_lists",
     "dumbmonit_blacklist_listed_major_lists",
@@ -8288,6 +8494,8 @@ pub(crate) const PRODUITES: &[&str] = &[
     "dumbmonit_unraid_container_autostart_stopped",
     "dumbmonit_veeam_job_failed",
     "dumbmonit_veeam_job_warning",
+    "dumbmonit_veeam_job_last_success_age_seconds",
+    "dumbmonit_veeam_job_next_run_seconds",
     "dumbmonit_veeam_repository_used_percent",
     "dumbmonit_veeam_license_expiry_seconds",
     "dumbmonit_windows_services_auto_stopped",
@@ -8343,6 +8551,7 @@ pub(crate) const PRODUITES: &[&str] = &[
     // Inventaire du réseau (`netinventory/mod.rs`).
     "dumbmonit_netscan_unknown_device",
     "dumbmonit_netscan_unknown_port",
+    "dumbmonit_netscan_mac_change",
     "dumbmonit_duplicati_backup_last_success_age_seconds",
     "dumbmonit_duplicati_backup_scheduled",
     "dumbmonit_kopia_source_last_snapshot_age_seconds",
@@ -8444,6 +8653,46 @@ pub(crate) const PRODUITES: &[&str] = &[
     "dumbmonit_service_up",
     "dumbmonit_synology_backup_last_success_age_seconds",
     "dumbmonit_unifi_internet_latency_seconds",
+    // Familles de capacité de la prévision de remplissage (`capacity.rs`).
+    "dumbmonit_filesystem_used_bytes",
+    "dumbmonit_filesystem_total_bytes",
+    "dumbmonit_filesystem_inodes_used_percent",
+    "dumbmonit_agent_zfs_pool_used_percent",
+    "dumbmonit_agent_zfs_pool_used_bytes",
+    "dumbmonit_agent_zfs_pool_size_bytes",
+    "dumbmonit_proxmox_node_zfs_pool_used_percent",
+    "dumbmonit_proxmox_node_lvm_vg_used_percent",
+    "dumbmonit_proxmox_guest_fs_used_percent",
+    "dumbmonit_pbs_datastore_bytes_used",
+    "dumbmonit_pbs_datastore_bytes_total",
+    "dumbmonit_truenas_pool_size_bytes",
+    "dumbmonit_truenas_pool_free_bytes",
+    "dumbmonit_synology_volume_used_bytes",
+    "dumbmonit_synology_volume_total_bytes",
+    "dumbmonit_synology_volume_effective_used_bytes",
+    "dumbmonit_synology_volume_effective_total_bytes",
+    "dumbmonit_synology_lun_allocated_bytes",
+    "dumbmonit_synology_lun_size_bytes",
+    "dumbmonit_truenas_zvol_used_percent",
+    "dumbmonit_truenas_zvol_allocated_bytes",
+    "dumbmonit_truenas_zvol_size_bytes",
+    "dumbmonit_qnap_volume_size_bytes",
+    "dumbmonit_qnap_volume_free_bytes",
+    "dumbmonit_unraid_array_used_percent",
+    "dumbmonit_unraid_array_used_bytes",
+    "dumbmonit_unraid_array_size_bytes",
+    "dumbmonit_ceph_capacity_used_bytes",
+    "dumbmonit_ceph_capacity_bytes",
+    "dumbmonit_vsphere_datastore_capacity_bytes",
+    "dumbmonit_vsphere_datastore_free_bytes",
+    "dumbmonit_nutanix_storage_container_used_bytes",
+    "dumbmonit_nutanix_storage_container_capacity_bytes",
+    "dumbmonit_opnsense_disk_used_percent",
+    "dumbmonit_fortigate_disk_used_percent",
+    "dumbmonit_m365_license_used_percent",
+    "dumbmonit_m365_license_consumed",
+    "dumbmonit_m365_license_enabled",
+    "dumbmonit_nut_battery_runtime_low_seconds",
 ];
 
 #[cfg(test)]
@@ -8547,6 +8796,8 @@ mod tests {
             "synology_ssd_wearout",
             "synology_volume_degraded",
             "synology_volume_almost_full",
+            "synology_thin_overcommit",
+            "synology_lun_almost_full",
             "synology_temperature_high",
             "synology_memory_high",
             "synology_abb_device_overdue",
@@ -8797,6 +9048,9 @@ mod tests {
             "domain_expiring_soon",
             "domain_on_hold",
             "domain_redemption",
+            "domain_nameservers_changed",
+            "domain_registrar_changed",
+            "domain_dnssec_lost",
             "dns_answer_changed",
             "webchange_detected",
             "netconfig_changed",
@@ -8846,6 +9100,7 @@ mod tests {
             "unraid_container_stopped",
             "veeam_job_failed",
             "veeam_job_warning",
+            "veeam_job_old",
             "veeam_repository_full",
             "veeam_license_expiring",
             "winrm_services_auto_stopped",
@@ -8969,7 +9224,9 @@ mod tests {
     fn les_regles_livrees_sont_actives_et_sans_canal_impose() {
         for rule in builtin_rules() {
             // Les règles d'inventaire du réseau sont les seules livrées éteintes.
-            let off = rule.uid == RULE_NETSCAN_NEW_DEVICE || rule.uid == RULE_NETSCAN_NEW_PORT;
+            let off = rule.uid == RULE_NETSCAN_NEW_DEVICE
+                || rule.uid == RULE_NETSCAN_NEW_PORT
+                || rule.uid == RULE_NETSCAN_MAC_CHANGE;
             assert_eq!(rule.enabled, !off, "{} enabled flag", rule.uid);
             assert!(rule.builtin);
             assert!(rule.channels.is_empty(), "{} must not impose any channel", rule.uid);
@@ -9048,6 +9305,30 @@ mod tests {
             "predict_linear(dumbmonit_fs_used_percent[6h], 345600) \
              and deriv(dumbmonit_fs_used_percent[6h]) > 0"
         );
+    }
+
+    #[test]
+    fn les_regles_derivees_sont_livrees_avec_des_reglages_senses() {
+        let rules = builtin_rules();
+        let forecast = rules.iter().find(|r| r.uid == RULE_CAPACITY_FORECAST).unwrap();
+        assert_eq!(forecast.kind, RuleKind::Forecast);
+        assert_eq!(forecast.operator, Operator::Lt);
+        assert_eq!(forecast.threshold, 30.0);
+        assert_eq!(forecast.params.forecast_warning_days, 14.0);
+        assert_eq!(forecast.params.forecast_critical_days, 7.0);
+        assert!(matches!(
+            crate::alerting::capacity::select(&forecast.query),
+            crate::alerting::capacity::Selection::Families(ref all) if all.len() > 20
+        ));
+
+        for uid in ["latency_drift", "http_5xx_drift"] {
+            let drift = rules.iter().find(|r| r.uid == uid).unwrap();
+            assert_eq!(drift.kind, RuleKind::Drift);
+            assert_eq!(drift.operator, Operator::Ge);
+            assert!(drift.clear_threshold.is_some_and(|clear| clear < drift.threshold));
+            assert!(drift.params.drift_min_value > 0.0, "{uid}: tiny values must not alert");
+            assert!(drift.for_duration >= Duration::from_secs(600), "{uid}: minimal duration");
+        }
     }
 
     #[test]

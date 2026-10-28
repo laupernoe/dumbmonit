@@ -1,0 +1,56 @@
+# Mesures et vues du type « xcpng » (format : crates/collectors/src/catalog.rs).
+source: xcpng
+prefixes: [xcpng_]
+metrics:
+  - { name: xcpng_host_memory_used_bytes, label: "Host memory used", unit: "B" }
+  - { name: xcpng_sr_used_percent, label: "SR used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: xcpng_host_cpu_cores, label: "Host CPU cores" }
+  - { name: xcpng_host_memory_total_bytes, label: "Host memory total", unit: "B" }
+  - { name: xcpng_host_info, label: "Host", kind: info }
+  - { name: xcpng_host_enabled, label: "Host enabled", unit: "bool" }
+  - { name: xcpng_host_live, label: "Host live", unit: "bool" }
+  - { name: xcpng_hosts, label: "Hosts" }
+  - { name: xcpng_hosts_enabled, label: "Hosts enabled" }
+  - { name: xcpng_vm_power_state_info, label: "VM power state", kind: info }
+  - { name: xcpng_vm_vcpus, label: "VM vCPUs" }
+  - { name: xcpng_vm_memory_bytes, label: "VM memory", unit: "B" }
+  - { name: xcpng_vm_running, label: "VM running", unit: "bool" }
+  - { name: xcpng_vms, label: "VMs" }
+  - { name: xcpng_vms_running, label: "VMs running" }
+  - { name: xcpng_vm_ha_protected_down, label: "VM HA protected down", better: "lower" }
+  - { name: xcpng_sr_size_bytes, label: "SR size", unit: "B" }
+  - { name: xcpng_sr_used_bytes, label: "SR used", unit: "B" }
+  - { name: xcpng_srs, label: "SRs" }
+  - { name: xcpng_pool_info, label: "Pool", kind: info }
+  - { name: xcpng_pool_ha_enabled, label: "Pool HA enabled", unit: "bool" }
+  - { name: xcpng_pool_ha_host_failures_to_tolerate, label: "Pool HA host failures to tolerate" }
+  - { name: xcpng_pool_ha_overcommitted, label: "Pool HA overcommitted", unit: "bool" }
+  - { name: xcpng_sr_shared, label: "SR shared", unit: "bool" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - xcpng_vm_ha_protected_down
+      - xcpng_hosts
+      - xcpng_vms_running
+      - xcpng_vms
+      - xcpng_host_cpu_cores
+      - xcpng_host_memory_total_bytes
+      - xcpng_host_enabled
+      - xcpng_host_live
+      - xcpng_hosts_enabled
+      - xcpng_vm_vcpus
+      - xcpng_vm_memory_bytes
+      - xcpng_vm_running
+      - xcpng_sr_size_bytes
+      - xcpng_srs
+      - xcpng_pool_ha_enabled
+      - xcpng_pool_ha_host_failures_to_tolerate
+      - xcpng_pool_ha_overcommitted
+      - xcpng_sr_shared
+  - view: timeseries
+    title: "Host memory"
+    metrics: [xcpng_host_memory_used_bytes]
+  - view: timeseries
+    title: "Storage repositories used"
+    metrics: [xcpng_sr_used_percent]

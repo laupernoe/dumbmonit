@@ -1,0 +1,39 @@
+# Mesures et vues du type « plex » (format : crates/collectors/src/catalog.rs).
+source: selfhosted
+prefixes: [plex_]
+metrics:
+  - { name: plex_streams, label: "Streams" }
+  - { name: plex_stream_bandwidth_bits_per_second, label: "Stream bandwidth bits per second", unit: "bit/s" }
+  - { name: plex_transcodes, label: "Transcodes" }
+  - { name: plex_transcodes_video, label: "Transcodes video" }
+  - { name: plex_transcodes_hardware, label: "Transcodes hardware" }
+  - { name: plex_transcoder_active_video_sessions, label: "Transcoder active video sessions" }
+  - { name: plex_streams_remote, label: "Streams remote" }
+  - { name: plex_streams_paused, label: "Streams paused" }
+  - { name: plex_activities, label: "Activities" }
+  - { name: plex_libraries, label: "Libraries" }
+  - { name: plex_libraries_scanning, label: "Libraries scanning" }
+  - { name: plex_update_available, label: "Update available", unit: "bool", better: "higher" }
+  - { name: plex_claimed, label: "Claimed" }
+  - { name: plex_version_info, label: "Version", kind: info }
+  - { name: plex_scrape_errors, label: "Scrape errors", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - plex_streams_remote
+      - plex_streams_paused
+      - plex_activities
+      - plex_libraries
+      - plex_libraries_scanning
+      - plex_update_available
+      - plex_version_info
+  - view: timeseries
+    title: "Streams"
+    metrics: [plex_streams]
+  - view: timeseries
+    title: "Stream bandwidth"
+    metrics: [plex_stream_bandwidth_bits_per_second]
+  - view: timeseries
+    title: "Transcoding"
+    metrics: [plex_transcodes, plex_transcodes_video, plex_transcodes_hardware, plex_transcoder_active_video_sessions]

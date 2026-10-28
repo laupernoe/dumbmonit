@@ -1,0 +1,35 @@
+# Mesures et vues du type « aws » (format : crates/collectors/src/catalog.rs).
+source: aws
+prefixes: [aws_]
+metrics:
+  - { name: ec2_cpu_percent, label: "EC2 CPU", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: rds_cpu_percent, label: "RDS CPU", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: rds_connections, label: "RDS connections" }
+  - { name: rds_free_storage_bytes, label: "RDS free storage", unit: "B" }
+  - { name: ec2_instances, label: "EC2 instances" }
+  - { name: ec2_readable, label: "EC2 readable", unit: "bool" }
+  - { name: ec2_status_check_failed, label: "EC2 status check failed", better: "lower" }
+  - { name: rds_instances, label: "RDS instances" }
+  - { name: rds_readable, label: "RDS readable", unit: "bool" }
+  - { name: alarms_in_alarm, label: "Alarms in alarm" }
+  - { name: alarm_in_alarm, label: "Alarm in alarm", unit: "bool" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - alarms_in_alarm
+      - ec2_status_check_failed
+      - ec2_instances
+      - rds_instances
+      - ec2_readable
+      - rds_readable
+      - alarm_in_alarm
+  - view: timeseries
+    title: "Instance CPU"
+    metrics: [ec2_cpu_percent, rds_cpu_percent]
+  - view: timeseries
+    title: "Database connections"
+    metrics: [rds_connections]
+  - view: timeseries
+    title: "Database free storage"
+    metrics: [rds_free_storage_bytes]

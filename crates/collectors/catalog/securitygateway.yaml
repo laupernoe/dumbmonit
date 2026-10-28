@@ -1,0 +1,25 @@
+# Mesures et vues du type « securitygateway » (format : crates/collectors/src/catalog.rs).
+source: mdaemon
+prefixes: [securitygateway_]
+metrics:
+  - { name: securitygateway_service_up, label: "Service up", unit: "bool" }
+  - { name: securitygateway_service_response_seconds, label: "Service response time", unit: "s", better: "lower" }
+  - { name: securitygateway_api_up, label: "API up", unit: "bool" }
+  - { name: securitygateway_api_response_seconds, label: "API response time", unit: "s", better: "lower" }
+  - { name: securitygateway_counters_available, label: "Counters readable", unit: "bool" }
+  - { name: securitygateway_counter, label: "Counter", entity: "counter" }
+  - { name: securitygateway_info, label: "Security Gateway", kind: info }
+  - { name: securitygateway_scrape_duration_seconds, label: "Scrape duration", unit: "s" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - securitygateway_service_up
+      - securitygateway_api_up
+      - securitygateway_info
+  - view: timeseries
+    title: "Response time"
+    metrics: [securitygateway_service_response_seconds, securitygateway_api_response_seconds]
+  - view: timeseries
+    title: "Queues and sessions"
+    metrics: [securitygateway_counter]

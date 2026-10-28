@@ -16,6 +16,7 @@ pub mod aws;
 pub mod azure;
 pub mod blacklist;
 pub mod caddy;
+pub mod catalog;
 pub mod ceph;
 pub mod client_devices;
 pub mod cloud;
@@ -91,7 +92,9 @@ use std::collections::{BTreeMap, HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
-use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target, apply_identity};
+use dumbmonit_proto::{
+    Collector, Measures, MetricKind, ProbeError, Sample, Target, apply_identity,
+};
 
 /// Marge laissée à une sonde pour écrire son verdict après son propre délai.
 const PROBE_TIMEOUT_MARGIN: Duration = Duration::from_secs(2);
@@ -374,6 +377,15 @@ impl Registry {
         }
     }
 
+    /// Familles de mesures et vues du type `kind` : celles que son collecteur
+    /// déclare lui-même (les profils SNMP chargés), sinon celles du catalogue
+    /// embarqué (`catalog/`). `None` : l'interface garde son rendu générique.
+    pub fn measures(&self, kind: &str) -> Option<Measures> {
+        self.get(kind)
+            .and_then(|collector| collector.measures(kind))
+            .or_else(|| embedded_measures(kind))
+    }
+
     pub fn kinds(&self) -> Vec<Arc<str>> {
         let mut kinds: Vec<_> = self.collectors.keys().cloned().collect();
         kinds.extend(self.runtime_read().keys().cloned());
@@ -485,6 +497,18 @@ impl Registry {
         }
         Ok(samples)
     }
+}
+
+/// Le catalogue embarqué (`catalog/`), quand le paquet est construit avec.
+#[cfg(feature = "catalog")]
+fn embedded_measures(kind: &str) -> Option<Measures> {
+    catalog::embedded(kind)
+}
+
+/// Sans la fonctionnalité `catalog` (l'agent relais) : aucune vue déclarée.
+#[cfg(not(feature = "catalog"))]
+fn embedded_measures(_kind: &str) -> Option<Measures> {
+    None
 }
 
 #[cfg(test)]

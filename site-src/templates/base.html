@@ -7,14 +7,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>@@TITLE@@</title>
 <meta name="description" content="@@DESC@@">
-<meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#07080a">
 <link rel="canonical" href="@@URL@@">
 @@ALTERNATES@@
 <link rel="icon" href="@@ROOT@@favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="@@ROOT@@apple-touch-icon.png">
-<link rel="preload" href="@@ROOT@@assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="@@ROOT@@assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="@@ROOT@@assets/site.css">
 <script src="@@ROOT@@assets/site.js" defer></script>
 
@@ -41,15 +40,16 @@
 
 <header class="topbar">
 	<div class="wrap">
-		<a class="brand" href="@@LINK:@@" aria-label="{{k172}}"><img src="@@ROOT@@favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<a class="brand" href="@@LINK:@@" aria-label="{{k172}}"><img src="@@ROOT@@favicon.svg" alt="" width="28" height="28">DumbMonit</a>
 		<nav class="nav" id="site-nav" aria-label="{{k173}}">
 @@NAV@@
 			<a class="nav-extra" href="https://demo.dumbmonit.app">{{k008}}</a>
+			<a class="nav-extra" href="https://github.com/laupernoe/dumbmonit">{{k010}}</a>
 		</nav>
 		<div class="actions">
 @@SWITCHER@@
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">@@ICON:github@@<span>{{k010}}</span></a>
 			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">{{k008}}</a>
-			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">{{k010}}</a>
 			<button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="{{nav_menu}}"><span aria-hidden="true"></span></button>
 		</div>
 	</div>
@@ -61,21 +61,53 @@
 
 <footer>
 	<div class="wrap">
-		<p>{{k165}}</p>
-		<nav aria-label="{{k182}}">
-			<a href="@@LINK:features/@@">{{nav_features}}</a>
-			<a href="@@LINK:devices/@@">{{nav_devices}}</a>
-			<a href="@@LINK:install/@@">{{nav_install}}</a>
-			<a href="@@LINK:roadmap/@@">{{nav_roadmap}}</a>
-			<a href="@@LINK:community/@@">{{nav_community}}</a>
-			<a href="https://demo.dumbmonit.app">{{k008}}</a>
-			<a href="https://github.com/laupernoe/dumbmonit">{{k010}}</a>
-			<a href="@@DOCS@@">{{k164}}</a>
-			<a href="https://github.com/laupernoe/dumbmonit/releases">{{k166}}</a>
-			<a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">{{k167}}</a>
-			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">{{k168}}</a>
-			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">{{k169}}</a>
-		</nav>
+		<div class="foot-grid">
+			<div class="foot-about">
+				<p class="foot-brand"><img src="@@ROOT@@favicon.svg" alt="" width="24" height="24">DumbMonit</p>
+				<p>{{k165}}</p>
+				<p class="foot-ver"><a href="https://github.com/laupernoe/dumbmonit/releases">v@@VERSION@@</a></p>
+			</div>
+			<nav aria-labelledby="ft-product">
+				<h2 id="ft-product">{{ft_product}}</h2>
+				<ul>
+					<li><a href="@@LINK:features/@@">{{nav_features}}</a></li>
+					<li><a href="@@LINK:devices/@@">{{nav_integrations}}</a></li>
+					<li><a href="@@LINK:install/@@">{{nav_download}}</a></li>
+					<li><a href="@@LINK:roadmap/@@">{{nav_roadmap}}</a></li>
+					<li><a href="https://demo.dumbmonit.app">{{k008}}</a></li>
+				</ul>
+			</nav>
+			<nav aria-labelledby="ft-res">
+				<h2 id="ft-res">{{ft_resources}}</h2>
+				<ul>
+					<li><a href="@@DOCS@@">{{k164}}</a></li>
+					<li><a href="https://github.com/laupernoe/dumbmonit/releases">{{k166}}</a></li>
+					<li><a href="https://github.com/laupernoe/dumbmonit">{{k010}}</a></li>
+					<li><a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">{{k169}}</a></li>
+					<li><a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">{{k168}}</a></li>
+				</ul>
+			</nav>
+			<nav aria-labelledby="ft-com">
+				<h2 id="ft-com">{{nav_community}}</h2>
+				<ul>
+					<li><a href="@@LINK:community/@@">{{nav_community}}</a></li>
+					<li><a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md">{{co_contrib_t}}</a></li>
+					<li><a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">{{k167}}</a></li>
+					<li><a href="https://github.com/laupernoe/dumbmonit/issues/new/choose">{{k163}}</a></li>
+				</ul>
+			</nav>
+			<nav aria-labelledby="ft-lang">
+				<h2 id="ft-lang">{{k187}}</h2>
+@@FOOT_LANGS@@
+			</nav>
+			<div class="foot-support">
+				<h2>{{nav_support}}</h2>
+				<p>{{sup_home}}</p>
+				<p><a class="btn btn-secondary btn-sm" href="https://liberapay.com/laupernoe">{{sup_lp}}</a></p>
+				<p><a href="@@LINK:community/#support@@">{{sup_more}}</a></p>
+			</div>
+		</div>
+		<p class="foot-note">{{k154}}</p>
 	</div>
 </footer>
 

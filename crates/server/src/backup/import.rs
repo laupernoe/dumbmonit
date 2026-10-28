@@ -125,6 +125,7 @@ pub async fn restore(
     report.push(restore_teams(&mut tx, bundle).await?);
     report.push(restore_topology_corrections(&mut tx, bundle, &refs).await?);
     report.push(restore_topology_rules(&mut tx, bundle, &refs).await?);
+    report.push(restore_lun_links(&mut tx, bundle, &refs).await?);
     report.push(restore_dashboards(&mut tx, bundle).await?);
 
     report.push(restore_channels(&mut tx, cipher, bundle).await?);
@@ -147,6 +148,7 @@ pub async fn restore(
     report.push(restore_remediation_policies(&mut tx, bundle, &refs).await?);
     report.push(restore_netconfig_host_keys(&mut tx, bundle, &refs).await?);
     report.push(restore_netconfig_versions(&mut tx, cipher, bundle, &refs).await?);
+    report.push(restore_netscan_schedules(&mut tx, bundle, &refs).await?);
     restore_client_assignments(&mut tx, bundle, &mut clients_report).await?;
     report.push(clients_report);
 
@@ -300,6 +302,12 @@ async fn restore_targets(
             outcomes.insert(key.clone(), RestoreOutcome::Updated);
         }
 
+        if restore_container_policies(tx, *id, &target.container_policies).await?
+            && outcomes.get(&key) == Some(&RestoreOutcome::Skipped)
+        {
+            outcomes.insert(key.clone(), RestoreOutcome::Updated);
+        }
+
         let current = sqlx::query("SELECT parent_id, via_agent FROM targets WHERE id = ?")
             .bind(id)
             .fetch_one(&mut **tx)
@@ -327,6 +335,58 @@ async fn restore_targets(
         report.count(outcome);
     }
     Ok(report)
+}
+
+/// Rétablit les politiques automatiques des conteneurs d'une machine : chaque
+/// conteneur du lot est écrit, ceux que le lot ne cite pas restent tels quels.
+/// Rend `true` si quelque chose a changé.
+async fn restore_container_policies(
+    tx: &mut Transaction<'_, Sqlite>,
+    id: i64,
+    policies: &[BundleContainerPolicy],
+) -> Result<bool> {
+    let mut changed = false;
+    for policy in policies {
+        let current = sqlx::query(
+            "SELECT auto_restart, auto_update, prune_old_image, only_in_maintenance
+             FROM container_policies WHERE target_id = ? AND container = ?",
+        )
+        .bind(id)
+        .bind(&policy.container)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("lecture d'une politique de conteneur")?;
+        if let Some(row) = &current
+            && (row.try_get::<i64, _>("auto_restart")? != 0) == policy.auto_restart
+            && (row.try_get::<i64, _>("auto_update")? != 0) == policy.auto_update
+            && (row.try_get::<i64, _>("prune_old_image")? != 0) == policy.prune_old_image
+            && (row.try_get::<i64, _>("only_in_maintenance")? != 0) == policy.only_in_maintenance
+        {
+            continue;
+        }
+        sqlx::query(
+            "INSERT INTO container_policies
+                 (target_id, container, auto_restart, auto_update, prune_old_image,
+                  only_in_maintenance)
+             VALUES (?, ?, ?, ?, ?, ?)
+             ON CONFLICT (target_id, container) DO UPDATE SET
+                 auto_restart = excluded.auto_restart,
+                 auto_update = excluded.auto_update,
+                 prune_old_image = excluded.prune_old_image,
+                 only_in_maintenance = excluded.only_in_maintenance",
+        )
+        .bind(id)
+        .bind(&policy.container)
+        .bind(i64::from(policy.auto_restart))
+        .bind(i64::from(policy.auto_update))
+        .bind(i64::from(policy.prune_old_image))
+        .bind(i64::from(policy.only_in_maintenance))
+        .execute(&mut **tx)
+        .await
+        .context("restauration d'une politique de conteneur")?;
+        changed = true;
+    }
+    Ok(changed)
 }
 
 /// Rétablit le réglage multi-emplacements d'un moniteur. Un agent absent est
@@ -698,6 +758,10 @@ async fn upsert_rule(
             && row.try_get::<String, _>("severity")? == rule.severity
             && row.try_get::<String, _>("selector")? == selector
             && row.try_get::<String, _>("channels")? == channel_json
+            // Les réglages (anomalie, prévision, dérive) se comparent en JSON
+            // structuré : l'ordre des clés diffère entre la base et le lot.
+            && serde_json::from_str::<Value>(&row.try_get::<String, _>("params")?).ok().as_ref()
+                == Some(&rule.params)
             && row.try_get::<String, _>("unit")? == rule.unit
             && row.try_get::<Option<i64>, _>("repeat_secs")? == rule.repeat_secs
             && row.try_get::<Option<i64>, _>("escalate_after_secs")? == rule.escalate_after_secs
@@ -1764,6 +1828,138 @@ async fn restore_netconfig_host_keys(
     Ok(report)
 }
 
+/// Scans planifiés et appareils connus ou ignorés. Un scan déjà présent (même
+/// sous-réseau, même scanner) garde ses réglages ; le lot n'y ajoute que les
+/// décisions sur les appareils. Ne retire jamais rien. L'inventaire est marqué
+/// initialisé dès qu'il reçoit des appareils : le prochain balayage ne doit pas
+/// refaire tout le réseau « nouveau ».
+async fn restore_netscan_schedules(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+    refs: &HashMap<String, i64>,
+) -> Result<SectionReport> {
+    use crate::netinventory::{MAX_INTERVAL_SECS, MIN_INTERVAL_SECS, canonical_cidr};
+
+    let mut report = SectionReport::new("netscan_schedules");
+    for entry in &bundle.netscan_schedules {
+        let Ok(cidr) = canonical_cidr(&entry.cidr) else {
+            report.skipped += 1;
+            report.notes.push(format!("scheduled scan \"{}\" has an invalid network", entry.cidr));
+            continue;
+        };
+        let agent_id = match &entry.agent {
+            Some(reference) => match refs.get(reference).copied() {
+                Some(id) => Some(id),
+                None => {
+                    report.skipped += 1;
+                    report.notes.push(format!(
+                        "scheduled scan {cidr}: its relay agent ({reference}) is not in the backup."
+                    ));
+                    continue;
+                }
+            },
+            None => None,
+        };
+
+        let existing: Option<i64> = sqlx::query_scalar(
+            "SELECT id FROM netscan_schedules
+             WHERE cidr = ?1 AND IFNULL(agent_id, 0) = IFNULL(?2, 0)",
+        )
+        .bind(&cidr)
+        .bind(agent_id)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("recherche du scan planifié")?;
+        let (schedule_id, mut changed) = match existing {
+            Some(id) => (id, false),
+            None => {
+                let depth = if entry.depth == "extended" { "extended" } else { "standard" };
+                let id: i64 = sqlx::query_scalar(
+                    "INSERT INTO netscan_schedules
+                         (name, cidr, agent_id, interval_secs, depth, enabled)
+                     VALUES (?, ?, ?, ?, ?, ?) RETURNING id",
+                )
+                .bind(entry.name.chars().take(80).collect::<String>())
+                .bind(&cidr)
+                .bind(agent_id)
+                .bind(entry.interval_secs.clamp(MIN_INTERVAL_SECS, MAX_INTERVAL_SECS))
+                .bind(depth)
+                .bind(entry.enabled)
+                .fetch_one(&mut **tx)
+                .await
+                .context("création du scan planifié")?;
+                (id, true)
+            }
+        };
+
+        for device in &entry.devices {
+            let row: Option<(i64, i64, i64)> = sqlx::query_as(
+                "SELECT id, known, ignored FROM netscan_devices
+                 WHERE schedule_id = ? AND ident = ?",
+            )
+            .bind(schedule_id)
+            .bind(&device.ident)
+            .fetch_optional(&mut **tx)
+            .await
+            .context("recherche de l'appareil")?;
+            match row {
+                Some((_, 1, ignored)) if (ignored != 0) == device.ignored => {}
+                Some((id, _, _)) => {
+                    sqlx::query(
+                        "UPDATE netscan_devices SET known = 1, ignored = ?, mac_change_from = NULL
+                         WHERE id = ?",
+                    )
+                    .bind(device.ignored)
+                    .bind(id)
+                    .execute(&mut **tx)
+                    .await
+                    .context("mise à jour de l'appareil")?;
+                    sqlx::query("UPDATE netscan_ports SET known = 1 WHERE device_id = ?")
+                        .bind(id)
+                        .execute(&mut **tx)
+                        .await
+                        .context("ports de l'appareil")?;
+                    changed = true;
+                }
+                None => {
+                    sqlx::query(
+                        "INSERT INTO netscan_devices
+                             (schedule_id, ident, mac, ip, hostname, vendor, known, ignored,
+                              first_seen, last_seen)
+                         VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?)",
+                    )
+                    .bind(schedule_id)
+                    .bind(&device.ident)
+                    .bind(&device.mac)
+                    .bind(&device.ip)
+                    .bind(&device.hostname)
+                    .bind(&device.vendor)
+                    .bind(device.ignored)
+                    .bind(&device.first_seen)
+                    .bind(&device.last_seen)
+                    .execute(&mut **tx)
+                    .await
+                    .context("création de l'appareil")?;
+                    changed = true;
+                }
+            }
+        }
+        if !entry.devices.is_empty() {
+            sqlx::query("UPDATE netscan_schedules SET initialized = 1 WHERE id = ?")
+                .bind(schedule_id)
+                .execute(&mut **tx)
+                .await
+                .context("initialisation de l'inventaire")?;
+        }
+        report.count(match (existing.is_some(), changed) {
+            (false, _) => RestoreOutcome::Created,
+            (true, true) => RestoreOutcome::Updated,
+            (true, false) => RestoreOutcome::Skipped,
+        });
+    }
+    Ok(report)
+}
+
 /// Versions des configurations réseau : rechiffrées avec la clé de cette
 /// instance, empreinte de comparaison recalculée. Une version déjà présente
 /// (même équipement, même date de relevé) est laissée.
@@ -2286,6 +2482,67 @@ async fn restore_topology_corrections(
         match result {
             Ok(_) => report.count(RestoreOutcome::Created),
             Err(error) => report.refused(&format!("map correction on \"{to}\""), &error.into()),
+        }
+    }
+    Ok(report)
+}
+
+/// Liens de LUN, par (NAS, LUN) : identique, laissé ; différent, mis à jour.
+async fn restore_lun_links(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+    refs: &HashMap<String, i64>,
+) -> Result<SectionReport> {
+    let mut report = SectionReport::new("lun_links");
+    for entry in &bundle.lun_links {
+        let target = refs.get(&entry.target).copied();
+        let consumer = refs.get(&entry.consumer).copied();
+        let (Some(target), Some(consumer)) = (target, consumer) else {
+            report.skipped += 1;
+            report.notes.push(format!(
+                "LUN link \"{}\" on \"{}\": a device it points at is not in this instance",
+                entry.lun, entry.target
+            ));
+            continue;
+        };
+        let existing: Option<(i64, String, String)> = sqlx::query_as(
+            "SELECT consumer_target_id, family, entity FROM lun_links
+             WHERE target_id = ? AND lun = ?",
+        )
+        .bind(target)
+        .bind(&entry.lun)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("recherche du lien de LUN")?;
+        let wanted = (consumer, entry.family.clone(), entry.entity.clone());
+        let outcome = match &existing {
+            Some(row) if *row == wanted => {
+                report.count(RestoreOutcome::Skipped);
+                continue;
+            }
+            Some(_) => RestoreOutcome::Updated,
+            None => RestoreOutcome::Created,
+        };
+        let result = sqlx::query(
+            "INSERT INTO lun_links (target_id, lun, consumer_target_id, family, entity, author)
+             VALUES (?, ?, ?, ?, ?, ?)
+             ON CONFLICT (target_id, lun) DO UPDATE SET
+                consumer_target_id = excluded.consumer_target_id,
+                family = excluded.family,
+                entity = excluded.entity,
+                author = excluded.author",
+        )
+        .bind(target)
+        .bind(&entry.lun)
+        .bind(consumer)
+        .bind(&entry.family)
+        .bind(&entry.entity)
+        .bind(&entry.author)
+        .execute(&mut **tx)
+        .await;
+        match result {
+            Ok(_) => report.count(outcome),
+            Err(error) => report.refused(&format!("LUN link \"{}\"", entry.lun), &error.into()),
         }
     }
     Ok(report)

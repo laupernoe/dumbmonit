@@ -689,3 +689,80 @@ async fn le_domaine_public_dune_page_traverse_le_lot() {
     assert_eq!(page["slug"], "acme");
     assert_eq!(page["domain"], "status.acme.example");
 }
+
+/// Les règles de prévision et de dérive gardent leurs réglages (paliers de
+/// jours, profondeur, sens de la dérive) à travers le lot, et une restauration
+/// remet des réglages modifiés depuis, même quand rien d'autre n'a bougé.
+#[tokio::test]
+async fn les_reglages_de_prevision_et_de_derive_traversent_le_lot() {
+    let source = setup(SECRET_A).await;
+    let (status, forecast) = source
+        .request(
+            "POST",
+            "/api/alerts/rules",
+            Some(json!({
+                "name": "Pools filling up", "kind": "forecast", "query": "truenas_pool,zfs_pool",
+                "operator": "<", "threshold": 45.0, "for_secs": 3600, "severity": "info",
+                "unit": "d",
+                "params": {
+                    "forecast_window_days": 14,
+                    "forecast_warning_days": 21,
+                    "forecast_critical_days": 3
+                }
+            })),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CREATED, "forecast rule refused: {forecast}");
+    let (status, drift) = source
+        .request(
+            "POST",
+            "/api/alerts/rules",
+            Some(json!({
+                "name": "Traffic collapsing", "kind": "drift",
+                "query": "dumbmonit_if_in_bps", "operator": ">=", "threshold": 4.0,
+                "for_secs": 900, "unit": "×",
+                "params": { "drift_direction": "down", "drift_weeks": 2, "drift_min_value": 1000 }
+            })),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CREATED, "drift rule refused: {drift}");
+    let bundle = source.export(PHRASE).await;
+
+    let target = setup(SECRET_B).await;
+    let (status, report) = target.restore(&bundle, PHRASE, true).await;
+    assert_eq!(status, StatusCode::OK, "restore refused: {report}");
+
+    let find = async |name: &str| {
+        let (_, rules) = target.request("GET", "/api/alerts/rules", None).await;
+        rules.as_array().expect("rules").iter().find(|r| r["name"] == name).cloned().expect(name)
+    };
+    let restored = find("Pools filling up").await;
+    assert_eq!(restored["kind"], "forecast");
+    assert_eq!(restored["query"], "truenas_pool,zfs_pool");
+    assert_eq!(restored["threshold"], 45.0);
+    assert_eq!(restored["params"]["forecast_window_days"], 14);
+    assert_eq!(restored["params"]["forecast_warning_days"], 21.0);
+    assert_eq!(restored["params"]["forecast_critical_days"], 3.0);
+    let restored = find("Traffic collapsing").await;
+    assert_eq!(restored["kind"], "drift");
+    assert_eq!(restored["params"]["drift_direction"], "down");
+    assert_eq!(restored["params"]["drift_weeks"], 2);
+    assert_eq!(restored["params"]["drift_min_value"], 1000.0);
+
+    // Rien n'a changé : une seconde restauration ne réécrit rien, réglages
+    // compris (la base et le lot ne rangent pas les clés dans le même ordre).
+    let uid = forecast["uid"].as_str().expect("uid").to_string();
+    let (_, again) = target.restore(&bundle, PHRASE, true).await;
+    assert_eq!(again["updated"], 0, "nothing changed: {again}");
+
+    // Réglages retouchés sur la destination seulement : la restauration les remet.
+    sqlx::query("UPDATE alert_rules SET params = '{}' WHERE uid = ?")
+        .bind(&uid)
+        .execute(&target.pool)
+        .await
+        .expect("params reset");
+    let (_, third) = target.restore(&bundle, PHRASE, true).await;
+    assert!(third["updated"].as_i64().unwrap() >= 1, "params differ: {third}");
+    let restored = find("Pools filling up").await;
+    assert_eq!(restored["params"]["forecast_warning_days"], 21.0);
+}

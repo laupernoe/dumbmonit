@@ -17,7 +17,7 @@
 //! ni vers un service tiers : elle est réduite à son pays (base locale, voir
 //! [`crate::geoip`]) ou à « réseau local » dès sa lecture.
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::sync::{Arc, LazyLock, Mutex};
 use std::time::{Duration, Instant};
 
@@ -333,6 +333,38 @@ pub fn summarize(
     (totals, countries, rules, ports, recent)
 }
 
+/// Connexions entrantes bloquées par pays dans la fenêtre : ce que la carte
+/// des menaces (`threats.rs`) lit. Les connexions sortantes (un poste du
+/// réseau vers l'extérieur) et les lignes sans pays n'y comptent pas.
+pub fn count_blocked(events: &VecDeque<LiveEvent>, now: i64) -> BTreeMap<String, u64> {
+    let mut countries = BTreeMap::new();
+    for e in events {
+        let country = e.country.as_str();
+        let is_country = country.len() == 2 && country.bytes().all(|b| b.is_ascii_uppercase());
+        if e.action == "block" && !e.outbound && e.at >= now - WINDOW_SECS && is_country {
+            *countries.entry(country.to_string()).or_insert(0) += 1;
+        }
+    }
+    countries
+}
+
+/// Les pare-feu dont la carte en direct tourne ou a tourné dans le quart
+/// d'heure, avec leurs blocages par pays. Rien n'est lu sur le pare-feu ici :
+/// seulement les fenêtres déjà en mémoire.
+pub fn blocked_by_country(now: i64) -> Vec<(TargetId, BTreeMap<String, u64>)> {
+    let feeds: Vec<(TargetId, Arc<Mutex<Feed>>)> = {
+        let feeds = FEEDS.lock().unwrap_or_else(|p| p.into_inner());
+        feeds.iter().map(|(id, feed)| (*id, feed.clone())).collect()
+    };
+    let mut out: Vec<(TargetId, BTreeMap<String, u64>)> = feeds
+        .into_iter()
+        .map(|(id, feed)| (id, count_blocked(&lock(&feed).events, now)))
+        .filter(|(_, countries)| !countries.is_empty())
+        .collect();
+    out.sort_by_key(|(id, _)| *id);
+    out
+}
+
 #[derive(Debug, Deserialize)]
 struct LiveQuery {
     #[serde(default)]
@@ -439,6 +471,39 @@ mod tests {
 
     fn lines() -> Vec<LogEntry> {
         serde_json::from_str(LOG).expect("journal")
+    }
+
+    #[test]
+    fn seuls_les_blocages_entrants_recents_comptent_par_pays() {
+        fn event(at: i64, action: &'static str, outbound: bool, country: &str) -> LiveEvent {
+            LiveEvent {
+                seq: 0,
+                at,
+                action,
+                outbound,
+                country: country.into(),
+                proto: "tcp".into(),
+                port: Some(22),
+                rule: String::new(),
+            }
+        }
+        let now = 10_000;
+        let events: VecDeque<LiveEvent> = [
+            event(now - 10, "block", false, "CN"),
+            event(now - 20, "block", false, "CN"),
+            event(now - 30, "block", false, "RU"),
+            event(now - 40, "pass", false, "RU"),
+            event(now - 50, "block", true, "US"),
+            event(now - 60, "block", false, "local"),
+            event(now - 70, "block", false, "unknown"),
+            event(now - WINDOW_SECS - 1, "block", false, "BR"),
+        ]
+        .into_iter()
+        .collect();
+        let counts = count_blocked(&events, now);
+        assert_eq!(counts.get("CN"), Some(&2));
+        assert_eq!(counts.get("RU"), Some(&1));
+        assert_eq!(counts.len(), 2, "ni sortant, ni local, ni hors fenêtre : {counts:?}");
     }
 
     #[test]

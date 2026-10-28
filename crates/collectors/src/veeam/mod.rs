@@ -262,6 +262,34 @@ fn instant_seconds(raw: &str) -> Option<i64> {
     chrono::DateTime::parse_from_rfc3339(raw.trim()).ok().map(|dt| dt.timestamp())
 }
 
+/// Durée en secondes de la session terminée la plus récente de chaque travail
+/// (`jobId`) : `endTime - creationTime`. Une session en cours (sans `endTime`) ou
+/// sans travail (sauvegarde de configuration) est ignorée.
+fn last_durations(sessions: &Section) -> BTreeMap<String, f64> {
+    let Section::Read(sessions) = sessions else { return BTreeMap::new() };
+    let mut latest: BTreeMap<String, (i64, f64)> = BTreeMap::new();
+    for session in data(sessions) {
+        let Some(job) = text(session, "jobId") else { continue };
+        let Some(start) =
+            session.get("creationTime").and_then(Value::as_str).and_then(instant_seconds)
+        else {
+            continue;
+        };
+        let Some(end) = session.get("endTime").and_then(Value::as_str).and_then(instant_seconds)
+        else {
+            continue;
+        };
+        if end < start {
+            continue;
+        }
+        let entry = latest.entry(job.to_string()).or_insert((i64::MIN, 0.0));
+        if start > entry.0 {
+            *entry = (start, (end - start) as f64);
+        }
+    }
+    latest.into_iter().map(|(job, (_, duration))| (job, duration)).collect()
+}
+
 /// Un appareil client par objet protégé, d'après ses points de restauration :
 /// voir le commentaire de module. `by_name` garde, pour chaque nom d'objet, la
 /// plateforme et la date du point le plus récent déjà rencontré.
@@ -305,6 +333,10 @@ pub fn samples(r: &Replies, stale_days: f64, ts_ms: i64) -> Vec<Sample> {
         out.push(g("veeam_version_info", 1.0).with_label("version", version));
     }
 
+    // Durée de la dernière session terminée de chaque travail (sessions des 24
+    // dernières heures), par identifiant de travail : c'est ce qui nourrit la
+    // durée au survol de la matrice jobs × jours.
+    let durations = last_durations(&r.sessions);
     let (mut jobs, mut failed, mut warning, mut running, mut disabled) = (0, 0, 0, 0, 0);
     for job in data(&r.jobs) {
         let Some(name) = text(job, "name") else { continue };
@@ -336,6 +368,27 @@ pub fn samples(r: &Replies, stale_days: f64, ts_ms: i64) -> Vec<Sample> {
             job.get("lastRun").and_then(Value::as_str).and_then(|t| age_seconds(t, ts_ms))
         {
             out.push(named(g("veeam_job_last_run_age_seconds", age)));
+        }
+        // « Dernière réussite » : une exécution en avertissement a sauvegardé ses
+        // données, une exécution en échec non. Sans réussite connue, pas de série :
+        // c'est `veeam_job_failed` qui parle. Le travail désactivé n'en émet pas.
+        if enabled
+            && (result.eq_ignore_ascii_case("Success") || result.eq_ignore_ascii_case("Warning"))
+            && let Some(age) =
+                job.get("lastRun").and_then(Value::as_str).and_then(|t| age_seconds(t, ts_ms))
+        {
+            out.push(named(g("veeam_job_last_success_age_seconds", age)));
+        }
+        // Prochaine exécution planifiée : sert à ne juger « trop ancien » que les
+        // travaux qui tournent au moins tous les jours.
+        if enabled
+            && let Some(left) =
+                job.get("nextRun").and_then(Value::as_str).and_then(|t| seconds_until(t, ts_ms))
+        {
+            out.push(named(g("veeam_job_next_run_seconds", left)));
+        }
+        if let Some(duration) = text(job, "id").and_then(|id| durations.get(id)) {
+            out.push(named(g("veeam_job_last_duration_seconds", *duration)));
         }
         if is_running && let Some(progress) = number(job.get("progressPercent")) {
             out.push(named(g("veeam_job_progress_percent", progress)));
@@ -506,6 +559,25 @@ mod tests {
         );
         assert_eq!(value(&s, "veeam_sessions_failed_24h", &[]), 1.0);
         assert_eq!(value(&s, "veeam_sessions_warning_24h", &[]), 1.0);
+        // Dernière réussite : seulement pour une exécution réussie ou en avertissement.
+        let success = value(&s, "veeam_job_last_success_age_seconds", &[("job", "Daily VMs")]);
+        assert!((success - age).abs() < 0.01, "{success}");
+        assert!(
+            find(&s, "veeam_job_last_success_age_seconds", &[("job", "File server")]).is_none(),
+            "a failed last run is not a success"
+        );
+        assert!(
+            find(&s, "veeam_job_last_success_age_seconds", &[("job", "Old SQL job")]).is_none(),
+            "a disabled job emits no success age"
+        );
+        assert_eq!(value(&s, "veeam_job_next_run_seconds", &[("job", "Daily VMs")]), 16.0 * 3600.0);
+        // Durée de la dernière session terminée : 01:00:12 -> 01:24:40, 02:00:03 -> 02:03:51.
+        assert_eq!(value(&s, "veeam_job_last_duration_seconds", &[("job", "Daily VMs")]), 1468.0);
+        assert_eq!(value(&s, "veeam_job_last_duration_seconds", &[("job", "File server")]), 228.0);
+        assert!(
+            find(&s, "veeam_job_last_duration_seconds", &[("job", "Offsite copy")]).is_none(),
+            "a running session has no end time"
+        );
         let nas = value(&s, "veeam_repository_used_percent", &[("repository", "NAS repository")]);
         assert!((nas - 96.0).abs() < 0.01, "{nas}");
         assert!(

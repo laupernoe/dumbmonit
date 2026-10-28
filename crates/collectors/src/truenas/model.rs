@@ -316,6 +316,19 @@ pub struct Dataset {
     pub quota: Option<ZfsProp>,
     #[serde(default)]
     pub refquota: Option<ZfsProp>,
+    /// `FILESYSTEM` ou `VOLUME` (un zvol).
+    #[serde(default, rename = "type")]
+    pub kind: Option<String>,
+    /// Taille d'un zvol.
+    #[serde(default)]
+    pub volsize: Option<ZfsProp>,
+    /// Réservation d'un zvol : sa taille (et un peu plus) s'il est épais, rien
+    /// s'il est fin (« sparse »).
+    #[serde(default)]
+    pub refreservation: Option<ZfsProp>,
+    /// Ce qui est réellement écrit dans le jeu de données, sans les instantanés.
+    #[serde(default)]
+    pub referenced: Option<ZfsProp>,
     /// Présent avec `extra.snapshots_count=true`.
     #[serde(default)]
     pub snapshot_count: Option<Num>,

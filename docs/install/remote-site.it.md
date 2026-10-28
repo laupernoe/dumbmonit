@@ -40,8 +40,10 @@ richiesta dell'agente relè fino a 25 secondi mentre aspetta il lavoro (long pol
 
 ## 2. Crea un token di iscrizione
 
-**Impostazioni → Agenti → Nuovo token**, o aggiungi un monitor di tipo *agente*. Copia il
-valore `dmon_…`: viene mostrato una sola volta.
+Aggiungi un monitor, scegli **Server con l'agente** e spunta *Questo agente è un relay per un sito
+remoto* (oppure apri l'ingresso *Relay* della pagina di aggiunta). Dai un nome al sito e crea il
+token: porta con sé la modalità relay e il sito, quindi non c'è nulla da modificare sulla macchina.
+Copia il valore `dmon_…`: viene mostrato una sola volta; la pagina attende poi il primo invio.
 
 ## 3. Avvia l'agente relè al sito remoto
 
@@ -101,6 +103,62 @@ Da allora:
 - la pagina dell'agente mostra *Relay for N devices*, e `GET /api/relays` elenca
   gli agenti relè con il loro sito e conteggio.
 
+## 5. Installare agent dietro il relay {#5-install-agents-behind-the-relay}
+
+Un sito dietro un firewall ha spesso server che non riescono affatto a raggiungere DumbMonit:
+esce solo il relay. Quei server possono comunque eseguire l'agent completo (sistema, dischi,
+servizi, container, backup): si collegano al **gateway** del relay, e il relay porta la loro
+connessione fino al server.
+
+```
+ remote site (only the relay goes out)                     head office
+ ┌────────────┐  TLS 1.3, mTLS   ┌──────────────┐  tunnel inside the  ┌──────────────────┐
+ │ agent      │═════════════════▶│ relay agent  │═ relay's own mTLS ═▶│ DumbMonit server │
+ │ (server A) │  to the relay's  │  gateway     │  connection, TCP    │  agent port 8443 │
+ └────────────┘  port 8443       └──────────────┘  8443 outbound      └──────────────────┘
+        └──────────── one TLS session, end to end, agent ⇄ server ─────────────┘
+```
+
+**In DumbMonit**, aggiungi un monitor, scegli **Server con l'agente** e, sotto *Come raggiunge la
+macchina questo server?*, scegli **Tramite &lt;relay&gt; (sito)**. Indica l'indirizzo con cui il
+sito raggiunge il relay (un IP o un nome locale). I comandi mostrati — Linux/macOS, Windows,
+Docker — puntano allora al gateway del relay
+(`--url=http://192.168.10.5:8443 --tls-url=https://192.168.10.5:8443`) e portano ancora
+l'impronta dell'autorità di certificazione del **server**. Il percorso attende poi la prima
+connessione e ti lascia dare un nome alla macchina, metterla in una cartella e collocarla in una
+sede senza lasciare la pagina. Da un sito in *Aggiungi per sito*, **Server con l'agente**
+preseleziona il relay di quel sito; la pagina del relay stesso ha **Installa un agente attraverso
+di esso**.
+
+Scegliere un relay per un'installazione gli chiede di aprire il suo gateway (sulla porta 8443 per
+impostazione predefinita) al prossimo invio. Il pannello *Relay* della pagina del relay mostra il
+gateway — *In ascolto sulla porta 8443 — 3 agent collegati* — e permette di cambiare porta e
+indirizzo, o di chiuderlo. Apri quella porta sul firewall del relay stesso, **solo verso la rete
+del sito**. Su un relay Docker, pubblica la porta (`-p 8443:8443`, o i `ports:` commentati di
+`docker-compose.agent.yml`). `gateway_listen: 0.0.0.0:9443` nell'`agent.yaml` del relay
+(`DUMBMONIT_AGENT_GATEWAY_LISTEN`) prevale sull'impostazione dell'interfaccia.
+
+Cosa passa attraverso il relay:
+
+- **Il canale cifrato dell'agent**, intatto. Il relay riconosce un ClientHello TLS e copia i
+  byte, nei due sensi, in un tunnel che apre verso la porta agent del server con il *proprio*
+  certificato client (un upgrade HTTP su `/api/agent/relay/tunnel`). Il server esegue allora
+  l'handshake TLS 1.3 con l'agent del sito come se si fosse collegato direttamente: certificato
+  client dell'agent, autorità fissata, token e segreto di associazione sono verificati dal server,
+  da un capo all'altro. La registrazione segue la stessa strada.
+- **L'installer e il binario**, che il relay recupera dal server sul proprio canale e serve sulla
+  stessa porta (solo `/install.sh`, `/install.ps1`, `/download/<file>`). Il comando di
+  installazione porta lo SHA-256 di ogni binario: lo script rifiuta qualsiasi altro.
+
+Il server registra, per ogni agent, il relay attraverso cui si collega. La pagina dell'agent dice
+*Raggiunge questo server tramite il relay …*; la mappa della topologia disegna il relay come suo
+genitore; e quando il relay va giù, gli agent dietro di esso appaiono come `suppressed` dal relay,
+non come tanti guasti separati. Un agent che in seguito si collega direttamente (o tramite un
+altro relay) viene aggiornato al suo invio successivo.
+
+Il kit Active Directory offre la stessa scelta: sotto **Route**, scegli il relay, e i server del
+dominio scaricano l'agent da esso e inviano i dati attraverso di esso.
+
 ## Avviso quando l'agente relè è inattivo
 
 Un agente relè che rimane silenzioso porta i suoi monitor con sé: i loro probe si fermano, e
@@ -115,7 +173,12 @@ entrambi sono inattivi.
 
 - Un agente relè per monitor. Un monitor sottoposto a probe dall'agente relè non viene
   anche sottoposto a probe dal server.
-- I monitor agente stessi non possono essere inoltrati: inoltrano le loro stesse metriche.
+- I monitor agent non vengono mai sondati tramite un relay (inviano le proprie metriche); un
+  agent può invece *collegarsi* tramite il gateway di un relay (vedi sopra). Un relay si collega
+  sempre direttamente: non esiste un relay dietro un relay.
+- Il gateway di un relay accetta per impostazione predefinita 64 connessioni alla volta e 4 MiB/s
+  per tunnel e direzione (`gateway_max_connections`, `gateway_rate_kib`); il server accetta 256
+  tunnel per relay.
 - L'agente relè esegue al massimo 8 probe per volta; un probe è limitato dal
   timeout del probe del server (`DUMBMONIT_PROBE_TIMEOUT_SECS`), limitato a 120 s su
   l'agente.

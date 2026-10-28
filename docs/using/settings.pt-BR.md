@@ -2,31 +2,32 @@
 
 ![Configurações: sete abas, aqui Minha conta com aparência, conta e segurança e notificações push](../assets/screenshots/settings-light.png){ loading=lazy }
 
-Configurações mantém o que é administrativo: sua conta, quem pode entrar e como, os tokens que permitem agentes e assistentes entrarem, fazer backup da instância, o tema, e a saúde do servidor. Está dividida em sete abas, cada uma com seu próprio endereço. Uma trilha lateral em tela larga, uma faixa de chips em um celular e uma busca sobre os nomes das seções ajudam a encontrar uma seção.
+As Configurações reúnem o que é administrativo: a própria instância, sua conta, quem pode entrar e como, os agentes, os canais de notificação, o backup da instância e a saúde do servidor. Elas são divididas em sete abas, cada uma com seu próprio endereço. Uma barra em tela larga, uma fileira de chips no celular e uma busca pelos nomes das seções ajudam a encontrar uma seção.
 
 | Aba | Endereço | O que contém |
 |---|---|---|
-| Minha conta | `/settings/account` | Aparência, Conta e segurança (senha, dois fatores, registro de segurança), Notificações push |
-| Equipe e acesso | `/settings/team` | Usuários, Login único |
-| Monitoramento | `/settings/monitoring` | Agentes, Pacotes de integração, [Pontuação de segurança](security-score.md) |
-| Notificações e relatórios | `/settings/notifications` | Canais, Política de notificações, Horário de silêncio ([Canais de notificação](../notifications.md)), Relatórios |
-| Páginas de status | `/settings/status` | Páginas de status e anúncios ([Páginas de status](status-pages.md)) |
-| Tela de parede | `/settings/wall` | Modo parede, Música da parede, Notícias do mural ([Modo parede](overview.md#wall-mode)) |
-| Sistema | `/settings/system` | Backup, O próprio DumbMonit, API e assistentes, Sobre |
+| Geral | `/settings/general` | Nome da instância, idioma e fuso horário, o assistente de configuração ([Interface e assistente de configuração](product-modes.md)) |
+| Minha conta | `/settings/account` | Idioma, Conta e segurança (senha, dois fatores, registro de segurança), Notificações push, Contatos de plantão e horário de silêncio ([Plantão](../alerting/oncall.md)) |
+| Equipe e acesso | `/settings/team` | Usuários, Equipes, Clientes, Login único, SAML, SCIM, LDAP |
+| Monitoramento | `/settings/monitoring` | Agentes, Pacotes de integração, [Pontuação de segurança](security-score.md), Locais |
+| Notificações | `/settings/notifications` | Canais, Política de notificações ([Canais de notificação](../notifications.md)) |
+| Tela de parede | `/settings/wall` | Modo parede: o que mostra e como abrir ([Modo parede](wall.md)) |
+| Sistema | `/settings/system` | Backup, Arquivos de configuração, O próprio DumbMonit, Dados e retenção, Logs, API e assistentes, Sobre |
 
-Cada seção mantém sua âncora: `/settings#agents` redireciona para `/settings/monitoring#agents`. Os links antigos (`/alerts#notifications`, `/status`) também redirecionam para o novo lugar.
+Cada seção mantém sua âncora: `/settings#agents` redireciona para `/settings/monitoring#agents`. Os links antigos (`/alerts#notifications`) também redirecionam para o novo lugar. As páginas de status e os relatórios não estão mais nas Configurações: eles têm páginas próprias, **Páginas de status** (`/status`) e **Relatórios** (`/reports`); `/settings/status` e `/settings/reports` redirecionam para lá. A música, as notícias e os widgets da parede deixaram de existir: seus links antigos (`#music`, `#news`, `#widgets`) abrem a aba Tela de parede.
 
 ## Aparência {#appearance}
 
-Três blocos, cada um pré-visualizando seu próprio tema: **Sistema** (segue
-seu monitor e muda com ele), **Dia** (o tema "papel de gráfico") e
-**Noite** (o tema "radar"). A escolha é armazenada no navegador. O
-alternador no cabeçalho e o *Alternar tema* da paleta de comandos mudam
-entre dia e noite.
+O idioma da interface, salvo neste navegador. O console tem uma única aparência
+escura, então não há tema para escolher; as páginas de status públicas mantêm
+seus temas claro e escuro.
 
-**Abrir modo parede** fica na parte inferior da seção: o boletim apenas,
-em tela cheia, para um monitor na sala. ++esc++ o deixa, e a paleta de
-comandos o abre de qualquer lugar — veja [Modo parede](overview.md#wall-mode).
+## Tela de parede {#wall}
+
+**Abrir o modo parede**: o painel do console, em tela cheia, para um monitor na
+sala. ++esc++ sai, e a paleta de comandos abre de qualquer lugar. A parede não
+tem mais música, notícias nem widgets; se quiser, uma cidade à noite pode ficar
+atrás do veredito. Veja [Modo parede](wall.md).
 
 ## Conta e segurança {#account--security}
 
@@ -180,20 +181,17 @@ como está.
 
 ## Agentes {#agents}
 
-Tokens de cadastro para o
-[agente Linux, macOS, FreeBSD e Windows](../devices/agent.md). Crie um com
-um nome ("Servidor de arquivos", "Frota doméstica"): o token é mostrado uma
-vez, com os comandos de instalação Linux e Windows prontos para copiar.
-Cada comando carrega os checksums SHA-256 dos binários de agente que este
-servidor entrega, e o instalador recusa um download que não corresponda;
-os checksums também são listados abaixo dos comandos, para comparar
-manualmente. A lista mostra o prefixo de cada token, data de criação,
-último uso e se foi revogado. **Revogar** para todo agente usando esse
-token em seu próximo envio.
+Só o que é comum a todos os [agentes](../devices/agent.md), para os
+administradores: o canal criptografado dos agentes (certificados e sua
+autoridade, veja [Segurança do agente](../install/agent-security.md)), as
+atualizações automáticas dos agentes e os tokens de inscrição já emitidos. Cada
+token mostra seu escopo, a data de criação e o último uso; **Revogar** para
+todos os agentes que o usam no próximo envio, sem apagar os monitoramentos.
 
-Um token pode cadastrar várias máquinas. Revogá-lo não exclui os
-monitores. Visualizadores veem a lista e a seção lê *Visualizador —
-somente leitura*; criar e revogar são para administradores.
+Adicionar uma máquina (token, comando de instalação, primeira conexão, rota por
+um relay, kit do Active Directory) acontece no fluxo de adição, **Novo
+monitoramento → Agente** (`/targets/new?kind=agent`), não aqui. Os próprios
+agentes têm suas páginas.
 
 ## Pontuação de segurança {#security-score}
 

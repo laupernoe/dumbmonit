@@ -93,12 +93,7 @@ impl Principal {
 #[derive(Clone)]
 pub struct CurrentPrincipal(pub Principal);
 
-/// Écritures que chacun peut faire sans être admin : sur son propre compte, et
-/// les deux gestes d'un écran mural, qui tourne volontiers sous un compte
-/// lecteur — rapporter l'état de son enceinte Spotify, et faire jouer le compte
-/// Spotify dessus (« Play here »). Ce second geste n'ouvre rien de neuf : le
-/// mur d'un lecteur reçoit déjà un jeton d'accès Spotify qui le permet
-/// (`/music/spotify/token`). Ces deux routes refusent les jetons d'API.
+/// Écritures que chacun peut faire sans être admin : sur son propre compte.
 const SELF_SERVICE: &[&str] = &[
     "/auth/logout",
     "/auth/password",
@@ -107,8 +102,6 @@ const SELF_SERVICE: &[&str] = &[
     "/auth/totp/verify",
     "/auth/passkeys/register/begin",
     "/auth/passkeys/register/finish",
-    "/music/speaker/report",
-    "/music/speaker/play",
 ];
 
 /// Écritures ouvertes au rôle `operator`, en plus de [`SELF_SERVICE`] : le

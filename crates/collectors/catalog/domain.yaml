@@ -1,0 +1,24 @@
+# Mesures et vues du type « domain » (format : crates/collectors/src/catalog.rs).
+source: domain
+prefixes: [domain_]
+metrics:
+  - { name: domain_expiry_days, label: "Expiry days", unit: "days" }
+  - { name: domain_expiry_timestamp_seconds, label: "Expiry timestamp", unit: "timestamp" }
+  - { name: domain_expiry_published, label: "Expiry published", unit: "bool" }
+  - { name: domain_dnssec, label: "Dnssec", unit: "bool" }
+  - { name: domain_on_hold, label: "On hold", unit: "bool" }
+  - { name: domain_redemption, label: "Redemption", unit: "bool" }
+  - { name: domain_status, label: "Status" }
+  - { name: domain_registrar_info, label: "Registrar", kind: info }
+  - { name: domain_rdap_age_seconds, label: "Rdap age", unit: "s" }
+  - { name: domain_rdap_ok, label: "Rdap ok", unit: "bool" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - domain_expiry_days
+      - domain_dnssec
+      - domain_on_hold
+      - domain_redemption
+      - domain_status
+      - domain_registrar_info

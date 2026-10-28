@@ -1,11 +1,12 @@
 <section class="page-head">
 	<div class="wrap">
+		<p class="eyebrow">{{nav_install}}</p>
 		<h1>{{in_h1}}</h1>
 		<p class="lede">{{in_lede}}</p>
 	</div>
 </section>
 
-<section class="block" style="border-top:0;padding-top:24px">
+<section class="block flush">
 	<div class="wrap">
 		<ol class="steps">
 			<li>
@@ -32,10 +33,10 @@
 			</li>
 		</ol>
 
-		<div class="split" style="margin-top:72px">
+		<div class="split even" style="margin-top:48px">
 			<div>
 				<h2 class="h-sm">{{in_req_h}}</h2>
-				<ul class="facts" style="margin-top:20px">
+				<ul class="facts">
 					<li>{{in_req_1}}</li>
 					<li>{{in_req_2}}</li>
 					<li>{{in_req_3}}</li>
@@ -44,7 +45,7 @@
 			</div>
 			<div>
 				<h2 class="h-sm">{{in_more_h}}</h2>
-				<ul class="facts" style="margin-top:20px">
+				<ul class="facts">
 					<li><a href="@@DOCS@@install/docker/">{{in_l_guide}}</a></li>
 					<li><a href="@@DOCS@@install/first-device/">{{in_l_first}}</a></li>
 					<li><a href="@@DOCS@@install/update/">{{in_l_update}}</a></li>
@@ -58,9 +59,9 @@
 
 <section class="block" id="agent">
 	<div class="wrap">
-		<div class="split flip">
+		<div class="split">
 			<div>
-				<div class="section-head" style="margin-bottom:24px">
+				<div class="section-head">
 					<h2>{{in_agent_h}}</h2>
 					<p>{{k094}}</p>
 				</div>
@@ -71,7 +72,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 					<button class="copy" type="button" data-copied="{{k171}}" data-copy="agent-cmd">{{k015}}</button>
 				</div>
 				<p class="code-note">{{k095}}</p>
-				<p style="margin-top:16px"><a href="@@DOCS@@devices/agent/">{{in_agent_doc}}</a></p>
+				<p><a class="more" href="@@DOCS@@devices/agent/">{{in_agent_doc}}</a></p>
 			</div>
 			<ul class="os-list">
 				<li><span class="os">{{k096}}</span><span class="plate plate-signal">{{k097}}</span><span class="how">{{k098}}</span></li>

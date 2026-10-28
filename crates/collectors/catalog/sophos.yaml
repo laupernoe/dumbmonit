@@ -1,0 +1,23 @@
+# Mesures et vues du type « sophos » (format : crates/collectors/src/catalog.rs).
+source: sophos
+prefixes: [sophos_]
+metrics:
+  - { name: sophos_interfaces, label: "Interfaces" }
+  - { name: sophos_interfaces_down, label: "Interfaces down", better: "lower" }
+  - { name: sophos_interface_down, label: "Interface down", unit: "bool", better: "lower" }
+  - { name: sophos_interface_link_up, label: "Interface link up", unit: "bool" }
+  - { name: sophos_interface_enabled, label: "Interface enabled", unit: "bool" }
+  - { name: sophos_ipsec_connections, label: "IPsec connections" }
+  - { name: sophos_ipsec_connection_activated, label: "IPsec connection activated", unit: "bool" }
+  - { name: sophos_api_version_info, label: "API version", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - sophos_interfaces
+      - sophos_interfaces_down
+      - sophos_interface_down
+      - sophos_interface_link_up
+      - sophos_interface_enabled
+      - sophos_ipsec_connections
+      - sophos_ipsec_connection_activated

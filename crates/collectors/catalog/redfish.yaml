@@ -1,0 +1,65 @@
+# Mesures et vues du type « redfish » (format : crates/collectors/src/catalog.rs).
+source: redfish
+prefixes: [redfish_]
+metrics:
+  - { name: redfish_temperature_celsius, label: "Temperature", unit: "°C" }
+  - { name: redfish_power_consumed_watts, label: "Power consumed power", unit: "W" }
+  - { name: redfish_psu_output_watts, label: "Psu output power", unit: "W" }
+  - { name: redfish_info, label: "Info", kind: info }
+  - { name: redfish_manager_info, label: "Manager", kind: info }
+  - { name: redfish_system_health, label: "System health" }
+  - { name: redfish_system_health_rollup, label: "System health rollup" }
+  - { name: redfish_system_power_on, label: "System power on", unit: "bool" }
+  - { name: redfish_memory_total_bytes, label: "Memory total", unit: "B" }
+  - { name: redfish_chassis_health, label: "Chassis health" }
+  - { name: redfish_chassis_health_rollup, label: "Chassis health rollup" }
+  - { name: redfish_storage_health, label: "Storage health" }
+  - { name: redfish_drive_health, label: "Drive health" }
+  - { name: redfish_drive_failure_predicted, label: "Drive failure predicted", unit: "bool" }
+  - { name: redfish_drive_life_left_percent, label: "Drive life left", unit: "%", min: 0, max: 100 }
+  - { name: redfish_drive_capacity_bytes, label: "Drive capacity", unit: "B" }
+  - { name: redfish_manager_health, label: "Manager health" }
+  - { name: redfish_log_entries, label: "Log entries" }
+  - { name: redfish_log_critical_entries, label: "Log critical entries" }
+  - { name: redfish_log_warning_entries, label: "Log warning entries" }
+  - { name: redfish_temperature_upper_critical_celsius, label: "Temperature upper critical", unit: "°C" }
+  - { name: redfish_temperature_upper_caution_celsius, label: "Temperature upper caution", unit: "°C" }
+  - { name: redfish_temperature_health, label: "Temperature health" }
+  - { name: redfish_fan_health, label: "Fan health" }
+  - { name: redfish_psu_health, label: "Psu health" }
+  - { name: redfish_psu_capacity_watts, label: "Psu capacity power", unit: "W" }
+  - { name: redfish_voltage_volts, label: "Voltage", unit: "V" }
+  - { name: redfish_voltage_health, label: "Voltage health" }
+  - { name: redfish_scrape_errors, label: "Scrape errors", better: "lower" }
+  - { name: redfish_scrape_duration_seconds, label: "Scrape duration", unit: "s", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - redfish_system_health
+      - redfish_drive_failure_predicted
+      - redfish_log_critical_entries
+      - redfish_system_power_on
+      - redfish_system_health_rollup
+      - redfish_memory_total_bytes
+      - redfish_chassis_health
+      - redfish_chassis_health_rollup
+      - redfish_storage_health
+      - redfish_drive_health
+      - redfish_drive_life_left_percent
+      - redfish_drive_capacity_bytes
+      - redfish_manager_health
+      - redfish_log_entries
+      - redfish_log_warning_entries
+      - redfish_temperature_health
+      - redfish_fan_health
+      - redfish_psu_health
+      - redfish_psu_capacity_watts
+      - redfish_voltage_volts
+      - redfish_voltage_health
+  - view: timeseries
+    title: "Temperatures"
+    metrics: [redfish_temperature_celsius]
+  - view: timeseries
+    title: "Power"
+    metrics: [redfish_power_consumed_watts, redfish_psu_output_watts]

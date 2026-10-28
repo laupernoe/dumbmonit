@@ -40,6 +40,8 @@ contatori: grafici e regole li trasformano in tassi.
 | `lines_read_total`, `lines_parsed_total`, `lines_unparsed_total` | righe di log lette dall'agent, e quelle analizzate o no | |
 | `source_lines_total`, `source_lines_unparsed_total` | lo stesso per fonte di log | `source` |
 | `buckets` | bucket di scenario attualmente aperti | |
+| `alerts_recent` | con un accesso macchina: avvisi locali delle ultime 24 ore letti dalla Local API | |
+| `alerts_by_country` | con un accesso macchina: quegli avvisi per paese di origine (`source.cn`) | `country` |
 
 Le famiglie della Local API appaiono dove gira la Local API, le famiglie
 dei log dove un agent legge i log; l'immagine ufficiale e un'installazione
@@ -58,6 +60,11 @@ riconosciuto), poi le decisioni attive, gli avvisi conservati, gli scenari
 attivati nelle ultime 24 ore e le righe lette al secondo, poi il tempo
 dall'ultimo scaricamento di ogni bouncer, le decisioni per origine e la
 quota non analizzata di ogni fonte di log.
+
+Con un accesso macchina segue una mappa delle minacce: gli avvisi delle ultime
+24 ore, colorati per paese. Gli stessi conteggi alimentano la mappa delle
+minacce della pagina Sicurezza, accanto ai blocchi dei firewall e alle minacce
+di Cloudflare.
 
 ## Lasciare che DumbMonit legga le metriche di CrowdSec
 
@@ -82,7 +89,13 @@ quota non analizzata di ogni fonte di log.
     sudo cscli bouncers add dumbmonit
     ```
 
-5. In DumbMonit, inserisci l'host CrowdSec, per esempio "crowdsec.lan". Dove la Local API e gli agent girano su host diversi, aggiungi ogni host: decisioni, avvisi e bouncer vengono contati dove gira la Local API, le righe di log dove ogni agent le legge.
+5. Oppure, per la mappa delle minacce della pagina Sicurezza: crea un accesso macchina e scegli Accesso macchina qui sotto. Viene conservato solo il paese di ogni avviso.
+
+    ```
+    sudo cscli machines add dumbmonit --password 'a-long-password'
+    ```
+
+6. In DumbMonit, inserisci l'host CrowdSec, per esempio "crowdsec.lan". Dove la Local API e gli agent girano su host diversi, aggiungi ogni host: decisioni, avvisi e bouncer vengono contati dove gira la Local API, le righe di log dove ogni agent le legge.
 
 !!! warning
     Un bouncer che smette di scaricare continua ad applicare una lista congelata: nuovi attaccanti passano e nulla si lamenta. DumbMonit avvisa quando le richieste di un bouncer si fermano per 30 minuti. Conosce solo i bouncer che hanno scaricato almeno una volta da quando CrowdSec è stato avviato l'ultima volta.
@@ -100,6 +113,7 @@ la finestra della regola.
 |---|---|
 | Metrics only | Nessuna: legge `/metrics`, e `/health` della Local API. |
 | Bouncer API key | La chiave stampata da `cscli bouncers add dumbmonit`, inviata come `X-Api-Key` alla Local API. |
+| Accesso macchina | Il nome e la password dati a `cscli machines add`. DumbMonit accede (`/v1/watchers/login`) e legge gli avvisi locali delle ultime 24 ore (`/v1/alerts`, esclusi quelli della community), conservando solo il paese di ciascuno: nessun indirizzo viene salvato. |
 
 Indirizzo: un nome host o IP (`crowdsec.lan`), `host:porta` per le
 metriche, oppure un URL completo. Opzioni: protocollo (HTTP per

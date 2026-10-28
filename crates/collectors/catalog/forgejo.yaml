@@ -1,0 +1,35 @@
+# Mesures et vues du type « forgejo » (format : crates/collectors/src/catalog.rs).
+source: selfhosted
+prefixes: [forgejo_]
+metrics:
+  - { name: forgejo_repos, label: "Repos" }
+  - { name: forgejo_users, label: "Users" }
+  - { name: forgejo_orgs, label: "Orgs" }
+  - { name: forgejo_cron_tasks, label: "Cron tasks" }
+  - { name: forgejo_cron_task_overdue, label: "Cron task overdue" }
+  - { name: forgejo_runners_total, label: "Runners" }
+  - { name: forgejo_runners_online, label: "Runners online" }
+  - { name: forgejo_runners_offline, label: "Runners offline", better: "lower" }
+  - { name: forgejo_runner_offline, label: "Runner offline", unit: "bool", better: "lower" }
+  - { name: forgejo_healthz_ok, label: "Healthz ok", unit: "bool" }
+  - { name: forgejo_healthz_check, label: "Healthz check", unit: "bool" }
+  - { name: forgejo_token_is_admin, label: "Token is admin", unit: "bool" }
+  - { name: forgejo_version_info, label: "Version", kind: info }
+  - { name: forgejo_scrape_errors, label: "Scrape errors", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - forgejo_repos
+      - forgejo_users
+      - forgejo_orgs
+      - forgejo_cron_tasks
+      - forgejo_cron_task_overdue
+      - forgejo_runners_total
+      - forgejo_runners_online
+      - forgejo_runners_offline
+      - forgejo_runner_offline
+      - forgejo_healthz_ok
+      - forgejo_healthz_check
+      - forgejo_token_is_admin
+      - forgejo_version_info

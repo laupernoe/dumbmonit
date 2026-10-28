@@ -1,0 +1,83 @@
+# Mesures et vues du type « ceph » (format : crates/collectors/src/catalog.rs).
+source: ceph
+prefixes: [ceph_]
+metrics:
+  - { name: ceph_capacity_used_percent, label: "Capacity used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: ceph_pool_used_percent, label: "Pool used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: ceph_osd_used_percent, label: "OSD used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: ceph_client_read_bytes_per_second, label: "Client read", unit: "B/s" }
+  - { name: ceph_client_write_bytes_per_second, label: "Client write", unit: "B/s" }
+  - { name: ceph_recovering_bytes_per_second, label: "Recovering", unit: "B/s" }
+  - { name: ceph_objects_degraded, label: "Objects degraded", better: "lower" }
+  - { name: ceph_objects_misplaced, label: "Objects misplaced" }
+  - { name: ceph_objects_unfound, label: "Objects unfound" }
+  - { name: ceph_pgs_unclean, label: "PGs unclean" }
+  - { name: ceph_client_read_ops_per_second, label: "Client read ops per second", unit: "/s" }
+  - { name: ceph_client_write_ops_per_second, label: "Client write ops per second", unit: "/s" }
+  - { name: ceph_health_ok, label: "Health ok", unit: "bool" }
+  - { name: ceph_health_status, label: "Health status" }
+  - { name: ceph_health_checks, label: "Health checks" }
+  - { name: ceph_health_check_info, label: "Health check", kind: info }
+  - { name: ceph_version_info, label: "Version", kind: info }
+  - { name: ceph_osds, label: "OSDs" }
+  - { name: ceph_osds_up, label: "OSDs up" }
+  - { name: ceph_osds_in, label: "OSDs in" }
+  - { name: ceph_osds_down, label: "OSDs down", better: "lower" }
+  - { name: ceph_osd_up, label: "OSD up", unit: "bool" }
+  - { name: ceph_osd_in, label: "OSD in", unit: "bool" }
+  - { name: ceph_pgs, label: "PGs" }
+  - { name: ceph_pgs_clean, label: "PGs clean" }
+  - { name: ceph_pgs_in_state, label: "PGs in state" }
+  - { name: ceph_objects, label: "Objects" }
+  - { name: ceph_hosts, label: "Hosts" }
+  - { name: ceph_mons, label: "Mons" }
+  - { name: ceph_mons_in_quorum, label: "Mons in quorum" }
+  - { name: ceph_mons_out_of_quorum, label: "Mons out of quorum" }
+  - { name: ceph_capacity_bytes, label: "Capacity", unit: "B" }
+  - { name: ceph_capacity_available_bytes, label: "Capacity available", unit: "B", better: "higher" }
+  - { name: ceph_capacity_used_bytes, label: "Capacity used", unit: "B" }
+  - { name: ceph_pools, label: "Pools" }
+  - { name: ceph_pool_used_bytes, label: "Pool used", unit: "B" }
+  - { name: ceph_pool_objects, label: "Pool objects" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - ceph_health_ok
+      - ceph_osds_down
+      - ceph_mons_out_of_quorum
+      - ceph_capacity_bytes
+      - ceph_osds
+      - ceph_pgs
+      - ceph_health_checks
+      - ceph_health_check_info
+      - ceph_version_info
+      - ceph_osds_up
+      - ceph_osds_in
+      - ceph_osd_up
+      - ceph_osd_in
+      - ceph_pgs_clean
+      - ceph_objects
+      - ceph_hosts
+      - ceph_mons
+      - ceph_mons_in_quorum
+      - ceph_capacity_available_bytes
+      - ceph_capacity_used_bytes
+      - ceph_pools
+      - ceph_pool_used_bytes
+      - ceph_pool_objects
+  - view: timeseries
+    title: "Capacity used"
+    metrics: [ceph_capacity_used_percent, ceph_pool_used_percent]
+  - view: topn
+    title: "OSD fill"
+    metrics: [ceph_osd_used_percent]
+    group_by: osd
+    options:
+      limit: "10"
+  - view: timeseries
+    title: "Client and recovery throughput"
+    metrics: [ceph_client_read_bytes_per_second, ceph_client_write_bytes_per_second, ceph_recovering_bytes_per_second]
+  - view: timeseries
+    title: "Recovery"
+    metrics: [ceph_objects_degraded, ceph_objects_misplaced, ceph_objects_unfound, ceph_pgs_unclean]

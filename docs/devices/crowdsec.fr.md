@@ -49,6 +49,8 @@ des compteurs : graphiques et règles les transforment en débits.
 | `lines_read_total`, `lines_parsed_total`, `lines_unparsed_total` | lignes de log lues par l'agent, et celles analysées ou non | |
 | `source_lines_total`, `source_lines_unparsed_total` | la même chose par source de log | `source` |
 | `buckets` | buckets de scénario actuellement ouverts | |
+| `alerts_recent` | avec un identifiant de machine : alertes locales des dernières 24 heures lues dans la Local API | |
+| `alerts_by_country` | avec un identifiant de machine : ces alertes par pays d'origine (`source.cn`) | `country` |
 
 Les familles de la Local API apparaissent là où la Local API tourne, les
 familles de log là où un agent lit des logs ; l'image officielle et une
@@ -67,6 +69,11 @@ n'a reconnues), puis les décisions actives, les alertes gardées, les
 scénarios déclenchés dans les dernières 24 heures et les lignes lues par
 seconde, puis le temps depuis la dernière récupération de chaque bouncer, les
 décisions par origine et la part non analysée de chaque source de log.
+
+Avec un identifiant de machine, une carte des menaces suit : les alertes des
+dernières 24 heures, colorées par pays. Les mêmes comptes alimentent la carte
+des menaces de la page Sécurité, à côté des blocages des pare-feu et des
+menaces de Cloudflare.
 
 ## Laisser DumbMonit lire les métriques de CrowdSec
 
@@ -90,11 +97,18 @@ décisions par origine et la part non analysée de chaque source de log.
     sudo cscli bouncers add dumbmonit
     ```
 
-5. Dans DumbMonit, saisissez l'hôte CrowdSec, par exemple "crowdsec.lan".
+5. Ou, pour la carte des menaces de la page Sécurité : créez un identifiant de machine et choisissez Identifiant de machine ci-dessous. Seul le pays de chaque alerte est gardé.
+
+    ```
+    sudo cscli machines add dumbmonit --password 'a-long-password'
+    ```
+
+6. Dans DumbMonit, saisissez l'hôte CrowdSec, par exemple "crowdsec.lan".
 
 ### Droits requis
 
 - **Clé d'API de bouncer (facultatif)** — Lecture seule : elle ne lit que les décisions
+- **Identifiant de machine (facultatif)** — Lit les alertes ; une machine peut aussi envoyer des alertes, gardez-le pour DumbMonit seul
 
 !!! warning
     Un bouncer qui cesse de tirer continue d'appliquer une liste figée : DumbMonit alerte quand les requêtes d'un bouncer s'arrêtent pendant 30 minutes.
@@ -128,6 +142,7 @@ calme ; passez-le en mode stream, ou augmentez la fenêtre de la règle.
 |---|---|
 | Métriques seulement | Rien : lit `/metrics`, et `/health` de la Local API. |
 | Clé d'API bouncer | La clé affichée par `cscli bouncers add dumbmonit`, envoyée comme `X-Api-Key` à la Local API. |
+| Identifiant de machine | Le nom et le mot de passe donnés à `cscli machines add`. DumbMonit se connecte (`/v1/watchers/login`) et lit les alertes locales des dernières 24 heures (`/v1/alerts`, communautaires exclues), en ne gardant que le pays de chacune : aucune adresse n'est enregistrée. |
 
 Adresse : un nom d'hôte ou une IP (`crowdsec.lan`), `host:port` pour les
 métriques, ou une URL complète. Options : protocole (HTTP par défaut), port

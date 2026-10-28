@@ -448,7 +448,7 @@ verifier_empreinte() {
     if [ -z "$attendu" ]; then
         rm -f "$fichier"
         echec "no expected checksum for $PLATFORM-$ARCH: nothing was installed.
-       Copy a fresh install command from DumbMonit (Settings > Agents): it carries
+       Copy a fresh install command from DumbMonit (Add monitor > Server with the agent): it carries
        --sha256 for the binaries this server ships. For a binary downloaded
        elsewhere, verify it yourself and pass --sha256=$PLATFORM-$ARCH:<hex>, or
        install it with --bin=PATH."
@@ -476,7 +476,7 @@ verifier_empreinte() {
         echec "checksum mismatch for $source_url (expected $attendu, got $obtenu):
        the download is corrupt or has been tampered with — or the server was
        upgraded since this command was copied. Nothing was installed. Copy a fresh
-       install command from DumbMonit (Settings > Agents) and run it again."
+       install command from DumbMonit (Add monitor > Server with the agent) and run it again."
     fi
     info "checksum verified ($obtenu)"
 }

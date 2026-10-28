@@ -1,0 +1,35 @@
+# Mesures et vues du type « omada » (format : crates/collectors/src/catalog.rs).
+source: omada
+prefixes: [omada_]
+metrics:
+  - { name: omada_controller_info, label: "Controller", kind: info }
+  - { name: omada_sites, label: "Sites" }
+  - { name: omada_site_clients, label: "Site clients" }
+  - { name: omada_clients, label: "Clients" }
+  - { name: omada_devices, label: "Devices" }
+  - { name: omada_device_online, label: "Device online", unit: "bool" }
+  - { name: omada_device_offline, label: "Device offline", better: "lower" }
+  - { name: omada_device_pending, label: "Device pending" }
+  - { name: omada_device_info, label: "Device", kind: info }
+  - { name: omada_device_cpu_usage_percent, label: "Device CPU usage", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: omada_device_memory_used_percent, label: "Device memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: omada_device_uptime_seconds, label: "Device uptime", unit: "s" }
+  - { name: omada_device_clients, label: "Device clients" }
+  - { name: omada_device_upgrade_available, label: "Device upgrade available", unit: "bool", better: "higher" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - omada_device_offline
+      - omada_device_pending
+      - omada_devices
+      - omada_sites
+      - omada_device_uptime_seconds
+      - omada_device_clients
+      - omada_device_upgrade_available
+  - view: timeseries
+    title: "Clients"
+    metrics: [omada_clients, omada_site_clients]
+  - view: timeseries
+    title: "CPU and memory per device"
+    metrics: [omada_device_cpu_usage_percent, omada_device_memory_used_percent]

@@ -284,13 +284,10 @@ impl TargetPayload {
             return Err(ApiError::BadRequest("A monitor cannot relay itself.".into()));
         }
         // Une machine à agent n'est jamais interrogée : ses mesures arrivent en
-        // poussée, un relais n'aurait rien à faire.
-        if via_agent.is_some() && self.kind == "agent" {
-            return Err(ApiError::BadRequest(
-                "An agent-monitored machine pushes its own metrics: it cannot be reached through a relay."
-                    .into(),
-            ));
-        }
+        // poussée. Le relais par lequel elle se connecte (sa passerelle) est
+        // constaté par le serveur, pas saisi : la valeur envoyée est ignorée et
+        // l'enregistrement garde celle qui est rangée.
+        let via_agent = if self.kind == "agent" { None } else { via_agent };
         // Même chose pour un heartbeat : c'est le travail qui appelle le serveur,
         // et le relais ne connaît pas ce type.
         if via_agent.is_some() && self.kind == crate::collectors::push::KIND {
@@ -570,7 +567,7 @@ pub async fn update(
         super::locations::check_location(&state.pool, location).await?;
     }
     let relay_before = db::targets::relay_of(&state.pool, id).await?;
-    if keep_relay {
+    if keep_relay || input.kind == "agent" {
         input.via_agent = relay_before;
     }
     let multisite = match new_multisite {
@@ -957,7 +954,7 @@ where
 /// Le relais doit être une machine à agent : c'est lui qui viendra chercher les
 /// sondes. Qu'il ait déclaré `relay: true` n'est pas exigé ici — l'agent peut
 /// être configuré après la cible — mais l'interface le signale.
-async fn check_relay(state: &AppState, via_agent: Option<TargetId>) -> ApiResult<()> {
+pub(super) async fn check_relay(state: &AppState, via_agent: Option<TargetId>) -> ApiResult<()> {
     let Some(via_agent) = via_agent else { return Ok(()) };
     match db::targets::get(&state.pool, &state.cipher, via_agent).await? {
         None => Err(ApiError::BadRequest(format!("Relay agent {via_agent} not found."))),

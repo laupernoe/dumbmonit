@@ -284,7 +284,9 @@
 | Synology SSD wearing out | У SSD осталось менее 10 % номинального ресурса (`dumbmonit_synology_disk_remaining_life_percent`); сбрасывается выше 12 %. | < 10 % | 1 ч | Advisory (`warning`) | 7 дн |
 | Synology volume degraded | Том деградировал или вышел из строя: избыточность утрачена (`dumbmonit_synology_volume_status`). | ≥ 2 | 5 мин | Warning (`critical`) | 6 ч |
 | Synology storage pool degraded | Пул хранения или SSD-кэш деградировал или вышел из строя: диск отказал, избыточность утрачена или перестраивается (`dumbmonit_synology_pool_status or dumbmonit_synology_ssd_cache_status`). | ≥ 2 | 5 мин | Warning (`critical`) | 6 ч |
-| Synology volume almost full | Том заполнен на 90 % или более (`dumbmonit_synology_volume_used_percent`); сбрасывается ниже 88 %. | ≥ 90 % | 15 мин | Advisory (`warning`), эскалируется через 24 ч | 6 ч |
+| Synology volume almost full | Том заполнен на 90 % или более, без учёта места, зарезервированного толстыми iSCSI LUN (`dumbmonit_synology_volume_effective_used_percent`, без LUN равно сырой заполненности); сбрасывается ниже 88 %. Том, заполненный толстым LUN, полон по замыслу и не вызывает оповещения. | ≥ 90 % | 15 мин | Advisory (`warning`), эскалируется через 24 ч | 6 ч |
+| Synology thin LUN over-allocation | Тонким LUN тома обещано больше места, чем на томе ещё свободно (`dumbmonit_synology_volume_thin_overcommit_percent`: обещанное и ещё не записанное место в процентах от свободного); сбрасывается ниже 95 %. | ≥ 100 % | 1 ч | Advisory (`warning`) | 24 ч |
+| Synology thin LUN almost full | Тонкий LUN записан на 95 % своего размера или более (`dumbmonit_synology_lun_used_percent`). Толстый LUN с NAS непрозрачен: оповещают правила монитора, который его использует (datastore, файловая система). | ≥ 95 % | 30 мин | Advisory (`warning`) | 24 ч |
 | Synology temperature high | Диск выше 55 °C или DSM поднял собственное предупреждение о температуре (`dumbmonit_synology_disk_temperature_celsius`, `dumbmonit_synology_temperature_warning`); сбрасывается ниже 52 °C. | > 55 °C | 15 мин | Advisory (`warning`) | 6 ч |
 | Synology memory high | Использование памяти NAS выше 95 % (`dumbmonit_synology_memory_usage_percent`); сбрасывается ниже 90 %. | > 95 % | 15 мин | Advisory (`warning`) | 6 ч |
 | Active Backup task failed | Последний запуск задачи Active Backup for Business завершился неудачей или скопировал лишь часть своих устройств (`dumbmonit_abb_task_last_status == bool 0`). Уведомление называет задачу. | > 0 | 10 мин | Warning (`critical`) | 24 ч |
@@ -509,6 +511,9 @@ Traefik, Caddy, Nginx Proxy Manager и регистрации доменов ([T
 | Domain about to expire | Домен истекает менее чем через 7 дней или уже истёк (`dumbmonit_domain_expiry_days`). | < 7 дн | 1 ч | Warning (`critical`) | 12 ч |
 | Domain on hold | Реестр перевёл домен в `clientHold` или `serverHold`: он исключён из DNS (`dumbmonit_domain_on_hold`). | > 0 | 30 мин | Warning (`critical`) | 6 ч |
 | Domain in redemption | Домен в состоянии `redemptionPeriod`, `pendingDelete` или `pendingRestore`: он истёк (`dumbmonit_domain_redemption`). | > 0 | 30 мин | Warning (`critical`) | 12 ч |
+| Domain name servers changed | Серверы имён делегирования отличаются от предыдущего чтения (`changes_prometheus(dumbmonit_domain_nameservers_fingerprint[1d])`). Разрешается само через сутки. | > 0 | 1 мин | Advisory (`warning`) | 24 ч |
+| Domain registrar changed | Регистратор отличается от предыдущего чтения: был перенос (`changes_prometheus(dumbmonit_domain_registrar_fingerprint[1d])`). | > 0 | 1 мин | Advisory (`warning`) | 24 ч |
+| Domain DNSSEC lost | DNSSEC был подписан в последние 7 дней, а теперь нет (`dumbmonit_domain_dnssec`). | < 1 | 1 ч | Advisory (`warning`) | 24 ч |
 | DNS answer changed | Ответ DNS-проверки с *Alert when the answer changes* отличается от предыдущего (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Разрешается само через час. | > 0 | 1 мин | Advisory (`warning`) | 24 ч |
 
 ### Чёрные списки DNS {#dns-blocklists}
@@ -596,6 +601,210 @@ Traefik, Caddy, Nginx Proxy Manager и регистрации доменов ([T
 |---|---|---|---|---|---|
 | Veeam job failed | Последний запуск включённого задания Veeam завершился неудачей: у защищаемых им данных нет новой точки восстановления (`dumbmonit_veeam_job_failed`). | > 0 | 5 мин | Warning (`critical`) | 1 дн |
 | Veeam job ended with a warning | Последний запуск включённого задания Veeam завершился с предупреждением: некоторые объекты могут быть не защищены (`dumbmonit_veeam_job_warning`). | > 0 | 5 мин | Advisory (`warning`) | 1 дн |
+|
+ 
+V
+e
+e
+a
+m
+ 
+b
+a
+c
+k
+u
+p
+ 
+t
+o
+o
+ 
+o
+l
+d
+ 
+|
+ 
+Б
+о
+л
+ь
+ш
+е
+ 
+д
+в
+у
+х
+ 
+д
+н
+е
+й
+ 
+н
+е
+т
+ 
+у
+с
+п
+е
+ш
+н
+о
+г
+о
+ 
+з
+а
+п
+у
+с
+к
+а
+ 
+з
+а
+д
+а
+н
+и
+я
+,
+ 
+з
+а
+п
+л
+а
+н
+и
+р
+о
+в
+а
+н
+н
+о
+г
+о
+ 
+х
+о
+т
+я
+ 
+б
+ы
+ 
+е
+ж
+е
+д
+н
+е
+в
+н
+о
+ 
+(
+`
+d
+u
+m
+b
+m
+o
+n
+i
+t
+_
+v
+e
+e
+a
+m
+_
+j
+o
+b
+_
+l
+a
+s
+t
+_
+s
+u
+c
+c
+e
+s
+s
+_
+a
+g
+e
+_
+s
+e
+c
+o
+n
+d
+s
+`
+)
+.
+ 
+|
+ 
+>
+ 
+2
+ 
+д
+н
+ 
+|
+ 
+1
+ 
+ч
+ 
+|
+ 
+A
+d
+v
+i
+s
+o
+r
+y
+ 
+(
+`
+w
+a
+r
+n
+i
+n
+g
+`
+)
+ 
+|
+ 
+1
+ 
+д
+н
+ 
+|
 | Veeam repository nearly full | Репозиторий резервных копий Veeam заполнен более чем на 90 %: следующие задания завершатся неудачей из-за нехватки места (`dumbmonit_veeam_repository_used_percent`). | > 90 % | 30 мин | Advisory (`warning`) | 1 дн |
 | Veeam license expiring | Лицензия Veeam истекает менее чем через 30 дней: задания остановятся по окончании льготного периода (`dumbmonit_veeam_license_expiry_seconds`). | < 30 дн | 1 ч | Advisory (`warning`) | 1 дн |
 
@@ -681,6 +890,16 @@ Traefik, Caddy, Nginx Proxy Manager и регистрации доменов ([T
 |---|---|---|---|---|---|
 | Security score dropped | Оценка упала на 10 пунктов или более относительно лучшего значения за последние 24 часа (`max_over_time(dumbmonit_security_score[1d]) - dumbmonit_security_score`): какая-то проверка начала не проходить. | ≥ 10 пунктов | 30 мин | Advisory (`warning`) | 24 ч |
 | Security score low | Оценка ниже 40, класс F (`dumbmonit_security_score`). Повышайте или понижайте порог в соответствии с вашей собственной планкой. | < 40 | 1 ч | Info (`info`) | 7 дн |
+
+### Инвентаризация сети {#network-inventory}
+
+Срабатывают по плановым сканированиям сети и их инвентарю (см. [Плановые сканирования и инвентарь](../using/discovery.md#scheduled-scans-and-inventory)). **Все три правила по умолчанию отключены**; у первых двух важность `info`, у правила о смене MAC — `warning`: включите их в списке правил, когда они понадобятся. На каждое новое устройство или порт приходится одна серия, а значит одно оповещение; оно остаётся открытым, пока элемент не отмечен как известный (метрика прекращается, оповещение разрешается за несколько минут), и не имеет напоминания. Первое сканирование сети никогда ничего не вызывает.
+
+| Правило | Что | Порог по умолчанию | Задержка | Важность | Напоминание |
+|---|---|---|---|---|---|
+| New device on the network | Плановое сканирование нашло устройство, которого нет в инвентаре (`dumbmonit_netscan_unknown_device`). | > 0 | нет | Info (`info`), **отключено** | нет |
+| New open port on the network | Плановое сканирование нашло новый открытый порт на известном устройстве (`dumbmonit_netscan_unknown_port`). | > 0 | нет | Info (`info`), **отключено** | нет |
+| MAC address changed for an IP | Новое устройство заняло адрес известного с другим MAC-адресом: подмена или заменённое оборудование (`dumbmonit_netscan_mac_change`). Открыто, пока не отмечено как известное или игнорируемое. | > 0 | нет | Advisory (`warning`), **отключено** | нет |
 
 ### Сам DumbMonit
 

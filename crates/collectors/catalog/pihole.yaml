@@ -1,0 +1,54 @@
+# Mesures et vues du type « pihole » (format : crates/collectors/src/catalog.rs).
+source: pihole
+prefixes: [pihole_]
+metrics:
+  - { name: pihole_queries_24h, label: "Queries 24 h" }
+  - { name: pihole_queries_blocked_24h, label: "Queries blocked 24 h" }
+  - { name: pihole_queries_forwarded_24h, label: "Queries forwarded 24 h" }
+  - { name: pihole_queries_cached_24h, label: "Queries cached 24 h" }
+  - { name: pihole_replies_servfail_24h, label: "Replies servfail 24 h" }
+  - { name: pihole_ftl_cpu_percent, label: "FTL CPU", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: pihole_ftl_memory_percent, label: "FTL memory", unit: "%", min: 0, max: 100 }
+  - { name: pihole_queries_per_second, label: "Queries per second", unit: "/s" }
+  - { name: pihole_queries_blocked_percent, label: "Queries blocked", unit: "%", min: 0, max: 100 }
+  - { name: pihole_unique_domains_24h, label: "Unique domains 24 h" }
+  - { name: pihole_clients_active, label: "Clients active" }
+  - { name: pihole_clients_total, label: "Clients" }
+  - { name: pihole_gravity_domains, label: "Gravity domains" }
+  - { name: pihole_gravity_age_seconds, label: "Gravity age", unit: "s" }
+  - { name: pihole_gravity_last_update_timestamp_seconds, label: "Gravity last update timestamp", unit: "timestamp" }
+  - { name: pihole_blocking_enabled, label: "Blocking enabled", unit: "bool" }
+  - { name: pihole_blocking_timer_seconds, label: "Blocking timer", unit: "s" }
+  - { name: pihole_ftl_uptime_seconds, label: "FTL uptime", unit: "s" }
+  - { name: pihole_privacy_level, label: "Privacy level" }
+  - { name: pihole_messages, label: "Messages" }
+  - { name: pihole_messages_by_type, label: "Messages by type" }
+  - { name: pihole_version_info, label: "Version", kind: info }
+  - { name: pihole_update_available, label: "Update available", unit: "bool", better: "higher" }
+  - { name: pihole_updates_available, label: "Updates available", better: "higher" }
+  - { name: pihole_scrape_errors, label: "Scrape errors", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - pihole_blocking_enabled
+      - pihole_queries_blocked_percent
+      - pihole_clients_active
+      - pihole_gravity_age_seconds
+      - pihole_queries_per_second
+      - pihole_unique_domains_24h
+      - pihole_clients_total
+      - pihole_gravity_domains
+      - pihole_blocking_timer_seconds
+      - pihole_ftl_uptime_seconds
+      - pihole_privacy_level
+      - pihole_messages
+      - pihole_version_info
+      - pihole_update_available
+      - pihole_updates_available
+  - view: timeseries
+    title: "DNS queries (24 h)"
+    metrics: [pihole_queries_24h, pihole_queries_blocked_24h, pihole_queries_forwarded_24h, pihole_queries_cached_24h, pihole_replies_servfail_24h]
+  - view: timeseries
+    title: "FTL load"
+    metrics: [pihole_ftl_cpu_percent, pihole_ftl_memory_percent]

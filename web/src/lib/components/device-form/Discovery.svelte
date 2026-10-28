@@ -328,9 +328,9 @@
 					{#if shownHosts.length === 0}
 						<EmptyState title={m.deviceform_scan_filtered_title()} description={m.deviceform_scan_filtered_desc()} />
 					{:else if view === 'graph'}
-						<DiscoveryGraph hosts={shownHosts} cidr={job.cidr} />
+						<DiscoveryGraph hosts={shownHosts} cidr={job.cidr} viaAgent={job.agent_id} />
 					{:else}
-						<DiscoveryList hosts={shownHosts} />
+						<DiscoveryList hosts={shownHosts} viaAgent={job.agent_id} />
 					{/if}
 				{:else if !running && job.status !== 'failed'}
 					<EmptyState title={m.deviceform_discovery_none_title({ cidr: job.cidr })} description={m.deviceform_scan_none_desc()} />

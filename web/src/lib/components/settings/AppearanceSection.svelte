@@ -1,99 +1,16 @@
 <script lang="ts">
 	/**
-	 * Settings → My account → Appearance: the language, and the theme as three
-	 * faceplate tiles with a swatch.
-	 * The swatches use literal palette values on purpose: each tile previews
-	 * its own theme regardless of the one currently applied.
+	 * Settings → My account → Appearance: the language. The console has one
+	 * dark palette, so there is no theme to pick here.
 	 */
-	import { Check, Moon, Sun, SunMoon } from 'lucide-svelte';
-	import type { Icon as LucideIcon } from 'lucide-svelte';
-	import { theme, type ThemePreference } from '#lib/stores/theme.svelte.js';
 	import { Panel } from '#lib/ui/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import LanguageSelect from '#lib/components/LanguageSelect.svelte';
-	import { mode } from '#lib/stores/mode.svelte.js';
-
-	interface Option {
-		value: ThemePreference;
-		label: () => string;
-		hint: () => string;
-		icon: typeof LucideIcon;
-	}
-
-	const OPTIONS: Option[] = [
-		{ value: 'auto', label: () => m.settings_appearance_system(), hint: () => m.settings_appearance_system_hint(), icon: SunMoon },
-		{ value: 'light', label: () => m.settings_appearance_day(), hint: () => m.settings_appearance_day_hint(), icon: Sun },
-		{ value: 'dark', label: () => m.settings_appearance_night(), hint: () => m.settings_appearance_night_hint(), icon: Moon }
-	];
-
-	// Day and night palette, as in app.css.
-	const DAY = { canvas: '#f3efe6', surface: '#fbf9f4', ink: '#16213a', signal: '#0f8f86' };
-	const NIGHT = { canvas: '#0a1020', surface: '#111a2e', ink: '#e8eef8', signal: '#22d3c5' };
-
-	function onkeydown(event: KeyboardEvent, index: number) {
-		const delta = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 0;
-		if (!delta) return;
-		event.preventDefault();
-		const next = OPTIONS[(index + delta + OPTIONS.length) % OPTIONS.length];
-		theme.set(next.value);
-		(event.currentTarget as HTMLElement).parentElement?.querySelectorAll<HTMLElement>('[role="radio"]')[OPTIONS.indexOf(next)]?.focus();
-	}
 </script>
 
-{#snippet swatch(value: ThemePreference)}
-	<!-- A miniature page: ground, a surface bar, a signal trace. -->
-	<span class="relative block h-12 w-full overflow-hidden rounded-lg border border-line max-sm:h-8" aria-hidden="true">
-		{#if value === 'auto'}
-			<span class="absolute inset-0" style:background={`linear-gradient(105deg, ${DAY.canvas} 50%, ${NIGHT.canvas} 50%)`}></span>
-			<span class="absolute top-2 left-2 h-2 w-[calc(50%-0.75rem)] rounded-sm" style:background={DAY.surface} style:border={`1px solid ${DAY.ink}22`}></span>
-			<span class="absolute top-2 right-2 h-2 w-[calc(50%-0.75rem)] rounded-sm" style:background={NIGHT.surface} style:border={`1px solid ${NIGHT.ink}22`}></span>
-			<svg class="absolute bottom-1 left-2 h-5 w-[calc(50%-0.75rem)]" viewBox="0 0 40 16" preserveAspectRatio="none"><path d="M1 13l8-6 7 5 8-9 8 7 7-4" fill="none" stroke={DAY.signal} stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-			<svg class="absolute right-2 bottom-1 h-5 w-[calc(50%-0.75rem)]" viewBox="0 0 40 16" preserveAspectRatio="none"><path d="M1 13l8-6 7 5 8-9 8 7 7-4" fill="none" stroke={NIGHT.signal} stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-		{:else}
-			{@const p = value === 'light' ? DAY : NIGHT}
-			<span class="absolute inset-0" style:background={p.canvas}></span>
-			<span class="absolute top-2 right-2 left-2 h-2 rounded-sm" style:background={p.surface} style:border={`1px solid ${p.ink}22`}></span>
-			<svg class="absolute right-2 bottom-1 left-2 h-5" viewBox="0 0 80 16" preserveAspectRatio="none"><path d="M1 13l14-6 12 5 14-9 14 7 12-4 12 1" fill="none" stroke={p.signal} stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-		{/if}
-	</span>
-{/snippet}
-
-<Panel id="appearance" title={m.settings_language_theme_title()} description={m.settings_language_theme_description()}>
-	<div class="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4 max-sm:mb-3 max-sm:flex-nowrap max-sm:pb-3">
+<Panel id="appearance" title={m.settings_appearance_language_title()} description={m.settings_language_theme_description()}>
+	<div class="flex flex-wrap items-center justify-between gap-3 max-sm:flex-nowrap">
 		<label for="settings-language" class="text-sm font-semibold text-ink">{m["settings.appearance.language_label"]()}</label>
 		<LanguageSelect id="settings-language" class="w-full max-sm:w-auto max-sm:min-w-0 max-sm:flex-1 sm:w-auto sm:min-w-56" />
 	</div>
-	<p class="mb-2 text-sm font-semibold text-ink">{m.settings_appearance_theme()}</p>
-	{#if mode.enterprise}
-		<p class="mb-3 text-[0.8125rem] text-ink-2">{m.settings_appearance_enterprise_dark()}</p>
-	{/if}
-	<!-- Phones: three small swatches side by side, the name under each. -->
-	<div class="grid gap-2 max-sm:grid-cols-3 sm:grid-cols-3" role="radiogroup" aria-label={m.settings_appearance_theme()}>
-		{#each OPTIONS as option, i (option.value)}
-			{@const selected = theme.preference === option.value}
-			{@const Icon = option.icon}
-			<button
-				type="button"
-				role="radio"
-				aria-checked={selected}
-				tabindex={selected ? 0 : -1}
-				class={`faceplate flex flex-col gap-3 p-3 text-left max-sm:gap-2 max-sm:p-2 ${selected ? '!border-signal ring-2 ring-signal/30' : ''}`}
-				data-interactive
-				onclick={() => theme.set(option.value)}
-				onkeydown={(e) => onkeydown(e, i)}
-			>
-				{@render swatch(option.value)}
-				<span class="flex items-center gap-2">
-					<Icon class="size-4 shrink-0 text-ink-2 max-sm:hidden" aria-hidden="true" />
-					<span class="min-w-0 flex-1">
-						<span class="block text-sm font-semibold text-ink">{option.label()}</span>
-						<span class="block text-[0.8125rem] text-ink-2 max-sm:hidden">{option.hint()}</span>
-					</span>
-					{#if selected}<Check class="size-4 shrink-0 text-signal-ink" aria-hidden="true" />{/if}
-				</span>
-			</button>
-		{/each}
-	</div>
-
-
 </Panel>

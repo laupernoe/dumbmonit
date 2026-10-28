@@ -8,8 +8,8 @@ use anyhow::{Context, Result};
 use dumbmonit_proto::{
     AGENT_KEY_HEADER, AGENT_SECRET_HEADER, AGENT_TLS_HEADER, AgentCommand, CERT_REFUSED,
     COMMANDS_PATH, CommandReport, INGEST_PATH, LOGS_PATH, LogBatch, ProbeOutcome, PushAck,
-    PushBatch, RELAY_PATH, TLS_ENROL_PATH, TLS_RENEW_PATH, TlsCertificate, TlsEnrolRequest,
-    TlsOffer, TlsRenewRequest,
+    PushBatch, RELAY_PATH, RELAY_TUNNEL_PATH, RELAY_TUNNEL_PROTOCOL, TLS_ENROL_PATH,
+    TLS_RENEW_PATH, TlsCertificate, TlsEnrolRequest, TlsOffer, TlsRenewRequest,
 };
 use tokio::sync::Notify;
 
@@ -495,7 +495,58 @@ impl PushClient {
         self.mark_reachable();
         Ok(bytes.to_vec())
     }
+
+    /// Ouvre, pour la passerelle du relais, un tunnel vers le port des agents
+    /// du serveur : une mise à niveau HTTP sous le certificat client du relais.
+    /// Le flux rendu est ensuite une connexion brute au port des agents — c'est
+    /// l'agent du site qui y fait sa propre poignée de main TLS.
+    ///
+    /// Jamais par l'ancien canal en clair : seul un relais authentifié par son
+    /// certificat peut ouvrir un tunnel.
+    pub async fn open_tunnel(&self) -> Result<reqwest::Upgraded, PushError> {
+        let channel = self.channel();
+        if !channel.encrypted {
+            return Err(PushError::Transport(
+                "the relay is not on the encrypted agent channel yet".to_string(),
+            ));
+        }
+        let target = format!("{}{RELAY_TUNNEL_PATH}", channel.base_url);
+        let response = self
+            .identified(channel.http.get(target).bearer_auth(&self.token))
+            .header(reqwest::header::CONNECTION, "upgrade")
+            .header(reqwest::header::UPGRADE, RELAY_TUNNEL_PROTOCOL)
+            .send()
+            .await
+            .map_err(|error| self.transport(&error))?;
+        if response.status() != reqwest::StatusCode::SWITCHING_PROTOCOLS {
+            return Err(rejection(response).await);
+        }
+        self.mark_reachable();
+        response.upgrade().await.map_err(|error| self.transport(&error))
+    }
+
+    /// Fichier d'installation (`install.sh`, `install.ps1`, `download/<nom>`)
+    /// relu pour les machines du site, par le canal chiffré du relais. La
+    /// réponse est rendue telle quelle, statut compris, pour être recopiée.
+    pub async fn fetch_relay_file(&self, file: &str) -> Result<reqwest::Response, PushError> {
+        let channel = self.channel();
+        if !channel.encrypted {
+            return Err(PushError::Transport(
+                "the relay is not on the encrypted agent channel yet".to_string(),
+            ));
+        }
+        let target = format!("{}{}", channel.base_url, crate::gateway::files_path(file));
+        self.identified(channel.http.get(target).bearer_auth(&self.token))
+            .timeout(RELAY_FILE_TIMEOUT)
+            .send()
+            .await
+            .map_err(|error| self.transport(&error))
+    }
 }
+
+/// Délai d'un fichier d'installation relu par le relais : un binaire d'agent
+/// sur un lien lent.
+const RELAY_FILE_TIMEOUT: Duration = Duration::from_secs(600);
 
 /// Chemin des sondes déléguées, ou du compte rendu de l'une d'elles.
 fn relay_path(id: Option<i64>) -> String {

@@ -24,18 +24,21 @@ theme:
   custom_dir: overrides
   logo: assets/logo.svg
   favicon: assets/logo.svg
+  font:
+    text: Geist
+    code: Geist Mono
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: teal
-      accent: teal
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: teal
-      accent: teal
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
@@ -201,10 +204,10 @@ nav:
       - Runbooks and remediation: alerting/remediation.md
       - Notification channels: notifications.md
   - Using DumbMonit:
-      - Product modes and setup wizard: using/product-modes.md
+      - Interface and setup wizard: using/product-modes.md
       - Overview page: using/overview.md
       - Network discovery: using/discovery.md
-      - Wall mode and music: using/wall.md
+      - Wall mode: using/wall.md
       - Monitors page: using/devices.md
       - Monitors from Docker labels: using/docker-labels.md
       - Import from other tools: using/imports.md

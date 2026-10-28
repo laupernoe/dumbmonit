@@ -42,6 +42,10 @@ WAN、互联网和告警状态仅存在于经典API中。使用密钥时，DumbM
 | `clients_by_type` | `wireless`、`wired`、`guest`、`vpn`（仅查看账户） | `type` |
 | `alarms` | 过去24小时内的关键系统日志条目，或未归档的告警 | |
 | `scrape_errors` | 上次探针失败的调用 | |
+| `port_enabled`、`port_up`、`port_speed_bps`、`port_full_duplex`、`port_uplink` | 每台在线交换机或网关的端口（只读账户，`port_table`）；已禁用的端口没有 `port_up` | `device`、`mac`、`port`（前面板编号）、`port_name` |
+| `port_poe_enabled`、`port_poe_watts` | 每个端口的 PoE | 同上 |
+| `port_rx_bytes_total`、`port_tx_bytes_total`、`port_rx_errors_total`、`port_tx_errors_total` | 每端口计数器，由交换机面板绘制 | 同上 |
+| `port_neighbor_info` | 值为 1，端口的 LLDP 邻居（`lldp_table`） | 同上，`remote_chassis`、`remote_port` |
 
 适用的[内置规则](../alerting/rules.md#unifi-network)：UniFi设备离线、UniFi互联网宕机、UniFi WAN链路宕机、UniFi网关CPU高、UniFi设备待采纳、UniFi固件更新可用、UniFi告警，加上设备不可达。
 

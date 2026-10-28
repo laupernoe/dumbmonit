@@ -6,10 +6,13 @@
 	 * agent's own agent.yaml wins (`relay_local`), and an agent too old to
 	 * follow the switch says so (`relay_control`).
 	 *
-	 * Once a relay: its site, the monitors that go through it, and the two next
-	 * steps — scan the site's network from it, add a monitor through it.
+	 * Once a relay: its site, the monitors that go through it, its gateway for
+	 * the agents of its site (they connect to it, end-to-end encrypted to the
+	 * server), and the next steps — scan the site's network from it, add a
+	 * monitor or install an agent through it. An agent that itself connects
+	 * through a relay says which one.
 	 */
-	import { RadioTower, Radar, Plus } from 'lucide-svelte';
+	import { RadioTower, Radar, Plus, Server } from 'lucide-svelte';
 	import { getAgentHost, listTargets, setAgentRelay, type AgentHost, type Target } from '#lib/api/index.js';
 	import { listLocations } from '#lib/api/locations.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
@@ -29,6 +32,12 @@
 
 	let enabled = $state(false);
 	let site = $state('');
+	/** Gateway for the agents of the site. */
+	let gateway = $state(false);
+	let gatewayPort = $state('8443');
+	let gatewayHost = $state('');
+	/** The relay this agent itself connects through, if any. */
+	let through = $state<Target | null>(null);
 	let saving = $state(false);
 	let error = $state<unknown>(null);
 
@@ -37,6 +46,9 @@
 		if (!agent) return;
 		enabled = agent.relay_wanted ?? agent.relay;
 		site = agent.relay_wanted_site ?? agent.site ?? '';
+		gateway = agent.gateway_wanted != null;
+		gatewayPort = String(agent.gateway_wanted ?? agent.gateway_port ?? 8443);
+		gatewayHost = agent.gateway_host ?? '';
 	}
 
 	$effect(() => {
@@ -46,6 +58,7 @@
 			.then(([agent, targets]) => {
 				adopt(agent);
 				relayed = targets.filter((t) => t.via_agent === id).sort((a, b) => a.name.localeCompare(b.name));
+				through = target.via_agent === null ? null : (targets.find((t) => t.id === target.via_agent) ?? null);
 			})
 			.catch(() => {
 				host = null;
@@ -67,8 +80,19 @@
 	const pinned = $derived(host?.relay_local === true);
 	/** What the user asked for, not yet what the agent reports. */
 	const pending = $derived(host !== null && switchable && !tooOld && !pinned && (host.relay_wanted ?? false) !== host.relay);
+	/** The server knows the gateway: older servers leave `gateway_wanted` out. */
+	const gatewayKnown = $derived(host !== null && host.gateway_wanted !== undefined);
+	const portValue = $derived(Number(gatewayPort));
+	const portValid = $derived(Number.isInteger(portValue) && portValue >= 1 && portValue <= 65535);
+	const gatewayDirty = $derived(
+		host !== null &&
+			gatewayKnown &&
+			(gateway !== (host.gateway_wanted != null) ||
+				(gateway && (portValue !== (host.gateway_wanted ?? 8443) || gatewayHost.trim() !== (host.gateway_host ?? ''))))
+	);
 	const dirty = $derived(
-		host !== null && (enabled !== (host.relay_wanted ?? host.relay) || site.trim() !== (host.relay_wanted_site ?? host.site ?? '').trim())
+		host !== null &&
+			(enabled !== (host.relay_wanted ?? host.relay) || site.trim() !== (host.relay_wanted_site ?? host.site ?? '').trim() || gatewayDirty)
 	);
 
 	async function save(event: SubmitEvent) {
@@ -77,7 +101,10 @@
 		saving = true;
 		error = null;
 		try {
-			adopt(await setAgentRelay(target.id, enabled, site.trim() || null));
+			const choice = gatewayKnown
+				? { enabled: enabled && gateway, port: portValid ? portValue : 8443, host: gatewayHost.trim() || null }
+				: undefined;
+			adopt(await setAgentRelay(target.id, enabled, site.trim() || null, choice));
 		} catch (cause) {
 			error = cause;
 		} finally {
@@ -86,7 +113,7 @@
 	}
 </script>
 
-{#if host && (auth.isAdmin || host.relay || relayed.length > 0)}
+{#if host && (auth.isAdmin || host.relay || relayed.length > 0 || through)}
 	{@const relayOn = host.relay}
 	<Panel title={m.devicesb_relay_panel_title()}>
 		{#snippet aside()}
@@ -101,7 +128,15 @@
 			{/if}
 		{/snippet}
 
-		{#if switchable && auth.isAdmin}
+		{#if through}
+			<p class="mb-3 flex flex-wrap items-center gap-2 text-sm text-ink">
+				<Server class="size-4 text-ink-2" aria-hidden="true" />
+				<span>{m.devicesb_relay_panel_through({ relay: through.name })}</span>
+				<a class="inline-flex min-h-10 items-center underline decoration-line underline-offset-2 hover:text-ink" href={`/targets/${through.id}`}>{m.devicesb_relay_panel_through_open()}</a>
+			</p>
+		{/if}
+
+		{#if switchable && auth.isAdmin && !through}
 			<form class="grid gap-3" onsubmit={save}>
 				<div class="flex items-start gap-3">
 					<Toggle id="relay-switch" bind:checked={enabled} label={m.devicesb_relay_panel_switch()} disabled={pinned || saving} />
@@ -127,6 +162,25 @@
 							{#each knownSites as known (known)}<option value={known}></option>{/each}
 						</datalist>
 					</Field>
+					{#if gatewayKnown}
+						<div class="flex items-start gap-3">
+							<Toggle id="relay-gateway" bind:checked={gateway} label={m.devicesb_relay_panel_gateway()} disabled={saving} />
+							<div class="min-w-0">
+								<label for="relay-gateway" class="text-sm font-semibold text-ink">{m.devicesb_relay_panel_gateway()}</label>
+								<p class="text-sm text-ink-2">{m.devicesb_relay_panel_gateway_help()}</p>
+							</div>
+						</div>
+						{#if gateway}
+							<div class="grid gap-3 sm:grid-cols-[1fr_8rem]">
+								<Field label={m.devicesb_relay_panel_gateway_host()} for="relay-gateway-host" help={m.devicesb_relay_panel_gateway_host_help()}>
+									<input id="relay-gateway-host" class="input" type="text" autocomplete="off" spellcheck="false" placeholder={host.hostname} disabled={saving} bind:value={gatewayHost} />
+								</Field>
+								<Field label={m.devicesb_relay_panel_gateway_port()} for="relay-gateway-port" error={portValid ? null : m.devicesb_relay_panel_gateway_port_invalid()}>
+									<input id="relay-gateway-port" class="input tnum" type="number" min="1" max="65535" step="1" disabled={saving} bind:value={gatewayPort} />
+								</Field>
+							</div>
+						{/if}
+					{/if}
 				{/if}
 				{#if tooOld}
 					<p class="text-sm text-warning">{m.devicesb_relay_panel_too_old({ flag: 'relay: true' })}</p>
@@ -140,7 +194,7 @@
 				{/if}
 				{#if !pinned}
 					<div>
-						<Button type="submit" variant="secondary" size="sm" loading={saving} disabled={!dirty}>{m.devicesb_relay_panel_save()}</Button>
+						<Button type="submit" variant="secondary" size="sm" loading={saving} disabled={!dirty || (gateway && !portValid)}>{m.devicesb_relay_panel_save()}</Button>
 					</div>
 				{/if}
 			</form>
@@ -152,6 +206,19 @@
 
 		{#if relayOn || count > 0}
 			<dl class="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[auto_1fr]">
+				{#if relayOn && gatewayKnown}
+					<dt class="text-ink-2">{m.devicesb_relay_panel_gateway_state()}</dt>
+					<dd class="text-ink">
+						{#if host.gateway_port != null}
+							{m.devicesb_relay_panel_gateway_listening({ port: String(host.gateway_port) })}
+							<span class="text-ink-2">— {m.devicesb_relay_panel_gateway_tunnels({ count: host.gateway_tunnels ?? 0 })}</span>
+						{:else if host.gateway_wanted != null}
+							{m.devicesb_relay_panel_gateway_opening()}
+						{:else}
+							{m.devicesb_relay_panel_gateway_closed()}
+						{/if}
+					</dd>
+				{/if}
 				<dt class="text-ink-2">{m.devicesb_relay_panel_relay_for()}</dt>
 				<dd class="text-ink">
 					{count === 1 ? m.devicesb_relay_panel_devices_one() : m.devicesb_relay_panel_devices_other({ count })}
@@ -175,6 +242,10 @@
 				<Button variant="ghost" size="sm" href={`/targets/new?via_agent=${target.id}`}>
 					<Plus class="size-4" aria-hidden="true" />
 					{m.devicesb_relay_panel_add()}
+				</Button>
+				<Button variant="ghost" size="sm" href={`/targets/new?kind=agent&via_agent=${target.id}`}>
+					<Server class="size-4" aria-hidden="true" />
+					{m.devicesb_relay_panel_install_agent()}
 				</Button>
 			</div>
 		{/if}

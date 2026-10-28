@@ -7,11 +7,12 @@
 	 * icon, never colour alone — until someone marks it as known.
 	 */
 	import { onMount } from 'svelte';
-	import { CalendarClock, CircleCheck, Play, Plus, Sparkles, Trash2 } from 'lucide-svelte';
+	import { CalendarClock, CircleCheck, EyeOff, Grid3x3, Play, Plus, Sparkles, Trash2 } from 'lucide-svelte';
 	import { ApiError, localSubnets, type LocalSubnet } from '#lib/api/index.js';
 	import {
 		createNetscanSchedule,
 		deleteNetscanSchedule,
+		ignoreNetscanDevice,
 		listNetscanInventory,
 		listNetscanSchedules,
 		markAllNetscanKnown,
@@ -24,6 +25,7 @@
 	import type { DiscoveryDepth, NetscanDevice, NetscanRunStatus, NetscanSchedule, RelayAgent } from '#lib/api/types.js';
 	import { formatRelative } from '#lib/format.js';
 	import { Button, Confirm, EmptyState, ErrorNotice, Field, Plate, Toggle, type Tone } from '#lib/ui/index.js';
+	import NetscanGrid from './NetscanGrid.svelte';
 	import { defaultSubnet, usableSubnets } from './test-connection';
 
 	/** Refresh while the screen is open: a scan finishes in the background. */
@@ -48,12 +50,18 @@
 	let creating = $state(false);
 	let formError = $state<unknown>(null);
 	let onlyNew = $state(false);
+	/** Network drawn as a grid; the first one until another is picked. */
+	let gridScheduleId = $state<number | null>(null);
 
 	const cidrValid = $derived(/^\s*[0-9a-f:.]+\/\d{1,3}\s*$/i.test(cidr));
+	// An ignored device never counts: its new ports are not reported either.
 	const unknownCount = $derived(
-		devices.reduce((sum, d) => sum + (d.known ? d.ports.filter((p) => !p.known).length : 1), 0)
+		devices.reduce((sum, d) => sum + (d.known ? (d.ignored ? 0 : d.ports.filter((p) => !p.known).length) : 1), 0)
 	);
-	const shown = $derived(onlyNew ? devices.filter((d) => !d.known || d.ports.some((p) => !p.known)) : devices);
+	const shown = $derived(
+		onlyNew ? devices.filter((d) => !d.known || (!d.ignored && d.ports.some((p) => !p.known))) : devices
+	);
+	const gridSchedule = $derived(schedules.find((s) => s.id === gridScheduleId) ?? schedules[0] ?? null);
 
 	onMount(() => {
 		const controller = new AbortController();
@@ -207,6 +215,12 @@
 							<p class="tnum text-[0.8125rem] text-ink-2">
 								{m.discovery_inventory_counts({ devices: schedule.devices, unknown: schedule.unknown_devices + schedule.unknown_ports })}
 							</p>
+							{#if schedule.mac_changes > 0}
+								<p class="flex items-center gap-2 text-[0.8125rem] font-semibold text-warning-ink">
+									<Plate tone="warning" label={m.discovery_inventory_mac_changed()} />
+									<span class="tnum">{m.discovery_inventory_mac_changes_count({ count: schedule.mac_changes })}</span>
+								</p>
+							{/if}
 							{#if !schedule.initialized}
 								<p class="text-[0.8125rem] text-ink-2">{m.discovery_inventory_baseline_pending()}</p>
 							{/if}
@@ -289,6 +303,33 @@
 			<p class="text-[0.8125rem] text-ink-2">{m.discovery_inventory_alerts_hint()}</p>
 		</section>
 
+		{#if gridSchedule}
+			<section aria-labelledby="inv-grid" class="grid gap-3">
+				<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+					<h3 id="inv-grid" class="flex items-center gap-2 text-sm font-semibold text-ink">
+						<Grid3x3 class="size-4 text-ink-2" aria-hidden="true" />
+						{m.discovery_grid_heading()}
+					</h3>
+					{#if schedules.length > 1}
+						<select class="input max-w-full font-mono text-[0.8125rem]" aria-label={m.discovery_grid_network_label()} value={String(gridSchedule.id)} onchange={(event) => (gridScheduleId = Number(event.currentTarget.value))}>
+							{#each schedules as schedule (schedule.id)}
+								<option value={String(schedule.id)}>{schedule.cidr}{schedule.name ? ` · ${schedule.name}` : ''}</option>
+							{/each}
+						</select>
+					{/if}
+				</div>
+				{#key gridSchedule.id}
+					<NetscanGrid
+						schedule={gridSchedule}
+						{devices}
+						{busy}
+						onknown={(id) => void act(`device-${id}`, () => markNetscanDeviceKnown(id))}
+						onignore={(id) => void act(`ignore-${id}`, () => ignoreNetscanDevice(id))}
+					/>
+				{/key}
+			</section>
+		{/if}
+
 		<section aria-labelledby="inv-inventory" class="grid gap-3">
 			<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
 				<h3 id="inv-inventory" class="text-sm font-semibold text-ink">{m.discovery_inventory_inventory_heading()}</h3>
@@ -322,23 +363,39 @@
 								<div class="min-w-0">
 									<p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink">
 										<span class="font-semibold">{deviceTitle(device)}</span>
-										{#if !device.known}
+										{#if device.ignored}
+											<Plate tone="muted" label={m.discovery_inventory_ignored()} />
+										{:else if !device.known}
 											<Plate tone="advisory" label={m.discovery_inventory_new_device()} />
+										{/if}
+										{#if device.mac_change_from && !device.known}
+											<Plate tone="warning" label={m.discovery_inventory_mac_changed()} />
 										{/if}
 									</p>
 									<p class="break-all font-mono text-[0.75rem] text-ink-2">
 										{device.ip}{device.mac ? ` · ${device.mac}` : ''}{device.hostname && device.vendor ? ` · ${device.vendor}` : ''}
 									</p>
+									{#if device.mac_change_from && !device.known}
+										<p class="text-[0.8125rem] text-warning-ink">{m.discovery_inventory_mac_changed_from({ mac: device.mac_change_from })}</p>
+									{/if}
 									<p class="text-[0.75rem] text-ink-2">
 										{#if schedules.length > 1}{scheduleLabel(device.schedule_id)} · {/if}{m.discovery_inventory_first_seen({ when: formatRelative(device.first_seen) })} · {m.discovery_inventory_last_seen({ when: formatRelative(device.last_seen) })}
 									</p>
 								</div>
-								{#if !device.known}
-									<Button size="sm" variant="secondary" disabled={busy !== null} loading={busy === `device-${device.id}`} onclick={() => act(`device-${device.id}`, () => markNetscanDeviceKnown(device.id))}>
-										<CircleCheck class="size-4" aria-hidden="true" />
-										{m.discovery_inventory_mark_device()}
-									</Button>
-								{/if}
+								<div class="flex flex-wrap items-center gap-2">
+									{#if !device.known || device.ignored}
+										<Button size="sm" variant="secondary" disabled={busy !== null} loading={busy === `device-${device.id}`} onclick={() => act(`device-${device.id}`, () => markNetscanDeviceKnown(device.id))}>
+											<CircleCheck class="size-4" aria-hidden="true" />
+											{m.discovery_inventory_mark_device()}
+										</Button>
+									{/if}
+									{#if !device.ignored}
+										<Button size="sm" variant="ghost" disabled={busy !== null} loading={busy === `ignore-${device.id}`} onclick={() => act(`ignore-${device.id}`, () => ignoreNetscanDevice(device.id))}>
+											<EyeOff class="size-4" aria-hidden="true" />
+											{m.discovery_inventory_ignore()}
+										</Button>
+									{/if}
+								</div>
 							</div>
 							{#if device.ports.length === 0}
 								<p class="text-[0.8125rem] text-ink-2">{m.discovery_inventory_no_ports()}</p>
@@ -348,7 +405,7 @@
 										<li class={`flex min-h-8 items-center gap-2 rounded-lg border px-2.5 text-[0.8125rem] ${port.known ? 'border-line bg-surface-2 text-ink-2' : 'border-advisory/50 bg-advisory-soft text-ink'}`}>
 											<span class="font-mono">{port.port}/{port.protocol}</span>
 											<span class="max-w-[10rem] truncate">{port.product}</span>
-											{#if !port.known}
+											{#if !port.known && !device.ignored}
 												<Sparkles class="size-3.5 text-advisory-ink" aria-hidden="true" />
 												<span class="font-semibold">{m.discovery_inventory_new_port()}</span>
 												{#if device.known}

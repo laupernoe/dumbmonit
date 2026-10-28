@@ -433,7 +433,6 @@ pub const SCOPED_ROUTES: &[(&str, &str, RouteRule)] = &[
     // Son propre compte.
     ("*", "/auth/**", RouteRule::Open),
     ("*", "/webpush/**", RouteRule::Open),
-    ("*", "/music/**", RouteRule::Open),
     // Catalogues, sans donnée d'équipement.
     ("GET", "/collectors", RouteRule::Open),
     ("GET", "/notify/kinds", RouteRule::Open),
@@ -463,6 +462,8 @@ pub const SCOPED_ROUTES: &[(&str, &str, RouteRule)] = &[
     ("GET", "/security/cves", RouteRule::Open),
     ("GET", "/security/cves/summary", RouteRule::Open),
     ("GET", "/security/cves/inventory", RouteRule::Open),
+    // Carte des menaces : pays seulement, sources filtrées par le gestionnaire.
+    ("GET", "/security/threats", RouteRule::Open),
     // Mode MSP : le rapport SLA et le logo de ses propres clients (le
     // gestionnaire vérifie le client demandé).
     ("GET", "/reports/sla", RouteRule::Open),
