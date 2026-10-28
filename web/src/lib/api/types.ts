@@ -5282,6 +5282,10 @@ export interface NetscanSchedule extends NetscanScheduleInput {
 	last_error: string | null;
 	devices: number;
 	unknown_devices: number;
+	/** Devices the administrator chose to ignore. */
+	ignored_devices: number;
+	/** New devices on the address of a known device under another MAC, still to review. */
+	mac_changes: number;
 	/** Unknown ports of known devices. */
 	unknown_ports: number;
 }
@@ -5302,8 +5306,13 @@ export interface NetscanDevice {
 	ip: string;
 	mac: string | null;
 	hostname: string | null;
+	/** Manufacturer from the MAC prefix (OUI), when known. */
 	vendor: string | null;
+	/** Also true for an ignored device. */
 	known: boolean;
+	ignored: boolean;
+	/** MAC the address had before this new device took it (spoofing or replaced hardware). */
+	mac_change_from: string | null;
 	first_seen: string;
 	last_seen: string;
 	ports: NetscanPort[];

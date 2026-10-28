@@ -59,7 +59,12 @@ fn find<'a>(devices: &'a [Value], ip: &str) -> &'a Value {
 
 fn kinds(items: &[Unknown]) -> (usize, usize) {
     let devices = items.iter().filter(|i| matches!(i, Unknown::Device { .. })).count();
-    (devices, items.len() - devices)
+    let changes = items.iter().filter(|i| matches!(i, Unknown::MacChange { .. })).count();
+    (devices, items.len() - devices - changes)
+}
+
+fn mac_changes(items: &[Unknown]) -> Vec<&Unknown> {
+    items.iter().filter(|i| matches!(i, Unknown::MacChange { .. })).collect()
 }
 
 #[tokio::test]
@@ -309,7 +314,7 @@ async fn l_inventaire_est_reserve_aux_administrateurs() {
 async fn les_regles_d_alerte_livrees_sont_eteintes_et_en_information() {
     let (_app, pool) = setup().await;
     db::alerts::seed_builtin_rules(&pool).await.expect("règles livrées");
-    for uid in ["netscan_new_device", "netscan_new_port"] {
+    for uid in ["netscan_new_device", "netscan_new_port", "netscan_mac_change"] {
         let (enabled, severity): (i64, String) =
             sqlx::query_as("SELECT enabled, severity FROM alert_rules WHERE uid = ?")
                 .bind(uid)
@@ -317,6 +322,148 @@ async fn les_regles_d_alerte_livrees_sont_eteintes_et_en_information() {
                 .await
                 .unwrap_or_else(|_| panic!("règle {uid} absente"));
         assert_eq!(enabled, 0, "{uid} doit être désactivée par défaut");
-        assert_eq!(severity, "info", "{uid}");
+        let expected = if uid == "netscan_mac_change" { "warning" } else { "info" };
+        assert_eq!(severity, expected, "{uid}");
     }
+}
+
+#[tokio::test]
+async fn une_autre_mac_sur_une_ip_connue_leve_un_changement_de_mac() {
+    let (app, pool) = setup().await;
+    let admin = app.admin_cookie().await;
+    let id = schedule(&app, &admin, "10.0.0.0/24").await;
+    let old = "aa:aa:aa:aa:aa:aa";
+    store::apply_scan(&pool, id, &[host("10.0.0.2", Some(old), &[22])]).await.unwrap();
+
+    let applied = store::apply_scan(
+        &pool,
+        id,
+        &[
+            host("10.0.0.2", Some("BB:BB:BB:BB:BB:BB"), &[]),
+            host("10.0.0.3", Some("cc:cc:cc:cc:cc:cc"), &[]),
+        ],
+    )
+    .await
+    .unwrap();
+    assert_eq!((applied.new_devices, applied.mac_changes), (2, 1));
+    let items = store::unknown_items(&pool).await.unwrap();
+    // Deux appareils nouveaux, dont un à la MAC changée : un seul changement.
+    assert_eq!(kinds(&items), (2, 0));
+    match mac_changes(&items).as_slice() {
+        [Unknown::MacChange { ident, previous_mac, .. }] => {
+            assert_eq!(ident, "mac:bb:bb:bb:bb:bb:bb");
+            assert_eq!(previous_mac, old);
+        }
+        other => panic!("un changement attendu : {other:?}"),
+    }
+
+    let list = app.get("/api/discovery/schedules", Some(&admin)).await;
+    assert_eq!(list.body["schedules"][0]["mac_changes"], 1);
+    let inventory = app.get("/api/discovery/inventory", Some(&admin)).await;
+    let devices = inventory.body["devices"].as_array().unwrap();
+    let spoof = devices.iter().find(|d| d["mac"] == "bb:bb:bb:bb:bb:bb").expect("appareil");
+    assert_eq!(spoof["mac_change_from"], old);
+    assert!(find(devices, "10.0.0.3")["mac_change_from"].is_null());
+
+    // Le même balayage ne le relève pas une seconde fois.
+    let again = store::apply_scan(&pool, id, &[host("10.0.0.2", Some("bb:bb:bb:bb:bb:bb"), &[])])
+        .await
+        .unwrap();
+    assert_eq!(again.mac_changes, 0);
+
+    // Marqué connu : le changement est acquitté.
+    let device = spoof["id"].as_i64().unwrap();
+    let reply = app
+        .post(&format!("/api/discovery/inventory/devices/{device}/known"), json!({}), Some(&admin))
+        .await;
+    assert_eq!(reply.status, StatusCode::NO_CONTENT, "{}", reply.body);
+    assert!(mac_changes(&store::unknown_items(&pool).await.unwrap()).is_empty());
+}
+
+#[tokio::test]
+async fn le_premier_balayage_ne_signale_aucun_changement_de_mac() {
+    let (app, pool) = setup().await;
+    let admin = app.admin_cookie().await;
+    let id = schedule(&app, &admin, "10.0.0.0/24").await;
+    // Deux MAC pour une IP dans le tout premier balayage : inventaire de départ.
+    let applied = store::apply_scan(
+        &pool,
+        id,
+        &[
+            host("10.0.0.2", Some("aa:aa:aa:aa:aa:aa"), &[]),
+            host("10.0.0.2", Some("bb:bb:bb:bb:bb:bb"), &[]),
+        ],
+    )
+    .await
+    .unwrap();
+    assert_eq!(applied.mac_changes, 0);
+    assert!(store::unknown_items(&pool).await.unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn ignorer_un_appareil_coupe_toutes_ses_alertes_et_connu_le_reprend() {
+    let (app, pool) = setup().await;
+    let admin = app.admin_cookie().await;
+    let id = schedule(&app, &admin, "10.0.0.0/24").await;
+    store::apply_scan(&pool, id, &[host("10.0.0.2", Some("aa:aa:aa:aa:aa:aa"), &[22])])
+        .await
+        .unwrap();
+    store::apply_scan(
+        &pool,
+        id,
+        &[host("10.0.0.2", Some("bb:bb:bb:bb:bb:bb"), &[22]), host("10.0.0.2", None, &[])],
+    )
+    .await
+    .unwrap();
+    let inventory = app.get("/api/discovery/inventory", Some(&admin)).await;
+    let guest = inventory.body["devices"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|d| d["mac"] == "bb:bb:bb:bb:bb:bb")
+        .unwrap()["id"]
+        .as_i64()
+        .unwrap();
+    assert!(!store::unknown_items(&pool).await.unwrap().is_empty());
+
+    let uri = format!("/api/discovery/inventory/devices/{guest}/ignore");
+    let reply = app.post(&uri, json!({}), Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::NO_CONTENT, "{}", reply.body);
+    assert!(store::unknown_items(&pool).await.unwrap().is_empty());
+
+    // Un port qui apparait sur l'appareil ignoré ne déclenche rien non plus.
+    store::apply_scan(&pool, id, &[host("10.0.0.2", Some("bb:bb:bb:bb:bb:bb"), &[22, 3389])])
+        .await
+        .unwrap();
+    assert!(store::unknown_items(&pool).await.unwrap().is_empty());
+    let list = app.get("/api/discovery/schedules", Some(&admin)).await;
+    let row = &list.body["schedules"][0];
+    assert_eq!(row["ignored_devices"], 1);
+    assert_eq!(row["unknown_ports"], 0);
+
+    let inventory = app.get("/api/discovery/inventory", Some(&admin)).await;
+    let device = inventory.body["devices"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|d| d["id"] == guest)
+        .unwrap();
+    assert_eq!((device["known"].as_bool(), device["ignored"].as_bool()), (Some(true), Some(true)));
+
+    // « Connu » le sort de l'état ignoré : ses ports nouveaux comptent de nouveau.
+    let reply = app
+        .post(&format!("/api/discovery/inventory/devices/{guest}/known"), json!({}), Some(&admin))
+        .await;
+    assert_eq!(reply.status, StatusCode::NO_CONTENT, "{}", reply.body);
+    store::apply_scan(&pool, id, &[host("10.0.0.2", Some("bb:bb:bb:bb:bb:bb"), &[22, 3389, 23])])
+        .await
+        .unwrap();
+    assert_eq!(kinds(&store::unknown_items(&pool).await.unwrap()), (0, 1));
+
+    let missing = "/api/discovery/inventory/devices/9999/ignore";
+    let reply = app.post(missing, json!({}), Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::NOT_FOUND);
+    let viewer = app.viewer_cookie(&admin).await;
+    let reply = app.post(&uri, json!({}), Some(&viewer)).await;
+    assert_eq!(reply.status, StatusCode::FORBIDDEN);
 }
