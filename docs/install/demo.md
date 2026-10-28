@@ -27,10 +27,16 @@ to put a showcase on your own site.
   host and a status page. The monitors are answered by fake responders inside
   the server, bound to `127.0.0.1` and replaying recorded API responses, so the
   real collectors and monitor panels run. Restarting gives the same estate.
-- **Seven days of history.** Synthetic metrics are written into
-  VictoriaMetrics at startup, so charts, *Last 7 days*, forecasts and alert
-  history are populated, and a few alerts are firing so *Needs you* has
-  something in it.
+- **Thirty days of history.** Synthetic metrics are written into
+  VictoriaMetrics at startup (the last week at five-minute resolution), so
+  charts, *Last 7 days*, 30-day availability, forecasts ("full in about N
+  days") and alert history are populated, and a few alerts are firing so
+  *Needs you* has something in it. A core switch with its ports and traffic, a
+  threat map fed by made-up CrowdSec and Cloudflare counts, domain and licence
+  deadlines, a backup matrix with a few failed nights, a device found by the
+  network scan and two status pages with night scenes complete the picture. All
+  of it is computed in memory from a fixed seed: nothing is fetched from the
+  network.
 - **Nothing leaves the server.** No notification is ever sent, and no probe
   goes to an address a visitor typed.
 - **A guided tour** opens after the first sign-in; the banner reopens it.

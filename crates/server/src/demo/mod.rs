@@ -17,6 +17,7 @@
 
 pub mod backfill;
 pub mod estate;
+pub mod extras;
 pub mod seed;
 pub mod synthetic;
 
@@ -60,6 +61,18 @@ pub async fn reset_database(path: &std::path::Path) -> anyhow::Result<()> {
 pub fn register_synthetic(registry: &mut crate::collectors::Registry) {
     for kind in ["http", "tls", "ping", "tcp", "dns"] {
         registry.register(std::sync::Arc::new(synthetic::SyntheticProbe::new(kind)));
+    }
+    // Commutateur SNMP, CrowdSec, Cloudflare, domaines, licence : simulés en
+    // mémoire, sans le moindre appel sortant (voir [`extras`]).
+    for kind in extras::KINDS {
+        registry.register(std::sync::Arc::new(synthetic::SyntheticProbe::new(*kind)));
+    }
+    // Les équipements simulés gardent leur vrai collecteur, avec un temps de
+    // réponse en plus : la colonne « Latency » de la console n'a pas de trous.
+    for kind in estate::KINDS {
+        if let Some(inner) = registry.get(kind) {
+            registry.register(std::sync::Arc::new(synthetic::Timed::new(inner)));
+        }
     }
 }
 
