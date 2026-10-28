@@ -125,6 +125,7 @@ pub async fn restore(
     report.push(restore_teams(&mut tx, bundle).await?);
     report.push(restore_topology_corrections(&mut tx, bundle, &refs).await?);
     report.push(restore_topology_rules(&mut tx, bundle, &refs).await?);
+    report.push(restore_lun_links(&mut tx, bundle, &refs).await?);
     report.push(restore_dashboards(&mut tx, bundle).await?);
 
     report.push(restore_channels(&mut tx, cipher, bundle).await?);
@@ -2290,6 +2291,67 @@ async fn restore_topology_corrections(
         match result {
             Ok(_) => report.count(RestoreOutcome::Created),
             Err(error) => report.refused(&format!("map correction on \"{to}\""), &error.into()),
+        }
+    }
+    Ok(report)
+}
+
+/// Liens de LUN, par (NAS, LUN) : identique, laissé ; différent, mis à jour.
+async fn restore_lun_links(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+    refs: &HashMap<String, i64>,
+) -> Result<SectionReport> {
+    let mut report = SectionReport::new("lun_links");
+    for entry in &bundle.lun_links {
+        let target = refs.get(&entry.target).copied();
+        let consumer = refs.get(&entry.consumer).copied();
+        let (Some(target), Some(consumer)) = (target, consumer) else {
+            report.skipped += 1;
+            report.notes.push(format!(
+                "LUN link \"{}\" on \"{}\": a device it points at is not in this instance",
+                entry.lun, entry.target
+            ));
+            continue;
+        };
+        let existing: Option<(i64, String, String)> = sqlx::query_as(
+            "SELECT consumer_target_id, family, entity FROM lun_links
+             WHERE target_id = ? AND lun = ?",
+        )
+        .bind(target)
+        .bind(&entry.lun)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("recherche du lien de LUN")?;
+        let wanted = (consumer, entry.family.clone(), entry.entity.clone());
+        let outcome = match &existing {
+            Some(row) if *row == wanted => {
+                report.count(RestoreOutcome::Skipped);
+                continue;
+            }
+            Some(_) => RestoreOutcome::Updated,
+            None => RestoreOutcome::Created,
+        };
+        let result = sqlx::query(
+            "INSERT INTO lun_links (target_id, lun, consumer_target_id, family, entity, author)
+             VALUES (?, ?, ?, ?, ?, ?)
+             ON CONFLICT (target_id, lun) DO UPDATE SET
+                consumer_target_id = excluded.consumer_target_id,
+                family = excluded.family,
+                entity = excluded.entity,
+                author = excluded.author",
+        )
+        .bind(target)
+        .bind(&entry.lun)
+        .bind(consumer)
+        .bind(&entry.family)
+        .bind(&entry.entity)
+        .bind(&entry.author)
+        .execute(&mut **tx)
+        .await;
+        match result {
+            Ok(_) => report.count(outcome),
+            Err(error) => report.refused(&format!("LUN link \"{}\"", entry.lun), &error.into()),
         }
     }
     Ok(report)

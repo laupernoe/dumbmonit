@@ -18,6 +18,7 @@
 	import Figure from '../Figure.svelte';
 	import { formatAgo, formatBytes, formatUnix } from '../pbs/format';
 	import AbbDevices from './AbbDevices.svelte';
+	import LunStorage from '../storage/LunStorage.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
@@ -111,8 +112,12 @@
 		return words[raid.toLowerCase()] ?? raid.toUpperCase();
 	}
 
+	/**
+	 * Fill tone of a volume, on its effective usage: a volume filled by a thick
+	 * iSCSI LUN is full by design, and only what lies beside the LUN can overflow.
+	 */
 	function usageTone(volume: SynologyVolume): Tone {
-		const pct = volume.used_percent ?? 0;
+		const pct = volume.effective_used_percent ?? volume.used_percent ?? 0;
 		if (pct >= 95) return 'warning';
 		if (pct >= 90) return 'advisory';
 		return 'signal';
@@ -241,7 +246,7 @@
 								<p class="min-w-0 font-semibold text-ink break-all">{volume.name}</p>
 								<span class="text-[0.75rem] text-ink-3">{[raidWord(volume.raid_type), volume.fs_type].filter(Boolean).join(' · ')}</span>
 								<Plate tone={toneOf(volume.severity)} label={stateWord(volume.status)} />
-								{#if (volume.used_percent ?? 0) >= 90}<Plate tone={usage} label={m.devicesb_synology_panel_almost_full()} bare />{/if}
+								{#if (volume.effective_used_percent ?? volume.used_percent ?? 0) >= 90}<Plate tone={usage} label={m.devicesb_synology_panel_almost_full()} bare />{/if}
 							</div>
 							{#if volume.total_bytes !== null}
 								<div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(volume.used_percent ?? 0)} aria-label={m.devicesb_synology_panel_usage_aria({ name: volume.name })}>
@@ -251,6 +256,14 @@
 									<span>{m.devicesb_synology_panel_used_of({ used: formatBytes(volume.used_bytes), total: formatBytes(volume.total_bytes) })}</span>
 									<span>{m.devicesb_synology_panel_percent_used({ percent: percent(volume.used_percent) ?? '—' })}</span>
 								</p>
+								{#if (volume.lun_reserved_bytes ?? 0) > 0}
+									<p class="mt-1 text-[0.8125rem] text-ink-2">
+										{m.devices_luns_volume_note({
+											size: formatBytes(volume.lun_reserved_bytes),
+											percent: percent(volume.effective_used_percent ?? null) ?? '—'
+										})}
+									</p>
+								{/if}
 							{:else}
 								<p class="mt-1 text-[0.8125rem] text-ink-2">{m.devicesb_synology_panel_capacity_unknown_volume()}</p>
 							{/if}
@@ -259,6 +272,8 @@
 				</ul>
 			{/if}
 		</Panel>
+
+		<LunStorage {target} />
 
 		{#if overview.pools.length > 0}
 			<Panel
