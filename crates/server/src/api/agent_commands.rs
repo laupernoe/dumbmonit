@@ -266,11 +266,22 @@ pub struct AgentHostView {
     pub binding_supported: bool,
     /// Fin de la fenêtre de reliaison ouverte à la main, si elle court encore.
     pub rebind_until: Option<String>,
+    /// Passerelle des agents du site : port demandé depuis l'interface
+    /// (`None` : fermée), port sur lequel le relais écoute vraiment, adresse
+    /// par laquelle le site le joint, et tunnels ouverts en ce moment.
+    pub gateway_wanted: Option<u16>,
+    pub gateway_port: Option<u16>,
+    pub gateway_host: Option<String>,
+    pub gateway_tunnels: usize,
 }
 
 impl AgentHostView {
-    fn new(info: agent::HostInfo, relayed: usize) -> Self {
+    fn new(info: agent::HostInfo, relayed: usize, tunnels: usize) -> Self {
         Self {
+            gateway_wanted: info.relay_gateway_wanted,
+            gateway_port: info.relay_gateway_port,
+            gateway_host: info.relay_gateway_host.clone(),
+            gateway_tunnels: tunnels,
             commands_supported: info.commands_supported(),
             binding: info.binding_state(),
             hostname: info.hostname,
@@ -668,7 +679,8 @@ async fn agent_host(
         .await?
         .ok_or_else(|| ApiError::NotFound(format!("No agent has reported for device {id} yet.")))?;
     let relayed = db::targets::relayed_counts(&state.pool).await?.get(&id).copied().unwrap_or(0);
-    Ok(Json(AgentHostView::new(info, relayed)))
+    let tunnels = state.agent_tls().tunnels_of(id);
+    Ok(Json(AgentHostView::new(info, relayed, tunnels)))
 }
 
 /// Réponse à l'ouverture d'une fenêtre de reliaison.
@@ -706,6 +718,21 @@ pub struct RelayChoice {
     /// Site de ce relais ; vide ou absent : aucun.
     #[serde(default)]
     pub site: Option<String>,
+    /// Passerelle des agents du site. Absente : inchangée.
+    #[serde(default)]
+    pub gateway: Option<GatewayChoice>,
+}
+
+/// Passerelle d'un relais, telle que l'interface la règle.
+#[derive(Debug, Deserialize)]
+pub struct GatewayChoice {
+    pub enabled: bool,
+    /// Port d'écoute sur le relais. Absent : 8443.
+    #[serde(default)]
+    pub port: Option<u16>,
+    /// Adresse par laquelle les machines du site joignent le relais.
+    #[serde(default)]
+    pub host: Option<String>,
 }
 
 /// `PUT /api/targets/{id}/agent/relay` : allume ou éteint le mode relais de la
@@ -722,8 +749,23 @@ async fn set_relay(
     if site.as_ref().is_some_and(|s| s.chars().count() > max) {
         return Err(ApiError::BadRequest(format!("Site name is limited to {max} characters.")));
     }
+    let gateway = match &choice.gateway {
+        Some(gateway) => {
+            let host = agent::clean_gateway_host(gateway.host.as_deref())
+                .map_err(|e| ApiError::BadRequest(e.into()))?;
+            let port = gateway.port.unwrap_or(dumbmonit_proto::DEFAULT_RELAY_GATEWAY_PORT);
+            if port == 0 {
+                return Err(ApiError::BadRequest("The gateway port must be 1 to 65535.".into()));
+            }
+            Some((gateway.enabled.then_some(port), host))
+        }
+        None => None,
+    };
     if !agent::set_relay_wanted(&state.pool, id, choice.enabled, site.as_deref()).await? {
         return Err(ApiError::NotFound(format!("No agent has reported for device {id} yet.")));
+    }
+    if let Some((port, host)) = gateway {
+        agent::set_relay_gateway(&state.pool, id, port, host.as_deref()).await?;
     }
     tracing::info!(
         cible = id,

@@ -24,6 +24,7 @@ site.
 | Serveur, entrant | **TCP 8443** | Canal chiffré des agents. Le seul port nécessaire aux agents d'autres réseaux. |
 | Serveur, entrant | TCP 8080 | Interface web, scripts d'installation et téléchargement de l'agent. Peut rester privé (LAN, VPN). |
 | Agents | aucun | Les agents n'établissent que des connexions sortantes. |
+| Relais avec passerelle | TCP 8443 (réglable), **depuis le réseau du site seulement** | Les agents d'un site qui ne joignent pas le serveur se connectent au relais (voir plus bas). |
 
 Avec Docker, publiez le port agents à côté du port web :
 
@@ -75,6 +76,51 @@ Si un routeur ou un mandataire TCP le publie sous un autre numéro, réglez
 
 Les commandes envoyées aux agents (redémarrage et mise à jour de conteneurs) et
 les sondes déléguées aux agents relais passent par le même canal.
+
+## Par la passerelle d'un relais
+
+Sur un site derrière un pare-feu, les agents peuvent joindre le serveur à
+travers l'agent relais du site ([Surveiller un site distant](remote-site.fr.md#5-installer-des-agents-derriere-le-relais)).
+La conception garde la sécurité du canal direct :
+
+- **De bout en bout.** Le relais ne termine jamais le TLS de l'agent. Il
+  vérifie qu'une connexion s'ouvre par un ClientHello TLS et recopie les octets
+  dans un tunnel vers le port des agents du serveur. Poignée de main,
+  certificat client de l'agent, autorité épinglée, échange de clés
+  post-quantique, jeton et secret de liaison sont entre l'agent et le serveur.
+  Le relais ne voit que du chiffré : il ne peut ni lire les mesures, les
+  commandes ou le jeton, ni les modifier sans que cela se voie, ni se faire
+  passer pour un agent (il n'a ni sa clé privée ni son jeton). L'enrôlement
+  passe par le même tunnel.
+- **Un relais authentifié.** Un tunnel est une mise à niveau HTTP sur
+  `/api/agent/relay/tunnel` sous le certificat client *du relais*, et seul un
+  agent en mode relais en obtient. Les tunnels ne s'imbriquent pas.
+- **Un client par relais.** En mode MSP, un relais ne porte que les machines
+  de son client : un enrôlement dont le jeton appartient à un autre client est
+  refusé (`403`), comme toute requête d'un agent d'un autre client passant par
+  lui. Le serveur refuse aussi de préparer une installation à travers le relais
+  d'un autre client.
+- **Pas un mandataire ouvert.** La destination est toujours le serveur auquel
+  le relais est enrôlé ; rien dans une connexion entrante ne peut en choisir
+  une autre. Hors TLS, la passerelle ne répond qu'à `GET /install.sh`,
+  `/install.ps1` et `/download/<fichier de l'agent>`, relus auprès du serveur
+  par le canal du relais ; la commande d'installation porte le SHA-256 de
+  chaque binaire et le script refuse tout autre fichier. Le reste (`CONNECT`,
+  SOCKS, autres chemins) est fermé ou reçoit un `404`.
+- **Borné.** La passerelle tient au plus 64 connexions
+  (`gateway_max_connections`), 4 Mio/s par tunnel et par sens
+  (`gateway_rate_kib`), ferme une connexion muette au bout de 10 secondes et un
+  tunnel inactif au bout de 15 minutes. Le serveur accepte 256 tunnels par
+  relais et applique ses limites habituelles de poignées de main.
+- **Tracé.** Le serveur retient, pour chaque agent, le relais par lequel il se
+  connecte : le relais devient son parent sur la carte de topologie et pour la
+  suppression des alertes.
+
+Ce que le relais peut encore faire, comme tout routeur sur le chemin : refuser
+de transporter (les agents apparaissent alors injoignables, suppressed par le
+relais s'il est lui-même en panne), et voir quand et combien ils envoient.
+Restreignez le port de la passerelle au réseau du site sur le pare-feu du
+relais.
 
 ## Modèle de menace
 
@@ -168,6 +214,8 @@ Sur l'agent (`agent.yaml` ou environnement) : `tls_url` /
 
 `GET /api/agent/install?base_url=…` renvoie l'URL web, l'URL du canal des
 agents, l'empreinte de l'autorité, les empreintes des binaires, et les
-commandes d'installation Unix et PowerShell avec `{TOKEN}` à remplacer. Un
+commandes d'installation Unix et PowerShell avec `{TOKEN}` à remplacer. Avec
+`relay_id=<relais>` (et éventuellement `relay_host=`), les commandes passent
+par la passerelle de ce relais. Un
 générateur GPO ou Ansible doit s'en servir plutôt que de reconstruire la
 commande.

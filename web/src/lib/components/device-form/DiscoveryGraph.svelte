@@ -15,9 +15,11 @@
 	interface Props {
 		hosts: DiscoveredHost[];
 		cidr: string;
+		/** Relay agent that ran the scan, `null` for the server. */
+		viaAgent?: number | null;
 	}
 
-	let { hosts, cidr }: Props = $props();
+	let { hosts, cidr, viaAgent = null }: Props = $props();
 
 	const sorted = $derived([...hosts].sort((a, b) => compareIp(a.ip, b.ip)));
 	const layout = $derived(layoutGraph(sorted.map((h) => ({ ip: h.ip, rows: h.services.length }))));
@@ -61,7 +63,7 @@
 					</header>
 					<div class="divide-y divide-line">
 						{#each sortServices(host.services) as service (`${service.protocol}${service.port}`)}
-							<DiscoveryService {service} ip={host.ip} hostname={host.hostname} compact />
+							<DiscoveryService {service} ip={host.ip} hostname={host.hostname} compact {viaAgent} />
 						{:else}
 							<p class="px-3 py-1.5 text-[0.75rem] text-ink-2">{m.deviceform_scan_no_service()}</p>
 						{/each}

@@ -100,6 +100,9 @@ struct FileConfig {
     action_services: Option<Vec<String>>,
     relay: Option<bool>,
     site: Option<String>,
+    gateway_listen: Option<String>,
+    gateway_max_connections: Option<usize>,
+    gateway_rate_kib: Option<u32>,
     interfaces_ignore: Option<Patterns>,
     interfaces_only: Option<Patterns>,
     mounts_ignore: Option<Patterns>,
@@ -261,6 +264,8 @@ pub struct Config {
     pub relay: bool,
     /// Site où l'agent est posé, tel qu'affiché dans l'interface.
     pub site: Option<String>,
+    /// Passerelle du relais pour les agents de son site (voir `gateway.rs`).
+    pub gateway: crate::gateway::GatewayConfig,
     /// Périmètre de la collecte système : interfaces, montages, détail par cœur.
     pub probe: ProbeConfig,
     /// Santé du système : mises à jour, redémarrage, unités en échec, SELinux.
@@ -328,6 +333,7 @@ impl fmt::Debug for Config {
             .field("actions", &self.actions)
             .field("relay", &self.relay)
             .field("site", &self.site)
+            .field("gateway", &self.gateway)
             .field("probe", &self.probe)
             .field("max_buffered_samples", &self.max_buffered_samples)
             .field("log_level", &self.log_level)
@@ -530,6 +536,12 @@ impl Config {
             .or(file.site)
             .map(|site| site.trim().to_string())
             .filter(|site| !site.is_empty());
+        let gateway = gateway_config(
+            &env,
+            file.gateway_listen,
+            file.gateway_max_connections,
+            file.gateway_rate_kib,
+        )?;
         let cpu_per_core = flag("DUMBMONIT_AGENT_CPU_PER_CORE", file.cpu_per_core, false)?;
 
         let docker_max_containers = match env.get("DUMBMONIT_AGENT_DOCKER_MAX_CONTAINERS") {
@@ -811,6 +823,7 @@ impl Config {
             actions,
             relay,
             site,
+            gateway,
             probe,
             system_health,
             plakar,
@@ -1113,6 +1126,48 @@ fn read_interval(
     Ok(seconds)
 }
 
+/// Réglages de la passerelle du relais : l'environnement prime sur le fichier.
+fn gateway_config(
+    env: &EnvSource,
+    listen: Option<String>,
+    max_connections: Option<usize>,
+    rate_kib: Option<u32>,
+) -> Result<crate::gateway::GatewayConfig> {
+    use crate::gateway::{DEFAULT_MAX_CONNECTIONS, DEFAULT_RATE_KIB, GatewayConfig};
+
+    let listen = match env
+        .get("DUMBMONIT_AGENT_GATEWAY_LISTEN")
+        .or(listen)
+        .map(|raw| raw.trim().to_string())
+        .filter(|raw| !raw.is_empty())
+    {
+        Some(raw) => Some(raw.parse::<std::net::SocketAddr>().with_context(|| {
+            format!("gateway_listen: invalid address '{raw}' (expected for example 0.0.0.0:8443)")
+        })?),
+        None => None,
+    };
+    let max_connections = match env.get("DUMBMONIT_AGENT_GATEWAY_MAX_CONNECTIONS") {
+        Some(raw) => raw.trim().parse::<usize>().with_context(|| {
+            format!("DUMBMONIT_AGENT_GATEWAY_MAX_CONNECTIONS: invalid value '{raw}'")
+        })?,
+        None => max_connections.unwrap_or(DEFAULT_MAX_CONNECTIONS),
+    };
+    let rate_kib = match env.get("DUMBMONIT_AGENT_GATEWAY_RATE_KIB") {
+        Some(raw) => raw
+            .trim()
+            .parse::<u32>()
+            .with_context(|| format!("DUMBMONIT_AGENT_GATEWAY_RATE_KIB: invalid value '{raw}'"))?,
+        None => rate_kib.unwrap_or(DEFAULT_RATE_KIB),
+    };
+    if max_connections == 0 {
+        bail!("gateway_max_connections must be at least 1");
+    }
+    if rate_kib == 0 {
+        bail!("gateway_rate_kib must be at least 1");
+    }
+    Ok(GatewayConfig { listen, max_connections, rate_kib })
+}
+
 fn parse_tags(raw: &str) -> Result<BTreeMap<String, String>> {
     let mut tags = BTreeMap::new();
     for pair in raw.split(',').map(str::trim).filter(|pair| !pair.is_empty()) {
@@ -1221,6 +1276,28 @@ mod tests {
             Config::merge(file_with_url_and_token(), env(&[("DUMBMONIT_AGENT_SITE", "  ")]))
                 .expect("configuration");
         assert_eq!(config.site, None);
+    }
+
+    #[test]
+    fn the_relay_gateway_is_read_from_the_file_or_the_environment() {
+        let config = Config::merge(file_with_url_and_token(), env(&[])).expect("configuration");
+        assert_eq!(config.gateway, crate::gateway::GatewayConfig::default());
+
+        let file = FileConfig {
+            gateway_listen: Some(" 0.0.0.0:9443 ".into()),
+            gateway_max_connections: Some(10),
+            ..file_with_url_and_token()
+        };
+        let config = Config::merge(file, env(&[("DUMBMONIT_AGENT_GATEWAY_RATE_KIB", "512")]))
+            .expect("configuration");
+        assert_eq!(config.gateway.listen, Some("0.0.0.0:9443".parse().unwrap()));
+        assert_eq!(config.gateway.max_connections, 10);
+        assert_eq!(config.gateway.rate_kib, 512);
+
+        let bad = FileConfig { gateway_listen: Some("relais".into()), ..file_with_url_and_token() };
+        assert!(Config::merge(bad, env(&[])).is_err(), "une adresse sans port est refusée");
+        let zero = env(&[("DUMBMONIT_AGENT_GATEWAY_MAX_CONNECTIONS", "0")]);
+        assert!(Config::merge(file_with_url_and_token(), zero).is_err());
     }
 
     #[test]

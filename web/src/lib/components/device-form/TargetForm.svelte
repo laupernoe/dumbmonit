@@ -29,7 +29,7 @@
 	import { knownFolders } from '#lib/components/devices/folders.js';
 	import { guessAgent } from '#lib/components/devices/mdaemon/agent-link.js';
 	import { groupOptions } from './option-groups';
-	import { listRelays } from '#lib/api/relay.js';
+	import { listRelayKinds, listRelays, relayable } from '#lib/api/relay.js';
 	import { listLocations } from '#lib/api/locations.js';
 	import type { MapLocation } from '#lib/api/types.js';
 	import { isMultisiteKind } from '#lib/format.js';
@@ -298,8 +298,18 @@
 	);
 
 	// --- Reached through (relay agents) --------------------------------------
-	// Agents are not relays for themselves: their metrics are pushed, not probed.
-	const canRelay = $derived(collector.kind !== 'agent');
+	// Agents push their metrics, heartbeats are called, website checks run on the
+	// server: only the kinds a relay knows are offered (`GET /relays/kinds`). A
+	// relay already set on an edited monitor stays visible.
+	let relayKinds = $state<string[] | null>(null);
+	$effect(() => {
+		const controller = new AbortController();
+		listRelayKinds(controller.signal)
+			.then((kinds) => (relayKinds = kinds))
+			.catch(() => (relayKinds = null));
+		return () => controller.abort();
+	});
+	const canRelay = $derived(relayable(collector.kind, relayKinds) || (target?.via_agent ?? null) !== null);
 	let relays = $state<RelayAgent[]>([]);
 	/** Set once the list came back, so the "no relay yet" hint never flashes before it. */
 	let relaysRead = $state(false);

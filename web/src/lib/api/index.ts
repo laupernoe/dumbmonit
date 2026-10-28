@@ -15,6 +15,7 @@ import type {
 	AgentHost,
 	AgentToken,
 	AgentTokenPayload,
+	TokenMachine,
 	RebindWindow,
 	AgentModule,
 	AckPayload,
@@ -743,6 +744,11 @@ export function createAgentToken(payload: AgentTokenPayload): Promise<CreatedAge
 	return request<CreatedAgentToken>('/agent/tokens', { method: 'POST', body: payload });
 }
 
+/** Machines enrolled with this token, newest first: the add flow waits for the first one. */
+export function listTokenMachines(id: number, signal?: AbortSignal): Promise<TokenMachine[]> {
+	return request<TokenMachine[]>(`/agent/tokens/${id}/machines`, { signal });
+}
+
 /** Creates a fleet token and the script that deploys the agent through a GPO. */
 export function createAdKit(payload: AdKitPayload): Promise<CreatedAdKit> {
 	return request<CreatedAdKit>('/agent/ad-kit', { method: 'POST', body: payload });
@@ -788,9 +794,26 @@ export async function listAgentModules(id: TargetId, signal?: AbortSignal): Prom
 	}
 }
 
+/** Gateway of a relay for the agents of its site. */
+export interface RelayGatewayChoice {
+	enabled: boolean;
+	/** Listening port on the relay. Left out: 8443. */
+	port?: number | null;
+	/** Address the site reaches the relay at. */
+	host?: string | null;
+}
+
 /** Switches the agent's relay mode on or off; the agent applies it at its next report. */
-export function setAgentRelay(id: TargetId, enabled: boolean, site: string | null): Promise<AgentHost> {
-	return request<AgentHost>(`/targets/${id}/agent/relay`, { method: 'PUT', body: { enabled, site } });
+export function setAgentRelay(
+	id: TargetId,
+	enabled: boolean,
+	site: string | null,
+	gateway?: RelayGatewayChoice
+): Promise<AgentHost> {
+	return request<AgentHost>(`/targets/${id}/agent/relay`, {
+		method: 'PUT',
+		body: gateway ? { enabled, site, gateway } : { enabled, site }
+	});
 }
 
 /** Ticks (creates the service's device) or unticks (drops it) a module. */

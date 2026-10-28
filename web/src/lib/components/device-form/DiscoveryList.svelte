@@ -7,9 +7,11 @@
 
 	interface Props {
 		hosts: DiscoveredHost[];
+		/** Relay agent that ran the scan, `null` for the server. */
+		viaAgent?: number | null;
 	}
 
-	let { hosts }: Props = $props();
+	let { hosts, viaAgent = null }: Props = $props();
 	const sorted = $derived([...hosts].sort((a, b) => compareIp(a.ip, b.ip)));
 </script>
 
@@ -25,7 +27,7 @@
 			</div>
 			<div class="divide-y divide-line">
 				{#each sortServices(host.services) as service (`${service.protocol}${service.port}`)}
-					<DiscoveryService {service} ip={host.ip} hostname={host.hostname} />
+					<DiscoveryService {service} ip={host.ip} hostname={host.hostname} {viaAgent} />
 				{:else}
 					<p class="px-4 py-3 text-[0.8125rem] text-ink-2">{m.deviceform_scan_no_service()}</p>
 				{/each}

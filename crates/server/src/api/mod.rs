@@ -231,6 +231,8 @@ pub fn router(state: AppState) -> Router {
         .route("/notify/kinds", get(channels::kinds))
         .route("/agent/tokens", get(ingest::list_tokens).post(ingest::create_token))
         .route("/agent/tokens/{id}", delete(ingest::revoke_token))
+        // Machines enrôlées par un jeton : le flux d'ajout attend la première.
+        .route("/agent/tokens/{id}/machines", get(ingest::token_machines))
         // Déploiement par stratégie de groupe Active Directory (`ad_deploy.rs`).
         .route("/agent/tokens/{id}/close", post(ad_deploy::close_token))
         .route("/agent/ad-kit", post(ad_deploy::create_kit))

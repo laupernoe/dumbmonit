@@ -252,7 +252,7 @@ if ($BinPath) {
         }
         if (-not $attendu) {
             Remove-Item -Path $exeTemporaire -Force -ErrorAction SilentlyContinue
-            Stop-Sur "No expected checksum for ${cle}: nothing was installed. Copy a fresh install command from DumbMonit (Settings > Agents): it carries -Sha256. For a binary you verified yourself, use -BinPath."
+            Stop-Sur "No expected checksum for ${cle}: nothing was installed. Copy a fresh install command from DumbMonit (Add monitor > Server with the agent): it carries -Sha256. For a binary you verified yourself, use -BinPath."
         }
         if ($attendu -notmatch '^[0-9a-f]{64}$') {
             Remove-Item -Path $exeTemporaire -Force -ErrorAction SilentlyContinue
@@ -261,7 +261,7 @@ if ($BinPath) {
         $obtenu = (Get-FileHash -Path $exeTemporaire -Algorithm SHA256).Hash.ToLowerInvariant()
         if ($obtenu -ne $attendu) {
             Remove-Item -Path $exeTemporaire -Force -ErrorAction SilentlyContinue
-            Stop-Sur "Checksum mismatch for ${source} (expected $attendu, got $obtenu): the download is corrupt or has been tampered with, or the server was upgraded since this command was copied. Nothing was installed. Copy a fresh install command from DumbMonit (Settings > Agents)."
+            Stop-Sur "Checksum mismatch for ${source} (expected $attendu, got $obtenu): the download is corrupt or has been tampered with, or the server was upgraded since this command was copied. Nothing was installed. Copy a fresh install command from DumbMonit (Add monitor > Server with the agent)."
         }
         Write-Etape "Checksum verified ($obtenu)"
     }

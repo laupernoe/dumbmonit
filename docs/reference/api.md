@@ -834,7 +834,8 @@ tokens need the `write` scope for changes. See [Email reports](../using/reports.
 | `POST` | `/api/agent/relay/{id}` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | Outcome of a delegated probe: `{"duration_ms", "error", "samples", "profile_id"}` (bodies up to 16 MB). `204`; `404` when the probe expired or belongs to another agent. |
 | `GET` | `/api/agent/commands?wait=N` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | Commands queued for an agent (container restart or update), held up to `wait` seconds when nothing is pending. Not meant to be called by hand. `key` alone proves nothing — it is public — so a bound machine must also present its binding secret; `403` otherwise, which is what stops one machine from taking another's commands. |
 | `POST` | `/api/agent/commands/{id}` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | Progress and outcome of a command, reported by the agent. `result` is truncated to the last 4 KB, with `[truncated by the server, beginning dropped]` at the front when that happens. |
-| `GET` | `/api/relays` | session | Every agent monitor as a possible relay: `id`, `name`, `site`, `relay` (declared `relay: true`), `last_seen_at`, `relayed` (monitors reached through it). Relays first, then by name. |
+| `GET` | `/api/relays` | session | Every agent monitor as a possible relay: `id`, `name`, `site`, `relay` (declared `relay: true`), `last_seen_at`, `relayed` (monitors reached through it), `gateway_wanted`, `gateway_port`, `gateway_host` (its gateway for the agents of its site), `client_id`. Relays first, then by name. |
+| `GET` | `/api/relays/kinds` | session | Kinds a relay agent can probe; forms only offer *Reached through* for those. |
 
 ```json
 {

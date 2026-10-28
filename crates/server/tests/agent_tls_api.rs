@@ -458,3 +458,273 @@ async fn the_install_parameters_carry_the_agent_channel_and_its_pin() {
     let windows = reply.body["windows_template"].as_str().unwrap();
     assert!(windows.contains(&format!("-CaPin {pin}")), "{windows}");
 }
+
+// ------------------------------------------------- agents derrière un relais
+
+/// Jeton qui fait de la machine enrôlée un relais.
+async fn relay_token(app: &TestApp, admin: &str) -> String {
+    let reply = app
+        .post(
+            "/api/agent/tokens",
+            json!({ "name": "relais", "reusable": true, "relay": true, "site": "Lyon" }),
+            Some(admin),
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::CREATED, "jeton : {}", reply.body);
+    reply.body["secret"].as_str().expect("secret").to_string()
+}
+
+/// Client du canal chiffré qui se connecte à `addr` (le serveur ou une
+/// passerelle), en vérifiant toujours l'autorité du serveur.
+fn client_at(addr: SocketAddr, ca: &[u8], identity: Option<(&[u8], &[u8])>) -> reqwest::Client {
+    let mut roots = rustls::RootCertStore::empty();
+    roots.add(CertificateDer::from(ca.to_vec())).expect("racine");
+    let builder = rustls::ClientConfig::builder_with_provider(agent_tls::provider())
+        .with_protocol_versions(&[&rustls::version::TLS13])
+        .expect("TLS 1.3")
+        .with_root_certificates(roots);
+    let config = match identity {
+        Some((certificate, key)) => builder
+            .with_client_auth_cert(
+                vec![CertificateDer::from(certificate.to_vec())],
+                PrivateKeyDer::Pkcs8(PrivatePkcs8KeyDer::from(key.to_vec())),
+            )
+            .expect("certificat client"),
+        None => builder.with_no_client_auth(),
+    };
+    reqwest::Client::builder()
+        .tls_backend_preconfigured(config)
+        .resolve(SERVER_NAME, addr)
+        .build()
+        .expect("client")
+}
+
+fn url_at(addr: SocketAddr, path: &str) -> String {
+    format!("https://{SERVER_NAME}:{}{path}", addr.port())
+}
+
+/// Demande un tunnel au serveur sous le certificat de `relay`.
+async fn ask_tunnel(lab: &Lab, relay: Option<&Enrolled>) -> reqwest::Response {
+    let ca = authority(lab).await;
+    let identity = relay.map(|r| (r.certificate.as_slice(), r.key.as_slice()));
+    client_at(lab.addr, &ca, identity)
+        .get(url(lab, dumbmonit_proto::RELAY_TUNNEL_PATH))
+        .header(reqwest::header::CONNECTION, "upgrade")
+        .header(reqwest::header::UPGRADE, dumbmonit_proto::RELAY_TUNNEL_PROTOCOL)
+        .send()
+        .await
+        .expect("tunnel")
+}
+
+/// Passerelle minimale, comme celle de l'agent relais : chaque connexion
+/// acceptée part dans un tunnel ouvert sous le certificat du relais, octet
+/// pour octet. Elle ne voit que du chiffré.
+async fn gateway(lab: &Lab, relay: &Enrolled) -> SocketAddr {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.expect("port");
+    let addr = listener.local_addr().expect("adresse");
+    let ca = authority(lab).await;
+    let tunnels =
+        client_at(lab.addr, &ca, Some((relay.certificate.as_slice(), relay.key.as_slice())));
+    let target = url(lab, dumbmonit_proto::RELAY_TUNNEL_PATH);
+    tokio::spawn(async move {
+        while let Ok((mut socket, _)) = listener.accept().await {
+            let tunnels = tunnels.clone();
+            let target = target.clone();
+            tokio::spawn(async move {
+                let response = tunnels
+                    .get(&target)
+                    .header(reqwest::header::CONNECTION, "upgrade")
+                    .header(reqwest::header::UPGRADE, dumbmonit_proto::RELAY_TUNNEL_PROTOCOL)
+                    .send()
+                    .await
+                    .expect("tunnel");
+                assert_eq!(response.status(), StatusCode::SWITCHING_PROTOCOLS);
+                let mut upgraded = response.upgrade().await.expect("mise à niveau");
+                let _ = tokio::io::copy_bidirectional(&mut socket, &mut upgraded).await;
+            });
+        }
+    });
+    addr
+}
+
+/// Enrôle une machine à travers une passerelle : la réponse, et la clé privée
+/// générée pour l'occasion.
+async fn enrol_through(
+    lab: &Lab,
+    gateway: SocketAddr,
+    enrolment: &str,
+    machine_id: &str,
+) -> (reqwest::Response, Vec<u8>) {
+    let key = rcgen::KeyPair::generate_for(&rcgen::PKCS_ECDSA_P256_SHA256).expect("clé");
+    let ca = authority(lab).await;
+    let response = client_at(gateway, &ca, None)
+        .post(url_at(gateway, "/api/agent/tls/enroll"))
+        .bearer_auth(enrolment)
+        .json(&json!({ "identity": identity(machine_id), "public_key": BASE64.encode(key.public_key_raw()) }))
+        .send()
+        .await
+        .expect("enrôlement");
+    (response, key.serialize_der())
+}
+
+async fn target_of(lab: &Lab, hostname: &str) -> i64 {
+    sqlx::query_scalar("SELECT target_id FROM agent_hosts WHERE hostname = ?")
+        .bind(hostname)
+        .fetch_one(&lab.state.pool)
+        .await
+        .expect("machine")
+}
+
+async fn via_agent(lab: &Lab, target: i64) -> Option<i64> {
+    sqlx::query_scalar("SELECT via_agent FROM targets WHERE id = ?")
+        .bind(target)
+        .fetch_one(&lab.state.pool)
+        .await
+        .expect("cible")
+}
+
+#[tokio::test]
+async fn an_agent_behind_a_relay_enrols_and_reports_end_to_end_and_the_relay_is_recorded() {
+    let (lab, admin) = lab().await;
+    let relay = enrolled(&lab, &relay_token(&lab.app, &admin).await, "id-relais", None).await;
+    let relay_id = target_of(&lab, "id-relais").await;
+    let through = gateway(&lab, &relay).await;
+
+    // Enrôlement et lots à travers le relais : la session TLS est celle de
+    // l'agent (son certificat, l'autorité épinglée du serveur), de bout en bout.
+    let enrolment = token(&lab.app, &admin).await;
+    let (response, key) = enrol_through(&lab, through, &enrolment, "id-site").await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: Value = response.json().await.expect("corps");
+    let agent = Enrolled {
+        certificate: BASE64.decode(body["certificate"].as_str().expect("certificat")).unwrap(),
+        key,
+        secret: body["agent_secret"].as_str().map(str::to_string),
+        pins: Vec::new(),
+    };
+    assert!(agent.secret.is_some(), "liaison attribuée à travers le relais aussi");
+    let site_id = target_of(&lab, "id-site").await;
+    assert_eq!(via_agent(&lab, site_id).await, Some(relay_id), "le relais est le parent");
+
+    // La machine change de chemin : elle se connecte en direct, le relais est oublié.
+    let direct = push_tls(&lab, &agent, &enrolment, "id-site").await;
+    assert_eq!(direct.status(), StatusCode::OK);
+    assert_eq!(via_agent(&lab, site_id).await, None);
+
+    // … puis de nouveau par le relais, avec son certificat.
+    let ca = authority(&lab).await;
+    let mut request =
+        client_at(through, &ca, Some((agent.certificate.as_slice(), agent.key.as_slice())))
+            .post(url_at(through, "/api/ingest"))
+            .bearer_auth(&enrolment)
+            .json(&batch("id-site"));
+    if let Some(secret) = &agent.secret {
+        request = request.header("x-dumbmonit-agent-secret", secret);
+    }
+    let relayed = request.send().await.expect("lot");
+    assert_eq!(relayed.status(), StatusCode::OK);
+    assert_eq!(via_agent(&lab, site_id).await, Some(relay_id));
+
+    // Un relais n'est pas sondé à la place de la machine : rien à déléguer.
+    let relays = db::targets::relay_map(&lab.state.pool).await.expect("relais");
+    assert!(!relays.contains_key(&site_id), "une machine à agent n'est jamais interrogée");
+}
+
+#[tokio::test]
+async fn only_a_relay_with_its_certificate_can_open_a_tunnel() {
+    let (lab, admin) = lab().await;
+    let anonymous = ask_tunnel(&lab, None).await;
+    assert_eq!(anonymous.status(), StatusCode::UNAUTHORIZED);
+
+    let plain = enrolled(&lab, &token(&lab.app, &admin).await, "id-ordinaire", None).await;
+    let refused = ask_tunnel(&lab, Some(&plain)).await;
+    assert_eq!(refused.status(), StatusCode::FORBIDDEN, "un agent ordinaire n'est pas un relais");
+
+    let relay = enrolled(&lab, &relay_token(&lab.app, &admin).await, "id-relais", None).await;
+    let granted = ask_tunnel(&lab, Some(&relay)).await;
+    assert_eq!(granted.status(), StatusCode::SWITCHING_PROTOCOLS);
+}
+
+#[tokio::test]
+async fn a_relay_cannot_enrol_a_machine_for_another_client() {
+    let (lab, admin) = lab().await;
+    let relay = enrolled(&lab, &relay_token(&lab.app, &admin).await, "id-relais", None).await;
+    let through = gateway(&lab, &relay).await;
+
+    let other: i64 = sqlx::query_scalar("INSERT INTO clients (name) VALUES ('Autre') RETURNING id")
+        .fetch_one(&lab.state.pool)
+        .await
+        .expect("client");
+    let reply = lab
+        .app
+        .post("/api/agent/tokens", json!({ "name": "autre", "client_id": other }), Some(&admin))
+        .await;
+    assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
+    let foreign = reply.body["secret"].as_str().unwrap().to_string();
+
+    let (response, _) = enrol_through(&lab, through, &foreign, "id-intrus").await;
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    let count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM agent_hosts WHERE hostname = 'id-intrus'")
+            .fetch_one(&lab.state.pool)
+            .await
+            .unwrap();
+    assert_eq!(count, 0, "rien n'est enrôlé");
+
+    // Le serveur refuse aussi de préparer une installation à travers ce relais
+    // pour l'autre client.
+    let relay_id = target_of(&lab, "id-relais").await;
+    let reply = lab
+        .app
+        .post(
+            "/api/agent/tokens",
+            json!({ "name": "x", "client_id": other, "relay_id": relay_id }),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{}", reply.body);
+}
+
+#[tokio::test]
+async fn install_commands_through_a_relay_point_at_its_gateway_and_open_it() {
+    let (lab, admin) = lab().await;
+    enrolled(&lab, &relay_token(&lab.app, &admin).await, "id-relais", None).await;
+    let relay_id = target_of(&lab, "id-relais").await;
+    let reply = lab
+        .app
+        .post(
+            "/api/agent/tokens",
+            json!({ "name": "site", "relay_id": relay_id, "relay_host": "192.168.10.5" }),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
+    let pin = lab.state.agent_tls().pins()[0].clone();
+    let linux = reply.body["install_linux"].as_str().unwrap();
+    assert!(linux.starts_with("curl -sSL http://192.168.10.5:8443/install.sh"), "{linux}");
+    assert!(linux.contains("--tls-url=https://192.168.10.5:8443"), "{linux}");
+    assert!(linux.contains(&format!("--ca-pin={pin}")), "la session va jusqu'au serveur : {linux}");
+
+    // La passerelle est demandée au relais, à son prochain accusé de réception.
+    let wanted: Option<i64> =
+        sqlx::query_scalar("SELECT relay_gateway_wanted FROM agent_hosts WHERE target_id = ?")
+            .bind(relay_id)
+            .fetch_one(&lab.state.pool)
+            .await
+            .unwrap();
+    assert_eq!(wanted, Some(8443));
+    let view = lab.app.get(&format!("/api/targets/{relay_id}/agent"), Some(&admin)).await;
+    assert_eq!(view.body["gateway_wanted"], 8443, "{}", view.body);
+    assert_eq!(view.body["gateway_host"], "192.168.10.5");
+
+    // Une adresse qui n'en est pas une est refusée.
+    let reply = lab
+        .app
+        .post(
+            "/api/agent/tokens",
+            json!({ "name": "site", "relay_id": relay_id, "relay_host": "http://x:1/" }),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{}", reply.body);
+}
