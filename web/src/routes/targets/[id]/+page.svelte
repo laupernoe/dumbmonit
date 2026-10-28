@@ -73,6 +73,7 @@
 	import { countAlertsByTarget } from '#lib/alerts-attention.js';
 	import SecurityBadge from '#lib/components/devices/SecurityBadge.svelte';
 	import CveDeviceCard from '#lib/components/cves/CveDeviceCard.svelte';
+	import MachineHealthCard from '#lib/components/devices/agent/MachineHealthCard.svelte';
 	import TargetRemediation from '#lib/components/remediation/TargetRemediation.svelte';
 	import SecurityReport from '#lib/components/devices/SecurityReport.svelte';
 	import { getTargetSecurity } from '#lib/api/security.js';
@@ -838,6 +839,13 @@
 
 	{#if target.multisite}
 		<ProbeLocationsCard targetId={target.id} {refreshKey} />
+	{/if}
+
+	<!-- What makes a machine slow, at a glance (agent hosts only) -->
+	{#if target.kind === 'agent'}
+		{#key target.id}
+			<MachineHealthCard {target} {refreshKey} />
+		{/key}
 	{/if}
 
 	<CveDeviceCard targetId={target.id} />

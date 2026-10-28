@@ -163,6 +163,14 @@ All notable changes to this project are documented here. The format follows
   Active Directory kit moved to the add flow; no add flow sends you to Settings
   any more.
 
+### Added
+
+- **Machine health card** at the top of an agent host's page: CPU, memory and disk
+  gauges with one-hour curves, a per-core heatmap, the ten heaviest processes by
+  CPU and memory, kernel pressure (PSI), OOM kills, inode usage and clock drift,
+  each with a short explanation. The Linux agent now reports these causes of a
+  slow machine (process names only, never command lines).
+
 ## 0.14.1 — 2026-10-28
 
 ### Added

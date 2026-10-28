@@ -1312,6 +1312,7 @@ dependencies = [
  "dumbmonit-collectors",
  "dumbmonit-proto",
  "hex",
+ "libc",
  "rcgen",
  "regex",
  "reqwest",
