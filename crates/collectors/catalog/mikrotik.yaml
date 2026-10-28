@@ -1,0 +1,62 @@
+# Mesures et vues du type « mikrotik » (format : crates/collectors/src/catalog.rs).
+source: mikrotik
+prefixes: [mikrotik_]
+metrics:
+  - { name: mikrotik_scrape_errors, label: "Scrape errors", better: "lower" }
+  - { name: mikrotik_uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: mikrotik_cpu_load_percent, label: "CPU load", unit: "%", min: 0, max: 100 }
+  - { name: mikrotik_cpu_count, label: "CPU count" }
+  - { name: mikrotik_memory_used_percent, label: "Memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: mikrotik_memory_total_bytes, label: "Memory total", unit: "B" }
+  - { name: mikrotik_memory_free_bytes, label: "Memory free", unit: "B", better: "higher" }
+  - { name: mikrotik_storage_used_percent, label: "Storage used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: mikrotik_storage_total_bytes, label: "Storage total", unit: "B" }
+  - { name: mikrotik_storage_free_bytes, label: "Storage free", unit: "B", better: "higher" }
+  - { name: mikrotik_temperature_celsius, label: "Temperature", unit: "°C" }
+  - { name: mikrotik_fan_rpm, label: "Fan RPM", unit: "rpm" }
+  - { name: mikrotik_power_watts, label: "Power power", unit: "W" }
+  - { name: mikrotik_voltage_volts, label: "Voltage", unit: "V" }
+  - { name: mikrotik_current_amperes, label: "Current amperes", unit: "A" }
+  - { name: mikrotik_health_ok, label: "Health ok", unit: "bool" }
+  - { name: mikrotik_info, label: "Info", kind: info }
+  - { name: mikrotik_routerboard, label: "Routerboard", unit: "bool" }
+  - { name: mikrotik_update_available, label: "Update available", unit: "bool", better: "higher" }
+  - { name: mikrotik_update_checked, label: "Update checked", unit: "bool" }
+  - { name: mikrotik_firmware_upgrade_pending, label: "Firmware upgrade pending", unit: "bool" }
+  - { name: mikrotik_interfaces_skipped, label: "Interfaces skipped" }
+  - { name: mikrotik_interface_running, label: "Interface running", unit: "bool" }
+  - { name: mikrotik_interface_rx_bytes_total, label: "Interface rx bytes", unit: "B", kind: counter, entity: "interface" }
+  - { name: mikrotik_interface_tx_bytes_total, label: "Interface tx bytes", unit: "B", kind: counter, entity: "interface" }
+  - { name: mikrotik_interface_rx_packets_total, label: "Interface rx packets", kind: counter }
+  - { name: mikrotik_interface_tx_packets_total, label: "Interface tx packets", kind: counter }
+  - { name: mikrotik_interface_rx_errors_total, label: "Interface rx errors", kind: counter, better: "lower" }
+  - { name: mikrotik_interface_tx_errors_total, label: "Interface tx errors", kind: counter, better: "lower" }
+  - { name: mikrotik_interface_rx_drops_total, label: "Interface rx drops", kind: counter }
+  - { name: mikrotik_interface_tx_drops_total, label: "Interface tx drops", kind: counter }
+  - { name: mikrotik_interface_link_downs_total, label: "Interface link downs", kind: counter }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - mikrotik_health_ok
+      - mikrotik_temperature_celsius
+      - mikrotik_storage_used_percent
+      - mikrotik_uptime_seconds
+      - mikrotik_fan_rpm
+      - mikrotik_power_watts
+      - mikrotik_voltage_volts
+      - mikrotik_current_amperes
+      - mikrotik_update_available
+      - mikrotik_firmware_upgrade_pending
+      - mikrotik_interface_running
+      - mikrotik_interface_rx_errors_total
+      - mikrotik_interface_tx_errors_total
+      - mikrotik_interface_rx_drops_total
+      - mikrotik_interface_tx_drops_total
+      - mikrotik_interface_link_downs_total
+  - view: timeseries
+    title: "CPU and memory"
+    metrics: [mikrotik_cpu_load_percent, mikrotik_memory_used_percent]
+  - view: timeseries
+    title: "Interface throughput"
+    metrics: [mikrotik_interface_rx_bytes_total, mikrotik_interface_tx_bytes_total]

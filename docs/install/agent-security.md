@@ -22,6 +22,7 @@ only needs to reach the server on the agent port, also from another site.
 | Server, inbound | **TCP 8443** | Encrypted agent channel. The only port agents on other networks need. |
 | Server, inbound | TCP 8080 | Web interface, install scripts and agent downloads. Can stay private (LAN, VPN). |
 | Agents | none | Agents only make outbound connections. |
+| Relay with a gateway | TCP 8443 (configurable), **from the site's network only** | Agents of a site that cannot reach the server connect to the relay (see below). |
 
 With Docker, publish the agent port next to the web port:
 
@@ -70,6 +71,47 @@ If a router or a TCP proxy publishes it under another number, set
 
 Commands sent to agents (container restart and update) and the probes
 delegated to relay agents travel over the same channel.
+
+## Through a relay gateway
+
+At a site behind a firewall, agents can reach the server through the site's
+relay agent ([Monitor a remote site](remote-site.md#5-install-agents-behind-the-relay)).
+The design keeps the security of the direct channel:
+
+- **End to end.** The relay never terminates the agent's TLS. It checks that a
+  connection opens with a TLS ClientHello and copies the bytes into a tunnel
+  to the server's agent port. The handshake, the agent's client certificate,
+  the pinned authority, the post-quantum key exchange, the token and the
+  binding secret are all between the agent and the server. The relay sees
+  ciphertext only: it cannot read the metrics, the commands or the token, alter
+  them unnoticed, or impersonate an agent (it holds neither its private key nor
+  its token). Enrolment goes through the same tunnel.
+- **An authenticated relay.** A tunnel is an HTTP upgrade on
+  `/api/agent/relay/tunnel` under the relay's *own* client certificate, and
+  only an agent in relay mode gets one. Tunnels cannot be nested.
+- **One client per relay.** In MSP mode, a relay only carries machines of its
+  own client: an enrolment whose token belongs to another client is refused
+  (`403`), and so is any request of an agent of another client through it. The
+  server also refuses to prepare an install through a relay of another client.
+- **Not an open proxy.** The destination is always the server the relay is
+  enrolled with; nothing in an incoming connection can choose another one.
+  Besides TLS, the gateway answers only `GET /install.sh`, `/install.ps1` and
+  `/download/<agent file>`, fetched from the server over the relay's channel;
+  the install command carries the SHA-256 of each binary and the script refuses
+  any other. Anything else (`CONNECT`, SOCKS, other paths) is closed or answered
+  `404`.
+- **Bounded.** The gateway holds at most 64 connections (`gateway_max_connections`),
+  4 MiB/s per tunnel and direction (`gateway_rate_kib`), closes a connection
+  that says nothing within 10 seconds and a tunnel idle for 15 minutes. The
+  server allows 256 tunnels per relay and applies its usual handshake limits.
+- **Recorded.** The server stores, for each agent, the relay it connects
+  through: the relay becomes its parent on the topology map and in alert
+  suppression.
+
+What the relay can still do, as any router on the path: refuse to carry
+traffic (the agents then show as unreachable, suppressed by the relay if it is
+down itself), and see when and how much they send. Restrict the gateway port to
+the site's network on the relay's firewall.
 
 ## Threat model
 
@@ -158,5 +200,6 @@ On the agent (`agent.yaml` or environment): `tls_url` /
 
 `GET /api/agent/install?base_url=…` returns the web URL, the agent channel URL,
 the CA fingerprint, the binary checksums, and the Unix and PowerShell install
-commands with `{TOKEN}` to replace. GPO or Ansible generators should use it
+commands with `{TOKEN}` to replace. With `relay_id=<relay>` (and optionally
+`relay_host=`), the commands go through that relay's gateway. GPO or Ansible generators should use it
 rather than rebuilding the command.

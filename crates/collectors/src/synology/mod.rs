@@ -66,6 +66,7 @@ mod client;
 pub mod devices;
 mod drive;
 mod error;
+mod iscsi;
 mod metrics;
 mod model;
 mod options;
@@ -130,6 +131,8 @@ const WANTED_APIS: &[&str] = &[
     API_BACKUP,
     abb::API_TASK,
     abb::API_LOG,
+    iscsi::API_LUN,
+    iscsi::API_TARGET,
     devices::API_OVERVIEW,
     drive::API_STATUS,
     drive::API_TEAM_FOLDERS,
@@ -156,7 +159,16 @@ pub struct SynologyCollector {
     abb_history: Arc<dyn AbbHistory>,
     /// Réglages de sécurité lus lentement (voir [`security`]), une entrée par cible.
     security: Mutex<HashMap<TargetId, security::Snapshot>>,
+    /// Dernière liste de LUN lue, par cible : un échec passager de l'API iSCSI ne
+    /// doit pas faire réapparaître un volume « plein » le temps d'une collecte.
+    luns: Mutex<HashMap<TargetId, LunCacheEntry>>,
 }
+
+/// Une liste de LUN en cache et l'instant de sa lecture.
+type LunCacheEntry = (std::time::Instant, Arc<Vec<iscsi::Lun>>);
+
+/// Durée pendant laquelle une liste de LUN reste valable après un échec.
+const LUN_CACHE_TTL: Duration = Duration::from_secs(3600);
 
 impl Default for SynologyCollector {
     fn default() -> Self {
@@ -166,6 +178,7 @@ impl Default for SynologyCollector {
             sessions: Mutex::new(HashMap::new()),
             abb_history: Arc::new(MemoryHistory::default()),
             security: Mutex::new(HashMap::new()),
+            luns: Mutex::new(HashMap::new()),
         }
     }
 }
@@ -188,6 +201,32 @@ impl SynologyCollector {
     pub fn with_abb_history(mut self, history: Arc<dyn AbbHistory>) -> Self {
         self.abb_history = history;
         self
+    }
+
+    /// Retient la liste de LUN fraîche, ou ressert la dernière en cas d'échec.
+    ///
+    /// `None` en entrée : le NAS n'annonce pas l'API iSCSI, il n'a pas de LUN.
+    fn remember_luns(
+        &self,
+        target_id: TargetId,
+        fresh: Option<&Result<Vec<iscsi::Lun>, ProbeError>>,
+    ) -> Option<Arc<Vec<iscsi::Lun>>> {
+        let mut cache = self.luns.lock().unwrap_or_else(|poison| poison.into_inner());
+        match fresh {
+            None => {
+                cache.remove(&target_id);
+                None
+            }
+            Some(Ok(luns)) => {
+                let luns = Arc::new(luns.clone());
+                cache.insert(target_id, (std::time::Instant::now(), luns.clone()));
+                Some(luns)
+            }
+            Some(Err(_)) => cache
+                .get(&target_id)
+                .filter(|(at, _)| at.elapsed() < LUN_CACHE_TTL)
+                .map(|(_, luns)| luns.clone()),
+        }
     }
 
     fn http(&self, insecure_tls: bool) -> Result<reqwest::Client, ProbeError> {
@@ -267,10 +306,16 @@ impl Collector for SynologyCollector {
 
         // Les trois inventaires sont indépendants : les enchaîner tripleraient le
         // temps passé sur un NAS dont les disques sortent de veille.
-        let (system, utilization, storage) = futures::join!(
+        // Les LUN iSCSI en même temps : sans eux, un volume qui porte un LUN
+        // épais paraît plein (voir [`iscsi`]).
+        let lun_call = async {
+            if dsm.supports(iscsi::API_LUN) { Some(iscsi::collect(&dsm).await) } else { None }
+        };
+        let (system, utilization, storage, fresh_luns) = futures::join!(
             dsm.call::<model::SystemInfo>(API_SYSTEM, VERSION_SYSTEM, "info", &[]),
             dsm.call::<model::Utilization>(API_UTILIZATION, VERSION_UTILIZATION, "get", &[]),
             dsm.call::<model::StorageInfo>(API_STORAGE, VERSION_STORAGE, "load_info", &[]),
+            lun_call,
         );
 
         // Si les trois appels de base échouent, la collecte n'a rien mesuré : renvoyer
@@ -301,11 +346,20 @@ impl Collector for SynologyCollector {
             "utilisation",
             utilization.map(|usage| metrics::utilization_samples(&usage, ts_ms)),
         );
+        let luns = self.remember_luns(target.id, fresh_luns.as_ref());
+        if let Some(Err(error)) = fresh_luns {
+            outcome.absorb(target.id, "LUN iSCSI", Err(error));
+        }
         outcome.absorb(
             target.id,
             "inventaire du stockage",
             storage.map(|storage| {
                 let mut samples = metrics::volume_samples(&storage.volumes, ts_ms);
+                let luns = luns.as_deref().map(Vec::as_slice);
+                samples.extend(iscsi::volume_samples(&storage.volumes, luns, ts_ms));
+                if let Some(luns) = luns {
+                    samples.extend(iscsi::lun_samples(luns, &storage.volumes, ts_ms));
+                }
                 samples.extend(metrics::pool_samples(&storage.storage_pools, "pool", ts_ms));
                 samples.extend(metrics::pool_samples(&storage.ssd_caches, "ssd_cache", ts_ms));
                 samples.extend(metrics::disk_samples(&storage.disks, ts_ms));
@@ -695,6 +749,8 @@ mod tests {
             API_BACKUP,
             abb::API_TASK,
             abb::API_LOG,
+            iscsi::API_LUN,
+            iscsi::API_TARGET,
             devices::API_OVERVIEW,
             drive::API_STATUS,
             drive::API_TEAM_FOLDERS,

@@ -1,27 +1,50 @@
 <section class="page-head">
 	<div class="wrap">
-		<h1 class="blur-in">{{co_h1}}</h1>
+		<p class="eyebrow">{{nav_community}}</p>
+		<h1>{{co_h1}}</h1>
 		<p class="lede">{{co_lede}}</p>
 	</div>
 </section>
 
-<section class="block" style="border-top:0;padding-top:24px">
+<section class="block flush">
 	<div class="wrap">
-		<ul class="cards cards-3">
-			<li class="card"><h2 class="card-h">{{k164}}</h2><p>{{co_docs_p}}</p><p><a class="more" href="@@DOCS@@">{{co_docs_a}}</a></p></li>
-			<li class="card"><h2 class="card-h">{{co_gh_t}}</h2><p>{{co_gh_p}}</p><p><a class="more" href="https://github.com/laupernoe/dumbmonit">{{k010}}</a></p></li>
-			<li class="card"><h2 class="card-h">{{co_contrib_t}}</h2><p>{{co_contrib_p}}</p><p><a class="more" href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md">{{co_contrib_a}}</a></p></li>
-			<li class="card"><h2 class="card-h">{{k169}}</h2><p>{{co_sec_p}}</p><p><a class="more" href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">{{co_sec_a}}</a></p></li>
-			<li class="card"><h2 class="card-h">{{k167}}</h2><p>{{co_tr_p}}</p><p><a class="more" href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">{{co_tr_a}}</a></p></li>
-			<li class="card"><h2 class="card-h">{{k166}}</h2><p>{{co_rel_p}}</p><p><a class="more" href="https://github.com/laupernoe/dumbmonit/blob/main/CHANGELOG.md">{{co_rel_a}}</a></p></li>
+		<ul class="cells cells-3">
+			<li><span class="icon" aria-hidden="true">@@ICON:docs@@</span><h2 class="card-h">{{k164}}</h2><p>{{co_docs_p}}</p><p><a class="more" href="@@DOCS@@">{{co_docs_a}}</a></p></li>
+			<li><span class="icon" aria-hidden="true">@@ICON:github@@</span><h2 class="card-h">{{co_gh_t}}</h2><p>{{co_gh_p}}</p><p><a class="more" href="https://github.com/laupernoe/dumbmonit">{{k010}}</a></p></li>
+			<li><span class="icon" aria-hidden="true">@@ICON:code@@</span><h2 class="card-h">{{co_contrib_t}}</h2><p>{{co_contrib_p}}</p><p><a class="more" href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md">{{co_contrib_a}}</a></p></li>
+			<li><span class="icon" aria-hidden="true">@@ICON:box@@</span><h2 class="card-h">{{k169}}</h2><p>{{co_sec_p}}</p><p><a class="more" href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">{{co_sec_a}}</a></p></li>
+			<li><span class="icon" aria-hidden="true">@@ICON:globe@@</span><h2 class="card-h">{{k167}}</h2><p>{{co_tr_p}}</p><p><a class="more" href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">{{co_tr_a}}</a></p></li>
+			<li><span class="icon" aria-hidden="true">@@ICON:download@@</span><h2 class="card-h">{{k166}}</h2><p>{{co_rel_p}}</p><p><a class="more" href="https://github.com/laupernoe/dumbmonit/blob/main/CHANGELOG.md">{{co_rel_a}}</a></p></li>
 		</ul>
+	</div>
+</section>
+
+<section class="block" id="support">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head tight">
+				<p class="eyebrow">{{nav_support}}</p>
+				<h2>{{sup_h}}</h2>
+				<p>{{sup_p}}</p>
+				<div class="cta"><a class="btn btn-primary" href="https://liberapay.com/laupernoe">{{sup_lp}}</a></div>
+				<p class="code-note">{{sup_other}}</p>
+			</div>
+			<div>
+				<h3 class="h-sm">{{sup_crypto}}</h3>
+				<ul class="wallets">
+					<li><span class="label-tape">Bitcoin</span><code id="w-btc">bc1phcqfc46ev9ztpuxyh3fmz6aaktshnz8z4ve9jk7pxdcyu9ks37wqq2kjgd</code><button class="copy" type="button" data-copied="{{k171}}" data-copy="w-btc">{{k015}}</button></li>
+					<li><span class="label-tape">Ethereum</span><code id="w-eth">0x67Cd93028943308B8c12782C9ad078D253278f40</code><button class="copy" type="button" data-copied="{{k171}}" data-copy="w-eth">{{k015}}</button></li>
+					<li><span class="label-tape">Solana</span><code id="w-sol">63u8bhkf63HBcNYbRRyaHPtfRtSUmbugtwaauzAxHtb3</code><button class="copy" type="button" data-copied="{{k171}}" data-copy="w-sol">{{k015}}</button></li>
+				</ul>
+			</div>
+		</div>
 	</div>
 </section>
 
 <section class="block">
 	<div class="wrap">
-		<div class="split">
-			<div class="section-head" style="margin-bottom:0">
+		<div class="split even">
+			<div class="section-head tight">
 				<h2>{{co_ossf_h}}</h2>
 				<p>{{co_ossf_p}}</p>
 				<ul class="badges">
@@ -32,16 +55,15 @@
 				</ul>
 				<p class="code-note">{{k154}}</p>
 			</div>
-			<div class="section-head" style="margin-bottom:0">
+			<div class="section-head tight">
 				<h2>{{k152}}</h2>
 				<p>{{k153}}</p>
 			</div>
 		</div>
 
-		<div class="feedback" style="margin-top:64px">
-			<img src="@@ROOT@@assets/mascot.svg" alt="" width="96" height="110" loading="lazy">
+		<div class="feedback" style="margin-top:48px">
 			<div>
-				<h2 style="font-size:clamp(1.6rem,1.2rem + 1.6vw,2.2rem)">{{k161}}</h2>
+				<h2>{{k161}}</h2>
 				<p>{{k162}}</p>
 			</div>
 			<div class="cta">

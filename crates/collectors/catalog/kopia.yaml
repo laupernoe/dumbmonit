@@ -1,0 +1,44 @@
+# Mesures et vues du type « kopia » (format : crates/collectors/src/catalog.rs).
+source: kopia
+prefixes: [kopia_]
+metrics:
+  - { name: kopia_source_last_snapshot_duration_seconds, label: "Source last snapshot duration", unit: "s", better: "lower" }
+  - { name: kopia_source_last_snapshot_bytes, label: "Source last snapshot", unit: "B" }
+  - { name: kopia_repo_connected, label: "Repo connected", unit: "bool" }
+  - { name: kopia_repo_readonly, label: "Repo readonly", unit: "bool" }
+  - { name: kopia_repo_info, label: "Repo", kind: info }
+  - { name: kopia_sources, label: "Sources" }
+  - { name: kopia_sources_without_snapshot, label: "Sources without snapshot" }
+  - { name: kopia_sources_with_errors, label: "Sources with errors", better: "lower" }
+  - { name: kopia_sources_uploading, label: "Sources uploading" }
+  - { name: kopia_sources_remote, label: "Sources remote" }
+  - { name: kopia_source_has_snapshot, label: "Source has snapshot", unit: "bool" }
+  - { name: kopia_source_scheduled, label: "Source scheduled" }
+  - { name: kopia_source_uploading, label: "Source uploading", unit: "bool" }
+  - { name: kopia_source_status_info, label: "Source status", kind: info }
+  - { name: kopia_source_last_snapshot_age_seconds, label: "Source last snapshot age", unit: "s" }
+  - { name: kopia_source_last_snapshot_errors, label: "Source last snapshot errors", better: "lower" }
+  - { name: kopia_source_last_snapshot_files, label: "Source last snapshot files" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - kopia_sources_with_errors
+      - kopia_sources_without_snapshot
+      - kopia_repo_connected
+      - kopia_sources
+      - kopia_repo_readonly
+      - kopia_sources_uploading
+      - kopia_sources_remote
+      - kopia_source_has_snapshot
+      - kopia_source_uploading
+      - kopia_source_status_info
+      - kopia_source_last_snapshot_age_seconds
+      - kopia_source_last_snapshot_errors
+      - kopia_source_last_snapshot_files
+  - view: timeseries
+    title: "Snapshot duration"
+    metrics: [kopia_source_last_snapshot_duration_seconds]
+  - view: timeseries
+    title: "Snapshot size"
+    metrics: [kopia_source_last_snapshot_bytes]

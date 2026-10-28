@@ -12,6 +12,7 @@ mod client;
 mod collect;
 mod commands;
 mod config;
+mod gateway;
 mod identity;
 // Le journal du service Windows ; compilé partout pour être testé sous Linux.
 #[cfg(any(windows, test))]

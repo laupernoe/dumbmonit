@@ -21,7 +21,7 @@
  *
  * Placement is deterministic: a refresh that changes states never moves a node.
  */
-import type { TopologyOrigin, TopologySiteSource, TopologySource } from '#lib/api/index.js';
+import type { TopologyEdgeTraffic, TopologyOrigin, TopologySiteSource, TopologySource } from '#lib/api/index.js';
 import type { TargetState } from '#lib/format.js';
 
 /** A device's state, or a guest's power state (a stopped VM is not an outage). */
@@ -60,6 +60,8 @@ export interface MapEdge {
 	/** Switch ports at each end (`lldp` and `l2` links). */
 	fromPort?: string | null;
 	toPort?: string | null;
+	/** Weathermap: the port's traffic, when the server knows it. */
+	traffic?: TopologyEdgeTraffic | null;
 }
 
 /** The key of a link, as the map and its panels name it. */
@@ -339,6 +341,10 @@ export interface PlacedEdge {
 	/** Switch ports at each end, shown on hover and in the link panel. */
 	fromPort?: string | null;
 	toPort?: string | null;
+	/** Weathermap: the port's traffic, when the server knows it. */
+	traffic?: TopologyEdgeTraffic | null;
+	/** An end of the link is down or behind an outage: its figures are stale, the link is drawn greyed out. */
+	stale?: boolean;
 }
 
 export interface Frame {
@@ -788,6 +794,9 @@ export function layoutMap(graph: Graph, options: { byGroup?: boolean; bySubnet?:
 				origin: e.origin ?? 'deduced',
 				fromPort: e.fromPort ?? null,
 				toPort: e.toPort ?? null,
+				traffic: e.traffic ?? null,
+				// The outage cascade of the dependencies (down, then impacted) greys out the cabling behind it too.
+				stale: !!e.traffic && [e.from, e.to].some((id) => graph.down.has(id) || graph.impacted.has(id)),
 				style: dependency ? ('dependency' as const) : ('mesh' as const),
 				wan: islands && siteOf(e.from) !== siteOf(e.to),
 				impacted: PROPAGATES.has(e.source) && (graph.down.has(e.from) || graph.impacted.has(e.from)),
@@ -840,6 +849,9 @@ export interface ListRow {
 	impacted: boolean;
 	/** How the node hangs from the row above it (`null` for a root). */
 	via: TopologySource | null;
+	/** Weathermap: traffic of the link that places the node, and that link's upstream end. */
+	traffic: TopologyEdgeTraffic | null;
+	linkFrom: string | null;
 }
 
 /** Depth-first rows of the tree, site by site (the main site first). */
@@ -856,7 +868,9 @@ export function listRows(graph: Graph): { site: SiteInfo; rows: ListRow[] }[] {
 				depth,
 				down: graph.down.has(id),
 				impacted: graph.impacted.has(id),
-				via: depth > 0 ? (graph.treeSource.get(id) ?? null) : null
+				via: depth > 0 ? (graph.treeSource.get(id) ?? null) : null,
+				traffic: depth > 0 ? (graph.treeEdge.get(id)?.traffic ?? null) : null,
+				linkFrom: depth > 0 ? (graph.treeEdge.get(id)?.from ?? null) : null
 			});
 			for (const child of graph.children.get(id) ?? []) if (members.has(child)) visit(child, depth + 1);
 		};

@@ -25,7 +25,7 @@ suas etiquetas.
 | Discos (contadores) | `disk_read_bytes`, `disk_written_bytes`, uma série por dispositivo de blocos | `device` |
 | Anfitrião | `uptime_seconds`, `process_count` | |
 | Serviços | `service_up` (1 = em execução) | `service` |
-| Contentores | `container_up`, `container_count`, `container_running_count`, `container_series_skipped` (contentores além de `docker_max_containers`) | `container`, `image` |
+| Contentores | `container_up`, `container_stop_expected` (só contentores parados: 1 quando o Docker não o reiniciaria), `container_count`, `container_running_count`, `container_series_skipped` (contentores além de `docker_max_containers`), `container_cpu_percent` (percentagem de um núcleo, a partir do segundo ciclo), `container_memory_bytes` (sem cache), `container_memory_limit_bytes` e `container_memory_percent` (só com limite), `container_net_rx_bytes` / `container_net_tx_bytes` e `container_block_read_bytes` / `container_block_write_bytes` (contadores cumulativos), `container_pids` e, para todo o anfitrião, `container_df_images_bytes`, `container_df_containers_bytes`, `container_df_volumes_bytes`, `container_df_build_cache_bytes`, `container_df_reclaimable_bytes` (lidos a cada dez minutos) | `container`, `image` |
 | Sensores | `agent_sensor_temperature_celsius`, `agent_sensor_temperature_critical_celsius` (o limiar que o próprio hardware declara), `agent_sensor_fan_rpm` | `sensor`, `fan` |
 | Saúde dos discos (SMART) | `agent_disk_smart_ok` (1 = o disco passa a sua própria autoavaliação), `agent_disk_temperature_celsius`, `agent_disk_power_on_hours`, `agent_disk_wearout_percent`, `agent_disk_reallocated_sectors`, `agent_disk_pending_sectors`, `agent_disk_media_errors` | `device`, `model` |
 | KVM / libvirt | `agent_libvirt_domains`, `agent_libvirt_domains_running`, `agent_libvirt_pools`; por domínio `agent_libvirt_domain_state_info`, `agent_libvirt_domain_running`, `agent_libvirt_domain_crashed`, `agent_libvirt_domain_vcpus`, `agent_libvirt_domain_memory_max_bytes`, `agent_libvirt_domain_memory_used_bytes`; por pool de armazenamento `agent_libvirt_pool_state_info`, `agent_libvirt_pool_active`, `agent_libvirt_pool_capacity_bytes`, `agent_libvirt_pool_allocation_bytes`, `agent_libvirt_pool_used_percent` — ver [Máquinas virtuais KVM através do libvirt](#kvm-virtual-machines-through-libvirt) | `domain`, `pool`, `state` |
@@ -121,10 +121,10 @@ critical**, **Hyper-V host CPU high** e **Hyper-V virtual disk errors** (veja
 Os passos abaixo são os que o aviso junto ao formulário mostra. Não há conta a
 criar na máquina: o token de registo é o único segredo.
 
-1. Guarde o monitor no DumbMonit: é mostrado uma vez um token de registo (dmon_…), com o comando de instalação pronto a copiar para Linux e para Windows. (Um token pode também ser criado em **Definições → Agentes**.)
-2. Esse token é a chave do agente para enviar as suas medições ao DumbMonit. Não é uma conta na máquina: nada a criar lá. Um token criado a partir do formulário do monitor é de uso único: regista esta máquina e mais nenhuma. Para uma frota, crie um token reutilizável em Definições → Agentes.
-3. Execute o comando de instalação na máquina a monitorizar, com direitos elevados (sudo no Linux e macOS, um PowerShell elevado no Windows). Descarrega o agente, escreve o token em agent.yaml e inicia o serviço.
-4. A máquina aparece sozinha em poucos segundos, com o nome do seu anfitrião. Nesse primeiro lote o servidor dá ao agente um segredo próprio e guarda-o em `/etc/dumbmonit/agent-secret`, legível por mais ninguém: a partir daí, essa máquina é a única que pode reportar sob este monitor. Perdeu o token? Definições → Agentes permite revogá-lo e criar outro.
+1. No DumbMonit, adicione uma monitorização e escolha **Servidor com o agente**. Escolha como a máquina chega ao servidor: **Diretamente** ou através de um **relay** de um site remoto atrás de uma firewall (consulte [Monitorizar um site remoto](../install/remote-site.md#5-install-agents-behind-the-relay)). É mostrado uma vez um token de registo (dmon_…), com o comando de instalação pronto a copiar para Linux/macOS, Windows e Docker.
+2. Esse token é a chave do agente para enviar as suas medições; não há nenhuma conta a criar na máquina. Por predefinição é de uso único: regista esta máquina e mais nenhuma. Para uma frota (um playbook, uma imagem de máquina), marque *Várias máquinas com este comando* antes de criar o comando; um domínio Windows inteiro passa pelo [kit Active Directory](agent-active-directory.md), proposto na mesma página. Um token perdido revoga-se em Definições → Agentes.
+3. Execute o comando de instalação na máquina a monitorizar, com privilégios elevados (sudo em Linux e macOS, um PowerShell como administrador em Windows).
+4. A página espera pelo primeiro envio (alguns segundos) e depois deixa-o dar nome à máquina, arrumá-la numa pasta e colocá-la num site, logo ali. Nesse primeiro lote o servidor dá ao agente um segredo próprio (`/etc/dumbmonit/agent-secret`, legível só por ele): a partir daí essa máquina é a única que pode reportar nesta monitorização.
 5. Docker: para ver os contentores e deixar o DumbMonit reiniciá-los ou atualizá-los, o agente tem de alcançar o socket do Docker. O serviço que o instalador regista já o consegue; se executar o agente sob um utilizador dedicado, adicione esse utilizador ao grupo «docker» e reinicie-o. As políticas de reinício e de atualização automática são então definidas por contentor na página do monitor.
 
 Duas coisas valem a pena ser lidas antes de implementar isto em mais do que uma
@@ -310,7 +310,7 @@ todos os sistemas.
     (`sha256sum`, `shasum`, `sha256`) está disponível.
 
     As somas de verificação mudam a cada versão do servidor: após atualizar o
-    DumbMonit, copie um comando de instalação novo de **Definições → Agentes**
+    DumbMonit, copie um comando de instalação novo (**Nova monitorização → Servidor com o agente**)
     (ou de um token novo) em vez de voltar a executar um antigo, que pararia com
     «checksum mismatch». As mesmas somas de verificação são mostradas sob o
     comando de instalação, e publicadas em `/download/<file>.sha256`.
@@ -342,7 +342,7 @@ todos os sistemas.
 Ambos os scripts são idempotentes: voltar a executar o comando de instalação, com
 o mesmo token e URL, substitui o binário, reescreve a configuração e reinicia o
 serviço. É esse o procedimento de atualização. Tome o comando do servidor atual
-(Definições → Agentes): o seu `--sha256` tem de corresponder aos binários da
+(Nova monitorização, **Servidor com o agente**): o seu `--sha256` tem de corresponder aos binários da
 versão do servidor para que atualizou.
 
 O mesmo comando migra uma máquina que ainda corre o agente EzyMonit, no Linux e no
@@ -537,6 +537,9 @@ num contentor sem montar um ficheiro:
 | `DUMBMONIT_AGENT_LOG` | `trace`, `debug`, `info`, `warn`, `error` |
 | `DUMBMONIT_AGENT_RELAY` | `true` para executar, para o servidor, as sondas dos monitores atribuídos a este agente (veja [Executar o agente no Docker / noutra rede](#run-the-agent-in-docker--on-another-network)) |
 | `DUMBMONIT_AGENT_SITE` | Etiqueta do site mostrada ao lado do agente quando é oferecido como relay |
+| `DUMBMONIT_AGENT_GATEWAY_LISTEN` | Gateway de um relay para os agentes do seu site, por exemplo `0.0.0.0:8443` (`gateway_listen:`); prevalece sobre a porta definida na interface (consulte [Instalar agentes atrás do relay](../install/remote-site.md#5-install-agents-behind-the-relay)) |
+| `DUMBMONIT_AGENT_GATEWAY_MAX_CONNECTIONS` | Ligações mantidas em simultâneo pelo gateway, 64 por predefinição (`gateway_max_connections:`) |
+| `DUMBMONIT_AGENT_GATEWAY_RATE_KIB` | Débito de cada túnel através do gateway, por sentido, em KiB/s, 4096 por predefinição (`gateway_rate_kib:`) |
 
 ## Contadores de desempenho do Windows {#windows-performance-counters}
 
@@ -770,8 +773,8 @@ DumbMonit, fica registado no log e é repetido mantendo o segredo.
 
 ## Tokens de registo {#enrolment-tokens}
 
-- Os tokens são criados em **Definições → Agentes** ou ao adicionar um monitor
-  do tipo agent. O servidor guarda apenas uma impressão digital: o token em claro
+- Os tokens são criados ao adicionar uma monitorização do tipo agent (de uso
+  único ou para várias máquinas) e pelo kit Active Directory. O servidor guarda apenas uma impressão digital: o token em claro
   é mostrado uma vez, na resposta de criação, com os dois comandos de instalação.
 - O agente envia-o como `Authorization: Bearer dmon_…` em `POST /api/ingest`.
   Nunca aparece nos registos do agente, nem sequer truncado.
@@ -822,14 +825,14 @@ tail -f /var/log/dumbmonit-agent.log   # service log (OpenRC)
 |---|---|
 | O instalador diz «could not reach the server» | URL ou token errado. A configuração está escrita: corrija o `agent.yaml`, depois reinicie o serviço. |
 | O download falha com 404 | O servidor não tem binários de agente (`DUMBMONIT_AGENT_DIR` vazio). Use `--bin=PATH` com um binário que compilou. |
-| O instalador pára com «checksum mismatch» | O comando foi copiado antes de uma atualização do servidor (copie um novo de Definições → Agentes), ou o binário recebido não é o que o servidor serve: um proxy ou uma cache pelo meio, ou um download adulterado. |
+| O instalador pára com «checksum mismatch» | O comando foi copiado antes de uma atualização do servidor (copie um novo ao adicionar um servidor com o agente), ou o binário recebido não é o que o servidor serve: um proxy ou uma cache pelo meio, ou um download adulterado. |
 | O instalador pára com «no expected checksum» | O comando não tem `--sha256` para esta plataforma: um comando antigo, ou um binário macOS (não fornecido pelo servidor). Copie um comando novo, ou passe `--sha256=<platform>-<arch>:<hex>` a partir do `.sha256` da versão. |
 | A máquina nunca aparece | O envio vai para `/api/ingest` no URL do comando de instalação; atrás de um proxy inverso, garanta que é reencaminhado e que corpos até 16 MB são permitidos. |
 | *Inacessível* embora o agente corra | O token foi revogado, ou os envios são rejeitados. Verifique `journalctl -u dumbmonit-agent`: o erro é registado aí. |
 | O registo diz «this agent is not recognised for this machine» | A máquina está associada a uma instalação de agente cujo segredo esta não tem — uma reinstalação, ou um contentor recriado sem o seu volume de estado. Abra a página do monitor e clique em **Allow re-enrolment**; veja [Novo registo após uma reinstalação](#re-enrolment-after-a-reinstall). |
 | O registo diz «this machine was enrolled before agent binding» | Um anfitrião que nunca se associou ao seu agente. Clique em **Allow re-enrolment** na sua página do monitor, depois reinicie o agente; veja [Anfitriões anteriores à associação](#hosts-that-predate-binding). |
 | O registo diz «this agent is too old to be bound to its machine» | O binário do agente não consegue guardar um segredo de associação. Volte a executar o comando de instalação no anfitrião; se o monitor já existe, clique primeiro em **Allow re-enrolment**. |
-| O registo diz «this enrollment token has already enrolled all the machines it was allowed to» | Um token de uso único a ser reutilizado. Crie um novo, ou um token reutilizável em Definições → Agentes. |
+| O registo diz «this enrollment token has already enrolled all the machines it was allowed to» | Um token de uso único a ser reutilizado. Crie um novo, ou marque *Várias máquinas com este comando* ao adicionar o servidor. |
 | Windows | As partes do serviço Windows não tinham sido exercitadas na imagem de build do projeto à data da escrita; reporte problemas no GitHub. |
 
 ## Contentores Docker {#docker-containers}

@@ -1,0 +1,44 @@
+# Mesures et vues du type « caddy » (format : crates/collectors/src/catalog.rs).
+source: caddy
+prefixes: [caddy_]
+metrics:
+  - { name: caddy_requests_total, label: "Requests", kind: counter }
+  - { name: caddy_server_requests_total, label: "Server requests", kind: counter }
+  - { name: caddy_requests_5xx_total, label: "Requests 5xx", kind: counter }
+  - { name: caddy_server_requests_5xx_total, label: "Server requests 5xx", kind: counter }
+  - { name: caddy_request_errors_total, label: "Request errors", kind: counter, better: "lower" }
+  - { name: caddy_server_request_errors_total, label: "Server request errors", kind: counter, better: "lower" }
+  - { name: caddy_upstream_requests, label: "Upstream requests" }
+  - { name: caddy_config_loaded, label: "Config loaded" }
+  - { name: caddy_servers, label: "Servers" }
+  - { name: caddy_routes, label: "Routes" }
+  - { name: caddy_upstreams, label: "Upstreams" }
+  - { name: caddy_upstreams_unhealthy, label: "Upstreams unhealthy", better: "lower" }
+  - { name: caddy_upstream_healthy, label: "Upstream healthy", unit: "bool" }
+  - { name: caddy_upstream_fails, label: "Upstream fails" }
+  - { name: caddy_config_last_reload_ok, label: "Config last reload ok", unit: "bool" }
+  - { name: caddy_config_last_reload_timestamp_seconds, label: "Config last reload timestamp", unit: "timestamp" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - caddy_upstreams_unhealthy
+      - caddy_upstreams
+      - caddy_servers
+      - caddy_routes
+      - caddy_config_loaded
+      - caddy_upstream_healthy
+      - caddy_config_last_reload_ok
+      - caddy_config_last_reload_timestamp_seconds
+  - view: timeseries
+    title: "Requests"
+    metrics: [caddy_requests_total, caddy_server_requests_total]
+  - view: timeseries
+    title: "Errors"
+    metrics: [caddy_requests_5xx_total, caddy_server_requests_5xx_total, caddy_request_errors_total, caddy_server_request_errors_total]
+  - view: topn
+    title: "Requests per upstream"
+    metrics: [caddy_upstream_requests]
+    group_by: upstream
+    options:
+      limit: "10"

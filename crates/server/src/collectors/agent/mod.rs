@@ -18,6 +18,7 @@
 //! équipement SNMP — c'est ce qui permet aux règles d'alerte, à l'anti-cascade et
 //! à l'interface de traiter les deux mondes sans distinction.
 
+pub mod catalog;
 pub mod commands;
 pub mod eventlog;
 pub mod logs;
@@ -33,18 +34,21 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use async_trait::async_trait;
-use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target, TargetId};
+use dumbmonit_proto::{Collector, Measures, MetricKind, ProbeError, Sample, Target, TargetId};
 use sqlx::SqlitePool;
 use tokio::sync::OnceCell;
 
 pub use modules::AgentServiceCollector;
 pub use policy::spawn_policy_scheduler;
-pub use receive::{AGENT_TOO_OLD, BINDING_MISMATCH, IngestError, NOT_BOUND, enrol, ingest};
+pub use receive::{
+    AGENT_TOO_OLD, BINDING_MISMATCH, IngestError, NOT_BOUND, enrol, ingest, token_client_of,
+};
 pub use store::{
-    HostInfo, KeyAuth, MAX_SITE_LEN, REBIND_WINDOW_MINUTES, Registration, TokenPolicy, TokenRecord,
-    ad_folder, allow_rebind, authorise_key, clean_ad_domain, clean_site, close_enrolment,
-    create_token, host, list_hosts, list_tokens, revoke_token, set_relay_wanted,
-    set_token_ad_domain, set_token_relay, target_of_key,
+    HostInfo, KeyAuth, MAX_SITE_LEN, REBIND_WINDOW_MINUTES, Registration, TokenMachine,
+    TokenPolicy, TokenRecord, ad_folder, allow_rebind, authorise_key, clean_ad_domain,
+    clean_gateway_host, clean_site, close_enrolment, create_token, host, list_hosts, list_tokens,
+    revoke_token, set_relay_gateway, set_relay_wanted, set_token_ad_domain, set_token_relay,
+    target_of_key, token_machines,
 };
 
 /// Vérifie un en-tête `Authorization` d'agent et renvoie l'identifiant du jeton.
@@ -184,6 +188,10 @@ impl Collector for AgentCollector {
         "agent"
     }
 
+    fn measures(&self, _kind: &str) -> Option<Measures> {
+        catalog::measures()
+    }
+
     async fn probe(&self, target: &Target) -> Result<Vec<Sample>, ProbeError> {
         let last_seen = store::last_seen_ms(&self.pool, target.id)
             .await
@@ -299,6 +307,7 @@ mod tests {
             tags: Default::default(),
             binding_supported: true,
             self_update: None,
+            relay_gateway: None,
             remediation: None,
         };
         let registration = store::register(&pool, &cipher, &identity, token_record.id, None)

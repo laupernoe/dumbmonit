@@ -55,21 +55,24 @@ a código arbitrário:
 
 ### Scene {#scene}
 
-A definição **Scene** desenha um horizonte de cidade atrás da faixa.
-As páginas novas começam com Paris, e as páginas existentes que não
-tinham cenário também o mostram agora; desmarque-o para uma faixa
-simples, ou ative **Simple mode** para abandonar os cenários de todo.
-Escolha quantos quiser, pela ordem que quiser. Cidades: Veneza, Paris,
-Tóquio, Nova Iorque, Londres, Roma, Sidney, Dubai, São Francisco,
-Barcelona, Amesterdão, Istambul e Rio de Janeiro. As sete novas
-maravilhas: Chichén Itzá, Machu Picchu, a Grande Muralha, Petra e o Taj
-Mahal (o Cristo Redentor do Rio está no cenário do Rio). As maravilhas
-antigas: Gize, Babilónia, Éfeso, Olímpia, Halicarnasso, Rodes e
-Alexandria, mais a Acrópole de Atenas. Com mais de um, **Rotation**
-decide quando a página passa ao seguinte: a cada visita (predefinição),
-a cada minuto, a cada dez minutos ou a cada hora. Os cenários são um
-conjunto fechado de desenhos que vêm com o DumbMonit — nada é carregado
-ou interpretado.
+A definição **Scene** desenha um horizonte de cidade atrás da faixa. As páginas
+novas começam com Paris; desmarque-a para uma faixa simples, ou ative **Simple
+mode** para dispensar os cenários. Escolha quantos quiser, pela ordem que
+quiser. São incluídos quatro cenários, quatro cidades à noite sob a lua e as
+estrelas, com o seu monumento iluminado: Paris (a torre Eiffel), Tóquio (a
+Tokyo Tower), Nova Iorque (o Empire State e o Chrysler Building) e Dubai (o
+Burj Khalifa). O tempo segue a página: céu estrelado quando está tudo bem,
+nuvens com um aviso, trovoada quando algo está em baixo. Sendo cenários
+noturnos, o título e o estado por cima usam sempre as cores escuras, seja qual
+for o tema da página. O Dubai substitui o Matterhorn, e as páginas que usavam
+um cenário retirado passaram para o mais próximo dos quatro (cidades europeias e
+mundo antigo para Paris, Ásia, mar e espaço para Tóquio, as Américas para Nova
+Iorque, os Alpes e o norte para o Dubai), cópias de segurança e chamadas à API
+incluídas. Com mais de um, **Rotation** decide quando a página passa ao
+seguinte: em cada visita (predefinição), a cada minuto, a cada dez minutos ou a
+cada hora. Os cenários são um conjunto fechado de desenhos incluídos no
+DumbMonit — nada é carregado nem interpretado. As mesmas quatro cidades podem
+também ficar por trás do veredicto da [parede](wall.md).
 
 Não há, de propósito, CSS ou HTML personalizado: uma página de estado
 é pública e vive na mesma origem que a sua interface de administração,

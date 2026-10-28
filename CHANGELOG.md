@@ -5,6 +5,228 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.14.2 — 2026-10-28
+
+### Added
+
+#### Device pages
+
+- **Device pages show only the charts that matter.** Every integration now
+  declares its metrics (unit, counter or gauge) and its views in the catalogue
+  (`GET /api/collectors`, new `metrics` and `views` fields): a row of current
+  values, then at most four charts, with busiest-entity rankings where one curve
+  per guest, mailbox or port would be unreadable. Everything else stays one click
+  away under **All measurements**. SNMP profiles can declare `label`, `unit`,
+  `entity`, `view` and `view_title` per metric.
+- **Catalogue rankings and heatmaps** use the shared chart kit: a `topn` view is a
+  ranked list, a `heatmap` view spreads its busiest entities over the period.
+- **Richer charts** on a device page: alert-rule threshold lines, markers for the
+  device's alerts and resolutions, one cursor shared by all its charts, a
+  "Compare to last week" switch (dashed overlay) and a mirrored in/out view for
+  interface traffic.
+- **Switch panel** on the page of an SNMP switch, a UniFi console and a MikroTik
+  router: the faceplate of every port (link, speed, PoE, errors, shape and word
+  for each state), the selected port's traffic in/out, errors of the day, LLDP/CDP
+  neighbour and native VLAN, and a heatmap of every port's traffic over 24 hours.
+  The `ethernet-switch` SNMP profile reads every physical port, the native VLAN
+  (Q-BRIDGE-MIB) and PoE (POWER-ETHERNET-MIB); UniFi publishes the ports of its
+  switches and gateways (`port_table`, `lldp_table`).
+- **Machine health card** at the top of an agent host's page: CPU, memory and disk
+  gauges with one-hour curves, a per-core heatmap, the ten heaviest processes by
+  CPU and memory, kernel pressure (PSI), OOM kills, inode usage and clock drift,
+  each with a short explanation. The Linux agent now reports these causes of a
+  slow machine (process names only, never command lines).
+
+#### Capacity and alerting
+
+- **Fill-up forecasts for every integration.** A new built-in rule, *Storage
+  filling up*, watches every capacity metric DumbMonit collects (agent
+  filesystems and ZFS pools, SNMP storage, Proxmox storages and pools, backup
+  datastores, TrueNAS, Synology, QNAP, Unraid, Ceph, vSphere and Nutanix
+  storage, appliance disks, Microsoft 365 licences, UPS battery runtime…) and
+  alerts when one will be full within 30 days at its current growth rate: info
+  first, warning under 14 days, critical under 7, speaking again at each step.
+  The growth is a robust fit over the last week that ignores gaps and restarts
+  after a cleanup, an expansion or a quota reset. `GET /api/targets/{id}/forecasts`
+  returns the per-entity forecast (used, size, growth per day, days to full,
+  confidence).
+- Capacity bars say when they will be full: each agent disk ("Full in about 23
+  days at this pace") and each NAS volume, from the same forecasts. Filesystem
+  inodes reported by the Linux agent are a forecast family too
+  (`filesystem_inodes`).
+- **Drift alerts.** Two built-in rules compare probe response times and the
+  share of 5xx answers (reverse proxies, Cloudflare) with the usual value for
+  the same hour over the previous four weeks, and alert at three times the
+  usual, with a minimum value, a minimum gap and a minimum duration so that
+  small or short-lived wobbles stay quiet. New rule types `forecast` and `drift`
+  are available to custom rules.
+- **iSCSI-aware storage.** A Synology volume that hosts a thick-provisioned
+  iSCSI LUN no longer alerts as "almost full": the volume fill alert and the
+  fill-up forecast now use the effective usage (without thick reservations),
+  identical to the raw usage when there is no LUN. New built-in rules warn
+  about thin LUN over-allocation (more space promised than the volume has
+  free) and thin LUNs almost full. The Synology panel shows the volume as
+  reserved space plus data and lists each LUN with its type, size, real usage
+  and the monitor that uses it — matched by name and size, or linked by hand
+  (`PUT /api/targets/{id}/luns/{lun}/consumer`, saved in backups). TrueNAS
+  zvols are listed the same way. `GET /api/targets/{id}/luns` returns it all.
+- **Deadlines timeline** on the Reports page: domains, certificates, Entra
+  application secrets, Infomaniak products, Tailscale keys and licenses (FortiGate,
+  Meraki, Palo Alto, Veeam, GitLab) on one 90-day axis, with the soonest as a
+  list on phones. Each monitor page shows its own expiry dates. Served by the new
+  `GET /api/deadlines` (soonest first, `target` and `max_days` filters).
+- **Domain changes**: the domain monitor now reads the name servers and
+  fingerprints them and the registrar. New default rules alert on a change of
+  name servers, a change of registrar, and DNSSEC lost.
+
+#### Maps
+
+- **Weathermap on the topology map.** Links between switches show their load: the
+  width and tint follow the port utilization (rate over port speed), the label
+  spells `412 Mb/s · 41 %` (always from 50 %, on hover or focus otherwise), a port
+  that loses frames is dashed, dots move along the link in the direction of the
+  busiest flow (still with reduced motion), and a link behind a down device is
+  greyed out. Clicking a link opens its rates each way, errors and the last hour.
+  A **Traffic** toggle sits next to **Group by subnet**; the list view shows the
+  load of each link; on a phone the map falls back to a list of the busiest links.
+  `GET /api/topology` links carry an optional `traffic` object, and
+  `GET /api/targets/{id}/port-traffic` returns the one-hour curve of a link's ports.
+- **Threat map.** The Security page opens with a world map of the attacks your
+  defences stopped, shaded by country: CrowdSec alerts of the last 24 hours, the
+  inbound connections blocked by an OPNsense firewall's live map, and Cloudflare
+  threats by country. Countries only: no address leaves the server or is stored.
+  The CrowdSec panel shows its own share. New route `GET /api/security/threats`.
+- **CrowdSec machine login.** Besides the bouncer key, a CrowdSec monitor accepts
+  a machine login (`cscli machines add`): DumbMonit then reads the local alerts and
+  keeps their country of origin (`dumbmonit_crowdsec_alerts_by_country`).
+- **Cloudflare threats by country** (`dumbmonit_cloudflare_country_threats`), read
+  with the traffic analytics already collected.
+- **One world map for every page.** Sites, cloud regions, threats and a
+  firewall's live traffic share the same map: country shading, sized discs and
+  links, a legend and the same data as a text list under it. The World view of
+  the Map page links each relay agent's site to the main site, in the relay's
+  state. AWS, Hetzner and OVHcloud panels map their regions and datacenters from a
+  built-in table (AWS, Azure, Hetzner, OVHcloud, Infomaniak), with no request out.
+
+#### Agents and relays
+
+- **Agents behind a relay.** At a site behind a firewall, where only the relay
+  agent goes out, servers can now run the full agent: they connect to the
+  relay's **gateway** (TCP 8443 by default, on the site's network), which
+  carries their connection to the server. The agent's TLS 1.3 session, client
+  certificate, pinned authority, token and binding secret stay end to end
+  between agent and server: the relay only copies ciphertext, through a tunnel
+  it opens under its own client certificate, and cannot read, alter or
+  impersonate anything. Enrolment, the install script and the binary (checked
+  against the SHA-256 in the command) go through the relay too. Bounded
+  connections and rate per tunnel, no open proxy, and a relay only carries
+  machines of its own client (MSP).
+- The server records the relay each agent connects through: shown on the
+  agent's page, drawn as its parent on the topology map, and used for alert
+  suppression (agents behind a relay that is down are `suppressed`, not down).
+- Install commands through a relay: choose **Directly** or **Through
+  &lt;relay&gt; (site)** when adding a server with the agent, in the Active
+  Directory kit (**Route**), from a site in *Add by site*, or from the relay's
+  page (**Install an agent through it**). `POST /api/agent/tokens`,
+  `GET /api/agent/install` and `POST /api/agent/ad-kit` take `relay_id` and
+  `relay_host`; the relay's *Relay* panel sets its gateway (port, address) and
+  shows the agents connected through it.
+- The add-an-agent flow does everything in place: token, Linux/macOS, Windows
+  and Docker commands, an option for several machines, the wait for the first
+  connection (`GET /api/agent/tokens/{id}/machines`), then naming, folder and
+  site. The Active Directory kit is offered there too.
+- Imports (Uptime Kuma, UptimeRobot, Gatus) can send the imported monitors
+  through a relay (`via_agent`), and monitors added from a relay's network scan
+  are probed through that relay. `GET /api/relays/kinds` lists the kinds a
+  relay can probe; forms only offer *Reached through* for those.
+
+#### Docker
+
+- **Docker consumption**: the agent now reads each running container's
+  statistics (one-shot `stats`, a bounded number in parallel, with a time
+  budget) and reports CPU (% of a core), memory (cache excluded) against its
+  limit, network and block I/O, and process count; `system/df` gives the disk
+  taken by images, containers, volumes and build cache, and what a prune would
+  free (read every ten minutes). The Docker panel shows CPU and memory meters
+  on every row, a top-5 by CPU and by memory, and a "restart loop" badge for a
+  container that restarted three times or more in fifteen minutes. Linux only,
+  as the rest of the Docker module. `GET /api/targets/{id}/containers` gains
+  `cpu_percent`, `memory_bytes`, `memory_limit_bytes` and `restarts_15m`.
+- **Docker bulk actions**: tick containers (or use "select all" and the quick
+  filters "no auto-update" / "no auto-restart") to enable or disable
+  auto-update and auto-restart for all of them, or update them now. A failure
+  is reported per container. New `PUT /api/targets/{id}/containers/policy`.
+- Container auto-update/auto-restart policies are now part of the configuration
+  backup.
+
+#### Network and backups
+
+- **Network watch**: scheduled network scans now flag a **MAC address change** (a new
+  device on the address of a known device: spoofing or replaced hardware; alert rule
+  `netscan_mac_change`, disabled by default), let you **ignore** a device, and draw
+  each subnet as a **grid** (one tile per address: new, known, ignored, absent, free)
+  with filters and an *Add as a monitor* action. Scheduled scans and the devices you
+  marked known or ignored are part of the backup.
+- **Backup matrix** (jobs x 30 days) on Veeam, Duplicati, Kopia, Synology Active
+  Backup and Plakar, and on Proxmox Backup Server, which now shares the same
+  component: one row per job, one cell per day (succeeded, warning, failed, not
+  run), the age of the last success, and duration and size on hover. The days are
+  rebuilt from the stored measurements.
+- Veeam: last duration of each job, age of its last successful run and time to its
+  next run; the new alert **Veeam backup too old** fires after two days without a
+  success on a job scheduled at least daily.
+- Veeam repository usage and the size of what Kopia and Duplicati keep are pinned
+  among the charts of their device page.
+
+### Changed
+
+- **One interface.** The Homelab interface is gone: everyone gets the console
+  (icon rail, header, context panel), with the pigeon logo. The overview opens on
+  a thin night-sky banner whose one line says how things stand ("pve-02 is down.
+  3 guests held back, alert sent." / "All 146 monitors up."), with a pigeon flying
+  across it (tap it). Wall mode moved to a screen icon in the header and always
+  shows the console's board. The setup wizard no longer asks for a mode and
+  always offers its three optional steps; Settings no longer has a mode picker,
+  a theme picker or an "Advanced" fold. Public status pages keep their light and
+  dark themes.
+- **Night scenes.** The status page banners are redrawn as four cities at night:
+  Paris (the Eiffel Tower in its golden lights, the beam turning), Tokyo (Tokyo
+  Tower, the Skytree, Mount Fuji), New York (the Empire State, whose crown takes
+  the page's colour, and the Chrysler Building) and **Dubai** (the Burj Khalifa),
+  which replaces the Matterhorn: stored pages move over (migration 0205), and
+  backups or API calls naming `matterhorn` land on `dubai`. A starry sky, the
+  moon lighting the buildings, lit windows and the weather following the page.
+  The text over them always uses the dark colours, so it stays legible in the
+  light theme. The wall can show the same cities behind its verdict and clock
+  (**Backdrop**, off by default, or `?city=`).
+- **Settings → Agents** keeps only instance settings: the encrypted channel
+  (with the agents still on the plain channel), automatic agent updates, and
+  the issued tokens with revocation. Adding agents, the agent list and the
+  Active Directory kit moved to the add flow; no add flow sends you to Settings
+  any more.
+- The agent binary no longer embeds the integrations' view catalogue, which only
+  the server's API serves (`catalog` feature of the collectors crate).
+- Cloudflare: threats by country are read by a query of their own, so a refusal
+  of that field never drops the traffic analytics.
+
+### Removed
+
+- The product mode (`product_mode`) in `GET /api/instance` and
+  `/api/instance/settings`. Older clients and backups that still carry it are
+  accepted; the field is ignored and no longer written.
+- The Homelab overview (weather scene, briefing, last 7 days) and the Homelab
+  wall (city scenes, music dock, widget zones).
+- Wall music (Spotify Connect, shared link), wall news and wall widgets, with
+  their Settings sections and API routes (`/api/music/*`, `/api/wall/news*`,
+  `/api/wall/widgets*`). Their stored settings are left in place and ignored;
+  the security policy no longer allows Spotify's player or any frame. Place
+  search for locations (`/api/locations/geocode`) stays.
+
+### Fixed
+
+- Restoring a backup now also restores alert rules whose detection settings are
+  the only thing that changed.
+
 ## 0.14.1 — 2026-10-28
 
 ### Added

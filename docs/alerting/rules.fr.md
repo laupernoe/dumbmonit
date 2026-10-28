@@ -294,7 +294,9 @@ dernier événement ; elle reparle au plus toutes les 10 minutes tant que des
 | Secteurs défaillants de disque Synology en croissance | De nouveaux secteurs illisibles sont apparus dans les dernières 24 heures (`delta(dumbmonit_synology_disk_unc_count[24h])`). | > 0 | 15 min | Avis (`warning`) | 24 h |
 | SSD Synology qui s'use | Un SSD a moins de 10 % de sa vie nominale restante (`dumbmonit_synology_disk_remaining_life_percent`) ; se résout au-dessus de 12 %. | < 10 % | 1 h | Avis (`warning`) | 7 j |
 | Volume Synology dégradé | Un volume est dégradé ou crashé : sa redondance a disparu (`dumbmonit_synology_volume_status`). | ≥ 2 | 5 min | Avertissement (`critical`) | 6 h |
-| Volume Synology presque plein | Un volume est plein à 90 % ou plus (`dumbmonit_synology_volume_used_percent`) ; se résout sous 88 %. | ≥ 90 % | 15 min | Avis (`warning`), escalade après 24 h | 6 h |
+| Volume Synology presque plein | Un volume est plein à 90 % ou plus, sans compter l'espace réservé par les LUN iSCSI en provisionnement épais (`dumbmonit_synology_volume_effective_used_percent`, égale à l'occupation brute sans LUN) ; se résout sous 88 %. Un volume rempli par un LUN épais est plein par construction et n'alerte pas. | ≥ 90 % | 15 min | Avis (`warning`), escalade après 24 h | 6 h |
+| Sur-allocation des LUN fins Synology | Les LUN fins d'un volume ont reçu la promesse de plus d'espace qu'il n'en reste de libre (`dumbmonit_synology_volume_thin_overcommit_percent` : espace promis et non écrit, en pourcentage de l'espace libre) ; se résout sous 95 %. | ≥ 100 % | 1 h | Avis (`warning`) | 24 h |
+| LUN fin Synology presque plein | Un LUN fin a 95 % ou plus de sa taille écrite (`dumbmonit_synology_lun_used_percent`). Un LUN épais est opaque vu du NAS : ce sont les règles de l'équipement qui l'utilise (datastore, système de fichiers) qui alertent. | ≥ 95 % | 30 min | Avis (`warning`) | 24 h |
 | Température Synology élevée | Un disque est au-dessus de 55 °C, ou DSM a levé son propre avertissement de température (`dumbmonit_synology_disk_temperature_celsius`, `dumbmonit_synology_temperature_warning`) ; se résout sous 52 °C. | > 55 °C | 15 min | Avis (`warning`) | 6 h |
 | Mémoire Synology élevée | Usage mémoire du NAS au-dessus de 95 % (`dumbmonit_synology_memory_usage_percent`) ; se résout sous 90 %. | > 95 % | 15 min | Avis (`warning`) | 6 h |
 | Tâche Active Backup échouée | La dernière exécution d'une tâche Active Backup for Business a échoué, ou n'a sauvegardé qu'une partie de ses appareils (`dumbmonit_abb_task_last_status == bool 0`). La notification nomme la tâche. | > 0 | 10 min | Avertissement (`critical`) | 24 h |
@@ -645,6 +647,9 @@ Les séries portent `router`, `service`, `server`, `upstream`, `host` ou
 | Domaine proche de l'expiration | Le domaine expire dans moins de 7 jours, ou a expiré (`dumbmonit_domain_expiry_days`). | < 7 j | 1 h | Avertissement (`critical`) | 12 h |
 | Domaine suspendu | Le registre a mis le domaine en `clientHold` ou `serverHold` : il est hors du DNS (`dumbmonit_domain_on_hold`). | > 0 | 30 min | Avertissement (`critical`) | 6 h |
 | Domaine en rachat | Le domaine est en `redemptionPeriod`, `pendingDelete` ou `pendingRestore` : il a expiré (`dumbmonit_domain_redemption`). | > 0 | 30 min | Avertissement (`critical`) | 12 h |
+| Serveurs de noms du domaine changés | Les serveurs de noms de la délégation diffèrent de la lecture précédente (`changes_prometheus(dumbmonit_domain_nameservers_fingerprint[1d])`). Se résout seule un jour plus tard. | > 0 | 1 min | Avis (`warning`) | 24 h |
+| Registraire du domaine changé | Le registraire diffère de la lecture précédente : il y a eu un transfert (`changes_prometheus(dumbmonit_domain_registrar_fingerprint[1d])`). | > 0 | 1 min | Avis (`warning`) | 24 h |
+| DNSSEC du domaine perdu | DNSSEC était signé ces 7 derniers jours et ne l'est plus (`dumbmonit_domain_dnssec`). | < 1 | 1 h | Avis (`warning`) | 24 h |
 | Réponse DNS changée | La réponse d'une vérification DNS avec *Alerter quand la réponse change* diffère de la précédente (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Se résout d'elle-même une heure plus tard. | > 0 | 1 min | Avis (`warning`) | 24 h |
 
 ### Listes noires DNS {#dns-blocklists}
@@ -747,6 +752,7 @@ Voir [Veeam Backup & Replication](../devices/veeam.md). Les jobs sont
 |---|---|---|---|---|---|
 | Job Veeam en échec | La dernière exécution d'un job Veeam activé a échoué : ce qu'il protège n'a pas de nouveau point de restauration (`dumbmonit_veeam_job_failed`). | > 0 | 5 min | Avertissement (`critical`) | 1 j |
 | Job Veeam terminé avec un avertissement | La dernière exécution d'un job Veeam activé s'est terminée avec un avertissement : certains objets ne sont peut-être pas protégés (`dumbmonit_veeam_job_warning`). | > 0 | 5 min | Avis (`warning`) | 1 j |
+| Sauvegarde Veeam trop ancienne | Aucune exécution réussie d'un job planifié au moins chaque jour depuis plus de deux jours (`dumbmonit_veeam_job_last_success_age_seconds`). | > 2 j | 1 h | Avis (`warning`) | 1 j |
 | Dépôt Veeam presque plein | Un dépôt de sauvegarde Veeam est plein à plus de 90 % : les prochains jobs échoueront par manque d'espace (`dumbmonit_veeam_repository_used_percent`). | > 90 % | 30 min | Avis (`warning`) | 1 j |
 | Licence Veeam arrivant à expiration | La licence Veeam expire dans moins de 30 jours : les jobs s'arrêtent à la fin de la période de grâce (`dumbmonit_veeam_license_expiry_seconds`). | < 30 j | 1 h | Avis (`warning`) | 1 j |
 
@@ -1048,12 +1054,13 @@ est activé dans les Paramètres (désactivé par défaut). Voir
 
 ### Inventaire du réseau {#inventaire-du-reseau}
 
-Déclenchées par les balayages réseau planifiés et leur inventaire (voir [Scans planifiés et inventaire](../using/discovery.fr.md#scans-planifies-et-inventaire)). **Les deux règles sont désactivées par défaut** et de gravité `info` : activez-les dans la liste des règles quand vous les voulez. Il y a une série, donc une alerte, par nouvel appareil ou port ; elle reste ouverte jusqu'à ce que l'élément soit marqué comme connu (la mesure s'arrête, l'alerte se résout en quelques minutes) et n'a pas de rappel. Le premier balayage d'un réseau ne déclenche jamais rien.
+Déclenchées par les balayages réseau planifiés et leur inventaire (voir [Scans planifiés et inventaire](../using/discovery.fr.md#scans-planifies-et-inventaire)). **Les trois règles sont désactivées par défaut** ; les deux premières sont de gravité `info`, celle du changement de MAC `warning` : activez-les dans la liste des règles quand vous les voulez. Il y a une série, donc une alerte, par nouvel appareil ou port ; elle reste ouverte jusqu'à ce que l'élément soit marqué comme connu (la mesure s'arrête, l'alerte se résout en quelques minutes) et n'a pas de rappel. Le premier balayage d'un réseau ne déclenche jamais rien.
 
 | Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
 |---|---|---|---|---|---|
 | New device on the network | Un balayage planifié a trouvé un appareil absent de l'inventaire (`dumbmonit_netscan_unknown_device`). | > 0 | aucun | Info (`info`), **désactivée** | aucun |
 | New open port on the network | Un balayage planifié a trouvé un nouveau port ouvert sur un appareil connu (`dumbmonit_netscan_unknown_port`). | > 0 | aucun | Info (`info`), **désactivée** | aucun |
+| MAC address changed for an IP | Un nouvel appareil a pris l'adresse d'un appareil connu avec une autre adresse MAC : usurpation ou matériel remplacé (`dumbmonit_netscan_mac_change`). Ouverte jusqu'à ce qu'il soit marqué connu ou ignoré. | > 0 | aucun | Avis (`warning`), **désactivée** | aucun |
 
 ### DumbMonit lui-même
 

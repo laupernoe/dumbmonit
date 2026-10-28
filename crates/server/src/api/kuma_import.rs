@@ -51,6 +51,11 @@ pub struct ImportQuery {
     /// Numéros de lignes à importer, séparés par des virgules ; absent : toutes.
     #[serde(default)]
     pub(super) rows: Option<String>,
+    /// Agent relais par lequel interroger les moniteurs importés (site
+    /// distant). Ignoré pour les types qu'un relais ne sait pas interroger
+    /// (heartbeats, surveillance de sites).
+    #[serde(default)]
+    pub(super) via_agent: Option<dumbmonit_proto::TargetId>,
 }
 
 #[derive(Serialize)]
@@ -186,6 +191,7 @@ pub(super) async fn run(
     notifications_ignored: usize,
     query: &ImportQuery,
 ) -> ApiResult<(StatusCode, Json<ImportReport>)> {
+    super::targets::check_relay(state, query.via_agent).await?;
     // `rows=1,4` : seules ces lignes (numérotées comme dans l'aperçu) sont traitées.
     let selected: Option<HashSet<usize>> = query
         .rows
@@ -236,7 +242,7 @@ pub(super) async fn run(
             kind: kind.into(),
             profile_id: None,
             parent_id: None,
-            via_agent: None,
+            via_agent: query.via_agent.filter(|_| super::relay::relayable(kind)).map(Some),
             interval_secs: Some(item.interval_secs),
             enabled: Some(item.enabled),
             tags: item.tags,

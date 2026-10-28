@@ -327,6 +327,7 @@ mod tests {
             position: 0,
             location: None,
             multisite: None,
+            container_policies: Vec::new(),
         });
         let names = redact(&mut doc);
         let text = serde_json::to_string(&doc.targets[0].credential).unwrap();

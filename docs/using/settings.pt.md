@@ -2,30 +2,32 @@
 
 ![Definições: sete separadores, aqui A minha conta com aparência, conta e segurança e notificações push](../assets/screenshots/settings-light.png){ loading=lazy }
 
-As Definições contêm o que é administrativo: a sua conta, quem pode iniciar sessão e como, os tokens que deixam entrar agentes e assistentes, a cópia de segurança da instância, o tema, e a saúde do servidor. Dividem-se em sete separadores, cada um com o seu próprio endereço. Uma barra lateral num ecrã largo, uma faixa de chips num telemóvel e uma pesquisa sobre os nomes das secções ajudam a encontrar uma secção.
+As Definições reúnem o que é administrativo: a própria instância, a sua conta, quem pode iniciar sessão e como, os agentes, os canais de notificação, a cópia de segurança da instância e a saúde do servidor. Estão divididas em sete separadores, cada um com o seu endereço. Uma barra num ecrã largo, uma fila de chips no telemóvel e uma pesquisa sobre os nomes das secções ajudam a encontrar uma secção.
 
 | Separador | Endereço | O que contém |
 |---|---|---|
-| A minha conta | `/settings/account` | Aparência, Conta e segurança (palavra-passe, dois fatores, registo de segurança), Notificações push |
-| Equipa e acesso | `/settings/team` | Utilizadores, Início de sessão único |
-| Monitorização | `/settings/monitoring` | Agentes, Pacotes de integração, [Pontuação de segurança](security-score.md) |
-| Notificações e relatórios | `/settings/notifications` | Canais, Política de notificações, Horário de silêncio ([Canais de notificação](../notifications.md)), Relatórios |
-| Páginas de estado | `/settings/status` | Páginas de estado e anúncios ([Páginas de estado](status-pages.md)) |
-| Ecrã de parede | `/settings/wall` | Modo parede, Música da parede, Notícias da parede ([Modo parede](overview.md#wall-mode)) |
-| Sistema | `/settings/system` | Cópia de segurança, O próprio DumbMonit, API e assistentes, Acerca |
+| Geral | `/settings/general` | Nome da instância, idioma e fuso horário, o assistente de configuração ([Interface e assistente de configuração](product-modes.md)) |
+| A minha conta | `/settings/account` | Idioma, Conta e segurança (palavra-passe, dois fatores, registo de segurança), Notificações push, Contactos de prevenção e horas de silêncio ([Prevenção](../alerting/oncall.md)) |
+| Equipa e acesso | `/settings/team` | Utilizadores, Equipas, Clientes, Início de sessão único, SAML, SCIM, LDAP |
+| Monitorização | `/settings/monitoring` | Agentes, Pacotes de integração, [Pontuação de segurança](security-score.md), Localizações |
+| Notificações | `/settings/notifications` | Canais, Política de notificações ([Canais de notificação](../notifications.md)) |
+| Ecrã de parede | `/settings/wall` | Modo parede: o que mostra e como abri-lo ([Modo parede](wall.md)) |
+| Sistema | `/settings/system` | Cópia de segurança, Ficheiros de configuração, O próprio DumbMonit, Dados e retenção, Registos, API e assistentes, Acerca |
 
-Cada secção mantém a sua âncora: `/settings#agents` reencaminha para `/settings/monitoring#agents`. As ligações antigas (`/alerts#notifications`, `/status`) também reencaminham para o novo local.
+Cada secção mantém a sua âncora: `/settings#agents` reencaminha para `/settings/monitoring#agents`. As ligações antigas (`/alerts#notifications`) também reencaminham para o novo lugar. As páginas de estado e os relatórios já não estão nas Definições: têm as suas próprias páginas, **Páginas de estado** (`/status`) e **Relatórios** (`/reports`); `/settings/status` e `/settings/reports` reencaminham para lá. A música, as notícias e os widgets da parede desapareceram: as suas ligações antigas (`#music`, `#news`, `#widgets`) abrem o separador Ecrã de parede.
 
 ## Aparência {#appearance}
 
-Três mosaicos, cada um a pré-visualizar o seu tema: **Sistema** (segue o seu
-dispositivo e muda com ele), **Dia** (o tema «papel de gráfico») e **Noite** (o
-tema «radar»). A escolha é guardada no navegador. O interruptor do cabeçalho e
-*Alternar tema* da paleta de comandos alternam entre dia e noite.
+O idioma da interface, guardado neste navegador. A consola tem um único aspeto
+escuro, por isso não há tema a escolher; as páginas de estado públicas mantêm
+os seus temas claro e escuro.
 
-**Abrir o modo parede** fica no fundo da secção: só o boletim, em ecrã inteiro,
-para um monitor na sala. ++esc++ sai dele, e a paleta de comandos abre-o a
-partir de qualquer lado — veja [Modo parede](overview.md#wall-mode).
+## Ecrã de parede {#wall}
+
+**Abrir o modo parede**: o painel da consola, em ecrã inteiro, para um ecrã na
+sala. ++esc++ sai, e a paleta de comandos abre-o a partir de qualquer lado. A
+parede já não tem música, notícias nem widgets; se quiser, uma cidade à noite
+pode ficar por trás do seu veredicto. Consulte [Modo parede](wall.md).
 
 ## Conta e segurança {#account-security}
 
@@ -185,19 +187,17 @@ se aplica. Um valor que guardou explicitamente é mantido tal como está.
 
 ## Agentes {#agents}
 
-Tokens de registo para o [agente Linux, macOS, FreeBSD e Windows](../devices/agent.md).
-Crie um com um nome («Servidor de ficheiros», «Frota doméstica»): o token é
-mostrado uma só vez, com os comandos de instalação Linux e Windows prontos a
-copiar. Cada comando traz as somas de verificação SHA-256 dos binários do agente
-que este servidor fornece, e o instalador recusa um download que não
-corresponda; as somas de verificação também estão listadas abaixo dos comandos,
-para comparar à mão. A lista mostra o prefixo de cada token, a data de criação,
-a última utilização e se foi revogado. **Revogar** pára todos os agentes que
-usam esse token no seu próximo envio.
+Apenas o que é comum a todos os [agentes](../devices/agent.md), para os
+administradores: o canal cifrado dos agentes (certificados e a sua autoridade,
+consulte [Segurança do agente](../install/agent-security.md)), as atualizações
+automáticas dos agentes e os tokens de inscrição já emitidos. Cada token mostra
+o seu âmbito, a data de criação e a última utilização; **Revogar** para todos
+os agentes que o usam no próximo envio, sem apagar as monitorizações.
 
-Um token pode registar várias máquinas. Revogá-lo não apaga os monitores. A
-lista de tokens, a criação e a revogação são para administradores; viewers e
-operators veem a secção sem a lista.
+Adicionar uma máquina (token, comando de instalação, primeira ligação,
+passagem por um relay, kit Active Directory) faz-se no fluxo de adição,
+**Nova monitorização → Agente** (`/targets/new?kind=agent`), não aqui. Os
+próprios agentes têm as suas páginas.
 
 ## Pontuação de segurança {#security-score}
 

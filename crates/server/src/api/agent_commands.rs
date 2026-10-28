@@ -212,6 +212,7 @@ pub fn ui_routes() -> Router<AppState> {
         .route("/targets/{id}/agent/modules", get(list_modules))
         .route("/targets/{id}/agent/modules/{module}", put(set_module))
         .route("/targets/{id}/containers", get(list_containers))
+        .route("/targets/{id}/containers/policy", put(set_policies))
         .route("/targets/{id}/containers/{name}/policy", put(set_policy))
         .route("/targets/{id}/containers/{name}/restart", post(restart))
         .route("/targets/{id}/containers/{name}/update", post(update))
@@ -266,11 +267,22 @@ pub struct AgentHostView {
     pub binding_supported: bool,
     /// Fin de la fenêtre de reliaison ouverte à la main, si elle court encore.
     pub rebind_until: Option<String>,
+    /// Passerelle des agents du site : port demandé depuis l'interface
+    /// (`None` : fermée), port sur lequel le relais écoute vraiment, adresse
+    /// par laquelle le site le joint, et tunnels ouverts en ce moment.
+    pub gateway_wanted: Option<u16>,
+    pub gateway_port: Option<u16>,
+    pub gateway_host: Option<String>,
+    pub gateway_tunnels: usize,
 }
 
 impl AgentHostView {
-    fn new(info: agent::HostInfo, relayed: usize) -> Self {
+    fn new(info: agent::HostInfo, relayed: usize, tunnels: usize) -> Self {
         Self {
+            gateway_wanted: info.relay_gateway_wanted,
+            gateway_port: info.relay_gateway_port,
+            gateway_host: info.relay_gateway_host.clone(),
+            gateway_tunnels: tunnels,
             commands_supported: info.commands_supported(),
             binding: info.binding_state(),
             hostname: info.hostname,
@@ -337,6 +349,16 @@ pub struct ContainerView {
     pub uptime_seconds: Option<u64>,
     pub image_age_seconds: Option<u64>,
     pub update_available: Option<bool>,
+    /// CPU en pourcent d'un cœur (100 : un cœur plein). Absent : agent sans
+    /// statistiques, conteneur arrêté, ou premier relevé.
+    pub cpu_percent: Option<f64>,
+    /// Mémoire utilisée, cache exclu.
+    pub memory_bytes: Option<u64>,
+    /// Limite mémoire du conteneur ; absente s'il n'en a pas.
+    pub memory_limit_bytes: Option<u64>,
+    /// Redémarrages sur les quinze dernières minutes : trois ou plus, c'est
+    /// une boucle de redémarrage.
+    pub restarts_15m: Option<u64>,
     pub policy: ContainerPolicy,
     pub last_command: Option<CommandView>,
 }
@@ -351,6 +373,10 @@ pub struct ContainerReading {
     pub started_seconds: Option<f64>,
     pub image_age_seconds: Option<f64>,
     pub update_available: Option<f64>,
+    pub cpu_percent: Option<f64>,
+    pub memory_bytes: Option<f64>,
+    pub memory_limit_bytes: Option<f64>,
+    pub restarts_15m: Option<f64>,
 }
 
 /// Regroupe les séries instantanées par nom de conteneur.
@@ -374,6 +400,9 @@ pub fn group_readings<'a>(
             "dumbmonit_container_started_seconds" => reading.started_seconds = Some(value),
             "dumbmonit_container_image_age_seconds" => reading.image_age_seconds = Some(value),
             "dumbmonit_container_update_available" => reading.update_available = Some(value),
+            "dumbmonit_container_cpu_percent" => reading.cpu_percent = Some(value),
+            "dumbmonit_container_memory_bytes" => reading.memory_bytes = Some(value),
+            "dumbmonit_container_memory_limit_bytes" => reading.memory_limit_bytes = Some(value),
             _ => {}
         }
     }
@@ -413,6 +442,10 @@ fn to_view(
             // -1 : vérification impossible (image locale, dépôt privé…).
             _ => None,
         }),
+        cpu_percent: reading.cpu_percent.filter(|v| v.is_finite() && *v >= 0.0),
+        memory_bytes: seconds(reading.memory_bytes),
+        memory_limit_bytes: seconds(reading.memory_limit_bytes).filter(|limit| *limit > 0),
+        restarts_15m: seconds(reading.restarts_15m),
         policy,
         last_command: last_command.map(CommandView::from),
     }
@@ -484,12 +517,30 @@ pub(crate) async fn list_containers(
 ) -> ApiResult<Json<Vec<ContainerView>>> {
     let DockerTargets { host, metrics } = docker_targets(&state, id).await?;
     let query = format!(
-        r#"{{__name__=~"dumbmonit_container_(up|health|restart_count|started_seconds|image_age_seconds|update_available)", target="{metrics}"}}"#
+        r#"{{__name__=~"dumbmonit_container_(up|health|restart_count|started_seconds|image_age_seconds|update_available|cpu_percent|memory_bytes|memory_limit_bytes)", target="{metrics}"}}"#
     );
     let series = state.victoria.query(&query).await?;
-    let readings = group_readings(
+    let mut readings = group_readings(
         series.iter().map(|s| (&s.metric, s.value.1.parse::<f64>().unwrap_or(f64::NAN))),
     );
+    // Les redémarrages récents sont une requête à part : une fonction de
+    // fenêtre ne se mélange pas au sélecteur d'instantanés ci-dessus, et même
+    // formule que la règle « Container restarting ». Son échec ne casse pas la
+    // liste, il retire seulement le badge.
+    let recent = state
+        .victoria
+        .query(&format!(
+            r#"increase_prometheus(dumbmonit_container_restart_count{{target="{metrics}"}}[15m])"#
+        ))
+        .await
+        .unwrap_or_default();
+    for s in &recent {
+        if let (Some(name), Ok(value)) = (s.metric.get("container"), s.value.1.parse::<f64>())
+            && let Some(reading) = readings.get_mut(name)
+        {
+            reading.restarts_15m = Some(value.round());
+        }
+    }
     let mut policies = commands::list_policies(&state.pool, host).await?;
     let mut latest = commands::last_command_per_container(&state.pool, host).await?;
 
@@ -539,6 +590,80 @@ async fn set_policy(
     let policy = patch.apply(current);
     commands::set_policy(&state.pool, host, &name, policy).await?;
     Ok(Json(policy))
+}
+
+/// Plus de conteneurs que cela d'un coup : borne le corps, pas l'usage réel.
+const MAX_BULK_CONTAINERS: usize = 500;
+
+/// Corps de `PUT /api/targets/{id}/containers/policy` : les conteneurs visés et
+/// les champs à changer (mêmes règles que [`PolicyPatch`] : omis, inchangé).
+#[derive(Debug, Default, Deserialize)]
+pub struct BulkPolicyBody {
+    #[serde(default)]
+    pub containers: Vec<String>,
+    #[serde(flatten)]
+    pub patch: PolicyPatch,
+}
+
+/// Résultat pour un conteneur d'une modification groupée.
+#[derive(Debug, Serialize)]
+pub struct BulkPolicyResult {
+    pub name: String,
+    pub ok: bool,
+    /// Politique complète après changement, quand `ok`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub policy: Option<ContainerPolicy>,
+    /// Pourquoi le nom a été refusé, quand `!ok`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+/// Réponse : un résultat par nom demandé, dans l'ordre de la demande.
+#[derive(Debug, Serialize)]
+pub struct BulkPolicyReply {
+    pub results: Vec<BulkPolicyResult>,
+}
+
+/// Même droits que la route unitaire. Les noms valides sont écrits en une
+/// transaction ; un nom invalide est rapporté sans empêcher les autres.
+async fn set_policies(
+    State(state): State<AppState>,
+    Path(id): Path<TargetId>,
+    Json(body): Json<BulkPolicyBody>,
+) -> ApiResult<Json<BulkPolicyReply>> {
+    let host = docker_targets(&state, id).await?.host;
+    if body.containers.is_empty() {
+        return Err(ApiError::BadRequest("Select at least one container.".into()));
+    }
+    if body.containers.len() > MAX_BULK_CONTAINERS {
+        return Err(ApiError::BadRequest(format!(
+            "At most {MAX_BULK_CONTAINERS} containers per request."
+        )));
+    }
+    let mut valid: Vec<String> = Vec::new();
+    for name in &body.containers {
+        if validate_name(name).is_ok() && !valid.contains(name) {
+            valid.push(name.clone());
+        }
+    }
+    let applied: BTreeMap<String, ContainerPolicy> =
+        commands::update_policies(&state.pool, host, &valid, |current| body.patch.apply(current))
+            .await?
+            .into_iter()
+            .collect();
+    let results = body
+        .containers
+        .into_iter()
+        .map(|name| match validate_name(&name) {
+            Err(error) => BulkPolicyResult { name, ok: false, policy: None, error: Some(error) },
+            // Un doublon dans la demande répond comme son premier exemplaire.
+            Ok(()) => {
+                let policy = applied.get(&name).copied();
+                BulkPolicyResult { name, ok: true, policy, error: None }
+            }
+        })
+        .collect();
+    Ok(Json(BulkPolicyReply { results }))
 }
 
 /// Conteneurs connus d'une cible, d'après les dernières mesures de son agent.
@@ -668,7 +793,8 @@ async fn agent_host(
         .await?
         .ok_or_else(|| ApiError::NotFound(format!("No agent has reported for device {id} yet.")))?;
     let relayed = db::targets::relayed_counts(&state.pool).await?.get(&id).copied().unwrap_or(0);
-    Ok(Json(AgentHostView::new(info, relayed)))
+    let tunnels = state.agent_tls().tunnels_of(id);
+    Ok(Json(AgentHostView::new(info, relayed, tunnels)))
 }
 
 /// Réponse à l'ouverture d'une fenêtre de reliaison.
@@ -706,6 +832,21 @@ pub struct RelayChoice {
     /// Site de ce relais ; vide ou absent : aucun.
     #[serde(default)]
     pub site: Option<String>,
+    /// Passerelle des agents du site. Absente : inchangée.
+    #[serde(default)]
+    pub gateway: Option<GatewayChoice>,
+}
+
+/// Passerelle d'un relais, telle que l'interface la règle.
+#[derive(Debug, Deserialize)]
+pub struct GatewayChoice {
+    pub enabled: bool,
+    /// Port d'écoute sur le relais. Absent : 8443.
+    #[serde(default)]
+    pub port: Option<u16>,
+    /// Adresse par laquelle les machines du site joignent le relais.
+    #[serde(default)]
+    pub host: Option<String>,
 }
 
 /// `PUT /api/targets/{id}/agent/relay` : allume ou éteint le mode relais de la
@@ -722,8 +863,23 @@ async fn set_relay(
     if site.as_ref().is_some_and(|s| s.chars().count() > max) {
         return Err(ApiError::BadRequest(format!("Site name is limited to {max} characters.")));
     }
+    let gateway = match &choice.gateway {
+        Some(gateway) => {
+            let host = agent::clean_gateway_host(gateway.host.as_deref())
+                .map_err(|e| ApiError::BadRequest(e.into()))?;
+            let port = gateway.port.unwrap_or(dumbmonit_proto::DEFAULT_RELAY_GATEWAY_PORT);
+            if port == 0 {
+                return Err(ApiError::BadRequest("The gateway port must be 1 to 65535.".into()));
+            }
+            Some((gateway.enabled.then_some(port), host))
+        }
+        None => None,
+    };
     if !agent::set_relay_wanted(&state.pool, id, choice.enabled, site.as_deref()).await? {
         return Err(ApiError::NotFound(format!("No agent has reported for device {id} yet.")));
+    }
+    if let Some((port, host)) = gateway {
+        agent::set_relay_gateway(&state.pool, id, port, host.as_deref()).await?;
     }
     tracing::info!(
         cible = id,
@@ -858,6 +1014,30 @@ mod tests {
         assert_eq!(view.health, "unhealthy");
         assert_eq!(view.update_available, None, "-1 means unknown");
         assert_eq!(view.uptime_seconds, None, "no started_seconds series");
+    }
+
+    #[test]
+    fn usage_readings_reach_the_view() {
+        let name = |metric: &str| labels(&[("__name__", metric), ("container", "web")]);
+        let (up, cpu, mem, limit) = (
+            name("dumbmonit_container_up"),
+            name("dumbmonit_container_cpu_percent"),
+            name("dumbmonit_container_memory_bytes"),
+            name("dumbmonit_container_memory_limit_bytes"),
+        );
+        let readings =
+            group_readings([(&up, 1.0), (&cpu, 42.5), (&mem, 1_000.0), (&limit, 0.0)].into_iter());
+        let mut web = readings["web"].clone();
+        web.restarts_15m = Some(3.0);
+        let view = to_view("web".into(), web, ContainerPolicy::default(), None);
+        assert_eq!(view.cpu_percent, Some(42.5));
+        assert_eq!(view.memory_bytes, Some(1_000));
+        assert_eq!(view.memory_limit_bytes, None, "a zero limit means unlimited");
+        assert_eq!(view.restarts_15m, Some(3));
+
+        let bare =
+            to_view("db".into(), ContainerReading::default(), ContainerPolicy::default(), None);
+        assert_eq!((bare.cpu_percent, bare.memory_bytes, bare.restarts_15m), (None, None, None));
     }
 
     #[test]

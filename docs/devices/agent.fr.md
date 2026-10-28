@@ -138,16 +138,16 @@ virtuel Hyper-V** (voir [Hôtes Hyper-V](#hyper-v-hosts)).
 
 Les étapes ci-dessous sont celles que montre l'avis à côté du formulaire. Il n'y a aucun compte à créer sur la machine : le jeton d'enrôlement est le seul secret.
 
-1. Dans DumbMonit, enregistrez la surveillance : un jeton d'enrôlement (dmon_…) est montré une fois, avec la commande d'installation prête à copier pour Linux et pour Windows.
+1. Dans DumbMonit, ajoutez une surveillance et choisissez **Serveur avec l'agent**. Choisissez comment la machine joint le serveur : **En direct**, ou **Via un relais** d'un site distant derrière un pare-feu (voir [Surveiller un site distant](../install/remote-site.fr.md#5-installer-des-agents-derriere-le-relais)). Un jeton d'enrôlement (dmon_…) est montré une fois, avec la commande d'installation prête à copier pour Linux/macOS, Windows et Docker.
 2. Lancez cette commande d'installation sur la machine, avec des droits élevés (sudo sur Linux et macOS, un PowerShell élevé sur Windows).
-3. La machine apparaît en quelques secondes, nommée d'après son nom d'hôte.
+3. La page attend le premier envoi (quelques secondes), puis permet de nommer la machine, de la ranger dans un dossier et de la placer sur un site, sur place.
 4. Facultatif, pour Docker : si l'agent tourne sous un utilisateur dédié, ajoutez cet utilisateur au groupe « docker » et redémarrez l'agent.
 
     ```
     usermod -aG docker dumbmonit
     ```
 
-5. Pour un parc, ou pour révoquer un jeton perdu, utilisez Réglages → Agents.
+5. Pour un parc (un playbook, une image de machine), cochez *Plusieurs machines avec cette commande* avant de créer la commande ; tout un domaine Windows passe par le [kit Active Directory](agent-active-directory.fr.md), proposé sur la même page. Révoquez un jeton perdu dans Réglages → Agents.
 
 !!! warning
     L'agent contacte le serveur, jamais l'inverse : aucun port n'a besoin d'être ouvert sur la machine surveillée.
@@ -157,7 +157,7 @@ Les étapes ci-dessous sont celles que montre l'avis à côté du formulaire. Il
 Le jeton est la clé de l'agent pour envoyer ses mesures à DumbMonit. Ce n'est
 pas un compte sur la machine. Un jeton créé depuis le formulaire de surveillance
 est à usage unique : il enrôle cette seule machine et rien d'autre. Pour un
-parc, créez un jeton réutilisable dans Réglages → Agents. À ce premier lot, le
+parc, cochez *Plusieurs machines avec cette commande* dans le même parcours. À ce premier lot, le
 serveur donne à l'agent un secret qui lui est propre et le stocke dans
 `/etc/dumbmonit/agent-secret`, lisible par personne d'autre : à partir de là,
 cette machine est la seule qui peut rapporter sous cette surveillance.
@@ -365,7 +365,7 @@ chaque système.
 
     Les sommes de contrôle changent à chaque release du serveur : après
     une mise à jour de DumbMonit, copiez une commande d'installation
-    fraîche depuis **Réglages → Agents** (ou depuis un nouveau jeton)
+    fraîche (ajoutez une surveillance, **Serveur avec l'agent**)
     plutôt que de relancer une ancienne, qui s'arrêterait avec « checksum
     mismatch ». Les mêmes sommes de contrôle sont montrées sous la
     commande d'installation, et publiées à `/download/<file>.sha256`.
@@ -405,7 +405,7 @@ sous Linux.
 Les deux scripts sont idempotents : relancer la commande d'installation,
 avec le même jeton et la même URL, remplace le binaire, réécrit la
 configuration et redémarre le service. C'est la procédure de mise à jour.
-Prenez la commande depuis le serveur actuel (Réglages → Agents) : son
+Prenez la commande depuis le serveur actuel (ajoutez une surveillance, **Serveur avec l'agent**) : son
 `--sha256` doit correspondre aux binaires de la version de serveur vers
 laquelle vous avez mis à jour.
 
@@ -789,6 +789,9 @@ utilisable dans un conteneur sans monter un fichier :
 | `DUMBMONIT_AGENT_LOG` | `trace`, `debug`, `info`, `warn`, `error` |
 | `DUMBMONIT_AGENT_RELAY` | `true` pour faire tourner, pour le serveur, les sondes des surveillances assignées à cet agent (voir [Faire tourner l'agent dans Docker / sur un autre réseau](#run-the-agent-in-docker--on-another-network)) |
 | `DUMBMONIT_AGENT_SITE` | Libellé de site montré à côté de l'agent quand il est proposé comme relais |
+| `DUMBMONIT_AGENT_GATEWAY_LISTEN` | Passerelle d'un relais pour les agents de son site, par exemple `0.0.0.0:8443` (`gateway_listen:`) ; prime sur le port réglé dans l'interface (voir [Installer des agents derrière le relais](../install/remote-site.fr.md#5-installer-des-agents-derriere-le-relais)) |
+| `DUMBMONIT_AGENT_GATEWAY_MAX_CONNECTIONS` | Connexions tenues à la fois par la passerelle, 64 par défaut (`gateway_max_connections:`) |
+| `DUMBMONIT_AGENT_GATEWAY_RATE_KIB` | Débit de chaque tunnel de la passerelle, par sens, en Kio/s, 4096 par défaut (`gateway_rate_kib:`) |
 
 ## Compteurs de performance Windows {#windows-performance-counters}
 
@@ -1063,7 +1066,7 @@ DumbMonit, est journalisé et réessayé en conservant le secret.
 
 ## Jetons d'enrôlement
 
-- Les jetons sont créés dans **Réglages → Agents** ou en ajoutant une surveillance de type agent. Le serveur ne garde qu'une empreinte : le jeton
+- Les jetons sont créés en ajoutant une surveillance de type agent (à usage unique, ou réutilisables pour plusieurs machines) et par le kit Active Directory. Le serveur ne garde qu'une empreinte : le jeton
   en clair est montré une fois, dans la réponse de création, avec les
   deux commandes d'installation.
 - L'agent l'envoie comme `Authorization: Bearer dmon_…` sur
@@ -1123,14 +1126,14 @@ tail -f /var/log/dumbmonit-agent.log   # journal du service (OpenRC)
 |---|---|
 | L'installateur dit « could not reach the server » | Mauvaise URL ou jeton. La configuration est écrite : corrigez `agent.yaml`, puis redémarrez le service. |
 | Le téléchargement échoue avec 404 | Le serveur n'a pas de binaires d'agent (`DUMBMONIT_AGENT_DIR` vide). Utilisez `--bin=PATH` avec un binaire que vous avez construit. |
-| L'installateur s'arrête avec « checksum mismatch » | La commande a été copiée avant une mise à jour du serveur (copiez-en une fraîche depuis Réglages → Agents), ou le binaire reçu n'est pas celui que le serveur sert : un proxy ou un cache sur le chemin, ou un téléchargement altéré. |
+| L'installateur s'arrête avec « checksum mismatch » | La commande a été copiée avant une mise à jour du serveur (copiez-en une fraîche en ajoutant un serveur avec l'agent), ou le binaire reçu n'est pas celui que le serveur sert : un proxy ou un cache sur le chemin, ou un téléchargement altéré. |
 | L'installateur s'arrête avec « no expected checksum » | La commande n'a pas de `--sha256` pour cette plateforme : une ancienne commande, ou un binaire macOS (pas fourni par le serveur). Copiez une commande fraîche, ou passez `--sha256=<platform>-<arch>:<hex>` depuis le `.sha256` de la release. |
 | La machine n'apparaît jamais | L'envoi va vers `/api/ingest` sur l'URL de la commande d'installation ; derrière un reverse proxy, assurez-vous qu'il est transféré et que les corps jusqu'à 16 Mo sont autorisés. |
 | *Inaccessible* bien que l'agent tourne | Le jeton a été révoqué, ou les envois sont rejetés. Vérifiez `journalctl -u dumbmonit-agent` : l'erreur y est journalisée. |
 | Le journal dit « this agent is not recognised for this machine » | La machine est liée à une installation d'agent dont celui-ci n'a pas le secret — une réinstallation, ou un conteneur recréé sans son volume d'état. Ouvrez la page de la surveillance et cliquez sur **Autoriser le réenrôlement** ; voir [Réenrôlement après une réinstallation](#re-enrolment-after-a-reinstall). |
 | Le journal dit « this machine was enrolled before agent binding » | Un hôte qui ne s'est jamais lié à son agent. Cliquez sur **Autoriser le réenrôlement** sur sa page de surveillance, puis redémarrez l'agent ; voir [Hôtes antérieurs à la liaison](#hosts-that-predate-binding). |
 | Le journal dit « this agent is too old to be bound to its machine » | Le binaire d'agent ne peut pas stocker de secret de liaison. Relancez la commande d'installation sur l'hôte ; si la surveillance existe déjà, cliquez d'abord sur **Autoriser le réenrôlement**. |
-| Le journal dit « this enrollment token has already enrolled all the machines it was allowed to » | Un jeton à usage unique réutilisé. Créez-en un nouveau, ou un jeton réutilisable dans Réglages → Agents. |
+| Le journal dit « this enrollment token has already enrolled all the machines it was allowed to » | Un jeton à usage unique réutilisé. Créez-en un nouveau, ou cochez *Plusieurs machines avec cette commande* en ajoutant le serveur. |
 | Windows | Les parties du service Windows n'avaient pas été exercées dans l'image de build du projet au moment de l'écriture ; rapportez les problèmes sur GitHub. |
 
 ## Conteneurs Docker {#docker-containers}

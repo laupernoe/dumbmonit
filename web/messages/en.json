@@ -286,7 +286,6 @@
 	"alerts_needs_empty_quiet": "Nothing needs you.",
 	"alerts_needs_no_device": "No monitor",
 	"alerts_needs_quiet_all_reporting": "Every monitor is reporting and no rule is firing.",
-	"alerts_needs_quiet_checked": "{text} Checked {when}.",
 	"alerts_needs_quiet_no_devices": "Add a monitor and its first report shows up here.",
 	"alerts_needs_quiet_waiting_many": [
 		{
@@ -363,6 +362,18 @@
 	"alerts_rules_all_kinds": "All kinds",
 	"alerts_rules_anomaly_summary": "sensitivity k = {k} · smoothing α = {alpha} · minimum {samples} samples · floor {abs} abs / {rel} rel",
 	"alerts_rules_baseline_anomaly": "baseline anomaly",
+	"alerts_rules_forecast_summary": "full in under {days} d (warning under {warning} d, critical under {critical} d)",
+	"alerts_rules_drift_summary": "{ratio}× the usual for this time of day",
+	"alerts_rules_forecast_warning": "Warning below (days)",
+	"alerts_rules_forecast_critical": "Critical below (days)",
+	"alerts_rules_forecast_tiers_help": "Days left before full. The alert raises its own severity and speaks again at each step.",
+	"alerts_rules_forecast_error_tiers": "Critical must be above 0 days and no larger than warning.",
+	"alerts_rules_drift_k": "Sensitivity (σ)",
+	"alerts_rules_drift_k_help": "Robust deviations from the usual value needed to open the alert: higher means quieter.",
+	"alerts_rules_drift_min_value": "Ignore values below",
+	"alerts_rules_drift_min_value_help": "In the metric's own unit: small values never count, however much they grow.",
+	"alerts_rules_drift_error_k": "Sensitivity must be a positive number.",
+	"alerts_rules_drift_error_min_value": "The minimum value must be zero or more.",
 	"alerts_rules_builtin": "Built-in",
 	"alerts_rules_channel_id": "channel #{id}",
 	"alerts_rules_clear_above": "Clear above",
@@ -707,6 +718,57 @@
 	"auth_setup_title": "Let's create your account.",
 	"auth_setup_username_required": "Choose a username.",
 	"auth_setup_username_spaces": "The username cannot contain spaces.",
+	"cloudregions_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} region",
+				"countPlural=other": "{count} regions"
+			}
+		}
+	],
+	"cloudregions_description": "Where this account's resources run.",
+	"cloudregions_map_label": "Map of the regions of {name}",
+	"cloudregions_pin_down": "{region}: {resources}, {down} not running",
+	"cloudregions_pin_home": "{region}: the account's region",
+	"cloudregions_pin_ok": "{region}: {resources}, all running",
+	"cloudregions_resources": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} resource",
+				"countPlural=other": "{count} resources"
+			}
+		}
+	],
+	"cloudregions_title": "Regions",
+	"cloudregions_unknown": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} resource is in a region not on the map.",
+				"countPlural=other": "{count} resources are in regions not on the map."
+			}
+		}
+	],
 	"dash_add": "Add {kind}",
 	"dash_add_group": "Add a widget",
 	"dash_alerts_more": "See all alerts (+{count})",
@@ -860,7 +922,7 @@
 	"demo_tour_s6_title": "The agent",
 	"demo_tour_s7_body": "Publish a public page for your users, with incidents, uptime badges and email subscriptions — without exposing the rest of the instance.",
 	"demo_tour_s7_title": "Status pages",
-	"demo_tour_s8_body": "For a screen in the room: the bulletin full screen, readable from across it, with an optional music player. That is the tour — look around, nothing you click can break.",
+	"demo_tour_s8_body": "For a screen in the room: the console's board full screen, readable from across it, with an optional night city behind it. That is the tour — look around, nothing you click can break.",
 	"demo_tour_s8_link": "Open wall mode",
 	"demo_tour_s8_title": "Wall mode",
 	"deviceform_checksums_summary": "Binary checksums (SHA-256) — the installer verifies the download against these",
@@ -989,9 +1051,7 @@
 	"deviceform_edit_type_fixed": "Type cannot be changed: remove the monitor and add it again as another type.",
 	"deviceform_enroll_add_device": "Add a monitor",
 	"deviceform_enroll_add_product": "Add the {product} monitor",
-	"deviceform_enroll_another": "Create another token",
 	"deviceform_enroll_cancel": "Cancel",
-	"deviceform_enroll_compose_note": "Or run the agent as a container at the site, with {file} from the repository — relay mode included:",
 	"deviceform_enroll_copy_docker": "Copy the Docker command",
 	"deviceform_enroll_copy_linux": "Copy the Linux command",
 	"deviceform_enroll_copy_now": "Copy the command now: this token will not be displayed again.",
@@ -1004,7 +1064,6 @@
 	"deviceform_enroll_default_name": "servers",
 	"deviceform_enroll_default_relay_name": "remote site",
 	"deviceform_enroll_default_site": "Remote site",
-	"deviceform_enroll_done_note": "The agent registers itself as a monitor within a minute. You can close this page. This token enrols this one machine and nothing else; for a fleet, create a reusable token in Settings → Agents.",
 	"deviceform_enroll_guide": "Remote-site guide: HTTPS, firewalls, ping",
 	"deviceform_enroll_intro": "A server with the agent has no address to enter: the agent installed on the machine introduces itself to this server. Create a token, run the command it gives you, done.",
 	"deviceform_enroll_linux": "Linux / macOS",
@@ -1018,13 +1077,9 @@
 	"deviceform_enroll_site_help": "Shown next to the relay when you pick it for a monitor.",
 	"deviceform_enroll_site_name": "Site name",
 	"deviceform_enroll_site_placeholder": "Lyon office",
-	"deviceform_enroll_step1": "Install the agent on a machine at the remote site",
-	"deviceform_enroll_step2": "Switch it to relay mode",
 	"deviceform_enroll_step3": "Add the monitors of that site",
-	"deviceform_enroll_step3_note": "The relay appears among the monitors within a minute. Add each switch, NAS or hypervisor there as usual, with its address as seen from the site, and under More options set \"Reached through\" to the relay. Nothing needs opening at the site: the relay only connects out.",
 	"deviceform_enroll_token": "Token",
 	"deviceform_enroll_token_help": "One token can enrol several machines: name it after a group or a machine.",
-	"deviceform_enroll_token_help_relay": "Only used to recognise the token in Settings → Agents.",
 	"deviceform_enroll_token_name": "Token name",
 	"deviceform_enroll_windows": "Windows (PowerShell, as administrator)",
 	"deviceform_enroll_windows_intro": "{product} runs on a Windows server, and its queues and services can only be read there. Create a token, run the PowerShell command it gives you on that server, then add the {product} monitor.",
@@ -1580,6 +1635,17 @@
 	"devices_docker_manage": "Manage containers",
 	"devices_docker_needs_agent": "Restart and update need an agent that runs commands.",
 	"devices_docker_no_metric": "No metric for this container in this range.",
+	"devices_docker_cpu_label": "CPU",
+	"devices_docker_cpu_hint": "Share of one core: 100% is one full core.",
+	"devices_docker_mem_label": "Memory",
+	"devices_docker_mem_limit_label": "Memory against its limit",
+	"devices_docker_mem_no_limit": "Memory in use: {used} (no limit set on this container).",
+	"devices_docker_crashloop": "Restart loop ({count} in 15 min)",
+	"devices_docker_crashloop_n": "{count} in a restart loop",
+	"devices_docker_top_cpu_title": "Top CPU",
+	"devices_docker_top_cpu_aria": "Containers using the most CPU",
+	"devices_docker_top_mem_title": "Top memory",
+	"devices_docker_top_mem_aria": "Containers using the most memory",
 	"devices_docker_none": "No Docker on this machine, or the agent cannot reach its socket (add the agent to the docker group or run it as root).",
 	"devices_docker_policies": "policies: {restart} auto-restart, {update} auto-update",
 	"devices_docker_policies_aria": "Container policies",
@@ -1612,7 +1678,7 @@
 	"devices_docker_strip_unavailable": "This agent cannot run commands (too old, or commands: false): policies are kept but nothing runs until it is reinstalled with the current installer.",
 	"devices_docker_title": "Containers",
 	"devices_docker_unavailable": "Actions unavailable",
-	"devices_docker_unavailable_body": "This agent cannot run commands — {why}. Reinstall it with the current installer (token from Settings → Agents, commands: true); restart, update and the policies below stay off until it reports back.",
+	"devices_docker_unavailable_body": "This agent cannot run commands — {why}. Reinstall it with the current installer (command from Add monitor, Server with the agent, commands: true); restart, update and the policies below stay off until it reports back.",
 	"devices_docker_up_for": "up {duration}",
 	"devices_docker_update_all": "Auto-update in maintenance windows, all containers",
 	"devices_docker_update_available": "Update available",
@@ -1939,6 +2005,49 @@
 	"devices_mikrotik_update_available": "Update available",
 	"devices_mikrotik_version_available": "Version {latest} is available on the {channel} channel.",
 	"devices_mikrotik_waiting": "Waiting for the first probe: the router has not been read yet.",
+	"devices_switch_title": "Switch ports",
+	"devices_switch_desc": "Front panel: link, speed, PoE and errors of every port. Select a port for its traffic.",
+	"devices_switch_summary": "Ports up: {up}/{total}",
+	"devices_switch_unit_label": "Switch",
+	"devices_switch_faceplate_label": "Ports of {device}",
+	"devices_switch_state_up": "Up",
+	"devices_switch_state_down": "Down",
+	"devices_switch_state_off": "Off",
+	"devices_switch_legend_up": "Link up, speed shown",
+	"devices_switch_legend_down": "No link",
+	"devices_switch_legend_off": "Disabled",
+	"devices_switch_legend_attention": "Errors, half duplex or PoE fault",
+	"devices_switch_poe_budget": "PoE budget",
+	"devices_switch_poe_draw": "PoE draw: {watts} W",
+	"devices_switch_detail_title": "Port {port}",
+	"devices_switch_close": "Close",
+	"devices_switch_link": "Link",
+	"devices_switch_uplink": "Uplink",
+	"devices_switch_speed": "Speed",
+	"devices_switch_half_duplex": "Half duplex",
+	"devices_switch_errors_day": "Errors (24 h)",
+	"devices_switch_detail_errors": "Errors (24 h): {count}",
+	"devices_switch_poe": "PoE",
+	"devices_switch_poe_delivering": "Delivering",
+	"devices_switch_poe_delivering_watts": "{watts} W",
+	"devices_switch_poe_searching": "Searching",
+	"devices_switch_poe_off": "Off",
+	"devices_switch_poe_fault": "Fault",
+	"devices_switch_poe_class": "class {level}",
+	"devices_switch_vlan": "VLAN",
+	"devices_switch_neighbor": "Neighbour",
+	"devices_switch_neighbor_value": "{name} · {port}",
+	"devices_switch_traffic": "Traffic, last 24 h",
+	"devices_switch_traffic_in": "In",
+	"devices_switch_traffic_out": "Out",
+	"devices_switch_no_traffic": "No traffic stored for this port yet.",
+	"devices_switch_select_hint": "Select a port to see its traffic, errors and neighbour.",
+	"devices_switch_heatmap_title": "Traffic per port, last 24 h",
+	"devices_switch_heatmap_label": "Throughput of each port over the last 24 hours",
+	"devices_switch_heatmap_low": "Quiet",
+	"devices_switch_heatmap_high": "Busy",
+	"devices_switch_no_data": "No data",
+	"devices_switch_heatmap_data": "Figures",
 	"devices_openvpn_clients_connected": "Clients connected",
 	"devices_openvpn_clients_note": "Clients are transient: this list is only what the management interface reports right now.",
 	"devices_openvpn_connected_ago": "connected {age} ago",
@@ -2121,6 +2230,17 @@
 	"devices_target_essentials": "Essentials",
 	"devices_target_every": "every {interval}",
 	"devices_target_everything_else": "Everything else",
+	"devices_target_all_measurements": "All measurements",
+	"devices_target_stat_yes": "Yes",
+	"devices_target_stat_no": "No",
+	"devices_target_stat_max_of": "max of {count}",
+	"devices_target_stat_min_of": "min of {count}",
+	"devices_target_stat_more": "Show all ({count})",
+	"devices_target_stat_less": "Show fewer",
+	"devices_target_rank_empty": "No data over this period",
+	"devices_target_rank_quiet": "Nothing above zero over this period",
+	"devices_target_rank_peak": "Peak over the period",
+	"devices_target_rank_latest": "Latest value",
 	"devices_target_families_filtered": "{shown} of {total} families",
 	"devices_target_families_one": "{count} family",
 	"devices_target_families_other": "{count} families",
@@ -2533,37 +2653,17 @@
 	"devicesb_opnsense_traffic_states_of_limit": "of {limit} states",
 	"devicesb_opnsense_traffic_usage_aria": "State table usage",
 	"devicesb_opnsense_wan_addresses": "WAN addresses",
-	"devicesb_pbs_calendar_aria_group": "{group}: {summary}",
-	"devicesb_pbs_calendar_aria_summary": "{ok} of {total} days backed up, {failed} failed",
 	"devicesb_pbs_calendar_empty_none": "No backup group yet: nothing has been backed up to this server, and no backup task ran in the last {days} days.",
 	"devicesb_pbs_calendar_empty_waiting": "Waiting for the first probe: the calendar fills in once the backup server has been read.",
 	"devicesb_pbs_calendar_failed_line": "Failed {ago}: {error}",
 	"devicesb_pbs_calendar_keeps": "keeps {retention}",
 	"devicesb_pbs_calendar_last_size": "{size} last",
 	"devicesb_pbs_calendar_latest_unverified": "Latest snapshot failed verification",
-	"devicesb_pbs_calendar_legend_failed": "Failed",
-	"devicesb_pbs_calendar_legend_none": "No backup",
-	"devicesb_pbs_calendar_legend_ok": "Backed up",
-	"devicesb_pbs_calendar_legend_running": "Running",
-	"devicesb_pbs_calendar_legend_verify_failed": "Verification failed",
-	"devicesb_pbs_calendar_outcome_failed": "failed",
-	"devicesb_pbs_calendar_outcome_ok": "OK",
-	"devicesb_pbs_calendar_outcome_running": "running",
-	"devicesb_pbs_calendar_plate_failed": "Last backup failed",
-	"devicesb_pbs_calendar_plate_late": "Last backup {ago}",
-	"devicesb_pbs_calendar_plate_missing": "No backup for {span}",
-	"devicesb_pbs_calendar_plate_none": "No backup yet",
-	"devicesb_pbs_calendar_plate_ok": "Backed up {ago}",
-	"devicesb_pbs_calendar_plate_running": "Backup running",
 	"devicesb_pbs_calendar_snapshots_one": "{count} snapshot",
 	"devicesb_pbs_calendar_snapshots_other": "{count} snapshots",
-	"devicesb_pbs_calendar_summary_today": "{ok} of {total} backed up today",
-	"devicesb_pbs_calendar_summary_today_failing": "{ok} of {total} backed up today, {failing} failing",
-	"devicesb_pbs_calendar_tip_run": "{time} · {outcome} · {duration}",
 	"devicesb_pbs_calendar_tip_snapshot": "snapshot {time}",
 	"devicesb_pbs_calendar_tip_verification_failed": "verification failed",
 	"devicesb_pbs_calendar_tip_verified": "verified",
-	"devicesb_pbs_calendar_today": "today",
 	"devicesb_pbs_ds_backend": "backend {backend}",
 	"devicesb_pbs_ds_bad_chunks_one": "The last garbage collection found {count} unreadable chunk: some backups in this datastore can no longer be restored.",
 	"devicesb_pbs_ds_bad_chunks_other": "The last garbage collection found {count} unreadable chunks: some backups in this datastore can no longer be restored.",
@@ -2637,11 +2737,6 @@
 	"devicesb_pbs_failures_show_fewer": "Show fewer",
 	"devicesb_pbs_failures_show_log": "Show log",
 	"devicesb_pbs_format_ago": "{span} ago",
-	"devicesb_pbs_format_day_failed": "Backup failed",
-	"devicesb_pbs_format_day_none": "No backup",
-	"devicesb_pbs_format_day_ok": "Backed up",
-	"devicesb_pbs_format_day_running": "Backup running",
-	"devicesb_pbs_format_day_verify_failed": "Backed up, verification failed",
 	"devicesb_pbs_format_in_span": "in {span}",
 	"devicesb_pbs_format_just_now": "just now",
 	"devicesb_pbs_format_never": "never",
@@ -3839,9 +3934,28 @@
 	"devicesb_webchange_timeline_same_title": "The same change on {count} pages",
 	"devicesb_webchange_timeline_watching_one": "Watching 1 page.",
 	"devicesb_webchange_timeline_watching_other": "Watching {count} pages.",
+	"discovery_grid_absent_detail": "Known device, not seen by the last scan.",
+	"discovery_grid_empty_filter": "No address in this state.",
+	"discovery_grid_filter_all": "All ({count})",
+	"discovery_grid_filter_label": "Filter addresses by state",
+	"discovery_grid_filter_state": "{state} ({count})",
+	"discovery_grid_free_detail": "No device has been seen at this address.",
+	"discovery_grid_heading": "Subnet grid",
+	"discovery_grid_hint": "Select an address to see its device and what you can do with it.",
+	"discovery_grid_label": "Addresses of {cidr}",
+	"discovery_grid_network_label": "Network shown in the grid",
+	"discovery_grid_not_scanned": "No scan has finished yet: every address shows as free.",
+	"discovery_grid_state_absent": "Absent",
+	"discovery_grid_state_free": "Free",
+	"discovery_grid_state_ignored": "Ignored",
+	"discovery_grid_state_known": "Known",
+	"discovery_grid_state_mac_changed": "MAC changed",
+	"discovery_grid_state_new": "New",
+	"discovery_grid_unavailable": "No grid for this network: it is drawn for IPv4 networks of up to 1024 addresses.",
 	"discovery_inventory_action_error": "That did not work",
 	"discovery_inventory_add_error": "Could not schedule the scan",
 	"discovery_inventory_add_heading": "Schedule a scan",
+	"discovery_inventory_add_monitor": "Add as a monitor",
 	"discovery_inventory_add_submit": "Schedule scan",
 	"discovery_inventory_alerts_hint": "Alerts for new devices and ports are off by default. To get them, turn on “New device on the network” and “New open port on the network” in the alert rules.",
 	"discovery_inventory_baseline_pending": "The first scan builds the list without alerting.",
@@ -3850,6 +3964,8 @@
 	"discovery_inventory_delete_confirm": "Delete it and its inventory?",
 	"discovery_inventory_enabled_label": "Enabled",
 	"discovery_inventory_first_seen": "First seen {when}",
+	"discovery_inventory_ignore": "Ignore",
+	"discovery_inventory_ignored": "Ignored",
 	"discovery_inventory_interval_every": "Every {span}",
 	"discovery_inventory_interval_label": "Scan interval",
 	"discovery_inventory_intro": "Scan a network on a schedule and keep a list of the devices and open ports it finds. The first scan builds the list without alerting; after that, anything new is flagged until you mark it as known.",
@@ -3859,6 +3975,9 @@
 	"discovery_inventory_last_run": "Last scan {when}",
 	"discovery_inventory_last_seen": "last seen {when}",
 	"discovery_inventory_load_error": "Could not load the scheduled scans",
+	"discovery_inventory_mac_changed": "MAC changed",
+	"discovery_inventory_mac_changed_from": "MAC changed: this address used to be {mac}.",
+	"discovery_inventory_mac_changes_count": "MAC changes to review: {count}",
 	"discovery_inventory_mark_all": "Mark all as known",
 	"discovery_inventory_mark_device": "Mark as known",
 	"discovery_inventory_mark_port": "Mark known",
@@ -4209,8 +4328,6 @@
 	"metrics_title_website_text_chars": "Text characters",
 	"metrics_title_website_title_changed": "Title changed",
 	"metrics_title_website_up": "Website up",
-	"misc2_browser_on": "{browser} on {system}",
-	"misc2_browser_unknown": "A browser",
 	"misc2_folds_container_stopped": [
 		{
 			"declarations": [
@@ -4513,34 +4630,11 @@
 	],
 	"misc2_mascot_aria": "DumbMonit, the pigeon",
 	"misc_ago": "{span} ago",
-	"misc_device_amplifier": "an amplifier",
-	"misc_device_cast_speaker": "a cast speaker",
-	"misc_device_chromecast": "a Chromecast",
-	"misc_device_computer": "a computer",
-	"misc_device_console": "a game console",
-	"misc_device_other": "another monitor",
-	"misc_device_phone": "a phone",
-	"misc_device_speaker": "a speaker",
-	"misc_device_tablet": "a tablet",
-	"misc_device_this": "this display",
-	"misc_device_tv": "a TV",
 	"misc_dur_d": "{n} d",
 	"misc_dur_h": "{n} h",
 	"misc_dur_min": "{n} min",
 	"misc_dur_s": "{n} s",
 	"misc_just_now": "just now",
-	"misc_music_deezer_cut": "This Deezer link looks cut short.",
-	"misc_music_deezer_kinds": "Deezer links to a track, album or playlist can play on the wall.",
-	"misc_music_deezer_short": "Short Deezer links cannot be read here: open it, then copy the full deezer.com link.",
-	"misc_music_empty": "Paste a link first.",
-	"misc_music_not_link": "That is not a link. Paste a Spotify, Deezer or YouTube link: a track, album, playlist, episode or video.",
-	"misc_music_spotify_cut": "This Spotify link looks cut short.",
-	"misc_music_spotify_kinds": "Spotify links to a track, album, playlist or episode can play on the wall.",
-	"misc_music_spotify_short": "Short Spotify links cannot be read here: open it, then copy the full open.spotify.com link.",
-	"misc_music_unsupported": "Paste a Spotify, Deezer or YouTube link: a track, album, playlist, episode or video.",
-	"misc_music_youtube_cut": "This YouTube link looks cut short.",
-	"misc_music_youtube_empty": "This YouTube link has no video or playlist in it.",
-	"misc_music_youtube_page": "Paste the link of a YouTube video or playlist, not of a channel or a page.",
 	"misc_nav_alerts": "Alerts",
 	"misc_nav_alerts_badge": "{count} active alerts",
 	"misc_nav_dashboards": "Dashboards",
@@ -4555,12 +4649,11 @@
 	"misc_nav_more": "More",
 	"misc_nav_overview": "Overview",
 	"misc_nav_palette_open": "Open the command palette",
-	"misc_nav_palette_title": "Command palette ({shortcut})",
 	"misc_nav_security": "Security",
 	"misc_nav_settings": "Settings",
 	"misc_nav_sign_out": "Sign out",
 	"misc_nav_wall": "Wall mode",
-	"misc_nav_wall_title": "Wall mode: the bulletin full screen, for a monitor in the room",
+	"misc_nav_wall_title": "Wall mode: the console's board full screen, for a monitor in the room",
 	"misc_never": "never",
 	"misc_palette_add_device": "Add a monitor",
 	"misc_palette_agent": "Install an agent",
@@ -4600,8 +4693,7 @@
 	"misc_palette_status_detail": "Public pages and announcements",
 	"misc_palette_status_page": "New status page",
 	"misc_palette_status_pages": "Status pages",
-	"misc_palette_theme": "Toggle theme",
-	"misc_palette_wall_detail": "Full-screen bulletin for a wall display",
+	"misc_palette_wall_detail": "Full-screen board for a wall display",
 	"misc_reason_auth": "Credentials refused",
 	"misc_reason_bad_secret": "Reply signature invalid: shared secret probably wrong",
 	"misc_reason_body": "Unreadable response",
@@ -4632,23 +4724,6 @@
 	"misc_shortcuts_go": "Go to {page}",
 	"misc_shortcuts_intro": "Letter shortcuts work when no text field has focus. Press the keys one after the other.",
 	"misc_shortcuts_title": "Keyboard shortcuts",
-	"misc_speaker_download_failed": "The Spotify player could not be downloaded (sdk.scdn.co unreachable).",
-	"misc_speaker_fix_auth": "Trying again by itself. If it keeps failing, reconnect Spotify in Settings → Wall music.",
-	"misc_speaker_fix_insecure": "Spotify only plays in a secure page: open DumbMonit over HTTPS (a reverse proxy), or as http://localhost on the display itself.",
-	"misc_speaker_fix_no_drm": "Use Chrome, Edge or Firefox on a computer plugged into the TV (Firefox: allow “Play DRM-controlled content”; Chromium on a Raspberry Pi: install Widevine, the libwidevinecdm0 package). Most smart-TV and kiosk browsers cannot. Otherwise play from the TV’s own Spotify app or a Chromecast: the wall still shows what plays.",
-	"misc_speaker_fix_premium": "Connect a Premium account in Settings → Wall music. Now playing still shows what plays on your other devices.",
-	"misc_speaker_fix_reconnect": "An admin can connect Spotify again in Settings → Wall music.",
-	"misc_speaker_no_token": "No Spotify token.",
-	"misc_speaker_not_accepted": "Spotify did not accept this display as a speaker.",
-	"misc_speaker_not_ready": "This display is not ready as a speaker yet.",
-	"misc_speaker_not_started": "The Spotify player did not start.",
-	"misc_speaker_playback_error": "Spotify could not play this track ({message}).",
-	"misc_speaker_problem_auth": "Spotify refused the wall’s connection{detail}.",
-	"misc_speaker_problem_init": "This browser cannot play Spotify: its DRM (Widevine) did not start{detail}.",
-	"misc_speaker_problem_premium": "Spotify Premium is required for the wall to be a speaker.",
-	"misc_speaker_reason_insecure": "This display opened DumbMonit over plain HTTP.",
-	"misc_speaker_reason_no_drm": "This browser cannot play Spotify: it has no DRM module (Widevine).",
-	"misc_speaker_reason_no_eme": "This browser cannot play Spotify: it has no Encrypted Media Extensions (DRM).",
 	"misc_state_disabled": "Disabled",
 	"misc_state_down": "Down",
 	"misc_state_misconfigured": "Misconfigured",
@@ -5110,261 +5185,6 @@
 	"oncall_window_overnight_hint": "An end before the start runs past midnight into the next day. 00:00 to 00:00 is the whole day.",
 	"oncall_window_remove": "Remove",
 	"oncall_window_to": "To",
-	"overview_brief_a_rule": "A rule",
-	"overview_brief_also": "Alerts also came and went on {names}.",
-	"overview_brief_also_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Alerts also came and went on {names} and {count} other.",
-				"countPlural=other": "Alerts also came and went on {names} and {count} others."
-			}
-		}
-	],
-	"overview_brief_device_n": "Monitor {id}",
-	"overview_brief_dissolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} alert built up and dissolved before firing.",
-				"countPlural=other": "{count} alerts built up and dissolved before firing."
-			}
-		}
-	],
-	"overview_brief_dissolved_mostly": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} alert built up and dissolved before firing (mostly {rule} on {device}).",
-				"countPlural=other": "{count} alerts built up and dissolved before firing (mostly {rule} on {device})."
-			}
-		}
-	],
-	"overview_brief_dropped": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} dropped out and came back.",
-				"countPlural=other": "{name} dropped out {count} times and came back."
-			}
-		}
-	],
-	"overview_brief_dropped_many": "{names} dropped out and came back.",
-	"overview_brief_head_first": "In the last 24 h",
-	"overview_brief_head_since": "Since {when}",
-	"overview_brief_kept_reporting": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} monitor kept reporting.",
-				"countPlural=other": "{count} monitors kept reporting."
-			}
-		}
-	],
-	"overview_brief_lead": "{head} — {parts}.",
-	"overview_brief_learning_many": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} are still learning the baseline: they would have fired once.",
-				"countPlural=other": "{names} are still learning the baseline: they would have fired {count} times."
-			}
-		}
-	],
-	"overview_brief_learning_one": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} is still learning the baseline: it would have fired once.",
-				"countPlural=other": "{names} is still learning the baseline: it would have fired {count} times."
-			}
-		}
-	],
-	"overview_brief_n_alerts_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} alert resolved on its own",
-				"countPlural=other": "{count} alerts resolved on their own"
-			}
-		}
-	],
-	"overview_brief_n_fired": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} alert fired",
-				"countPlural=other": "{count} alerts fired"
-			}
-		}
-	],
-	"overview_brief_n_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} resolved on its own",
-				"countPlural=other": "{count} resolved on their own"
-			}
-		}
-	],
-	"overview_brief_n_still": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} still firing",
-				"countPlural=other": "{count} still firing"
-			}
-		}
-	],
-	"overview_brief_n_unreachable": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} monitor unreachable",
-				"countPlural=other": "{count} monitors unreachable"
-			}
-		}
-	],
-	"overview_brief_nothing_no_channel": "Nothing was sent: no notification channel is set up yet.",
-	"overview_brief_nothing_sent": "Nothing was sent.",
-	"overview_brief_nothing_to_channel": "Nothing was sent to {channel}.",
-	"overview_brief_nothing_to_channels": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Nothing was sent to your {count} channel.",
-				"countPlural=other": "Nothing was sent to your {count} channels."
-			}
-		}
-	],
-	"overview_brief_notified": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} notification went out.",
-				"countPlural=other": "{count} notifications went out."
-			}
-		}
-	],
-	"overview_brief_notified_to": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} notification went out to {channel}.",
-				"countPlural=other": "{count} notifications went out to {channel}."
-			}
-		}
-	],
-	"overview_brief_on_device": "On {device}, {phrases}.",
-	"overview_brief_phrase_fired_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} fired and resolved on its own",
-				"countPlural=other": "{name} fired {count} times and resolved on its own"
-			}
-		}
-	],
-	"overview_brief_phrase_resolved": "{name} resolved on its own",
-	"overview_brief_quiet_away": "Nothing happened while you were away.",
-	"overview_brief_quiet_first": "Nothing happened in the last 24 h.",
-	"overview_brief_the_server": "the server",
 	"overview_first_all_done": "All three done. This guide will not come back.",
 	"overview_first_channel_action": "Add a channel",
 	"overview_first_channel_text": "Email, ntfy, Discord, Telegram, PagerDuty — whatever you already read. Nothing is sent until something is wrong.",
@@ -5388,39 +5208,15 @@
 	"overview_first_test_text": "Send a test from the channel. This step turns green once one really leaves.",
 	"overview_first_test_title": "Check a message arrives",
 	"overview_first_title": "Your first five minutes",
-	"overview_needs_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "+{count} more",
-				"countPlural=other": "+{count} more"
-			}
-		}
-	],
-	"overview_page_checked": "Checked {when}",
 	"overview_page_empty_text": "Add a switch, a NAS, a hypervisor or a website, and it starts reporting within a minute.",
 	"overview_page_empty_title": "No monitor yet",
 	"overview_page_error_load": "Could not load the overview",
 	"overview_page_error_refresh": "Could not refresh the alerts.",
 	"overview_page_history_note": "Read from the alert history of the past week.",
-	"overview_page_last_days": "Last {days} days",
-	"overview_page_mark_read": "Mark as read",
-	"overview_page_needs_you": "Needs you",
 	"overview_page_or": "Or {agent}, or {relay} through one.",
 	"overview_page_or_agent": "install the agent on a machine",
 	"overview_page_or_relay": "watch a remote site",
-	"overview_page_since": "Since you last looked",
 	"overview_page_title": "Overview",
-	"overview_scene_asleep": "{label}, the pigeon is asleep",
-	"overview_scene_cloudy": "A few clouds",
-	"overview_scene_overcast": "Overcast",
-	"overview_scene_storm": "Storm",
 	"overview_sky_clear": "Clear skies",
 	"overview_sky_n_acked": [
 		{
@@ -5598,101 +5394,11 @@
 	"overview_sky_plate_unreachable": "Unreachable",
 	"overview_sky_sentence": "{parts}.",
 	"overview_sky_waiting": "Waiting for the first reports",
-	"overview_streaks_d_h": "{days} d {hours} h",
-	"overview_streaks_fewest": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "fewest alerts: {count} alert event in {days} days",
-				"countPlural=other": "fewest alerts: {count} alert events in {days} days"
-			}
-		}
-	],
-	"overview_streaks_h_min": "{hours} h {minutes} min",
-	"overview_streaks_many_unreachable": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} and {count} more is unreachable",
-				"countPlural=other": "{name} and {count} more are unreachable"
-			}
-		}
-	],
-	"overview_streaks_most": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} alert event (started, fired or resolved) in {days} days",
-				"countPlural=other": "{count} alert events (started, fired or resolved) in {days} days"
-			}
-		}
-	],
-	"overview_streaks_no_alert": "no alert in {days} days",
-	"overview_streaks_no_alert_like": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "no alert in {days} days, like {count} other",
-				"countPlural=other": "no alert in {days} days, like {count} others"
-			}
-		}
-	],
-	"overview_streaks_noisiest": "Most alerts",
-	"overview_streaks_none_down": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "no monitor went unreachable in {count} day",
-				"countPlural=other": "no monitor went unreachable in {count} days"
-			}
-		}
-	],
-	"overview_streaks_not_now": "Incomplete",
-	"overview_streaks_one_unreachable": "{name} is unreachable",
-	"overview_streaks_over": "over {days} d",
-	"overview_streaks_quietest": "Quietest monitor",
-	"overview_streaks_reporting": "Everything reporting",
-	"overview_streaks_reporting_for": "Everything reporting for",
-	"overview_streaks_since_outage": "no monitor unreachable since the last outage",
-	"overview_streaks_under_minute": "under a minute",
 	"overview_tips_another": "Another tip",
 	"overview_tips_hide": "Hide these tips",
 	"overview_tips_hide_title": "Hide these tips (in this browser)",
 	"overview_tips_label": "Did you know?",
 	"overview_tips_prefix": "Did you know? {title}",
-	"overview_week_days_short": "{days} d",
-	"overview_when_dated": "{date} {time}",
-	"overview_when_yesterday": "yesterday {time}",
 	"push_runs_description": "Every start, success and failure the job reported, newest first.",
 	"push_runs_duration": "took {duration}",
 	"push_runs_duration_unknown": "duration unknown",
@@ -6016,7 +5722,6 @@
 	"settings.section.appearance": "Appearance",
 	"settings.section.assistant": "API & assistants",
 	"settings.section.backup": "Backup",
-	"settings.section.music": "Wall music",
 	"settings.section.packs": "Integration packs",
 	"settings.section.reports": "Reports",
 	"settings.section.security": "Account & security",
@@ -6171,37 +5876,15 @@
 	"settings_agents_ad_unlimited": "Unlimited",
 	"settings_agents_ad_waiting": "Waiting for the first server",
 	"settings_agents_ad_watch_intro": "Servers appear here as they enrol. You can close this window; enrolment continues.",
-	"settings_agents_copied": "I've copied it",
 	"settings_agents_copy_command": "Copy command",
-	"settings_agents_copy_token": "Copy token",
 	"settings_agents_create": "Create token",
 	"settings_agents_create_error": "Could not create the token",
 	"settings_agents_created_at": "Created {when}",
-	"settings_agents_created_title": "Token “{name}” created",
-	"settings_agents_days_invalid": "The number of days must be a whole number, one or more.",
-	"settings_agents_description": "An agent is one small program on a Linux, Windows, macOS or FreeBSD machine: it reports the system, disks, services, Docker containers and backups, and lets you restart or update a container from here. In relay mode it also probes, for this server, the monitors of its own network — a second site, a client, anything behind a NAT — and only ever connects out.",
-	"settings_agents_empty_description": "Create one, then run the install command on the machine.",
 	"settings_agents_empty_title": "No token yet.",
 	"settings_agents_enrols_no_more": "Enrols no more",
-	"settings_agents_expires": "Stops enrolling after",
-	"settings_agents_expires_help": "Days. Machines already enrolled keep reporting; leave empty for no deadline.",
 	"settings_agents_install": "Install an agent",
-	"settings_agents_install_linux": "Install on Linux",
-	"settings_agents_install_windows": "Install on Windows (PowerShell)",
-	"settings_agents_last_report": "Last report {when}",
 	"settings_agents_last_used": "Last used {when}",
-	"settings_agents_list_aria": "Agents reporting to this server",
 	"settings_agents_load_error": "Could not load the tokens",
-	"settings_agents_machines": "Machines it may enrol",
-	"settings_agents_machines_help": "Leave empty for no limit.",
-	"settings_agents_machines_invalid": "The number of machines must be a whole number, one or more.",
-	"settings_agents_name_placeholder": "File server",
-	"settings_agents_name_required": "Name the token, for example after the machine it will enrol.",
-	"settings_agents_new_token": "New token",
-	"settings_agents_new_token_help": "Only used to recognise the token in this list.",
-	"settings_agents_no_deadline": "No deadline",
-	"settings_agents_no_limit": "No limit",
-	"settings_agents_none": "No agent has reported to this server yet.",
 	"settings_agents_probes": [
 		{
 			"declarations": [
@@ -6219,25 +5902,6 @@
 	],
 	"settings_agents_relay_label": "Relay",
 	"settings_agents_relay_label_site": "Relay · {site}",
-	"settings_agents_relay_off": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Relay off — {count} monitor waiting",
-				"countPlural=other": "Relay off — {count} monitors waiting"
-			}
-		}
-	],
-	"settings_agents_relay_off_title": "Set relay: true on this agent so it picks up their probes",
-	"settings_agents_relay_title": "Relay mode: it probes monitors of its own network for this server",
-	"settings_agents_reusable": "Reusable for a fleet",
-	"settings_agents_reusable_help": "Off, the token enrols one machine and then enrols nothing more — the right default for a single install. On, it can go into a playbook or an image.",
 	"settings_agents_revoke": "Revoke",
 	"settings_agents_revoke_confirm": "Revoke for good?",
 	"settings_agents_revoke_error": "Could not revoke the token",
@@ -6247,19 +5911,15 @@
 	"settings_agents_scope_fleet_ratio": "Fleet · {uses}/{max} enrolled",
 	"settings_agents_scope_single": "Single use",
 	"settings_agents_scope_single_used": "Single use · used",
-	"settings_agents_shown_once": "Shown once — copy it now",
 	"settings_agents_spent_note": "Machines enrolled with it keep reporting; it just cannot let a new one in.",
 	"settings_agents_stops_at": "Stops enrolling {when}",
 	"settings_agents_title": "Agents",
-	"settings_agents_tls_badge": "Encrypted",
-	"settings_agents_tls_badge_title": "Encrypted agent channel: TLS 1.3 with a client certificate, key exchange {group}",
 	"settings_agents_tls_copy_fingerprint": "Copy the fingerprint",
 	"settings_agents_tls_counts": "Encrypted: {encrypted}. Plain channel: {plain}.",
 	"settings_agents_tls_disabled": "The agent port is closed (DUMBMONIT_AGENT_LISTEN=off): agents report through the web port only.",
 	"settings_agents_tls_fingerprint": "Certificate authority fingerprint (SHA-256)",
 	"settings_agents_tls_fingerprint_help": "The install commands carry it: an agent accepts no other server, even one with a valid public certificate.",
 	"settings_agents_tls_legacy": "Plain channel",
-	"settings_agents_tls_legacy_title": "This agent still reports through the web port. Once updated, it switches to the encrypted agent channel by itself, as soon as it can reach the agent port.",
 	"settings_agents_tls_legacy_until": "The plain channel closes by itself on {when}.",
 	"settings_agents_tls_load_error": "Could not read the agent channel",
 	"settings_agents_tls_port_hint": "For agents on other networks, open only TCP port {port} on the server. Nothing has to be opened on the agents.",
@@ -6278,10 +5938,7 @@
 	"settings_agents_tls_summary": "Agents connect to port {port} with TLS 1.3, a certificate per machine and post-quantum key exchange ({group}). They recognise this server by the fingerprint of its own certificate authority, so no one on the network can read or alter what they send.",
 	"settings_agents_tls_title": "Agent channel",
 	"settings_agents_token": "Token",
-	"settings_agents_tokens_intro": "Adding a monitor of type agent makes a single-use token for you. Create one here for a fleet, a playbook or a machine image.",
 	"settings_agents_tokens_title": "Enrolment tokens",
-	"settings_agents_watch_remote": "Watch a remote site",
-	"settings_agents_watches_own": "Watches its own machine",
 	"settings_agentupdates_agents_empty": "No agent reports to this server yet.",
 	"settings_agentupdates_agents_title": "Agents",
 	"settings_agentupdates_canary_flag": "Canary",
@@ -6356,14 +6013,7 @@
 	"settings_agentupdates_window_any": "Any time",
 	"settings_agentupdates_window_maintenance": "Only during a maintenance window (a silence on the device)",
 	"settings_agentupdates_window_manual": "Manual only",
-	"settings_appearance_day": "Day",
-	"settings_appearance_day_hint": "Chart paper, navy ink.",
-	"settings_appearance_night": "Night",
-	"settings_appearance_night_hint": "Radar composite, cyan signal.",
-	"settings_appearance_system": "System",
-	"settings_appearance_system_hint": "Follows your device.",
-	"settings_appearance_theme": "Theme",
-	"settings_appearance_wall_description": "The bulletin alone, full screen, for a monitor in the room. Press Esc to leave; ⌘K / Ctrl K opens it from anywhere.",
+	"settings_appearance_wall_description": "The console's board, full screen, for a monitor in the room. Press Esc to leave; ⌘K / Ctrl K opens it from anywhere.",
 	"settings_appearance_wall_open": "Open wall mode",
 	"settings_appearance_wall_title": "Wall mode",
 	"settings_assistant_any_network": "Any network",
@@ -6521,6 +6171,7 @@
 	"settings_backup_section_incidents": "Incidents and maintenance announcements.",
 	"settings_backup_section_netconfig_host_keys": "Remembered SSH host keys of configuration backups, so no device is trusted anew.",
 	"settings_backup_section_netconfig_versions": "Network configuration versions, only when you include them: they hold device secrets.",
+	"settings_backup_section_netscan_schedules": "Scheduled network scans, with the devices you marked as known or ignored.",
 	"settings_backup_section_packs": "Integration packs, so monitors of a pack type are probed again.",
 	"settings_backup_section_push_monitors": "Heartbeat tokens, so the URLs your cron jobs call stay the same.",
 	"settings_backup_section_rule_overrides": "Per-monitor thresholds and exclusions.",
@@ -6535,8 +6186,6 @@
 	"settings_backup_without_key": "Without the key",
 	"settings_backup_write_error": "Could not write the backup",
 	"settings_block_connection": "Connection",
-	"settings_block_off": "Off",
-	"settings_block_on": "On",
 	"settings_config_action_create": "Create",
 	"settings_config_action_delete": "Delete",
 	"settings_config_action_update": "Update",
@@ -6590,7 +6239,6 @@
 	"settings_config_yaml_label": "or paste the YAML",
 	"settings_language_auto": "Automatic (browser language)",
 	"settings_language_theme_description": "Saved in this browser.",
-	"settings_language_theme_title": "Language & theme",
 	"settings_ldap_access_denied": "Refused: in no listed group",
 	"settings_ldap_admin_groups": "Admin groups",
 	"settings_ldap_base_dn": "Base DN",
@@ -6757,97 +6405,7 @@
 	"settings_logs_storage_title": "Local storage",
 	"settings_logs_title": "Server logs",
 	"settings_logs_total_size": "Total size",
-	"settings_music_account": "Account",
-	"settings_music_admin_only": "An admin can connect a Spotify account here.",
-	"settings_music_app": "App (Client ID)",
-	"settings_music_connect_button": "Connect Spotify",
-	"settings_music_connect_heading": "Spotify Connect",
-	"settings_music_connect_intro": "The wall becomes a speaker named {name}: in the Spotify app on your phone, open Devices and pick it, the sound comes out of the display. The wall also shows what plays on the account wherever it plays — the TV's app, a cast speaker, your laptop.",
-	"settings_music_connected_at": "Connected",
-	"settings_music_connected_default": "Connected",
-	"settings_music_copy_redirect": "Copy redirect URI",
-	"settings_music_description": "Start music from your phone and hear it on the wall display, or send it a Spotify, Deezer or YouTube link.",
-	"settings_music_disconnect": "Disconnect",
-	"settings_music_disconnect_confirm": "Disconnect Spotify?",
-	"settings_music_disconnect_error": "Could not disconnect",
-	"settings_music_err_client_id": "Paste the Client ID from your app’s page in the Spotify Developer Dashboard (32 letters and digits).",
-	"settings_music_expired": "Spotify ended the connection. Connect again below: the Client ID is kept.",
-	"settings_music_expired_reason": "Spotify ended the connection ({reason}). Connect again below: the Client ID is kept.",
-	"settings_music_finish": "Finish connecting",
-	"settings_music_finish_error": "Could not finish the connection",
-	"settings_music_link_heading": "Play a link on the walls",
-	"settings_music_link_intro": "Without Premium, or for Deezer and YouTube — which have no Connect-style remote on the web — send a link from any screen, your phone included: every wall plays it in the service's own player. A browser not signed in to Spotify or Deezer on the wall plays 30-second previews.",
-	"settings_music_link_label": "Link to play on the walls",
-	"settings_music_load_error": "Could not load the music settings",
-	"settings_music_missing": "This server does not offer wall music yet: update DumbMonit.",
-	"settings_music_missing_scopes": "Spotify did not grant {scopes}: reconnect and accept every permission.",
-	"settings_music_needs_1": "Spotify Premium, on the account that owns the app. A personal app (development mode) admits up to five accounts: add others under User Management.",
-	"settings_music_needs_2": "The phone must be signed in to the same Spotify account as the one connected here: a browser speaker is only listed for its own account — not for other members of a Family plan, and not found on the network like a smart speaker.",
-	"settings_music_needs_3": "For the wall to be a speaker, its browser must open DumbMonit over HTTPS (or as localhost on the display itself) and have working DRM (Widevine): Chrome, Edge or Firefox on a computer, Chromium with Widevine on a Raspberry Pi. Most smart-TV and kiosk browsers cannot — the wall says so on screen, and the walls below show it here.",
-	"settings_music_needs_4": "Browsers keep a page silent until it is touched: tap or press a key on the wall once after it loads (or start the kiosk browser with --autoplay-policy=no-user-gesture-required).",
-	"settings_music_needs_5": "“Now playing” works without any of that: the server asks Spotify what plays, every few seconds, even over plain HTTP.",
-	"settings_music_needs_6": "Spotify ends a connection six months after it was approved: connect again before the date shown.",
-	"settings_music_needs_heading": "What it needs",
-	"settings_music_not_connected": "Spotify is not connected",
-	"settings_music_nothing_playing": "Nothing is playing on this account.",
-	"settings_music_nothing_sent": "Nothing is sent to the walls. An admin can send a link.",
-	"settings_music_now_artists": " — {artists}",
-	"settings_music_now_device": ", on {device}",
-	"settings_music_now_line": "{status}: {title}{artists}{device}",
-	"settings_music_on_walls": "On the walls",
-	"settings_music_open_spotify": "Open Spotify",
-	"settings_music_outcome_connected": "Spotify is connected.",
-	"settings_music_outcome_denied": "Spotify did not grant access. Start again and choose “Agree”.",
-	"settings_music_outcome_exchange": "Spotify refused to complete the connection. Check that the redirect URI below is registered in your app, exactly.",
-	"settings_music_outcome_hint": "Start again below; nothing was changed.",
-	"settings_music_outcome_internal": "The connection could not be saved. Check the server logs.",
-	"settings_music_outcome_session": "Your DumbMonit session was not the one that started the connection. Sign in, then start again.",
-	"settings_music_outcome_state": "This approval was unknown, expired or already used. Start again from “Connect Spotify”.",
-	"settings_music_outcome_unknown": "The connection did not complete.",
-	"settings_music_plate_connected": "Spotify connected",
-	"settings_music_plate_off": "Spotify off",
-	"settings_music_plate_reconnect": "Reconnect Spotify",
-	"settings_music_play_on_wall": "Play on the wall",
-	"settings_music_reconnect_by": "Reconnect by",
-	"settings_music_reconnect_note": "Spotify ends connections after six months.",
-	"settings_music_redirect_insecure": "DumbMonit is served over plain HTTP, and Spotify only accepts https:// or this 127.0.0.1 address. Nothing answers there: after approving, your browser shows an error page — copy its address, it carries the code. Served over HTTPS, the redirect would be direct.",
-	"settings_music_redirect_secure": "Spotify comes straight back to this page.",
-	"settings_music_right_now": "Right now",
-	"settings_music_send_error": "Could not send the link",
-	"settings_music_sent_by": "sent by {name}",
-	"settings_music_start_error": "Could not start the connection",
-	"settings_music_status_paused": "Paused",
-	"settings_music_status_playing": "Playing",
-	"settings_music_step1_after": "(any name). Tick Web API and Web Playback SDK, and add this redirect URI:",
-	"settings_music_step1_before": "1. Create an app in the",
-	"settings_music_step1_link": "Spotify Developer Dashboard",
-	"settings_music_step2_help": "On the app's page, under Basic Information. There is no secret to copy: DumbMonit uses PKCE.",
-	"settings_music_step2_label": "2. Paste its Client ID",
-	"settings_music_step3": "3. Approve on Spotify, then come back here.",
-	"settings_music_step4_help": "It starts with {uri}?code= — valid ten minutes, once.",
-	"settings_music_step4_label": "4. Paste the address of the page you landed on",
-	"settings_music_stop": "Stop",
-	"settings_music_title": "Wall music",
 	"settings_nav_push": "Push notifications",
-	"settings_news_country": "Country",
-	"settings_news_country_ai": "AI (in English)",
-	"settings_news_country_international": "International",
-	"settings_news_country_tech": "Tech (in English)",
-	"settings_news_custom_add": "Add feed",
-	"settings_news_custom_name": "Name (optional)",
-	"settings_news_custom_title": "Add a custom feed",
-	"settings_news_custom_url": "RSS or Atom address",
-	"settings_news_limit": "At most {count} feeds.",
-	"settings_news_none": "No feed yet. Tick a source above or add your own.",
-	"settings_news_remove": "Remove {name}",
-	"settings_news_selected": "Feeds on the wall",
-	"settings_news_sources": "Sources",
-	"settings_news_test": "Test",
-	"settings_news_test_fail": "Could not read this feed: {error}",
-	"settings_news_test_ok": "It works. Latest headline: “{title}”",
-	"settings_news_testing": "Reading the feed…",
-	"settings_news_ticker": "Headlines",
-	"settings_news_ticker_hint": "The latest headlines of these feeds on the wall, refreshed every five minutes. Place them in the layout below.",
 	"settings_packs_add_device": "Add a {label}",
 	"settings_packs_admin_only_description": "A pack decides what this server asks your monitors.",
 	"settings_packs_admin_only_title": "Only an administrator can manage integration packs.",
@@ -7225,8 +6783,6 @@
 	"settings_search_kw_assistant": "api token mcp ai assistant claude chatgpt",
 	"settings_search_kw_backup": "backup export restore configuration",
 	"settings_search_kw_locations": "world map sites places coordinates openstreetmap tiles",
-	"settings_search_kw_music": "music spotify speaker wall",
-	"settings_search_kw_news": "news headlines rss feeds wall",
 	"settings_search_kw_notifications": "channels discord email ntfy telegram quiet hours status page",
 	"settings_search_kw_packs": "integration pack yaml community",
 	"settings_search_kw_policy": "policy batching digest rate limit escalation flapping reminder public address action links",
@@ -7236,7 +6792,6 @@
 	"settings_search_kw_sso": "openid oidc login provider authentik keycloak",
 	"settings_search_kw_users": "accounts people roles admin viewer operator",
 	"settings_search_kw_wall": "wall kiosk tv room monitor full screen",
-	"settings_search_kw_widgets": "widgets weather crypto bitcoin stocks exchange rates currencies cve vulnerabilities wall",
 	"settings_search_label": "Search settings",
 	"settings_search_none": "No setting matches.",
 	"settings_search_placeholder": "Search settings…",
@@ -7332,45 +6887,6 @@
 	"settings_sla_this_month": "This month so far",
 	"settings_sla_title": "Availability report (SLA)",
 	"settings_sla_to": "To",
-	"settings_speaker_account": "Account",
-	"settings_speaker_account_note": "— the phone must be signed in to this Spotify account to see the wall.",
-	"settings_speaker_browser_default": "A browser",
-	"settings_speaker_connected": "Connected",
-	"settings_speaker_device_playing": "{name} (playing)",
-	"settings_speaker_err_name": "A speaker name is at most 64 characters.",
-	"settings_speaker_heading": "Speaker",
-	"settings_speaker_in_devices": "In Spotify’s devices",
-	"settings_speaker_listed_as": "Listed in Spotify as {name}.",
-	"settings_speaker_listed_no": "Not right now",
-	"settings_speaker_listed_yes": "Yes — phones on this account can pick it",
-	"settings_speaker_lists": "Spotify lists: {devices}",
-	"settings_speaker_lists_none": "Spotify lists no device on this account right now.",
-	"settings_speaker_missing": "This server does not report the speaker yet: update DumbMonit.",
-	"settings_speaker_name_help": "What phones list under Devices. Every wall uses it; add ?speaker=Kitchen to one wall's address to name that one alone. Empty: “DumbMonit Wall”.",
-	"settings_speaker_name_label": "Name in Spotify",
-	"settings_speaker_phase_connecting": "Connecting",
-	"settings_speaker_phase_error": "Stopped",
-	"settings_speaker_phase_locked": "Ready, sound locked",
-	"settings_speaker_phase_not_listed": "Not listed by Spotify",
-	"settings_speaker_phase_off": "Off on this display",
-	"settings_speaker_phase_ready": "Ready",
-	"settings_speaker_phase_unsupported": "Cannot play here",
-	"settings_speaker_premium": "Premium",
-	"settings_speaker_premium_no": "No — the wall cannot be a speaker",
-	"settings_speaker_premium_unknown": "Not known yet (a wall tells when it connects)",
-	"settings_speaker_premium_yes": "Yes",
-	"settings_speaker_read_error": "Could not read the speaker",
-	"settings_speaker_refresh": "Refresh",
-	"settings_speaker_refresh_aria": "Refresh the speaker status",
-	"settings_speaker_rename": "Rename",
-	"settings_speaker_rename_error": "Could not rename the speaker.",
-	"settings_speaker_test_fail": "Spotify did not start playing.",
-	"settings_speaker_test_hint": "Plays the account on “{name}”, resuming what played last.",
-	"settings_speaker_test_ok": "Spotify now plays on “{name}”: listen to the wall. Nothing to hear? Tap the wall once to unlock its sound.",
-	"settings_speaker_test_sound": "Test sound",
-	"settings_speaker_wall_meta": "· as “{name}” · {when}",
-	"settings_speaker_walls": "Walls",
-	"settings_speaker_walls_none": "No wall has reported in the last fifteen minutes. Open /wall on the display (signed in, viewer accounts included) and it shows up here within a minute.",
 	"settings_sso_admin_groups": "Admin groups",
 	"settings_sso_admin_groups_help": "Comma separated. Members become admins, everyone else a viewer (or an operator, below) — re-evaluated at each sign-in. Both lists empty: roles are managed here.",
 	"settings_sso_alg_warning": "This provider does not list RS256 or ES256: DumbMonit only accepts those signatures.",
@@ -7615,103 +7131,6 @@
 	"settings_users_update_error": "Could not update the user",
 	"settings_users_username": "Username",
 	"settings_users_you": "you",
-	"settings_widgets_add": "Add",
-	"settings_widgets_ai": "AI usage",
-	"settings_widgets_ai_by_person": "Show the biggest users",
-	"settings_widgets_ai_by_person_help": "Adds a list of who used the most tokens. Neither provider breaks costs down by person, so only tokens are listed.",
-	"settings_widgets_ai_claude": "Claude (Anthropic)",
-	"settings_widgets_ai_claude_hint": "Cost and tokens of the organization’s Claude API usage.",
-	"settings_widgets_ai_claude_key": "Anthropic Admin API key",
-	"settings_widgets_ai_claude_key_help": "Starts with sk-ant-admin. Admin keys exist only for organizations and are created in the Claude Console by an organization admin. Stored encrypted, never shown again.",
-	"settings_widgets_ai_hint": "Cost and tokens of your organization’s Claude and OpenAI API accounts, read from their admin APIs every 15 minutes. Consumer subscriptions (Claude Pro and Max, ChatGPT Plus) and their weekly limits have no official API and cannot be shown.",
-	"settings_widgets_ai_key_howto": "How to get an admin key",
-	"settings_widgets_ai_openai": "ChatGPT (OpenAI API)",
-	"settings_widgets_ai_openai_hint": "Cost and tokens of the organization’s OpenAI API usage.",
-	"settings_widgets_ai_openai_key": "OpenAI admin key",
-	"settings_widgets_ai_openai_key_help": "An organization admin key, created by an organization owner. Stored encrypted, never shown again. It reads API usage, not ChatGPT Plus accounts.",
-	"settings_widgets_ai_people": "Names",
-	"settings_widgets_ai_people_help": "The APIs return identifiers, not names. Add an identifier (an account or API key id, as the provider shows it) and the name to display.",
-	"settings_widgets_ai_period": "Period",
-	"settings_widgets_ai_person_add": "Add a name",
-	"settings_widgets_ai_person_id": "Identifier",
-	"settings_widgets_ai_person_name": "Name",
-	"settings_widgets_crypto": "Crypto prices",
-	"settings_widgets_crypto_coins": "Coins",
-	"settings_widgets_crypto_currency": "Display currency",
-	"settings_widgets_crypto_custom": "Another coin",
-	"settings_widgets_crypto_custom_help": "Its CoinGecko id, as in the address of its page on coingecko.com.",
-	"settings_widgets_crypto_hint": "Live price and 24-hour change, from CoinGecko's public API (no key; the server asks about once a minute).",
-	"settings_widgets_crypto_key": "CoinGecko Demo key (optional)",
-	"settings_widgets_crypto_key_help": "Free on coingecko.com; it gives the server a rate limit of its own. Stored encrypted, never shown again.",
-	"settings_widgets_cve": "Critical vulnerabilities",
-	"settings_widgets_cve_count": "Shown",
-	"settings_widgets_cve_hint": "The latest CVEs rated critical by the NVD this week, and those CISA lists as actively exploited (no key; read once an hour).",
-	"settings_widgets_cve_source": "List",
-	"settings_widgets_cve_source_both": "Both: critical and exploited",
-	"settings_widgets_cve_source_kev": "Actively exploited (CISA KEV)",
-	"settings_widgets_cve_source_nvd": "Critical (NVD, CVSS 9 or more)",
-	"settings_widgets_description": "Weather, news, a free message, crypto prices, stocks, exchange rates, critical vulnerabilities and AI usage, small and still around the monitors. Drop each one where you want it on the model of the screen. The server reads every source and caches it: no display talks to them.",
-	"settings_widgets_fx": "Exchange rates",
-	"settings_widgets_fx_base": "Base currency",
-	"settings_widgets_fx_currencies": "Currencies",
-	"settings_widgets_fx_hint": "Daily reference rates of the central banks, from Frankfurter (no key; read once an hour).",
-	"settings_widgets_key_keep": "Leave empty to keep the saved key",
-	"settings_widgets_key_missing": "Without this key the widget stays off the wall.",
-	"settings_widgets_key_remove": "Remove the key",
-	"settings_widgets_key_removing": "The key will be removed when you save.",
-	"settings_widgets_key_saved": "A key is saved. Type a new one to replace it.",
-	"settings_widgets_layout": "Layout",
-	"settings_widgets_layout_down": "Move {name} down",
-	"settings_widgets_layout_earlier": "Move {name} earlier",
-	"settings_widgets_layout_help": "Drag a widget onto the screen where you want it. Or select it with Enter, then use the arrow keys or the buttons.",
-	"settings_widgets_layout_help_list": "Choose a zone for each widget and order them with the arrows.",
-	"settings_widgets_layout_hint": "What you drop here is what the wall shows, small and still: nothing takes turns. When a zone runs out of room, its widgets show fewer entries.",
-	"settings_widgets_layout_key": "Needs a key",
-	"settings_widgets_layout_later": "Move {name} later",
-	"settings_widgets_layout_monitors": "Monitors",
-	"settings_widgets_layout_move_to": "Move to",
-	"settings_widgets_layout_moved": "{name} moved to {zone}, place {position} of {count}.",
-	"settings_widgets_layout_moved_hidden": "{name} is now hidden.",
-	"settings_widgets_layout_none_selected": "Select a widget to move it with the keyboard.",
-	"settings_widgets_layout_off": "Off",
-	"settings_widgets_layout_place": "Place of {name}",
-	"settings_widgets_layout_reset": "Reset to default",
-	"settings_widgets_layout_reset_done": "Layout reset to the default. Save to keep it.",
-	"settings_widgets_layout_screen": "Scale model of the wall screen",
-	"settings_widgets_layout_selected": "{name} selected",
-	"settings_widgets_layout_up": "Move {name} up",
-	"settings_widgets_remove": "Remove {name}",
-	"settings_widgets_save": "Save widgets",
-	"settings_widgets_saved": "Saved. The walls pick it up within a minute.",
-	"settings_widgets_stocks": "Stock quotes",
-	"settings_widgets_stocks_hint": "Last price and change of the day, from Finnhub. A free Finnhub key is needed: no keyless source of quotes is both reliable and allowed. The free plan covers US-listed stocks.",
-	"settings_widgets_stocks_key": "Finnhub API key",
-	"settings_widgets_stocks_key_help": "Free at finnhub.io. Stored encrypted, never shown again.",
-	"settings_widgets_stocks_symbols": "Symbols",
-	"settings_widgets_stocks_symbols_help": "Ticker symbols separated by commas, up to ten.",
-	"settings_widgets_text": "Message",
-	"settings_widgets_text_content": "Text",
-	"settings_widgets_text_help": "{count} / {max} characters. Plain text, on one line.",
-	"settings_widgets_text_hint": "A short note for the team, shown as is on the wall.",
-	"settings_widgets_text_placeholder": "Stand-up at 10:00 in the blue room",
-	"settings_widgets_title": "Wall widgets",
-	"settings_widgets_weather": "Weather",
-	"settings_widgets_weather_add": "Choose {place}",
-	"settings_widgets_weather_find": "Search",
-	"settings_widgets_weather_hint": "An icon and the temperature now, under the clock, from Open-Meteo (no key; read every 15 minutes).",
-	"settings_widgets_weather_imperial": "Imperial (°F, mph)",
-	"settings_widgets_weather_metric": "Metric (°C, km/h)",
-	"settings_widgets_weather_no_place": "No place yet: search for a city above.",
-	"settings_widgets_weather_none_found": "No place by that name.",
-	"settings_widgets_weather_places": "Place",
-	"settings_widgets_weather_search": "Find a city",
-	"settings_widgets_weather_searching": "Searching…",
-	"settings_widgets_weather_units": "Units",
-	"settings_widgets_zone_bottom": "Bottom bar",
-	"settings_widgets_zone_empty": "Nothing here.",
-	"settings_widgets_zone_hidden": "Hidden",
-	"settings_widgets_zone_right": "Right column",
-	"settings_widgets_zone_top": "Top bar",
 	"status_access_help": "A private page is never indexed, stays out of the sitemap, and its badges, feeds and JSON follow the same rule. Signed-in access covers local, LDAP and SSO accounts, on the main address only.",
 	"status_access_label": "Who can see this page",
 	"status_access_password": "Anyone with the password",
@@ -8121,7 +7540,7 @@
 	"status_public_title": "Status",
 	"status_public_title_with_page": "{title} · Status",
 	"status_public_uptime_last": "Uptime over the last {days} days",
-	"status_scene_matterhorn": "Matterhorn",
+	"status_scene_dubai": "Dubai",
 	"status_scene_newyork": "New York",
 	"status_scene_paris": "Paris",
 	"status_scene_rotation_10m": "Every 10 minutes",
@@ -8649,6 +8068,35 @@
 	"topology_state_stopped": "Stopped",
 	"topology_state_suppressed": "Suppressed",
 	"topology_subnet_toggle": "Group by subnet",
+	"topology_traffic_toggle": "Traffic",
+	"topology_traffic_edge_label": "{from} to {to}: {load}",
+	"topology_traffic_errors_short": "errors",
+	"topology_traffic_panel_label": "Link traffic",
+	"topology_traffic_close": "Close",
+	"topology_traffic_ports": "Measured on {ports} ({name})",
+	"topology_traffic_stale": "An end of this link is down or unreachable: these figures are not current.",
+	"topology_traffic_in": "Received by {name}",
+	"topology_traffic_out": "Sent by {name}",
+	"topology_traffic_speed_label": "Port speed",
+	"topology_traffic_speed_unknown": "unknown",
+	"topology_traffic_errors_label": "Errors and discards",
+	"topology_traffic_errors_rate": "{count} per minute",
+	"topology_traffic_errors_none": "None",
+	"topology_traffic_hour": "Last hour",
+	"topology_traffic_hour_peak": "Peak {rate}",
+	"topology_traffic_hour_error": "The curve could not be loaded.",
+	"topology_traffic_hour_loading": "Loading the curve",
+	"topology_traffic_chart_label": "Traffic over the last hour, received and sent",
+	"topology_traffic_legend_in": "Received",
+	"topology_traffic_legend_out": "Sent",
+	"topology_traffic_legend_title": "Link load",
+	"topology_traffic_legend_range": "{from}–{to} %",
+	"topology_traffic_legend_errors": "Dashed: errors or discards",
+	"topology_traffic_legend_flow": "Dots: direction of the busiest flow",
+	"topology_traffic_legend_stale": "Greyed: an end is down",
+	"topology_traffic_top_title": "Busiest links",
+	"topology_traffic_top_empty": "No link reports traffic yet.",
+	"topology_traffic_load_col": "Load",
 	"topology_summary_devices": "Monitors: {count}",
 	"topology_summary_down": "Down: {count}",
 	"topology_summary_sites": "Remote sites: {count}",
@@ -8670,158 +8118,34 @@
 	"ui_error_notice_help_network": "Check that the server is running and your network is up.",
 	"ui_error_notice_help_server": "Check the server logs, then try again.",
 	"ui_error_notice_signin": "Sign in again",
-	"wall_back": "Back to the overview",
-	"wall_city_newyork": "New York",
-	"wall_city_paris": "Paris",
-	"wall_city_title": "City",
-	"wall_city_tokyo": "Tokyo",
-	"wall_city_zermatt": "Zermatt",
-	"wall_devices_aria": "Monitors",
-	"wall_devices_more": "{count} more monitors, all reporting",
-	"wall_devices_more_trouble": "{count} more monitors (needing attention: {trouble})",
-	"wall_devices_reporting": "Reporting",
-	"wall_dock_enable": "Tap to enable sound",
-	"wall_dock_enable_hint": "Then pick “{name}” under Devices in Spotify",
-	"wall_dock_hide": "Hide",
-	"wall_dock_retrying": "Trying again by itself…",
-	"wall_dock_trouble_pill": "Not a speaker here",
-	"wall_dock_trouble_title": "Spotify can’t play on this display",
-	"wall_dock_why": "Why",
 	"wall_ent_oncall_none": "Nobody on call. Set up an on-call schedule in Alerts.",
 	"wall_exit": "Exit",
 	"wall_exit_aria": "Exit wall mode",
-	"wall_load_error": "Could not load the wall",
-	"wall_market_vs": "vs {base}",
-	"wall_music_admin_only": "Only an admin can change it.",
-	"wall_music_button": "Music",
-	"wall_music_cancel": "Cancel",
-	"wall_music_dialog": "Music on the walls",
-	"wall_music_link_help": "A Spotify, Deezer or YouTube (Music) link to a track, album, playlist or video. Every wall plays it, in the service's own player. Deezer and YouTube have no remote like Spotify Connect: a link is the way.",
-	"wall_music_link_label": "Play a link on the walls",
-	"wall_music_play_error": "Spotify did not start playing here.",
-	"wall_music_play_here": "Play here",
-	"wall_music_play_wall": "Play on the wall",
-	"wall_music_retry": "Try again",
-	"wall_music_send_error": "Could not send the link.",
-	"wall_music_settings": "Settings → Wall music",
-	"wall_music_speaker": "Spotify speaker",
-	"wall_music_speaker_label": "Use this display as a Spotify speaker",
-	"wall_music_state_disabled": "Off on this display",
-	"wall_music_state_disabled_detail": "Now playing still shows.",
-	"wall_music_state_error": "Stopped",
-	"wall_music_state_expired": "Reconnect needed",
-	"wall_music_state_locked": "Sound locked",
-	"wall_music_state_locked_detail": "Tap anywhere on the wall once, then pick it in Spotify.",
-	"wall_music_state_off": "Not connected",
-	"wall_music_state_off_admin": "Connect a Spotify account in Settings → Wall music to play from your phone.",
-	"wall_music_state_off_user": "An admin can connect a Spotify account in Settings → Wall music.",
-	"wall_music_state_ready": "Ready",
-	"wall_music_state_ready_detail": "In Spotify on a phone signed in to the same account: Devices → {name}. Or play here from this panel.",
-	"wall_music_state_starting": "Starting…",
-	"wall_music_state_unlisted": "Not listed yet",
-	"wall_music_state_unlisted_detail": "Spotify does not list this display yet; it reconnects by itself in a minute or two.",
-	"wall_music_state_unsupported": "Unavailable here",
-	"wall_music_stop": "Stop",
-	"wall_music_stop_error": "Could not stop the music.",
-	"wall_now_aria": "Now playing",
-	"wall_now_cover": "Cover of {name}",
-	"wall_now_fold": "Fold the music card",
-	"wall_now_on": "{verb} on {where}",
-	"wall_now_paused": "Paused",
-	"wall_now_pill_aria": "{verb}: {track}. Show the music card",
-	"wall_now_playing": "Playing",
-	"wall_now_progress": "Track progress",
-	"wall_now_progress_text": "{position} of {total}",
 	"wall_page_title": "Wall · DumbMonit",
-	"wall_player_fold": "Fold",
-	"wall_player_fold_aria": "Fold the player",
-	"wall_player_show": "Show",
-	"wall_player_stop_aria": "Stop the music on every wall",
-	"wall_player_title": "{label} player",
-	"wall_problems_agent_silent": "Agent silent for {duration}",
-	"wall_problems_aria": "Problems",
-	"wall_problems_more": "{count} more problems: see Alerts",
-	"wall_problems_no_data": "No data for {duration}",
-	"wall_problems_parent_down": "{rule} · {parent} is down",
-	"wall_problems_times": "×{count}",
-	"wall_refresh_failed": "Last refresh failed, showing the previous state.",
-	"wall_scene_sign_problems": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} PROBLEM",
-				"countPlural=other": "{count} PROBLEMS"
-			}
-		}
-	],
+	"wall_scene_auto": "Auto",
+	"wall_scene_button": "Backdrop",
+	"wall_scene_forced": "A link set this one for right now; it is not saved here.",
+	"wall_scene_hint": "Closest to this display's time zone, or pick a city.",
+	"wall_scene_none": "None",
+	"wall_scene_title": "City at night behind the board",
 	"wall_status_empty": "Nothing to watch yet",
 	"wall_status_ok": "All good",
 	"wall_status_problem_one": "1 problem",
 	"wall_status_problems": "{count} problems",
 	"wall_status_waiting": "Waiting for reports",
-	"wall_theme_auto": "Auto",
-	"wall_theme_auto_hint": "Follows the rest of DumbMonit.",
-	"wall_theme_button": "Theme",
-	"wall_theme_day": "Day",
-	"wall_theme_day_hint": "Chart paper, navy ink.",
-	"wall_theme_dialog": "Theme for this wall",
-	"wall_theme_forced": "A link set this one for right now; it is not saved here.",
-	"wall_theme_night": "Night",
-	"wall_theme_night_hint": "Radar composite, cyan signal.",
-	"wall_theme_title": "Theme on this display",
 	"wall_updated_relative": "Updated {when}",
 	"wall_updated_seconds": "Updated {seconds} s ago",
 	"wall_updated_waiting": "Waiting for the first check…",
-	"wall_weather_now": "{place}: {sky}, {temperature}",
 	"wall_widgets_ai_cost": "Cost",
-	"wall_widgets_ai_month": "This month",
 	"wall_widgets_ai_needs_key": "Needs an admin API key (Settings → Wall display).",
 	"wall_widgets_ai_note": "Organization API usage in US dollars. Subscriptions (Pro, Max, Plus) are not included.",
 	"wall_widgets_ai_people": "Most tokens",
 	"wall_widgets_ai_people_note": "Tokens only: costs are not broken down by person.",
-	"wall_widgets_ai_today": "Today",
-	"wall_widgets_ai_tokens": "{count} tokens",
-	"wall_widgets_ai_unattributed": "Unattributed",
-	"wall_widgets_ai_week": "Last 7 days",
-	"wall_widgets_aria": "Widgets",
-	"wall_widgets_claude": "Claude",
-	"wall_widgets_crypto": "Crypto",
 	"wall_widgets_crypto_note": "Change over 24 hours",
-	"wall_widgets_cve": "Critical vulnerabilities",
-	"wall_widgets_cve_exploited": "Exploited",
-	"wall_widgets_cve_none": "No critical vulnerability this week.",
-	"wall_widgets_cve_ransomware": "Ransomware",
-	"wall_widgets_cve_unscored": "n/s",
-	"wall_widgets_fx": "Exchange rates",
 	"wall_widgets_fx_note": "In {base}, rates of {date}; change since the previous day",
-	"wall_widgets_more": "+{count}",
 	"wall_widgets_needs_key": "Needs a free API key (Settings → Wall display).",
-	"wall_widgets_news": "Headlines",
-	"wall_widgets_openai": "OpenAI",
-	"wall_widgets_sky_clear": "Clear",
-	"wall_widgets_sky_cloudy": "Cloudy",
-	"wall_widgets_sky_drizzle": "Drizzle",
-	"wall_widgets_sky_fog": "Fog",
-	"wall_widgets_sky_partly": "Partly cloudy",
-	"wall_widgets_sky_rain": "Rain",
-	"wall_widgets_sky_snow": "Snow",
-	"wall_widgets_sky_storm": "Thunderstorm",
-	"wall_widgets_source": "Source: {source}",
-	"wall_widgets_stale": "Out of date: read {when}",
-	"wall_widgets_stocks": "Stocks",
 	"wall_widgets_stocks_unknown": "Unknown symbols: {symbols}",
-	"wall_widgets_text": "Message",
-	"wall_widgets_trend_down": "down {change}",
-	"wall_widgets_trend_flat": "unchanged",
-	"wall_widgets_trend_up": "up {change}",
 	"wall_widgets_unavailable": "Unavailable right now.",
-	"wall_widgets_weather": "Weather",
 	"website_after": "After:",
 	"website_before": "Before:",
 	"website_category": "Category",
@@ -9041,34 +8365,14 @@
 	"console_table_hint": "Worst first. Select a row to inspect it.",
 	"console_table_keys": "j / k to move, Enter to inspect, o to open",
 	"console_table_title": "Monitors",
-	"mode_enterprise_point_nav": "Icon rail, context panel and the command palette everywhere",
-	"mode_enterprise_point_table": "Dense tables with extra columns, filters and keyboard shortcuts",
-	"mode_enterprise_point_team": "Teams, single sign-on, on-call and logs up front",
-	"mode_enterprise_text": "A dense, very dark console for teams, with every option in view.",
-	"mode_enterprise_title": "Enterprise",
-	"mode_homelab_point_forms": "Short forms with sensible defaults, advanced settings folded away",
-	"mode_homelab_point_nav": "Four destinations in view, everything else under More",
-	"mode_homelab_point_theme": "The weather bulletin and the rack, in light or dark",
-	"mode_homelab_text": "A calm interface with the essentials in view. Every feature stays one click away.",
-	"mode_homelab_title": "Homelab",
-	"mode_picker_label": "Product mode",
-	"mode_picker_selected": "Selected",
-	"mode_switch_keeps": "Switching changes the interface only. Nothing is deleted.",
-	"settings_advanced_summary": "Sections: {count}",
-	"settings_advanced_title": "Advanced",
-	"settings_appearance_enterprise_dark": "Enterprise mode always uses its dark console. Switch to Homelab in Settings → General for light and dark themes.",
 	"settings_general_instance_text": "The name shows in the header. Language and time zone are the defaults for new browsers and reports.",
 	"settings_general_instance_title": "Instance",
-	"settings_general_mode_saving": "Switching…",
-	"settings_general_mode_text": "Homelab keeps things simple. Enterprise shows every option in a dense dark console.",
-	"settings_general_mode_title": "Interface mode",
 	"settings_general_readonly": "Only administrators can change these settings.",
 	"settings_general_save": "Save",
 	"settings_general_saved": "Saved",
 	"settings_general_wizard_run": "Run the setup wizard",
 	"settings_general_wizard_text": "Walk through the first-run steps again: mode, name, notifications, monitors, agent.",
 	"settings_general_wizard_title": "Setup wizard",
-	"settings_search_kw_general": "mode homelab enterprise interface name language time zone wizard setup",
 	"settings_tab_general": "General",
 	"wizard_agent_text": "The agent reports CPU, memory, disks, containers and services from a machine. Run the command on the machine you want to watch.",
 	"wizard_agent_title": "Install an agent",
@@ -9090,8 +8394,6 @@
 	"wizard_instance_timezone": "Time zone",
 	"wizard_instance_title": "Name this instance",
 	"wizard_intro": "Every step can be skipped and changed later in Settings.",
-	"wizard_mode_text": "Pick the interface that fits the people who use it. You can switch any time in Settings → General.",
-	"wizard_mode_title": "Choose how DumbMonit looks",
 	"wizard_monitors_count": "Monitors so far: {count}",
 	"wizard_monitors_import": "Import",
 	"wizard_monitors_import_text": "From Uptime Kuma, UptimeRobot, Gatus, Healthchecks or a list of sites.",
@@ -9392,5 +8694,458 @@
 	"deviceform_site_more": "Show {count} more",
 	"deviceform_site_added": "{name} added.",
 	"deviceform_site_open": "Open",
-	"deviceform_site_kinds": "Common here"
+	"deviceform_site_kinds": "Common here",
+	"devices_luns_cancel": "Cancel",
+	"devices_luns_change_link": "Change link",
+	"devices_luns_consumer": "Used by {target} · {entity}",
+	"devices_luns_consumer_auto": "Matched by name and size",
+	"devices_luns_consumer_manual": "Linked by hand",
+	"devices_luns_consumer_no_data": "No recent reading from {target}.",
+	"devices_luns_data": "Data",
+	"devices_luns_desc": "A thick LUN reserves its whole size on its volume: the volume looks full, and that is normal. What matters is how full the LUN is inside, which only the monitor that uses it can tell.",
+	"devices_luns_full_normal": "Volume full is normal: {size} reserved by {luns} (thick).",
+	"devices_luns_fully_reserved": "The thick LUNs take the whole volume: nothing else can fill it.",
+	"devices_luns_host": "On {volume}",
+	"devices_luns_initiators": "Connected: {list}",
+	"devices_luns_kind_thick": "Thick",
+	"devices_luns_kind_thin": "Thin",
+	"devices_luns_kind_unknown": "Type unknown",
+	"devices_luns_link": "Link to a monitor",
+	"devices_luns_link_error": "The link could not be saved.",
+	"devices_luns_load_error": "The LUNs could not be loaded.",
+	"devices_luns_no_entity": "This monitor has no disk, datastore or filesystem with a known size yet.",
+	"devices_luns_not_mapped": "Not mapped to any target",
+	"devices_luns_overcommit": "Thin over-allocation: {promised} promised for {free} free",
+	"devices_luns_pick_entity": "Disk, datastore or filesystem",
+	"devices_luns_pick_monitor": "Monitor that uses this LUN",
+	"devices_luns_pick_placeholder": "Choose…",
+	"devices_luns_reserved": "Reserved by LUNs",
+	"devices_luns_save": "Save",
+	"devices_luns_sessions_one": "1 iSCSI session",
+	"devices_luns_sessions_other": "{count} iSCSI sessions",
+	"devices_luns_size": "Size {size}",
+	"devices_luns_thick_hint": "Link it to the monitor that uses it to see how full it is.",
+	"devices_luns_thick_unknown": "Reserved (thick), internal usage unknown",
+	"devices_luns_thin_promised": "Thin LUNs: {promised} promised, {free} free",
+	"devices_luns_title": "iSCSI LUNs",
+	"devices_luns_title_zvols": "Zvols",
+	"devices_luns_unlink": "Remove link",
+	"devices_luns_volume_note": "Includes {size} reserved by thick iSCSI LUNs; without them, {percent} used.",
+	"devices_luns_written": "Written",
+	"backup_matrix_aria_group": "{group}: {summary}",
+	"backup_matrix_aria_summary": "{ok} of {total} days backed up, {failed} failed",
+	"backup_matrix_state_ok": "Backed up",
+	"backup_matrix_state_failed": "Failed",
+	"backup_matrix_state_running": "Running",
+	"backup_matrix_state_none": "No backup",
+	"backup_matrix_outcome_ok": "OK",
+	"backup_matrix_outcome_failed": "failed",
+	"backup_matrix_outcome_running": "running",
+	"backup_matrix_plate_failed": "Last backup failed",
+	"backup_matrix_plate_late": "Last backup {ago}",
+	"backup_matrix_plate_missing": "No backup for {span}",
+	"backup_matrix_plate_none": "No backup yet",
+	"backup_matrix_plate_ok": "Backed up {ago}",
+	"backup_matrix_plate_running": "Backup running",
+	"backup_matrix_summary_today": "{ok} of {total} backed up today",
+	"backup_matrix_summary_today_failing": "{ok} of {total} backed up today, {failing} failing",
+	"backup_matrix_today": "today",
+	"backup_matrix_state_warning": "Warning",
+	"backup_matrix_state_nodata": "No data",
+	"backup_matrix_outcome_warning": "warning",
+	"backup_matrix_plate_warning": "Backed up {ago}, with warnings",
+	"backup_matrix_legend": "Legend",
+	"backup_matrix_meta_duration": "Last run {duration}",
+	"backup_matrix_meta_size": "{size}",
+	"backup_history_title": "Backup history",
+	"backup_history_description": "One row per job, one cell per day over the last {days} days, rebuilt from the stored measurements.",
+	"backup_history_err": "Could not load the backup history",
+	"devices_metrics_veeam_repositories": "Repository usage",
+	"devices_metrics_kopia_snapshot_size": "Last snapshot size",
+	"devices_metrics_duplicati_target_size": "Backend size",
+	"devices_metrics_duplicati_source_size": "Source size",
+	"devices_docker_bulk_select_row": "Select {name}",
+	"devices_docker_bulk_selected": "{count} selected",
+	"devices_docker_bulk_select_all": "Select all ({count})",
+	"devices_docker_bulk_clear": "Clear selection",
+	"devices_docker_bulk_aria": "Bulk actions on containers",
+	"devices_docker_bulk_filter_aria": "Quick filter",
+	"devices_docker_bulk_filter_all": "All",
+	"devices_docker_bulk_filter_no_update": "No auto-update",
+	"devices_docker_bulk_filter_no_restart": "No auto-restart",
+	"devices_docker_bulk_filter_empty": "No container matches this filter.",
+	"devices_docker_bulk_update_on": "Enable auto-update",
+	"devices_docker_bulk_update_off": "Disable auto-update",
+	"devices_docker_bulk_restart_on": "Enable auto-restart",
+	"devices_docker_bulk_restart_off": "Disable auto-restart",
+	"devices_docker_bulk_update_now": "Update now ({count})",
+	"devices_docker_bulk_update_now_confirm": "Pull and replace {count}?",
+	"devices_docker_bulk_applied": "Policy applied to {count}.",
+	"devices_docker_bulk_queued": "Update queued for {count}.",
+	"devices_docker_bulk_partial_title": "{failed} of {total} failed",
+	"devices_docker_bulk_failed_line": "{name}: {reason}",
+	"devices_docker_bulk_dismiss": "Dismiss",
+	"devices_docker_bulk_tag_auto_update": "auto-update",
+	"devices_docker_bulk_tag_auto_restart": "auto-restart",
+	"devices_machine_title": "Machine health",
+	"devices_machine_description": "What makes this machine slow, over the last hour.",
+	"devices_machine_cpu": "CPU",
+	"devices_machine_ram": "Memory",
+	"devices_machine_disk": "Disk",
+	"devices_machine_disk_worst": "Disk {mount}",
+	"devices_machine_disks_title": "Disks",
+	"devices_machine_disks_hint": "How full each disk is and, at the current pace, when it will be full.",
+	"devices_machine_tone_signal": "Normal",
+	"devices_machine_tone_advisory": "Elevated",
+	"devices_machine_tone_warning": "High",
+	"devices_machine_no_data": "No data",
+	"devices_machine_last_hour": "Last hour",
+	"devices_machine_cores_title": "CPU per core",
+	"devices_machine_cores_hint": "One saturated core hides in the average.",
+	"devices_machine_core": "Core {n}",
+	"devices_machine_heat_low": "Idle",
+	"devices_machine_heat_high": "Saturated",
+	"devices_machine_heat_label": "CPU usage per core over the last hour",
+	"devices_machine_top_cpu": "Top processes by CPU",
+	"devices_machine_top_cpu_hint": "Share of one core; a multi-threaded process can exceed 100 %. Names only, never command lines.",
+	"devices_machine_top_mem": "Top processes by memory",
+	"devices_machine_top_mem_hint": "Resident memory, processes of the same name added together.",
+	"devices_machine_pressure_title": "Waiting for resources",
+	"devices_machine_pressure_hint": "Share of the last 10 seconds during which tasks were stalled waiting for the resource (kernel PSI). A few percent already feels slow, even when usage looks fine.",
+	"devices_machine_psi_cpu": "CPU",
+	"devices_machine_psi_memory": "Memory",
+	"devices_machine_psi_io": "Disk I/O",
+	"devices_machine_psi_some": "{value} waiting",
+	"devices_machine_psi_full": "{value} fully stalled",
+	"devices_machine_oom_title": "OOM kills (24 h)",
+	"devices_machine_oom_none": "None",
+	"devices_machine_oom_hint": "Processes the kernel killed because memory ran out.",
+	"devices_machine_inodes_title": "Inodes",
+	"devices_machine_inodes_value": "{mount}: {value} used",
+	"devices_machine_inodes_hint": "A full inode table stops writes even when free space remains.",
+	"devices_machine_clock_title": "Clock",
+	"devices_machine_clock_offset": "{offset} from the reference",
+	"devices_machine_clock_synced": "Synchronised",
+	"devices_machine_clock_unsynced": "Not synchronised",
+	"devices_machine_clock_hint": "A drifting clock breaks TLS certificates and Kerberos.",
+	"deviceform_agentflow_another": "Add another machine",
+	"deviceform_agentflow_connected": "{host} is connected ({os}).",
+	"deviceform_agentflow_docker_note": "Runs the agent as a container on that machine, with the same server, channel and fingerprint as the install command.",
+	"deviceform_agentflow_fleet": "A whole Windows domain at once?",
+	"deviceform_agentflow_folder": "Folder",
+	"deviceform_agentflow_folder_help": "Optional. Machines in the same folder are grouped in the monitor list.",
+	"deviceform_agentflow_gateway_pending": "{relay} opens its gateway at its next report, within a minute. Run the command once it listens.",
+	"deviceform_agentflow_install_behind": "Install an agent behind this relay",
+	"deviceform_agentflow_name": "Name",
+	"deviceform_agentflow_open": "Open the machine",
+	"deviceform_agentflow_platform_aria": "Operating system",
+	"deviceform_agentflow_platform_docker": "Docker",
+	"deviceform_agentflow_platform_windows": "Windows",
+	"deviceform_agentflow_relay_host": "Relay address seen from the site",
+	"deviceform_agentflow_relay_host_help": "The IP or local name the machines of the site reach the relay at, without a port; its gateway listens on port {port}. Left empty: the address already set, else its host name.",
+	"deviceform_agentflow_relay_next": "Then add the monitors of that site as usual and pick this relay under Reached through, or install the agent on its servers through it: their encrypted connection goes through the relay to this server.",
+	"deviceform_agentflow_reusable": "Several machines with this command",
+	"deviceform_agentflow_reusable_help": "A reusable token, for a playbook or a machine image. Revoke it in Settings once you are done.",
+	"deviceform_agentflow_reusable_plate": "Reusable",
+	"deviceform_agentflow_route": "How does the machine reach this server?",
+	"deviceform_agentflow_route_direct": "Directly",
+	"deviceform_agentflow_route_help": "Through a relay: for a site behind a firewall, where only the relay goes out. The agent's encrypted session still ends at this server; the relay only carries it.",
+	"deviceform_agentflow_route_relay": "Through {relay}",
+	"deviceform_agentflow_route_relay_site": "Through {relay} ({site})",
+	"deviceform_agentflow_save": "Save",
+	"deviceform_agentflow_saved": "{name} is saved.",
+	"deviceform_agentflow_save_error": "Could not save the machine",
+	"deviceform_agentflow_site": "Site",
+	"deviceform_agentflow_site_none": "No site",
+	"deviceform_agentflow_site_preset": "It will be placed at {site}.",
+	"deviceform_agentflow_step_connect": "Wait for the agent, then name it",
+	"deviceform_agentflow_step_install": "Run the command on the machine",
+	"deviceform_agentflow_through_note": "These commands download the agent from {relay} and connect through it ({address}). The agent still checks this server's fingerprint: the relay can neither read nor alter its traffic.",
+	"deviceform_agentflow_through_plate": "Through {relay}",
+	"deviceform_agentflow_token_help_relay": "Only used to recognise the token in the list of issued tokens.",
+	"deviceform_agentflow_wait_again": "Wait again",
+	"deviceform_agentflow_waiting": "Waiting for the agent's first report…",
+	"deviceform_agentflow_wait_stopped": "Still nothing after an hour.",
+	"deviceform_relaypick_help": "Monitors of the kinds a relay can probe go through it; the others stay on this server.",
+	"deviceform_relaypick_label": "Probe from",
+	"deviceform_relaypick_server": "This server",
+	"deviceform_site_agent": "Server with the agent",
+	"deviceform_site_agent_via": "installed through {relay}",
+	"devicesb_relay_panel_gateway": "Gateway for the agents of this site",
+	"devicesb_relay_panel_gateway_closed": "Closed",
+	"devicesb_relay_panel_gateway_help": "Machines that cannot reach this server connect their agent to the relay, which carries their encrypted sessions without reading them. Open the port on the relay's firewall, to the site's network only.",
+	"devicesb_relay_panel_gateway_host": "Address seen from the site",
+	"devicesb_relay_panel_gateway_host_help": "IP or local name, written into the install commands.",
+	"devicesb_relay_panel_gateway_listening": "Listening on port {port}",
+	"devicesb_relay_panel_gateway_opening": "Opens at the next report",
+	"devicesb_relay_panel_gateway_port": "Port",
+	"devicesb_relay_panel_gateway_port_invalid": "From 1 to 65535.",
+	"devicesb_relay_panel_gateway_state": "Gateway",
+	"devicesb_relay_panel_install_agent": "Install an agent through it",
+	"devicesb_relay_panel_through": "Reaches this server through the relay {relay}.",
+	"devicesb_relay_panel_through_open": "Open the relay",
+	"settings_agents_add_elsewhere": "Machines are added from the monitor list, where the install command is made for you.",
+	"settings_agents_ad_route": "Route",
+	"settings_agents_ad_route_help": "Through a relay: the servers download the agent from it and report through it, encrypted end to end to this server.",
+	"settings_agents_settings_description": "Settings shared by every agent: the encrypted channel, automatic updates, and the enrolment tokens already issued.",
+	"settings_agents_tokens_issued_intro": "Each install command carries one of these tokens. Revoke a token that leaked or is no longer needed.",
+	"settings_agents_tokens_none": "Tokens appear here once you add a machine with the agent.",
+	"devicesb_relay_panel_gateway_tunnels": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} agent connected",
+				"countPlural=other": "{count} agents connected"
+			}
+		}
+	],
+	"deadlines_title": "Deadlines",
+	"deadlines_description": "What expires in the next {days} days: domains, certificates, application secrets, products, keys and licenses.",
+	"deadlines_timeline_label": "Timeline of the next {days} days",
+	"deadlines_today": "Today",
+	"deadlines_in": "in {span}",
+	"deadlines_expired_ago": "Expired {span} ago",
+	"deadlines_expires_today": "Expires today",
+	"deadlines_kind_domain": "Domain",
+	"deadlines_kind_certificate": "Certificate",
+	"deadlines_kind_credential": "Secret",
+	"deadlines_kind_product": "Product",
+	"deadlines_kind_key": "Key",
+	"deadlines_kind_license": "License",
+	"deadlines_tier_urgent": "7 days or less",
+	"deadlines_tier_soon": "8 to 30 days",
+	"deadlines_tier_notice": "31 to 60 days",
+	"deadlines_tier_calm": "More than 60 days",
+	"deadlines_show_all": "Show all {count}",
+	"deadlines_show_fewer": "Show fewer",
+	"deadlines_open": "Open {name}",
+	"deadlines_load_error": "Could not load the deadlines.",
+	"deadlines_target_title": "Expiry dates",
+	"deadlines_list_label": "Deadlines, soonest first",
+	"deadlines_marker_label": "{what}, {target}: {when}",
+	"geomap_country_none": "{country}: nothing",
+	"geomap_country_value": "{country}: {value}",
+	"geomap_legend": "Legend",
+	"geomap_legend_fewer": "Fewer",
+	"geomap_legend_link_down": "Relay down",
+	"geomap_legend_link_idle": "Relay not probed",
+	"geomap_legend_link_ok": "Relay up",
+	"geomap_legend_link_warn": "Relay needs a look",
+	"geomap_legend_more": "More (up to {max})",
+	"geomap_legend_step": "From {value}",
+	"geomap_list_countries": "Countries",
+	"geomap_list_links": "Links",
+	"geomap_list_places": "Places",
+	"geomap_list_toggle": "View as a list ({count})",
+	"geomap_relay_link": "Relay {relay} links {site} to {main}: {state}",
+	"threatmap_crowdsec_hint": "Choose Machine login as this monitor's credential (cscli machines add) to see where its alerts come from, by country.",
+	"threatmap_description": "Where the attacks your defences stopped come from, by country.",
+	"threatmap_empty_body": "Give a CrowdSec monitor a machine login, open the live map of an OPNsense firewall, or add Cloudflare with traffic analytics: the attacks they stop appear here, by country.",
+	"threatmap_empty_title": "No source feeds the threat map yet",
+	"threatmap_err_load": "Could not load the threat map",
+	"threatmap_map_label": "World map of stopped attacks, by country",
+	"threatmap_partial": "The metrics store did not answer: only the firewalls' live maps are counted.",
+	"threatmap_privacy": "Countries only: no address is kept or shown.",
+	"threatmap_quiet": "Nothing stopped over the period covered.",
+	"threatmap_source_cloudflare": "Cloudflare threats",
+	"threatmap_source_crowdsec": "CrowdSec alerts",
+	"threatmap_source_firewall": "Firewall blocks (live map)",
+	"threatmap_sources": "Sources",
+	"threatmap_split_cloudflare": "Cloudflare {count}",
+	"threatmap_split_crowdsec": "CrowdSec {count}",
+	"threatmap_split_firewall": "Firewall {count}",
+	"threatmap_title": "Threat map",
+	"threatmap_top": "Top countries",
+	"threatmap_value": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{shown} attack stopped",
+				"countPlural=other": "{shown} attacks stopped"
+			}
+		}
+	],
+	"threatmap_window_hours": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Last {count} hour",
+				"countPlural=other": "Last {count} hours"
+			}
+		}
+	],
+	"threatmap_window_minutes": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Last {count} minute",
+				"countPlural=other": "Last {count} minutes"
+			}
+		}
+	],
+	"devices_chart_label": "Chart",
+	"devices_chart_last_week_series": "Last week: {label}",
+	"devices_chart_compare_week": "Compare to last week",
+	"devices_chart_compare_failed": "Could not load last week",
+	"devices_chart_compare_empty": "No data for last week",
+	"devices_chart_summary_series": "{label}: latest {last}, min {min}, max {max}.",
+	"devices_chart_summary_mirror": "The second series is drawn below zero, mirrored.",
+	"devices_chart_summary_threshold": "Threshold {label}: {value}.",
+	"devices_chart_summary_event": "{when}: {label}.",
+	"devices_chart_event_label": "{when}, {label}",
+	"console_banner_label": "Status",
+	"console_banner_poke": "Poke the pigeon",
+	"console_banner_egg": "The pigeon did a barrel roll. Uptime unaffected.",
+	"console_banner_empty": "Nothing to watch yet.",
+	"console_banner_down_one": "{name} is down.",
+	"console_banner_down_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} monitor is down.",
+				"countPlural=other": "{count} monitors are down."
+			}
+		}
+	],
+	"console_banner_held": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} guest held back.",
+				"countPlural=other": "{count} guests held back."
+			}
+		}
+	],
+	"console_banner_held_sent": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} guest held back, alert sent.",
+				"countPlural=other": "{count} guests held back, alert sent."
+			}
+		}
+	],
+	"console_banner_sent": "Alert sent.",
+	"console_banner_attention_one": "{name} needs a look.",
+	"console_banner_attention_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} monitor needs a look.",
+				"countPlural=other": "{count} monitors need a look."
+			}
+		}
+	],
+	"console_banner_alerts": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} open alert.",
+				"countPlural=other": "{count} open alerts."
+			}
+		}
+	],
+	"console_banner_up_of": "{up} of {total} monitors up.",
+	"console_banner_waiting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} waiting for a first report.",
+				"countPlural=other": "{count} waiting for a first report."
+			}
+		}
+	],
+	"console_banner_all_up": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "The only monitor is up.",
+				"countPlural=other": "All {count} monitors up."
+			}
+		}
+	],
+	"console_banner_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} paused.",
+				"countPlural=other": "{count} paused."
+			}
+		}
+	],
+	"console_banner_all_paused": "Every monitor is paused.",
+	"settings_appearance_language_title": "Language",
+	"settings_search_kw_instance": "instance name language time zone wizard setup"
 }

@@ -264,6 +264,16 @@
 		const parts: string[] = [];
 		if (rule.kind === 'anomaly') {
 			parts.push(m.alerts_rules_baseline_anomaly());
+		} else if (rule.kind === 'forecast') {
+			parts.push(
+				m.alerts_rules_forecast_summary({
+					days: rule.threshold,
+					warning: rule.params.forecast_warning_days ?? 14,
+					critical: rule.params.forecast_critical_days ?? 7
+				})
+			);
+		} else if (rule.kind === 'drift') {
+			parts.push(m.alerts_rules_drift_summary({ ratio: rule.threshold }));
 		} else {
 			// Seconds read better as a duration: "above 7 d", not "above 604800 s".
 			const amount =

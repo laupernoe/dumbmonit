@@ -19,8 +19,9 @@ use chrono::{TimeDelta, Utc};
 use dumbmonit_proto::TargetId;
 use serde::Serialize;
 
+use crate::alerting::capacity::{self, Selection};
 use crate::alerting::machine::Phase;
-use crate::alerting::model::Severity;
+use crate::alerting::model::{Rule, RuleKind, Severity};
 use crate::api::{ApiError, ApiResult};
 use crate::db;
 use crate::notify::policy_store;
@@ -96,7 +97,7 @@ pub async fn list(
         .into_iter()
         .filter(|rule| rule_clients.get(&rule.id).is_none_or(|c| Some(*c) == target_client))
         .filter(|rule| rule.selector.matches(Some(&node)))
-        .filter(|rule| reads_any(&rule.query, &index))
+        .filter(|rule| reads_any(&watched_query(rule), &index))
         .map(|rule| {
             let over = overrides.iter().find(|o| o.rule_uid == rule.uid);
             TargetRule {
@@ -115,6 +116,20 @@ pub async fn list(
         .collect();
     rules.sort_by_key(|rule| rule.name.to_lowercase());
     Ok(Json(TargetRules { status: "ok", rules }))
+}
+
+/// Ce qu'une règle lit réellement : une règle de prévision désigne des familles
+/// de capacité, dont les expressions portent les noms de métriques.
+fn watched_query(rule: &Rule) -> String {
+    if rule.kind != RuleKind::Forecast {
+        return rule.query.clone();
+    }
+    match capacity::select(&rule.query) {
+        Selection::Families(families) => {
+            families.iter().map(|family| family.percent).collect::<Vec<_>>().join(" or ")
+        }
+        Selection::Custom(query) => query,
+    }
 }
 
 /// La requête lit-elle au moins une des séries `written` ?

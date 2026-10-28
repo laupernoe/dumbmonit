@@ -13,6 +13,8 @@
 		open?: boolean;
 		/** Header content, laid out on one line after the chevron. */
 		header: Snippet;
+		/** Optional control left of the chevron (a selection checkbox), outside the toggle button. */
+		leading?: Snippet;
 		/** Content that must stay clickable on its own, right of the header (plates, buttons). */
 		trailing?: Snippet;
 		children: Snippet;
@@ -20,11 +22,12 @@
 		style?: string;
 	}
 
-	let { id, open = $bindable(), header, trailing, children, class: className = '', style }: Props = $props();
+	let { id, open = $bindable(), header, leading, trailing, children, class: className = '', style }: Props = $props();
 </script>
 
 <li class={`flex flex-col ${className}`} {style}>
 	<div class="flex items-center gap-2 px-4 py-2.5 sm:px-5">
+		{#if leading}{@render leading()}{/if}
 		<button
 			type="button"
 			class="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left hover:text-signal-ink"

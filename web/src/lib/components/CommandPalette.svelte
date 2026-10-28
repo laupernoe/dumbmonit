@@ -28,7 +28,6 @@
 		CalendarClock,
 		BellPlus,
 		Megaphone,
-		SunMoon,
 		CornerDownLeft,
 		Cpu,
 		RadioTower,
@@ -46,7 +45,6 @@
 	import { displayState, STATE_LABEL, STATE_TONE, type ProbeStatus } from '#lib/format.js';
 	import { loadProbeStatuses } from '#lib/metrics.js';
 	import { palette } from '#lib/stores/palette.svelte.js';
-	import { theme } from '#lib/stores/theme.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { queryWords, rank, pushRecent, loadRecents, saveRecents, shortcutKeys, type RecentItem } from '#lib/palette/logic.js';
 	import { ENTRY_SHORTCUT } from '#lib/palette/shortcuts.js';
@@ -107,7 +105,7 @@
 		{ id: 'page:/status', group: 'pages', label: m.misc_palette_status_pages(), detail: m.misc_palette_status_detail(), keywords: 'public incidents maintenance announcements uptime', icon: Globe, href: '/status', run: go('/status') },
 		{ id: 'page:/reports', group: 'pages', admin: true, label: m.reports_page_title(), detail: m.reports_palette_detail(), keywords: 'reports sla availability export pdf csv scheduled email history', icon: FileText, href: '/reports', run: go('/reports') },
 		{ id: 'page:/logs', group: 'pages', admin: true, label: m.logsearch_title(), keywords: 'logs search logsql victorialogs errors', icon: ScrollText, href: '/logs', run: go('/logs') },
-		{ id: 'page:/settings', group: 'pages', label: m.misc_nav_settings(), keywords: 'preferences account language password users sso agents tokens assistant appearance theme backup about', icon: Settings2, href: '/settings', run: go('/settings') },
+		{ id: 'page:/settings', group: 'pages', label: m.misc_nav_settings(), keywords: 'preferences account language password users sso agents tokens assistant appearance backup about', icon: Settings2, href: '/settings', run: go('/settings') },
 		{ id: 'page:/wall', group: 'pages', label: m.misc_nav_wall(), detail: m.misc_palette_wall_detail(), keywords: 'kiosk tv screen', icon: Tv, href: '/wall', run: go('/wall') },
 		{ id: 'page:docs', group: 'pages', label: m.misc_palette_documentation(), keywords: 'docs help manual notifications channels', icon: BookOpen, run: () => window.open('https://dumbmonit.readthedocs.io/en/latest/', '_blank', 'noopener') },
 		{ id: 'action:add', group: 'actions', admin: true, label: m.misc_palette_add_device(), keywords: 'new target create host', icon: Plus, run: go('/targets/new') },
@@ -123,7 +121,6 @@
 		...(auth.canOperate
 			? [{ id: 'action:silence', group: 'actions' as Group, label: m.misc_palette_silence(), keywords: 'mute quiet maintenance snooze pause alerts', icon: BellOff, run: go('/alerts#scheduled') }]
 			: []),
-		{ id: 'action:theme', group: 'actions', label: m.misc_palette_theme(), keywords: 'dark light night day', icon: SunMoon, run: () => theme.toggle() },
 		{ id: 'action:shortcuts', group: 'actions', label: m.misc_shortcuts_title(), keywords: 'help keys hotkeys keyboard', icon: Keyboard, run: () => palette.openHelp() },
 		...settingsSections(),
 		...(auth.canSignOut

@@ -97,3 +97,70 @@ async fn the_client_wraps_failures_with_a_readable_message() {
         .unwrap_err();
     assert!(error.to_string().contains("did not answer"), "{error}");
 }
+
+#[tokio::test]
+async fn usage_and_disk_are_read_and_the_cpu_needs_two_cycles() {
+    use std::sync::atomic::{AtomicU64, Ordering};
+    let dir = tempfile::tempdir().unwrap();
+    let cpu = std::sync::Arc::new(AtomicU64::new(1_000_000_000));
+    let seen = cpu.clone();
+    let (socket, calls) = fake_docker(&dir, move |req| match req.path.as_str() {
+        "/containers/json?all=1" => (200, LIST.to_string()),
+        "/containers/aaa111/json" => (
+            200,
+            r#"{"State":{"Status":"running","Running":true},"HostConfig":{"Memory":1000}}"#
+                .to_string(),
+        ),
+        "/containers/bbb222/json" => (200, r#"{"State":{"Status":"exited"}}"#.to_string()),
+        "/containers/aaa111/stats?stream=false&one-shot=true" => (
+            200,
+            format!(
+                r#"{{"cpu_stats":{{"cpu_usage":{{"total_usage":{}}}}},
+                    "memory_stats":{{"usage":400,"stats":{{"inactive_file":100}}}}}}"#,
+                seen.fetch_add(500_000_000, Ordering::SeqCst)
+            ),
+        ),
+        "/system/df" => (
+            200,
+            r#"{"LayersSize":42,"Images":[],"Containers":[],"Volumes":[],"BuildCache":[]}"#
+                .to_string(),
+        ),
+        "/images/sha256:img1/json" => (200, IMAGE.to_string()),
+        _ => (500, String::new()),
+    });
+    let mut probe = DockerProbe::new(&socket, 10);
+
+    let first = probe.read().await.expect("premier cycle");
+    let web = first.detailed.iter().find(|c| c.name == "web").unwrap();
+    let usage = web.usage.as_ref().expect("statistiques");
+    assert_eq!(usage.memory_bytes, 300);
+    assert_eq!(web.memory_limit_bytes, Some(1000));
+    assert_eq!(usage.cpu_centipercent, None, "pas de CPU au premier relevé");
+    assert_eq!(first.disk.as_ref().map(|d| d.images_bytes), Some(42));
+    // Un conteneur arrêté n'est pas interrogé.
+    assert_eq!(calls.count("GET", "/containers/bbb222/stats"), 0);
+    assert!(first.detailed.iter().find(|c| c.name == "job").unwrap().usage.is_none());
+
+    tokio::time::sleep(Duration::from_millis(250)).await;
+    let second = probe.read().await.expect("second cycle");
+    let web = second.detailed.iter().find(|c| c.name == "web").unwrap();
+    let centi = web.usage.as_ref().unwrap().cpu_centipercent.expect("CPU au second relevé");
+    // 0,5 s de CPU en ~0,25 s d'horloge : de l'ordre de deux cœurs, la
+    // précision du minuteur ne se teste pas ici.
+    assert!(centi > 0, "{centi}");
+    // `system/df` est mis en cache dix minutes.
+    assert_eq!(calls.count("GET", "/system/df"), 1);
+}
+
+#[tokio::test]
+async fn a_daemon_without_stats_still_yields_the_inventory() {
+    let dir = tempfile::tempdir().unwrap();
+    let (socket, _) = fake_docker(&dir, |req| match req.path.as_str() {
+        "/containers/json?all=1" => (200, LIST.to_string()),
+        "/containers/aaa111/json" => (200, RUNNING.to_string()),
+        _ => (404, String::new()),
+    });
+    let inventory = DockerProbe::new(&socket, 10).read().await.expect("inventaire");
+    assert!(inventory.detailed.iter().all(|c| c.usage.is_none()));
+    assert!(inventory.disk.is_none());
+}

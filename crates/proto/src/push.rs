@@ -151,6 +151,11 @@ pub struct AgentIdentity {
     /// le serveur n'y demande alors ni service ni script.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub remediation: Option<crate::RemediationInfo>,
+    /// Port sur lequel la passerelle du relais accepte les agents de son site,
+    /// quand elle écoute. Absent : pas de passerelle (agent ordinaire, relais
+    /// sans passerelle, ou binaire antérieur).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub relay_gateway: Option<u16>,
 }
 
 impl AgentIdentity {
@@ -374,6 +379,12 @@ pub struct RelaySetting {
     /// configuration.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub site: Option<String>,
+    /// Passerelle des agents du site : port local sur lequel le relais accepte
+    /// les agents qui ne joignent pas le serveur, et qu'il fait passer, chiffrés
+    /// de bout en bout, jusqu'au port des agents du serveur. Absent : pas de
+    /// passerelle. `gateway_listen` dans l'agent.yaml du relais prime.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub gateway_port: Option<u16>,
 }
 
 #[cfg(test)]
@@ -399,6 +410,7 @@ mod tests {
             tags: BTreeMap::from([("salle".to_string(), "cave".to_string())]),
             binding_supported: true,
             self_update: None,
+            relay_gateway: None,
             remediation: None,
         }
     }
@@ -541,7 +553,11 @@ mod tests {
             agent_secret: None,
             bound: true,
             disabled_modules: vec!["docker".into()],
-            relay: Some(RelaySetting { enabled: true, site: Some("Lyon".into()) }),
+            relay: Some(RelaySetting {
+                enabled: true,
+                site: Some("Lyon".into()),
+                gateway_port: Some(8443),
+            }),
             event_rules: Some(vec![EventLogRule {
                 id: 4,
                 channel: "Security".into(),

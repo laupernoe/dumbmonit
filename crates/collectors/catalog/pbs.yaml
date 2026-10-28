@@ -1,0 +1,135 @@
+# Mesures et vues du type « pbs » (format : crates/collectors/src/catalog.rs).
+source: pbs
+prefixes: [pbs_]
+metrics:
+  - { name: pbs_up, label: "Up", unit: "bool" }
+  - { name: pbs_scrape_errors, label: "Scrape errors", better: "lower" }
+  - { name: pbs_version_info, label: "Version", kind: info }
+  - { name: pbs_feature_skipped_info, label: "Feature skipped", kind: info }
+  - { name: pbs_traffic_rules_total, label: "Traffic rules" }
+  - { name: pbs_traffic_rate_in_bytes, label: "Traffic rate in", unit: "B/s" }
+  - { name: pbs_traffic_rate_out_bytes, label: "Traffic rate out", unit: "B/s" }
+  - { name: pbs_traffic_limit_in_bytes, label: "Traffic limit in", unit: "B" }
+  - { name: pbs_traffic_limit_out_bytes, label: "Traffic limit out", unit: "B" }
+  - { name: pbs_tape_media_writable, label: "Tape media writable" }
+  - { name: pbs_tape_media_total, label: "Tape media" }
+  - { name: pbs_tape_media_pools_total, label: "Tape media pools" }
+  - { name: pbs_tape_media_expired, label: "Tape media expired", unit: "bool" }
+  - { name: pbs_tape_media_bytes_used, label: "Tape media bytes used" }
+  - { name: pbs_tape_drives_total, label: "Tape drives" }
+  - { name: pbs_tape_drive_info, label: "Tape drive", kind: info }
+  - { name: pbs_tape_changers_total, label: "Tape changers" }
+  - { name: pbs_tape_backup_jobs_total, label: "Tape backup jobs" }
+  - { name: pbs_tape_backup_job_next_run_seconds, label: "Tape backup job next run", unit: "s" }
+  - { name: pbs_tape_backup_job_never_run, label: "Tape backup job never run", unit: "bool" }
+  - { name: pbs_tape_backup_job_last_ok, label: "Tape backup job last ok", unit: "bool" }
+  - { name: pbs_sync_job_last_ok, label: "Sync job last ok", unit: "bool" }
+  - { name: pbs_node_zfs_pool_used_percent, label: "Node ZFS pool used", unit: "%", better: "lower", entity: "pool", min: 0, max: 100 }
+  - { name: pbs_node_zfs_pool_health_info, label: "Node ZFS pool health", kind: info }
+  - { name: pbs_node_zfs_pool_degraded, label: "Node ZFS pool degraded", unit: "bool", better: "lower" }
+  - { name: pbs_node_uptime_seconds, label: "Node uptime", unit: "s" }
+  - { name: pbs_node_updates_pending, label: "Node updates pending" }
+  - { name: pbs_node_swap_used_bytes, label: "Node swap used", unit: "B" }
+  - { name: pbs_node_swap_total_bytes, label: "Node swap total", unit: "B" }
+  - { name: pbs_node_services_total, label: "Node services" }
+  - { name: pbs_node_service_enabled, label: "Node service enabled", unit: "bool" }
+  - { name: pbs_node_service_active, label: "Node service active", unit: "bool" }
+  - { name: pbs_node_running_version_stale, label: "Node running version stale", unit: "bool" }
+  - { name: pbs_node_rootfs_used_bytes, label: "Node root FS used", unit: "B" }
+  - { name: pbs_node_rootfs_total_bytes, label: "Node root FS total", unit: "B" }
+  - { name: pbs_node_rootfs_percent, label: "Node root FS", unit: "%", min: 0, max: 100 }
+  - { name: pbs_node_rootfs_avail_bytes, label: "Node root FS avail", unit: "B" }
+  - { name: pbs_node_package_info, label: "Node package", kind: info }
+  - { name: pbs_node_memory_used_percent, label: "Node memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: pbs_node_memory_used_bytes, label: "Node memory used", unit: "B" }
+  - { name: pbs_node_memory_total_bytes, label: "Node memory total", unit: "B" }
+  - { name: pbs_node_memory_free_bytes, label: "Node memory free", unit: "B", better: "higher" }
+  - { name: pbs_node_kernel_info, label: "Node kernel", kind: info }
+  - { name: pbs_node_iowait_percent, label: "Node I/O wait", unit: "%", min: 0, max: 100 }
+  - { name: pbs_node_disk_wearout_percent, label: "Node disk wearout", unit: "%", min: 0, max: 100 }
+  - { name: pbs_node_disk_smart_failed, label: "Node disk SMART failed", unit: "bool", better: "lower" }
+  - { name: pbs_node_disk_size_bytes, label: "Node disk size", unit: "B" }
+  - { name: pbs_node_disk_health_info, label: "Node disk health", kind: info }
+  - { name: pbs_node_cpu_percent, label: "Node CPU", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: pbs_node_cpu_count, label: "Node CPU count" }
+  - { name: pbs_node_certificate_expires_seconds, label: "Node certificate expires", unit: "s" }
+  - { name: pbs_job_next_run_seconds, label: "Job next run", unit: "s" }
+  - { name: pbs_job_last_run_age_seconds, label: "Job last run age", unit: "s" }
+  - { name: pbs_job_last_ok, label: "Job last ok", unit: "bool" }
+  - { name: pbs_job_enabled, label: "Job enabled", unit: "bool" }
+  - { name: pbs_gc_last_success_age_seconds, label: "GC last success age", unit: "s" }
+  - { name: pbs_gc_last_run_ok, label: "GC last run ok", unit: "bool" }
+  - { name: pbs_gc_last_removed_chunks, label: "GC last removed chunks" }
+  - { name: pbs_gc_last_removed_bytes, label: "GC last removed", unit: "B" }
+  - { name: pbs_gc_last_pending_chunks, label: "GC last pending chunks" }
+  - { name: pbs_gc_last_pending_bytes, label: "GC last pending", unit: "B" }
+  - { name: pbs_gc_last_duration_seconds, label: "GC last duration", unit: "s", better: "lower" }
+  - { name: pbs_gc_disk_chunks, label: "GC disk chunks" }
+  - { name: pbs_gc_bad_chunks, label: "GC bad chunks" }
+  - { name: pbs_datastore_used_percent, label: "Datastore used", unit: "%", better: "lower", entity: "datastore", min: 0, max: 100 }
+  - { name: pbs_datastore_maintenance, label: "Datastore maintenance", unit: "bool" }
+  - { name: pbs_datastore_history_days, label: "Datastore history days", unit: "days" }
+  - { name: pbs_datastore_growth_percent_per_day, label: "Datastore growth percent per day" }
+  - { name: pbs_datastore_growth_bytes_per_day, label: "Datastore growth bytes per day" }
+  - { name: pbs_datastore_estimated_full_seconds, label: "Datastore estimated full", unit: "s" }
+  - { name: pbs_datastore_dedup_factor, label: "Datastore dedup factor" }
+  - { name: pbs_datastore_bytes_used, label: "Datastore bytes used" }
+  - { name: pbs_datastore_bytes_total, label: "Datastore bytes", unit: "B" }
+  - { name: pbs_datastore_bytes_avail, label: "Datastore bytes avail" }
+  - { name: pbs_datastore_backend_info, label: "Datastore backend", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - pbs_job_last_ok
+      - pbs_datastore_estimated_full_seconds
+      - pbs_gc_last_run_ok
+      - pbs_node_zfs_pool_degraded
+      - pbs_node_disk_smart_failed
+      - pbs_node_updates_pending
+      - pbs_traffic_rules_total
+      - pbs_tape_media_writable
+      - pbs_tape_media_total
+      - pbs_tape_media_pools_total
+      - pbs_tape_media_expired
+      - pbs_tape_media_bytes_used
+      - pbs_tape_drives_total
+      - pbs_tape_changers_total
+      - pbs_tape_backup_jobs_total
+      - pbs_tape_backup_job_next_run_seconds
+      - pbs_tape_backup_job_never_run
+      - pbs_tape_backup_job_last_ok
+      - pbs_sync_job_last_ok
+      - pbs_node_uptime_seconds
+      - pbs_node_swap_used_bytes
+      - pbs_node_services_total
+      - pbs_node_service_active
+      - pbs_node_running_version_stale
+      - pbs_node_disk_wearout_percent
+      - pbs_node_certificate_expires_seconds
+      - pbs_job_next_run_seconds
+      - pbs_job_last_run_age_seconds
+      - pbs_gc_last_success_age_seconds
+      - pbs_gc_last_removed_chunks
+      - pbs_gc_last_removed_bytes
+      - pbs_gc_last_pending_chunks
+      - pbs_gc_last_pending_bytes
+      - pbs_gc_last_duration_seconds
+      - pbs_gc_disk_chunks
+      - pbs_gc_bad_chunks
+      - pbs_datastore_maintenance
+      - pbs_datastore_history_days
+      - pbs_datastore_growth_percent_per_day
+      - pbs_datastore_growth_bytes_per_day
+      - pbs_datastore_dedup_factor
+  - view: timeseries
+    title: "Node CPU and memory"
+    metrics: [pbs_node_cpu_percent, pbs_node_iowait_percent, pbs_node_memory_used_percent]
+  - view: topn
+    title: "Storage used"
+    metrics: [pbs_datastore_used_percent, pbs_node_rootfs_percent, pbs_node_zfs_pool_used_percent]
+    options:
+      limit: "10"
+  - view: timeseries
+    title: "Traffic rules throughput"
+    metrics: [pbs_traffic_rate_in_bytes, pbs_traffic_rate_out_bytes]

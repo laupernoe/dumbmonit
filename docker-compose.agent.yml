@@ -12,13 +12,22 @@ services:
     image: ghcr.io/laupernoe/dumbmonit-agent:latest
     environment:
       DUMBMONIT_AGENT_URL: ${DUMBMONIT_AGENT_URL:?set the server URL}
-      DUMBMONIT_AGENT_TOKEN: ${DUMBMONIT_AGENT_TOKEN:?create a token in Settings › Agents}
+      DUMBMONIT_AGENT_TOKEN: ${DUMBMONIT_AGENT_TOKEN:?copy the token shown when adding a server with the agent}
+      # Encrypted agent channel and the fingerprint of the server's authority,
+      # as the install command shows them. Behind a relay, the relay's gateway.
+      DUMBMONIT_AGENT_TLS_URL: ${DUMBMONIT_AGENT_TLS_URL:-}
+      DUMBMONIT_AGENT_CA_PIN: ${DUMBMONIT_AGENT_CA_PIN:-}
       # The name shown in DumbMonit (a container's own hostname is random).
       DUMBMONIT_AGENT_HOSTNAME: ${DUMBMONIT_AGENT_HOSTNAME:-}
       # true = also run the probes of the devices assigned to this agent.
       DUMBMONIT_AGENT_RELAY: ${DUMBMONIT_AGENT_RELAY:-false}
       DUMBMONIT_AGENT_SITE: ${DUMBMONIT_AGENT_SITE:-}
       DUMBMONIT_AGENT_SECRET_FILE: /var/lib/dumbmonit-agent/agent-secret
+      # A relay with its gateway on: where the agents of the site connect.
+      # Publish the port below too.
+      DUMBMONIT_AGENT_GATEWAY_LISTEN: ${DUMBMONIT_AGENT_GATEWAY_LISTEN:-}
+    # ports:
+    #   - "8443:8443"
     volumes:
       # Keeps the agent bound to its device when the container is recreated.
       - agent-state:/var/lib/dumbmonit-agent

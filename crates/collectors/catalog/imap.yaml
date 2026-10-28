@@ -1,0 +1,27 @@
+# Mesures et vues du type « imap » (format : crates/collectors/src/catalog.rs).
+source: uptime
+prefixes: [probe_]
+metrics:
+  - { name: probe_success, label: "Up", unit: "bool" }
+  - { name: probe_duration_seconds, label: "Probe duration", unit: "s", better: "lower" }
+  - { name: probe_failure_info, label: "Failure reason", kind: info }
+  - { name: probe_connect_seconds, label: "Connect time", unit: "s", better: "lower" }
+  - { name: probe_imap_greeting_seconds, label: "Greeting time", unit: "s", better: "lower" }
+  - { name: probe_imap_login_seconds, label: "Login time", unit: "s", better: "lower" }
+  - { name: probe_imap_authenticated, label: "Authenticated", unit: "bool" }
+  - { name: probe_tls_handshake_seconds, label: "TLS handshake", unit: "s", better: "lower" }
+  - { name: probe_tls_version_info, label: "TLS version", kind: info }
+  - { name: probe_ssl_cert_expiry_days, label: "Certificate expires in", unit: "days" }
+  - { name: probe_ssl_cert_valid, label: "Certificate trusted", unit: "bool" }
+  - { name: probe_ssl_cert_issuer_info, label: "Certificate issuer", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - probe_imap_authenticated
+      - probe_tls_version_info
+      - probe_ssl_cert_expiry_days
+      - probe_ssl_cert_valid
+  - view: timeseries
+    title: "Response time"
+    metrics: [probe_duration_seconds, probe_connect_seconds, probe_imap_greeting_seconds, probe_imap_login_seconds, probe_tls_handshake_seconds]

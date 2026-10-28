@@ -96,6 +96,21 @@ pub async fn enrol(
     Ok(registration)
 }
 
+/// Client (MSP) du jeton d'enrôlement présenté, `None` si le jeton est absent,
+/// inconnu ou révoqué. Sert à refuser qu'un relais enrôle une machine pour un
+/// autre client que le sien.
+pub async fn token_client_of(
+    pool: &SqlitePool,
+    bearer: Option<&str>,
+) -> anyhow::Result<Option<i64>> {
+    let Some(presented) = token::extract_bearer(bearer) else { return Ok(None) };
+    let Some(token_id) = store::find_active_token(pool, &token::fingerprint(presented)).await?
+    else {
+        return Ok(None);
+    };
+    Ok(Some(crate::auth::clients::token_client(pool, token_id).await?))
+}
+
 /// Accepte un lot : vérifie le jeton, rattache la machine, range les mesures.
 pub async fn ingest(
     pool: &SqlitePool,
@@ -397,6 +412,7 @@ mod tests {
                 tags: BTreeMap::new(),
                 binding_supported: true,
                 self_update: None,
+                relay_gateway: None,
                 remediation: None,
             },
             samples,

@@ -3323,6 +3323,24 @@ const CROWDSEC_BOUNCER_KEY: CredentialView = CredentialView {
     )],
 };
 
+/// Compte de machine de la LAPI (`collectors/crowdsec`) : lit les alertes
+/// récentes, réduites à leur pays pour la carte des menaces.
+const CROWDSEC_MACHINE_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Machine login",
+    help: "Also reads the alerts of the last 24 hours, counted by country for the threat map. Addresses are never kept.",
+    fields: &[
+        cred_text("username", "Machine name", "The name given to cscli machines add.", "dumbmonit"),
+        cred_secret(
+            "password",
+            "Password",
+            "The password given to cscli machines add. Stored encrypted, never shown again.",
+            "",
+            true,
+        ),
+    ],
+};
+
 /// Délai commun aux intégrations Redis et MongoDB (`collectors/socket.rs`).
 const SOCKET_TIMEOUT: OptionView = number(
     "request_timeout_seconds",
@@ -4899,6 +4917,15 @@ pub async fn list(State(state): State<AppState>) -> Json<Vec<KindDescription>> {
     let mut kinds = Vec::new();
     for kind in registry.kinds() {
         let mut description = describe(&kind, registry.get(&kind).and_then(|c| c.description()));
+        // Mesures et vues : celles du collecteur ou du catalogue embarqué, sauf pour
+        // un type né à l'exécution qui les a décrites lui-même.
+        if description.metrics.is_empty()
+            && description.views.is_empty()
+            && let Some(measures) = registry.measures(&kind)
+        {
+            description.metrics = measures.metrics;
+            description.views = measures.views;
+        }
         // Les prérequis ne concernent que les types compilés : un paquet
         // d'intégration ne peut pas en déclarer sous le nom d'un type du serveur.
         if compiled(&kind).is_some() {
@@ -5314,11 +5341,12 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             setup: Setup {
                 title: "Install the agent on the machine",
                 steps: &[
-                    "In DumbMonit, save the monitor: an enrollment token (dmon_…) is shown once, with the install command ready to copy for Linux and for Windows.",
+                    "In DumbMonit, add a monitor and pick Server with the agent, then choose how the machine reaches the server: directly, or through the relay of a remote site behind a firewall.",
+                    "An enrollment token (dmon_…) is shown once, with the install command ready to copy for Linux/macOS, Windows and Docker.",
                     "Run that install command on the machine, with elevated rights (sudo on Linux and macOS, an elevated PowerShell on Windows).",
-                    "The machine shows up within a few seconds, named after its host name.",
+                    "The page waits for the first report (a few seconds), then lets you name the machine, file it in a folder and place it at a site, on the spot.",
                     "Optional, for Docker: if the agent runs under a dedicated user, add that user to the \"docker\" group and restart the agent.\nusermod -aG docker dumbmonit",
-                    "For a fleet, or to revoke a lost token, use Settings → Agents.",
+                    "For a fleet (a playbook, a machine image), tick Several machines with this command; a whole Windows domain goes through the Active Directory kit, offered on the same page.",
                 ],
                 ports: &[to_server!(
                     8080,
@@ -7132,8 +7160,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 "CrowdSec in Docker",
                 "CrowdSec on OPNsense or pfSense",
             ],
-            credential_types: &["none", "api_token"],
-            credentials: &[CROWDSEC_METRICS_ONLY, CROWDSEC_BOUNCER_KEY],
+            credential_types: &["none", "api_token", "username_password"],
+            credentials: &[CROWDSEC_METRICS_ONLY, CROWDSEC_BOUNCER_KEY, CROWDSEC_MACHINE_LOGIN],
             address_hint: "crowdsec.lan",
             default_port: 6060,
             setup: Setup {
@@ -7143,6 +7171,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Check from the DumbMonit host that the metrics answer on port 6060, and filter that port so only the DumbMonit host reaches it.\ncurl -s http://crowdsec.lan:6060/metrics | grep cs_info",
                     "DumbMonit also checks the Local API on port 8080 of the same host: untick Check the Local API for a host that only runs an agent.",
                     "Optional: create a bouncer key and paste it as Bouncer API key below.\nsudo cscli bouncers add dumbmonit",
+                    "Or, for the threat map of the Security page: create a machine login and choose Machine login below. Only the country of each alert is kept.\nsudo cscli machines add dumbmonit --password 'a-long-password'",
                     "In DumbMonit, enter the CrowdSec host, for example \"crowdsec.lan\".",
                 ],
                 ports: &[
@@ -7153,7 +7182,10 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                         "Only with the Local API check option (on by default)",
                     ),
                 ],
-                permissions: &["Bouncer API key (optional)\nRead-only: it can only read decisions"],
+                permissions: &[
+                    "Bouncer API key (optional)\nRead-only: it can only read decisions",
+                    "Machine login (optional)\nReads the alerts; a machine can also send alerts, so keep it for DumbMonit only",
+                ],
                 warning: "A bouncer that stops pulling keeps enforcing a frozen list: DumbMonit warns when a bouncer's requests stop for 30 minutes.",
             },
             options: CROWDSEC_OPTIONS,
@@ -8177,6 +8209,8 @@ impl CollectorView {
                 doc_url: guide_url(self.kind).into(),
             },
             options: self.options.iter().map(OptionView::description).collect(),
+            metrics: Vec::new(),
+            views: Vec::new(),
             requirements: Vec::new(),
         }
     }

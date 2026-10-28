@@ -2,30 +2,32 @@
 
 ![Einstellungen: sieben Tabs, hier Mein Konto mit Darstellung, Konto und Sicherheit und Push-Benachrichtigungen](../assets/screenshots/settings-light.png){ loading=lazy }
 
-Die Einstellungen enthalten das Administrative: Ihr Konto, wer sich wie anmelden kann, die Tokens, die Agenten und Assistenten hereinlassen, die Sicherung der Instanz, das Theme und den Zustand des Servers. Sie sind in sieben Tabs gegliedert, jeder mit eigener Adresse. Eine Leiste auf breitem Bildschirm, ein Streifen von Chips auf dem Smartphone und ein Suchfeld über die Abschnittsnamen helfen beim Finden eines Abschnitts.
+Die Einstellungen enthalten das Administrative: die Instanz selbst, Ihr Konto, wer sich wie anmelden kann, die Agenten, die Benachrichtigungskanäle, die Sicherung der Instanz und den Zustand des Servers. Sie sind in sieben Tabs gegliedert, jeder mit eigener Adresse. Eine Leiste auf breitem Bildschirm, eine Reihe von Chips auf dem Telefon und ein Suchfeld über den Abschnittsnamen helfen, einen Abschnitt zu finden.
 
 | Tab | Adresse | Inhalt |
 |---|---|---|
-| Mein Konto | `/settings/account` | Darstellung, Konto und Sicherheit (Passwort, Zwei-Faktor, Sicherheitsprotokoll), Push-Benachrichtigungen |
-| Team & Zugang | `/settings/team` | Benutzer, Single Sign-on |
-| Überwachung | `/settings/monitoring` | Agenten, Integrationspakete, [Sicherheitsbewertung](security-score.md) |
-| Benachrichtigungen & Berichte | `/settings/notifications` | Kanäle, Benachrichtigungsrichtlinie, Ruhezeiten ([Benachrichtigungskanäle](../notifications.md)), Berichte |
-| Statusseiten | `/settings/status` | Statusseiten und Ankündigungen ([Statusseiten](status-pages.md)) |
-| Wandanzeige | `/settings/wall` | Wandmodus, Wandmusik, Wandnachrichten ([Wandmodus](overview.md#wall-mode)) |
-| System | `/settings/system` | Sicherung, DumbMonit selbst, API und Assistenten, Info |
+| Allgemein | `/settings/general` | Name der Instanz, Sprache und Zeitzone, der Einrichtungsassistent ([Oberfläche und Einrichtungsassistent](product-modes.md)) |
+| Mein Konto | `/settings/account` | Sprache, Konto und Sicherheit (Passwort, Zwei-Faktor, Sicherheitsprotokoll), Push-Benachrichtigungen, Bereitschaftskontakte und Ruhezeiten ([Bereitschaft](../alerting/oncall.md)) |
+| Team & Zugang | `/settings/team` | Benutzer, Teams, Kunden, Single Sign-on, SAML, SCIM, LDAP |
+| Überwachung | `/settings/monitoring` | Agenten, Integrationspakete, [Sicherheitsbewertung](security-score.md), Standorte |
+| Benachrichtigungen | `/settings/notifications` | Kanäle, Benachrichtigungsrichtlinie ([Benachrichtigungskanäle](../notifications.md)) |
+| Wandanzeige | `/settings/wall` | Wandmodus: was er zeigt und wie man ihn öffnet ([Wandmodus](wall.md)) |
+| System | `/settings/system` | Sicherung, Konfigurationsdateien, DumbMonit selbst, Daten und Aufbewahrung, Logs, API und Assistenten, Info |
 
-Jeder Abschnitt behält seinen Anker: `/settings#agents` leitet an `/settings/monitoring#agents` weiter. Die alten Links (`/alerts#notifications`, `/status`) leiten ebenfalls an die neue Stelle weiter.
+Jeder Abschnitt behält seinen Anker: `/settings#agents` leitet an `/settings/monitoring#agents` weiter. Die alten Links (`/alerts#notifications`) leiten ebenfalls an die neue Stelle weiter. Statusseiten und Berichte sind nicht mehr in den Einstellungen: Sie haben eigene Seiten, **Statusseiten** (`/status`) und **Berichte** (`/reports`); `/settings/status` und `/settings/reports` leiten dorthin weiter. Musik, Nachrichten und Widgets der Wand gibt es nicht mehr: Ihre alten Links (`#music`, `#news`, `#widgets`) öffnen den Tab Wandanzeige.
 
 ## Darstellung {#appearance}
 
-Drei Kacheln, jede mit Vorschau ihres eigenen Themes: **System** (folgt Ihrem Gerät und wechselt
-mit ihm), **Tag** (das Theme „Diagrammpapier“) und **Nacht** (das Theme „Radar“). Die Wahl wird im
-Browser gespeichert. Der Umschalter im Header und *Theme wechseln* der Befehlspalette schalten
-zwischen Tag und Nacht um.
+Die Sprache der Oberfläche, in diesem Browser gespeichert. Die Konsole hat ein
+einziges dunkles Erscheinungsbild, es gibt also kein Theme zu wählen; öffentliche
+Statusseiten behalten ihr helles und dunkles Theme.
 
-**Wandmodus öffnen** steht am Ende des Abschnitts: der Bericht allein, im Vollbild, für einen
-Monitor im Raum. ++esc++ verlässt ihn, und die Befehlspalette öffnet ihn von überall — siehe
-[Wandmodus](overview.md#wall-mode).
+## Wandanzeige {#wall}
+
+**Wandmodus öffnen**: die Übersicht der Konsole im Vollbild, für einen Monitor
+im Raum. ++esc++ verlässt ihn, die Befehlspalette öffnet ihn von überall. Die
+Wand hat keine Musik, keine Nachrichten und keine Widgets mehr; auf Wunsch
+steht eine nächtliche Stadt hinter ihrem Urteil. Siehe [Wandmodus](wall.md).
 
 ## Konto & Sicherheit {#account-security}
 
@@ -165,18 +167,18 @@ unverändert.
 
 ## Agenten {#agents}
 
-Enrollment-Tokens für den [Linux-, macOS-, FreeBSD- und Windows-Agenten](../devices/agent.md).
-Erstellen Sie eines mit einem Namen („Dateiserver“, „Heimflotte“): Das Token wird einmalig
-angezeigt, mit den kopierfertigen Installationsbefehlen für Linux und Windows. Jeder Befehl trägt
-die SHA-256-Prüfsummen der Agent-Binaries, die dieser Server ausliefert, und der Installer lehnt
-einen nicht passenden Download ab; die Prüfsummen stehen zum Vergleich von Hand auch unter den
-Befehlen. Die Liste zeigt für jedes Token sein Präfix, Erstellungsdatum, letzte Verwendung und ob
-es widerrufen wurde. **Widerrufen** stoppt jeden Agenten, der dieses Token verwendet, bei seinem
-nächsten Push.
+Nur was allen [Agenten](../devices/agent.md) gemeinsam ist, für Admins: der
+verschlüsselte Agentenkanal (Zertifikate und ihre Zertifizierungsstelle, siehe
+[Agentensicherheit](../install/agent-security.md)), die automatischen
+Agenten-Updates und die bereits ausgegebenen Registrierungstokens. Jedes Token
+zeigt seinen Geltungsbereich, das Erstellungsdatum und die letzte Nutzung;
+**Widerrufen** stoppt jeden Agenten, der es nutzt, bei seiner nächsten
+Übertragung, ohne die Monitore zu löschen.
 
-Ein Token kann mehrere Rechner anmelden. Das Widerrufen löscht die Monitore nicht. Die Tokenliste,
-Erstellen und Widerrufen sind Admins vorbehalten; Betrachter und Operatoren sehen den Abschnitt
-ohne die Liste.
+Eine Maschine wird im Hinzufügen-Ablauf hinzugefügt (Token,
+Installationsbefehl, erste Verbindung, Weg über ein Relay, Active-Directory-Kit):
+**Neuer Monitor → Agent** (`/targets/new?kind=agent`), nicht hier. Die Agenten
+selbst haben eigene Seiten.
 
 ## Sicherheitsbewertung {#security-score}
 

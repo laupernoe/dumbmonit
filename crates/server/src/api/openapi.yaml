@@ -189,20 +189,6 @@ tags:
     description: Health of DumbMonit itself and the outgoing heartbeat.
   - name: Assistants
     description: The built-in Model Context Protocol (MCP) server.
-  - name: Wall news
-    description: >-
-      Optional headlines (RSS/Atom, read by the server) on the wall display.
-      Off by default.
-  - name: Wall widgets
-    description: >-
-      Optional widgets on the wall display (coins, weather, stocks, exchange
-      rates, critical CVEs), read by the server from public sources and
-      cached. Off by default. API keys never come back.
-  - name: Wall music
-    description: >-
-      Music on the wall display: what plays on the connected Spotify account,
-      the link every wall plays, and connecting Spotify (Authorization Code +
-      PKCE). Refresh tokens never leave the server.
   - name: Prometheus compatibility
     description: Read access for an existing Prometheus or Grafana, outside `/api`.
   - name: OpenTelemetry
@@ -2105,8 +2091,10 @@ paths:
       description: >-
         The inventory built by the scheduled scans, unknown devices first. An unknown
         device or port stays reported (see the `netscan_new_device` and
-        `netscan_new_port` alert rules) until it is marked as known. Administrators
-        only.
+        `netscan_new_port` alert rules) until it is marked as known. A new device that
+        takes the address of a known device under another MAC address carries
+        `mac_change_from` (spoofing or replaced hardware; `netscan_mac_change` alert
+        rule) until it is marked as known or ignored. Administrators only.
       x-token-scope: read
       parameters:
         - name: schedule_id
@@ -2171,6 +2159,26 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/discovery/inventory/devices/{id}/ignore:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: ignoreNetscanDevice
+      tags: [Discovery]
+      summary: Ignore a device
+      description: >-
+        The device and its ports count as known and never alert again (new device,
+        MAC change, new port). `markNetscanDeviceKnown` puts it back in the inventory.
+      x-token-scope: write
+      responses:
+        "204": { description: Ignored. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/discovery/inventory/ports/{id}/known:
     parameters:
       - name: id
@@ -2227,13 +2235,13 @@ paths:
     get:
       operationId: getInstance
       tags: [Onboarding]
-      summary: Product mode and whether the setup wizard is done
-      description: Public, so the interface can pick its layout before sign-in. Nothing else about the instance is disclosed here.
+      summary: Whether the setup wizard is done
+      description: Public, so the interface knows before sign-in whether to offer the setup wizard. Nothing else about the instance is disclosed here.
       security: []
       x-token-scope: public
       responses:
         "200":
-          description: Product mode and setup state.
+          description: Setup state.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/PublicInstance" }
@@ -2255,8 +2263,8 @@ paths:
     put:
       operationId: putInstanceSettings
       tags: [Onboarding]
-      summary: Change the product mode, name, language or time zone, or finish the wizard
-      description: An omitted field keeps its stored value. Switching the product mode only changes the interface; nothing is deleted.
+      summary: Change the name, language or time zone, or finish the wizard
+      description: An omitted field keeps its stored value. The former `product_mode` field is ignored if sent (there is a single interface).
       x-token-scope: write
       requestBody:
         required: true
@@ -2416,6 +2424,10 @@ paths:
         - name: dry_run
           in: query
           schema: { type: boolean, default: false }
+        - name: via_agent
+          in: query
+          schema: { type: integer, format: int64 }
+          description: Relay agent that probes the imported monitors (a remote site). Ignored for kinds a relay cannot probe.
         - name: rows
           in: query
           description: >-
@@ -2470,6 +2482,10 @@ paths:
         - name: dry_run
           in: query
           schema: { type: boolean, default: false }
+        - name: via_agent
+          in: query
+          schema: { type: integer, format: int64 }
+          description: Relay agent that probes the imported monitors (a remote site). Ignored for kinds a relay cannot probe.
         - name: rows
           in: query
           description: >-
@@ -2516,6 +2532,10 @@ paths:
         - name: dry_run
           in: query
           schema: { type: boolean, default: false }
+        - name: via_agent
+          in: query
+          schema: { type: integer, format: int64 }
+          description: Relay agent that probes the imported monitors (a remote site). Ignored for kinds a relay cannot probe.
         - name: rows
           in: query
           description: >-
@@ -2565,6 +2585,10 @@ paths:
         - name: dry_run
           in: query
           schema: { type: boolean, default: false }
+        - name: via_agent
+          in: query
+          schema: { type: integer, format: int64 }
+          description: Relay agent that probes the imported monitors (a remote site). Ignored for kinds a relay cannot probe.
         - name: rows
           in: query
           schema: { type: string, example: "1,4,5" }
@@ -2613,6 +2637,10 @@ paths:
         - name: dry_run
           in: query
           schema: { type: boolean, default: false }
+        - name: via_agent
+          in: query
+          schema: { type: integer, format: int64 }
+          description: Relay agent that probes the imported monitors (a remote site). Ignored for kinds a relay cannot probe.
         - name: rows
           in: query
           schema: { type: string, example: "1,4,5" }
@@ -4804,6 +4832,39 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/agent/tokens/{id}/machines:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: listAgentTokenMachines
+      tags: [Agents]
+      summary: Machines enrolled with a token, newest first
+      description: >-
+        Administrator only. The add-an-agent flow polls it after showing the
+        install command, to see the first connection and then name the machine,
+        file it in a folder and place it at a site without leaving the flow.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Up to 50 machines.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, name, hostname, os]
+                  properties:
+                    id: { type: integer, format: int64, description: Id of the `agent` device. }
+                    name: { type: string }
+                    hostname: { type: string }
+                    os: { type: string }
+                    last_seen_at: { type: [string, "null"] }
+                    via_agent: { type: [integer, "null"], format: int64, description: Relay the machine connects through. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/agent/tokens/{id}/close:
     parameters:
       - $ref: "#/components/parameters/Id"
@@ -4868,6 +4929,16 @@ paths:
           required: false
           schema: { type: string }
           description: The URL machines reach this server at; the listen address by default.
+        - name: relay_id
+          in: query
+          required: false
+          schema: { type: integer, format: int64 }
+          description: "Commands through this relay agent: scripts, binaries and the encrypted channel go through its gateway, end-to-end encrypted to this server."
+        - name: relay_host
+          in: query
+          required: false
+          schema: { type: string }
+          description: Address the site reaches the relay at; the one set on the relay, else its host name.
       responses:
         "200":
           description: Install parameters.
@@ -5100,6 +5171,24 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/relays/kinds:
+    get:
+      operationId: listRelayKinds
+      tags: [Agents]
+      summary: Device kinds a relay agent can probe
+      description: The add forms only offer "Reached through" (and the gateway route) for these kinds.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Kinds, sorted.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/relays:
     get:
       operationId: listRelays
@@ -5149,6 +5238,8 @@ paths:
         left out. Each device node carries the `subnet` it sits in (from its IP address and the
         networks the site's firewalls know, else its /24; none for a public address or a host
         name) and, when a firewall says so, that network's `vlan` and `vlan_name`.
+        A link with a known switch port also carries `traffic` (bit rates, utilization against
+        the port speed, errors) read from the interface counters already collected.
         Device addresses are not included; only the addresses a hypervisor reports for its guests
         are (`ips`). States are read from `GET /api/targets`.
         A node's `site` is found without configuration: the location the device is placed at
@@ -5750,6 +5841,14 @@ paths:
               properties:
                 enabled: { type: boolean }
                 site: { type: [string, "null"], maxLength: 80, description: Site of this relay. }
+                gateway:
+                  type: object
+                  description: "Gateway for the agents of its site: they connect to the relay, which carries their TLS sessions, unread, to this server. Absent: unchanged."
+                  required: [enabled]
+                  properties:
+                    enabled: { type: boolean }
+                    port: { type: [integer, "null"], minimum: 1, maximum: 65535, default: 8443 }
+                    host: { type: [string, "null"], maxLength: 253, description: Address the site reaches the relay at. }
       responses:
         "200":
           description: The machine after the change.
@@ -5964,6 +6063,35 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ContainerPolicy" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/containers/policy:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    put:
+      operationId: setContainerPolicies
+      tags: [Containers]
+      summary: Set several containers' automatic actions at once
+      description: >-
+        Applies the same optional fields to every named container in one
+        transaction; an omitted field keeps each container's stored value.
+        A name that is not a valid container name is reported in its own result
+        and does not stop the others. Same rights as the single-container route.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContainerPolicyBulkPatch" }
+      responses:
+        "200":
+          description: One result per requested name, in request order.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContainerPolicyBulkReply" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -7952,6 +8080,36 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/port-traffic:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getPortTraffic
+      tags: [Devices]
+      summary: Traffic of switch ports over the last hour
+      description: |
+        Received and sent bit rate of one or more interfaces of the device, one point per
+        minute over the last hour (the curve shown when a link of the topology map is clicked).
+        Several ports are added up, as for a LAG.
+      x-token-scope: read
+      parameters:
+        - name: ports
+          in: query
+          required: true
+          description: "Interface names (`ifname`) separated by commas, at most 16."
+          schema: { type: string }
+      responses:
+        "200":
+          description: The curve.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PortTraffic" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "502": { description: The metrics store did not answer. }
+
   /api/targets/{id}/proxy:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -7970,6 +8128,39 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/deadlines:
+    get:
+      operationId: listDeadlines
+      tags: [Integrations]
+      summary: Expiry dates across the instance, soonest first
+      description: >
+        Domains, certificates, application secrets (Entra), products
+        (Infomaniak), device keys (Tailscale) and licences, read from the last
+        point of each collected expiry series. Already expired items stay for
+        thirty days.
+      x-token-scope: read
+      parameters:
+        - name: target
+          in: query
+          required: false
+          description: Only this monitor.
+          schema: { type: integer }
+        - name: max_days
+          in: query
+          required: false
+          description: Horizon in days (default 366, at most 3650).
+          schema: { type: number }
+      responses:
+        "200":
+          description: The deadlines of the monitors the caller can see.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Deadline" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 
   /api/targets/{id}/blacklist:
     parameters:
@@ -8028,6 +8219,109 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/forecasts:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getTargetForecasts
+      tags: [Alerts]
+      summary: Fill-up forecasts — disks, datastores, pools, volumes, licences
+      description: >-
+        One entry per capacity entity of the device (every family of the
+        capacity catalogue: agent filesystems, Proxmox and PBS datastores,
+        TrueNAS/Synology/QNAP/Unraid/Ceph pools and volumes, Microsoft 365
+        licences, UPS battery runtime…). The growth is a Theil–Sen fit over the
+        last days (7 by default), restarted after the last lasting drop (cleanup,
+        expansion, quota reset), so gaps and steps do not skew it. Uses the
+        settings of the built-in `capacity_forecast` rule; `severity` is what
+        that rule would raise today. Sorted by `days_to_full`, soonest first.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Forecasts, soonest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CapacityForecast" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "502": { $ref: "#/components/responses/BadGateway" }
+
+  /api/targets/{id}/luns:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getTargetLuns
+      tags: [Integrations]
+      summary: iSCSI LUNs (Synology) or zvols (TrueNAS) of a NAS, and what uses them
+      description: >-
+        One entry per LUN or zvol, read from the last probe: provisioning
+        (`thick`, `thin`, `unknown`), size, what it takes on its volume, the
+        written share of a thin LUN, the iSCSI targets and connected initiators.
+        A thick LUN is opaque from the NAS: `consumer` gives the monitor that
+        uses it (a manual link, or an automatic match on name and size when it
+        is unambiguous) and that monitor's own fill level. For a Synology, the
+        volumes that host LUNs come with their effective usage (without
+        thick reservations) and their thin over-allocation.
+      x-token-scope: read
+      responses:
+        "200":
+          description: LUNs and the volumes hosting them.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TargetLuns" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/luns/{lun}/consumer:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: lun
+        in: path
+        required: true
+        description: The `id` of the LUN (DSM UUID, zvol name), URL-encoded.
+        schema: { type: string }
+    put:
+      operationId: linkLunConsumer
+      tags: [Integrations]
+      summary: Say which monitor uses a LUN
+      description: >-
+        Manual link "this LUN is entity X of monitor Y". `family` and `entity`
+        name a capacity entity as `GET /api/targets/{id}/forecasts` returns it
+        (for example `vsphere_datastore` and `datastore1`, or `filesystem` and
+        `/srv`). Replaces any previous link of the LUN. Saved in backups.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_id, family, entity]
+              properties:
+                target_id: { type: integer, format: int64, description: The consuming monitor. }
+                family: { type: string, examples: [vsphere_datastore, filesystem, proxmox_storage] }
+                entity: { type: string, examples: [datastore1, /srv] }
+      responses:
+        "204": { description: Link saved. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: unlinkLunConsumer
+      tags: [Integrations]
+      summary: Remove the manual link of a LUN
+      x-token-scope: write
+      responses:
+        "204": { description: Link removed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   # ---------------------------------------------------------------- sécurité
   /api/targets/{id}/security:
     parameters:
@@ -8069,6 +8363,36 @@ paths:
               schema: { $ref: "#/components/schemas/SecuritySummary" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/security/threats:
+    get:
+      operationId: getSecurityThreats
+      tags: [Security]
+      summary: Threat map, by country, every source together
+      description: >-
+        Attacks stopped, counted by country of origin: CrowdSec alerts of the
+        last 24 hours (`source.cn`, needs a machine login on the CrowdSec
+        monitor), inbound connections blocked by the OPNsense live map (its
+        15-minute window, only while someone watches it) and Cloudflare threats
+        by country (traffic analytics). Countries only: no address is ever read,
+        stored or returned. A team-restricted account sees its own devices'
+        sources only.
+      x-token-scope: read
+      parameters:
+        - name: target
+          in: query
+          required: false
+          schema: { type: integer, format: int64 }
+          description: Only the sources of this device (the CrowdSec panel).
+      responses:
+        "200":
+          description: Countries, busiest first, and the sources that feed the map.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ThreatMap" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /api/security/settings:
     get:
@@ -8571,510 +8895,6 @@ paths:
         "429": { $ref: "#/components/responses/TooManyRequests" }
         "502": { description: VictoriaLogs did not answer. }
         "503": { description: Log storage is not enabled. }
-  /api/wall/news:
-    get:
-      operationId: getWallNews
-      tags: [Wall news]
-      summary: Headlines for the walls
-      description: >-
-        The latest headlines of the configured RSS/Atom feeds (read by the
-        server, cached five minutes). Off by default. Walls poll it every five
-        minutes.
-      x-token-scope: read
-      responses:
-        "200":
-          description: Headlines and feed problems.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/WallNews" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-  /api/wall/news/settings:
-    get:
-      operationId: getWallNewsSettings
-      tags: [Wall news]
-      summary: Wall news settings
-      x-token-scope: read
-      responses:
-        "200":
-          description: The settings (defaults while never saved).
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/WallNewsSettings" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-    put:
-      operationId: putWallNewsSettings
-      tags: [Wall news]
-      summary: Save the wall news settings
-      description: >-
-        At most eight feeds (http or https). Fields of the former pictures
-        (`gallery`) and live video (`video`, `video_url`…) are accepted and
-        ignored.
-      x-token-scope: write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/WallNewsSettings" }
-      responses:
-        "200":
-          description: The settings as saved.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/WallNewsSettings" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-  /api/wall/news/presets:
-    get:
-      operationId: getWallNewsPresets
-      tags: [Wall news]
-      summary: News sources offered per country
-      x-token-scope: read
-      responses:
-        "200":
-          description: Countries with their feeds and live channels.
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/WallNewsCountry" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-  /api/wall/news/test:
-    post:
-      operationId: testWallNewsFeed
-      tags: [Wall news]
-      summary: Read a feed once and show its first headline
-      description: Uncached; refuses internal addresses like every wall fetch.
-      x-token-scope: write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [url]
-              properties:
-                url: { type: string, maxLength: 500 }
-      responses:
-        "200":
-          description: Whether the feed could be read, and why not.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/WallNewsTest" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-  /api/wall/widgets:
-    get:
-      operationId: getWallWidgets
-      tags: [Wall widgets]
-      summary: The widgets' data for the walls
-      description: >-
-        One section per widget turned on (`null` otherwise). The server reads
-        the sources and caches them (coins 60 s, stocks 5 min, weather 15 min,
-        rates and CVEs 1 h, AI usage 15 min); a source that fails keeps its last value for a few
-        hours, with `error` set. Walls poll it every minute.
-      x-token-scope: read
-      responses:
-        "200":
-          description: The sections.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/WallWidgets" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-  /api/wall/widgets/settings:
-    get:
-      operationId: getWallWidgetsSettings
-      tags: [Wall widgets]
-      summary: Wall widgets settings
-      x-token-scope: read
-      responses:
-        "200":
-          description: The settings (defaults while never saved), and whether API keys are set.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/WallWidgetsSettings" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-    put:
-      operationId: putWallWidgetsSettings
-      tags: [Wall widgets]
-      summary: Save the wall widgets settings
-      description: >-
-        An omitted field takes its default. `secrets` sets the optional API
-        keys: an omitted key is kept, an empty string clears it. Keys are
-        stored encrypted and never returned.
-      x-token-scope: write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              allOf:
-                - { $ref: "#/components/schemas/WallWidgetsSettings" }
-                - type: object
-                  properties:
-                    secrets:
-                      type: object
-                      properties:
-                        finnhub: { type: string, maxLength: 200 }
-                        coingecko: { type: string, maxLength: 200, description: A CoinGecko Demo key. }
-                        anthropic: { type: string, maxLength: 200, description: "An Anthropic Admin API key (sk-ant-admin…), organizations only." }
-                        openai: { type: string, maxLength: 200, description: An OpenAI organization admin key. }
-      responses:
-        "200":
-          description: The settings as saved.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/WallWidgetsSettings" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-  /api/wall/widgets/catalog:
-    get:
-      operationId: getWallWidgetsCatalog
-      tags: [Wall widgets]
-      summary: Coins and currencies offered
-      x-token-scope: read
-      responses:
-        "200":
-          description: The coins (CoinGecko ids), their display currencies and the exchange-rate currencies.
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [coins, coin_currencies, fx_currencies]
-                properties:
-                  coins:
-                    type: array
-                    items:
-                      type: object
-                      required: [id, symbol, name]
-                      properties:
-                        id: { type: string }
-                        symbol: { type: string }
-                        name: { type: string }
-                  coin_currencies: { type: array, items: { type: string } }
-                  fx_currencies: { type: array, items: { type: string } }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-  /api/wall/widgets/places:
-    get:
-      operationId: searchWallWidgetsPlaces
-      tags: [Wall widgets]
-      summary: Find a place for the weather (Open-Meteo geocoding)
-      x-token-scope: read
-      parameters:
-        - name: q
-          in: query
-          required: true
-          schema: { type: string, minLength: 2, maxLength: 80 }
-        - name: lang
-          in: query
-          schema: { type: string, description: Two-letter language of the names. }
-      responses:
-        "200":
-          description: Up to eight places.
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/WallPlace" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "502":
-          description: The geocoding service did not answer.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Error" }
-  /api/music/now:
-    get:
-      operationId: getWallMusic
-      tags: [Wall music]
-      summary: What the walls play
-      description: >-
-        What plays on the connected Spotify account, wherever it plays (read
-        from Spotify at most every few seconds, shared by every caller), and
-        the link the walls play. Walls poll it every five seconds.
-      x-token-scope: read
-      responses:
-        "200":
-          description: Spotify playback and the shared link.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/WallMusic" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-  /api/music/link:
-    put:
-      operationId: playOnWall
-      tags: [Wall music]
-      summary: Every wall plays this Spotify, Deezer or YouTube link
-      x-token-scope: write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [link]
-              properties:
-                link: { type: string, maxLength: 500 }
-      responses:
-        "200":
-          description: The link now on the walls.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/WallLink" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-    delete:
-      operationId: stopWallLink
-      tags: [Wall music]
-      summary: The walls stop the embedded player
-      x-token-scope: write
-      responses:
-        "204": { description: Stopped. }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-  /api/music/spotify:
-    get:
-      operationId: getSpotifyAccount
-      tags: [Wall music]
-      summary: The connected Spotify account, never a token
-      x-token-scope: read
-      responses:
-        "200":
-          description: Connection state.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/SpotifyAccount" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-    delete:
-      operationId: disconnectSpotify
-      tags: [Wall music]
-      summary: Disconnect Spotify and forget its tokens
-      x-token-scope: write
-      responses:
-        "204": { description: Disconnected. }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-  /api/music/spotify/authorize:
-    post:
-      operationId: startSpotifyConnection
-      tags: [Wall music]
-      summary: Start connecting Spotify
-      description: >-
-        Administrator session only. Returns Spotify's approval URL (PKCE, valid
-        ten minutes, once). `redirect_uri` is `http://127.0.0.1:8888/callback`
-        or `https://<origin of the page>/api/music/spotify/callback`.
-      security: [{ cookieAuth: [] }]
-      x-token-scope: none
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [client_id, redirect_uri]
-              properties:
-                client_id: { type: string }
-                redirect_uri: { type: string }
-      responses:
-        "200":
-          description: Where to send the browser.
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [authorize_url, redirect_uri, expires_in]
-                properties:
-                  authorize_url: { type: string }
-                  redirect_uri: { type: string }
-                  expires_in: { type: integer }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-  /api/music/spotify/complete:
-    post:
-      operationId: completeSpotifyConnection
-      tags: [Wall music]
-      summary: Finish a loopback connection with the address the browser landed on
-      description: Administrator session only, the one that started the connection.
-      security: [{ cookieAuth: [] }]
-      x-token-scope: none
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [url]
-              properties:
-                url: { type: string }
-      responses:
-        "200":
-          description: The connected account.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/SpotifyAccount" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-  /api/music/spotify/token:
-    get:
-      operationId: getSpotifyToken
-      tags: [Wall music]
-      summary: A short-lived Spotify access token for the wall's player
-      description: >-
-        Browser sessions only (any role): the wall's Web Playback SDK needs it.
-        API tokens are refused.
-      security: [{ cookieAuth: [] }]
-      x-token-scope: none
-      responses:
-        "200":
-          description: The access token (never cached).
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [access_token, expires_in]
-                properties:
-                  access_token: { type: string }
-                  expires_in: { type: integer }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "409": { $ref: "#/components/responses/Conflict" }
-  /api/music/speaker:
-    get:
-      operationId: getWallSpeaker
-      tags: [Wall music]
-      summary: The wall's Spotify speaker, as Settings shows it
-      description: >-
-        The speaker name, the connected account, whether it has Premium (when
-        Spotify or a wall said so), the account's Spotify Connect devices right
-        now, whether the speaker is among them, and what each wall reported in
-        the last fifteen minutes (browser, phase, problem).
-      x-token-scope: read
-      responses:
-        "200":
-          description: The speaker's state (never cached).
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/WallSpeaker" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-    put:
-      operationId: setWallSpeakerName
-      tags: [Wall music]
-      summary: Rename the speaker every wall announces (admin)
-      description: >-
-        `null` or an empty name goes back to "DumbMonit Wall". Walls pick the
-        new name up within a few seconds.
-      x-token-scope: write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [name]
-              properties:
-                name: { type: [string, "null"], maxLength: 64 }
-      responses:
-        "200":
-          description: The name now in use.
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [speaker_name]
-                properties:
-                  speaker_name: { type: string }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-  /api/music/speaker/report:
-    post:
-      operationId: reportWallSpeaker
-      tags: [Wall music]
-      summary: A wall reports its speaker's state
-      description: >-
-        Browser sessions only: sent by the wall every minute and on every
-        change. The reply says whether Spotify lists the wall's device
-        (`null` when it cannot be checked).
-      security: [{ cookieAuth: [] }]
-      x-token-scope: none
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [display, name, phase]
-              properties:
-                display: { type: string, description: "Random id kept by the wall's browser (8–64 letters, digits, dashes)." }
-                name: { type: string }
-                phase: { type: string, enum: [off, unsupported, starting, ready, error] }
-                activated: { type: boolean }
-                device_id: { type: [string, "null"] }
-                problem: { type: [string, "null"] }
-                browser: { type: [string, "null"] }
-                premium: { type: [boolean, "null"] }
-      responses:
-        "200":
-          description: Whether Spotify lists this wall.
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [listed]
-                properties:
-                  listed: { type: [boolean, "null"] }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-  /api/music/speaker/play:
-    post:
-      operationId: playOnWallSpeaker
-      tags: [Wall music]
-      summary: Play the account on the wall's speaker
-      description: >-
-        Browser sessions only (any role: the wall already holds a token that
-        can do this). Transfers the account's playback to `device_id`, or to
-        the device named like the speaker, and resumes it — "Play here" on the
-        wall, "Test sound" in Settings.
-      security: [{ cookieAuth: [] }]
-      x-token-scope: none
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                device_id: { type: [string, "null"] }
-      responses:
-        "200":
-          description: Spotify now plays there.
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [device_id, speaker_name]
-                properties:
-                  device_id: { type: string }
-                  speaker_name: { type: string }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "409": { $ref: "#/components/responses/Conflict" }
 
   # ---------------------------------------------------------- on-call
   /api/oncall/people:
@@ -11040,6 +10860,21 @@ components:
               sha256: { type: string }
         linux_template: { type: string, description: "Unix install command; replace `{TOKEN}`." }
         windows_template: { type: string, description: "PowerShell install command; replace `{TOKEN}`." }
+        via_relay:
+          oneOf:
+            - type: "null"
+            - $ref: "#/components/schemas/RelayRoute"
+    RelayRoute:
+      type: object
+      required: [relay_id, relay_name, host, port, listening]
+      description: The relay gateway the commands go through.
+      properties:
+        relay_id: { type: integer, format: int64 }
+        relay_name: { type: string }
+        site: { type: [string, "null"] }
+        host: { type: string, description: Address of the relay as seen from its site. }
+        port: { type: integer, description: Port of its gateway. }
+        listening: { type: boolean, description: The relay reports its gateway open on that port. }
     AgentChannel:
       type: object
       required: [enabled, required, required_setting, protocol, key_exchange, agents]
@@ -11148,6 +10983,8 @@ components:
         relay: { type: boolean, default: false, description: Make the enrolled machine a relay for a remote site. }
         site: { type: [string, "null"], maxLength: 80, description: Site of that relay. }
         client_id: { type: [integer, "null"], format: int64, description: "MSP mode: the client the token enrols into. Absent: the default client." }
+        relay_id: { type: [integer, "null"], format: int64, description: "Install through this relay agent (a site behind a firewall): the commands point at its gateway, which the server asks the relay to open. The relay must belong to the same client." }
+        relay_host: { type: [string, "null"], maxLength: 253, description: Address the site reaches the relay at (host name or IP, no scheme or port). }
     CreatedAgentToken:
       allOf:
         - $ref: "#/components/schemas/AgentToken"
@@ -11171,6 +11008,8 @@ components:
         sysvol_binary: { type: boolean, default: false, description: Also copy the agent binary to SYSVOL for servers without outbound access. }
         server_host: { type: [string, "null"], description: 'DNS name (FQDN) or IPv4 address of this server that agents contact, with an optional :port. Replaces the host of base_url.' }
         dns_server: { type: [string, "null"], description: IP address of a DNS server used to resolve server_host on machines that cannot. }
+        relay_id: { type: [integer, "null"], format: int64, description: "Servers of a site behind a firewall install and report through this relay agent (its gateway). Replaces base_url and server_host." }
+        relay_host: { type: [string, "null"], maxLength: 253, description: Address the servers reach the relay at. }
     CreatedAgentAdKit:
       type: object
       required: [token, secret, script, filename, folder, install_windows, server_url]
@@ -11209,6 +11048,18 @@ components:
           type: array
           description: Settings read from the device's `tags`, in display order.
           items: { $ref: "#/components/schemas/OptionDescription" }
+        metrics:
+          type: array
+          description: >-
+            Metric families this type emits, with unit and kind. Omitted when the type declares
+            none: the interface then guesses from the name suffixes.
+          items: { $ref: "#/components/schemas/MetricDescription" }
+        views:
+          type: array
+          description: >-
+            Views recommended for the device page, in display order: a row of figures (`stat`)
+            and up to four charts. Omitted when the type declares none: every family is charted.
+          items: { $ref: "#/components/schemas/ViewDescription" }
         requirements:
           type: array
           description: >-
@@ -11216,6 +11067,44 @@ components:
             with whether the server found it in place. Omitted when the type needs nothing. The
             interface writes the sentences from `id` and shows the notice while `satisfied` is false.
           items: { $ref: "#/components/schemas/Requirement" }
+    MetricDescription:
+      type: object
+      required: [name, kind]
+      properties:
+        name: { type: string, description: 'Name as the collector emits it, without the `dumbmonit_` prefix the server adds when storing it.' }
+        label: { type: string }
+        unit: { type: string, description: '`%`, `s`, `ms`, `B`, `B/s`, `°C`, `bool`, `days`, `timestamp`…; for a counter, the unit of the running total (charted as a rate). Omitted: a plain number.' }
+        kind: { type: string, enum: [gauge, counter, info, state] }
+        better: { type: string, enum: [higher, lower], description: Which way a good figure goes. Omitted when neither. }
+        min: { type: number }
+        max: { type: number }
+        max_from: { type: string, description: Family giving the maximum of each series. }
+        entity: { type: string, description: 'Label that names the measured object (`ifname`, `disk`, `pool`…).' }
+        states:
+          type: array
+          description: For `kind = state`, what each code means.
+          items:
+            type: object
+            required: [value, label]
+            properties:
+              value: { type: number }
+              label: { type: string }
+              tone: { type: string, enum: [ok, warning, critical, neutral] }
+    ViewDescription:
+      type: object
+      required: [view, metrics]
+      properties:
+        view: { type: string, description: '`stat`, `timeseries`, `topn`, `heatmap`, `gauge`, `table`; an unknown view is drawn as curves.' }
+        title: { type: string }
+        metrics:
+          type: array
+          description: Families shown, by `MetricDescription.name`.
+          items: { type: string }
+        group_by: { type: string, description: 'Label that tells entities apart (`topn`, `heatmap`); omitted: every series.' }
+        options:
+          type: object
+          additionalProperties: { type: string }
+          description: 'View settings, e.g. `limit`.'
     Requirement:
       type: object
       required: [id, satisfied, doc_url, compose_snippet]
@@ -11373,7 +11262,7 @@ components:
         enabled: { type: boolean, default: true }
     NetscanSchedule:
       type: object
-      required: [id, name, cidr, agent_id, agent_name, interval_secs, depth, enabled, initialized, running, last_run_at, last_status, last_error, devices, unknown_devices, unknown_ports]
+      required: [id, name, cidr, agent_id, agent_name, interval_secs, depth, enabled, initialized, running, last_run_at, last_status, last_error, devices, unknown_devices, ignored_devices, mac_changes, unknown_ports]
       properties:
         id: { type: integer, format: int64 }
         name: { type: string }
@@ -11390,6 +11279,8 @@ components:
         last_error: { type: [string, "null"] }
         devices: { type: integer }
         unknown_devices: { type: integer }
+        ignored_devices: { type: integer }
+        mac_changes: { type: integer, description: New devices on the address of a known device under another MAC, not yet marked known or ignored. }
         unknown_ports: { type: integer, description: Unknown ports of known devices. }
     NetscanPort:
       type: object
@@ -11404,15 +11295,17 @@ components:
         last_seen: { type: string }
     NetscanDevice:
       type: object
-      required: [id, schedule_id, ip, mac, hostname, vendor, known, first_seen, last_seen, ports]
+      required: [id, schedule_id, ip, mac, hostname, vendor, known, ignored, mac_change_from, first_seen, last_seen, ports]
       properties:
         id: { type: integer, format: int64 }
         schedule_id: { type: integer, format: int64 }
         ip: { type: string, description: Last address seen; a device is identified by its MAC when visible. }
         mac: { type: [string, "null"] }
         hostname: { type: [string, "null"] }
-        vendor: { type: [string, "null"] }
-        known: { type: boolean }
+        vendor: { type: [string, "null"], description: Manufacturer from the MAC prefix (OUI), when known. }
+        known: { type: boolean, description: Also true for an ignored device. }
+        ignored: { type: boolean }
+        mac_change_from: { type: [string, "null"], description: MAC address the IP had before this new device took it. }
         first_seen: { type: string }
         last_seen: { type: string }
         ports:
@@ -11533,21 +11426,15 @@ components:
         dismissed:
           type: array
           items: { type: string, enum: [device, channel, test] }
-    ProductMode:
-      type: string
-      enum: [homelab, enterprise]
-      description: "`homelab`: a simpler interface. `enterprise`: the dense dark interface with advanced options in view. Presentation only."
     PublicInstance:
       type: object
-      required: [product_mode, setup_completed]
+      required: [setup_completed]
       properties:
-        product_mode: { $ref: "#/components/schemas/ProductMode" }
         setup_completed: { type: boolean }
     InstanceSettings:
       type: object
-      required: [product_mode, setup_completed, name, language, timezone]
+      required: [setup_completed, name, language, timezone]
       properties:
-        product_mode: { $ref: "#/components/schemas/ProductMode" }
         setup_completed: { type: boolean }
         setup_completed_at: { type: [string, "null"], description: UTC without suffix. }
         name: { type: string, maxLength: 80, description: Empty shows "DumbMonit". }
@@ -11556,7 +11443,6 @@ components:
     InstancePatch:
       type: object
       properties:
-        product_mode: { $ref: "#/components/schemas/ProductMode" }
         setup_completed: { type: boolean }
         name: { type: string, maxLength: 80 }
         language: { type: string }
@@ -11979,6 +11865,17 @@ components:
         min_samples: { type: integer, default: 3 }
         log_window_secs: { type: integer, minimum: 60, maximum: 86400, default: 300, description: "`log_pattern` rules: counting window. Accepted on write as `window_secs` too." }
         log_per_target: { type: boolean, default: true, description: "`log_pattern` rules: one alert per device (the `target` field of the lines), or a single one. Accepted on write as `per_target` too." }
+        forecast_window_days: { type: integer, minimum: 2, maximum: 90, default: 7, description: "`forecast` rules: days of history fitted." }
+        forecast_warning_days: { type: number, default: 14, description: "`forecast` rules: at least warning below this many days." }
+        forecast_critical_days: { type: number, default: 7, description: "`forecast` rules: critical below this many days." }
+        forecast_min_confidence: { type: number, minimum: 0, maximum: 1, default: 0.5, description: "`forecast` rules: forecasts less sure than this never fire." }
+        forecast_limit: { type: number, default: 100, description: "`forecast` rules on a custom expression: the value at which it is full." }
+        drift_window_secs: { type: integer, minimum: 60, maximum: 86400, default: 900, description: "`drift` rules: window of the current measurement." }
+        drift_weeks: { type: integer, minimum: 0, maximum: 8, default: 4, description: "`drift` rules: previous weeks compared at the same hour; 0 uses the 7-day median only." }
+        drift_min_samples: { type: integer, default: 5, description: "`drift` rules: minimum points in the window." }
+        drift_min_value: { type: number, minimum: 0, default: 0, description: "`drift` rules: smaller values never count (the measurement going up, the usual value going down)." }
+        drift_min_delta: { type: number, minimum: 0, default: 0, description: "`drift` rules: minimum absolute gap to the usual value." }
+        drift_direction: { type: string, enum: [up, down, both], default: up }
     Operator:
       type: string
       enum: [">", ">=", "<", "<="]
@@ -11990,7 +11887,7 @@ components:
         uid: { type: string }
         name: { type: string }
         description: { type: string }
-        kind: { type: string, enum: [threshold, anomaly, predict, log_pattern], description: "`log_pattern` counts the log lines that match `query` (a LogsQL filter, no pipes) over `params.log_window_secs` and compares the count to `threshold`." }
+        kind: { type: string, enum: [threshold, anomaly, predict, log_pattern, forecast, drift], description: "`log_pattern` counts the log lines that match `query` (a LogsQL filter, no pipes) over `params.log_window_secs` and compares the count to `threshold`. `forecast` compares the days before full to `threshold` (`query`: `*`, comma-separated capacity families, or a custom expression full at `params.forecast_limit`); the severity rises to warning and critical below `params.forecast_warning_days` and `params.forecast_critical_days`. `drift` compares how many times the usual value (same hour over the previous weeks, or the 7-day median) the measurement of `query` is to `threshold`, once its robust score reaches `params.k`." }
         query: { type: string }
         operator: { $ref: "#/components/schemas/Operator" }
         threshold: { type: number }
@@ -12018,7 +11915,7 @@ components:
         uid: { type: string, description: Derived from the name when absent. }
         name: { type: string }
         description: { type: string }
-        kind: { type: string, enum: [threshold, anomaly, predict, log_pattern], description: "`log_pattern` counts the log lines that match `query` (a LogsQL filter, no pipes) over `params.log_window_secs` and compares the count to `threshold`." }
+        kind: { type: string, enum: [threshold, anomaly, predict, log_pattern, forecast, drift], description: "`log_pattern` counts the log lines that match `query` (a LogsQL filter, no pipes) over `params.log_window_secs` and compares the count to `threshold`. `forecast` compares the days before full to `threshold` (`query`: `*`, comma-separated capacity families, or a custom expression full at `params.forecast_limit`); the severity rises to warning and critical below `params.forecast_warning_days` and `params.forecast_critical_days`. `drift` compares how many times the usual value (same hour over the previous weeks, or the 7-day median) the measurement of `query` is to `threshold`, once its robust score reaches `params.k`." }
         query: { type: string }
         operator: { $ref: "#/components/schemas/Operator" }
         threshold: { type: number }
@@ -12528,9 +12425,9 @@ components:
           type: array
           items: { type: string }
           description: >-
-            Decorative scene ids: `paris`, `tokyo`, `newyork`, `matterhorn`. A retired id (for
-            example `venice`) is folded onto the nearest of the four. Omitted keeps the saved
-            list; `[]` means no scene.
+            Decorative scene ids: `paris`, `tokyo`, `newyork`, `dubai`. A retired id (for
+            example `venice`, or `matterhorn`, replaced by `dubai`) is folded onto the nearest
+            of the four. Omitted keeps the saved list; `[]` means no scene.
         scene_rotation: { type: string, description: Omitted keeps the saved value (`visit` on creation). }
         simple: { type: boolean, default: false, description: Omitted keeps the saved value. }
         show_calendar: { type: boolean, default: false, description: Public 90-day calendar. Omitted keeps the saved value. }
@@ -12762,6 +12659,10 @@ components:
         relay: { type: boolean, description: The agent declared `relay true` in its last batch. }
         last_seen_at: { type: [string, "null"] }
         relayed: { type: integer, description: Devices reached through this agent. }
+        gateway_wanted: { type: [integer, "null"], description: Gateway port asked from the UI; null when closed. }
+        gateway_port: { type: [integer, "null"], description: Port the relay reports its gateway listening on. }
+        gateway_host: { type: [string, "null"], description: Address the site reaches the relay at. }
+        client_id: { type: [integer, "null"], format: int64, description: Client of the agent; a relay only carries machines of its own client. }
     DashboardWidget:
       type: object
       required: [id, type, x, y, w, h]
@@ -13164,6 +13065,43 @@ components:
         rule_id: { type: [integer, "null"], format: int64, description: The learned rule that drew it. }
         from_port: { type: [string, "null"], description: "Switch port at the `from` end (`lldp` and `l2` links)." }
         to_port: { type: [string, "null"], description: "Switch port at the `to` end." }
+        traffic:
+          oneOf:
+            - $ref: "#/components/schemas/TopologyEdgeTraffic"
+            - type: "null"
+          description: |
+            Weathermap: traffic of the port this link goes through. Absent when no port of the
+            link has interface counters (`if_octets_*`) in the metrics store.
+    TopologyEdgeTraffic:
+      type: object
+      required: [measured_on, ports, bps_in, bps_out, errors_per_sec]
+      description: |
+        Rates over the last few minutes, read from the interface counters the SNMP IF-MIB
+        profile and the agent already collect. The measured side is the first of `from`, `to`
+        whose port has counters; several ports of one link (a LAG) are added up.
+      properties:
+        measured_on: { type: string, description: "Node (`t<id>`) whose counters were read." }
+        ports: { type: array, items: { type: string }, description: "Interface names measured (`ifname`)." }
+        bps_in: { type: number, description: "Bits per second received by `measured_on`." }
+        bps_out: { type: number, description: "Bits per second sent by `measured_on`." }
+        speed_bps: { type: [number, "null"], description: "Negotiated speed (sum of the ports), bits per second; null when a port does not report it." }
+        utilization_in: { type: [number, "null"], minimum: 0, maximum: 1, description: "`bps_in / speed_bps`; null without a speed." }
+        utilization_out: { type: [number, "null"], minimum: 0, maximum: 1, description: "`bps_out / speed_bps`; null without a speed." }
+        errors_per_sec: { type: number, description: "Errors and discards per second, both directions." }
+    PortTraffic:
+      type: object
+      required: [step_secs, points]
+      properties:
+        step_secs: { type: integer }
+        points:
+          type: array
+          items:
+            type: object
+            required: [t, bps_in, bps_out]
+            properties:
+              t: { type: integer, description: Unix time in seconds. }
+              bps_in: { type: number }
+              bps_out: { type: number }
     AgentHost:
       type: object
       required: [hostname, os, agent_version, commands_supported, relay, relayed, binding, bound]
@@ -13186,6 +13124,10 @@ components:
         bound: { type: boolean }
         bound_at: { type: [string, "null"] }
         rebind_until: { type: [string, "null"] }
+        gateway_wanted: { type: [integer, "null"], description: Gateway port asked from the UI; null when closed. }
+        gateway_port: { type: [integer, "null"], description: Port the relay reports its gateway listening on. }
+        gateway_host: { type: [string, "null"], description: Address the agents of its site reach it at. }
+        gateway_tunnels: { type: integer, description: Agents of its site connected through it right now. }
     RebindWindow:
       type: object
       required: [rebind_until, minutes]
@@ -13289,6 +13231,33 @@ components:
         auto_update: { type: boolean }
         prune_old_image: { type: boolean }
         only_in_maintenance: { type: boolean }
+    ContainerPolicyBulkPatch:
+      type: object
+      required: [containers]
+      properties:
+        containers:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items: { type: string }
+        auto_restart: { type: boolean }
+        auto_update: { type: boolean }
+        prune_old_image: { type: boolean }
+        only_in_maintenance: { type: boolean }
+    ContainerPolicyBulkReply:
+      type: object
+      required: [results]
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            required: [name, ok]
+            properties:
+              name: { type: string }
+              ok: { type: boolean }
+              policy: { $ref: "#/components/schemas/ContainerPolicy" }
+              error: { type: string }
     Command:
       type: object
       required: [id, target_id, kind, args, status, created_at]
@@ -13315,6 +13284,10 @@ components:
         uptime_seconds: { type: [integer, "null"] }
         image_age_seconds: { type: [integer, "null"] }
         update_available: { type: [boolean, "null"] }
+        cpu_percent: { type: [number, "null"], description: "CPU as a percentage of one core (100 = one full core). Null: no statistics, stopped, or first reading." }
+        memory_bytes: { type: [integer, "null"], description: Memory in use, page cache excluded. }
+        memory_limit_bytes: { type: [integer, "null"], description: Memory limit of the container; null when it has none. }
+        restarts_15m: { type: [integer, "null"], description: Restarts over the last fifteen minutes; three or more is a restart loop. }
         policy: { $ref: "#/components/schemas/ContainerPolicy" }
         last_command:
           oneOf:
@@ -14325,6 +14298,19 @@ components:
         checks: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
         figures: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
         breakdowns: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+    Deadline:
+      type: object
+      required: [target, target_name, target_kind, kind, what, expires_at, days_left]
+      properties:
+        target: { type: integer }
+        target_name: { type: string }
+        target_kind: { type: string }
+        kind:
+          type: string
+          description: "`domain`, `certificate`, `credential`, `product`, `key` or `license`."
+        what: { type: string, description: The object that expires (host, application, device…). }
+        expires_at: { type: string, description: UTC, no suffix. }
+        days_left: { type: number, description: Negative once expired. }
     BlacklistOverview:
       type: object
       additionalProperties: true
@@ -14345,6 +14331,32 @@ components:
         addresses: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
         auth: { type: [object, "null"], additionalProperties: true }
         providers: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+    CapacityForecast:
+      type: object
+      required: [family, family_label, metric, entity, labels, used_percent, used, size, unit, growth_per_day, days_to_full, full_at, confidence, status, severity, window_days]
+      properties:
+        family: { type: string, examples: [filesystem, pbs_datastore, truenas_pool] }
+        family_label: { type: string }
+        metric: { type: string, description: Metric of the percentage, or the family for an expression. }
+        entity: { type: string, description: "Readable entity (`/srv`, `tank`…); empty for the whole device." }
+        labels:
+          type: object
+          additionalProperties: { type: string }
+        used_percent: { type: [number, "null"] }
+        used: { type: [number, "null"], description: Raw used amount in `unit`, when the integration publishes it. }
+        size: { type: [number, "null"], description: Raw total in `unit`. }
+        unit: { type: string, examples: [bytes, seats, ""] }
+        growth_per_day: { type: [number, "null"], description: Percentage points per day. }
+        days_to_full: { type: [number, "null"], description: "`null` without growth or without enough history; 0 when full." }
+        full_at: { type: [string, "null"], description: Estimated fill date, UTC without suffix. }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        status: { type: string, enum: [growing, stable, full, insufficient_data] }
+        severity:
+          description: Severity the forecast rule would raise today; `null` when it would not fire.
+          oneOf:
+            - $ref: "#/components/schemas/Severity"
+            - type: "null"
+        window_days: { type: integer }
     SynologyOverview:
       type: object
       additionalProperties: true
@@ -14362,6 +14374,76 @@ components:
         tasks: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
         devices: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
         utc_offset_s: { type: integer }
+    TargetLuns:
+      type: object
+      required: [luns, volumes, sampled_at]
+      properties:
+        luns:
+          type: array
+          items:
+            type: object
+            required: [id, name, host_volume, provisioning, lun_type, status, size_bytes, reserved_bytes, allocated_bytes, used_percent, mapped, sessions, targets, consumer]
+            properties:
+              id: { type: string, description: "DSM UUID or zvol name: the `lun` label." }
+              name: { type: string }
+              host_volume: { type: string, description: Host volume (Synology) or pool (TrueNAS). }
+              provisioning: { type: string, enum: [thick, thin, unknown] }
+              lun_type: { type: string, examples: [BLUN_THICK, BLUN, FILE] }
+              status: { type: string }
+              size_bytes: { type: [number, "null"] }
+              reserved_bytes: { type: [number, "null"], description: "Space taken on the volume: the size if thick, the written space if thin." }
+              allocated_bytes: { type: [number, "null"], description: Written space of a thin LUN. }
+              used_percent: { type: [number, "null"], description: Written share of a thin LUN; null for a thick one. }
+              mapped: { type: [boolean, "null"] }
+              sessions: { type: [number, "null"] }
+              targets:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    iqn: { type: string }
+                    name: { type: string }
+                    sessions: { type: number }
+                    initiators: { type: array, items: { type: string } }
+              consumer:
+                oneOf:
+                  - type: "null"
+                  - type: object
+                    required: [source, target_id, target_name, family, family_label, entity, used_percent, used_bytes, size_bytes]
+                    properties:
+                      source: { type: string, enum: [manual, auto] }
+                      target_id: { type: integer, format: int64 }
+                      target_name: { type: string }
+                      family: { type: string }
+                      family_label: { type: string }
+                      entity: { type: string }
+                      used_percent: { type: [number, "null"] }
+                      used_bytes: { type: [number, "null"] }
+                      size_bytes: { type: [number, "null"] }
+        volumes:
+          type: array
+          description: Synology volumes hosting at least one LUN; empty elsewhere.
+          items:
+            type: object
+            additionalProperties: true
+            properties:
+              volume: { type: string }
+              name: { type: string }
+              total_bytes: { type: [number, "null"] }
+              used_bytes: { type: [number, "null"] }
+              used_percent: { type: [number, "null"] }
+              lun_count: { type: [number, "null"] }
+              reserved_bytes: { type: [number, "null"], description: Sum of the thick LUN sizes. }
+              thin_allocated_bytes: { type: [number, "null"] }
+              thin_provisioned_bytes: { type: [number, "null"] }
+              thin_promised_bytes: { type: [number, "null"], description: Promised to thin LUNs and not written yet. }
+              data_bytes: { type: [number, "null"], description: Data outside LUNs. }
+              effective_total_bytes: { type: [number, "null"] }
+              effective_used_bytes: { type: [number, "null"] }
+              effective_used_percent: { type: [number, "null"] }
+              overcommit_percent: { type: [number, "null"], description: Promised thin space as a percentage of the free space. }
+              fully_reserved: { type: [boolean, "null"] }
+        sampled_at: { type: [number, "null"] }
 
     # -------------------------------------------------------------- sécurité
     SecurityGrade:
@@ -14513,6 +14595,36 @@ components:
               unknown: { type: integer }
               top_failures: { type: array, items: { type: string } }
 
+    ThreatMap:
+      type: object
+      required: [countries, sources, partial, evaluated_at]
+      properties:
+        countries:
+          type: array
+          description: Busiest first.
+          items:
+            type: object
+            required: [code, total, crowdsec, firewall, cloudflare]
+            properties:
+              code: { type: string, description: ISO 3166-1 alpha-2 country code. }
+              total: { type: integer }
+              crowdsec: { type: integer }
+              firewall: { type: integer }
+              cloudflare: { type: integer }
+        sources:
+          type: array
+          description: Sources plugged in, even with nothing seen; empty when none is.
+          items:
+            type: object
+            required: [source, targets, total, window_secs]
+            properties:
+              source: { type: string, enum: [crowdsec, firewall, cloudflare] }
+              targets: { type: array, items: { type: integer, format: int64 } }
+              total: { type: integer }
+              window_secs: { type: integer, description: Time span the counts of this source cover. }
+        partial: { type: boolean, description: "`true`: VictoriaMetrics did not answer, only the firewall live windows are counted." }
+        evaluated_at: { type: string }
+
     CveState:
       type: string
       enum: [vulnerable, patched, unknown]
@@ -14640,58 +14752,6 @@ components:
             code: { type: integer }
             message: { type: string }
             data: {}
-    NowPlaying:
-      type: object
-      required: [playing, kind, title, artists, duration_ms, progress_ms]
-      properties:
-        playing: { type: boolean }
-        kind: { type: string, description: "`track`, `episode`, `ad` or `unknown`." }
-        title: { type: string }
-        artists: { type: array, items: { type: string } }
-        album: { type: [string, "null"] }
-        cover_url: { type: [string, "null"], description: Always on https://i.scdn.co. }
-        duration_ms: { type: integer }
-        progress_ms: { type: integer }
-        device_name: { type: [string, "null"] }
-        device_type: { type: [string, "null"] }
-    WallNewsItem:
-      type: object
-      required: [title, link, source]
-      properties:
-        title: { type: string }
-        link: { type: string }
-        source: { type: string }
-        published: { type: [string, "null"], description: UTC, without suffix. }
-    WallNews:
-      type: object
-      required: [ticker, items, problems]
-      properties:
-        ticker: { type: boolean }
-        items:
-          type: array
-          items: { $ref: "#/components/schemas/WallNewsItem" }
-        problems:
-          type: array
-          items:
-            type: object
-            required: [feed, message]
-            properties:
-              feed: { type: string }
-              message: { type: string }
-    WallNewsSettings:
-      type: object
-      required: [ticker, feeds]
-      properties:
-        ticker: { type: boolean }
-        feeds:
-          type: array
-          maxItems: 8
-          items:
-            type: object
-            required: [url]
-            properties:
-              url: { type: string }
-              label: { type: string, maxLength: 40 }
     WallPlace:
       type: object
       required: [name, latitude, longitude]
@@ -14701,256 +14761,6 @@ components:
         country_code: { type: string }
         latitude: { type: number }
         longitude: { type: number }
-    WallWidgetsSettings:
-      type: object
-      properties:
-        layout: { $ref: "#/components/schemas/WallLayout" }
-        text:
-          type: object
-          description: The free message widget (plain text, one line).
-          properties:
-            enabled: { type: boolean }
-            content: { type: string, maxLength: 200 }
-        crypto:
-          type: object
-          properties:
-            enabled: { type: boolean }
-            coins: { type: array, maxItems: 10, items: { type: string }, description: CoinGecko ids. }
-            currency: { type: string, default: usd }
-        weather:
-          type: object
-          properties:
-            enabled: { type: boolean }
-            places: { type: array, maxItems: 1, items: { $ref: "#/components/schemas/WallPlace" }, description: "The one place whose weather shows under the clock." }
-            units: { type: string, enum: [metric, imperial] }
-        stocks:
-          type: object
-          properties:
-            enabled: { type: boolean }
-            symbols: { type: array, maxItems: 10, items: { type: string } }
-        fx:
-          type: object
-          properties:
-            enabled: { type: boolean }
-            base: { type: string, default: EUR }
-            currencies: { type: array, maxItems: 10, items: { type: string } }
-        cve:
-          type: object
-          properties:
-            enabled: { type: boolean }
-            source: { type: string, enum: [both, nvd, kev] }
-            count: { type: integer, minimum: 1, maximum: 10 }
-        has_finnhub_key: { type: boolean, readOnly: true }
-        ai:
-          type: object
-          description: >-
-            AI usage cards (Claude, OpenAI), read from the providers'
-            organization admin APIs. Consumer subscriptions (Claude Pro/Max,
-            ChatGPT Plus) have no official API and are not covered.
-          properties:
-            period: { type: string, enum: [today, week, month], default: week, description: "UTC; week = the last 7 days, month = the current month." }
-            by_person: { type: boolean, description: "Also list the biggest consumers (tokens only; the providers do not break costs down by person)." }
-            claude: { $ref: "#/components/schemas/WallAiProvider" }
-            openai: { $ref: "#/components/schemas/WallAiProvider" }
-        has_coingecko_key: { type: boolean, readOnly: true }
-        has_anthropic_key: { type: boolean, readOnly: true }
-        has_openai_key: { type: boolean, readOnly: true }
-    WallAiProvider:
-      type: object
-      properties:
-        enabled: { type: boolean }
-        people:
-          type: array
-          maxItems: 30
-          description: Display names for the identifiers the provider's API returns (Anthropic account or API key ids, OpenAI user or API key ids).
-          items:
-            type: object
-            required: [id, name]
-            properties:
-              id: { type: string, maxLength: 100 }
-              name: { type: string, maxLength: 40 }
-    WallAiUsage:
-      type: object
-      required: [period, from, cost_usd, input_tokens, output_tokens]
-      properties:
-        period: { type: string, enum: [today, week, month] }
-        from: { type: string, description: First day (UTC, YYYY-MM-DD). }
-        cost_usd: { type: number, description: Total cost in US dollars. }
-        input_tokens: { type: integer, description: Input tokens, cache included. }
-        output_tokens: { type: integer }
-        people:
-          type: [array, "null"]
-          description: Biggest consumers by tokens; null unless `by_person` is on.
-          items:
-            type: object
-            required: [name, mapped, input_tokens, output_tokens]
-            properties:
-              name: { type: [string, "null"], description: "A configured name, else the shortened identifier; null when the API attributes the usage to no key or account." }
-              mapped: { type: boolean }
-              input_tokens: { type: integer }
-              output_tokens: { type: integer }
-    WallWidgetSection:
-      type: object
-      required: [updated, error, needs_key, source, source_url]
-      properties:
-        data: { description: "The widget's data; null when unavailable." }
-        updated: { type: [string, "null"], description: When the source was read (UTC, without suffix). }
-        error: { type: [string, "null"], description: Why the last read failed (the data may be older). }
-        needs_key: { type: boolean }
-        source: { type: string, description: The source to credit on the widget. }
-        source_url: { type: string }
-    WallWidgets:
-      type: object
-      required: [layout]
-      properties:
-        layout: { $ref: "#/components/schemas/WallLayout" }
-        crypto:
-          oneOf:
-            - { $ref: "#/components/schemas/WallWidgetSection" }
-            - { type: "null" }
-        weather:
-          oneOf:
-            - { $ref: "#/components/schemas/WallWidgetSection" }
-            - { type: "null" }
-        stocks:
-          oneOf:
-            - { $ref: "#/components/schemas/WallWidgetSection" }
-            - { type: "null" }
-        fx:
-          oneOf:
-            - { $ref: "#/components/schemas/WallWidgetSection" }
-            - { type: "null" }
-        cve:
-          oneOf:
-            - { $ref: "#/components/schemas/WallWidgetSection" }
-            - { type: "null" }
-        claude:
-          description: "Claude (Anthropic) usage; `data` is a WallAiUsage. Null when off."
-          oneOf:
-            - { $ref: "#/components/schemas/WallWidgetSection" }
-            - { type: "null" }
-        openai:
-          description: "OpenAI usage; `data` is a WallAiUsage. Null when off."
-          oneOf:
-            - { $ref: "#/components/schemas/WallWidgetSection" }
-            - { type: "null" }
-        text: { type: [string, "null"], description: "The free message; null when off or empty." }
-    WallNewsCountry:
-      type: object
-      required: [code, feeds]
-      properties:
-        code: { type: string, description: ISO 3166-1 alpha-2, TECH or AI (themed groups), or INT. }
-        feeds:
-          type: array
-          items:
-            type: object
-            required: [label, url]
-            properties:
-              label: { type: string }
-              url: { type: string }
-    WallLayout:
-      type: object
-      description: >-
-        Where each wall widget goes (weather, news, cve, crypto, stocks, fx,
-        claude, openai, text), in order. Unknown or repeated ids are dropped; a
-        widget missing from every zone goes to its default one (weather, news,
-        cve and text on the right, the others in the bottom bar). Placing a widget
-        does not turn it on.
-      properties:
-        top: { type: array, items: { type: string } }
-        bottom: { type: array, items: { type: string } }
-        right: { type: array, items: { type: string } }
-        hidden: { type: array, items: { type: string } }
-    WallNewsTest:
-      type: object
-      required: [ok, count]
-      properties:
-        ok: { type: boolean }
-        error: { type: [string, "null"] }
-        count: { type: integer }
-        first:
-          oneOf:
-            - { $ref: "#/components/schemas/WallNewsItem" }
-            - { type: "null" }
-    WallLink:
-      type: object
-      required: [link, set_by, set_at]
-      properties:
-        link: { type: string }
-        set_by: { type: string }
-        set_at: { type: string, description: UTC, without suffix. }
-    WallMusic:
-      type: object
-      required: [spotify, speaker_name]
-      properties:
-        spotify:
-          type: object
-          required: [status]
-          properties:
-            status: { type: string, enum: [off, connected, expired] }
-            now_playing:
-              oneOf:
-                - { $ref: "#/components/schemas/NowPlaying" }
-                - { type: "null" }
-            error: { type: [string, "null"] }
-        link:
-          oneOf:
-            - { $ref: "#/components/schemas/WallLink" }
-            - { type: "null" }
-        speaker_name: { type: string }
-    WallSpeaker:
-      type: object
-      required: [speaker_name, status, devices, listed, walls]
-      properties:
-        speaker_name: { type: string }
-        status: { type: string, enum: [off, connected, expired] }
-        account_name: { type: [string, "null"] }
-        premium: { type: [boolean, "null"], description: "null: unknown." }
-        devices:
-          type: array
-          items:
-            type: object
-            required: [name, type, is_active, is_restricted]
-            properties:
-              id: { type: [string, "null"] }
-              name: { type: string }
-              type: { type: string }
-              is_active: { type: boolean }
-              is_restricted: { type: boolean }
-              volume_percent: { type: [integer, "null"] }
-        listed: { type: boolean, description: "Spotify lists the speaker among the account's devices." }
-        walls:
-          type: array
-          items:
-            type: object
-            required: [display, name, phase, activated, seen_at]
-            properties:
-              display: { type: string }
-              name: { type: string }
-              phase: { type: string }
-              activated: { type: boolean }
-              device_id: { type: [string, "null"] }
-              problem: { type: [string, "null"] }
-              browser: { type: [string, "null"] }
-              premium: { type: [boolean, "null"] }
-              listed: { type: [boolean, "null"] }
-              seen_at: { type: string, description: "UTC, no suffix." }
-        error: { type: [string, "null"] }
-    SpotifyAccount:
-      type: object
-      required: [status, missing_scopes, speaker_name, scopes, loopback_redirect_uri, callback_path]
-      properties:
-        status: { type: string, enum: [off, connected, expired] }
-        client_id: { type: [string, "null"] }
-        account_name: { type: [string, "null"] }
-        connected_at: { type: [string, "null"] }
-        reconnect_by: { type: [string, "null"], description: Spotify ends a connection six months after approval. }
-        missing_scopes: { type: array, items: { type: string } }
-        last_error: { type: [string, "null"] }
-        speaker_name: { type: string }
-        scopes: { type: array, items: { type: string } }
-        loopback_redirect_uri: { type: string }
-        callback_path: { type: string }
     OnCallPerson:
       type: object
       properties:

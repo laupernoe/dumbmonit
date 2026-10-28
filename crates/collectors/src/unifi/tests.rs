@@ -168,6 +168,40 @@ async fn un_compte_view_only_lit_tout_et_garde_sa_session() {
     assert_eq!(value(&samples, "unifi_clients"), Some(41.0));
     assert_eq!(value(&samples, "unifi_alarms"), Some(0.0));
     assert_eq!(value(&samples, "unifi_scrape_errors"), Some(0.0));
+    // Façade du commutateur : port_table et lldp_table de stat/device.
+    let port = |metric: &str, index: &str| {
+        samples
+            .iter()
+            .find(|s| {
+                s.metric == metric
+                    && s.labels.get("device").map(String::as_str) == Some("Office switch")
+                    && s.labels.get("port").map(String::as_str) == Some(index)
+            })
+            .map(|s| s.value)
+    };
+    assert_eq!(port("unifi_port_up", "1"), Some(1.0));
+    assert_eq!(port("unifi_port_speed_bps", "1"), Some(1_000_000_000.0));
+    assert_eq!(port("unifi_port_uplink", "1"), Some(1.0));
+    assert_eq!(port("unifi_port_poe_watts", "2"), Some(6.42));
+    assert_eq!(port("unifi_port_rx_errors_total", "2"), Some(3.0));
+    assert_eq!(port("unifi_port_up", "3"), Some(0.0));
+    assert_eq!(port("unifi_port_speed_bps", "3"), None, "pas de vitesse sans lien");
+    assert_eq!(port("unifi_port_enabled", "4"), Some(0.0));
+    assert_eq!(port("unifi_port_up", "4"), None, "un port désactivé n'est pas « sans lien »");
+    let neighbor = samples
+        .iter()
+        .find(|s| s.metric == "unifi_port_neighbor_info")
+        .expect("voisin LLDP du port 2");
+    assert_eq!(neighbor.labels["port"], "2");
+    assert_eq!(neighbor.labels["remote_port"], "eth0");
+    assert_eq!(neighbor.labels["port_name"], "Hall AP");
+    // Les points d'accès ne publient pas de ports.
+    assert!(
+        samples
+            .iter()
+            .filter(|s| s.metric.starts_with("unifi_port_"))
+            .all(|s| s.labels["device"] == "Office switch")
+    );
     // Nommé, en IP fixe et annoté : suivi par défaut.
     assert_eq!(
         labelled(&samples, "client_device_last_seen_timestamp_seconds", "device", "Noe's desktop"),

@@ -15,6 +15,7 @@
 	import DatasetsProtection from './DatasetsProtection.svelte';
 	import NasHealth from './NasHealth.svelte';
 	import PoolsAndDisks from './PoolsAndDisks.svelte';
+	import LunStorage from '../storage/LunStorage.svelte';
 	import { SERIOUS_LEVELS, formatAgo, formatCount, formatUnix, reading } from './format';
 
 	interface Props {
@@ -116,6 +117,8 @@
 			{/snippet}
 			<PoolsAndDisks pools={storage?.pools ?? []} disks={storage?.disks ?? []} />
 		</Panel>
+
+		<LunStorage {target} />
 
 		<Panel
 			title={m.devicesb_truenas_panel_protection_title()}

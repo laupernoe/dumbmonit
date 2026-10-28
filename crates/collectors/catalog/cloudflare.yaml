@@ -1,0 +1,69 @@
+# Mesures et vues du type « cloudflare » (format : crates/collectors/src/catalog.rs).
+source: cloudflare
+prefixes: [cloudflare_]
+metrics:
+  - { name: cloudflare_zone_http_requests, label: "Zone HTTP requests" }
+  - { name: cloudflare_zone_http_5xx_percent, label: "Zone HTTP 5xx", unit: "%", min: 0, max: 100 }
+  - { name: cloudflare_zone_http_5xx, label: "Zone HTTP 5xx" }
+  - { name: cloudflare_zones, label: "Zones" }
+  - { name: cloudflare_zones_active, label: "Zones active" }
+  - { name: cloudflare_zones_paused, label: "Zones paused" }
+  - { name: cloudflare_zone_active, label: "Zone active", unit: "bool" }
+  - { name: cloudflare_zone_paused, label: "Zone paused", unit: "bool" }
+  - { name: cloudflare_zone_info, label: "Zone", kind: info }
+  - { name: cloudflare_tunnels, label: "Tunnels" }
+  - { name: cloudflare_tunnels_healthy, label: "Tunnels healthy" }
+  - { name: cloudflare_tunnels_degraded, label: "Tunnels degraded", better: "lower" }
+  - { name: cloudflare_tunnels_down, label: "Tunnels down", better: "lower" }
+  - { name: cloudflare_tunnel_healthy, label: "Tunnel healthy", unit: "bool" }
+  - { name: cloudflare_tunnel_degraded, label: "Tunnel degraded", unit: "bool", better: "lower" }
+  - { name: cloudflare_tunnel_down, label: "Tunnel down", unit: "bool", better: "lower" }
+  - { name: cloudflare_tunnel_connections, label: "Tunnel connections" }
+  - { name: cloudflare_certificate_expiry_seconds, label: "Certificate expiry", unit: "s" }
+  - { name: cloudflare_lb_pools, label: "LB pools" }
+  - { name: cloudflare_lb_pool_enabled, label: "LB pool enabled", unit: "bool" }
+  - { name: cloudflare_lb_pool_healthy, label: "LB pool healthy", unit: "bool" }
+  - { name: cloudflare_lb_pool_origins, label: "LB pool origins" }
+  - { name: cloudflare_lb_pool_origins_healthy, label: "LB pool origins healthy" }
+  - { name: cloudflare_load_balancers, label: "Load balancers" }
+  - { name: cloudflare_load_balancer_enabled, label: "Load balancer enabled", unit: "bool" }
+  - { name: cloudflare_analytics_readable, label: "Analytics readable", unit: "bool" }
+  - { name: cloudflare_certificates_readable, label: "Certificates readable", unit: "bool" }
+  - { name: cloudflare_lb_readable, label: "LB readable", unit: "bool" }
+  - { name: cloudflare_tunnels_readable, label: "Tunnels readable", unit: "bool" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - cloudflare_tunnels_down
+      - cloudflare_tunnels_degraded
+      - cloudflare_zones
+      - cloudflare_tunnels
+      - cloudflare_zones_active
+      - cloudflare_zones_paused
+      - cloudflare_zone_active
+      - cloudflare_zone_paused
+      - cloudflare_zone_info
+      - cloudflare_tunnels_healthy
+      - cloudflare_tunnel_healthy
+      - cloudflare_tunnel_degraded
+      - cloudflare_tunnel_down
+      - cloudflare_tunnel_connections
+      - cloudflare_certificate_expiry_seconds
+      - cloudflare_lb_pools
+      - cloudflare_lb_pool_enabled
+      - cloudflare_lb_pool_healthy
+      - cloudflare_lb_pool_origins
+      - cloudflare_lb_pool_origins_healthy
+      - cloudflare_load_balancers
+      - cloudflare_load_balancer_enabled
+      - cloudflare_analytics_readable
+      - cloudflare_certificates_readable
+      - cloudflare_lb_readable
+      - cloudflare_tunnels_readable
+  - view: timeseries
+    title: "HTTP requests"
+    metrics: [cloudflare_zone_http_requests]
+  - view: timeseries
+    title: "5xx share"
+    metrics: [cloudflare_zone_http_5xx_percent]

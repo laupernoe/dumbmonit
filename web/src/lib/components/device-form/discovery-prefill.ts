@@ -38,9 +38,14 @@ export function cleanPrefill(raw: unknown): Prefill {
 	return out;
 }
 
-/** Link to the add form: `kind` plus the pre-filled fields (and a suggested name). */
-export function addUrl(kind: string, prefill: Record<string, unknown> | null, name?: string | null): string {
+/**
+ * Link to the add form: `kind` plus the pre-filled fields (and a suggested
+ * name). `viaAgent`: the relay agent whose scan found the device — the
+ * monitor is then probed through it, as the scan was.
+ */
+export function addUrl(kind: string, prefill: Record<string, unknown> | null, name?: string | null, viaAgent?: number | null): string {
 	const params = new URLSearchParams({ kind });
+	if (viaAgent != null) params.set('via_agent', String(viaAgent));
 	const clean = cleanPrefill(prefill);
 	if (name && !('name' in clean)) clean.name = name;
 	if (Object.keys(clean).length > 0) params.set('prefill', JSON.stringify(clean));

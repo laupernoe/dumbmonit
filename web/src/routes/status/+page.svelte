@@ -1,7 +1,7 @@
 <script lang="ts">
 	/**
 	 * Status pages: the public pages and the announcements shown on them, a
-	 * destination of their own (the Enterprise rail, "More" in Homelab). They
+	 * destination of their own on the rail ("More" on phones). They
 	 * used to sit in Settings; `/settings/status` forwards here.
 	 */
 	import { m } from '#lib/paraglide/messages.js';

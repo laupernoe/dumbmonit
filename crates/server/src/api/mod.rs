@@ -18,8 +18,11 @@ mod collectors;
 mod cves;
 mod dashboard_templates;
 pub mod dashboards;
+mod deadlines;
 pub(crate) mod discovery;
 mod error;
+mod forecasts;
+mod geocode;
 mod gitops;
 mod health;
 mod ical;
@@ -32,10 +35,10 @@ mod label_monitors;
 mod ldap;
 pub mod locations;
 mod logs;
+mod luns;
 mod mcp;
 mod metrics;
 mod monitor_imports;
-mod music;
 mod netconfig;
 mod netinventory;
 mod notify_policy;
@@ -76,17 +79,16 @@ mod target_rules;
 pub(crate) mod targets;
 mod targets_import;
 mod teams;
+mod threats;
 mod tokens;
 mod topology;
 pub(crate) mod topology_edits;
 mod topology_l2;
+mod topology_traffic;
 mod totp;
 mod truenas;
 mod update;
 mod users;
-mod wall_news;
-mod wall_news_presets;
-mod wall_widgets;
 mod webchange;
 mod webpush;
 mod website;
@@ -111,13 +113,6 @@ use crate::auth::AuthState;
 use crate::auth::cors::CorsPolicy;
 use crate::state::AppState;
 
-/// Lecteur des flux RSS/Atom du mur, exposé pour les cibles de fuzzing
-/// (`fuzz/`) seulement : le reste de l'API n'en a pas besoin.
-#[doc(hidden)]
-pub fn fuzz_wall_news(xml: &str) -> usize {
-    wall_news::parse(xml, "fuzz").map_or(0, |items| items.len())
-}
-
 /// Protocole des agents : lots, commandes, sondes relayées, sous le garde du
 /// jeton d'enrôlement. Monté sur le port de l'interface (ancien canal) et sur
 /// le canal chiffré des agents ([`crate::agent_tls`]).
@@ -138,12 +133,6 @@ pub fn agent_routes(state: &AppState) -> Router<AppState> {
 }
 
 pub fn router(state: AppState) -> Router {
-    router_with(state, crate::music::MusicHub::from_env())
-}
-
-/// Le même routeur, avec l'état de la musique du mur fourni par l'appelant —
-/// les tests y branchent un faux Spotify.
-pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router {
     let auth_state = AuthState::from_env(&state.config);
 
     // Tout ce qui touche à l'instance — lecture comprise : la liste des
@@ -191,6 +180,7 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/discovery/inventory", get(netinventory::inventory))
         .route("/discovery/inventory/known", post(netinventory::all_known))
         .route("/discovery/inventory/devices/{id}/known", post(netinventory::device_known))
+        .route("/discovery/inventory/devices/{id}/ignore", post(netinventory::device_ignore))
         .route("/discovery/inventory/ports/{id}/known", post(netinventory::port_known))
         .route("/onboarding", get(onboarding::get).put(onboarding::put))
         .route("/targets", get(targets::list).post(targets::create))
@@ -243,6 +233,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/notify/kinds", get(channels::kinds))
         .route("/agent/tokens", get(ingest::list_tokens).post(ingest::create_token))
         .route("/agent/tokens/{id}", delete(ingest::revoke_token))
+        // Machines enrôlées par un jeton : le flux d'ajout attend la première.
+        .route("/agent/tokens/{id}/machines", get(ingest::token_machines))
         // Déploiement par stratégie de groupe Active Directory (`ad_deploy.rs`).
         .route("/agent/tokens/{id}/close", post(ad_deploy::close_token))
         .route("/agent/ad-kit", post(ad_deploy::create_kit))
@@ -262,6 +254,10 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(agent_logs::ui_routes())
         // Panneau Synology : vue d'ensemble et appareils Active Backup (`synology.rs`).
         .merge(synology::routes())
+        // Prévisions de remplissage d'un équipement (`forecasts.rs`).
+        .merge(forecasts::routes())
+        // LUN iSCSI et zvols d'un NAS, et leur consommateur (`luns.rs`).
+        .merge(luns::routes())
         // Agents relais proposés par le formulaire d'équipement (`relay.rs`).
         .merge(relay::ui_routes())
         // Carte de topologie, construite à partir des liens connus (`topology.rs`).
@@ -310,6 +306,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(proxies::routes())
         // Listes noires DNS : serveur mail et plage d'adresses (`blacklist.rs`).
         .merge(blacklist::routes())
+        // Frise des échéances : domaines, certificats, secrets, licences (`deadlines.rs`).
+        .merge(deadlines::routes())
         // Moniteurs en poussée : jeton d'une cible et sa régénération (`push.rs`).
         .merge(push::ui_routes())
         // Sauvegarde et restauration de l'instance (`backup.rs`).
@@ -331,14 +329,10 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(netconfig::routes())
         // Santé et référencement d'un site : dernière lecture et changements (`website.rs`).
         .merge(website::routes())
-        // Musique du mode mur : Spotify Connect et lien partagé (`music.rs`).
-        .merge(music::routes())
-        // Actualités du mur : bandeau de titres et vignette vidéo (`wall_news.rs`).
-        .merge(wall_news::routes())
-        // Widgets du mur : cryptos, météo, actions, devises, CVE (`wall_widgets/`).
-        .merge(wall_widgets::routes())
         // Note de sécurité par équipement et vue du parc (`security.rs`).
         .merge(security::routes())
+        // Carte des menaces par pays, toutes sources réunies (`threats.rs`).
+        .merge(threats::routes())
         // Failles connues (CVE) de l'inventaire logiciel (`cves.rs`).
         .merge(cves::routes())
         // Notifications Web Push du compte connecté : appareils abonnés, test (`webpush.rs`).
@@ -423,9 +417,6 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         // Heartbeats : l'URL secrète qu'un cron ou un script appelle (`push.rs`).
         // Ouverte par nécessité — une crontab n'a ni session ni en-tête anti-CSRF.
         .merge(push::public_routes())
-        // Retour de Spotify après l'approbation : une navigation, vérifiée par
-        // son `state` et par la session qui revient (`music.rs`).
-        .merge(music::public_routes())
         // Provisionnement SCIM 2.0 (Entra ID, Okta) : hors session, sous le jeton
         // dédié du fournisseur, vérifié par sa propre garde (`scim.rs`).
         .merge(scim::routes(&state));
@@ -466,7 +457,6 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         // couche qui dépose `AuthState`, dont il lit les mandataires de confiance.
         .layer(middleware::from_fn(crate::auth::cookie::secure_when_https))
         .layer(Extension(auth_state))
-        .layer(Extension(music_hub))
         // Mode démonstration : toute écriture refusée ici, avant l'authentification
         // et avant tout gestionnaire — une seule porte, pas une vérification par route.
         .layer(middleware::from_fn_with_state(state.clone(), crate::demo::guard))
@@ -560,8 +550,8 @@ fn loggable_path(path: &str) -> std::borrow::Cow<'_, str> {
 ///   risque résiduel est l'exfiltration par feuille de style injectée, qui
 ///   suppose déjà une injection HTML.
 /// - `img-src` : les icônes de l'interface sont des `data:` SVG produits par le
-///   build (les flèches de `<select>`, par exemple). L'interface y ajoute les
-///   pochettes de Spotify ([`CSP_MUSIC_IMG_SRC`]).
+///   build (les flèches de `<select>`, par exemple). L'interface y ajoute, si
+///   un fond en ligne est choisi, l'origine des tuiles de la carte du monde.
 /// - `manifest-src` : le manifeste web de l'interface (installation sur un
 ///   téléphone), sans quoi `default-src 'none'` le refuse à chaque page.
 /// - `font-src`, `connect-src` : `'self'` et rien d'autre. Aucune police
@@ -579,30 +569,6 @@ const CSP_BASE: &str = "default-src 'none'; \
 
 /// Images : celles du build (`data:` compris), partout.
 const CSP_IMG_SRC: &str = "img-src 'self' data:";
-
-/// Ce que le mode mur fait venir d'ailleurs pour la musique (`crate::music`),
-/// réservé à l'interface : une page de statut publique n'encadre rien et ne
-/// charge aucun script tiers.
-///
-/// - `frame-src` : les trois lecteurs intégrés que le mur sait construire
-///   (`web/src/lib/wall/music.ts`, liste `EMBED_ORIGINS`), plus l'iframe de
-///   lecture du Web Playback SDK de Spotify (`sdk.scdn.co/embedded/…`), qui
-///   porte le son et les DRM. Des origines `https`, sans joker ni domaine
-///   parent : l'interface reconstruit chaque adresse à partir d'un identifiant
-///   validé, et la politique garantit qu'aucune autre origine ne peut être
-///   encadrée, même si ce contrôle était contourné.
-/// - `script-src` : le script du SDK, et lui seul — le chemin complet, pas
-///   l'origine. Il ne fait aucune requête depuis la page : il crée l'iframe
-///   ci-dessus et lui parle par `postMessage`.
-/// - `img-src` : les pochettes, servies par le CDN d'images de Spotify (le
-///   serveur écarte toute autre adresse avant de la transmettre).
-///
-/// Rien en `connect-src` ni en `media-src` : c'est le serveur qui parle à l'API
-/// Spotify, et l'audio est joué dans l'iframe du SDK, sous sa propre politique.
-const CSP_MUSIC_FRAME_SRC: &str = "https://open.spotify.com https://widget.deezer.com \
-     https://www.youtube-nocookie.com https://sdk.scdn.co";
-const CSP_MUSIC_SCRIPT_SRC: &str = "https://sdk.scdn.co/spotify-player.js";
-const CSP_MUSIC_IMG_SRC: &str = "https://i.scdn.co";
 
 /// Chemins qu'une page tierce peut encadrer : une page de statut
 /// (`/s/<slug>`) et sa vue compacte (`/s/<slug>/embed`), rien d'autre — ni les
@@ -624,7 +590,7 @@ fn is_embeddable(path: &str) -> bool {
 ///
 /// Sur le domaine public d'une page (`crate::status_host`), la racine est la
 /// page elle-même : encadrable comme `/s/<slug>`, et nulle part la politique de
-/// l'interface (musique du mur) n'est servie.
+/// l'interface (tuiles de la carte) n'est servie.
 async fn security_headers(mut request: Request, next: Next) -> Response {
     let path_embeddable = is_embeddable(request.uri().path());
     let root = request.uri().path() == "/";
@@ -659,10 +625,10 @@ async fn security_headers(mut request: Request, next: Next) -> Response {
             // Les tuiles de la carte du monde, quand un fond en ligne est
             // choisi : une seule origine, validée à l'enregistrement.
             let tiles = locations::tile_origin().map(|o| format!(" {o}")).unwrap_or_default();
+            // Rien n'est encadré et aucun script tiers n'est chargé : sans
+            // `frame-src`, `default-src 'none'` refuse toute iframe.
             format!(
-                "{CSP_BASE}; {CSP_IMG_SRC} {CSP_MUSIC_IMG_SRC}{tiles}; \
-                 frame-src {CSP_MUSIC_FRAME_SRC}; \
-                 script-src 'self' 'nonce-{nonce}' {CSP_MUSIC_SCRIPT_SRC}; \
+                "{CSP_BASE}; {CSP_IMG_SRC}{tiles}; script-src 'self' 'nonce-{nonce}'; \
                  frame-ancestors 'none'"
             )
         }
@@ -695,26 +661,10 @@ mod tests {
     }
 
     #[test]
-    fn music_opens_exactly_the_players_the_sdk_and_the_covers() {
-        let frames: Vec<&str> = CSP_MUSIC_FRAME_SRC.split_whitespace().collect();
-        assert_eq!(
-            frames,
-            [
-                "https://open.spotify.com",
-                "https://widget.deezer.com",
-                "https://www.youtube-nocookie.com",
-                "https://sdk.scdn.co"
-            ]
-        );
-        // Un seul script tiers, désigné par son chemin complet.
-        assert_eq!(CSP_MUSIC_SCRIPT_SRC, "https://sdk.scdn.co/spotify-player.js");
-        assert_eq!(CSP_MUSIC_IMG_SRC, "https://i.scdn.co");
-        for source in [CSP_MUSIC_FRAME_SRC, CSP_MUSIC_SCRIPT_SRC, CSP_MUSIC_IMG_SRC] {
-            assert!(!source.contains('*'), "aucun joker : {source}");
-            assert!(!source.contains("http:"), "https seulement : {source}");
-        }
-        assert!(!CSP_BASE.contains("frame-src"), "hors de l'interface, rien n'est encadré");
+    fn nothing_is_framed_and_no_third_party_script_is_loaded() {
+        assert!(!CSP_BASE.contains("frame-src"), "aucune iframe, nulle part");
         assert!(!CSP_BASE.contains("img-src"), "chaque réponse choisit ses images");
+        assert!(!CSP_BASE.contains("scdn") && !CSP_IMG_SRC.contains("scdn"));
     }
 
     #[test]

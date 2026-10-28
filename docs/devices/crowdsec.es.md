@@ -41,6 +41,8 @@ son contadores: las gráficas y las reglas los convierten en tasas.
 | `lines_read_total`, `lines_parsed_total`, `lines_unparsed_total` | líneas de log leídas por el agente, y las analizadas o no | |
 | `source_lines_total`, `source_lines_unparsed_total` | lo mismo por fuente de log | `source` |
 | `buckets` | buckets de escenario actualmente abiertos | |
+| `alerts_recent` | con un acceso de máquina: alertas locales de las últimas 24 horas leídas de la Local API | |
+| `alerts_by_country` | con un acceso de máquina: esas alertas por país de origen (`source.cn`) | `country` |
 
 Las familias de la Local API aparecen donde se ejecuta la Local API, las
 familias de log donde un agente lee logs; la imagen oficial y una
@@ -59,6 +61,11 @@ reconoció), luego las decisiones activas, alertas conservadas, escenarios
 activados en las últimas 24 horas y líneas leídas por segundo, y después
 el tiempo desde la última actualización de cada bouncer, las decisiones
 por origen y la proporción no analizada de cada fuente de log.
+
+Con un acceso de máquina aparece un mapa de amenazas: las alertas de las
+últimas 24 horas, coloreadas por país. Los mismos recuentos alimentan el mapa de
+amenazas de la página Seguridad, junto a los bloqueos de los cortafuegos y las
+amenazas de Cloudflare.
 
 ## Dejar que DumbMonit lea las métricas de CrowdSec {#let-dumbmonit-read-crowdsecs-metrics}
 
@@ -96,7 +103,13 @@ por origen y la proporción no analizada de cada fuente de log.
     sudo cscli bouncers add dumbmonit
     ```
 
-5. En DumbMonit, introduce el host de CrowdSec, por ejemplo
+5. O, para el mapa de amenazas de la página Seguridad: crea un acceso de máquina y elige Acceso de máquina más abajo. Solo se guarda el país de cada alerta.
+
+    ```
+    sudo cscli machines add dumbmonit --password 'a-long-password'
+    ```
+
+6. En DumbMonit, introduce el host de CrowdSec, por ejemplo
    «crowdsec.lan». Cuando la Local API y los agentes se ejecutan en hosts
    distintos, añade cada host: las decisiones, alertas y bouncers se
    cuentan donde se ejecuta la Local API, las líneas de log donde cada
@@ -122,6 +135,7 @@ stream, o eleva la ventana de la regla.
 |---|---|
 | Solo métricas | Nada: lee `/metrics`, y `/health` de la Local API. |
 | Clave de API de bouncer | La clave impresa por `cscli bouncers add dumbmonit`, enviada como `X-Api-Key` a la Local API. |
+| Acceso de máquina | El nombre y la contraseña dados a `cscli machines add`. DumbMonit inicia sesión (`/v1/watchers/login`) y lee las alertas locales de las últimas 24 horas (`/v1/alerts`, sin las comunitarias), guardando solo el país de cada una: no se almacena ninguna dirección. |
 
 Dirección: un nombre de host o IP (`crowdsec.lan`), `host:puerto` para las
 métricas, o una URL completa. Opciones: protocolo (HTTP por defecto),

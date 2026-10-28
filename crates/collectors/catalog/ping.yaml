@@ -1,0 +1,20 @@
+# Mesures et vues du type « ping » (format : crates/collectors/src/catalog.rs).
+source: uptime
+prefixes: [probe_]
+metrics:
+  - { name: probe_success, label: "Up", unit: "bool" }
+  - { name: probe_duration_seconds, label: "Probe duration", unit: "s", better: "lower" }
+  - { name: probe_failure_info, label: "Failure reason", kind: info }
+  - { name: probe_icmp_rtt_seconds, label: "Round trip", unit: "s", better: "lower" }
+  - { name: probe_icmp_rtt_min_seconds, label: "Fastest round trip", unit: "s" }
+  - { name: probe_icmp_rtt_max_seconds, label: "Slowest round trip", unit: "s" }
+  - { name: probe_icmp_packet_loss_ratio, label: "Packet loss", unit: "ratio", better: "lower", min: 0, max: 1 }
+  - { name: probe_icmp_packets_sent, label: "Echoes sent" }
+  - { name: probe_icmp_packets_received, label: "Echoes received" }
+views:
+  - view: timeseries
+    title: "Response time"
+    metrics: [probe_duration_seconds, probe_icmp_rtt_seconds]
+  - view: timeseries
+    title: "Packet loss"
+    metrics: [probe_icmp_packet_loss_ratio]
