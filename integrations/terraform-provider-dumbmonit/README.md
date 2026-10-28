@@ -5,7 +5,8 @@ rules, maintenance windows and status pages. Built on the
 [Terraform Plugin Framework](https://developer.hashicorp.com/terraform/plugin/framework).
 It talks to the REST API with an administrator API token (scope `write`).
 
-This provider is not part of the server image and is not built by the Rust CI.
+This provider is not part of the server image; its own workflow
+(`.github/workflows/terraform-provider.yml`) builds and vets it.
 Terraform and the declarative YAML files of DumbMonit
 ([Configuration files](../../docs/using/config-files.md)) are two ways to the
 same goal; pick one per object, not both.

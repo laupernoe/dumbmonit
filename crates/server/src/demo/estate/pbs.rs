@@ -158,6 +158,22 @@ async fn handle(uri: Uri) -> Response {
     }
 }
 
+/// Sauvegardes ratées : `(jours avant aujourd'hui, rang de l'invité dans GUESTS,
+/// message)`. La matrice des sauvegardes montre ainsi quelques cases en échec,
+/// toutes assez anciennes pour ne déclencher aucune alerte.
+const FAILURES: &[(i64, usize, &str)] = &[
+    (2, 1, "TASK ERROR: backup failed: connection reset by peer"),
+    (5, 1, "TASK ERROR: backup failed: guest agent is not running, unable to freeze the guest"),
+    (5, 3, "TASK ERROR: backup failed: lock timeout - got a timeout waiting for the lock"),
+    (11, 0, "TASK ERROR: backup failed: no space left on device"),
+    (19, 2, "TASK ERROR: backup failed: connection reset by peer"),
+];
+
+/// Cette sauvegarde-là a-t-elle échoué ?
+fn failure(day: i64, guest: usize) -> Option<&'static str> {
+    FAILURES.iter().find(|(d, g, _)| *d == day && *g == guest).map(|(_, _, status)| *status)
+}
+
 /// Minuit (UTC) du jour courant.
 fn last_night(now: i64) -> i64 {
     now - now.rem_euclid(86_400)
@@ -189,7 +205,11 @@ fn tasks(now: i64) -> Vec<Value> {
             if start > now {
                 continue;
             }
-            out.push(task("backup", &format!("{STORE}:{kind}/{id}"), start, 140, "OK"));
+            let worker = format!("{STORE}:{kind}/{id}");
+            match failure(day, i) {
+                Some(status) => out.push(task("backup", &worker, start, 35, status)),
+                None => out.push(task("backup", &worker, start, 140, "OK")),
+            }
         }
         for (worker_type, worker_id, hour, duration) in [
             ("prunejob", "main:p-main", 2, 40),
@@ -225,8 +245,12 @@ fn datastore(path: &str, now: i64) -> Response {
         "snapshots" => {
             let night = last_night(now);
             let mut out = Vec::new();
-            for (kind, id) in GUESTS.iter().take(groups) {
+            for (rank, (kind, id)) in GUESTS.iter().enumerate().take(groups) {
                 for day in 0..7 {
+                    // Une sauvegarde ratée n'a laissé aucun instantané.
+                    if failure(day, rank).is_some() {
+                        continue;
+                    }
                     out.push(json!({
                         "backup-type": kind, "backup-id": id,
                         "backup-time": night - day * 86_400 + 3600,
@@ -238,5 +262,23 @@ fn datastore(path: &str, now: i64) -> Response {
         }
         "gc" => data(json!({"store": store, "last-run-state": "OK"})),
         _ => json(StatusCode::NOT_FOUND, json!({"data": null}).to_string()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn la_matrice_des_sauvegardes_a_quelques_echecs() {
+        let all = tasks(1_790_000_000);
+        let failed = all
+            .iter()
+            .filter(|t| t["status"].as_str().is_some_and(|s| s.starts_with("TASK ERROR")))
+            .count();
+        assert_eq!(failed, FAILURES.len());
+        // Assez anciens pour ne déclencher aucune alerte, et sur des invités réels.
+        assert!(FAILURES.iter().all(|(day, guest, _)| *day >= 2 && *guest < GUESTS.len()));
+        assert!(failure(2, 1).is_some() && failure(0, 1).is_none());
     }
 }

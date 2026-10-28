@@ -32,10 +32,17 @@ valer, ou para colocar uma vitrine no seu próprio site.
   servidor, ligados a `127.0.0.1` e a reproduzir respostas de API gravadas,
   pelo que os coletores reais e os painéis de monitor funcionam. Reiniciar
   devolve o mesmo património.
-- **Sete dias de histórico.** Métricas sintéticas são escritas na
-  VictoriaMetrics no arranque, para que os gráficos, *Últimos 7 dias*, as
-  previsões e o histórico de alertas estejam preenchidos, e alguns alertas
-  estão ativos para que *Precisa de si* tenha algo.
+- **Trinta dias de histórico.** Métricas sintéticas são escritas na
+  VictoriaMetrics no arranque (a última semana com resolução de cinco
+  minutos), para que os gráficos, *Últimos 7 dias*, a disponibilidade a 30
+  dias, as previsões («cheio dentro de cerca de N dias») e o histórico de
+  alertas estejam preenchidos, e alguns alertas estão ativos para que
+  *Precisa de si* tenha algo. Um switch central com as suas portas e o seu
+  tráfego, um mapa de ameaças alimentado por contagens inventadas do CrowdSec
+  e da Cloudflare, prazos de domínios e licenças, uma matriz de cópias de
+  segurança com algumas noites falhadas, um dispositivo encontrado pela análise
+  de rede e duas páginas de estado com cenas noturnas completam o quadro. Tudo
+  é calculado em memória a partir de uma semente fixa: nada é obtido da rede.
 - **Nada sai do servidor.** Nenhuma notificação é enviada, e nenhuma
   verificação vai a um endereço que um visitante tenha escrito.
 - **Uma visita guiada** abre após a primeira sessão iniciada; a faixa reabre-a.

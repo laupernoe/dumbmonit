@@ -23,6 +23,7 @@
 		listCollectors,
 		probeTarget,
 		queryInstant,
+		queryRange,
 		updateTarget,
 		type Alert,
 		type AlertRule,
@@ -60,7 +61,8 @@
 		type UptimeSummary
 	} from '#lib/metrics.js';
 	import Chart, { type Serie } from '#lib/components/Chart.svelte';
-	import { eventsFromHistory, thresholdsFor } from '#lib/chart-context.js';
+	import { eventsFromHistory, eventsFromRestarts, thresholdsFor } from '#lib/chart-context.js';
+	import { CONTAINER_RESTART_METRIC, UPTIME_METRIC, restartEvents, type RestartEvent } from '#lib/restart-events.js';
 	import Readout from '#lib/components/Readout.svelte';
 	import Figure from '#lib/components/devices/Figure.svelte';
 	import Segmented from '#lib/components/devices/Segmented.svelte';
@@ -336,7 +338,10 @@
 	// Context laid over this page's charts: rule thresholds and alert transitions.
 	let chartRules = $state.raw<AlertRule[]>([]);
 	let chartHistory = $state.raw<AlertHistoryEntry[]>([]);
-	const chartEvents = $derived(eventsFromHistory(chartHistory, chartRules, id));
+	let chartRestarts = $state.raw<RestartEvent[]>([]);
+	const chartEvents = $derived(
+		[...eventsFromHistory(chartHistory, chartRules, id), ...eventsFromRestarts(chartRestarts)].sort((a, b) => a.at - b.at)
+	);
 	/** One cursor for every chart of this device page. */
 	const syncKey = $derived(`target-${id}`);
 	const thresholdsOf = (metric: string, unit: string, scale = 1) =>
@@ -369,6 +374,31 @@
 			if (rules) chartRules = rules;
 			if (history) chartHistory = history;
 		});
+		return () => controller.abort();
+	});
+	// Restart markers: agent reboots and Docker container restarts, read from the stored series.
+	$effect(() => {
+		const targetId = id;
+		const seconds = rangeSeconds;
+		const controller = new AbortController();
+		const end = Date.now() / 1000;
+		void queryRange(
+			{
+				query: `{__name__=~"${UPTIME_METRIC}|${CONTAINER_RESTART_METRIC}", target="${targetId}"}`,
+				start: end - seconds,
+				end,
+				// A restart must show between two samples: never coarser than a few minutes.
+				step: Math.min(300, Math.max(30, Math.round(seconds / 600)))
+			},
+			controller.signal
+		)
+			.then((found) => {
+				if (controller.signal.aborted || targetId !== id) return;
+				chartRestarts = restartEvents(found);
+			})
+			.catch(() => {
+				// Decoration only: the charts stand without it.
+			});
 		return () => controller.abort();
 	});
 	/** Bell in the header: this monitor's active alerts, counted like the list does. */

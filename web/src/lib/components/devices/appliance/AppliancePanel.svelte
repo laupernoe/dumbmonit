@@ -19,6 +19,7 @@
 	import ClientDevicesTable from '../ClientDevicesTable.svelte';
 	import CloudRegions from '#lib/components/geomap/CloudRegions.svelte';
 	import Figure from '../Figure.svelte';
+	import SwitchPanel from '../switch/SwitchPanel.svelte';
 	import { FOLDS, type ApplianceView } from './folds';
 
 	/** Kinds whose devices page also shows the client-devices table. */
@@ -111,6 +112,10 @@
 			{/each}
 		{/if}
 	</Panel>
+{/if}
+
+{#if (target.kind === 'omada' || target.kind === 'arubacentral') && !variant}
+	<SwitchPanel {target} class="mt-6" />
 {/if}
 
 {#if WITH_HISTORY.has(variant ?? target.kind)}

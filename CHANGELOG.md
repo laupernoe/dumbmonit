@@ -5,6 +5,55 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.14.3 — 2026-10-28
+
+### Added
+
+- **Machine health on Windows.** The agent now fills the machine health card on
+  Windows too: top processes by CPU and memory, processor queue length, memory
+  pages per second and disk queue length (`agent_windows_*`, shown among the
+  current values), and the clock offset and synchronisation read from
+  `w32tm /query /status /verbose` (same `agent_clock_*` series as on Linux).
+- **Switch panel for Omada and Aruba Central.** Switches managed by an Omada
+  controller or by Aruba Central show their ports (state, speed, PoE) in the
+  switch panel, like SNMP switches.
+- **ENTITY-SENSOR-MIB sensors in SNMP profiles.** A new `entity-sensors` profile
+  reads temperatures, voltages, currents, fan speeds and power from ENTITY-SENSOR-MIB, with
+  the scale and precision each sensor reports.
+- **Restart markers on device charts.** Host reboots (uptime going back) and
+  container restarts are marked on the charts of the device page.
+- **Expiries in deadlines.** OVH services report their expiry date and are listed
+  in deadlines; the Veeam support contract has an expiry rule and a deadline.
+- **Region map.** Azure and Infomaniak resources carry a region label and are
+  placed on the region map.
+- **Hyper Backup in the backup matrix.** Synology Hyper Backup tasks appear in the
+  backup history and matrix.
+
+### Changed
+
+- **A fuller demo.** The demo estate now carries 30 days of history (last week
+  at five-minute resolution) and shows what the recent releases added: charts
+  on every monitor, latency and p95 columns filled, 30-day availability below
+  100 % for monitors that are down, a storage forecast ("full in about N
+  days", shown in the console's Forecast panel), a core switch with ports and
+  weathermap traffic, a threat map fed by made-up CrowdSec and Cloudflare
+  counts, domain and licence deadlines, a backup matrix with a few failed
+  nights, a new device found by the network scan, and two status pages with
+  Paris and Tokyo night scenes. Everything is computed in memory from a fixed
+  seed.
+- **Terraform provider.** Built with Go 1.27.3 and up-to-date dependencies
+  (gRPC, `golang.org/x/net`, `x/text`, `x/sys`), which closes the open advisories
+  on them; a new workflow builds, vets and scans it with `govulncheck`.
+- **arm64 images for stable releases.** Each stable release also gets
+  linux/arm64 server and agent images, built on a native ARM runner; pre-releases
+  and `:edge` stay amd64 only.
+
+### Fixed
+
+- **Agent self-update.** The trial run of a freshly downloaded agent
+  (`--version`) is tried again when Linux briefly reports the file as busy
+  (ETXTBSY), instead of failing the update.
+
 ## 0.14.2 — 2026-10-28
 
 ### Added

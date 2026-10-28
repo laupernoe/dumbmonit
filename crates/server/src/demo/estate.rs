@@ -28,6 +28,9 @@ mod redfish;
 mod synology;
 mod truenas;
 
+/// Types de cible des équipements simulés ci-dessous.
+pub const KINDS: &[&str] = &["proxmox", "synology", "pbs", "truenas", "opnsense", "redfish"];
+
 /// Un équipement du parc fictif, tel que la base doit l'enregistrer.
 pub struct DemoDevice {
     /// Identifiant stable, repris par l'amorçage de la base.
