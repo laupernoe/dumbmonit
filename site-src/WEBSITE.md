@@ -15,9 +15,10 @@ that can be used the same way. The diagrams are drawn in HTML and CSS (`DIAGRAMS
 so their text wraps and translates; each one lays itself out from its own width (container
 queries), horizontal when it has the room, vertical otherwise.
 
-A recorded demo shows up as a "See it in action" block on the home page as soon as a video is
-present in `static/assets/media/` (`demo.webm` and/or `demo.mp4`, poster `demo.webp`, `.jpg` or
-`.png`, or `demo-poster.*`); without one, the block is left out (never a broken reference).
+The home page plays a recorded tour (`#video`, muted, loops while on screen, never under reduced
+motion). Its files live once in the repository, in `docs/assets/demo/` (the README uses them too);
+`build.py` copies `dumbmonit-demo.webm`, `dumbmonit-demo.mp4` and `demo-poster.jpg` into
+`website/assets/demo/` and fails if one is missing.
 
 ## One-time setup
 

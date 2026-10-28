@@ -324,8 +324,9 @@
  "badge_agent": "Via agente",
  "fam_more_name": "Mais integrações",
  "fam_more_blurb": "Os tipos de monitor mais recentes, ainda sem família.",
- "vd_eyebrow": "Em ação",
- "vd_h": "Dois minutos com o DumbMonit",
- "vd_p": "A instância de demo, gravada: adicionar um monitor, ver um alerta chegar, reconhecê-lo.",
- "vd_fallback": "Seu navegador não consegue reproduzir este vídeo."
+ "vid_eyebrow": "Em movimento",
+ "vid_h": "Um minuto no console",
+ "vid_p": "A visão geral, um monitor, o mapa, o mapa ao vivo de um firewall, uma página de status pública e o painel de parede, na demo online.",
+ "vid_alt": "Vídeo do console do DumbMonit: a visão geral com o banner do tempo, o detalhe de um monitor, o mapa da infraestrutura, o mapa ao vivo de um firewall, uma página de status pública e o painel de parede.",
+ "vid_dl": "Baixar o vídeo (MP4)"
 }

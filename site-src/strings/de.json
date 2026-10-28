@@ -324,8 +324,9 @@
  "badge_agent": "Über den Agent",
  "fam_more_name": "Weitere Integrationen",
  "fam_more_blurb": "Die neuesten Monitortypen, noch keiner Familie zugeordnet.",
- "vd_eyebrow": "In Aktion",
- "vd_h": "Zwei Minuten mit DumbMonit",
- "vd_p": "Die Demo-Instanz, aufgezeichnet: einen Monitor anlegen, einen Alarm ankommen sehen, ihn bestätigen.",
- "vd_fallback": "Ihr Browser kann dieses Video nicht abspielen."
+ "vid_eyebrow": "In Bewegung",
+ "vid_h": "Eine Minute in der Konsole",
+ "vid_p": "Die Übersicht, ein Monitor, die Karte, die Live-Karte einer Firewall, eine öffentliche Statusseite und die Wandanzeige, in der Live-Demo.",
+ "vid_alt": "Video der DumbMonit-Konsole: die Übersicht mit dem Wetterbanner, die Details eines Monitors, die Infrastrukturkarte, die Live-Karte einer Firewall, eine öffentliche Statusseite und die Wandanzeige.",
+ "vid_dl": "Video herunterladen (MP4)"
 }

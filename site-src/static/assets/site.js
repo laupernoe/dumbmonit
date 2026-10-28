@@ -315,3 +315,26 @@
 		io.observe(el);
 	});
 })();
+
+/* Video tour: loads and plays only when visible, never autoplays with reduced motion. */
+(function () {
+	var v = document.getElementById('tour');
+	if (!v) return;
+	var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	if (calm || !('IntersectionObserver' in window)) {
+		v.controls = true;
+		return;
+	}
+	var io = new IntersectionObserver(function (entries) {
+		entries.forEach(function (en) {
+			if (en.isIntersecting) {
+				v.preload = 'auto';
+				var p = v.play();
+				if (p && p.catch) p.catch(function () { v.controls = true; });
+			} else {
+				v.pause();
+			}
+		});
+	}, { threshold: 0.35 });
+	io.observe(v);
+})();
