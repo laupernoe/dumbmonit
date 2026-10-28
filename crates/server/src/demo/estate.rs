@@ -332,7 +332,7 @@ fn shift_iso(value: &mut Value, offset: i64) {
                 && text.as_bytes()[10] == b'T'
                 && text.as_bytes()[..4].iter().all(u8::is_ascii_digit);
             if looks_like_date && let Ok(at) = chrono::DateTime::parse_from_rfc3339(text) {
-                let moved = at + chrono::Duration::seconds(offset);
+                let moved = at.with_timezone(&chrono::Utc) + chrono::Duration::seconds(offset);
                 *text = moved.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
             }
         }
