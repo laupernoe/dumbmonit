@@ -34,6 +34,15 @@ All notable changes to this project are documented here. The format follows
 - **Terraform provider.** Built with Go 1.27.3 and up-to-date dependencies
   (gRPC, `golang.org/x/net`, `x/text`, `x/sys`), which closes the open advisories
   on them; a new workflow builds, vets and scans it with `govulncheck`.
+- **arm64 images for stable releases.** Each stable release also gets
+  linux/arm64 server and agent images, built on a native ARM runner; pre-releases
+  and `:edge` stay amd64 only.
+
+### Fixed
+
+- **Agent self-update.** The trial run of a freshly downloaded agent
+  (`--version`) is tried again when Linux briefly reports the file as busy
+  (ETXTBSY), instead of failing the update.
 
 ## 0.14.2 — 2026-10-28
 
