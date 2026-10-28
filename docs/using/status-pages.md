@@ -15,7 +15,7 @@ an email.
 
 ## 1. Create a page
 
-**Status pages** (the Enterprise rail; **More** in Homelab) → **New page**. That page lists your status pages
+**Status pages** (in the icon rail) → **New page**. That page lists your status pages
 (open, edit, delete) with the announcements under them; the editor opens on
 its own route (`/status/new`, `/status/<id>`). The public rendering is at
 `/s/<address>`. Status pages used to sit in Settings: `/settings/status` and its

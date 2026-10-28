@@ -7,7 +7,7 @@ défaut ; quotidien et mensuel sont à un clic. Les rapports réutilisent un
 **canal de notification email (SMTP)**, configurez-en donc un d'abord (voir
 [Canaux de notification](../notifications.md)).
 
-Ouvrez **Rapports** (le rail Entreprise ; **Plus** en Homelab) pour les configurer. La page réunit l'export de disponibilité (SLA) d'une période, les rapports planifiés et l'historique de leurs envois ; elle était dans les Réglages, et `/settings/reports` y redirige. Tout ici est réservé aux
+Ouvrez **Rapports** (dans le rail d'icônes) pour les configurer. La page réunit l'export de disponibilité (SLA) d'une période, les rapports planifiés et l'historique de leurs envois ; elle était dans les Réglages, et `/settings/reports` y redirige. Tout ici est réservé aux
 administrateurs, lecture incluse, car la page liste les adresses des
 destinataires.
 

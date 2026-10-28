@@ -16,7 +16,7 @@ serveur — ni dans la page, ni dans un badge, ni dans un email.
 
 ## 1. Créer une page
 
-**Pages de statut** (le rail Entreprise ; **Plus** en Homelab) → **Nouvelle page**. Cette page liste vos
+**Pages de statut** (dans le rail d'icônes) → **Nouvelle page**. Cette page liste vos
 pages d'état (ouvrir, modifier, supprimer) avec les annonces en
 dessous ; l'éditeur s'ouvre sur sa propre route (`/status/new`,
 `/status/<id>`). Le rendu public est à `/s/<adresse>`. Les pages de statut étaient dans les
@@ -24,7 +24,7 @@ Réglages : `/settings/status` et ses liens redirigent ici.
 
 | Champ | Ce qu'il fait |
 | --- | --- |
-| **Titre** | Le titre de la page (« Homelab »). |
+| **Titre** | Le titre de la page (« État des services »). |
 | **Adresse** | La dernière partie de l'URL, `/s/<adresse>`. Suggérée depuis le titre ; lettres minuscules, chiffres et tirets, de 2 à 40 caractères. |
 | **Description** | Une phrase sous le titre. Optionnel. |
 | **Thème** | Jour, nuit, ou suivre le système du visiteur. |
