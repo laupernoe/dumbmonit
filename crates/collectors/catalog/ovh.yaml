@@ -17,6 +17,7 @@ metrics:
   - { name: ovh_servers_down, label: "Servers down", better: "lower" }
   - { name: ovh_item_ok, label: "Item ok", unit: "bool" }
   - { name: ovh_figure, label: "Figure" }
+  - { name: ovh_service_expiry_seconds, label: "Service expiry", unit: "s" }
 views:
   - view: stat
     title: "Current values"
