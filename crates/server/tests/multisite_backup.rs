@@ -104,13 +104,13 @@ async fn les_politiques_de_conteneurs_voyagent_avec_la_sauvegarde() {
         .fetch_one(&pool)
         .await
         .unwrap();
-    let web = dumbmonit_server::collectors::agent::commands::get_policy(&pool, id, "web")
-        .await
-        .unwrap();
-    assert!(web.auto_restart && web.auto_update && !web.prune_old_image && !web.only_in_maintenance);
-    let db = dumbmonit_server::collectors::agent::commands::get_policy(&pool, id, "db")
-        .await
-        .unwrap();
+    let web =
+        dumbmonit_server::collectors::agent::commands::get_policy(&pool, id, "web").await.unwrap();
+    assert!(
+        web.auto_restart && web.auto_update && !web.prune_old_image && !web.only_in_maintenance
+    );
+    let db =
+        dumbmonit_server::collectors::agent::commands::get_policy(&pool, id, "db").await.unwrap();
     assert!(db.auto_restart && !db.auto_update);
 
     let again = restore(&pool, &cipher, &lot, true).await.expect("seconde restauration");

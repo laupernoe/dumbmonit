@@ -231,9 +231,8 @@ pub fn rank(groups: BTreeMap<String, (f64, u64)>, with_cpu: bool) -> ProcessTop 
     } else {
         Vec::new()
     };
-    by_cpu.sort_by(|a, b| {
-        b.cpu_percent.total_cmp(&a.cpu_percent).then_with(|| a.name.cmp(&b.name))
-    });
+    by_cpu
+        .sort_by(|a, b| b.cpu_percent.total_cmp(&a.cpu_percent).then_with(|| a.name.cmp(&b.name)));
     by_cpu.truncate(TOP_N);
 
     let mut by_memory: Vec<ProcessUsage> = usages.into_iter().filter(|u| u.rss_bytes > 0).collect();
@@ -446,7 +445,8 @@ async fn run(program: &str, args: &[&str]) -> Option<String> {
         .stderr(std::process::Stdio::null())
         .kill_on_drop(true)
         .output();
-    let output = tokio::time::timeout(std::time::Duration::from_secs(3), command).await.ok()?.ok()?;
+    let output =
+        tokio::time::timeout(std::time::Duration::from_secs(3), command).await.ok()?.ok()?;
     output.status.success().then(|| String::from_utf8_lossy(&output.stdout).into_owned())
 }
 

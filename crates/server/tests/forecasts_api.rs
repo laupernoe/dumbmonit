@@ -214,10 +214,8 @@ async fn la_regle_de_prevision_s_enregistre_avec_ses_paliers() {
     // Les règles livrées de prévision et de dérive sont là.
     let reply = app.get("/api/alerts/rules", Some(&admin)).await;
     let rules = reply.body.as_array().expect("règles");
-    let kinds: Vec<(&str, &str)> = rules
-        .iter()
-        .filter_map(|r| Some((r["uid"].as_str()?, r["kind"].as_str()?)))
-        .collect();
+    let kinds: Vec<(&str, &str)> =
+        rules.iter().filter_map(|r| Some((r["uid"].as_str()?, r["kind"].as_str()?))).collect();
     assert!(kinds.contains(&("capacity_forecast", "forecast")), "{kinds:?}");
     assert!(kinds.contains(&("latency_drift", "drift")), "{kinds:?}");
     assert!(kinds.contains(&("http_5xx_drift", "drift")), "{kinds:?}");

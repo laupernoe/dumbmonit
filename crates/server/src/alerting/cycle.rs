@@ -978,7 +978,8 @@ mod tests {
     fn une_derive_ne_s_ouvre_que_si_elle_est_armee() {
         let mut drift = rule("latency_drift", RuleKind::Drift, 2.0, 0);
         drift.operator = Operator::Ge;
-        let fingerprint = model::fingerprint(&drift.uid, &model::identity_key(&point(1, 0.0).labels));
+        let fingerprint =
+            model::fingerprint(&drift.uid, &model::identity_key(&point(1, 0.0).labels));
         let annotated = |armed: bool| {
             HashMap::from([(
                 fingerprint.clone(),

@@ -442,12 +442,8 @@ async fn ignorer_un_appareil_coupe_toutes_ses_alertes_et_connu_le_reprend() {
     assert_eq!(row["unknown_ports"], 0);
 
     let inventory = app.get("/api/discovery/inventory", Some(&admin)).await;
-    let device = inventory.body["devices"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|d| d["id"] == guest)
-        .unwrap();
+    let device =
+        inventory.body["devices"].as_array().unwrap().iter().find(|d| d["id"] == guest).unwrap();
     assert_eq!((device["known"].as_bool(), device["ignored"].as_bool()), (Some(true), Some(true)));
 
     // « Connu » le sort de l'état ignoré : ses ports nouveaux comptent de nouveau.

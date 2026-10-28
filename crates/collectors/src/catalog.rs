@@ -22,9 +22,9 @@
 //! serveur ajoute à l'écriture. Les profils SNMP portent leurs vues eux-mêmes
 //! (`Catalog::measures`) et l'agent est décrit par le serveur.
 
-use std::collections::HashSet;
 #[cfg(feature = "catalog")]
 use std::collections::BTreeMap;
+use std::collections::HashSet;
 #[cfg(feature = "catalog")]
 use std::sync::OnceLock;
 
@@ -116,14 +116,12 @@ impl CatalogFile {
     pub fn unemitted<'a>(&'a self, source: &str) -> Vec<&'a str> {
         let emitted = |name: &str| {
             contains_word(source, name)
-                || self
-                    .prefixes
-                    .iter()
-                    .filter_map(|prefix| name.strip_prefix(prefix.as_str()))
-                    .any(|rest| {
+                || self.prefixes.iter().filter_map(|prefix| name.strip_prefix(prefix.as_str())).any(
+                    |rest| {
                         source.contains(&format!("\"{rest}\""))
                             || source.contains(&format!("}}_{rest}\""))
-                    })
+                    },
+                )
         };
         self.metrics.iter().map(|metric| &*metric.name).filter(|&name| !emitted(name)).collect()
     }
