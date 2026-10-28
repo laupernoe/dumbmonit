@@ -153,6 +153,12 @@ const FAMILIES: &[Family] = &[
         what: &[],
     },
     Family {
+        metric: "veeam_support_expiry_seconds",
+        unit: Unit::Seconds,
+        kind: "license",
+        what: &[],
+    },
+    Family {
         metric: "gitlab_license_expiry_seconds",
         unit: Unit::Seconds,
         kind: "license",
