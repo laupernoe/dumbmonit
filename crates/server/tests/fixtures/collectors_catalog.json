@@ -16774,6 +16774,12 @@
         "name": "ovh_figure",
         "label": "Figure",
         "kind": "gauge"
+      },
+      {
+        "name": "ovh_service_expiry_seconds",
+        "label": "Service expiry",
+        "unit": "s",
+        "kind": "gauge"
       }
     ],
     "views": [
