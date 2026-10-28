@@ -1,0 +1,31 @@
+# Mesures et vues du type « nextcloud » (format : crates/collectors/src/catalog.rs).
+source: selfhosted
+prefixes: [nextcloud_]
+metrics:
+  - { name: nextcloud_opcache_hit_rate_percent, label: "OPcache hit rate", unit: "%", min: 0, max: 100 }
+  - { name: nextcloud_opcache_memory_used_percent, label: "OPcache memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: nextcloud_opcache_interned_strings_used_percent, label: "OPcache interned strings used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: nextcloud_opcache_oom_restarts, label: "OPcache oom restarts" }
+  - { name: nextcloud_opcache_enabled, label: "OPcache enabled", unit: "bool" }
+  - { name: nextcloud_active_users, label: "Active users" }
+  - { name: nextcloud_update_available, label: "Update available", unit: "bool", better: "higher" }
+  - { name: nextcloud_app_update_available, label: "App update available", better: "higher" }
+  - { name: nextcloud_maintenance, label: "Maintenance", unit: "bool" }
+  - { name: nextcloud_needs_db_upgrade, label: "Needs db upgrade", unit: "bool" }
+  - { name: nextcloud_platform_info, label: "Platform", kind: info }
+  - { name: nextcloud_version_info, label: "Version", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - nextcloud_opcache_hit_rate_percent
+      - nextcloud_opcache_memory_used_percent
+      - nextcloud_opcache_interned_strings_used_percent
+      - nextcloud_opcache_oom_restarts
+      - nextcloud_opcache_enabled
+      - nextcloud_active_users
+      - nextcloud_update_available
+      - nextcloud_app_update_available
+      - nextcloud_maintenance
+      - nextcloud_needs_db_upgrade
+      - nextcloud_version_info

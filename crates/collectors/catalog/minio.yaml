@@ -1,0 +1,42 @@
+# Mesures et vues du type « minio » (format : crates/collectors/src/catalog.rs).
+source: minio
+prefixes: [minio_]
+metrics:
+  - { name: minio_heal_active, label: "Heal active", unit: "bool" }
+  - { name: minio_s3_requests_total, label: "S3 requests", kind: counter }
+  - { name: minio_s3_requests_4xx_total, label: "S3 requests 4xx", kind: counter }
+  - { name: minio_s3_requests_5xx_total, label: "S3 requests 5xx", kind: counter }
+  - { name: minio_capacity_usable_used_percent, label: "Usable capacity used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: minio_capacity_usable_bytes, label: "Usable capacity", unit: "B" }
+  - { name: minio_usage_bytes, label: "Data stored", unit: "B" }
+  - { name: minio_objects, label: "Objects" }
+  - { name: minio_buckets, label: "Buckets" }
+  - { name: minio_drives_offline, label: "Drives offline" }
+  - { name: minio_drives, label: "Drives" }
+  - { name: minio_nodes_offline, label: "Nodes offline" }
+  - { name: minio_nodes_online, label: "Nodes online" }
+  - { name: minio_replication_failed_objects, label: "Replication failures" }
+  - { name: minio_uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: minio_version_info, label: "Version", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - minio_nodes_offline
+      - minio_drives_offline
+      - minio_replication_failed_objects
+      - minio_heal_active
+      - minio_capacity_usable_bytes
+      - minio_usage_bytes
+      - minio_objects
+      - minio_buckets
+      - minio_drives
+      - minio_nodes_online
+      - minio_uptime_seconds
+      - minio_version_info
+  - view: timeseries
+    title: "S3 requests"
+    metrics: [minio_s3_requests_total, minio_s3_requests_4xx_total, minio_s3_requests_5xx_total]
+  - view: timeseries
+    title: "Capacity used"
+    metrics: [minio_capacity_usable_used_percent]

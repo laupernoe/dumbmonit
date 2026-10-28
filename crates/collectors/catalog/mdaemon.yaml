@@ -1,0 +1,17 @@
+# Mesures et vues du type « mdaemon » (format : crates/collectors/src/catalog.rs).
+source: mdaemon
+prefixes: [mdaemon_]
+metrics:
+  - { name: mdaemon_service_up, label: "Service up", unit: "bool" }
+  - { name: mdaemon_service_response_seconds, label: "Service response", unit: "s", better: "lower" }
+  - { name: mdaemon_api_up, label: "API up", unit: "bool" }
+  - { name: mdaemon_info, label: "Info", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - mdaemon_service_up
+      - mdaemon_api_up
+  - view: timeseries
+    title: "Response time"
+    metrics: [mdaemon_service_response_seconds]

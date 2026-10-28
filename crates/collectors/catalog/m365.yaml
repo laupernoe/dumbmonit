@@ -1,0 +1,44 @@
+# Mesures et vues du type « m365 » (format : crates/collectors/src/catalog.rs).
+source: m365
+prefixes: [m365_]
+metrics:
+  - { name: m365_service_ok, label: "Service ok", unit: "bool" }
+  - { name: m365_item_ok, label: "Item ok", unit: "bool" }
+  - { name: m365_figure, label: "Figure" }
+  - { name: m365_services, label: "Services" }
+  - { name: m365_services_degraded, label: "Services degraded", better: "lower" }
+  - { name: m365_issues_readable, label: "Issues readable", unit: "bool" }
+  - { name: m365_incidents_active, label: "Incidents active" }
+  - { name: m365_advisories_active, label: "Advisories active" }
+  - { name: m365_service_issues, label: "Service issues" }
+  - { name: m365_licenses_readable, label: "Licenses readable", unit: "bool" }
+  - { name: m365_license_used_percent, label: "License used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: m365_license_consumed, label: "License consumed" }
+  - { name: m365_license_enabled, label: "License enabled", unit: "bool" }
+  - { name: m365_license_available, label: "License available", better: "higher" }
+  - { name: m365_licenses_exhausted, label: "Licenses exhausted" }
+  - { name: m365_risky_readable, label: "Risky readable", unit: "bool" }
+  - { name: m365_risky_users, label: "Risky users" }
+  - { name: m365_risky_users_high, label: "Risky users high" }
+  - { name: m365_signins_readable, label: "Signins readable", unit: "bool" }
+  - { name: m365_signin_failures_1h, label: "Signin failures 1 h" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - m365_services_degraded
+      - m365_incidents_active
+      - m365_licenses_exhausted
+      - m365_risky_users_high
+      - m365_service_ok
+      - m365_item_ok
+      - m365_figure
+      - m365_services
+      - m365_advisories_active
+      - m365_service_issues
+      - m365_license_used_percent
+      - m365_license_available
+      - m365_risky_users
+  - view: timeseries
+    title: "Sign-in failures (1 h)"
+    metrics: [m365_signin_failures_1h]

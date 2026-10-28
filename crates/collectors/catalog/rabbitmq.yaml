@@ -1,0 +1,62 @@
+# Mesures et vues du type « rabbitmq » (format : crates/collectors/src/catalog.rs).
+source: rabbitmq
+prefixes: [rabbitmq_]
+metrics:
+  - { name: rabbitmq_queue_messages_ready, label: "Queue messages ready" }
+  - { name: rabbitmq_queue_messages_unacked, label: "Queue messages unacked" }
+  - { name: rabbitmq_messages_published_total, label: "Messages published", kind: counter }
+  - { name: rabbitmq_messages_delivered_total, label: "Messages delivered", kind: counter }
+  - { name: rabbitmq_messages_redelivered_total, label: "Messages redelivered", kind: counter }
+  - { name: rabbitmq_node_memory_used_percent, label: "Node memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: rabbitmq_node_fd_used_percent, label: "Node FD used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: rabbitmq_messages_unroutable_total, label: "Messages unroutable", kind: counter }
+  - { name: rabbitmq_version_info, label: "Version", kind: info }
+  - { name: rabbitmq_node_running, label: "Node running", unit: "bool" }
+  - { name: rabbitmq_node_partitions, label: "Node partitions" }
+  - { name: rabbitmq_partitions, label: "Partitions" }
+  - { name: rabbitmq_node_memory_used_bytes, label: "Node memory used", unit: "B" }
+  - { name: rabbitmq_node_memory_limit_bytes, label: "Node memory limit", unit: "B" }
+  - { name: rabbitmq_node_disk_free_bytes, label: "Node disk free", unit: "B", better: "higher" }
+  - { name: rabbitmq_node_disk_free_limit_bytes, label: "Node disk free limit", unit: "B" }
+  - { name: rabbitmq_node_fd_used, label: "Node FD used" }
+  - { name: rabbitmq_node_uptime_seconds, label: "Node uptime", unit: "s" }
+  - { name: rabbitmq_node_being_drained, label: "Node being drained", unit: "bool" }
+  - { name: rabbitmq_nodes, label: "Nodes" }
+  - { name: rabbitmq_nodes_running, label: "Nodes running" }
+  - { name: rabbitmq_alarm, label: "Alarm", unit: "bool" }
+  - { name: rabbitmq_alarms, label: "Alarms" }
+  - { name: rabbitmq_queue_consumers, label: "Queue consumers" }
+  - { name: rabbitmq_queue_running, label: "Queue running", unit: "bool" }
+  - { name: rabbitmq_queues_without_consumers, label: "Queues without consumers" }
+  - { name: rabbitmq_queues_not_running, label: "Queues not running", unit: "bool" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - rabbitmq_alarms
+      - rabbitmq_partitions
+      - rabbitmq_queues_without_consumers
+      - rabbitmq_nodes_running
+      - rabbitmq_messages_unroutable_total
+      - rabbitmq_version_info
+      - rabbitmq_node_running
+      - rabbitmq_node_partitions
+      - rabbitmq_node_memory_limit_bytes
+      - rabbitmq_node_disk_free_bytes
+      - rabbitmq_node_disk_free_limit_bytes
+      - rabbitmq_node_uptime_seconds
+      - rabbitmq_node_being_drained
+      - rabbitmq_nodes
+      - rabbitmq_alarm
+      - rabbitmq_queue_consumers
+      - rabbitmq_queue_running
+      - rabbitmq_queues_not_running
+  - view: timeseries
+    title: "Queued messages"
+    metrics: [rabbitmq_queue_messages_ready, rabbitmq_queue_messages_unacked]
+  - view: timeseries
+    title: "Message rate"
+    metrics: [rabbitmq_messages_published_total, rabbitmq_messages_delivered_total, rabbitmq_messages_redelivered_total]
+  - view: timeseries
+    title: "Node resources"
+    metrics: [rabbitmq_node_memory_used_percent, rabbitmq_node_fd_used_percent]

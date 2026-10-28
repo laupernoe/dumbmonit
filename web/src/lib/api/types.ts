@@ -805,6 +805,48 @@ export interface CollectorOption {
 	columns: CollectorOptionColumn[];
 }
 
+/** Nature of a metric family: a counter only grows and is charted as a rate. */
+export type MetricKindName = 'gauge' | 'counter' | 'info' | 'state';
+
+/** What one code of a `state` metric means. */
+export interface MetricState {
+	value: number;
+	label: string;
+	/** `ok`, `warning`, `critical` or `neutral`. */
+	tone: string;
+}
+
+/** A metric family a device type emits, as the catalogue describes it. */
+export interface MetricDescription {
+	/** Name as the collector emits it, without the `dumbmonit_` prefix the server adds. */
+	name: string;
+	label: string;
+	/** `%`, `s`, `B`, `B/s`, `°C`, `bool`…; for a counter, the unit of the running total. */
+	unit: string;
+	kind: MetricKindName;
+	/** Which way a good figure goes; empty when neither. */
+	better: '' | 'higher' | 'lower';
+	min: number | null;
+	max: number | null;
+	/** Family giving the maximum of each series. */
+	max_from: string;
+	/** Label that names the measured object (`ifname`, `disk`…). */
+	entity: string;
+	states: MetricState[];
+}
+
+/** A view the catalogue recommends for the device page. */
+export interface ViewDescription {
+	/** `stat`, `timeseries`, `topn`, `heatmap`, or one a later server adds (drawn as curves). */
+	view: string;
+	title: string;
+	/** Families shown, by `MetricDescription.name`. */
+	metrics: string[];
+	/** Label that tells entities apart; empty: every series. */
+	group_by: string;
+	options: Record<string, string>;
+}
+
 /**
  * A device type offered by this server.
  *
@@ -828,6 +870,10 @@ export interface CollectorInfo {
 	options: CollectorOption[];
 	/** Server-side prerequisites of this type; the server omits the field when there are none. */
 	requirements: CollectorRequirement[];
+	/** Metric families this type declares; empty for a type (or a server) that declares none. */
+	metrics: MetricDescription[];
+	/** Recommended device-page views; empty: the page charts every family, as before. */
+	views: ViewDescription[];
 }
 
 /**
@@ -888,6 +934,43 @@ export function normalizeCollector(raw: Partial<CollectorInfo> & { kind: string 
 						doc_url: r.doc_url?.trim() ?? '',
 						compose_snippet: r.compose_snippet?.trim() ?? ''
 					}))
+			: [],
+		metrics: Array.isArray(raw.metrics)
+			? raw.metrics.filter((d) => d && typeof d.name === 'string' && d.name.trim()).map(normalizeMetric)
+			: [],
+		views: Array.isArray(raw.views)
+			? raw.views
+					.filter((v) => v && typeof v.view === 'string' && Array.isArray(v.metrics))
+					.map((v) => ({
+						view: v.view,
+						title: typeof v.title === 'string' ? v.title : '',
+						metrics: v.metrics.filter((n) => typeof n === 'string'),
+						group_by: typeof v.group_by === 'string' ? v.group_by : '',
+						options: v.options && typeof v.options === 'object' ? v.options : {}
+					}))
+			: []
+	};
+}
+
+const METRIC_KINDS: readonly MetricKindName[] = ['gauge', 'counter', 'info', 'state'];
+
+/** Fills the optional fields of a catalogue metric (the server omits empty ones). */
+function normalizeMetric(raw: Partial<MetricDescription> & { name: string }): MetricDescription {
+	const kind = METRIC_KINDS.find((k) => k === raw.kind) ?? 'gauge';
+	return {
+		name: raw.name.trim(),
+		label: raw.label?.trim() ?? '',
+		unit: raw.unit?.trim() ?? '',
+		kind,
+		better: raw.better === 'higher' || raw.better === 'lower' ? raw.better : '',
+		min: typeof raw.min === 'number' ? raw.min : null,
+		max: typeof raw.max === 'number' ? raw.max : null,
+		max_from: raw.max_from?.trim() ?? '',
+		entity: raw.entity?.trim() ?? '',
+		states: Array.isArray(raw.states)
+			? raw.states
+					.filter((s) => s && typeof s.value === 'number' && typeof s.label === 'string')
+					.map((s) => ({ value: s.value, label: s.label, tone: typeof s.tone === 'string' ? s.tone : 'neutral' }))
 			: []
 	};
 }

@@ -1,0 +1,32 @@
+# Mesures et vues du type « unifiprotect » (format : crates/collectors/src/catalog.rs).
+source: selfhosted
+prefixes: [unifiprotect_]
+metrics:
+  - { name: unifiprotect_storage_used_percent, label: "Storage used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: unifiprotect_camera_online, label: "Camera online", unit: "bool" }
+  - { name: unifiprotect_camera_recording, label: "Camera recording", unit: "bool" }
+  - { name: unifiprotect_cameras_total, label: "Cameras" }
+  - { name: unifiprotect_cameras_offline, label: "Cameras offline", better: "lower" }
+  - { name: unifiprotect_cameras_not_recording, label: "Cameras not recording" }
+  - { name: unifiprotect_recording_disabled, label: "Recording disabled", unit: "bool" }
+  - { name: unifiprotect_storage_size_bytes, label: "Storage size", unit: "B" }
+  - { name: unifiprotect_disks_total, label: "Disks" }
+  - { name: unifiprotect_disks_unhealthy, label: "Disks unhealthy", better: "lower" }
+  - { name: unifiprotect_version_info, label: "Version", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - unifiprotect_camera_online
+      - unifiprotect_camera_recording
+      - unifiprotect_cameras_total
+      - unifiprotect_cameras_offline
+      - unifiprotect_cameras_not_recording
+      - unifiprotect_recording_disabled
+      - unifiprotect_storage_size_bytes
+      - unifiprotect_disks_total
+      - unifiprotect_disks_unhealthy
+      - unifiprotect_version_info
+  - view: timeseries
+    title: "Storage used"
+    metrics: [unifiprotect_storage_used_percent]

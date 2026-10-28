@@ -1,0 +1,60 @@
+# Mesures et vues du type « kubernetes » (format : crates/collectors/src/catalog.rs).
+source: kubernetes
+prefixes: [kubernetes_]
+metrics:
+  - { name: k8s_pods_pending, label: "Kubernetes pods pending" }
+  - { name: k8s_pods_failed, label: "Kubernetes pods failed", better: "lower" }
+  - { name: k8s_pods_not_ready, label: "Kubernetes pods not ready" }
+  - { name: k8s_pods_crashlooping, label: "Kubernetes pods crashlooping" }
+  - { name: k8s_pod_restarts, label: "Kubernetes pod restarts", kind: counter }
+  - { name: k8s_workload_desired, label: "Kubernetes workload desired" }
+  - { name: k8s_workload_ready, label: "Kubernetes workload ready" }
+  - { name: k8s_workload_unavailable, label: "Kubernetes workload unavailable" }
+  - { name: k8s_warning_events, label: "Kubernetes warning events" }
+  - { name: k8s_warning_events_by_reason, label: "Kubernetes warning events by reason" }
+  - { name: k8s_nodes, label: "Kubernetes nodes" }
+  - { name: k8s_nodes_ready, label: "Kubernetes nodes ready" }
+  - { name: k8s_node_ready, label: "Kubernetes node ready", unit: "bool" }
+  - { name: k8s_node_unschedulable, label: "Kubernetes node unschedulable", unit: "bool" }
+  - { name: k8s_node_pressure, label: "Kubernetes node pressure", unit: "bool" }
+  - { name: k8s_node_info, label: "Kubernetes node", kind: info }
+  - { name: k8s_version_info, label: "Kubernetes version", kind: info }
+  - { name: k8s_pods, label: "Kubernetes pods" }
+  - { name: k8s_pods_running, label: "Kubernetes pods running" }
+  - { name: k8s_pod_ready, label: "Kubernetes pod ready" }
+  - { name: k8s_pod_crashlooping, label: "Kubernetes pod crashlooping" }
+  - { name: k8s_pod_pending, label: "Kubernetes pod pending" }
+  - { name: k8s_pod_blocked, label: "Kubernetes pod blocked" }
+  - { name: k8s_pvcs, label: "Kubernetes PVCs" }
+  - { name: k8s_pvc_bound, label: "Kubernetes PVC bound", unit: "bool" }
+  - { name: k8s_pvc_pending, label: "Kubernetes PVC pending", unit: "bool" }
+  - { name: k8s_pvcs_pending, label: "Kubernetes PVCs pending" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - k8s_nodes_ready
+      - k8s_nodes
+      - k8s_pods_running
+      - k8s_pods
+      - k8s_pvcs_pending
+      - k8s_node_ready
+      - k8s_node_unschedulable
+      - k8s_node_pressure
+      - k8s_version_info
+      - k8s_pod_blocked
+      - k8s_pvcs
+      - k8s_pvc_bound
+      - k8s_pvc_pending
+  - view: timeseries
+    title: "Unhealthy pods"
+    metrics: [k8s_pods_pending, k8s_pods_failed, k8s_pods_not_ready, k8s_pods_crashlooping]
+  - view: timeseries
+    title: "Pod restarts"
+    metrics: [k8s_pod_restarts]
+  - view: timeseries
+    title: "Workload replicas"
+    metrics: [k8s_workload_desired, k8s_workload_ready, k8s_workload_unavailable]
+  - view: timeseries
+    title: "Warning events"
+    metrics: [k8s_warning_events, k8s_warning_events_by_reason]

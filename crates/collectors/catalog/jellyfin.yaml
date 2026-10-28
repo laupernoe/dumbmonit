@@ -1,0 +1,40 @@
+# Mesures et vues du type « jellyfin » (format : crates/collectors/src/catalog.rs).
+source: selfhosted
+prefixes: [jellyfin_]
+metrics:
+  - { name: jellyfin_streams, label: "Streams" }
+  - { name: jellyfin_transcodes, label: "Transcodes" }
+  - { name: jellyfin_sessions, label: "Sessions" }
+  - { name: jellyfin_streams_paused, label: "Streams paused" }
+  - { name: jellyfin_scheduled_tasks_failed, label: "Scheduled tasks failed", better: "lower" }
+  - { name: jellyfin_scheduled_tasks_running, label: "Scheduled tasks running" }
+  - { name: jellyfin_scheduled_task_failed, label: "Scheduled task failed", unit: "bool", better: "lower" }
+  - { name: jellyfin_library_scan_age_seconds, label: "Library scan age", unit: "s" }
+  - { name: jellyfin_library_scan_last_ok, label: "Library scan last ok", unit: "bool" }
+  - { name: jellyfin_plugins, label: "Plugins" }
+  - { name: jellyfin_plugins_broken, label: "Plugins broken" }
+  - { name: jellyfin_plugin_broken, label: "Plugin broken", unit: "bool" }
+  - { name: jellyfin_pending_restart, label: "Pending restart", unit: "bool" }
+  - { name: jellyfin_shutting_down, label: "Shutting down", unit: "bool", better: "lower" }
+  - { name: jellyfin_version_info, label: "Version", kind: info }
+  - { name: jellyfin_scrape_errors, label: "Scrape errors", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - jellyfin_sessions
+      - jellyfin_streams_paused
+      - jellyfin_scheduled_tasks_failed
+      - jellyfin_scheduled_tasks_running
+      - jellyfin_scheduled_task_failed
+      - jellyfin_library_scan_age_seconds
+      - jellyfin_library_scan_last_ok
+      - jellyfin_plugins
+      - jellyfin_plugins_broken
+      - jellyfin_plugin_broken
+      - jellyfin_pending_restart
+      - jellyfin_shutting_down
+      - jellyfin_version_info
+  - view: timeseries
+    title: "Playback"
+    metrics: [jellyfin_streams, jellyfin_transcodes]

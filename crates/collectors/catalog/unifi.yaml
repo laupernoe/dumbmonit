@@ -1,0 +1,40 @@
+# Mesures et vues du type « unifi » (format : crates/collectors/src/catalog.rs).
+source: unifi
+prefixes: [unifi_]
+metrics:
+  - { name: unifi_internet_latency_seconds, label: "Internet latency", unit: "s", better: "lower" }
+  - { name: unifi_clients, label: "Clients" }
+  - { name: unifi_clients_by_type, label: "Clients by type" }
+  - { name: unifi_wan_availability_percent, label: "WAN availability", unit: "%", min: 0, max: 100 }
+  - { name: unifi_devices, label: "Devices" }
+  - { name: unifi_devices_upgradable, label: "Devices upgradable" }
+  - { name: unifi_device_state, label: "Device state" }
+  - { name: unifi_device_up, label: "Device up", unit: "bool" }
+  - { name: unifi_device_upgradable, label: "Device upgradable", unit: "bool" }
+  - { name: unifi_wan_link_up, label: "WAN link up", unit: "bool" }
+  - { name: unifi_wan_up, label: "WAN up", unit: "bool" }
+  - { name: unifi_internet_up, label: "Internet up", unit: "bool" }
+  - { name: unifi_subsystem_status, label: "Subsystem status", unit: "bool" }
+  - { name: unifi_alarms, label: "Alarms" }
+  - { name: unifi_info, label: "Info", kind: info }
+  - { name: unifi_scrape_errors, label: "Scrape errors", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - unifi_internet_up
+      - unifi_wan_availability_percent
+      - unifi_devices_upgradable
+      - unifi_alarms
+      - unifi_devices
+      - unifi_device_state
+      - unifi_device_upgradable
+      - unifi_wan_link_up
+      - unifi_wan_up
+      - unifi_subsystem_status
+  - view: timeseries
+    title: "Internet latency"
+    metrics: [unifi_internet_latency_seconds]
+  - view: timeseries
+    title: "Clients"
+    metrics: [unifi_clients]

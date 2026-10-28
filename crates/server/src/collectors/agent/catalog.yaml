@@ -1,0 +1,117 @@
+# Mesures et vues du type « agent », servies par le serveur (format : crates/collectors/src/catalog.rs ; `source` : crates/agent/src).
+source: agent
+prefixes: []
+metrics:
+  - { name: cpu_usage_percent, label: "CPU usage", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: cpu_core_usage_percent, label: "CPU usage per core", unit: "%", entity: "core", min: 0, max: 100 }
+  - { name: cpu_count, label: "CPU cores" }
+  - { name: load_average_1, label: "Load (1 min)" }
+  - { name: load_average_5, label: "Load (5 min)" }
+  - { name: load_average_15, label: "Load (15 min)" }
+  - { name: memory_used_percent, label: "Memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: memory_used_bytes, label: "Memory used", unit: "B" }
+  - { name: memory_available_bytes, label: "Memory available", unit: "B", better: "higher" }
+  - { name: memory_total_bytes, label: "Memory size", unit: "B" }
+  - { name: swap_used_percent, label: "Swap used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: swap_used_bytes, label: "Swap used", unit: "B" }
+  - { name: swap_total_bytes, label: "Swap size", unit: "B" }
+  - { name: filesystem_used_percent, label: "Disk used", unit: "%", better: "lower", entity: "mountpoint", min: 0, max: 100 }
+  - { name: filesystem_used_bytes, label: "Disk used", unit: "B", entity: "mountpoint" }
+  - { name: filesystem_free_bytes, label: "Disk free", unit: "B", better: "higher", entity: "mountpoint" }
+  - { name: filesystem_total_bytes, label: "Disk size", unit: "B", entity: "mountpoint" }
+  - { name: disk_read_bytes, label: "Disk read", unit: "B", kind: counter, entity: "device" }
+  - { name: disk_written_bytes, label: "Disk written", unit: "B", kind: counter, entity: "device" }
+  - { name: if_octets_in, label: "Traffic in", unit: "B", kind: counter, entity: "ifname" }
+  - { name: if_octets_out, label: "Traffic out", unit: "B", kind: counter, entity: "ifname" }
+  - { name: if_packets_in, label: "Packets in", kind: counter, entity: "ifname" }
+  - { name: if_packets_out, label: "Packets out", kind: counter, entity: "ifname" }
+  - { name: if_errors_in, label: "Errors in", kind: counter, better: "lower", entity: "ifname" }
+  - { name: if_errors_out, label: "Errors out", kind: counter, better: "lower", entity: "ifname" }
+  - { name: uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: process_count, label: "Processes" }
+  - { name: service_up, label: "Service up", unit: "bool", entity: "unit" }
+  - { name: agent_os_info, label: "Operating system", kind: info }
+  - { name: agent_updates_pending, label: "Updates pending", better: "lower" }
+  - { name: agent_security_updates_pending, label: "Security updates pending", better: "lower" }
+  - { name: agent_reboot_required, label: "Reboot required", unit: "bool" }
+  - { name: agent_systemd_failed_units, label: "Failed units", better: "lower" }
+  - { name: agent_systemd_unit_failed, label: "Unit failed", unit: "bool", entity: "unit" }
+  - { name: agent_selinux_mode, label: "SELinux mode" }
+  - { name: agent_ssh_root_login, label: "SSH root login", unit: "bool" }
+  - { name: agent_ssh_password_auth, label: "SSH password login", unit: "bool" }
+  - { name: agent_firewall_profile_enabled, label: "Firewall profile enabled", unit: "bool", entity: "profile" }
+  - { name: agent_firewall_active, label: "Firewall active", unit: "bool" }
+  - { name: agent_rdp_enabled, label: "RDP enabled", unit: "bool" }
+  - { name: agent_rdp_nla, label: "RDP network level authentication", unit: "bool" }
+  - { name: agent_smb1_enabled, label: "SMBv1 enabled", unit: "bool" }
+  - { name: agent_collect_seconds, label: "Collection time", unit: "s" }
+  - { name: agent_buffered_samples, label: "Buffered samples" }
+  - { name: agent_dropped_samples, label: "Dropped samples", kind: counter, better: "lower" }
+  - { name: container_count, label: "Containers" }
+  - { name: container_running_count, label: "Containers running" }
+  - { name: agent_zfs_pool_used_percent, label: "ZFS pool used", unit: "%", better: "lower", entity: "pool", min: 0, max: 100 }
+  - { name: agent_zfs_pool_health, label: "ZFS pool health", entity: "pool" }
+  - { name: agent_zfs_pool_scrub_errors, label: "ZFS scrub errors", better: "lower", entity: "pool" }
+  - { name: agent_disk_temperature_celsius, label: "Disk temperature", unit: "°C", entity: "device" }
+  - { name: agent_disk_smart_ok, label: "SMART healthy", unit: "bool", entity: "device" }
+  - { name: agent_disk_wearout_percent, label: "Disk wear", unit: "%", entity: "device" }
+  - { name: agent_disk_reallocated_sectors, label: "Reallocated sectors", better: "lower", entity: "device" }
+  - { name: agent_sensor_temperature_celsius, label: "Sensor temperature", unit: "°C", entity: "sensor" }
+  - { name: agent_sensor_fan_rpm, label: "Fan speed", unit: "rpm", entity: "sensor" }
+  - { name: agent_libvirt_domains, label: "Virtual machines" }
+  - { name: agent_libvirt_domains_running, label: "Virtual machines running" }
+  - { name: agent_mail_queue_files, label: "Mail queue" }
+  - { name: agent_mail_queue_oldest_seconds, label: "Oldest queued mail", unit: "s" }
+  - { name: agent_speedtest_download_bytes_per_second, label: "Speed test download", unit: "B/s", better: "higher" }
+  - { name: agent_speedtest_upload_bytes_per_second, label: "Speed test upload", unit: "B/s", better: "higher" }
+  - { name: agent_speedtest_latency_ms, label: "Speed test latency", unit: "ms", better: "lower" }
+  - { name: hyperv_vms_health_critical, label: "Hyper-V VMs critical", better: "lower" }
+  - { name: hyperv_host_cpu_percent, label: "Hyper-V host CPU", unit: "%" }
+  - { name: mdaemon_queue_messages, label: "MDaemon queue" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - agent_security_updates_pending
+      - agent_updates_pending
+      - agent_reboot_required
+      - agent_systemd_failed_units
+      - filesystem_used_percent
+      - load_average_1
+      - uptime_seconds
+      - cpu_count
+      - memory_total_bytes
+      - process_count
+      - container_running_count
+      - container_count
+      - agent_zfs_pool_used_percent
+      - agent_zfs_pool_scrub_errors
+      - agent_disk_smart_ok
+      - agent_disk_temperature_celsius
+      - agent_sensor_temperature_celsius
+      - agent_disk_reallocated_sectors
+      - agent_libvirt_domains_running
+      - agent_mail_queue_files
+      - agent_speedtest_download_bytes_per_second
+      - agent_speedtest_upload_bytes_per_second
+      - agent_speedtest_latency_ms
+      - hyperv_vms_health_critical
+      - hyperv_host_cpu_percent
+      - mdaemon_queue_messages
+      - agent_firewall_active
+      - agent_ssh_root_login
+      - agent_buffered_samples
+      - agent_dropped_samples
+      - agent_os_info
+  - view: timeseries
+    title: "CPU"
+    metrics: [cpu_usage_percent]
+  - view: timeseries
+    title: "Memory"
+    metrics: [memory_used_percent, swap_used_percent]
+  - view: timeseries
+    title: "Disk I/O"
+    metrics: [disk_read_bytes, disk_written_bytes]
+  - view: timeseries
+    title: "Network"
+    metrics: [if_octets_in, if_octets_out]

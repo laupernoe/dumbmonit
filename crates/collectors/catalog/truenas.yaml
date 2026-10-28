@@ -1,0 +1,69 @@
+# Mesures et vues du type « truenas » (format : crates/collectors/src/catalog.rs).
+source: truenas
+prefixes: [truenas_]
+metrics:
+  - { name: truenas_pool_used_percent, label: "Pool used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: truenas_dataset_quota_used_percent, label: "Dataset quota used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: truenas_disk_temperature_celsius, label: "Disk temperature", unit: "°C" }
+  - { name: truenas_pool_fragmentation_percent, label: "Pool fragmentation", unit: "%", min: 0, max: 100 }
+  - { name: truenas_pool_free_bytes, label: "Pool free", unit: "B", better: "higher" }
+  - { name: truenas_pool_allocated_bytes, label: "Pool allocated", unit: "B" }
+  - { name: truenas_pool_size_bytes, label: "Pool size", unit: "B" }
+  - { name: truenas_pool_healthy, label: "Pool healthy", unit: "bool" }
+  - { name: truenas_pool_warning, label: "Pool warning", unit: "bool" }
+  - { name: truenas_pool_status_info, label: "Pool status", kind: info }
+  - { name: truenas_pool_device_errors, label: "Pool device errors", kind: counter, better: "lower" }
+  - { name: truenas_pool_devices_unhealthy, label: "Pool devices unhealthy", better: "lower" }
+  - { name: truenas_pool_scan_running, label: "Pool scan running", unit: "bool" }
+  - { name: truenas_pool_scan_percent, label: "Pool scan", unit: "%", min: 0, max: 100 }
+  - { name: truenas_pool_last_scrub_age_seconds, label: "Pool last scrub age", unit: "s" }
+  - { name: truenas_pool_last_scrub_errors, label: "Pool last scrub errors", better: "lower" }
+  - { name: truenas_pool_scrub_threshold_days, label: "Pool scrub threshold days", unit: "days" }
+  - { name: truenas_dataset_used_bytes, label: "Dataset used", unit: "B" }
+  - { name: truenas_dataset_available_bytes, label: "Dataset available", unit: "B", better: "higher" }
+  - { name: truenas_dataset_quota_bytes, label: "Dataset quota", unit: "B" }
+  - { name: truenas_dataset_snapshots, label: "Dataset snapshots" }
+  - { name: truenas_dataset_snapshot_age_seconds, label: "Dataset snapshot age", unit: "s" }
+  - { name: truenas_dataset_locked, label: "Dataset locked", unit: "bool" }
+  - { name: truenas_disk_size_bytes, label: "Disk size", unit: "B" }
+  - { name: truenas_disk_smart_failed, label: "Disk SMART failed", unit: "bool", better: "lower" }
+  - { name: truenas_alerts, label: "Alerts" }
+  - { name: truenas_service_running, label: "Service running", unit: "bool" }
+  - { name: truenas_version_info, label: "Version", kind: info }
+  - { name: truenas_uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: truenas_memory_total_bytes, label: "Memory total", unit: "B" }
+  - { name: truenas_cpu_count, label: "CPU count" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - truenas_alerts
+      - truenas_pool_healthy
+      - truenas_pool_devices_unhealthy
+      - truenas_disk_smart_failed
+      - truenas_pool_fragmentation_percent
+      - truenas_pool_free_bytes
+      - truenas_pool_size_bytes
+      - truenas_pool_warning
+      - truenas_pool_device_errors
+      - truenas_pool_scan_running
+      - truenas_pool_scan_percent
+      - truenas_pool_last_scrub_age_seconds
+      - truenas_pool_last_scrub_errors
+      - truenas_dataset_used_bytes
+      - truenas_dataset_available_bytes
+      - truenas_dataset_snapshots
+      - truenas_dataset_snapshot_age_seconds
+      - truenas_dataset_locked
+      - truenas_disk_size_bytes
+      - truenas_service_running
+      - truenas_version_info
+      - truenas_uptime_seconds
+      - truenas_memory_total_bytes
+      - truenas_cpu_count
+  - view: timeseries
+    title: "Storage used"
+    metrics: [truenas_pool_used_percent, truenas_dataset_quota_used_percent]
+  - view: timeseries
+    title: "Disk temperatures"
+    metrics: [truenas_disk_temperature_celsius]

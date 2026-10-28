@@ -1,0 +1,18 @@
+# Mesures et vues du type « radius » (format : crates/collectors/src/catalog.rs).
+source: uptime
+prefixes: [probe_]
+metrics:
+  - { name: probe_success, label: "Up", unit: "bool" }
+  - { name: probe_duration_seconds, label: "Probe duration", unit: "s", better: "lower" }
+  - { name: probe_failure_info, label: "Failure reason", kind: info }
+  - { name: probe_connect_seconds, label: "Connect time", unit: "s", better: "lower" }
+  - { name: probe_radius_response_seconds, label: "Response time", unit: "s", better: "lower" }
+  - { name: probe_radius_response_code, label: "Response code", kind: state, states: [{ value: 2, label: "Accepted", tone: ok }, { value: 3, label: "Rejected", tone: critical }, { value: 11, label: "Challenge", tone: neutral }] }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - probe_radius_response_code
+  - view: timeseries
+    title: "Response time"
+    metrics: [probe_duration_seconds, probe_connect_seconds, probe_radius_response_seconds]
