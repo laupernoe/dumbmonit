@@ -16,6 +16,18 @@ metrics:
   - { name: omada_device_uptime_seconds, label: "Device uptime", unit: "s" }
   - { name: omada_device_clients, label: "Device clients" }
   - { name: omada_device_upgrade_available, label: "Device upgrade available", unit: "bool", better: "higher" }
+  - { name: omada_port_enabled, label: "Port enabled", unit: "bool" }
+  - { name: omada_port_up, label: "Port link up", unit: "bool" }
+  - { name: omada_port_speed_bps, label: "Port speed", unit: "bit/s" }
+  - { name: omada_port_full_duplex, label: "Port full duplex", unit: "bool" }
+  - { name: omada_port_uplink, label: "Port uplink", unit: "bool" }
+  - { name: omada_port_poe_enabled, label: "Port PoE enabled", unit: "bool" }
+  - { name: omada_port_poe_watts, label: "Port PoE power", unit: "W" }
+  - { name: omada_port_rx_bytes_total, label: "Port traffic in", unit: "B", kind: counter }
+  - { name: omada_port_tx_bytes_total, label: "Port traffic out", unit: "B", kind: counter }
+  - { name: omada_port_rx_errors_total, label: "Port errors in", better: "lower", kind: counter }
+  - { name: omada_port_tx_errors_total, label: "Port errors out", better: "lower", kind: counter }
+  - { name: omada_port_neighbor_info, label: "Port neighbour", kind: info }
 views:
   - view: stat
     title: "Current values"
