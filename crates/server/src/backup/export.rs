@@ -458,6 +458,24 @@ async fn targets(
     .await
     .context("lecture des équipements")?;
     let mut multisite = crate::db::multisite::all(pool).await?;
+    let mut policies: HashMap<i64, Vec<BundleContainerPolicy>> = HashMap::new();
+    for row in sqlx::query(
+        "SELECT target_id, container, auto_restart, auto_update, prune_old_image,
+                only_in_maintenance
+         FROM container_policies ORDER BY target_id, container",
+    )
+    .fetch_all(pool)
+    .await
+    .context("lecture des politiques de conteneurs")?
+    {
+        policies.entry(row.try_get("target_id")?).or_default().push(BundleContainerPolicy {
+            container: row.try_get("container")?,
+            auto_restart: row.try_get::<i64, _>("auto_restart")? != 0,
+            auto_update: row.try_get::<i64, _>("auto_update")? != 0,
+            prune_old_image: row.try_get::<i64, _>("prune_old_image")? != 0,
+            only_in_maintenance: row.try_get::<i64, _>("only_in_maintenance")? != 0,
+        });
+    }
 
     let mut out = Vec::with_capacity(rows.len());
     for row in &rows {
@@ -498,6 +516,7 @@ async fn targets(
                 agents: config.agents.iter().filter_map(|a| refs.get(a).cloned()).collect(),
                 quorum: config.quorum,
             }),
+            container_policies: policies.remove(&id).unwrap_or_default(),
         });
     }
     Ok(out)

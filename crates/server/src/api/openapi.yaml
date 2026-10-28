@@ -6045,6 +6045,35 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/containers/policy:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    put:
+      operationId: setContainerPolicies
+      tags: [Containers]
+      summary: Set several containers' automatic actions at once
+      description: >-
+        Applies the same optional fields to every named container in one
+        transaction; an omitted field keeps each container's stored value.
+        A name that is not a valid container name is reported in its own result
+        and does not stop the others. Same rights as the single-container route.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContainerPolicyBulkPatch" }
+      responses:
+        "200":
+          description: One result per requested name, in request order.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContainerPolicyBulkReply" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/targets/{id}/containers/{name}/restart:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -13102,6 +13131,33 @@ components:
         auto_update: { type: boolean }
         prune_old_image: { type: boolean }
         only_in_maintenance: { type: boolean }
+    ContainerPolicyBulkPatch:
+      type: object
+      required: [containers]
+      properties:
+        containers:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items: { type: string }
+        auto_restart: { type: boolean }
+        auto_update: { type: boolean }
+        prune_old_image: { type: boolean }
+        only_in_maintenance: { type: boolean }
+    ContainerPolicyBulkReply:
+      type: object
+      required: [results]
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            required: [name, ok]
+            properties:
+              name: { type: string }
+              ok: { type: boolean }
+              policy: { $ref: "#/components/schemas/ContainerPolicy" }
+              error: { type: string }
     Command:
       type: object
       required: [id, target_id, kind, args, status, created_at]

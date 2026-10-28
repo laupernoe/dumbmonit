@@ -273,3 +273,52 @@ async fn a_partial_policy_body_keeps_the_stored_fields() {
     assert_eq!(web["policy"]["prune_old_image"], false);
     assert_eq!(web["policy"]["only_in_maintenance"], true);
 }
+
+#[tokio::test]
+async fn a_bulk_policy_change_applies_to_every_named_container() {
+    let app = setup().await;
+    let (target, admin) = current_agent(&app).await;
+    let single = format!("/api/targets/{target}/containers/db/policy");
+    let bulk = format!("/api/targets/{target}/containers/policy");
+
+    // `db` a déjà un réglage propre que la modification groupée doit préserver.
+    let reply = app.put(&single, json!({ "prune_old_image": false }), Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+
+    let reply = app
+        .put(
+            &bulk,
+            json!({ "containers": ["web", "db", "bad name!"], "auto_update": true }),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    let results = reply.body["results"].as_array().unwrap();
+    assert_eq!(results.len(), 3);
+    assert_eq!(results[0]["name"], "web");
+    assert_eq!(results[0]["ok"], true);
+    assert_eq!(results[0]["policy"]["auto_update"], true);
+    assert_eq!(results[0]["policy"]["auto_restart"], false);
+    assert_eq!(results[1]["policy"]["prune_old_image"], false);
+    assert_eq!(results[2]["ok"], false);
+    assert!(results[2]["error"].is_string());
+
+    let containers = app.get(&format!("/api/targets/{target}/containers"), Some(&admin)).await;
+    for name in ["web", "db"] {
+        let c = containers.body.as_array().unwrap().iter().find(|c| c["name"] == name).unwrap();
+        assert_eq!(c["policy"]["auto_update"], true, "{name}");
+    }
+
+    // Désactivation groupée, et refus d'une liste vide.
+    let reply =
+        app.put(&bulk, json!({ "containers": ["web"], "auto_update": false }), Some(&admin)).await;
+    assert_eq!(reply.body["results"][0]["policy"]["auto_update"], false);
+    let reply = app.put(&bulk, json!({ "containers": [], "auto_update": true }), Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::BAD_REQUEST);
+    let reply = app.put(&bulk, json!({ "containers": ["web"], "auto_update": true }), None).await;
+    assert!(
+        reply.status == StatusCode::UNAUTHORIZED || reply.status == StatusCode::FORBIDDEN,
+        "{}",
+        reply.status
+    );
+}
