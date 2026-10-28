@@ -62,7 +62,7 @@ arrêtée est le signal le plus proche que l'API donne d'une VM qui s'est
 arrêtée contre votre gré ; si vous éteignez volontairement une VM protégée,
 supprimez d'abord sa priorité de redémarrage.
 
-Les [règles intégrées](../alerting/rules.md#xcp-ng-xenserver) qui s'appliquent :
+Les [règles intégrées](../alerting/rules.md) qui s'appliquent :
 
 - **Hôte XCP-ng hors ligne** : le battement de cœur d'un hôte n'a pas atteint
   le coordinateur depuis cinq minutes (Avertissement).
