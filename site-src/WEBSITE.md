@@ -38,7 +38,7 @@ python3 -m http.server 4321 --directory /tmp/preview
 |---|---|
 | `index.html`, `features/`, `devices/`, `devices/<family>/`, `install/`, `roadmap/`, `community/` (and the same under `<lang>/`) | The pages in each language, **generated** by `site-src/build.py` (do not edit by hand). English is the root, the others live in `/fr/`, `/de/`, `/es/`, `/it/`, `/pt/`, `/pt-BR/`, `/ru/`, `/zh-Hans/`. Colours and type follow the Enterprise tokens of `web/src/app.css` (dark only). |
 | `static/assets/site.css` | Styles and design tokens. |
-| `static/assets/shots/` | Screenshots of the live demo (not shown at the moment; recapture them in Enterprise mode before using `@@SHOT@@` again) (`DUMBMONIT_DEMO=1`): desktop 1440 x 900 at 2x (plus a 1x copy), phone 390 x 844 at 2x, light and dark, AVIF with a WebP fallback. |
+| `static/assets/shots/` | Screenshots of the live demo (none at the moment: capture them from the console before using `@@SHOT@@` again) (`DUMBMONIT_DEMO=1`): desktop 1440 x 900 at 2x (plus a 1x copy), phone 390 x 844 at 2x, light and dark, AVIF with a WebP fallback. |
 | `static/assets/og.png` | Social preview image, 1200 × 630. |
 | `404.html`, `robots.txt`, `sitemap.xml`, `.nojekyll` | Pages housekeeping. |
 
