@@ -206,7 +206,7 @@ test('heatmap: one row per known port, one column per sample time', () => {
 
 test('queries stay on the target and escape label values', () => {
 	assert.equal(quote('a"b\\c'), '"a\\"b\\\\c"');
-	for (const kind of ['snmp', 'unifi', 'mikrotik']) {
+	for (const kind of ['snmp', 'unifi', 'omada', 'arubacentral', 'mikrotik']) {
 		const source = SOURCES[kind];
 		for (const q of source.instant(7)) assert.match(q, /target="7"/);
 		const { in: rx, out: tx } = source.traffic(7, 'aa:bb', 'p"1');
@@ -215,7 +215,6 @@ test('queries stay on the target and escape label values', () => {
 		assert.ok(rx.includes('"p\\"1"'));
 		assert.match(source.heatmap(7, 'aa:bb'), /target="7"/);
 	}
-	assert.equal(SOURCES.omada, undefined, 'no port data collected for Omada yet');
 });
 
 test('Omada and Aruba Central reuse the UniFi layout under their own prefix', () => {
