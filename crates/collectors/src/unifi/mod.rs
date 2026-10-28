@@ -561,6 +561,7 @@ async fn classic(
         Ok(raw) => {
             let devices: Vec<Device> = raw.iter().filter_map(model::classic_device).collect();
             out.extend(metrics::device_samples(&devices, ts_ms));
+            out.extend(metrics::port_samples(&devices, ts_ms));
         }
         Err(error) => {
             errors += 1;

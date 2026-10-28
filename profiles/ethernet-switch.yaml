@@ -2,7 +2,11 @@
 # de trame par cause (EtherLike-MIB, RFC 3635), le duplex négocié, le trafic de
 # diffusion en compteurs 64 bits, les voisins LLDP (IEEE 802.1AB) et CDP, la table d'adresses du pont
 # (FDB), la table ARP et les agrégats LAG, dont la carte de topologie tire les
-# liens de niveau 2.
+# liens de niveau 2. S'y ajoutent, pour le panneau de commutateur, l'état de
+# tous les ports physiques, le VLAN natif (Q-BRIDGE-MIB) et le PoE
+# (POWER-ETHERNET-MIB). ENTITY-SENSOR-MIB n'est pas lue : sa valeur ne se lit
+# qu'avec l'échelle (une énumération de puissances de dix) et la précision de
+# chaque capteur, ce que le moteur de profils ne sait pas combiner.
 #
 # Ce profil ne s'attribue à aucun sysObjectID : les MIB qu'il lit sont
 # standard, mais seuls les commutateurs les remplissent vraiment. Il est inclus
@@ -226,6 +230,83 @@ metrics:
       mac: 1.3.6.1.2.1.4.22.1.2
     filters:
       max_rows: 1024
+
+  # Façade des ports, pour le panneau de commutateur. if_oper_status (IF-MIB)
+  # écarte à dessein les ports désactivés et ceux qui n'ont jamais eu de lien ;
+  # une façade, elle, doit les montrer tous, vides compris, comme le vrai
+  # matériel. Même colonne ifOperStatus (1 = up, 2 = down, 7 = lowerLayerDown…),
+  # l'état administratif en étiquette (1 = activé, 2 = désactivé), et seulement
+  # les interfaces Ethernet physiques (ifType 6 ethernetCsmacd, 62 fastEther,
+  # 69 fastEtherFX, 117 gigabitEthernet) : ni VLAN, ni agrégat, ni boucle.
+  # L'étiquette « index » est l'ifIndex, la clé de jointure avec PoE, VLAN et
+  # voisins.
+  - name: switch_port_status
+    oid: 1.3.6.1.2.1.2.2.1.8
+    kind: gauge
+    walk: true
+    labels:
+      ifname: 1.3.6.1.2.1.31.1.1.1.1
+      ifalias: 1.3.6.1.2.1.31.1.1.1.18
+      admin: 1.3.6.1.2.1.2.2.1.7
+    filters:
+      max_rows: 256
+      keep_only_when_oid_equals:
+        - oid: 1.3.6.1.2.1.2.2.1.3
+          values: [6, 62, 69, 117]
+
+  # VLAN natif de chaque port (Q-BRIDGE-MIB, RFC 4363, dot1qPvid), indexé par
+  # numéro de port du pont : bridge_port_info donne l'ifIndex correspondant.
+  - name: port_pvid
+    oid: 1.3.6.1.2.1.17.7.1.4.5.1.1
+    kind: gauge
+    walk: true
+    filters:
+      max_rows: 256
+
+  # PoE (POWER-ETHERNET-MIB, RFC 3621), pethPsePortTable indexée par
+  # groupe.port (pethPsePortGroupIndex.pethPsePortIndex). La RFC laisse au
+  # constructeur la correspondance avec l'ifIndex ; sur les commutateurs à un
+  # seul groupe, le second arc est le numéro du port en façade, et c'est ce que
+  # lit le panneau. Valeur = pethPsePortDetectionStatus : 1 disabled,
+  # 2 searching, 3 deliveringPower, 4 fault, 5 test, 6 otherFault.
+  # Étiquettes : pethPsePortAdminEnable (1 = activé, 2 = désactivé) et
+  # pethPsePortPowerClassifications (1 = classe 0 … 5 = classe 4).
+  # La RFC ne publie pas la puissance par port : seuls les totaux par groupe,
+  # ci-dessous, sont standard.
+  - name: poe_port_status
+    oid: 1.3.6.1.2.1.105.1.1.1.6
+    kind: gauge
+    walk: true
+    labels:
+      admin: 1.3.6.1.2.1.105.1.1.1.3
+      class: 1.3.6.1.2.1.105.1.1.1.10
+    filters:
+      max_rows: 256
+
+  # Budget et consommation PoE par groupe (pethMainPseTable, indexée par
+  # pethMainPseGroupIndex) : pethMainPsePower (W nominaux),
+  # pethMainPseConsumptionPower (W consommés), pethMainPseOperStatus
+  # (1 = on, 2 = off, 3 = faulty).
+  - name: poe_power_budget_watts
+    oid: 1.3.6.1.2.1.105.1.3.1.1.2
+    kind: gauge
+    walk: true
+    filters:
+      max_rows: 16
+
+  - name: poe_power_consumed_watts
+    oid: 1.3.6.1.2.1.105.1.3.1.1.4
+    kind: gauge
+    walk: true
+    filters:
+      max_rows: 16
+
+  - name: poe_main_status
+    oid: 1.3.6.1.2.1.105.1.3.1.1.3
+    kind: gauge
+    walk: true
+    filters:
+      max_rows: 16
 
   # Agrégats 802.3ad (LAG-MIB, dot3adAggPortAttachedAggID), indexés par ifIndex :
   # la valeur est l'ifIndex de l'agrégat, 0 hors agrégat. Les ports membres ne

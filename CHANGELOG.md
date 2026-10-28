@@ -46,6 +46,13 @@ All notable changes to this project are documented here. The format follows
   device's alerts and resolutions, one cursor shared by all its charts, a
   "Compare to last week" switch (dashed overlay) and a mirrored in/out view for
   interface traffic.
+- **Switch panel** on the page of an SNMP switch, a UniFi console and a MikroTik
+  router: the faceplate of every port (link, speed, PoE, errors, shape and word
+  for each state), the selected port's traffic in/out, errors of the day, LLDP/CDP
+  neighbour and native VLAN, and a heatmap of every port's traffic over 24 hours.
+  The `ethernet-switch` SNMP profile reads every physical port, the native VLAN
+  (Q-BRIDGE-MIB) and PoE (POWER-ETHERNET-MIB); UniFi publishes the ports of its
+  switches and gateways (`port_table`, `lldp_table`).
 
 - **Device pages show only the charts that matter.** Every integration now
   declares its metrics (unit, counter or gauge) and its views in the catalogue
