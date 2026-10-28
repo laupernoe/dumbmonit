@@ -20,6 +20,7 @@ pub mod estate;
 pub mod extras;
 pub mod seed;
 pub mod synthetic;
+pub mod workspace;
 
 use axum::Json;
 use axum::extract::{Request, State};
@@ -76,31 +77,76 @@ pub fn register_synthetic(registry: &mut crate::collectors::Registry) {
     }
 }
 
-/// Tâches de fond de la démonstration : l'agent simulé pousse ses mesures par le
-/// vrai chemin d'ingestion, et l'historique rétroactif est écrit une fois.
+/// Tâches de fond de la démonstration : les agents simulés poussent leurs
+/// mesures par le vrai chemin d'ingestion, le relais exécute les sondes qu'on
+/// lui confie, et l'historique rétroactif est écrit une fois.
 pub fn spawn(state: AppState, seeded: seed::Seeded) {
-    let agent_state = state.clone();
-    let token = seeded.agent_token;
-    let secret = seeded.agent_secret;
+    for agent in seeded.agents {
+        if agent.host.relay {
+            spawn_relay(state.clone(), agent.id);
+        }
+        let agent_state = state.clone();
+        tokio::spawn(async move {
+            let mut tick = tokio::time::interval(std::time::Duration::from_secs(30));
+            tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+            loop {
+                tick.tick().await;
+                if let Err(error) = seed::push_agent_batch(
+                    &agent_state.pool,
+                    &agent_state.cipher,
+                    &agent_state.sink,
+                    agent.host,
+                    &agent.token,
+                    agent.secret.as_deref(),
+                )
+                .await
+                {
+                    let host = agent.host.hostname;
+                    tracing::warn!(%error, host, "demo: simulated agent push failed");
+                }
+            }
+        });
+    }
+    backfill::spawn(state, seeded.targets);
+}
+
+/// Le relais simulé : vient chercher les sondes des équipements de son site
+/// (`via_agent`) dans la file du serveur, comme un vrai relais par son attente
+/// longue, les exécute avec les collecteurs du processus (les faux du bureau)
+/// et rend compte par le même chemin que l'API des relais.
+fn spawn_relay(state: AppState, agent_id: dumbmonit_proto::TargetId) {
+    use crate::collectors::relay::{self, JobResult};
+    use dumbmonit_proto::{Collector as _, ProbeJob, ProbeOutcome};
     tokio::spawn(async move {
-        let mut tick = tokio::time::interval(std::time::Duration::from_secs(30));
-        tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
         loop {
-            tick.tick().await;
-            if let Err(error) = seed::push_agent_batch(
-                &agent_state.pool,
-                &agent_state.cipher,
-                &agent_state.sink,
-                &token,
-                secret.as_deref(),
-            )
-            .await
-            {
-                tracing::warn!(%error, "demo: simulated agent push failed");
+            let commands = state.relay().take(agent_id, std::time::Duration::from_secs(25)).await;
+            for command in commands {
+                let Ok(job) = ProbeJob::from_command(&command) else { continue };
+                let started = std::time::Instant::now();
+                let result = match state.collectors.get(&job.target.kind) {
+                    Some(collector) => collector.probe(&job.target).await,
+                    None => Err(dumbmonit_proto::ProbeError::Config(format!(
+                        "unknown type {}",
+                        job.target.kind
+                    ))),
+                };
+                let (samples, error) = match result {
+                    Ok(samples) => (samples, None),
+                    Err(error) => (Vec::new(), Some(error.to_string())),
+                };
+                let outcome = ProbeOutcome {
+                    duration_ms: started.elapsed().as_millis() as u64,
+                    error,
+                    samples,
+                    profile_id: None,
+                    netconfig: None,
+                };
+                if let Some(job) = state.relay().complete(agent_id, command.id) {
+                    relay::settle(&state, job, JobResult::Done(outcome)).await;
+                }
             }
         }
     });
-    backfill::spawn(state, seeded.targets);
 }
 
 /// Seules écritures permises : ouvrir et fermer sa session.

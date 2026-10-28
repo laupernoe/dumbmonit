@@ -23,26 +23,31 @@ valer, ou para colocar uma vitrine no seu próprio site.
   `{"error": "This is a read-only demo…", "demo": true}`. Iniciar e terminar
   sessão são as únicas escritas permitidas. A interface mostra a mensagem no
   local onde o clique aconteceu.
-- **Um património fixo e fictício.** No arranque, a base de dados é criada
-  do zero e semeada com um pequeno homelab sob `*.home.arpa`: um cluster
-  Proxmox VE, um NAS Synology, um Proxmox Backup Server, um TrueNAS, uma
-  firewall OPNsense, um servidor Redfish com uma peça em falha, algumas
-  verificações HTTP, TLS e ping, um anfitrião com agente e uma página de
-  estado. Os monitores são respondidos por simuladores falsos dentro do
-  servidor, ligados a `127.0.0.1` e a reproduzir respostas de API gravadas,
-  pelo que os coletores reais e os painéis de monitor funcionam. Reiniciar
-  devolve o mesmo património.
-- **Trinta dias de histórico.** Métricas sintéticas são escritas na
-  VictoriaMetrics no arranque (a última semana com resolução de cinco
-  minutos), para que os gráficos, *Últimos 7 dias*, a disponibilidade a 30
-  dias, as previsões («cheio dentro de cerca de N dias») e o histórico de
-  alertas estejam preenchidos, e alguns alertas estão ativos para que
-  *Precisa de si* tenha algo. Um switch central com as suas portas e o seu
-  tráfego, um mapa de ameaças alimentado por contagens inventadas do CrowdSec
-  e da Cloudflare, prazos de domínios e licenças, uma matriz de cópias de
-  segurança com algumas noites falhadas, um dispositivo encontrado pela análise
-  de rede e duas páginas de estado com cenas noturnas completam o quadro. Tudo
-  é calculado em memória a partir de uma semente fixa: nada é obtido da rede.
+- **Dois clientes fictícios.** No arranque, a base de dados é recriada e
+  preenchida com um homelab em `*.home.arpa` — Proxmox VE, um NAS Synology com
+  um LUN iSCSI, Proxmox Backup Server, TrueNAS, OPNsense, UniFi, Kopia, um
+  servidor Redfish com uma peça avariada, um switch SNMP, sondas HTTP, TLS, DNS
+  e ping, um agente Linux com Docker — e, em modo MSP, com um pequeno gabinete
+  de arquitetura em Genebra: um controlador de domínio Windows com o seu
+  agente, Veeam Backup & Replication, uma rede Omada, Microsoft 365 e
+  Entra ID, consultados através de um agente relay instalado no escritório. Os
+  monitores são respondidos por equipamentos simulados dentro do servidor,
+  ligados a `127.0.0.1`, que reproduzem respostas de API gravadas: os
+  coletores e painéis reais funcionam. Reiniciar dá o mesmo parque.
+- **Trinta dias de histórico, e o resto do produto.** No arranque, são
+  escritas métricas sintéticas no VictoriaMetrics, em blocos limitados (a
+  última semana com resolução de cinco minutos): gráficos, *Últimos 7 dias*,
+  disponibilidade a 30 dias, previsões, a matriz de cópias de segurança e o
+  histórico de alertas ficam preenchidos, e alguns alertas estão ativos. A
+  semente preenche também o que normalmente se configura à mão: equipas e
+  pastas, contas e escalas de prevenção com políticas de escalonamento,
+  silêncios, procedimentos, dois painéis, relatórios agendados, canais de
+  notificação (nunca usados), locais no mapa-múndi, vulnerabilidades
+  conhecidas, quatro páginas de estado (uma por cena noturna) com um incidente
+  em curso, e uma varredura de rede com um dispositivo novo. Tudo é calculado a
+  partir de uma semente fixa: nada é obtido da rede, nem sequer as fontes de
+  vulnerabilidades. A pesquisa de registos fica desligada: a demo não tem
+  armazenamento de registos.
 - **Nada sai do servidor.** Nenhuma notificação é enviada, e nenhuma
   verificação vai a um endereço que um visitante tenha escrito.
 - **Uma visita guiada** abre após a primeira sessão iniciada; a faixa reabre-a.

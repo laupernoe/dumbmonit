@@ -28,7 +28,7 @@ use dumbmonit_proto::{MetricKind, Sample, TargetId};
 use tracing::{info, warn};
 
 use super::extras;
-use super::synthetic::{self, AGENT_HOST};
+use super::synthetic;
 use crate::state::AppState;
 use crate::tsdb::METRIC_PREFIX;
 
@@ -134,8 +134,10 @@ async fn synthetic_history(
         let services = service_labels(state, *id).await?;
         for ts in timeline.iter().copied() {
             let (samples, healthy) = match kind.as_str() {
-                "agent" if name == AGENT_HOST => (synthetic::agent_samples(ts), true),
-                "http" | "tls" | "ping" => match synthetic::probe_samples(kind, name, ts) {
+                "agent" if synthetic::agent_host(name).is_some() => {
+                    (synthetic::agent_host(name).map(|host| (host.samples)(ts)).unwrap_or_default(), true)
+                }
+                "http" | "tls" | "ping" | "dns" => match synthetic::probe_samples(kind, name, ts) {
                     Ok(samples) => (samples, true),
                     // Une machine en panne a répondu jusqu'à la veille : sans série
                     // `up` interrompue, l'alerte « injoignable » n'aurait rien à
@@ -186,7 +188,8 @@ async fn device_history(
     let mut buffer = Vec::with_capacity(CHUNK);
     for (id, _, kind) in targets {
         // Les types simulés par [`extras`] ont déjà leur historique complet.
-        if matches!(kind.as_str(), "agent" | "http" | "tls" | "ping") || extras::handles(kind) {
+        if matches!(kind.as_str(), "agent" | "http" | "tls" | "ping" | "dns") || extras::handles(kind)
+        {
             continue;
         }
         let series = state.victoria.query(&format!("{{target=\"{id}\"}}")).await?;
@@ -228,12 +231,19 @@ enum Shape {
     Filling,
     /// Un temps de fonctionnement : décroît d'autant qu'on remonte le temps.
     Uptime,
+    /// L'âge de la dernière exécution d'une tâche (sauvegarde, réplication,
+    /// vérification) : en dents de scie, une exécution par jour (par semaine si
+    /// la dernière date de plus de deux jours). La matrice des sauvegardes y lit
+    /// une exécution par jour.
+    Age,
 }
 
 impl Shape {
     fn of(metric: &str) -> Self {
         let has = |part: &str| metric.contains(part);
-        if has("uptime") {
+        if has("last") && metric.ends_with("_age_seconds") {
+            Self::Age
+        } else if has("uptime") {
             Self::Uptime
         } else if has("total")
             || has("count")
@@ -278,6 +288,11 @@ impl Shape {
                 let back = age_ms / 1000.0;
                 if current > back { current - back } else { current }
             }
+            Self::Age => {
+                let back = age_ms / 1000.0;
+                let period = if current <= 2.0 * 86_400.0 { 86_400.0 } else { 7.0 * 86_400.0 };
+                if back <= current { current - back } else { (current - back).rem_euclid(period) }
+            }
         }
     }
 }
@@ -289,7 +304,7 @@ mod tests {
     #[test]
     fn chaque_forme_rejoint_la_valeur_actuelle() {
         let now = 1_790_000_000_000;
-        for shape in [Shape::Flat, Shape::Load, Shape::Filling, Shape::Uptime] {
+        for shape in [Shape::Flat, Shape::Load, Shape::Filling, Shape::Uptime, Shape::Age] {
             assert!((shape.value(42.0, 7, now, now) - 42.0).abs() < 1e-9, "{shape:?}");
         }
     }
@@ -300,6 +315,19 @@ mod tests {
         assert_eq!(Shape::of("proxmox_storage_used_percent"), Shape::Filling);
         assert_eq!(Shape::of("up"), Shape::Flat);
         assert_eq!(Shape::of("proxmox_node_uptime_seconds"), Shape::Uptime);
+        assert_eq!(Shape::of("veeam_job_last_run_age_seconds"), Shape::Age);
+    }
+
+    #[test]
+    fn l_age_d_une_tache_repart_de_zero_chaque_jour() {
+        let now = 1_790_000_000_000;
+        let hour = 3_600_000;
+        // Dernière exécution il y a deux heures : il y a trois heures, la
+        // précédente datait de 23 heures.
+        let age = |ts| Shape::Age.value(7_200.0, 1, ts, now);
+        assert!((age(now - hour) - 3_600.0).abs() < 1e-6);
+        assert!((age(now - 3 * hour) - 82_800.0).abs() < 1e-6);
+        assert!((0.0..86_400.0).contains(&age(now - 20 * 24 * hour)));
     }
 
     #[test]

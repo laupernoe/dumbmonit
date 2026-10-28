@@ -1,7 +1,6 @@
 //! Équipements synthétiques de la démonstration qui n'ont pas de faux serveur
 //! derrière eux : un commutateur SNMP et ses ports, CrowdSec et Cloudflare (la
-//! carte des menaces), des noms de domaine et une licence (la frise des
-//! échéances).
+//! carte des menaces), et des noms de domaine (la frise des échéances).
 //!
 //! Comme les sondes de [`super::synthetic`], chaque mesure ne dépend que du nom
 //! de la cible et de l'horodatage : le direct, l'historique rétroactif
@@ -15,12 +14,11 @@ use dumbmonit_proto::Sample;
 use super::synthetic::{activity, counter, cumulative, days_since_anchor, gauge, noise, seed};
 
 /// Types de cible que ce module sait simuler.
-pub const KINDS: &[&str] = &["snmp", "crowdsec", "cloudflare", "domain", "veeam"];
+pub const KINDS: &[&str] = &["snmp", "crowdsec", "cloudflare", "domain"];
 
 pub const SWITCH_HOST: &str = "switch-core.home.arpa";
 pub const CROWDSEC_HOST: &str = "crowdsec.home.arpa";
 pub const CLOUDFLARE_HOST: &str = "Cloudflare edge";
-pub const VEEAM_HOST: &str = "veeam.home.arpa";
 
 /// Domaines surveillés : (nom, jours restants au démarrage, bureau
 /// d'enregistrement). Le dernier arrive à échéance : l'alerte se déclenche.
@@ -42,7 +40,6 @@ pub fn samples(kind: &str, name: &str, ts_ms: i64) -> Option<Vec<Sample>> {
         "crowdsec" => crowdsec(ts_ms),
         "cloudflare" => cloudflare(ts_ms),
         "domain" => domain(name, ts_ms),
-        "veeam" => veeam(ts_ms),
         _ => return None,
     };
     // Temps de réponse : de quelques millisecondes (SNMP local) à près d'une demi-
@@ -351,21 +348,6 @@ fn domain(name: &str, ts_ms: i64) -> Vec<Sample> {
     ]
 }
 
-fn veeam(ts_ms: i64) -> Vec<Sample> {
-    let seconds = |days: f64| remaining_days(days, ts_ms) * 86_400.0;
-    vec![
-        gauge("veeam_license_valid", 1.0, ts_ms),
-        gauge("veeam_license_info", 1.0, ts_ms)
-            .with_label("status", "Valid")
-            .with_label("type", "Subscription")
-            .with_label("edition", "Enterprise Plus"),
-        gauge("veeam_license_expiry_seconds", seconds(58.0), ts_ms),
-        gauge("veeam_support_expiry_seconds", seconds(17.0), ts_ms),
-        gauge("veeam_license_instances_licensed", 25.0, ts_ms),
-        gauge("veeam_license_instances_used", 19.0, ts_ms),
-    ]
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -467,7 +449,5 @@ mod tests {
             assert!((at(now - 10 * day) - (days + 10.0)).abs() < 1e-9, "{name}");
         }
         assert!(DOMAINS.iter().any(|(_, days, _)| *days < 14.0), "une échéance proche");
-        let license = find(&veeam(now), "veeam_license_expiry_seconds")[0].value;
-        assert!((license - 58.0 * 86_400.0).abs() < 1.0);
     }
 }

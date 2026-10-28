@@ -24,25 +24,30 @@ Site zu veröffentlichen.
   und `{"error": "This is a read-only demo…", "demo": true}` abgelehnt.
   Ein- und Ausloggen sind die einzigen erlaubten Schreibvorgänge. Die
   Oberfläche zeigt die Meldung dort, wo der Klick passierte.
-- **Ein fester, fiktiver Bestand.** Beim Start wird die Datenbank frisch
-  erstellt und mit einem kleinen Homelab unter `*.home.arpa` befüllt: ein
-  Proxmox-VE-Cluster, ein Synology-NAS, ein Proxmox Backup Server, ein
-  TrueNAS, eine OPNsense-Firewall, ein Redfish-Server mit einem
-  ausfallenden Teil, ein paar HTTP-, TLS- und Ping-Checks, ein Agent-Host
-  und eine Statusseite. Die Monitore werden von gefälschten Respondern
-  innerhalb des Servers beantwortet, an `127.0.0.1` gebunden und
-  aufgezeichnete API-Antworten wiedergebend, sodass die echten Collectors
-  und Monitorpanels laufen. Ein Neustart ergibt denselben Bestand.
-- **Dreißig Tage Historie.** Beim Start werden synthetische Metriken in
-  VictoriaMetrics geschrieben (die letzte Woche in Fünf-Minuten-Auflösung),
-  sodass Diagramme, *Last 7 days*, die 30-Tage-Verfügbarkeit, Vorhersagen
-  („voll in etwa N Tagen“) und die Alarmhistorie befüllt sind, und ein paar
-  Alarme feuern, damit *Needs you* etwas enthält. Ein Core-Switch mit seinen
-  Ports und seinem Verkehr, eine Bedrohungskarte mit erfundenen CrowdSec- und
-  Cloudflare-Zahlen, Domain- und Lizenzfristen, eine Backup-Matrix mit ein paar
-  fehlgeschlagenen Nächten, ein vom Netzwerkscan gefundenes Gerät und zwei
-  Statusseiten mit Nachtszenen runden das Bild ab. Alles wird aus einem festen
-  Seed im Speicher berechnet: Nichts wird aus dem Netz geladen.
+- **Zwei fiktive Kunden.** Beim Start wird die Datenbank neu angelegt und mit
+  einem Homelab unter `*.home.arpa` befüllt — Proxmox VE, ein Synology-NAS mit
+  einer iSCSI-LUN, Proxmox Backup Server, TrueNAS, OPNsense, UniFi, Kopia, ein
+  Redfish-Server mit einem defekten Bauteil, ein SNMP-Switch, HTTP-, TLS-, DNS-
+  und Ping-Prüfungen, ein Linux-Agent mit Docker — und, im MSP-Modus, mit einem
+  kleinen Architekturbüro in Genf: ein Windows-Domänencontroller mit seinem
+  Agenten, Veeam Backup & Replication, ein Omada-Netzwerk, Microsoft 365 und
+  Entra ID, abgefragt über einen Relay-Agenten im Büro. Die Monitore werden von
+  simulierten Geräten im Server beantwortet, gebunden an `127.0.0.1`, die
+  aufgezeichnete API-Antworten wiedergeben: Die echten Kollektoren und Panels
+  laufen. Ein Neustart ergibt denselben Bestand.
+- **Dreißig Tage Verlauf und der Rest des Produkts.** Beim Start werden
+  synthetische Metriken in begrenzten Blöcken in VictoriaMetrics geschrieben
+  (die letzte Woche in Fünf-Minuten-Auflösung): Diagramme, *Letzte 7 Tage*,
+  30-Tage-Verfügbarkeit, Prognosen, die Backup-Matrix und der Alarmverlauf sind
+  gefüllt, und einige Alarme sind aktiv. Der Seed füllt auch, was sonst von
+  Hand eingerichtet wird: Teams und Ordner, Konten und Bereitschaftspläne mit
+  Eskalationsrichtlinien, Stummschaltungen, Runbooks, zwei Dashboards, geplante
+  Berichte, Benachrichtigungskanäle (nie benutzt), Standorte auf der
+  Weltkarte, bekannte Schwachstellen, vier Statusseiten (eine pro Nachtszene)
+  mit einem laufenden Vorfall und ein Netzwerkscan mit einem neuen Gerät. Alles
+  wird aus einem festen Seed berechnet: Nichts wird aus dem Netz geladen, nicht
+  einmal die Schwachstellenquellen. Die Protokollsuche bleibt aus: Die Demo hat
+  keinen Protokollspeicher.
 - **Nichts verlässt den Server.** Es wird nie eine Benachrichtigung
   gesendet, und keine Abfrage geht an eine von einer Besucherin oder
   einem Besucher eingegebene Adresse.

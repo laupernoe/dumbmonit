@@ -5,6 +5,25 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Changed
+
+- **A complete public demo.** The demo (`DUMBMONIT_DEMO=1`) now fills every
+  page but log search. Two clients in MSP mode: the homelab, now with UniFi, Kopia,
+  DNS checks and an iSCSI LUN on the Synology NAS, and a small architecture
+  office in Geneva with a Windows domain controller (machine health card),
+  Veeam Backup & Replication 13, an Omada network, Microsoft 365 and Entra ID,
+  polled through a relay agent placed in the office. The Linux agent reports
+  the full machine health card (top processes, pressure, inodes, clock). The
+  seed also fills teams and folders, accounts, on-call rotas and escalation
+  policies, silences, runbooks, two dashboards, scheduled reports, more
+  notification channels (never used), sites on the world map with the relay
+  link, known vulnerabilities (never downloaded in the demo), four status
+  pages, one per night scene, with an ongoing incident and a planned
+  maintenance. The backfilled history of backup jobs runs once a day, so the
+  backup matrix reads one run per day. The wall shows the night city closest to
+  the viewer by default in the demo. Log search stays off: the demo has no log
+  store.
+
 ## 0.14.3 — 2026-10-28
 
 ### Added
