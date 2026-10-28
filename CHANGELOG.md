@@ -55,6 +55,31 @@ All notable changes to this project are documented here. The format follows
   away under **All measurements**. SNMP profiles can declare `label`, `unit`,
   `entity`, `view` and `view_title` per metric.
 
+### Added
+
+- **Fill-up forecasts for every integration.** A new built-in rule, *Storage
+  filling up*, watches every capacity metric DumbMonit collects (agent
+  filesystems and ZFS pools, SNMP storage, Proxmox storages and pools, backup
+  datastores, TrueNAS, Synology, QNAP, Unraid, Ceph, vSphere and Nutanix
+  storage, appliance disks, Microsoft 365 licences, UPS battery runtime…) and
+  alerts when one will be full within 30 days at its current growth rate: info
+  first, warning under 14 days, critical under 7, speaking again at each step.
+  The growth is a robust fit over the last week that ignores gaps and restarts
+  after a cleanup, an expansion or a quota reset. `GET /api/targets/{id}/forecasts`
+  returns the per-entity forecast (used, size, growth per day, days to full,
+  confidence).
+- **Drift alerts.** Two built-in rules compare probe response times and the
+  share of 5xx answers (reverse proxies, Cloudflare) with the usual value for
+  the same hour over the previous four weeks, and alert at three times the
+  usual, with a minimum value, a minimum gap and a minimum duration so that
+  small or short-lived wobbles stay quiet. New rule types `forecast` and `drift`
+  are available to custom rules.
+
+### Fixed
+
+- Restoring a backup now also restores alert rules whose detection settings are
+  the only thing that changed.
+
 ## 0.14.1 — 2026-10-28
 
 ### Added
