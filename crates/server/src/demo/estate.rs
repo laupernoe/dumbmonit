@@ -20,6 +20,9 @@ use axum::response::{IntoResponse, Response};
 use dumbmonit_proto::Credential;
 use serde_json::Value;
 
+mod graph;
+mod kopia;
+mod omada;
 mod opnsense;
 mod pbs;
 mod pve;
@@ -27,9 +30,23 @@ mod pve_files;
 mod redfish;
 mod synology;
 mod truenas;
+mod unifi;
+mod veeam;
 
 /// Types de cible des équipements simulés ci-dessous.
-pub const KINDS: &[&str] = &["proxmox", "synology", "pbs", "truenas", "opnsense", "redfish"];
+pub const KINDS: &[&str] = &[
+    "proxmox", "synology", "pbs", "truenas", "opnsense", "redfish", "unifi", "kopia", "veeam",
+    "omada", "m365", "entra",
+];
+
+/// Équipements du bureau du client PME (Muller Architectes, Genève), interrogés
+/// par l'agent relais posé sur place (voir `super::workspace`).
+pub const OFFICE_DEVICES: &[&str] = &["vbr01.muller.home.arpa", "omada.muller.home.arpa"];
+/// Locataire Microsoft du client PME.
+pub const M365_NAME: &str = "Microsoft 365 (muller-archi.ch)";
+pub const ENTRA_NAME: &str = "Entra ID (muller-archi.ch)";
+/// Adresse du faux Microsoft Graph : connexion et lectures sur le même hôte.
+const GRAPH: &str = "http://graph.muller.home.arpa";
 
 /// Un équipement du parc fictif, tel que la base doit l'enregistrer.
 pub struct DemoDevice {
@@ -51,7 +68,7 @@ pub struct Estate {
 
 /// Lance tous les faux équipements et décrit le parc.
 pub async fn start() -> anyhow::Result<Estate> {
-    let fakes: [(DemoDevice, Router); 6] = [
+    let fakes: [(DemoDevice, Router); 12] = [
         (
             DemoDevice {
                 key: "pve",
@@ -137,6 +154,93 @@ pub async fn start() -> anyhow::Result<Estate> {
             },
             redfish::router(),
         ),
+        (
+            DemoDevice {
+                key: "unifi",
+                name: "unifi.home.arpa",
+                kind: "unifi",
+                address: "http://unifi.home.arpa".into(),
+                tags: vec![],
+                credential: Credential::ApiToken { token: unifi::KEY.into() },
+                interval_secs: 60,
+            },
+            unifi::router(),
+        ),
+        (
+            DemoDevice {
+                key: "kopia",
+                name: "kopia.home.arpa",
+                kind: "kopia",
+                address: "http://kopia.home.arpa".into(),
+                tags: vec![],
+                credential: Credential::UsernamePassword {
+                    username: "kopia".into(),
+                    password: "demonstration".into(),
+                },
+                interval_secs: 300,
+            },
+            kopia::router(),
+        ),
+        (
+            DemoDevice {
+                key: "veeam",
+                name: "vbr01.muller.home.arpa",
+                kind: "veeam",
+                address: "http://vbr01.muller.home.arpa".into(),
+                tags: vec![],
+                credential: Credential::UsernamePassword {
+                    username: r"MULLER\svc-dumbmonit".into(),
+                    password: "demonstration".into(),
+                },
+                interval_secs: 300,
+            },
+            veeam::router(),
+        ),
+        (
+            DemoDevice {
+                key: "omada",
+                name: "omada.muller.home.arpa",
+                kind: "omada",
+                address: "http://omada.muller.home.arpa".into(),
+                tags: vec![],
+                credential: Credential::UsernamePassword {
+                    username: "demonstration-client".into(),
+                    password: "demonstration-secret".into(),
+                },
+                interval_secs: 120,
+            },
+            omada::router(),
+        ),
+        (
+            DemoDevice {
+                key: "m365",
+                name: M365_NAME,
+                kind: "m365",
+                address: GRAPH.into(),
+                tags: vec![("tenant_id", graph::TENANT.into()), ("login_url", GRAPH.into())],
+                credential: Credential::UsernamePassword {
+                    username: "00000000-0000-0000-0000-00000000d3m0".into(),
+                    password: "demonstration".into(),
+                },
+                interval_secs: 300,
+            },
+            graph::router(),
+        ),
+        (
+            DemoDevice {
+                key: "entra",
+                name: ENTRA_NAME,
+                kind: "entra",
+                address: GRAPH.into(),
+                tags: vec![("tenant_id", graph::TENANT.into()), ("login_url", GRAPH.into())],
+                credential: Credential::UsernamePassword {
+                    username: "00000000-0000-0000-0000-00000000d3m0".into(),
+                    password: "demonstration".into(),
+                },
+                interval_secs: 900,
+            },
+            graph::router(),
+        ),
     ];
 
     let mut devices = Vec::new();
@@ -215,6 +319,50 @@ fn shift_times(value: &mut Value, offset: i64) {
     }
 }
 
+/// Recale de `offset` secondes toute date RFC 3339 écrite en texte
+/// (`2026-09-30T01:00:12.31+02:00`), quelle que soit sa clé : Veeam, Kopia et
+/// Microsoft Graph datent tout ainsi.
+fn shift_iso(value: &mut Value, offset: i64) {
+    match value {
+        Value::Array(items) => items.iter_mut().for_each(|item| shift_iso(item, offset)),
+        Value::Object(map) => map.values_mut().for_each(|item| shift_iso(item, offset)),
+        Value::String(text) => {
+            let looks_like_date = text.len() >= 20
+                && text.as_bytes()[4] == b'-'
+                && text.as_bytes()[10] == b'T'
+                && text.as_bytes()[..4].iter().all(u8::is_ascii_digit);
+            if looks_like_date && let Ok(at) = chrono::DateTime::parse_from_rfc3339(text) {
+                let moved = at.with_timezone(&chrono::Utc) + chrono::Duration::seconds(offset);
+                *text = moved.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Une réponse enregistrée, mots remplacés et dates recalées : capturée à
+/// `capture_s`, elle a l'air d'avoir été lue à l'instant.
+fn replay(body: &str, capture_s: i64, words: &[(&str, &str)]) -> Response {
+    let mut text = body.to_string();
+    for (from, to) in words {
+        text = text.replace(from, to);
+    }
+    match serde_json::from_str::<Value>(&text) {
+        Ok(mut doc) => {
+            let offset = now_s() - capture_s;
+            shift_times(&mut doc, offset);
+            shift_iso(&mut doc, offset);
+            json(StatusCode::OK, doc.to_string())
+        }
+        Err(_) => json(StatusCode::OK, text),
+    }
+}
+
+/// Instant RFC 3339 d'une capture, en secondes Unix.
+fn instant(text: &str) -> i64 {
+    chrono::DateTime::parse_from_rfc3339(text).map(|at| at.timestamp()).unwrap_or(0)
+}
+
 /// Remplace chaque occurrence de `from` qui n'est pas collée à une lettre ou un
 /// chiffre : `AIR01` ne touche pas `AIR01n`, `node1` ne touche pas `node10`.
 fn replace_word(text: &str, from: &str, to: &str) -> String {
@@ -235,6 +383,13 @@ fn replace_word(text: &str, from: &str, to: &str) -> String {
     out
 }
 
+/// Niveau d'activité de l'équipement `name` à l'instant, dans [0, 1] : la même
+/// journée que les sondes synthétiques.
+fn synthetic_load(name: &str) -> f64 {
+    let now = chrono::Utc::now().timestamp_millis();
+    super::synthetic::activity(super::synthetic::seed(name), now)
+}
+
 /// L'heure courante, en secondes Unix.
 fn now_s() -> i64 {
     chrono::Utc::now().timestamp()
@@ -252,6 +407,14 @@ mod tests {
             "\"adguard\" \"AIR01n\""
         );
         assert_eq!(replace_word("node/node1 node10", "node1", "pve1"), "node/pve1 node10");
+    }
+
+    #[test]
+    fn les_dates_en_texte_sont_recalees() {
+        let mut doc = json!({"lastRun": "2026-09-30T01:00:12+02:00", "name": "2026 plan"});
+        shift_iso(&mut doc, 3600);
+        assert_eq!(doc["lastRun"], "2026-09-30T00:00:12Z");
+        assert_eq!(doc["name"], "2026 plan");
     }
 
     #[test]

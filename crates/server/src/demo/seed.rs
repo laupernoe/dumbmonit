@@ -14,7 +14,7 @@ use sqlx::SqlitePool;
 
 use super::estate::DemoDevice;
 use super::extras;
-use super::synthetic::{self, AGENT_HOST, FLAKY_HOST};
+use super::synthetic::{self, AGENT_HOST, AgentHost, FLAKY_HOST};
 use super::{DEMO_PASSWORD, DEMO_USERNAME};
 use crate::auth::password;
 use crate::auth::users::{self, NewUser, Role};
@@ -41,17 +41,24 @@ const CHECKS: &[(&str, &str, &str, Option<&str>)] = &[
     (extras::SWITCH_HOST, "snmp", "switch-core.home.arpa", None),
     (extras::CROWDSEC_HOST, "crowdsec", "http://crowdsec.home.arpa:8080", None),
     (extras::CLOUDFLARE_HOST, "cloudflare", "api.cloudflare.com", None),
-    (extras::VEEAM_HOST, "veeam", "https://veeam.home.arpa:9419", None),
+    ("nextcloud.home.arpa (DNS)", "dns", "nextcloud.home.arpa", None),
+    ("dupont.ch (DNS)", "dns", "dupont.ch", None),
 ];
+
+/// Une machine à agent du parc fictif, enregistrée.
+pub struct SeededAgent {
+    pub host: &'static AgentHost,
+    pub id: TargetId,
+    /// Jeton d'enregistrement, en clair : il ne quitte pas le processus.
+    pub token: String,
+    /// Secret de liaison remis à l'agent à son premier lot : sans lui, le
+    /// serveur refuserait les lots suivants, comme pour une vraie machine.
+    pub secret: Option<String>,
+}
 
 /// Ce que la suite du démarrage doit connaître du parc.
 pub struct Seeded {
-    /// Jeton d'enregistrement de l'agent simulé, en clair : il ne quitte pas le
-    /// processus.
-    pub agent_token: String,
-    /// Secret de liaison remis à l'agent simulé à son premier lot : sans lui, le
-    /// serveur refuserait les lots suivants, comme pour une vraie machine.
-    pub agent_secret: Option<String>,
+    pub agents: Vec<SeededAgent>,
     pub targets: Vec<(TargetId, String, String)>,
 }
 
@@ -115,15 +122,21 @@ pub async fn run(
         targets.push((id, domain.to_string(), "domain".to_string()));
     }
 
-    // L'agent s'enregistre lui-même au premier lot, comme sur une vraie machine.
-    let (_, agent_token) = agent::create_token(
-        pool,
-        "docker01 (demo)",
-        TokenPolicy { max_uses: None, expires_in_days: None },
-    )
-    .await?;
-    let (agent_id, agent_secret) = push_agent_batch(pool, cipher, sink, &agent_token, None).await?;
-    targets.push((agent_id, AGENT_HOST.to_string(), "agent".to_string()));
+    // Chaque agent s'enregistre lui-même au premier lot, comme sur une vraie
+    // machine : la machine Docker, le contrôleur de domaine, le relais.
+    let mut agents = Vec::new();
+    for host in synthetic::AGENT_HOSTS {
+        let label = format!("{} (demo)", host.hostname.split('.').next().unwrap_or(host.hostname));
+        let policy = TokenPolicy { max_uses: None, expires_in_days: None };
+        let (_, token) = agent::create_token(pool, &label, policy).await?;
+        let (id, secret) = push_agent_batch(pool, cipher, sink, host, &token, None).await?;
+        targets.push((id, host.hostname.to_string(), "agent".to_string()));
+        agents.push(SeededAgent { host, id, token, secret });
+    }
+    let agent_id = agents.first().map(|agent| agent.id).context("demo agent")?;
+    // Clients, comptes, astreinte, sondes du bureau par le relais… : avant les
+    // pages de statut, qui en montrent certaines.
+    super::workspace::run(pool, cipher, &mut targets).await.context("demo workspace")?;
 
     seed_notifications(pool).await?;
     seed_status_pages(pool, &targets).await?;
@@ -138,7 +151,7 @@ pub async fn run(
     .execute(pool)
     .await?;
 
-    Ok(Seeded { agent_token, agent_secret, targets })
+    Ok(Seeded { agents, targets })
 }
 
 /// Crée une sonde synthétique : aucun identifiant, aucune connexion sortante.
@@ -173,34 +186,36 @@ pub async fn push_agent_batch(
     pool: &SqlitePool,
     cipher: &Cipher,
     sink: &SampleSink,
+    host: &AgentHost,
     token: &str,
     secret: Option<&str>,
 ) -> Result<(TargetId, Option<String>)> {
     let now = Utc::now().timestamp_millis();
+    let arch = if host.kernel.ends_with("arm64") { "aarch64" } else { "x86_64" };
     let identity = AgentIdentity {
-        hostname: AGENT_HOST.to_string(),
-        os: "linux".to_string(),
-        os_version: Some("Debian GNU/Linux 13 (trixie)".to_string()),
-        kernel_version: Some("6.12.48-amd64".to_string()),
-        arch: Some("x86_64".to_string()),
+        hostname: host.hostname.to_string(),
+        os: host.os.to_string(),
+        os_version: Some(host.os_version.to_string()),
+        kernel_version: Some(host.kernel.to_string()),
+        arch: Some(arch.to_string()),
         agent_version: env!("CARGO_PKG_VERSION").to_string(),
-        commands_enabled: Some(false),
-        relay: false,
-        site: None,
-        relay_control: false,
-        relay_local: false,
-        machine_id: Some("demo-docker01".to_string()),
+        commands_enabled: Some(host.relay),
+        relay: host.relay,
+        site: host.site.map(str::to_string),
+        relay_control: host.relay,
+        relay_local: host.relay,
+        machine_id: Some(host.machine_id.to_string()),
         tags: BTreeMap::new(),
         binding_supported: true,
         self_update: None,
-        relay_gateway: None,
+        relay_gateway: host.gateway,
         remediation: None,
     };
     let batch = PushBatch {
         protocol: PUSH_PROTOCOL_VERSION,
         identity,
         sent_at_ms: now,
-        samples: synthetic::agent_samples(now),
+        samples: (host.samples)(now),
         inventory: None,
         event_log: None,
         declared_monitors: None,
@@ -282,6 +297,35 @@ const PAGES: &[PageSpec] = &[
         ],
         kinds: &[("truenas", "Media storage", "Media"), ("pbs", "Backups", "Hosts")],
     },
+    PageSpec {
+        slug: "photos",
+        title: "Dupont photos",
+        description: "The family photo site and the mailboxes behind dupont.ch.",
+        scene: "newyork",
+        items: &[
+            ("nextcloud.home.arpa (TLS)", "Photo sharing", "Web"),
+            ("dupont.ch (DNS)", "dupont.ch name servers", "Web"),
+            (extras::CLOUDFLARE_HOST, "Cloudflare edge", "Web"),
+        ],
+        kinds: &[("kopia", "Offsite photo backup", "Backups")],
+    },
+    PageSpec {
+        slug: "muller",
+        title: "Muller Architectes — IT status",
+        description: "Office network, file server, backups and Microsoft 365 for the Geneva team.",
+        scene: "dubai",
+        items: &[
+            ("intranet.muller.home.arpa", "Intranet", "Office"),
+            ("nas.muller.home.arpa", "File server", "Office"),
+            ("printer.muller.home.arpa", "Printer", "Office"),
+            (super::synthetic::WINDOWS_HOST, "Sign-in (Active Directory)", "Office"),
+        ],
+        kinds: &[
+            ("omada", "Wi-Fi and network", "Office"),
+            ("veeam", "Nightly backups", "Backups"),
+            ("m365", "Microsoft 365", "Cloud"),
+        ],
+    },
 ];
 
 async fn seed_status_pages(
@@ -301,7 +345,7 @@ async fn seed_status_pages(
                 theme: "auto".to_string(),
                 show_uptime_days: 30,
                 accent: "default".to_string(),
-                // Une scène de nuit par page : Paris, puis Tokyo.
+                // Une scène de nuit par page : Paris, Tokyo, New York, Dubaï.
                 scenes: spec.scene.to_string(),
                 scene_rotation: "visit".to_string(),
                 simple: false,
@@ -372,6 +416,61 @@ async fn seed_status_pages(
         true,
     )
     .await?;
+
+    // Un incident en cours sur la page du bureau, la dégradation d'Exchange
+    // Online que remonte Microsoft 365, et sa maintenance planifiée.
+    let office: Option<i64> =
+        sqlx::query_scalar("SELECT id FROM status_pages WHERE slug = 'muller'")
+            .fetch_optional(pool)
+            .await?;
+    if let Some(office) = office {
+        sqlx::query(
+            "UPDATE status_pages SET client_id = (SELECT id FROM clients WHERE name = ?)
+             WHERE id = ?",
+        )
+        .bind(super::workspace::OFFICE_CLIENT)
+        .bind(office)
+        .execute(pool)
+        .await?;
+        let started = hour_floor(Utc::now()) - chrono::Duration::hours(2);
+        let incident = db::status_pages::create_incident(
+            pool,
+            &IncidentInput {
+                page_id: Some(office),
+                title: "Delays on incoming email".to_string(),
+                kind: "incident".to_string(),
+                status: "monitoring".to_string(),
+                severity: "minor".to_string(),
+                starts_at: stamp(started),
+                ends_at: None,
+            },
+        )
+        .await?;
+        db::status_pages::add_update(
+            pool,
+            incident,
+            "monitoring",
+            "Microsoft reports a degradation of Exchange Online in Europe; mail arrives with \
+             up to 20 minutes of delay. Nothing to do on your side.",
+            true,
+        )
+        .await?;
+        let window = hour_floor(Utc::now()) + chrono::Duration::days(3);
+        let window = window.with_hour(18).unwrap_or(window);
+        db::status_pages::create_incident(
+            pool,
+            &IncidentInput {
+                page_id: Some(office),
+                title: "Firewall and switch firmware update".to_string(),
+                kind: "maintenance".to_string(),
+                status: "scheduled".to_string(),
+                severity: "minor".to_string(),
+                starts_at: stamp(window),
+                ends_at: Some(stamp(window + chrono::Duration::minutes(45))),
+            },
+        )
+        .await?;
+    }
     Ok(())
 }
 
