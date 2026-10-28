@@ -5,43 +5,21 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
-### Changed
-
-- **One interface.** The Homelab interface is gone: everyone gets the console
-  (icon rail, header, context panel), with the pigeon logo. The overview opens on
-  a thin night-sky banner whose one line says how things stand ("pve-02 is down.
-  3 guests held back, alert sent." / "All 146 monitors up."), with a pigeon flying
-  across it (tap it). Wall mode moved to a screen icon in the header and always
-  shows the console's board. The setup wizard no longer asks for a mode and
-  always offers its three optional steps; Settings no longer has a mode picker,
-  a theme picker or an "Advanced" fold. Public status pages keep their light and
-  dark themes.
-- **Night scenes.** The status page banners are redrawn as four cities at night:
-  Paris (the Eiffel Tower in its golden lights, the beam turning), Tokyo (Tokyo
-  Tower, the Skytree, Mount Fuji), New York (the Empire State, whose crown takes
-  the page's colour, and the Chrysler Building) and **Dubai** (the Burj Khalifa),
-  which replaces the Matterhorn: stored pages move over (migration 0205), and
-  backups or API calls naming `matterhorn` land on `dubai`. A starry sky, the
-  moon lighting the buildings, lit windows and the weather following the page.
-  The text over them always uses the dark colours, so it stays legible in the
-  light theme. The wall can show the same cities behind its verdict and clock
-  (**Backdrop**, off by default, or `?city=`).
-
-### Removed
-
-- The product mode (`product_mode`) in `GET /api/instance` and
-  `/api/instance/settings`. Older clients and backups that still carry it are
-  accepted; the field is ignored and no longer written.
-- The Homelab overview (weather scene, briefing, last 7 days) and the Homelab
-  wall (city scenes, music dock, widget zones).
-- Wall music (Spotify Connect, shared link), wall news and wall widgets, with
-  their Settings sections and API routes (`/api/music/*`, `/api/wall/news*`,
-  `/api/wall/widgets*`). Their stored settings are left in place and ignored;
-  the security policy no longer allows Spotify's player or any frame. Place
-  search for locations (`/api/locations/geocode`) stays.
+## 0.14.2 — 2026-10-28
 
 ### Added
 
+#### Device pages
+
+- **Device pages show only the charts that matter.** Every integration now
+  declares its metrics (unit, counter or gauge) and its views in the catalogue
+  (`GET /api/collectors`, new `metrics` and `views` fields): a row of current
+  values, then at most four charts, with busiest-entity rankings where one curve
+  per guest, mailbox or port would be unreadable. Everything else stays one click
+  away under **All measurements**. SNMP profiles can declare `label`, `unit`,
+  `entity`, `view` and `view_title` per metric.
+- **Catalogue rankings and heatmaps** use the shared chart kit: a `topn` view is a
+  ranked list, a `heatmap` view spreads its busiest entities over the period.
 - **Richer charts** on a device page: alert-rule threshold lines, markers for the
   device's alerts and resolutions, one cursor shared by all its charts, a
   "Compare to last week" switch (dashed overlay) and a mirrored in/out view for
@@ -53,16 +31,13 @@ All notable changes to this project are documented here. The format follows
   The `ethernet-switch` SNMP profile reads every physical port, the native VLAN
   (Q-BRIDGE-MIB) and PoE (POWER-ETHERNET-MIB); UniFi publishes the ports of its
   switches and gateways (`port_table`, `lldp_table`).
+- **Machine health card** at the top of an agent host's page: CPU, memory and disk
+  gauges with one-hour curves, a per-core heatmap, the ten heaviest processes by
+  CPU and memory, kernel pressure (PSI), OOM kills, inode usage and clock drift,
+  each with a short explanation. The Linux agent now reports these causes of a
+  slow machine (process names only, never command lines).
 
-- **Device pages show only the charts that matter.** Every integration now
-  declares its metrics (unit, counter or gauge) and its views in the catalogue
-  (`GET /api/collectors`, new `metrics` and `views` fields): a row of current
-  values, then at most four charts, with busiest-entity rankings where one curve
-  per guest, mailbox or port would be unreadable. Everything else stays one click
-  away under **All measurements**. SNMP profiles can declare `label`, `unit`,
-  `entity`, `view` and `view_title` per metric.
-
-### Added
+#### Capacity and alerting
 
 - **Fill-up forecasts for every integration.** A new built-in rule, *Storage
   filling up*, watches every capacity metric DumbMonit collects (agent
@@ -75,6 +50,10 @@ All notable changes to this project are documented here. The format follows
   after a cleanup, an expansion or a quota reset. `GET /api/targets/{id}/forecasts`
   returns the per-entity forecast (used, size, growth per day, days to full,
   confidence).
+- Capacity bars say when they will be full: each agent disk ("Full in about 23
+  days at this pace") and each NAS volume, from the same forecasts. Filesystem
+  inodes reported by the Linux agent are a forecast family too
+  (`filesystem_inodes`).
 - **Drift alerts.** Two built-in rules compare probe response times and the
   share of 5xx answers (reverse proxies, Cloudflare) with the usual value for
   the same hour over the previous four weeks, and alert at three times the
@@ -91,13 +70,16 @@ All notable changes to this project are documented here. The format follows
   and the monitor that uses it — matched by name and size, or linked by hand
   (`PUT /api/targets/{id}/luns/{lun}/consumer`, saved in backups). TrueNAS
   zvols are listed the same way. `GET /api/targets/{id}/luns` returns it all.
+- **Deadlines timeline** on the Reports page: domains, certificates, Entra
+  application secrets, Infomaniak products, Tailscale keys and licenses (FortiGate,
+  Meraki, Palo Alto, Veeam, GitLab) on one 90-day axis, with the soonest as a
+  list on phones. Each monitor page shows its own expiry dates. Served by the new
+  `GET /api/deadlines` (soonest first, `target` and `max_days` filters).
+- **Domain changes**: the domain monitor now reads the name servers and
+  fingerprints them and the registrar. New default rules alert on a change of
+  name servers, a change of registrar, and DNSSEC lost.
 
-### Fixed
-
-- Restoring a backup now also restores alert rules whose detection settings are
-  the only thing that changed.
-
-### Added
+#### Maps
 
 - **Weathermap on the topology map.** Links between switches show their load: the
   width and tint follow the port utilization (rate over port speed), the label
@@ -109,9 +91,6 @@ All notable changes to this project are documented here. The format follows
   load of each link; on a phone the map falls back to a list of the busiest links.
   `GET /api/topology` links carry an optional `traffic` object, and
   `GET /api/targets/{id}/port-traffic` returns the one-hour curve of a link's ports.
-
-### Added
-
 - **Threat map.** The Security page opens with a world map of the attacks your
   defences stopped, shaded by country: CrowdSec alerts of the last 24 hours, the
   inbound connections blocked by an OPNsense firewall's live map, and Cloudflare
@@ -129,18 +108,7 @@ All notable changes to this project are documented here. The format follows
   state. AWS, Hetzner and OVHcloud panels map their regions and datacenters from a
   built-in table (AWS, Azure, Hetzner, OVHcloud, Infomaniak), with no request out.
 
-### Added
-
-- **Deadlines timeline** on the Reports page: domains, certificates, Entra
-  application secrets, Infomaniak products, Tailscale keys and licenses (FortiGate,
-  Meraki, Palo Alto, Veeam, GitLab) on one 90-day axis, with the soonest as a
-  list on phones. Each monitor page shows its own expiry dates. Served by the new
-  `GET /api/deadlines` (soonest first, `target` and `max_days` filters).
-- **Domain changes**: the domain monitor now reads the name servers and
-  fingerprints them and the registrar. New default rules alert on a change of
-  name servers, a change of registrar, and DNSSEC lost.
-
-### Added
+#### Agents and relays
 
 - **Agents behind a relay.** At a site behind a firewall, where only the relay
   agent goes out, servers can now run the full agent: they connect to the
@@ -172,23 +140,7 @@ All notable changes to this project are documented here. The format follows
   are probed through that relay. `GET /api/relays/kinds` lists the kinds a
   relay can probe; forms only offer *Reached through* for those.
 
-### Changed
-
-- **Settings → Agents** keeps only instance settings: the encrypted channel
-  (with the agents still on the plain channel), automatic agent updates, and
-  the issued tokens with revocation. Adding agents, the agent list and the
-  Active Directory kit moved to the add flow; no add flow sends you to Settings
-  any more.
-
-### Added
-
-- **Machine health card** at the top of an agent host's page: CPU, memory and disk
-  gauges with one-hour curves, a per-core heatmap, the ten heaviest processes by
-  CPU and memory, kernel pressure (PSI), OOM kills, inode usage and clock drift,
-  each with a short explanation. The Linux agent now reports these causes of a
-  slow machine (process names only, never command lines).
-
-### Added
+#### Docker
 
 - **Docker consumption**: the agent now reads each running container's
   statistics (one-shot `stats`, a bounded number in parallel, with a time
@@ -207,7 +159,7 @@ All notable changes to this project are documented here. The format follows
 - Container auto-update/auto-restart policies are now part of the configuration
   backup.
 
-### Added
+#### Network and backups
 
 - **Network watch**: scheduled network scans now flag a **MAC address change** (a new
   device on the address of a known device: spoofing or replaced hardware; alert rule
@@ -215,9 +167,6 @@ All notable changes to this project are documented here. The format follows
   each subnet as a **grid** (one tile per address: new, known, ignored, absent, free)
   with filters and an *Add as a monitor* action. Scheduled scans and the devices you
   marked known or ignored are part of the backup.
-
-### Added
-
 - **Backup matrix** (jobs x 30 days) on Veeam, Duplicati, Kopia, Synology Active
   Backup and Plakar, and on Proxmox Backup Server, which now shares the same
   component: one row per job, one cell per day (succeeded, warning, failed, not
@@ -228,6 +177,55 @@ All notable changes to this project are documented here. The format follows
   success on a job scheduled at least daily.
 - Veeam repository usage and the size of what Kopia and Duplicati keep are pinned
   among the charts of their device page.
+
+### Changed
+
+- **One interface.** The Homelab interface is gone: everyone gets the console
+  (icon rail, header, context panel), with the pigeon logo. The overview opens on
+  a thin night-sky banner whose one line says how things stand ("pve-02 is down.
+  3 guests held back, alert sent." / "All 146 monitors up."), with a pigeon flying
+  across it (tap it). Wall mode moved to a screen icon in the header and always
+  shows the console's board. The setup wizard no longer asks for a mode and
+  always offers its three optional steps; Settings no longer has a mode picker,
+  a theme picker or an "Advanced" fold. Public status pages keep their light and
+  dark themes.
+- **Night scenes.** The status page banners are redrawn as four cities at night:
+  Paris (the Eiffel Tower in its golden lights, the beam turning), Tokyo (Tokyo
+  Tower, the Skytree, Mount Fuji), New York (the Empire State, whose crown takes
+  the page's colour, and the Chrysler Building) and **Dubai** (the Burj Khalifa),
+  which replaces the Matterhorn: stored pages move over (migration 0205), and
+  backups or API calls naming `matterhorn` land on `dubai`. A starry sky, the
+  moon lighting the buildings, lit windows and the weather following the page.
+  The text over them always uses the dark colours, so it stays legible in the
+  light theme. The wall can show the same cities behind its verdict and clock
+  (**Backdrop**, off by default, or `?city=`).
+- **Settings → Agents** keeps only instance settings: the encrypted channel
+  (with the agents still on the plain channel), automatic agent updates, and
+  the issued tokens with revocation. Adding agents, the agent list and the
+  Active Directory kit moved to the add flow; no add flow sends you to Settings
+  any more.
+- The agent binary no longer embeds the integrations' view catalogue, which only
+  the server's API serves (`catalog` feature of the collectors crate).
+- Cloudflare: threats by country are read by a query of their own, so a refusal
+  of that field never drops the traffic analytics.
+
+### Removed
+
+- The product mode (`product_mode`) in `GET /api/instance` and
+  `/api/instance/settings`. Older clients and backups that still carry it are
+  accepted; the field is ignored and no longer written.
+- The Homelab overview (weather scene, briefing, last 7 days) and the Homelab
+  wall (city scenes, music dock, widget zones).
+- Wall music (Spotify Connect, shared link), wall news and wall widgets, with
+  their Settings sections and API routes (`/api/music/*`, `/api/wall/news*`,
+  `/api/wall/widgets*`). Their stored settings are left in place and ignored;
+  the security policy no longer allows Spotify's player or any frame. Place
+  search for locations (`/api/locations/geocode`) stays.
+
+### Fixed
+
+- Restoring a backup now also restores alert rules whose detection settings are
+  the only thing that changed.
 
 ## 0.14.1 — 2026-10-28
 
