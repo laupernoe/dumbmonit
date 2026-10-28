@@ -56,21 +56,24 @@ aprirla a codice arbitrario:
 
 ### Scene
 
-L'impostazione **Scene** disegna uno skyline cittadino dietro il
-banner. Le nuove pagine partono con Parigi, e le pagine esistenti che
-non avevano una scena ora la mostrano anch'esse; deselezionala per un
-banner semplice, oppure attiva **Simple mode** per eliminare le scene
-del tutto. Scegli quante ne vuoi, nell'ordine che vuoi. Città: Venezia,
-Parigi, Tokyo, New York, Londra, Roma, Sydney, Dubai, San Francisco,
-Barcellona, Amsterdam, Istanbul e Rio de Janeiro. Le nuove sette
-meraviglie: Chichén Itzá, Machu Picchu, la Grande Muraglia, Petra e il
-Taj Mahal (il Cristo Redentore di Rio è nella scena di Rio). Le
-meraviglie antiche: Giza, Babilonia, Efeso, Olimpia, Alicarnasso, Rodi e
-Alessandria, più l'Acropoli di Atene. Con più di una, **Rotation**
-decide quando la pagina passa alla successiva: a ogni visita
-(predefinito), ogni minuto, ogni dieci minuti o ogni ora. Le scene sono
-un insieme chiuso di disegni forniti con DumbMonit — nulla viene
-caricato o interpretato.
+L'impostazione **Scene** disegna uno skyline cittadino dietro il banner. Le
+nuove pagine partono con Parigi; deselezionala per un banner semplice, oppure
+attiva **Simple mode** per fare a meno delle scene. Scegline quante vuoi,
+nell'ordine che vuoi. Sono incluse quattro scene, quattro città di notte sotto
+la luna e le stelle, con il loro monumento illuminato: Parigi (la torre
+Eiffel), Tokyo (la Tokyo Tower), New York (l'Empire State e il Chrysler
+Building) e Dubai (il Burj Khalifa). Il meteo segue la pagina: cielo stellato
+quando va tutto bene, nuvole con un avviso, temporale quando qualcosa è giù.
+Essendo scene notturne, il titolo e lo stato sopra usano sempre i colori scuri,
+qualunque sia il tema della pagina. Dubai sostituisce il Cervino, e le pagine
+che usavano una scena ritirata sono passate alla più vicina delle quattro (città
+europee e mondo antico a Parigi, Asia, mare e spazio a Tokyo, le Americhe a New
+York, le Alpi e il nord a Dubai), backup e chiamate API compresi. Con più di
+una, **Rotation** decide quando la pagina passa alla successiva: a ogni visita
+(predefinito), ogni minuto, ogni dieci minuti o ogni ora. Le scene sono un
+insieme chiuso di disegni forniti con DumbMonit — niente viene caricato o
+interpretato. Le stesse quattro città possono stare anche dietro al verdetto
+della [parete](wall.md).
 
 Non c'è deliberatamente alcun CSS o HTML personalizzato: una pagina di
 stato è pubblica e vive sulla stessa origine della tua interfaccia di

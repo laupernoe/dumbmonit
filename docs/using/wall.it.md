@@ -14,7 +14,7 @@ Dall'alto:
 - gli **allarmi aperti**, i più gravi per primi;
 - **chi è reperibile** ora, con il calendario e la fine del turno.
 
-Nessuno sfondo, nessuna musica, nessun widget: fondo nero, la tipografia della
+Nessuna musica, nessun widget: fondo nero, la tipografia della
 console, stati scritti accanto a una forma e mai solo a colori.
 
 ## Aprire e uscire
@@ -24,8 +24,15 @@ Aprila con l'icona **Wall mode** della barra in alto, dalla command palette
 account limitato ad alcuni team o clienti non ha la modalità Wall, perché mostra
 l'intera flotta.
 
-## Aspetto
+## Sfondo {#backdrop}
 
-La modalità Wall condivide l'aspetto scuro della console. I temi delle città di
-notte (Parigi, New York, Tokyo e Dubai) appartengono alle
-[pagine di stato](status-pages.md).
+La parete condivide l'aspetto scuro della console. Il pulsante **Sfondo** (in
+alto a destra, accanto a Exit) può disegnare una delle città di notte delle
+[pagine di stato](status-pages.md) dietro al verdetto e all'orologio: Parigi,
+New York, Tokyo o Dubai, oppure *Auto* per la più vicina al fuso orario del
+browser. È spento per impostazione predefinita e ricordato per browser;
+`?city=paris` (o `newyork`, `tokyo`, `dubai`, `none`) in un link lo sceglie solo
+per quello schermo. Il cielo segue il quadro: stelle quando va tutto bene,
+nuvole con un avviso, temporale con un allarme. Su un telefono, o con la scheda
+nascosta, la città resta ferma. Uno `zermatt` salvato o in un link ora porta a
+Dubai.

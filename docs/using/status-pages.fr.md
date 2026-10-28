@@ -83,7 +83,8 @@ voulez, dans l'ordre que vous voulez. Quatre scènes sont fournies, quatre ville
 page passe à la suivante : à chaque visite (défaut), chaque minute,
 toutes les dix minutes ou chaque heure. Les scènes sont un ensemble
 fermé de dessins fournis avec DumbMonit — rien n'est téléchargé ni
-interprété.
+interprété. Les mêmes quatre villes peuvent aussi s'afficher derrière le verdict du
+[mur](wall.md#backdrop) (**Décor**).
 
 Il n'y a délibérément pas de CSS ou HTML personnalisé : une page d'état
 est publique et vit sur la même origine que votre interface
