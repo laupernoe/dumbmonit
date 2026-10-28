@@ -8703,6 +8703,8 @@
 	"devices_machine_ram": "内存",
 	"devices_machine_disk": "磁盘",
 	"devices_machine_disk_worst": "磁盘 {mount}",
+	"devices_machine_disks_title": "磁盘",
+	"devices_machine_disks_hint": "每块磁盘的占用情况，以及按当前速度何时会写满。",
 	"devices_machine_tone_signal": "正常",
 	"devices_machine_tone_advisory": "偏高",
 	"devices_machine_tone_warning": "过高",

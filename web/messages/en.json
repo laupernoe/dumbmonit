@@ -8793,6 +8793,8 @@
 	"devices_machine_ram": "Memory",
 	"devices_machine_disk": "Disk",
 	"devices_machine_disk_worst": "Disk {mount}",
+	"devices_machine_disks_title": "Disks",
+	"devices_machine_disks_hint": "How full each disk is and, at the current pace, when it will be full.",
 	"devices_machine_tone_signal": "Normal",
 	"devices_machine_tone_advisory": "Elevated",
 	"devices_machine_tone_warning": "High",

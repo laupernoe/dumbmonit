@@ -38,9 +38,35 @@
 	let entitiesLoading = $state(false);
 	let saving = $state(false);
 	let linkError = $state<string | null>(null);
+	/** Fill forecasts of this NAS, to say when each volume is full at this pace. */
+	let forecasts = $state<CapacityForecast[]>([]);
+
+	/** Families whose entity is one of the volumes listed here. */
+	const VOLUME_FAMILIES = new Set(['synology_volume', 'qnap_volume', 'truenas_pool']);
+
+	async function loadForecasts(signal?: AbortSignal) {
+		try {
+			forecasts = (await getTargetForecasts(target.id, signal)).filter((f) => VOLUME_FAMILIES.has(f.family));
+		} catch {
+			// Additive: without forecasts the bars simply carry no "full in".
+			forecasts = [];
+		}
+	}
+
+	/** Days before the volume is full at the current pace, rounded; null without a forecast. */
+	function daysToFull(volume: LunVolume): number | null {
+		const found = forecasts.find(
+			(f) =>
+				f.labels.volume === volume.volume ||
+				f.labels.pool === volume.volume ||
+				(f.entity !== '' && (f.entity === volume.volume || f.entity === volume.name))
+		);
+		return found?.days_to_full == null ? null : Math.round(found.days_to_full);
+	}
 
 	async function load(signal?: AbortSignal) {
 		error = null;
+		void loadForecasts(signal);
 		try {
 			view = await getTargetLuns(target.id, signal);
 		} catch (cause) {
@@ -194,6 +220,7 @@
 				{#each view.volumes as volume (volume.volume)}
 					{@const thick = thickOn(volume)}
 					{@const over = (volume.overcommit_percent ?? 0) >= 100}
+					{@const days = daysToFull(volume)}
 					<li class="px-5 py-3">
 						{#if volume.total_bytes !== null && volume.used_bytes !== null}
 							<CapacityBar
@@ -206,6 +233,8 @@
 								format={(v) => formatBytes(v)}
 								warnAt={0.9}
 								criticalAt={0.95}
+								forecastDays={days}
+								forecastLabel={days === null ? '' : m.storage_full_in({ count: days })}
 							/>
 						{/if}
 						{#if volume.fully_reserved}
