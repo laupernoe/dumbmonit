@@ -11,13 +11,22 @@
 	 * exclamation, down arrow, dots, pause) and anything that needs attention
 	 * spells its state under the name. A down node gets a thick ring and a
 	 * halo; what it takes down with it a dashed ring and the word "Unreachable".
+	 *
+	 * Weathermap (`traffic`): a link with port counters is drawn as a pipe whose
+	 * width and tint follow its load, dashed when the port loses frames, with
+	 * dots moving along it in the direction of the busiest flow (still under
+	 * reduced motion). Its `412 Mb/s · 41 %` label shows on hover or focus, and
+	 * always from 50 %: the load is written, never only coloured. A link behind
+	 * a down device is greyed out, like the dependants it cascades to.
 	 */
 	import { m } from '#lib/paraglide/messages.js';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 	import { STATE_LABEL, type TargetState } from '#lib/format.js';
 	import { Box, Monitor, Server } from 'lucide-svelte';
 	import type { Frame, MapLayout, NodeState, PlacedEdge, PlacedNode } from './layout';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { EDGE_DASH, guestLabel, portsText, sourceShort, zoneLabel } from './legend';
+	import { linkLoad, loadText, type Band } from './traffic';
 
 	interface Props {
 		layout: MapLayout;
@@ -37,6 +46,11 @@
 		dropTarget?: string | null;
 		/** Node being dragged: drawn faded where it was. */
 		dragging?: string | null;
+		/** Weathermap: draw the load of the links that have traffic. */
+		traffic?: boolean;
+		/** Key of the link whose traffic panel is open. */
+		selectedLink?: string | null;
+		onlink?: (key: string) => void;
 	}
 
 	let {
@@ -50,8 +64,14 @@
 		selectedEdge = null,
 		onedge,
 		dropTarget = null,
-		dragging = null
+		dragging = null,
+		traffic = false,
+		selectedLink = null,
+		onlink
 	}: Props = $props();
+
+	/** The link under the pointer or focus: its label shows. */
+	let hoverLink = $state<string | null>(null);
 
 	const names = $derived(new Map(layout.nodes.map((p) => [p.node.id, p.node.name])));
 
@@ -67,6 +87,46 @@
 			event.preventDefault();
 			onedge?.(key);
 		}
+	}
+
+	function onlinkkey(event: KeyboardEvent, key: string) {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			onlink?.(key);
+		}
+	}
+
+	/** Whole class names, so Tailwind sees them: the tint of each load band. */
+	const BAND_STROKE: Record<Band, string> = {
+		idle: 'stroke-ink-3',
+		low: 'stroke-signal',
+		mid: 'stroke-signal',
+		high: 'stroke-advisory',
+		full: 'stroke-warning',
+		unknown: 'stroke-ink-2'
+	};
+
+	/** The links that show their traffic: those that have some, when the weathermap is on. */
+	function weather(edge: PlacedEdge) {
+		return traffic && edge.traffic ? { traffic: edge.traffic, load: linkLoad(edge.traffic, edge.from) } : null;
+	}
+
+	function weatherText(edge: PlacedEdge): string {
+		const w = weather(edge);
+		if (!w) return '';
+		const text = loadText(w.load, getLocale());
+		return w.load.errors ? `${text} · ${m.topology_traffic_errors_short()}` : text;
+	}
+
+	function weatherLabel(edge: PlacedEdge): string {
+		return m.topology_traffic_edge_label({ from: names.get(edge.from) ?? edge.from, to: names.get(edge.to) ?? edge.to, load: weatherText(edge) });
+	}
+
+	/** The label shows on hover, focus or selection, and always on a link past half its capacity. */
+	function labelled(edge: PlacedEdge): boolean {
+		const w = weather(edge);
+		if (!w || edge.stale) return false;
+		return hoverLink === edge.key || selectedLink === edge.key || (w.load.pct ?? 0) >= 50;
 	}
 
 	type Badge = 'ok' | 'down' | 'impacted' | 'warn' | 'wait' | 'idle';
@@ -211,19 +271,43 @@
 	{@const dimmed = highlight !== null && !lit}
 	{@const dependency = edge.style === 'dependency'}
 	{@const tone = edgeTone(edge.impacted, lit, dependency)}
-	<g opacity={dimmed ? 0.1 : edge.impacted || lit ? 1 : dependency ? 0.8 : 0.6}>
+	{@const w = weather(edge)}
+	<g opacity={dimmed ? 0.1 : w ? (edge.stale ? 0.4 : 0.95) : edge.impacted || lit ? 1 : dependency ? 0.8 : 0.6}>
 		{#if edge.wan}
 			<!-- A WAN link: a wide soft band under a dashed line, a tunnel between two sites. -->
 			<path d={edge.path} fill="none" class={STROKE[tone]} stroke-width="7" stroke-linecap="round" opacity="0.14" />
 		{/if}
-		<path
-			d={edge.path}
-			fill="none"
-			class={STROKE[tone]}
-			stroke-width={edge.wan ? 2.2 : dependency ? (lit || edge.impacted ? 2.2 : 1.6) : lit || edge.impacted ? 1.6 : 1.1}
-			stroke-dasharray={EDGE_DASH[edge.wan && edge.source === 'wan' ? 'wan' : edge.source] || undefined}
-			stroke-linecap="round"
-		/>
+		{#if w}
+			<!-- The load: a pipe as wide as the link is busy, dashed when its port loses frames. A greyed link has stale figures. -->
+			<path
+				d={edge.path}
+				fill="none"
+				class={edge.stale ? 'stroke-ink-3' : BAND_STROKE[w.load.band]}
+				stroke-width={w.load.width}
+				stroke-dasharray={w.load.errors ? '5 3' : edge.stale ? '2 3' : undefined}
+				stroke-linecap={w.load.errors ? 'butt' : 'round'}
+			/>
+			{#if w.load.forward !== null && !edge.stale}
+				<path
+					d={edge.path}
+					fill="none"
+					class={`stroke-surface ${w.load.forward ? 'topo-flow' : 'topo-flow topo-flow-back'}`}
+					stroke-width={Math.max(1.6, w.load.width * 0.5)}
+					stroke-dasharray="0.1 10"
+					stroke-linecap="round"
+					opacity="0.9"
+				/>
+			{/if}
+		{:else}
+			<path
+				d={edge.path}
+				fill="none"
+				class={STROKE[tone]}
+				stroke-width={edge.wan ? 2.2 : dependency ? (lit || edge.impacted ? 2.2 : 1.6) : lit || edge.impacted ? 1.6 : 1.1}
+				stroke-dasharray={EDGE_DASH[edge.wan && edge.source === 'wan' ? 'wan' : edge.source] || undefined}
+				stroke-linecap="round"
+			/>
+		{/if}
 		{#if edge.arrow}
 			<polygon points={edge.arrow} class={FILL[tone]} />
 		{/if}
@@ -235,8 +319,8 @@
 				stroke-width="1.6"
 			/>
 		{/if}
-		{#if selectedEdge === edge.key}
-			<path d={edge.path} fill="none" class="stroke-signal" stroke-width="5" stroke-linecap="round" opacity="0.35" />
+		{#if selectedEdge === edge.key || (w && selectedLink === edge.key)}
+			<path d={edge.path} fill="none" class="stroke-signal" stroke-width={(w?.load.width ?? 1) + 4} stroke-linecap="round" opacity="0.35" />
 		{/if}
 	</g>
 {/each}
@@ -260,6 +344,43 @@
 				onclick={() => onedge?.(edge.key)}
 				onkeydown={(event: KeyboardEvent) => onedgekey(event, edge.key)}
 			><title>{edgeLabel(edge)}</title></path>
+		{/if}
+	{/each}
+{/if}
+
+{#if traffic && !editing && interactive}
+	<!-- Wide invisible strokes: a link with traffic opens its panel, by touch or with Tab. -->
+	{#each layout.edges as edge (edge.key)}
+		{#if edge.traffic}
+			<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+			<path
+				d={edge.path}
+				fill="none"
+				stroke="transparent"
+				stroke-width="18"
+				class="topo-edge"
+				pointer-events="stroke"
+				role="button"
+				tabindex="0"
+				aria-label={weatherLabel(edge)}
+				aria-pressed={selectedLink === edge.key}
+				onclick={() => onlink?.(edge.key)}
+				onkeydown={(event: KeyboardEvent) => onlinkkey(event, edge.key)}
+				onpointerenter={() => (hoverLink = edge.key)}
+				onpointerleave={() => (hoverLink = null)}
+				onfocus={() => (hoverLink = edge.key)}
+				onblur={() => (hoverLink = null)}
+			><title>{weatherLabel(edge)}</title></path>
+		{/if}
+	{/each}
+	{#each layout.edges as edge (edge.key)}
+		{#if labelled(edge)}
+			{@const text = weatherText(edge)}
+			{@const width = text.length * 6.3 + 14}
+			<g transform={`translate(${edge.mid.x},${edge.mid.y})`} pointer-events="none">
+				<rect x={-width / 2} y="-10" {width} height="20" rx="10" class="fill-surface stroke-line-strong" stroke-width="1" />
+				<text y="4" text-anchor="middle" class="fill-ink" font-size="11" font-weight="600">{text}</text>
+			</g>
 		{/if}
 	{/each}
 {/if}
@@ -398,8 +519,20 @@
 			opacity: 0.1;
 		}
 	}
+	:global(.topo-flow) {
+		animation: topo-flow 1.1s linear infinite;
+	}
+	:global(.topo-flow-back) {
+		animation-direction: reverse;
+	}
+	@keyframes -global-topo-flow {
+		to {
+			stroke-dashoffset: -10.1;
+		}
+	}
 	@media (prefers-reduced-motion: reduce) {
-		:global(.topo-pulse) {
+		:global(.topo-pulse),
+		:global(.topo-flow) {
 			animation: none;
 		}
 	}

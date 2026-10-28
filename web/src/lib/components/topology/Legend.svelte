@@ -5,16 +5,27 @@
 	 */
 	import { m } from '#lib/paraglide/messages.js';
 	import { EDGE_DASH, SOURCES, sourceLabel } from './legend';
+	import { BAND_LIMITS, widthFor } from './traffic';
 
 	interface Props {
 		/** Sites are drawn: the WAN link is part of the legend. */
 		wan?: boolean;
 		/** Some links were corrected by hand or set by a learned rule. */
 		corrected?: boolean;
+		/** The weathermap is on: add the load scale. */
+		traffic?: boolean;
 		class?: string;
 	}
 
-	let { wan = false, corrected = false, class: className = '' }: Props = $props();
+	let { wan = false, corrected = false, traffic = false, class: className = '' }: Props = $props();
+
+	/** The four load bands of the weathermap: 0–25, 25–50, 50–75, 75–100 %. */
+	const BANDS = [
+		{ from: 0, to: BAND_LIMITS[0], stroke: 'stroke-signal' },
+		{ from: BAND_LIMITS[0], to: BAND_LIMITS[1], stroke: 'stroke-signal' },
+		{ from: BAND_LIMITS[1], to: BAND_LIMITS[2], stroke: 'stroke-advisory' },
+		{ from: BAND_LIMITS[2], to: 100, stroke: 'stroke-warning' }
+	];
 </script>
 
 <div class={`flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-ink-2 ${className}`}>
@@ -71,4 +82,36 @@
 		</svg>
 		{m.topology_legend_suppressed()}
 	</span>
+	{#if traffic}
+		<div class="flex basis-full flex-wrap items-center gap-x-5 gap-y-2 border-t border-line pt-2">
+			<span class="font-semibold text-ink">{m.topology_traffic_legend_title()}</span>
+			{#each BANDS as band (band.from)}
+				<span class="inline-flex items-center gap-2">
+					<svg width="34" height="10" aria-hidden="true" class="shrink-0">
+						<line x1="2" y1="5" x2="32" y2="5" class={band.stroke} stroke-width={widthFor((band.from + band.to) / 2)} stroke-linecap="round" />
+					</svg>
+					<span class="tabular-nums">{m.topology_traffic_legend_range({ from: band.from, to: band.to })}</span>
+				</span>
+			{/each}
+			<span class="inline-flex items-center gap-2">
+				<svg width="34" height="10" aria-hidden="true" class="shrink-0">
+					<line x1="2" y1="5" x2="32" y2="5" class="stroke-advisory" stroke-width="3" stroke-dasharray="5 3" />
+				</svg>
+				{m.topology_traffic_legend_errors()}
+			</span>
+			<span class="inline-flex items-center gap-2">
+				<svg width="34" height="10" aria-hidden="true" class="shrink-0">
+					<line x1="2" y1="5" x2="32" y2="5" class="stroke-signal" stroke-width="4" stroke-linecap="round" />
+					<line x1="2" y1="5" x2="32" y2="5" class="stroke-surface" stroke-width="2" stroke-linecap="round" stroke-dasharray="0.1 10" />
+				</svg>
+				{m.topology_traffic_legend_flow()}
+			</span>
+			<span class="inline-flex items-center gap-2">
+				<svg width="34" height="10" aria-hidden="true" class="shrink-0">
+					<line x1="2" y1="5" x2="32" y2="5" class="stroke-ink-3" stroke-width="3" stroke-dasharray="2 3" stroke-linecap="round" />
+				</svg>
+				{m.topology_traffic_legend_stale()}
+			</span>
+		</div>
+	{/if}
 </div>

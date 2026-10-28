@@ -5,6 +5,7 @@
  */
 import { request } from './client';
 import type {
+	PortTraffic,
 	Topology,
 	TopologyCorrectionCreated,
 	TopologyCorrectionInput,
@@ -15,6 +16,11 @@ import type {
 
 export function getTopology(signal?: AbortSignal): Promise<Topology> {
 	return request<Topology>('/topology', { signal });
+}
+
+/** The last hour of traffic of one or more interfaces of a device (a link's ports). */
+export function getPortTraffic(targetId: number, ports: string[], signal?: AbortSignal): Promise<PortTraffic> {
+	return request<PortTraffic>(`/targets/${targetId}/port-traffic`, { query: { ports: ports.join(',') }, signal });
 }
 
 export function createCorrection(input: TopologyCorrectionInput): Promise<TopologyCorrectionCreated> {

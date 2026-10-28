@@ -9,12 +9,16 @@
 	 * another asks to attach it there (`onattach`), and links become buttons
 	 * that open their own panel (`edgePanel`). The node panel gets the
 	 * correction tools from the caller (`editor`).
+	 *
+	 * With `traffic` (weathermap), clicking a link that has port counters opens
+	 * its traffic panel: rates each way, errors, the last hour.
 	 */
 	import type { Snippet } from 'svelte';
 	import { m } from '#lib/paraglide/messages.js';
-	import { Maximize, Minus, Plus } from 'lucide-svelte';
+	import { Maximize, Minus, Plus, X } from 'lucide-svelte';
 	import MapContent from './MapContent.svelte';
 	import NodePanel from './NodePanel.svelte';
+	import LinkTraffic from './LinkTraffic.svelte';
 	import { chainOf, type Graph, type MapLayout } from './layout';
 
 	interface Props {
@@ -31,6 +35,8 @@
 		editor?: Snippet<[string]>;
 		/** The panel of the selected link. */
 		edgePanel?: Snippet<[string]>;
+		/** Weathermap: links show their load and open a traffic panel. */
+		traffic?: boolean;
 	}
 
 	let {
@@ -42,8 +48,17 @@
 		selectedEdge = $bindable(null),
 		onattach,
 		editor,
-		edgePanel
+		edgePanel,
+		traffic = false
 	}: Props = $props();
+
+	/** Key of the link whose traffic panel is open. */
+	let selectedLink = $state<string | null>(null);
+	const linkEdge = $derived(selectedLink !== null ? (layout.edges.find((e) => e.key === selectedLink && e.traffic) ?? null) : null);
+	const nameOf = (id: string) => graph.nodes.get(id)?.name ?? id;
+	$effect(() => {
+		if (selectedLink !== null && (!traffic || editing || !linkEdge)) selectedLink = null;
+	});
 
 	// Leaving the corrections closes the link panel.
 	$effect(() => {
@@ -244,6 +259,7 @@
 		if (!(event.target as Element).closest('.topo-node, .topo-edge, button')) {
 			selected = null;
 			selectedEdge = null;
+			selectedLink = null;
 		}
 	}
 
@@ -252,12 +268,14 @@
 			if (event.key === 'Escape') {
 				selected = null;
 				selectedEdge = null;
+				selectedLink = null;
 			}
 			return;
 		}
 		if (event.key === 'Escape') {
 			selected = null;
 			selectedEdge = null;
+			selectedLink = null;
 			return;
 		}
 		if ((event.target as Element).closest('.topo-node, .topo-edge') && (event.key === 'Enter' || event.key === ' ')) return;
@@ -305,11 +323,18 @@
 				{selected}
 				{editing}
 				{selectedEdge}
+				{traffic}
+				{selectedLink}
+				onlink={(key) => {
+					selected = null;
+					selectedLink = selectedLink === key ? null : key;
+				}}
 				{dropTarget}
 				dragging={drag?.active ? drag.id : null}
 				onhover={(id) => (hover = id)}
 				onselect={(id) => {
 					selectedEdge = null;
+					selectedLink = null;
 					selected = selected === id ? null : id;
 				}}
 				onedge={(key) => {
@@ -324,7 +349,7 @@
 			{/if}
 		</g>
 	</svg>
-	<div class={`absolute bottom-3 flex flex-col gap-1.5 ${selected || selectedEdge ? 'right-3 max-sm:hidden sm:right-[21.5rem]' : 'right-3'}`}>
+	<div class={`absolute bottom-3 flex flex-col gap-1.5 ${selected || selectedEdge || selectedLink ? 'right-3 max-sm:hidden sm:right-[21.5rem]' : 'right-3'}`}>
 		<button type="button" class={controlClass} title={m.topology_zoom_in()} aria-label={m.topology_zoom_in()} onclick={() => zoomAt(1.25)}>
 			<Plus class="size-4" aria-hidden="true" />
 		</button>
@@ -342,6 +367,22 @@
 			aria-label={m.topology_edit_edge_panel()}
 		>
 			{@render edgePanel(selectedEdge)}
+		</section>
+	{:else if linkEdge && linkEdge.traffic}
+		<section
+			data-topo-panel
+			class="absolute inset-x-2 bottom-2 z-10 flex max-h-[58%] flex-col overflow-hidden rounded-[var(--radius-card)] border border-line-strong bg-surface shadow-lift sm:inset-x-auto sm:top-3 sm:right-3 sm:bottom-3 sm:max-h-none sm:w-80"
+			aria-label={m.topology_traffic_panel_label()}
+		>
+			<header class="flex items-center justify-between gap-2 border-b border-line px-4 py-2">
+				<h2 class="text-sm font-bold text-ink">{m.topology_traffic_panel_label()}</h2>
+				<button type="button" class="inline-flex size-10 items-center justify-center rounded-lg text-ink-2 hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-signal" aria-label={m.topology_traffic_close()} onclick={() => (selectedLink = null)}>
+					<X class="size-4" aria-hidden="true" />
+				</button>
+			</header>
+			<div class="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+				<LinkTraffic from={linkEdge.from} to={linkEdge.to} traffic={linkEdge.traffic} name={nameOf} stale={linkEdge.stale} fromPort={linkEdge.fromPort} toPort={linkEdge.toPort} />
+			</div>
 		</section>
 	{:else if selected && graph.nodes.has(selected)}
 		<NodePanel {graph} id={selected} {editor} onselect={(id) => (selected = id)} onclose={() => (selected = null)} />
