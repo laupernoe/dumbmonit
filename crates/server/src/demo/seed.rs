@@ -422,11 +422,8 @@ async fn seed_network_inventory(pool: &SqlitePool, agent: TargetId) -> Result<()
     for (mac, ip, hostname, vendor, known, ports) in HOSTS {
         // Les appareils connus sont là depuis le premier balayage, il y a deux
         // semaines ; l'intrus, depuis trois heures.
-        let first_seen = at(if *known {
-            chrono::Duration::days(14)
-        } else {
-            chrono::Duration::hours(3)
-        });
+        let first_seen =
+            at(if *known { chrono::Duration::days(14) } else { chrono::Duration::hours(3) });
         let device: i64 = sqlx::query_scalar(
             "INSERT INTO netscan_devices
                  (schedule_id, ident, mac, ip, hostname, vendor, known, first_seen, last_seen)

@@ -404,9 +404,11 @@ mod tests {
         // étiquettes que lisent le panneau (index) et la carte (ifname).
         let octets = find(&all, "if_octets_in");
         assert_eq!(octets.len(), PORTS.iter().filter(|p| p.up).count());
-        assert!(octets.iter().all(|s| {
-            s.labels.contains_key("index") && s.labels.contains_key("ifname")
-        }));
+        assert!(
+            octets
+                .iter()
+                .all(|s| { s.labels.contains_key("index") && s.labels.contains_key("ifname") })
+        );
         // Les voisins LLDP portent le nom des cibles du parc : la carte les relie.
         let neighbors: Vec<&str> = find(&all, "lldp_neighbor_info")
             .iter()
@@ -443,9 +445,11 @@ mod tests {
         let crowd = crowdsec(TS);
         let countries = find(&crowd, "crowdsec_alerts_by_country");
         assert_eq!(countries.len(), CROWDSEC_COUNTRIES.len());
-        assert!(countries.iter().all(|s| {
-            s.value >= 1.0 && s.labels.get("country").is_some_and(|c| c.len() == 2)
-        }));
+        assert!(
+            countries.iter().all(|s| {
+                s.value >= 1.0 && s.labels.get("country").is_some_and(|c| c.len() == 2)
+            })
+        );
         let total = find(&crowd, "crowdsec_alerts_recent")[0].value;
         assert_eq!(total, countries.iter().map(|s| s.value).sum::<f64>());
         let cloud = cloudflare(TS);
