@@ -9,3 +9,4 @@ export type { Threshold } from './Gauge.svelte';
 export type { StateCell } from './StateGrid.svelte';
 export * from './types.js';
 export * from './infer.js';
+export * from './tone.js';
