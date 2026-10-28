@@ -4773,6 +4773,42 @@ export interface SecuritySettings {
 	enabled: boolean;
 }
 
+/** Where the threat map's counts come from. Mirrors `threats::Source`. */
+export type ThreatSourceKind = 'crowdsec' | 'firewall' | 'cloudflare';
+
+/** One country of `GET /api/security/threats`. Mirrors `ThreatCountry`. */
+export interface ThreatCountry {
+	/** ISO 3166-1 alpha-2. */
+	code: string;
+	total: number;
+	crowdsec: number;
+	firewall: number;
+	cloudflare: number;
+}
+
+/** A source plugged into the threat map, even with nothing seen. Mirrors `ThreatSource`. */
+export interface ThreatSource {
+	source: ThreatSourceKind;
+	/** Devices feeding it. */
+	targets: TargetId[];
+	total: number;
+	/** Time span its counts cover. */
+	window_secs: number;
+}
+
+/**
+ * `GET /api/security/threats`: attacks stopped, by country of origin, every
+ * source together. Countries only, never an address. Mirrors `ThreatMap`.
+ */
+export interface ThreatMap {
+	/** Busiest first. */
+	countries: ThreatCountry[];
+	sources: ThreatSource[];
+	/** VictoriaMetrics did not answer: only the firewall live windows are counted. */
+	partial: boolean;
+	evaluated_at: string;
+}
+
 /** One of the three conditions of a heartbeat. Mirrors `selfmon::Component`. */
 export interface SelfMonitoringComponent {
 	name: 'scheduler' | 'database' | 'victoria';

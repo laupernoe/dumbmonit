@@ -3323,6 +3323,24 @@ const CROWDSEC_BOUNCER_KEY: CredentialView = CredentialView {
     )],
 };
 
+/// Compte de machine de la LAPI (`collectors/crowdsec`) : lit les alertes
+/// récentes, réduites à leur pays pour la carte des menaces.
+const CROWDSEC_MACHINE_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Machine login",
+    help: "Also reads the alerts of the last 24 hours, counted by country for the threat map. Addresses are never kept.",
+    fields: &[
+        cred_text("username", "Machine name", "The name given to cscli machines add.", "dumbmonit"),
+        cred_secret(
+            "password",
+            "Password",
+            "The password given to cscli machines add. Stored encrypted, never shown again.",
+            "",
+            true,
+        ),
+    ],
+};
+
 /// Délai commun aux intégrations Redis et MongoDB (`collectors/socket.rs`).
 const SOCKET_TIMEOUT: OptionView = number(
     "request_timeout_seconds",
@@ -7141,8 +7159,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 "CrowdSec in Docker",
                 "CrowdSec on OPNsense or pfSense",
             ],
-            credential_types: &["none", "api_token"],
-            credentials: &[CROWDSEC_METRICS_ONLY, CROWDSEC_BOUNCER_KEY],
+            credential_types: &["none", "api_token", "username_password"],
+            credentials: &[CROWDSEC_METRICS_ONLY, CROWDSEC_BOUNCER_KEY, CROWDSEC_MACHINE_LOGIN],
             address_hint: "crowdsec.lan",
             default_port: 6060,
             setup: Setup {
@@ -7152,6 +7170,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Check from the DumbMonit host that the metrics answer on port 6060, and filter that port so only the DumbMonit host reaches it.\ncurl -s http://crowdsec.lan:6060/metrics | grep cs_info",
                     "DumbMonit also checks the Local API on port 8080 of the same host: untick Check the Local API for a host that only runs an agent.",
                     "Optional: create a bouncer key and paste it as Bouncer API key below.\nsudo cscli bouncers add dumbmonit",
+                    "Or, for the threat map of the Security page: create a machine login and choose Machine login below. Only the country of each alert is kept.\nsudo cscli machines add dumbmonit --password 'a-long-password'",
                     "In DumbMonit, enter the CrowdSec host, for example \"crowdsec.lan\".",
                 ],
                 ports: &[
@@ -7162,7 +7181,10 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                         "Only with the Local API check option (on by default)",
                     ),
                 ],
-                permissions: &["Bouncer API key (optional)\nRead-only: it can only read decisions"],
+                permissions: &[
+                    "Bouncer API key (optional)\nRead-only: it can only read decisions",
+                    "Machine login (optional)\nReads the alerts; a machine can also send alerts, so keep it for DumbMonit only",
+                ],
                 warning: "A bouncer that stops pulling keeps enforcing a frozen list: DumbMonit warns when a bouncer's requests stop for 30 minutes.",
             },
             options: CROWDSEC_OPTIONS,

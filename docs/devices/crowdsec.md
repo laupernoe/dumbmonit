@@ -47,6 +47,8 @@ and rules turn them into rates.
 | `lines_read_total`, `lines_parsed_total`, `lines_unparsed_total` | log lines read by the agent, and those parsed or not | |
 | `source_lines_total`, `source_lines_unparsed_total` | the same per log source | `source` |
 | `buckets` | scenario buckets currently open | |
+| `alerts_recent` | with a machine login: local alerts of the last 24 hours read from the Local API | |
+| `alerts_by_country` | with a machine login: those alerts by country of origin (`source.cn`) | `country` |
 
 The Local API families appear where the Local API runs, the log families where
 an agent reads logs; the official image and a standard install run both.
@@ -63,6 +65,10 @@ log reading and the share of lines no parser recognised), then the active
 decisions, alerts kept, scenarios triggered in the last 24 hours and lines
 read per second, then the time since each bouncer last pulled, the decisions
 by origin and the unparsed share of each log source.
+
+With a machine login, a threat map follows: the alerts of the last 24 hours,
+shaded by country. The same counts feed the threat map of the Security page,
+next to the firewalls' blocks and Cloudflare's threats.
 
 ## Let DumbMonit read CrowdSec's metrics
 
@@ -86,11 +92,18 @@ by origin and the unparsed share of each log source.
     sudo cscli bouncers add dumbmonit
     ```
 
-5. In DumbMonit, enter the CrowdSec host, for example "crowdsec.lan".
+5. Or, for the threat map of the Security page: create a machine login and choose Machine login below. Only the country of each alert is kept.
+
+    ```
+    sudo cscli machines add dumbmonit --password 'a-long-password'
+    ```
+
+6. In DumbMonit, enter the CrowdSec host, for example "crowdsec.lan".
 
 ### Required permissions
 
 - **Bouncer API key (optional)** — Read-only: it can only read decisions
+- **Machine login (optional)** — Reads the alerts; a machine can also send alerts, so keep it for DumbMonit only
 
 !!! warning
     A bouncer that stops pulling keeps enforcing a frozen list: DumbMonit warns when a bouncer's requests stop for 30 minutes.
@@ -122,6 +135,7 @@ mode, or raise the rule's window.
 |---|---|
 | Metrics only | Nothing: reads `/metrics`, and `/health` of the Local API. |
 | Bouncer API key | The key printed by `cscli bouncers add dumbmonit`, sent as `X-Api-Key` to the Local API. |
+| Machine login | The name and password given to `cscli machines add`. DumbMonit logs in (`/v1/watchers/login`) and reads the local alerts of the last 24 hours (`/v1/alerts`, community ones excluded), keeping only the country of each one: no address is stored. |
 
 Address: a host name or IP (`crowdsec.lan`), `host:port` for the metrics, or
 a full URL. Options: protocol (HTTP by default), metrics port (6060), Check

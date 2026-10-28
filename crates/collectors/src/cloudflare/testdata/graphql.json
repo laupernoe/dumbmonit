@@ -8,12 +8,19 @@
              {"edgeResponseStatus": 200, "requests": 1100},
              {"edgeResponseStatus": 404, "requests": 20},
              {"edgeResponseStatus": 502, "requests": 60},
-             {"edgeResponseStatus": 503, "requests": 20}]}},
+             {"edgeResponseStatus": 503, "requests": 20}],
+             "countryMap": [
+             {"clientCountryName": "US", "threats": 12},
+             {"clientCountryName": "CN", "threats": 30},
+             {"clientCountryName": "XX", "threats": 4},
+             {"clientCountryName": "T1", "threats": 2},
+             {"clientCountryName": "CH", "threats": 0}]}},
            {"sum": {"requests": 300, "responseStatusMap": [{"edgeResponseStatus": 200, "requests": 300}]}}]},
         {"zoneTag": "2b6f1f0a1d3c4e5f60718293a4b5c6d7",
          "httpRequests1hGroups": [
            {"sum": {"requests": 40, "responseStatusMap": [
-             {"edgeResponseStatus": 200, "requests": 30}, {"edgeResponseStatus": 500, "requests": 10}]}}]}
+             {"edgeResponseStatus": 200, "requests": 30}, {"edgeResponseStatus": 500, "requests": 10}],
+             "countryMap": [{"clientCountryName": "CN", "threats": 5}]}}]}
       ]
     }
   },
