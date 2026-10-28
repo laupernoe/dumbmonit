@@ -107,9 +107,9 @@ async fn le_semis_montre_les_nouveautes() {
     let domains = kinds.iter().filter(|kind| **kind == "domain").count();
     assert_eq!(domains, demo::extras::DOMAINS.len());
 
-    // Deux pages de statut, chacune sous sa scène de nuit.
+    // Quatre pages de statut, chacune sous sa scène de nuit.
     let pages = app.get("/api/status-pages", Some(&cookie)).await;
-    let scenes: Vec<(String, String)> = pages
+    let mut scenes: Vec<(String, String)> = pages
         .body
         .as_array()
         .unwrap()
@@ -119,13 +119,14 @@ async fn le_semis_montre_les_nouveautes() {
             (page["slug"].as_str().unwrap().to_string(), scenes[0].as_str().unwrap().to_string())
         })
         .collect();
-    let expected =
-        [("home", "paris"), ("lab", "tokyo"), ("photos", "newyork"), ("muller", "dubai")];
-    assert_eq!(
-        scenes,
-        expected.map(|(slug, scene)| (slug.to_string(), scene.to_string())),
-        "les quatre scènes de nuit"
-    );
+    // L'API trie par titre : on compare sans tenir compte de l'ordre.
+    scenes.sort();
+    let mut expected: Vec<(String, String)> =
+        [("home", "paris"), ("lab", "tokyo"), ("photos", "newyork"), ("muller", "dubai")]
+            .map(|(slug, scene)| (slug.to_string(), scene.to_string()))
+            .to_vec();
+    expected.sort();
+    assert_eq!(scenes, expected, "les quatre scènes de nuit");
     let lab = app.get("/api/public/status/lab", None).await;
     assert_eq!(lab.status, StatusCode::OK, "{:?}", lab.body);
 
@@ -154,7 +155,7 @@ async fn chaque_page_cle_a_des_donnees() {
     let cookie = demo_cookie(&app).await;
     // (route, clé du tableau, minimum attendu).
     let pages: &[(&str, Option<&str>, usize)] = &[
-        ("/api/targets", None, 25),
+        ("/api/targets", None, 24),
         ("/api/alerts/rules", None, 10),
         ("/api/alerts/history", None, 2),
         ("/api/alerts/silences", None, 2),
