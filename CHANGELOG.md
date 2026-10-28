@@ -5,6 +5,19 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Changed
+
+- **A fuller demo.** The demo estate now carries 30 days of history (last week
+  at five-minute resolution) and shows what the recent releases added: charts
+  on every monitor, latency and p95 columns filled, 30-day availability below
+  100 % for monitors that are down, a storage forecast ("full in about N
+  days", shown in the console's Forecast panel), a core switch with ports and
+  weathermap traffic, a threat map fed by made-up CrowdSec and Cloudflare
+  counts, domain and licence deadlines, a backup matrix with a few failed
+  nights, a new device found by the network scan, and two status pages with
+  Paris and Tokyo night scenes. Everything is computed in memory from a fixed
+  seed.
+
 ## 0.14.3 — 2026-10-28
 
 ### Added
