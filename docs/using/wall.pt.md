@@ -14,7 +14,7 @@ De cima para baixo:
 - os **alertas abertos**, os mais graves primeiro;
 - **quem está de prevenção** agora, com a escala e o fim do turno.
 
-Sem cenário, sem música e sem widgets: fundo preto, a tipografia da consola,
+Sem música e sem widgets: fundo preto, a tipografia da consola,
 estados escritos junto de uma forma e nunca só por cor.
 
 ## Abrir e sair
@@ -24,8 +24,15 @@ comandos («Wall mode») ou escrevendo o URL. ++esc++ ou **Exit** volta à conso
 Uma conta limitada a algumas equipas ou clientes não tem o modo parede, porque
 mostra toda a frota.
 
-## Aspeto
+## Fundo {#backdrop}
 
-O modo parede partilha o aspeto escuro da consola. Os temas de cidades de noite
-(Paris, Nova Iorque, Tóquio e Dubai) pertencem às
-[páginas de estado](status-pages.md).
+A parede partilha o aspeto escuro da consola. O botão **Fundo** (em cima à
+direita, ao lado de Exit) pode desenhar uma das cidades à noite das
+[páginas de estado](status-pages.md) por trás do veredicto e do relógio: Paris,
+Nova Iorque, Tóquio ou Dubai, ou *Auto* para a mais próxima do fuso horário do
+navegador. Está desligado por predefinição e é lembrado por navegador;
+`?city=paris` (ou `newyork`, `tokyo`, `dubai`, `none`) numa ligação escolhe-o só
+para esse ecrã. O céu segue o painel: estrelas quando está tudo bem, nuvens com
+um aviso, trovoada com um alerta. Num telemóvel, ou com o separador escondido, a
+cidade fica parada. Um `zermatt` guardado ou numa ligação vai agora dar ao
+Dubai.

@@ -25,7 +25,7 @@ commandes (« Mode mur ») ou en tapant l'URL. ++esc++ ou **Quitter** retourne �
 console. Un compte limité à certaines équipes ou à certains clients n'a pas le
 mur, puisqu'il montre toute la flotte.
 
-## Décor
+## Décor {#backdrop}
 
 Le mur partage l'apparence sombre de la console. Le bouton **Décor** (en haut à
 droite, à côté de Quitter) peut dessiner l'une des villes de nuit des
