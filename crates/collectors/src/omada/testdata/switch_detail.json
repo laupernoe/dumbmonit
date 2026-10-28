@@ -1,0 +1,7 @@
+{"errorCode":0,"msg":"Success.","result":{"mac":"AA-BB-CC-00-00-02","name":"SW-Core","type":"switch","ports":[
+{"port":1,"name":"Port1","portEnable":true,"status":1,"linkSpeed":3,"duplex":2,"poe":true,"poePower":6.5,"rx":123456,"tx":654321,"rxErrors":0,"txErrors":2,"lldpSystemName":"ap-hall","lldpPortId":"eth0"},
+{"port":2,"name":"Port2","portEnable":true,"status":0,"linkSpeed":0,"poe":false},
+{"port":3,"name":"Port3","portEnable":true,"status":1,"linkSpeed":2,"duplex":1,"poe":false},
+{"port":4,"name":"Port4","portEnable":false,"status":0},
+{"port":5,"name":"SFP+1","portEnable":true,"status":1,"linkSpeed":5,"duplex":2,"uplink":true}
+]}}

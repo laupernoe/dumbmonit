@@ -365,6 +365,7 @@ mod tests {
         assert_eq!(
             ids,
             vec![
+                "entity-sensors",
                 "ethernet-switch",
                 "host-resources",
                 "hpe-aruba-switch",

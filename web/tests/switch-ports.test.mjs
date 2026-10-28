@@ -217,3 +217,25 @@ test('queries stay on the target and escape label values', () => {
 	}
 	assert.equal(SOURCES.omada, undefined, 'no port data collected for Omada yet');
 });
+
+test('Omada and Aruba Central reuse the UniFi layout under their own prefix', () => {
+	const m = (kind, name, labels, value) =>
+		serie(`dumbmonit_${kind}_port_${name}`, { mac: 'SG1', device: 'sw', ...labels }, value);
+	for (const kind of ['omada', 'arubacentral']) {
+		const state = [
+			m(kind, 'enabled', { port: '1/1/1' }, 1),
+			m(kind, 'up', { port: '1/1/1' }, 1),
+			m(kind, 'speed_bps', { port: '1/1/1' }, 1e9),
+			m(kind, 'poe_enabled', { port: '1/1/1' }, 1),
+			m(kind, 'poe_watts', { port: '1/1/1' }, 7.5),
+			m(kind, 'enabled', { port: '1/1/2' }, 0)
+		];
+		assert.ok(SOURCES[kind].instant(7)[0].includes(`dumbmonit_${kind}_port_`));
+		const [unit] = SOURCES[kind].fold([state, []]);
+		assert.equal(unit.name, 'sw');
+		assert.equal(unit.ports[0].link, 'up');
+		assert.equal(unit.ports[0].poe, 'delivering');
+		assert.equal(unit.ports[1].link, 'disabled');
+	}
+	assert.equal(foldUnifi([], []).length, 0);
+});
