@@ -1,61 +1,48 @@
 {
  "sections": [
   {
-   "id": "big",
+   "id": "progress",
    "title": {
-    "fr": "Gros chantiers suivants",
-    "en": "Bigger projects next",
-    "de": "Größere Vorhaben als Nächstes",
-    "es": "Los siguientes grandes proyectos",
-    "it": "I prossimi grandi progetti",
-    "pt": "Os próximos grandes projetos",
-    "ru": "Следующие крупные проекты",
-    "zh-Hans": "接下来的大项目",
-    "pt-BR": "Os próximos grandes projetos"
+    "fr": "En cours",
+    "en": "In progress",
+    "de": "In Arbeit",
+    "es": "En curso",
+    "it": "In corso",
+    "pt": "Em curso",
+    "ru": "В работе",
+    "zh-Hans": "进行中",
+    "pt-BR": "Em andamento"
    },
    "items": [
     {
      "status": "progress",
+     "version": "0.14.3",
      "text": {
-      "fr": "Une seule interface : la console Entreprise devient l'interface unique, le mode Homelab est retiré",
-      "en": "One interface: the Enterprise console becomes the only interface and Homelab mode is retired",
-      "de": "Eine Oberfläche: Die Enterprise-Konsole wird die einzige Oberfläche, der Homelab-Modus entfällt",
-      "es": "Una sola interfaz: la consola Empresa pasa a ser la única interfaz y se retira el modo Homelab",
-      "it": "Un'unica interfaccia: la console Enterprise diventa l'unica interfaccia e la modalità Homelab viene ritirata",
-      "pt": "Uma só interface: a consola Empresa passa a ser a única interface e o modo Homelab é retirado",
-      "ru": "Один интерфейс: консоль Enterprise становится единственной, режим Homelab убирается",
-      "zh-Hans": "统一界面：企业控制台成为唯一界面，家庭实验室模式将被移除",
-      "pt-BR": "Uma só interface: o console Empresa passa a ser a única interface e o modo Homelab é removido"
-     }
-    },
-    {
-     "status": "planned",
-     "text": {
-      "fr": "Appli mobile native avec alertes critiques",
-      "en": "Native mobile app with critical alerts",
-      "de": "Native Mobile-App mit kritischen Alarmen",
-      "es": "App móvil nativa con alertas críticas",
-      "it": "App mobile nativa con avvisi critici",
-      "pt": "Aplicação móvel nativa com alertas críticos",
-      "ru": "Нативное мобильное приложение с критическими оповещениями",
-      "zh-Hans": "支持关键告警的原生移动应用",
-      "pt-BR": "App mobile nativo com alertas críticos"
+      "fr": "ports Omada et Aruba ; capteurs SNMP ; Hyper Backup ; échéances OVH ; santé machine Windows ; images arm64 ; démo enrichie",
+      "en": "Omada and Aruba ports; SNMP sensors; Hyper Backup; OVH deadlines; Windows machine health; arm64 images; richer demo",
+      "de": "Omada- und Aruba-Ports; SNMP-Sensoren; Hyper Backup; OVH-Fristen; Maschinenzustand unter Windows; arm64-Images; umfangreichere Demo",
+      "es": "puertos Omada y Aruba; sensores SNMP; Hyper Backup; vencimientos de OVH; salud de la máquina en Windows; imágenes arm64; demo más completa",
+      "it": "porte Omada e Aruba; sensori SNMP; Hyper Backup; scadenze OVH; salute della macchina su Windows; immagini arm64; demo più ricca",
+      "pt": "portas Omada e Aruba; sensores SNMP; Hyper Backup; prazos da OVH; saúde da máquina no Windows; imagens arm64; demonstração mais completa",
+      "ru": "порты Omada и Aruba; датчики SNMP; Hyper Backup; сроки OVH; состояние машины на Windows; образы arm64; расширенная демонстрация",
+      "zh-Hans": "Omada 与 Aruba 端口；SNMP 传感器；Hyper Backup；OVH 到期；Windows 机器健康；arm64 镜像；更丰富的演示",
+      "pt-BR": "portas Omada e Aruba; sensores SNMP; Hyper Backup; vencimentos da OVH; saúde da máquina no Windows; imagens arm64; demonstração mais completa"
      }
     }
    ]
   },
   {
-   "id": "mid",
+   "id": "next",
    "title": {
-    "fr": "Moyen terme",
-    "en": "Medium term",
-    "de": "Mittelfristig",
-    "es": "Medio plazo",
-    "it": "Medio termine",
-    "pt": "Médio prazo",
-    "ru": "Среднесрочно",
-    "zh-Hans": "中期",
-    "pt-BR": "Médio prazo"
+    "fr": "Prochainement",
+    "en": "Coming next",
+    "de": "Als Nächstes",
+    "es": "Próximamente",
+    "it": "Prossimamente",
+    "pt": "A seguir",
+    "ru": "Далее",
+    "zh-Hans": "即将推出",
+    "pt-BR": "A seguir"
    },
    "items": [
     {
@@ -71,1423 +58,50 @@
       "zh-Hans": "AI 故障预测：可选的 dumbmonit-forecast 容器（默认关闭），预测磁盘写满、资源饱和与季节性异常，并发出“预计故障”告警",
       "pt-BR": "Previsão de falhas com IA: contêiner opcional dumbmonit-forecast (desativado por padrão) que prevê discos cheios, saturação e anomalias sazonais, e dispara alertas de \"falha prevista\""
      }
+    },
+    {
+     "status": "planned",
+     "text": {
+      "fr": "Plus d'intégrations et des panneaux plus riches",
+      "en": "More integrations and richer panels",
+      "de": "Mehr Integrationen und umfangreichere Panels",
+      "es": "Más integraciones y paneles más completos",
+      "it": "Più integrazioni e pannelli più ricchi",
+      "pt": "Mais integrações e painéis mais completos",
+      "ru": "Больше интеграций и более богатые панели",
+      "zh-Hans": "更多集成与更丰富的面板",
+      "pt-BR": "Mais integrações e painéis mais completos"
+     }
     }
    ]
   },
   {
-   "id": "later",
+   "id": "onhold",
    "title": {
-    "fr": "Plus tard",
-    "en": "Later",
-    "de": "Später",
-    "es": "Más adelante",
-    "it": "Più avanti",
-    "pt": "Mais tarde",
-    "ru": "Позже",
-    "zh-Hans": "以后",
-    "pt-BR": "Mais tarde"
+    "fr": "En suspens",
+    "en": "On hold",
+    "de": "Zurückgestellt",
+    "es": "En pausa",
+    "it": "In pausa",
+    "pt": "Em pausa",
+    "ru": "Отложено",
+    "zh-Hans": "暂缓",
+    "pt-BR": "Em pausa"
    },
    "items": [
     {
-     "status": "planned",
+     "status": "idea",
      "text": {
-      "fr": "Parcours scriptés dans un vrai navigateur et enregistreur de scénarios",
-      "en": "Scripted journeys in a real browser, with a scenario recorder",
-      "de": "Skriptgesteuerte Abläufe in einem echten Browser, mit Szenario-Recorder",
-      "es": "Recorridos con script en un navegador real, con grabador de escenarios",
-      "it": "Percorsi automatizzati in un browser reale, con registratore di scenari",
-      "pt": "Percursos com script num navegador real, com gravador de cenários",
-      "ru": "Сценарии в настоящем браузере и запись сценариев",
-      "zh-Hans": "在真实浏览器中运行脚本化流程，并提供场景录制器",
-      "pt-BR": "Percursos com script em um navegador real, com gravador de cenários"
+      "fr": "Appli mobile native avec alertes critiques, si des utilisateurs la demandent",
+      "en": "Native mobile app with critical alerts, if users ask for it",
+      "de": "Native Mobile-App mit kritischen Alarmen, falls Nutzer sie wünschen",
+      "es": "App móvil nativa con alertas críticas, si los usuarios la piden",
+      "it": "App mobile nativa con avvisi critici, se gli utenti la richiedono",
+      "pt": "Aplicação móvel nativa com alertas críticos, se os utilizadores a pedirem",
+      "ru": "Нативное мобильное приложение с критическими оповещениями, если пользователи попросят",
+      "zh-Hans": "带关键告警的原生移动应用，如果用户有需求",
+      "pt-BR": "App móvel nativo com alertas críticos, se os usuários pedirem"
      }
-    },
-    {
-     "status": "planned",
-     "text": {
-      "fr": "APM, traces distribuées, RUM, suivi des erreurs",
-      "en": "APM, distributed tracing, RUM and error tracking",
-      "de": "APM, verteiltes Tracing, RUM und Fehlerverfolgung",
-      "es": "APM, trazas distribuidas, RUM y seguimiento de errores",
-      "it": "APM, tracce distribuite, RUM e tracciamento degli errori",
-      "pt": "APM, traços distribuídos, RUM e acompanhamento de erros",
-      "ru": "APM, распределённая трассировка, RUM и отслеживание ошибок",
-      "zh-Hans": "APM、分布式追踪、RUM 和错误跟踪",
-      "pt-BR": "APM, traços distribuídos, RUM e acompanhamento de erros"
-     }
-    },
-    {
-     "status": "planned",
-     "text": {
-      "fr": "Haute disponibilité / cluster et base PostgreSQL",
-      "en": "High availability / clustering and a PostgreSQL database",
-      "de": "Hochverfügbarkeit / Cluster und PostgreSQL-Datenbank",
-      "es": "Alta disponibilidad / clúster y base de datos PostgreSQL",
-      "it": "Alta disponibilità / cluster e database PostgreSQL",
-      "pt": "Alta disponibilidade / cluster e base de dados PostgreSQL",
-      "ru": "Высокая доступность / кластер и база данных PostgreSQL",
-      "zh-Hans": "高可用 / 集群，以及 PostgreSQL 数据库",
-      "pt-BR": "Alta disponibilidade / cluster e banco de dados PostgreSQL"
-     }
-    },
-    {
-     "status": "planned",
-     "text": {
-      "fr": "NetFlow et sFlow",
-      "en": "NetFlow and sFlow",
-      "de": "NetFlow und sFlow",
-      "es": "NetFlow y sFlow",
-      "it": "NetFlow e sFlow",
-      "pt": "NetFlow e sFlow",
-      "ru": "NetFlow и sFlow",
-      "zh-Hans": "NetFlow 和 sFlow",
-      "pt-BR": "NetFlow e sFlow"
-     }
-    },
-    {
-     "status": "planned",
-     "text": {
-      "fr": "Patching, accès distant et scripts à distance",
-      "en": "Patching, remote access and remote scripts",
-      "de": "Patching, Fernzugriff und Skripte auf Remote-Systemen",
-      "es": "Parcheo, acceso remoto y scripts remotos",
-      "it": "Patching, accesso remoto e script remoti",
-      "pt": "Atualizações de segurança, acesso remoto e scripts remotos",
-      "ru": "Установка обновлений, удалённый доступ и удалённые скрипты",
-      "zh-Hans": "补丁管理、远程访问和远程脚本",
-      "pt-BR": "Aplicação de patches, acesso remoto e scripts remotos"
-     }
-    },
-    {
-     "status": "planned",
-     "text": {
-      "fr": "Petit SIEM, détection d'intrusion, conformité CIS",
-      "en": "A small SIEM, intrusion detection and CIS compliance",
-      "de": "Ein kleines SIEM, Angriffserkennung und CIS-Compliance",
-      "es": "Un SIEM ligero, detección de intrusiones y cumplimiento CIS",
-      "it": "Un piccolo SIEM, rilevamento delle intrusioni e conformità CIS",
-      "pt": "Um SIEM leve, deteção de intrusões e conformidade CIS",
-      "ru": "Небольшой SIEM, обнаружение вторжений и соответствие CIS",
-      "zh-Hans": "轻量 SIEM、入侵检测和 CIS 合规检查",
-      "pt-BR": "Um SIEM leve, detecção de intrusões e conformidade CIS"
-     }
-    },
-    {
-     "status": "planned",
-     "text": {
-      "fr": "Marque blanche et portail client",
-      "en": "White labelling and a customer portal",
-      "de": "White-Label-Betrieb und Kundenportal",
-      "es": "Marca blanca y portal de clientes",
-      "it": "White label e portale clienti",
-      "pt": "Marca branca e portal de clientes",
-      "ru": "White label и клиентский портал",
-      "zh-Hans": "白标定制和客户门户",
-      "pt-BR": "Marca branca e portal de clientes"
-     }
-    },
-    {
-     "status": "planned",
-     "text": {
-      "fr": "Coûts cloud, CI/CD, serverless",
-      "en": "Cloud costs, CI/CD and serverless",
-      "de": "Cloud-Kosten, CI/CD und Serverless",
-      "es": "Costes de nube, CI/CD y serverless",
-      "it": "Costi cloud, CI/CD e serverless",
-      "pt": "Custos de nuvem, CI/CD e serverless",
-      "ru": "Расходы на облако, CI/CD и serverless",
-      "zh-Hans": "云成本、CI/CD 和 serverless",
-      "pt-BR": "Custos de nuvem, CI/CD e serverless"
-     }
-    }
-   ]
-  },
-  {
-   "id": "ideas-features",
-   "title": {
-    "fr": "Idées : fonctionnalités",
-    "en": "Ideas: features",
-    "de": "Ideen: Funktionen",
-    "es": "Ideas: funciones",
-    "it": "Idee: funzionalità",
-    "pt": "Ideias: funcionalidades",
-    "ru": "Идеи: функции",
-    "zh-Hans": "创意：功能",
-    "pt-BR": "Ideias: funcionalidades"
-   },
-   "groups": [
-    {
-     "title": {
-      "fr": "Sondes et contrôles",
-      "en": "Probes and checks",
-      "de": "Sonden und Prüfungen",
-      "es": "Sondas y controles",
-      "it": "Sonde e controlli",
-      "pt": "Sondas e verificações",
-      "ru": "Проверки и зонды",
-      "zh-Hans": "探测与检查",
-      "pt-BR": "Sondas e verificações"
-     },
-     "items": [
-      {
-       "text": {
-        "fr": "Scénarios HTTP en plusieurs étapes",
-        "en": "Multi-step HTTP scenarios",
-        "de": "HTTP-Szenarien mit mehreren Schritten",
-        "es": "Escenarios HTTP de varios pasos",
-        "it": "Scenari HTTP in più passaggi",
-        "pt": "Cenários HTTP em várias etapas",
-        "ru": "Многошаговые сценарии HTTP",
-        "zh-Hans": "多步骤 HTTP 场景",
-        "pt-BR": "Cenários HTTP em várias etapas"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Sonde LDAP générique",
-        "en": "Generic LDAP probe",
-        "de": "Allgemeine LDAP-Prüfung",
-        "es": "Sonda LDAP genérica",
-        "it": "Sonda LDAP generica",
-        "pt": "Sonda LDAP genérica",
-        "ru": "Универсальная проверка LDAP",
-        "zh-Hans": "通用 LDAP 探测",
-        "pt-BR": "Sonda LDAP genérica"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Serveurs de jeux",
-        "en": "Game servers",
-        "de": "Spieleserver",
-        "es": "Servidores de juegos",
-        "it": "Server di gioco",
-        "pt": "Servidores de jogos",
-        "ru": "Игровые серверы",
-        "zh-Hans": "游戏服务器",
-        "pt-BR": "Servidores de jogos"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "SIP / VoIP",
-        "en": "SIP / VoIP",
-        "de": "SIP / VoIP",
-        "es": "SIP / VoIP",
-        "it": "SIP / VoIP",
-        "pt": "SIP / VoIP",
-        "ru": "SIP / VoIP",
-        "zh-Hans": "SIP / VoIP",
-        "pt-BR": "SIP / VoIP"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Traceroute et MTR historisés",
-        "en": "Traceroute and MTR with history",
-        "de": "Traceroute und MTR mit Verlauf",
-        "es": "Traceroute y MTR con historial",
-        "it": "Traceroute e MTR con storico",
-        "pt": "Traceroute e MTR com histórico",
-        "ru": "Traceroute и MTR с историей",
-        "zh-Hans": "带历史记录的 Traceroute 和 MTR",
-        "pt-BR": "Traceroute e MTR com histórico"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Requête SQL personnalisée avec seuil",
-        "en": "Custom SQL query with a threshold",
-        "de": "Eigene SQL-Abfrage mit Schwellenwert",
-        "es": "Consulta SQL personalizada con umbral",
-        "it": "Query SQL personalizzata con soglia",
-        "pt": "Consulta SQL personalizada com limiar",
-        "ru": "Собственный SQL-запрос с порогом",
-        "zh-Hans": "带阈值的自定义 SQL 查询",
-        "pt-BR": "Consulta SQL personalizada com limiar"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Heartbeat par e-mail entrant",
-        "en": "Heartbeat by incoming email",
-        "de": "Heartbeat per eingehender E-Mail",
-        "es": "Heartbeat por correo entrante",
-        "it": "Heartbeat tramite e-mail in arrivo",
-        "pt": "Heartbeat por e-mail recebido",
-        "ru": "Heartbeat по входящему письму",
-        "zh-Hans": "通过收到的邮件实现心跳",
-        "pt-BR": "Heartbeat por e-mail recebido"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Contrôle d'intégrité des fichiers",
-        "en": "File integrity monitoring",
-        "de": "Dateiintegritätsprüfung",
-        "es": "Control de integridad de archivos",
-        "it": "Controllo di integrità dei file",
-        "pt": "Verificação de integridade de ficheiros",
-        "ru": "Контроль целостности файлов",
-        "zh-Hans": "文件完整性检查",
-        "pt-BR": "Verificação de integridade de ficheiros"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Surveillance d'un processus précis",
-        "en": "Monitoring of a specific process",
-        "de": "Überwachung eines bestimmten Prozesses",
-        "es": "Supervisión de un proceso concreto",
-        "it": "Monitoraggio di un processo specifico",
-        "pt": "Monitorização de um processo específico",
-        "ru": "Мониторинг конкретного процесса",
-        "zh-Hans": "监控指定进程",
-        "pt-BR": "Monitorização de um processo específico"
-       },
-       "status": "idea"
-      }
-     ]
-    },
-    {
-     "title": {
-      "fr": "Matériel et inventaire",
-      "en": "Hardware and inventory",
-      "de": "Hardware und Inventar",
-      "es": "Hardware e inventario",
-      "it": "Hardware e inventario",
-      "pt": "Hardware e inventário",
-      "ru": "Оборудование и инвентарь",
-      "zh-Hans": "硬件与资产清单",
-      "pt-BR": "Hardware e inventário"
-     },
-     "items": [
-      {
-       "text": {
-        "fr": "GPU",
-        "en": "GPU",
-        "de": "GPU",
-        "es": "GPU",
-        "it": "GPU",
-        "pt": "GPU",
-        "ru": "GPU",
-        "zh-Hans": "GPU",
-        "pt-BR": "GPU"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Wi-Fi (clients, signal, canaux)",
-        "en": "Wi-Fi (clients, signal, channels)",
-        "de": "WLAN (Clients, Signal, Kanäle)",
-        "es": "Wi-Fi (clientes, señal, canales)",
-        "it": "Wi-Fi (client, segnale, canali)",
-        "pt": "Wi-Fi (clientes, sinal, canais)",
-        "ru": "Wi-Fi (клиенты, сигнал, каналы)",
-        "zh-Hans": "Wi-Fi（客户端、信号、信道）",
-        "pt-BR": "Wi-Fi (clientes, sinal, canais)"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Inventaire matériel (CMDB)",
-        "en": "Hardware inventory (CMDB)",
-        "de": "Hardware-Inventar (CMDB)",
-        "es": "Inventario de hardware (CMDB)",
-        "it": "Inventario hardware (CMDB)",
-        "pt": "Inventário de hardware (CMDB)",
-        "ru": "Инвентаризация оборудования (CMDB)",
-        "zh-Hans": "硬件资产清单（CMDB）",
-        "pt-BR": "Inventário de hardware (CMDB)"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Garanties et licences",
-        "en": "Warranties and licences",
-        "de": "Garantien und Lizenzen",
-        "es": "Garantías y licencias",
-        "it": "Garanzie e licenze",
-        "pt": "Garantias e licenças",
-        "ru": "Гарантии и лицензии",
-        "zh-Hans": "保修与许可证",
-        "pt-BR": "Garantias e licenças"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Abonnements et échéances",
-        "en": "Subscriptions and due dates",
-        "de": "Abonnements und Fälligkeiten",
-        "es": "Suscripciones y vencimientos",
-        "it": "Abbonamenti e scadenze",
-        "pt": "Subscrições e prazos",
-        "ru": "Подписки и сроки",
-        "zh-Hans": "订阅与到期日",
-        "pt-BR": "Subscrições e prazos"
-       },
-       "status": "idea"
-      }
-     ]
-    },
-    {
-     "title": {
-      "fr": "Analyse et capacité",
-      "en": "Analysis and capacity",
-      "de": "Analyse und Kapazität",
-      "es": "Análisis y capacidad",
-      "it": "Analisi e capacità",
-      "pt": "Análise e capacidade",
-      "ru": "Анализ и ёмкость",
-      "zh-Hans": "分析与容量",
-      "pt-BR": "Análise e capacidade"
-     },
-     "items": [
-      {
-       "text": {
-        "fr": "Marqueurs de déploiement sur les graphiques",
-        "en": "Deployment markers on graphs",
-        "de": "Deployment-Markierungen in Diagrammen",
-        "es": "Marcadores de despliegue en los gráficos",
-        "it": "Marcatori di rilascio sui grafici",
-        "pt": "Marcadores de implementação nos gráficos",
-        "ru": "Метки развёртываний на графиках",
-        "zh-Hans": "图表上的部署标记",
-        "pt-BR": "Marcadores de implementação nos gráficos"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Corrélation d'événements",
-        "en": "Event correlation",
-        "de": "Ereigniskorrelation",
-        "es": "Correlación de eventos",
-        "it": "Correlazione di eventi",
-        "pt": "Correlação de eventos",
-        "ru": "Корреляция событий",
-        "zh-Hans": "事件关联",
-        "pt-BR": "Correlação de eventos"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Analyse de cause par IA",
-        "en": "AI root-cause analysis",
-        "de": "KI-gestützte Ursachenanalyse",
-        "es": "Análisis de causa con IA",
-        "it": "Analisi della causa con IA",
-        "pt": "Análise de causa com IA",
-        "ru": "Анализ причин с помощью ИИ",
-        "zh-Hans": "AI 根因分析",
-        "pt-BR": "Análise de causa com IA"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Rapport de capacité",
-        "en": "Capacity report",
-        "de": "Kapazitätsbericht",
-        "es": "Informe de capacidad",
-        "it": "Report di capacità",
-        "pt": "Relatório de capacidade",
-        "ru": "Отчёт о ёмкости",
-        "zh-Hans": "容量报告",
-        "pt-BR": "Relatório de capacidade"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "SLO et budget d'erreur",
-        "en": "SLOs and error budget",
-        "de": "SLOs und Fehlerbudget",
-        "es": "SLO y presupuesto de errores",
-        "it": "SLO e budget di errore",
-        "pt": "SLO e orçamento de erros",
-        "ru": "SLO и бюджет ошибок",
-        "zh-Hans": "SLO 与错误预算",
-        "pt-BR": "SLO e orçamento de erros"
-       },
-       "status": "idea"
-      }
-     ]
-    },
-    {
-     "title": {
-      "fr": "Tableaux de bord et vues",
-      "en": "Dashboards and views",
-      "de": "Dashboards und Ansichten",
-      "es": "Paneles y vistas",
-      "it": "Dashboard e viste",
-      "pt": "Painéis e vistas",
-      "ru": "Дашборды и представления",
-      "zh-Hans": "仪表盘与视图",
-      "pt-BR": "Painéis e vistas"
-     },
-     "items": [
-      {
-       "text": {
-        "fr": "Variables de tableau de bord",
-        "en": "Dashboard variables",
-        "de": "Dashboard-Variablen",
-        "es": "Variables de panel",
-        "it": "Variabili della dashboard",
-        "pt": "Variáveis de painel",
-        "ru": "Переменные дашборда",
-        "zh-Hans": "仪表盘变量",
-        "pt-BR": "Variáveis de painel"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Comparaison de périodes",
-        "en": "Period comparison",
-        "de": "Zeitraumvergleich",
-        "es": "Comparación de periodos",
-        "it": "Confronto tra periodi",
-        "pt": "Comparação de períodos",
-        "ru": "Сравнение периодов",
-        "zh-Hans": "时间段对比",
-        "pt-BR": "Comparação de períodos"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Partage d'un tableau de bord en lecture seule",
-        "en": "Read-only dashboard sharing",
-        "de": "Dashboards schreibgeschützt teilen",
-        "es": "Compartir un panel en solo lectura",
-        "it": "Condivisione di una dashboard in sola lettura",
-        "pt": "Partilha de painéis só de leitura",
-        "ru": "Общий доступ к дашборду только для чтения",
-        "zh-Hans": "只读共享仪表盘",
-        "pt-BR": "Partilha de painéis só de leitura"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Plans d'étage",
-        "en": "Floor plans",
-        "de": "Grundrisse",
-        "es": "Planos de planta",
-        "it": "Planimetrie",
-        "pt": "Plantas de piso",
-        "ru": "Планы этажей",
-        "zh-Hans": "平面图",
-        "pt-BR": "Plantas de piso"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Vue datacenter multi-racks",
-        "en": "Multi-rack datacenter view",
-        "de": "Rechenzentrumsansicht mit mehreren Racks",
-        "es": "Vista de centro de datos con varios racks",
-        "it": "Vista datacenter multi-rack",
-        "pt": "Vista de datacenter com vários racks",
-        "ru": "Вид дата-центра с несколькими стойками",
-        "zh-Hans": "多机架数据中心视图",
-        "pt-BR": "Vista de datacenter com vários racks"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Source de données Grafana",
-        "en": "Grafana data source",
-        "de": "Grafana-Datenquelle",
-        "es": "Fuente de datos para Grafana",
-        "it": "Origine dati per Grafana",
-        "pt": "Fonte de dados para Grafana",
-        "ru": "Источник данных для Grafana",
-        "zh-Hans": "Grafana 数据源",
-        "pt-BR": "Fonte de dados para Grafana"
-       },
-       "status": "idea"
-      }
-     ]
-    },
-    {
-     "title": {
-      "fr": "Alertes, incidents et pages de statut",
-      "en": "Alerts, incidents and status pages",
-      "de": "Alarme, Vorfälle und Statusseiten",
-      "es": "Alertas, incidentes y páginas de estado",
-      "it": "Avvisi, incidenti e pagine di stato",
-      "pt": "Alertas, incidentes e páginas de estado",
-      "ru": "Оповещения, инциденты и страницы статуса",
-      "zh-Hans": "告警、事件与状态页",
-      "pt-BR": "Alertas, incidentes e páginas de estado"
-     },
-     "items": [
-      {
-       "text": {
-        "fr": "Préférences de notification par utilisateur",
-        "en": "Per-user notification preferences",
-        "de": "Benachrichtigungseinstellungen pro Benutzer",
-        "es": "Preferencias de notificación por usuario",
-        "it": "Preferenze di notifica per utente",
-        "pt": "Preferências de notificação por utilizador",
-        "ru": "Настройки уведомлений для каждого пользователя",
-        "zh-Hans": "按用户设置通知偏好",
-        "pt-BR": "Preferências de notificação por utilizador"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Gestion d'incident interne",
-        "en": "Internal incident management",
-        "de": "Interne Vorfallsverwaltung",
-        "es": "Gestión interna de incidentes",
-        "it": "Gestione interna degli incidenti",
-        "pt": "Gestão interna de incidentes",
-        "ru": "Внутреннее управление инцидентами",
-        "zh-Hans": "内部事件管理",
-        "pt-BR": "Gestão interna de incidentes"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Post-mortems",
-        "en": "Post-mortems",
-        "de": "Post-Mortems",
-        "es": "Post-mortems",
-        "it": "Post-mortem",
-        "pt": "Post-mortems",
-        "ru": "Постмортемы",
-        "zh-Hans": "事后复盘",
-        "pt-BR": "Post-mortems"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "CSS personnalisé des pages de statut",
-        "en": "Custom CSS for status pages",
-        "de": "Eigenes CSS für Statusseiten",
-        "es": "CSS personalizado para las páginas de estado",
-        "it": "CSS personalizzato per le pagine di stato",
-        "pt": "CSS personalizado nas páginas de estado",
-        "ru": "Собственный CSS для страниц статуса",
-        "zh-Hans": "状态页自定义 CSS",
-        "pt-BR": "CSS personalizado nas páginas de estado"
-       },
-       "status": "idea"
-      }
-     ]
-    },
-    {
-     "title": {
-      "fr": "Outils et écosystème",
-      "en": "Tools and ecosystem",
-      "de": "Werkzeuge und Ökosystem",
-      "es": "Herramientas y ecosistema",
-      "it": "Strumenti ed ecosistema",
-      "pt": "Ferramentas e ecossistema",
-      "ru": "Инструменты и экосистема",
-      "zh-Hans": "工具与生态",
-      "pt-BR": "Ferramentas e ecossistema"
-     },
-     "items": [
-      {
-       "text": {
-        "fr": "Export complet de la configuration",
-        "en": "Full configuration export",
-        "de": "Vollständiger Konfigurationsexport",
-        "es": "Exportación completa de la configuración",
-        "it": "Esportazione completa della configurazione",
-        "pt": "Exportação completa da configuração",
-        "ru": "Полный экспорт конфигурации",
-        "zh-Hans": "完整配置导出",
-        "pt-BR": "Exportação completa da configuração"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Bibliothèques clientes pour les tâches cron",
-        "en": "Client libraries for cron jobs",
-        "de": "Client-Bibliotheken für Cron-Jobs",
-        "es": "Bibliotecas cliente para tareas cron",
-        "it": "Librerie client per i job cron",
-        "pt": "Bibliotecas cliente para tarefas cron",
-        "ru": "Клиентские библиотеки для задач cron",
-        "zh-Hans": "Cron 任务客户端库",
-        "pt-BR": "Bibliotecas cliente para tarefas cron"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Compatibilité avec les plugins Nagios",
-        "en": "Nagios plugin compatibility",
-        "de": "Kompatibilität mit Nagios-Plugins",
-        "es": "Compatibilidad con plugins de Nagios",
-        "it": "Compatibilità con i plugin Nagios",
-        "pt": "Compatibilidade com plugins Nagios",
-        "ru": "Совместимость с плагинами Nagios",
-        "zh-Hans": "兼容 Nagios 插件",
-        "pt-BR": "Compatibilidade com plugins Nagios"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Catalogue communautaire de packs",
-        "en": "Community pack catalogue",
-        "de": "Community-Katalog für Packs",
-        "es": "Catálogo comunitario de packs",
-        "it": "Catalogo comunitario di pack",
-        "pt": "Catálogo comunitário de packs",
-        "ru": "Каталог паков от сообщества",
-        "zh-Hans": "社区扩展包目录",
-        "pt-BR": "Catálogo comunitário de packs"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Chart Helm et opérateur Kubernetes",
-        "en": "Helm chart and Kubernetes operator",
-        "de": "Helm-Chart und Kubernetes-Operator",
-        "es": "Chart de Helm y operador de Kubernetes",
-        "it": "Chart Helm e operatore Kubernetes",
-        "pt": "Chart Helm e operador Kubernetes",
-        "ru": "Helm-чарт и оператор Kubernetes",
-        "zh-Hans": "Helm chart 与 Kubernetes Operator",
-        "pt-BR": "Chart Helm e operador Kubernetes"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Import depuis Zabbix, PRTG et Nagios",
-        "en": "Import from Zabbix, PRTG and Nagios",
-        "de": "Import aus Zabbix, PRTG und Nagios",
-        "es": "Importación desde Zabbix, PRTG y Nagios",
-        "it": "Importazione da Zabbix, PRTG e Nagios",
-        "pt": "Importação de Zabbix, PRTG e Nagios",
-        "ru": "Импорт из Zabbix, PRTG и Nagios",
-        "zh-Hans": "从 Zabbix、PRTG 和 Nagios 导入",
-        "pt-BR": "Importação de Zabbix, PRTG e Nagios"
-       },
-       "status": "idea"
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "ideas-integrations",
-   "title": {
-    "fr": "Idées : intégrations",
-    "en": "Ideas: integrations",
-    "de": "Ideen: Integrationen",
-    "es": "Ideas: integraciones",
-    "it": "Idee: integrazioni",
-    "pt": "Ideias: integrações",
-    "ru": "Идеи: интеграции",
-    "zh-Hans": "创意：集成",
-    "pt-BR": "Ideias: integrações"
-   },
-   "groups": [
-    {
-     "title": {
-      "fr": "Cloud",
-      "en": "Cloud",
-      "de": "Cloud",
-      "es": "Nube",
-      "it": "Cloud",
-      "pt": "Cloud",
-      "ru": "Облако",
-      "zh-Hans": "云",
-      "pt-BR": "Cloud"
-     },
-     "items": [
-      {
-       "name": "Google Cloud",
-       "status": "idea"
-      },
-      {
-       "name": "Exoscale",
-       "status": "idea"
-      },
-      {
-       "name": "Scaleway",
-       "status": "idea"
-      },
-      {
-       "name": "DigitalOcean",
-       "status": "idea"
-      },
-      {
-       "name": "Backblaze B2",
-       "status": "idea"
-      },
-      {
-       "name": "Vercel",
-       "status": "idea"
-      },
-      {
-       "name": "Netlify",
-       "status": "idea"
-      }
-     ]
-    },
-    {
-     "title": {
-      "fr": "Microsoft",
-      "en": "Microsoft",
-      "de": "Microsoft",
-      "es": "Microsoft",
-      "it": "Microsoft",
-      "pt": "Microsoft",
-      "ru": "Microsoft",
-      "zh-Hans": "Microsoft",
-      "pt-BR": "Microsoft"
-     },
-     "items": [
-      {
-       "name": "Exchange",
-       "status": "idea"
-      },
-      {
-       "name": "Intune",
-       "status": "idea"
-      },
-      {
-       "name": "IIS",
-       "status": "idea"
-      },
-      {
-       "name": "DHCP/DNS Windows",
-       "status": "idea"
-      },
-      {
-       "name": "AD CS",
-       "status": "idea"
-      },
-      {
-       "name": "SharePoint",
-       "status": "idea"
-      }
-     ]
-    },
-    {
-     "title": {
-      "fr": "Conteneurs et virtualisation",
-      "en": "Containers and virtualisation",
-      "de": "Container und Virtualisierung",
-      "es": "Contenedores y virtualización",
-      "it": "Container e virtualizzazione",
-      "pt": "Contentores e virtualização",
-      "ru": "Контейнеры и виртуализация",
-      "zh-Hans": "容器与虚拟化",
-      "pt-BR": "Contentores e virtualização"
-     },
-     "items": [
-      {
-       "name": "Podman",
-       "status": "idea"
-      },
-      {
-       "name": "Portainer",
-       "status": "idea"
-      },
-      {
-       "name": "Docker Swarm",
-       "status": "idea"
-      },
-      {
-       "name": "Nomad",
-       "status": "idea"
-      },
-      {
-       "name": "Incus/LXD",
-       "status": "idea"
-      },
-      {
-       "name": "OpenShift",
-       "status": "idea"
-      },
-      {
-       "name": "Rancher",
-       "status": "idea"
-      },
-      {
-       "name": "OpenStack",
-       "status": "idea"
-      },
-      {
-       "name": "oVirt",
-       "status": "idea"
-      }
-     ]
-    },
-    {
-     "title": {
-      "fr": "Bases et services",
-      "en": "Databases and services",
-      "de": "Datenbanken und Dienste",
-      "es": "Bases de datos y servicios",
-      "it": "Database e servizi",
-      "pt": "Bases de dados e serviços",
-      "ru": "Базы данных и сервисы",
-      "zh-Hans": "数据库与服务",
-      "pt-BR": "Bases de dados e serviços"
-     },
-     "items": [
-      {
-       "name": "ClickHouse",
-       "status": "idea"
-      },
-      {
-       "name": "Cassandra",
-       "status": "idea"
-      },
-      {
-       "name": "etcd",
-       "status": "idea"
-      },
-      {
-       "name": "Memcached",
-       "status": "idea"
-      },
-      {
-       "name": "HAProxy",
-       "status": "idea"
-      },
-      {
-       "name": "Varnish",
-       "status": "idea"
-      },
-      {
-       "name": "PHP-FPM",
-       "status": "idea"
-      },
-      {
-       "name": "Tomcat/JMX",
-       "status": "idea"
-      }
-     ]
-    },
-    {
-     "title": {
-      "fr": "Réseau et sécurité",
-      "en": "Network and security",
-      "de": "Netzwerk und Sicherheit",
-      "es": "Red y seguridad",
-      "it": "Rete e sicurezza",
-      "pt": "Rede e segurança",
-      "ru": "Сеть и безопасность",
-      "zh-Hans": "网络与安全",
-      "pt-BR": "Rede e segurança"
-     },
-     "items": [
-      {
-       "name": "Ruckus",
-       "status": "idea"
-      },
-      {
-       "name": "Check Point",
-       "status": "idea"
-      },
-      {
-       "name": "Cisco ASA",
-       "status": "idea"
-      },
-      {
-       "name": "Juniper Mist",
-       "status": "idea"
-      },
-      {
-       "name": "Fritz!Box",
-       "status": "idea"
-      },
-      {
-       "name": "Starlink",
-       "status": "idea"
-      },
-      {
-       "name": "Cloudflare Tunnel",
-       "status": "idea"
-      },
-      {
-       "name": "ZeroTier",
-       "status": "idea"
-      },
-      {
-       "name": "NetBird",
-       "status": "idea"
-      },
-      {
-       "name": "Headscale",
-       "status": "idea"
-      },
-      {
-       "name": "NetBox",
-       "status": "idea"
-      },
-      {
-       "name": "phpIPAM",
-       "status": "idea"
-      },
-      {
-       "name": "Suricata",
-       "status": "idea"
-      },
-      {
-       "name": "Zeek",
-       "status": "idea"
-      },
-      {
-       "name": "Wazuh",
-       "status": "idea"
-      },
-      {
-       "name": "Fail2ban",
-       "status": "idea"
-      }
-     ]
-    },
-    {
-     "title": {
-      "fr": "Stockage et sauvegarde",
-      "en": "Storage and backup",
-      "de": "Speicher und Backup",
-      "es": "Almacenamiento y copias",
-      "it": "Storage e backup",
-      "pt": "Armazenamento e cópias",
-      "ru": "Хранилища и резервное копирование",
-      "zh-Hans": "存储与备份",
-      "pt-BR": "Armazenamento e cópias"
-     },
-     "items": [
-      {
-       "name": "NetApp",
-       "status": "idea"
-      },
-      {
-       "name": "Pure Storage",
-       "status": "idea"
-      },
-      {
-       "name": "HPE OneView",
-       "status": "idea"
-      },
-      {
-       "name": "Dell OpenManage",
-       "status": "idea"
-      },
-      {
-       "name": "Acronis",
-       "status": "idea"
-      },
-      {
-       "name": "NAKIVO",
-       "status": "idea"
-      },
-      {
-       "name": "UrBackup",
-       "status": "idea"
-      },
-      {
-       "name": "Windows Server Backup",
-       "status": "idea"
-      },
-      {
-       "name": "Scrutiny",
-       "status": "idea"
-      }
-     ]
-    },
-    {
-     "title": {
-      "fr": "Caméras",
-      "en": "Cameras",
-      "de": "Kameras",
-      "es": "Cámaras",
-      "it": "Telecamere",
-      "pt": "Câmaras",
-      "ru": "Камеры",
-      "zh-Hans": "摄像头",
-      "pt-BR": "Câmaras"
-     },
-     "items": [
-      {
-       "name": "Blue Iris",
-       "status": "idea"
-      },
-      {
-       "name": "Hikvision",
-       "status": "idea"
-      },
-      {
-       "name": "Dahua",
-       "status": "idea"
-      }
-     ]
-    },
-    {
-     "title": {
-      "fr": "Applications",
-      "en": "Applications",
-      "de": "Anwendungen",
-      "es": "Aplicaciones",
-      "it": "Applicazioni",
-      "pt": "Aplicações",
-      "ru": "Приложения",
-      "zh-Hans": "应用",
-      "pt-BR": "Aplicações"
-     },
-     "items": [
-      {
-       "name": "Emby",
-       "status": "idea"
-      },
-      {
-       "name": "Lidarr",
-       "status": "idea"
-      },
-      {
-       "name": "Prowlarr",
-       "status": "idea"
-      },
-      {
-       "name": "Transmission",
-       "status": "idea"
-      },
-      {
-       "name": "SABnzbd",
-       "status": "idea"
-      },
-      {
-       "name": "Overseerr/Jellyseerr",
-       "status": "idea"
-      },
-      {
-       "name": "Tautulli",
-       "status": "idea"
-      },
-      {
-       "name": "Audiobookshelf",
-       "status": "idea"
-      },
-      {
-       "name": "Navidrome",
-       "status": "idea"
-      },
-      {
-       "name": "Gitea",
-       "status": "idea"
-      },
-      {
-       "name": "GitHub",
-       "status": "idea"
-      },
-      {
-       "name": "Jenkins",
-       "status": "idea"
-      },
-      {
-       "name": "Woodpecker/Drone",
-       "status": "idea"
-      },
-      {
-       "name": "Harbor",
-       "status": "idea"
-      },
-      {
-       "name": "Grafana",
-       "status": "idea"
-      },
-      {
-       "name": "Authelia",
-       "status": "idea"
-      },
-      {
-       "name": "Syncthing",
-       "status": "idea"
-      },
-      {
-       "name": "Postfix/Dovecot",
-       "status": "idea"
-      },
-      {
-       "name": "Matrix Synapse",
-       "status": "idea"
-      },
-      {
-       "name": "ONLYOFFICE",
-       "status": "idea"
-      },
-      {
-       "name": "Odoo",
-       "status": "idea"
-      },
-      {
-       "name": "GLPI",
-       "status": "idea"
-      },
-      {
-       "name": "Ollama",
-       "status": "idea"
-      },
-      {
-       "name": "Zigbee2MQTT",
-       "status": "idea"
-      },
-      {
-       "name": "ESPHome",
-       "status": "idea"
-      },
-      {
-       "name": "Tasmota",
-       "status": "idea"
-      },
-      {
-       "name": "Philips Hue",
-       "status": "idea"
-      },
-      {
-       "name": "Node-RED",
-       "status": "idea"
-      },
-      {
-       "name": "WordPress",
-       "status": "idea"
-      }
-     ]
-    },
-    {
-     "title": {
-      "fr": "Ticketing",
-      "en": "Ticketing",
-      "de": "Ticketsysteme",
-      "es": "Tickets",
-      "it": "Ticketing",
-      "pt": "Ticketing",
-      "ru": "Тикет-системы",
-      "zh-Hans": "工单系统",
-      "pt-BR": "Ticketing"
-     },
-     "items": [
-      {
-       "name": "ServiceNow",
-       "status": "idea"
-      },
-      {
-       "name": "Zendesk",
-       "status": "idea"
-      },
-      {
-       "name": "Freshservice",
-       "status": "idea"
-      },
-      {
-       "name": "osTicket",
-       "status": "idea"
-      },
-      {
-       "name": "Redmine",
-       "status": "idea"
-      },
-      {
-       "name": "Linear",
-       "status": "idea"
-      },
-      {
-       "name": "HaloPSA",
-       "status": "idea"
-      },
-      {
-       "name": "ConnectWise",
-       "status": "idea"
-      },
-      {
-       "name": "Autotask",
-       "status": "idea"
-      }
-     ]
-    },
-    {
-     "title": {
-      "fr": "Notifications",
-      "en": "Notifications",
-      "de": "Benachrichtigungen",
-      "es": "Notificaciones",
-      "it": "Notifiche",
-      "pt": "Notificações",
-      "ru": "Уведомления",
-      "zh-Hans": "通知",
-      "pt-BR": "Notificações"
-     },
-     "items": [
-      {
-       "text": {
-        "fr": "Appels vocaux",
-        "en": "Voice calls",
-        "de": "Sprachanrufe",
-        "es": "Llamadas de voz",
-        "it": "Chiamate vocali",
-        "pt": "Chamadas de voz",
-        "ru": "Голосовые звонки",
-        "zh-Hans": "语音电话",
-        "pt-BR": "Chamadas de voz"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "Réception des alertes d'Alertmanager",
-        "en": "Receiving Alertmanager alerts",
-        "de": "Empfang von Alertmanager-Alarmen",
-        "es": "Recepción de alertas de Alertmanager",
-        "it": "Ricezione degli avvisi di Alertmanager",
-        "pt": "Receção de alertas do Alertmanager",
-        "ru": "Приём оповещений Alertmanager",
-        "zh-Hans": "接收 Alertmanager 告警",
-        "pt-BR": "Receção de alertas do Alertmanager"
-       },
-       "status": "idea"
-      },
-      {
-       "name": "Splunk On-Call",
-       "status": "idea"
-      },
-      {
-       "name": "incident.io",
-       "status": "idea"
-      },
-      {
-       "name": "Squadcast",
-       "status": "idea"
-      },
-      {
-       "name": "Pushsafer",
-       "status": "idea"
-      },
-      {
-       "name": "LINE",
-       "status": "idea"
-      },
-      {
-       "name": "DingTalk/Feishu/WeCom",
-       "status": "idea"
-      }
-     ]
-    },
-    {
-     "title": {
-      "fr": "Écosystème",
-      "en": "Ecosystem",
-      "de": "Ökosystem",
-      "es": "Ecosistema",
-      "it": "Ecosistema",
-      "pt": "Ecossistema",
-      "ru": "Экосистема",
-      "zh-Hans": "生态",
-      "pt-BR": "Ecossistema"
-     },
-     "items": [
-      {
-       "name": "Telegraf",
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "agent Zabbix",
-        "en": "Zabbix agent",
-        "de": "Zabbix-Agent",
-        "es": "agente de Zabbix",
-        "it": "agente Zabbix",
-        "pt": "agente Zabbix",
-        "ru": "агент Zabbix",
-        "zh-Hans": "Zabbix 代理",
-        "pt-BR": "agente Zabbix"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "agent Checkmk",
-        "en": "Checkmk agent",
-        "de": "Checkmk-Agent",
-        "es": "agente de Checkmk",
-        "it": "agente Checkmk",
-        "pt": "agente Checkmk",
-        "ru": "агент Checkmk",
-        "zh-Hans": "Checkmk 代理",
-        "pt-BR": "agente Checkmk"
-       },
-       "status": "idea"
-      },
-      {
-       "name": "Netdata",
-       "status": "idea"
-      },
-      {
-       "name": "Sentry",
-       "status": "idea"
-      },
-      {
-       "name": "GitHub Actions",
-       "status": "idea"
-      },
-      {
-       "name": "GitLab CI",
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "collection Ansible",
-        "en": "Ansible collection",
-        "de": "Ansible-Collection",
-        "es": "colección de Ansible",
-        "it": "collection Ansible",
-        "pt": "coleção Ansible",
-        "ru": "коллекция Ansible",
-        "zh-Hans": "Ansible 集合",
-        "pt-BR": "coleção Ansible"
-       },
-       "status": "idea"
-      },
-      {
-       "text": {
-        "fr": "agendas Google/Outlook",
-        "en": "Google/Outlook calendars",
-        "de": "Google-/Outlook-Kalender",
-        "es": "calendarios de Google/Outlook",
-        "it": "calendari Google/Outlook",
-        "pt": "calendários Google/Outlook",
-        "ru": "календари Google/Outlook",
-        "zh-Hans": "Google/Outlook 日历",
-        "pt-BR": "calendários Google/Outlook"
-       },
-       "status": "idea"
-      }
-     ]
     }
    ]
   },
@@ -1507,6 +121,21 @@
    "items": [
     {
      "status": "delivered",
+     "version": "0.14.2",
+     "text": {
+      "fr": "interface unique (la console Entreprise) ; agents installables derrière un relais ; scènes de nuit sur les pages de statut (Paris, New York, Tokyo, Dubaï) ; graphiques triés par intégration ; alertes de prévision et de dérive ; carte du monde et des menaces ; topologie avec trafic ; frise des échéances ; matrice des sauvegardes ; actions groupées et statistiques Docker ; santé de la machine ; surveillance des scans réseau ; panneau de switch ; NAS conscient des LUN iSCSI",
+      "en": "one interface (the Enterprise console); agents installed behind a relay; night scenes on status pages (Paris, New York, Tokyo, Dubai); charts sorted by integration; forecast and drift alerts; world and threat maps; topology with traffic; deadlines timeline; backup matrix; Docker bulk actions and stats; machine health; network scan watch; switch panel; NAS aware of iSCSI LUNs",
+      "de": "eine Oberfläche (die Enterprise-Konsole); Agenten hinter einem Relay installierbar; Nachtszenen auf Statusseiten (Paris, New York, Tokio, Dubai); nach Integration sortierte Diagramme; Prognose- und Drift-Warnungen; Welt- und Bedrohungskarte; Topologie mit Datenverkehr; Fristen-Zeitleiste; Backup-Matrix; Docker-Sammelaktionen und -Statistiken; Maschinenzustand; Überwachung von Netzwerk-Scans; Switch-Panel; NAS mit iSCSI-LUN-Erkennung",
+      "es": "una sola interfaz (la consola Empresa); agentes instalables detrás de un relé; escenas nocturnas en las páginas de estado (París, Nueva York, Tokio, Dubái); gráficos ordenados por integración; alertas de previsión y de deriva; mapa del mundo y de amenazas; topología con tráfico; cronología de vencimientos; matriz de copias de seguridad; acciones en lote y estadísticas de Docker; salud de la máquina; vigilancia de los escaneos de red; panel de switch; NAS que reconoce los LUN iSCSI",
+      "it": "un'unica interfaccia (la console Enterprise); agenti installabili dietro un relay; scene notturne nelle pagine di stato (Parigi, New York, Tokyo, Dubai); grafici ordinati per integrazione; avvisi di previsione e di deriva; mappa del mondo e delle minacce; topologia con traffico; cronologia delle scadenze; matrice dei backup; azioni di gruppo e statistiche Docker; salute della macchina; sorveglianza delle scansioni di rete; pannello dello switch; NAS consapevole dei LUN iSCSI",
+      "pt": "uma só interface (a consola Empresa); agentes instaláveis atrás de um relé; cenas noturnas nas páginas de estado (Paris, Nova Iorque, Tóquio, Dubai); gráficos ordenados por integração; alertas de previsão e de desvio; mapa do mundo e das ameaças; topologia com tráfego; cronologia de prazos; matriz de cópias de segurança; ações em lote e estatísticas do Docker; saúde da máquina; vigilância das análises de rede; painel do switch; NAS com reconhecimento dos LUN iSCSI",
+      "ru": "единый интерфейс (консоль Enterprise); агенты за ретранслятором; ночные сцены на страницах статуса (Париж, Нью-Йорк, Токио, Дубай); графики, отсортированные по интеграциям; оповещения о прогнозе и дрейфе; карта мира и угроз; топология с трафиком; лента сроков; матрица резервных копий; групповые действия и статистика Docker; состояние машины; контроль сканирований сети; панель коммутатора; NAS с поддержкой LUN iSCSI",
+      "zh-Hans": "统一界面（企业控制台）；可在中继之后安装代理；状态页夜景（巴黎、纽约、东京、迪拜）；按集成排序的图表；预测与漂移告警；世界与威胁地图；带流量的拓扑；到期时间线；备份矩阵；Docker 批量操作与统计；机器健康；网络扫描监视；交换机面板；识别 iSCSI LUN 的 NAS",
+      "pt-BR": "uma só interface (o console Empresa); agentes instaláveis atrás de um relay; cenas noturnas nas páginas de status (Paris, Nova York, Tóquio, Dubai); gráficos ordenados por integração; alertas de previsão e de desvio; mapa do mundo e de ameaças; topologia com tráfego; linha do tempo de vencimentos; matriz de backups; ações em lote e estatísticas do Docker; saúde da máquina; vigilância das varreduras de rede; painel do switch; NAS ciente dos LUNs iSCSI"
+     }
+    },
+    {
+     "status": "delivered",
      "version": "0.14.1",
      "text": {
       "fr": "ajout de supervision par site, avec les appareils découverts par le relais ; modèles de tableaux de bord ; mur Entreprise ; déploiement Active Directory avec adresse du serveur et DNS ; pages de sécurité compactes ; pages Statut et Rapports hors des Réglages",
@@ -1524,15 +153,15 @@
      "status": "delivered",
      "version": "0.14.0",
      "text": {
-      "fr": "modes Homelab et Entreprise avec assistant de démarrage ; mode multi-clients (MSP) avec rapports par client ; équipes, droits par dossier, SAML et SCIM ; astreinte et escalade ; tableaux de bord et explorateur de métriques ; GitOps, CLI et Terraform ; journaux centralisés, syslog et traps SNMP ; OpenTelemetry et exporteurs Prometheus ; sondes multisites ; tickets, procédures et remédiation ; intégrations cloud, réseau, stockage, applications et bases de données ; Windows sans agent ; topologie LLDP ; sauvegarde des configurations réseau",
-      "en": "Homelab and Enterprise modes with a setup wizard; multi-client (MSP) mode with per-client reports; teams, per-folder rights, SAML and SCIM; on-call and escalation; dashboards and a metrics explorer; GitOps, CLI and Terraform; central logs, syslog and SNMP traps; OpenTelemetry and Prometheus exporters; multi-location probes; tickets, runbooks and remediation; cloud, network, storage, application and database integrations; agentless Windows; LLDP topology; network configuration backups",
-      "de": "Modi Homelab und Enterprise mit Einrichtungsassistent; Mandantenmodus (MSP) mit Berichten pro Kunde; Teams, Rechte pro Ordner, SAML und SCIM; Bereitschaft und Eskalation; Dashboards und Metrik-Explorer; GitOps, CLI und Terraform; zentrale Logs, Syslog und SNMP-Traps; OpenTelemetry und Prometheus-Exporter; Prüfungen von mehreren Standorten; Tickets, Runbooks und Behebung; Cloud-, Netzwerk-, Speicher-, Anwendungs- und Datenbank-Integrationen; Windows ohne Agent; LLDP-Topologie; Sicherung von Netzwerkkonfigurationen",
-      "es": "modos Homelab y Empresa con asistente de configuración; modo multicliente (MSP) con informes por cliente; equipos, permisos por carpeta, SAML y SCIM; guardias y escalado; paneles y explorador de métricas; GitOps, CLI y Terraform; registros centralizados, syslog y traps SNMP; OpenTelemetry y exportadores de Prometheus; sondas desde varias ubicaciones; tickets, runbooks y remediación; integraciones de nube, red, almacenamiento, aplicaciones y bases de datos; Windows sin agente; topología LLDP; copia de seguridad de configuraciones de red",
-      "it": "modalità Homelab ed Enterprise con procedura guidata; modalità multi-cliente (MSP) con report per cliente; team, permessi per cartella, SAML e SCIM; reperibilità ed escalation; dashboard ed esploratore di metriche; GitOps, CLI e Terraform; log centralizzati, syslog e trap SNMP; OpenTelemetry ed exporter Prometheus; sonde da più sedi; ticket, runbook e remediation; integrazioni cloud, rete, storage, applicazioni e database; Windows senza agente; topologia LLDP; backup delle configurazioni di rete",
-      "pt": "modos Homelab e Empresa com assistente de configuração; modo multicliente (MSP) com relatórios por cliente; equipas, permissões por pasta, SAML e SCIM; prevenção e escalonamento; painéis e explorador de métricas; GitOps, CLI e Terraform; registos centralizados, syslog e traps SNMP; OpenTelemetry e exportadores Prometheus; sondas a partir de vários locais; tickets, runbooks e remediação; integrações de cloud, rede, armazenamento, aplicações e bases de dados; Windows sem agente; topologia LLDP; cópia de segurança das configurações de rede",
-      "ru": "режимы Homelab и Enterprise с мастером настройки; мультиклиентский режим (MSP) с отчётами по клиентам; команды, права на папки, SAML и SCIM; дежурства и эскалация; дашборды и обозреватель метрик; GitOps, CLI и Terraform; централизованные журналы, syslog и SNMP-трапы; OpenTelemetry и экспортеры Prometheus; проверки из нескольких точек; тикеты, ранбуки и автоматическое устранение; интеграции облаков, сетей, хранилищ, приложений и баз данных; Windows без агента; топология LLDP; резервное копирование конфигураций сетевых устройств",
-      "zh-Hans": "家庭实验室与企业两种模式及设置向导；多客户（MSP）模式及按客户报告；团队、按文件夹权限、SAML 与 SCIM；值班与升级；仪表板与指标浏览器；GitOps、CLI 与 Terraform；集中日志、syslog 与 SNMP trap；OpenTelemetry 与 Prometheus exporter；多地点探测；工单、运行手册与自动修复；云、网络、存储、应用与数据库集成；无代理 Windows；LLDP 拓扑；网络设备配置备份",
-      "pt-BR": "modos Homelab e Empresa com assistente de configuração; modo multicliente (MSP) com relatórios por cliente; equipes, permissões por pasta, SAML e SCIM; plantão e escalonamento; painéis e explorador de métricas; GitOps, CLI e Terraform; logs centralizados, syslog e traps SNMP; OpenTelemetry e exportadores Prometheus; sondas a partir de vários locais; tickets, runbooks e remediação; integrações de nuvem, rede, armazenamento, aplicativos e bancos de dados; Windows sem agente; topologia LLDP; backup das configurações de rede"
+      "fr": "mode multi-clients (MSP) avec rapports par client ; équipes, droits par dossier, SAML et SCIM ; astreinte et escalade ; tableaux de bord et explorateur de métriques ; GitOps, CLI et Terraform ; journaux centralisés, syslog et traps SNMP ; OpenTelemetry et exporteurs Prometheus ; sondes multisites ; tickets, procédures et remédiation ; intégrations cloud, réseau, stockage, applications et bases de données ; Windows sans agent ; topologie LLDP ; sauvegarde des configurations réseau",
+      "en": "multi-client (MSP) mode with per-client reports; teams, per-folder rights, SAML and SCIM; on-call and escalation; dashboards and a metrics explorer; GitOps, CLI and Terraform; central logs, syslog and SNMP traps; OpenTelemetry and Prometheus exporters; multi-location probes; tickets, runbooks and remediation; cloud, network, storage, application and database integrations; agentless Windows; LLDP topology; network configuration backups",
+      "de": "Mandantenmodus (MSP) mit Berichten pro Kunde; Teams, Rechte pro Ordner, SAML und SCIM; Bereitschaft und Eskalation; Dashboards und Metrik-Explorer; GitOps, CLI und Terraform; zentrale Logs, Syslog und SNMP-Traps; OpenTelemetry und Prometheus-Exporter; Prüfungen von mehreren Standorten; Tickets, Runbooks und Behebung; Cloud-, Netzwerk-, Speicher-, Anwendungs- und Datenbank-Integrationen; Windows ohne Agent; LLDP-Topologie; Sicherung von Netzwerkkonfigurationen",
+      "es": "modo multicliente (MSP) con informes por cliente; equipos, permisos por carpeta, SAML y SCIM; guardias y escalado; paneles y explorador de métricas; GitOps, CLI y Terraform; registros centralizados, syslog y traps SNMP; OpenTelemetry y exportadores de Prometheus; sondas desde varias ubicaciones; tickets, runbooks y remediación; integraciones de nube, red, almacenamiento, aplicaciones y bases de datos; Windows sin agente; topología LLDP; copia de seguridad de configuraciones de red",
+      "it": "modalità multi-cliente (MSP) con report per cliente; team, permessi per cartella, SAML e SCIM; reperibilità ed escalation; dashboard ed esploratore di metriche; GitOps, CLI e Terraform; log centralizzati, syslog e trap SNMP; OpenTelemetry ed exporter Prometheus; sonde da più sedi; ticket, runbook e remediation; integrazioni cloud, rete, storage, applicazioni e database; Windows senza agente; topologia LLDP; backup delle configurazioni di rete",
+      "pt": "modo multicliente (MSP) com relatórios por cliente; equipas, permissões por pasta, SAML e SCIM; prevenção e escalonamento; painéis e explorador de métricas; GitOps, CLI e Terraform; registos centralizados, syslog e traps SNMP; OpenTelemetry e exportadores Prometheus; sondas a partir de vários locais; tickets, runbooks e remediação; integrações de cloud, rede, armazenamento, aplicações e bases de dados; Windows sem agente; topologia LLDP; cópia de segurança das configurações de rede",
+      "ru": "мультиклиентский режим (MSP) с отчётами по клиентам; команды, права на папки, SAML и SCIM; дежурства и эскалация; дашборды и обозреватель метрик; GitOps, CLI и Terraform; централизованные журналы, syslog и SNMP-трапы; OpenTelemetry и экспортеры Prometheus; проверки из нескольких точек; тикеты, ранбуки и автоматическое устранение; интеграции облаков, сетей, хранилищ, приложений и баз данных; Windows без агента; топология LLDP; резервное копирование конфигураций сетевых устройств",
+      "zh-Hans": "多客户（MSP）模式及按客户报告；团队、按文件夹权限、SAML 与 SCIM；值班与升级；仪表板与指标浏览器；GitOps、CLI 与 Terraform；集中日志、syslog 与 SNMP trap；OpenTelemetry 与 Prometheus exporter；多地点探测；工单、运行手册与自动修复；云、网络、存储、应用与数据库集成；无代理 Windows；LLDP 拓扑；网络设备配置备份",
+      "pt-BR": "modo multicliente (MSP) com relatórios por cliente; equipes, permissões por pasta, SAML e SCIM; plantão e escalonamento; painéis e explorador de métricas; GitOps, CLI e Terraform; logs centralizados, syslog e traps SNMP; OpenTelemetry e exportadores Prometheus; sondas a partir de vários locais; tickets, runbooks e remediação; integrações de nuvem, rede, armazenamento, aplicativos e bancos de dados; Windows sem agente; topologia LLDP; backup das configurações de rede"
      }
     },
     {
@@ -1614,15 +243,15 @@
      "status": "delivered",
      "version": "0.10.0",
      "text": {
-      "fr": "réputation des serveurs mail et des plages IP, widgets et usage Claude/OpenAI sur le mur, plus de défilement latéral sur mobile",
-      "en": "mail server and IP range reputation, widgets and Claude/OpenAI usage on the wall, no more sideways scrolling on phones",
-      "de": "Reputation von Mailservern und IP-Bereichen, Widgets und Claude/OpenAI-Nutzung auf der Wand, kein seitliches Scrollen mehr auf Smartphones",
-      "es": "reputación de servidores de correo y rangos de IP, widgets y uso de Claude/OpenAI en el modo pared, sin desplazamiento lateral en móviles",
-      "it": "reputazione di server di posta e intervalli IP, widget e utilizzo di Claude/OpenAI sulla parete, niente più scorrimento laterale su smartphone",
-      "pt": "reputação de servidores de correio e intervalos de IP, widgets e utilização do Claude/OpenAI no modo parede, sem deslocamento lateral nos telemóveis",
-      "ru": "репутация почтовых серверов и диапазонов IP, виджеты и расход Claude/OpenAI на стене, больше нет горизонтальной прокрутки на телефонах",
-      "zh-Hans": "邮件服务器与 IP 段信誉检查、墙屏上的小组件及 Claude/OpenAI 用量、手机上不再横向滚动",
-      "pt-BR": "reputação de servidores de e-mail e faixas de IP, widgets e uso do Claude/OpenAI no modo parede, sem rolagem lateral no celular"
+      "fr": "réputation des serveurs mail et des plages IP, plus de défilement latéral sur mobile",
+      "en": "mail server and IP range reputation, no more sideways scrolling on phones",
+      "de": "Reputation von Mailservern und IP-Bereichen, kein seitliches Scrollen mehr auf Smartphones",
+      "es": "reputación de servidores de correo y rangos de IP, sin desplazamiento lateral en móviles",
+      "it": "reputazione di server di posta e intervalli IP, niente più scorrimento laterale su smartphone",
+      "pt": "reputação de servidores de correio e intervalos de IP, sem deslocamento lateral nos telemóveis",
+      "ru": "репутация почтовых серверов и диапазонов IP, больше нет горизонтальной прокрутки на телефонах",
+      "zh-Hans": "邮件服务器与 IP 段信誉检查、手机上不再横向滚动",
+      "pt-BR": "reputação de servidores de e-mail e faixas de IP, sem rolagem lateral no celular"
      }
     },
     {
@@ -1659,15 +288,15 @@
      "status": "delivered",
      "version": "0.1.0-alpha.8",
      "text": {
-      "fr": "actualités sur le mur, modules de l'agent au choix, catégories de sites web, changements de site web surlignés",
-      "en": "news on the wall, choosable agent modules, website categories, highlighted website changes",
-      "de": "Nachrichten auf der Wand, wählbare Agent-Module, Website-Kategorien, hervorgehobene Website-Änderungen",
-      "es": "noticias en el modo pared, módulos del agente a elegir, categorías de sitios web, cambios de sitios web resaltados",
-      "it": "notizie sulla parete, moduli dell'agente a scelta, categorie di siti web, modifiche dei siti web evidenziate",
-      "pt": "notícias no modo parede, módulos do agente à escolha, categorias de sítios web, alterações de sítios web realçadas",
-      "ru": "новости на стене, выбор модулей агента, категории сайтов, подсветка изменений на сайтах",
-      "zh-Hans": "墙屏新闻、可选的代理模块、网站分类、高亮显示网站变更",
-      "pt-BR": "notícias no modo parede, módulos do agente à escolha, categorias de sites, mudanças de sites destacadas"
+      "fr": "modules de l'agent au choix, catégories de sites web, changements de site web surlignés",
+      "en": "choosable agent modules, website categories, highlighted website changes",
+      "de": "wählbare Agent-Module, Website-Kategorien, hervorgehobene Website-Änderungen",
+      "es": "módulos del agente a elegir, categorías de sitios web, cambios de sitios web resaltados",
+      "it": "moduli dell'agente a scelta, categorie di siti web, modifiche dei siti web evidenziate",
+      "pt": "módulos do agente à escolha, categorias de sítios web, alterações de sítios web realçadas",
+      "ru": "выбор модулей агента, категории сайтов, подсветка изменений на сайтах",
+      "zh-Hans": "可选的代理模块、网站分类、高亮显示网站变更",
+      "pt-BR": "módulos do agente à escolha, categorias de sites, mudanças de sites destacadas"
      }
     },
     {
