@@ -116,7 +116,7 @@ pub fn spawn(state: AppState, seeded: seed::Seeded) {
 /// et rend compte par le même chemin que l'API des relais.
 fn spawn_relay(state: AppState, agent_id: dumbmonit_proto::TargetId) {
     use crate::collectors::relay::{self, JobResult};
-    use dumbmonit_proto::{Collector as _, ProbeJob, ProbeOutcome};
+    use dumbmonit_proto::{ProbeJob, ProbeOutcome};
     tokio::spawn(async move {
         loop {
             let commands = state.relay().take(agent_id, std::time::Duration::from_secs(25)).await;

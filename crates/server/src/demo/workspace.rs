@@ -680,7 +680,7 @@ async fn seed_vulnerabilities(
             Some(("CVE-2025-33073", None, "unknown", "vendor_build", "nvd", 9))),
     ];
     for (host, component, version, origin, finding) in findings {
-        let Some(target) = find(*host) else { continue };
+        let Some(target) = find(host) else { continue };
         sqlx::query(
             "INSERT OR IGNORE INTO cve_components (target_id, component, version, origin)
              VALUES (?, ?, ?, ?)",
