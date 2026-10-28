@@ -53,8 +53,8 @@ Back up *Settings → Backup* **and** `/data/secret.key`. Updating, ports, lost 
 
 - **Alerting that does not cry wolf**: a parent that is down hides its children, maintenance windows and silences (recoveries stay quiet too), forecasts, a seasonal baseline, and a bell on each monitor counting its active alerts.
 - **23 notification channels**: Discord, Slack, Telegram, Matrix, ntfy, email, PagerDuty, webhook and more.
-- **Public status pages** with history, incidents, email subscribers, badges and city scenes.
-- **Wall mode** (a dedicated screen for a room monitor), with optional widgets (weather, crypto prices, stock quotes, exchange rates, critical CVEs, RSS news with pictures, Claude and OpenAI API usage), and an optional **security score** next to the main products (hosts, Proxmox, Synology, OPNsense, websites, Active Directory).
+- **Public status pages** with history, incidents, email subscribers, badges and four night cities (Paris, Tokyo, New York, Dubai).
+- **Wall mode**: the console's board full screen for a room monitor, with an optional night city behind it, and an optional **security score** next to the main products (hosts, Proxmox, Synology, OPNsense, websites, Active Directory).
 - **API and MCP server** (27 tools): ask Claude or ChatGPT "is everything fine?", or read it from Prometheus and Grafana.
 - **Encrypted backup**, accounts with TOTP, OIDC single sign-on and **LDAP / Active Directory** sign-in, an installable phone app (PWA), and remote sites through an outbound-only relay agent.
 
