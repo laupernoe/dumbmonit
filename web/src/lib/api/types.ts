@@ -3036,6 +3036,10 @@ export interface SynologyVolume {
 	total_bytes: number | null;
 	used_bytes: number | null;
 	used_percent: number | null;
+	/** Usage without the space reserved by thick iSCSI LUNs: what the fill alert reads. */
+	effective_used_percent?: number | null;
+	/** Sum of the thick LUN sizes on the volume; `null` without LUNs. */
+	lun_reserved_bytes?: number | null;
 }
 
 export interface SynologyDisk {
@@ -3087,6 +3091,91 @@ export interface SynologyOverview {
 	disks: SynologyDisk[];
 	/** Unix seconds of the newest reading, `null` before the first probe. */
 	sampled_at: number | null;
+}
+
+// --- iSCSI LUNs and zvols -------------------------------------------------------
+// Mirrors `crates/server/src/api/luns.rs`: `GET /targets/{id}/luns`.
+
+export type LunProvisioning = 'thick' | 'thin' | 'unknown';
+
+export interface LunTarget {
+	iqn: string;
+	name: string;
+	sessions: number;
+	/** IQNs of the connected initiators. */
+	initiators: string[];
+}
+
+/** The monitor that uses a LUN, and its own fill level. */
+export interface LunConsumer {
+	/** `manual` = saved link, `auto` = unambiguous match on name and size. */
+	source: 'manual' | 'auto';
+	target_id: TargetId;
+	target_name: string;
+	family: string;
+	family_label: string;
+	entity: string;
+	used_percent: number | null;
+	used_bytes: number | null;
+	size_bytes: number | null;
+}
+
+export interface Lun {
+	/** DSM UUID or zvol name: the `lun` label. */
+	id: string;
+	name: string;
+	/** Host volume (Synology) or pool (TrueNAS). */
+	host_volume: string;
+	provisioning: LunProvisioning;
+	/** DSM's own word: `BLUN_THICK`, `BLUN`, `FILE`…; empty for a zvol. */
+	lun_type: string;
+	status: string;
+	size_bytes: number | null;
+	/** Space taken on the volume: the size if thick, the written space if thin. */
+	reserved_bytes: number | null;
+	allocated_bytes: number | null;
+	/** Written share of a thin LUN; `null` for a thick one (opaque from the NAS). */
+	used_percent: number | null;
+	mapped: boolean | null;
+	sessions: number | null;
+	targets: LunTarget[];
+	consumer: LunConsumer | null;
+}
+
+export interface LunVolume {
+	volume: string;
+	name: string;
+	total_bytes: number | null;
+	used_bytes: number | null;
+	used_percent: number | null;
+	lun_count: number | null;
+	/** Sum of the thick LUN sizes. */
+	reserved_bytes: number | null;
+	thin_allocated_bytes: number | null;
+	thin_provisioned_bytes: number | null;
+	/** Promised to thin LUNs and not written yet. */
+	thin_promised_bytes: number | null;
+	/** Data outside LUNs. */
+	data_bytes: number | null;
+	effective_total_bytes: number | null;
+	effective_used_bytes: number | null;
+	effective_used_percent: number | null;
+	/** Promised thin space as a percentage of the free space. */
+	overcommit_percent: number | null;
+	fully_reserved: boolean | null;
+}
+
+export interface TargetLuns {
+	luns: Lun[];
+	/** Synology volumes hosting at least one LUN; empty elsewhere. */
+	volumes: LunVolume[];
+	sampled_at: number | null;
+}
+
+export interface LunLinkPayload {
+	target_id: TargetId;
+	family: string;
+	entity: string;
 }
 
 export type AbbDeviceState = 'ok' | 'idle' | 'learning' | 'running' | 'overdue' | 'failing' | 'never';

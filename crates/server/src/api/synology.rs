@@ -82,6 +82,11 @@ pub struct VolumeView {
     pub total_bytes: Option<f64>,
     pub used_bytes: Option<f64>,
     pub used_percent: Option<f64>,
+    /// Occupation sans les réservations des LUN iSCSI épais : c'est elle que
+    /// l'alerte de remplissage regarde. Égale à `used_percent` sans LUN.
+    pub effective_used_percent: Option<f64>,
+    /// Somme des tailles des LUN épais posés sur le volume ; `null` sans LUN.
+    pub lun_reserved_bytes: Option<f64>,
 }
 
 /// Un groupe de stockage ou un cache SSD.
@@ -269,6 +274,8 @@ pub fn build_overview(series: &[InstantSeries]) -> SynologyView {
                 "total_bytes" => volume.total_bytes = value,
                 "used_bytes" => volume.used_bytes = value,
                 "used_percent" => volume.used_percent = value,
+                "effective_used_percent" => volume.effective_used_percent = value,
+                "lun_reserved_bytes" => volume.lun_reserved_bytes = value,
                 _ => {}
             }
             continue;

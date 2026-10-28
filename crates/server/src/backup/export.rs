@@ -94,7 +94,26 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         msp_settings: crate::auth::settings::get::<Value>(pool, crate::auth::clients::SETTINGS_KEY)
             .await?,
         client_assignments: client_assignments(pool, &refs).await?,
+        lun_links: lun_links(pool, &refs).await?,
     })
+}
+
+/// Liens de LUN dont les deux équipements existent encore.
+async fn lun_links(pool: &SqlitePool, refs: &HashMap<i64, String>) -> Result<Vec<BundleLunLink>> {
+    let links = crate::db::lun_links::list_all(pool).await?;
+    Ok(links
+        .into_iter()
+        .filter_map(|link| {
+            Some(BundleLunLink {
+                target: refs.get(&link.target_id)?.clone(),
+                lun: link.lun,
+                consumer: refs.get(&link.consumer_target_id)?.clone(),
+                family: link.family,
+                entity: link.entity,
+                author: link.author,
+            })
+        })
+        .collect())
 }
 
 async fn clients(pool: &SqlitePool) -> Result<Vec<BundleClient>> {

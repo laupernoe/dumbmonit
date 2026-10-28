@@ -4660,8 +4660,15 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_synology_pool_status or dumbmonit_synology_ssd_cache_status",
             )
         },
+        // L'occupation effective, sans les réservations des LUN iSCSI épais : un
+        // volume rempli par un LUN épais est plein par construction, et seul ce
+        // qui reste à côté peut déborder (`collectors/synology/iscsi.rs`). Sans
+        // LUN, elle vaut l'occupation brute ; la brute ne sert que de repli avant
+        // la première collecte d'un collecteur à jour.
         Rule {
-            description: "Volume 90% full or more.".to_string(),
+            description: "Volume 90% full or more, not counting the space reserved by \
+                          thick-provisioned iSCSI LUNs."
+                .to_string(),
             operator: Operator::Ge,
             threshold: 90.0,
             clear_threshold: Some(88.0),
@@ -4673,7 +4680,51 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "synology_volume_almost_full",
                 "Synology volume almost full",
                 RuleKind::Threshold,
-                "dumbmonit_synology_volume_used_percent",
+                "dumbmonit_synology_volume_effective_used_percent \
+                 or dumbmonit_synology_volume_used_percent",
+            )
+        },
+        // Sur-allocation fine : les LUN fins du volume ont reçu la promesse de
+        // plus d'espace qu'il n'en reste de libre. La valeur est l'espace promis
+        // et pas encore écrit, en pourcentage de l'espace libre : à 100 %, le
+        // prochain octet écrit dans un LUN peut ne plus trouver de place, et
+        // l'hôte iSCSI voit alors son disque passer en lecture seule.
+        Rule {
+            description: "Thin over-allocation: the thin iSCSI LUNs of this volume were \
+                          promised more space than the volume still has free (value = \
+                          promised and unwritten space, as a percentage of the free space)."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 100.0,
+            clear_threshold: Some(95.0),
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "synology_thin_overcommit",
+                "Synology thin LUN over-allocation",
+                RuleKind::Threshold,
+                "dumbmonit_synology_volume_thin_overcommit_percent",
+            )
+        },
+        // Un LUN fin dont l'allocation approche sa taille. Un LUN épais n'a pas
+        // de série : son remplissage se lit chez l'équipement qui l'utilise
+        // (datastore, disque d'un agent), dont les règles alertent déjà.
+        Rule {
+            description: "This thin iSCSI LUN has 95% or more of its size written.".to_string(),
+            operator: Operator::Ge,
+            threshold: 95.0,
+            clear_threshold: Some(93.0),
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "synology_lun_almost_full",
+                "Synology thin LUN almost full",
+                RuleKind::Threshold,
+                "dumbmonit_synology_lun_used_percent",
             )
         },
         // 55 °C est le seuil à partir duquel les fabricants de disques mécaniques
@@ -7985,6 +8036,9 @@ pub(crate) const PRODUITES: &[&str] = &[
     "dumbmonit_synology_pool_status",
     "dumbmonit_synology_ssd_cache_status",
     "dumbmonit_synology_volume_used_percent",
+    "dumbmonit_synology_volume_effective_used_percent",
+    "dumbmonit_synology_volume_thin_overcommit_percent",
+    "dumbmonit_synology_lun_used_percent",
     "dumbmonit_synology_disk_temperature_celsius",
     "dumbmonit_synology_temperature_warning",
     "dumbmonit_synology_memory_usage_percent",
@@ -8533,6 +8587,13 @@ pub(crate) const PRODUITES: &[&str] = &[
     "dumbmonit_truenas_pool_free_bytes",
     "dumbmonit_synology_volume_used_bytes",
     "dumbmonit_synology_volume_total_bytes",
+    "dumbmonit_synology_volume_effective_used_bytes",
+    "dumbmonit_synology_volume_effective_total_bytes",
+    "dumbmonit_synology_lun_allocated_bytes",
+    "dumbmonit_synology_lun_size_bytes",
+    "dumbmonit_truenas_zvol_used_percent",
+    "dumbmonit_truenas_zvol_allocated_bytes",
+    "dumbmonit_truenas_zvol_size_bytes",
     "dumbmonit_qnap_volume_size_bytes",
     "dumbmonit_qnap_volume_free_bytes",
     "dumbmonit_unraid_array_used_percent",
@@ -8653,6 +8714,8 @@ mod tests {
             "synology_ssd_wearout",
             "synology_volume_degraded",
             "synology_volume_almost_full",
+            "synology_thin_overcommit",
+            "synology_lun_almost_full",
             "synology_temperature_high",
             "synology_memory_high",
             "synology_abb_device_overdue",
