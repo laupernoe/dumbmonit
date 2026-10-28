@@ -110,6 +110,7 @@ mod tests {
 
     const ZYXEL: &str = include_str!("fixtures/zyxel-xs1930-10.snmprec");
     const BMC: &str = include_str!("fixtures/bmc-supermicro-netsnmp.snmprec");
+    const POE: &str = include_str!("fixtures/poe-switch-synthetic.snmprec");
 
     fn run(recording: &'static str, profile: Option<&'static str>) -> (String, Vec<Sample>) {
         super::super::testutil::block_on_large_stack(async move {
@@ -164,6 +165,77 @@ mod tests {
         assert!(on_port(&samples, "if_broadcast_packets_in", "swp00").is_some());
         // dot3StatsFrameTooLongs n'est pas lue : elle compte les trames jumbo.
         assert!(samples.iter().all(|s| !s.metric.contains("too_long")));
+    }
+
+    fn on_index<'a>(samples: &'a [Sample], metric: &str, index: &str) -> Option<&'a Sample> {
+        samples.iter().find(|s| {
+            s.metric == metric && s.labels.get("index").map(String::as_str) == Some(index)
+        })
+    }
+
+    #[test]
+    fn la_facade_du_zyxel_montre_tous_les_ports_physiques() {
+        let (_, samples) = run(ZYXEL, None);
+        let ports: Vec<_> = values(&samples, "switch_port_status")
+            .into_iter()
+            .filter_map(|s| s.labels.get("ifname").map(String::as_str))
+            .collect();
+        // Les dix ports en façade, y compris swp08 et swp09 jamais montés, que
+        // if_oper_status écarte.
+        assert_eq!(ports.len(), 10, "{ports:?}");
+        assert_eq!(on_port(&samples, "switch_port_status", "swp09").unwrap().value, 2.0);
+        assert_eq!(on_port(&samples, "switch_port_status", "swp00").unwrap().value, 1.0);
+        // Les interfaces de VLAN (ifType 53) ne sont pas des ports.
+        assert!(on_index(&samples, "switch_port_status", "30001").is_none());
+        // Pas de PoE sur ce modèle : séries simplement absentes.
+        assert!(values(&samples, "poe_port_status").is_empty());
+    }
+
+    #[test]
+    fn le_commutateur_poe_livre_facade_poe_vlan_et_voisin() {
+        let (_, samples) = run(POE, Some("ethernet-switch"));
+
+        // Façade : quatre ports Ethernet, ni le VLAN (136) ni l'agrégat (161).
+        let status = values(&samples, "switch_port_status");
+        assert_eq!(status.len(), 4);
+        let ge4 = on_port(&samples, "switch_port_status", "ge4").unwrap();
+        assert_eq!(ge4.value, 2.0);
+        assert_eq!(ge4.labels["admin"], "2");
+        assert_eq!(ge4.labels["index"], "4");
+        // ge3 n'a jamais eu de lien : absent d'IF-MIB, présent en façade.
+        assert!(on_port(&samples, "if_oper_status", "ge3").is_none());
+        assert_eq!(on_port(&samples, "switch_port_status", "ge3").unwrap().value, 2.0);
+        assert_eq!(
+            on_port(&samples, "switch_port_status", "ge1").unwrap().labels["ifalias"],
+            "Hall AP"
+        );
+        assert_eq!(on_port(&samples, "if_speed_bps", "ge2").unwrap().value, 100_000_000.0);
+
+        // PoE par port, indexé groupe.port.
+        let poe1 = on_index(&samples, "poe_port_status", "1.1").unwrap();
+        assert_eq!(poe1.value, 3.0, "deliveringPower");
+        assert_eq!(poe1.labels["class"], "3");
+        assert_eq!(on_index(&samples, "poe_port_status", "1.3").unwrap().value, 4.0, "fault");
+        assert_eq!(on_index(&samples, "poe_port_status", "1.4").unwrap().labels["admin"], "2");
+        // Totaux du groupe 1.
+        assert_eq!(on_index(&samples, "poe_power_budget_watts", "1").unwrap().value, 60.0);
+        assert_eq!(on_index(&samples, "poe_power_consumed_watts", "1").unwrap().value, 7.0);
+        assert_eq!(on_index(&samples, "poe_main_status", "1").unwrap().value, 1.0);
+
+        // VLAN natif par port du pont, et la table qui ramène à l'ifIndex.
+        assert_eq!(on_index(&samples, "port_pvid", "3").unwrap().value, 20.0);
+        assert_eq!(on_index(&samples, "bridge_port_info", "3").unwrap().value, 3.0);
+
+        // Voisin LLDP sur le port local 1 (deuxième arc de l'index).
+        let lldp = values(&samples, "lldp_neighbor_info");
+        assert_eq!(lldp.len(), 1);
+        assert_eq!(lldp[0].labels["index"], "0.1.1");
+        assert_eq!(lldp[0].labels["remote_sysname"], "ap-hall");
+        assert_eq!(lldp[0].labels["remote_port"], "eth0");
+        assert_eq!(
+            on_index(&samples, "lldp_local_port_info", "1").unwrap().labels["port_id"],
+            "ge1"
+        );
     }
 
     #[test]

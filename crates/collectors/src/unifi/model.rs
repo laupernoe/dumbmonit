@@ -154,6 +154,79 @@ pub struct Device {
     pub clients: Option<f64>,
     /// Liens WAN d'une passerelle (`wan1`, `wan2`) et s'ils sont montés.
     pub wan_links: Vec<(String, bool)>,
+    /// Ports d'un commutateur ou d'une passerelle (`port_table` de l'API
+    /// classique) ; vide avec l'API d'intégration, qui ne les décrit pas.
+    pub ports: Vec<Port>,
+}
+
+/// Un port de `port_table`, avec son voisin LLDP s'il est connu.
+///
+/// Noms de champs de l'API classique non documentée par Ubiquiti, tels que les
+/// relèvent les clients communautaires (aiounifi, unpoller) : à vérifier sur
+/// un vrai contrôleur, chaque champ reste facultatif.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Port {
+    /// `port_idx` : numéro du port en façade, à partir de 1.
+    pub index: u32,
+    pub name: Option<String>,
+    /// `enable` : désactivé par l'administrateur quand faux.
+    pub enabled: Option<bool>,
+    pub up: Option<bool>,
+    /// `speed`, en Mbit/s dans l'API, ramené en bit/s.
+    pub speed_bps: Option<f64>,
+    pub full_duplex: Option<bool>,
+    /// `poe_enable` : alimentation activée sur ce port.
+    pub poe_enabled: Option<bool>,
+    /// `poe_power`, en watts (souvent écrit en texte).
+    pub poe_watts: Option<f64>,
+    pub rx_bytes: Option<f64>,
+    pub tx_bytes: Option<f64>,
+    pub rx_errors: Option<f64>,
+    pub tx_errors: Option<f64>,
+    pub uplink: bool,
+    /// `lldp_table` de l'équipement, rattachée par `local_port_idx`.
+    pub neighbor_chassis: Option<String>,
+    pub neighbor_port: Option<String>,
+}
+
+/// Les ports d'un équipement, voisins LLDP compris.
+fn classic_ports(raw: &Value) -> Vec<Port> {
+    let Some(table) = raw.get("port_table").and_then(Value::as_array) else {
+        return Vec::new();
+    };
+    let lldp = raw.get("lldp_table").and_then(Value::as_array);
+    let mut ports: Vec<Port> = table
+        .iter()
+        .filter_map(|entry| {
+            let index = entry.get("port_idx").and_then(Value::as_u64)?;
+            let index = u32::try_from(index).ok().filter(|i| *i > 0)?;
+            let neighbor = lldp.and_then(|rows| {
+                rows.iter().find(|row| {
+                    row.get("local_port_idx").and_then(Value::as_u64) == Some(u64::from(index))
+                })
+            });
+            Some(Port {
+                index,
+                name: text(entry.get("name")),
+                enabled: entry.get("enable").and_then(Value::as_bool),
+                up: entry.get("up").and_then(Value::as_bool),
+                speed_bps: number(entry.get("speed")).map(|mbps| mbps * 1_000_000.0),
+                full_duplex: entry.get("full_duplex").and_then(Value::as_bool),
+                poe_enabled: entry.get("poe_enable").and_then(Value::as_bool),
+                poe_watts: number(entry.get("poe_power")),
+                rx_bytes: number(entry.get("rx_bytes")),
+                tx_bytes: number(entry.get("tx_bytes")),
+                rx_errors: number(entry.get("rx_errors")),
+                tx_errors: number(entry.get("tx_errors")),
+                uplink: entry.get("is_uplink").and_then(Value::as_bool).unwrap_or(false),
+                neighbor_chassis: neighbor.and_then(|row| text(row.get("chassis_id"))),
+                neighbor_port: neighbor.and_then(|row| text(row.get("port_id"))),
+            })
+        })
+        .collect();
+    ports.sort_by_key(|port| port.index);
+    ports.dedup_by_key(|port| port.index);
+    ports
 }
 
 /// Enveloppe de l'API classique : `{"meta":{"rc":"ok"},"data":[…]}`.
@@ -218,6 +291,7 @@ pub fn classic_device(raw: &Value) -> Option<Device> {
         memory_percent: number(stats.and_then(|s| s.get("mem"))),
         clients: number(raw.get("num_sta")),
         wan_links,
+        ports: classic_ports(raw),
         mac,
     })
 }
@@ -354,6 +428,7 @@ impl IntegrationDevice {
             memory_percent: stats.memory_utilization_pct,
             clients: None,
             wan_links: Vec::new(),
+            ports: Vec::new(),
             model,
             mac,
         }
@@ -450,6 +525,27 @@ mod tests {
         assert_eq!(state("Garden AP"), DeviceState::Isolated);
         // Sans nom, un équipement en attente prend son adresse MAC.
         assert_eq!(state("74:83:c2:00:00:04"), DeviceState::Pending);
+    }
+
+    #[test]
+    fn les_ports_du_commutateur_et_leur_voisin_lldp_sont_lus() {
+        let switch = devices().into_iter().find(|d| d.kind == DeviceType::Switch).unwrap();
+        assert_eq!(switch.ports.len(), 4);
+        let hall = &switch.ports[1];
+        assert_eq!(hall.index, 2);
+        assert_eq!(hall.name.as_deref(), Some("Hall AP"));
+        assert_eq!(hall.up, Some(true));
+        assert_eq!(hall.speed_bps, Some(1_000_000_000.0));
+        // `poe_power` arrive en texte.
+        assert_eq!(hall.poe_watts, Some(6.42));
+        assert_eq!(hall.neighbor_chassis.as_deref(), Some("74:83:c2:00:00:03"));
+        assert_eq!(hall.neighbor_port.as_deref(), Some("eth0"));
+        assert!(switch.ports[0].uplink);
+        assert!(switch.ports[0].neighbor_chassis.is_none());
+        assert_eq!(switch.ports[3].enabled, Some(false));
+        // Sans port_table (passerelle de la fixture), aucun port.
+        let gateway = devices().into_iter().find(|d| d.kind == DeviceType::Gateway).unwrap();
+        assert!(gateway.ports.is_empty());
     }
 
     #[test]
