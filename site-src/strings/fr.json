@@ -325,10 +325,5 @@
  "badge_beta": "Bêta",
  "badge_agent": "Via l'agent",
  "fam_more_name": "Autres intégrations",
- "fam_more_blurb": "Les derniers types de surveillance, pas encore rangés dans une famille.",
- "vid_eyebrow": "En mouvement",
- "vid_h": "Une minute dans la console",
- "vid_p": "La vue d’ensemble, un moniteur, la carte, la carte en direct d’un pare-feu, une page de statut publique et l’affichage mural, sur la démo en ligne.",
- "vid_alt": "Vidéo de la console DumbMonit : la vue d’ensemble et son bandeau météo, le détail d’un moniteur, la carte de l’infrastructure, la carte en direct d’un pare-feu, une page de statut publique et l’affichage mural.",
- "vid_dl": "Télécharger la vidéo (MP4)"
+ "fam_more_blurb": "Les derniers types de surveillance, pas encore rangés dans une famille."
 }

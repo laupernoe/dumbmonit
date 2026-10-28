@@ -323,10 +323,5 @@
  "badge_beta": "Beta",
  "badge_agent": "Tramite agente",
  "fam_more_name": "Altre integrazioni",
- "fam_more_blurb": "Gli ultimi tipi di monitor, non ancora assegnati a una famiglia.",
- "vid_eyebrow": "In movimento",
- "vid_h": "Un minuto nella console",
- "vid_p": "La panoramica, un monitor, la mappa, la mappa in tempo reale di un firewall, una pagina di stato pubblica e il display a parete, sulla demo online.",
- "vid_alt": "Video della console DumbMonit: la panoramica con il suo banner meteo, il dettaglio di un monitor, la mappa dell’infrastruttura, la mappa in tempo reale di un firewall, una pagina di stato pubblica e il display a parete.",
- "vid_dl": "Scarica il video (MP4)"
+ "fam_more_blurb": "Gli ultimi tipi di monitor, non ancora assegnati a una famiglia."
 }
