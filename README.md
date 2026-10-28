@@ -13,7 +13,9 @@ One container, graphs and alerts in under a minute.
 
 **[Live demo](https://demo.dumbmonit.app)** · **[Website](https://dumbmonit.app)** · **[Documentation](https://dumbmonit.readthedocs.io/en/latest/)** · **[Roadmap](https://github.com/users/laupernoe/projects/2)**
 
-<img src="docs/assets/screenshots/overview.png" alt="DumbMonit console: fleet status, active alerts and monitors" width="900">
+<a href="docs/assets/demo/dumbmonit-demo.mp4"><img src="docs/assets/demo/dumbmonit-demo.gif" alt="DumbMonit demo: the overview, a monitor, the map, a firewall live map, a status page and the wall display" width="900"></a>
+
+<sub>Short preview. <a href="docs/assets/demo/dumbmonit-demo.mp4">Watch the full video (MP4)</a>.</sub>
 
 </div>
 
@@ -24,6 +26,8 @@ DumbMonit watches servers, network gear, hypervisors, storage, applications and 
 - **Fast to set up.** Pick a type, read what to prepare on the device, fill the few fields that matter. SNMP profiles are detected automatically.
 - **Quiet by default.** Useful rules from the start, and one notification instead of thirty when a switch goes down.
 - **Free, for good.** MIT licence, no paid edition, no feature held back.
+
+<p align="center"><img src="docs/assets/screenshots/overview.png" alt="DumbMonit console: fleet status, active alerts and monitors" width="900"></p>
 
 ## Quick start
 

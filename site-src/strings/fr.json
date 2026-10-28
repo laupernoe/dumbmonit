@@ -315,5 +315,10 @@
  "dm_toast_p": "aucune réponse depuis 2 minutes",
  "dm_chart": "Temps de réponse, dernière heure",
  "dm_ack": "Acquitter",
- "dm_acked": "Acquittée"
+ "dm_acked": "Acquittée",
+ "vid_eyebrow": "En mouvement",
+ "vid_h": "Une minute dans la console",
+ "vid_p": "La vue d’ensemble, un moniteur, la carte, la carte en direct d’un pare-feu, une page de statut publique et l’affichage mural, sur la démo en ligne.",
+ "vid_alt": "Vidéo de la console DumbMonit : la vue d’ensemble et son bandeau météo, le détail d’un moniteur, la carte de l’infrastructure, la carte en direct d’un pare-feu, une page de statut publique et l’affichage mural.",
+ "vid_dl": "Télécharger la vidéo (MP4)"
 }

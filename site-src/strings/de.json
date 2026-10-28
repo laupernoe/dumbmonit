@@ -313,5 +313,10 @@
  "dm_toast_p": "seit 2 Minuten keine Antwort",
  "dm_chart": "Antwortzeit, letzte Stunde",
  "dm_ack": "Bestätigen",
- "dm_acked": "Bestätigt"
+ "dm_acked": "Bestätigt",
+ "vid_eyebrow": "In Bewegung",
+ "vid_h": "Eine Minute in der Konsole",
+ "vid_p": "Die Übersicht, ein Monitor, die Karte, die Live-Karte einer Firewall, eine öffentliche Statusseite und die Wandanzeige, in der Live-Demo.",
+ "vid_alt": "Video der DumbMonit-Konsole: die Übersicht mit dem Wetterbanner, die Details eines Monitors, die Infrastrukturkarte, die Live-Karte einer Firewall, eine öffentliche Statusseite und die Wandanzeige.",
+ "vid_dl": "Video herunterladen (MP4)"
 }
