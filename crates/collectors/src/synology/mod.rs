@@ -161,8 +161,11 @@ pub struct SynologyCollector {
     security: Mutex<HashMap<TargetId, security::Snapshot>>,
     /// Dernière liste de LUN lue, par cible : un échec passager de l'API iSCSI ne
     /// doit pas faire réapparaître un volume « plein » le temps d'une collecte.
-    luns: Mutex<HashMap<TargetId, (std::time::Instant, Arc<Vec<iscsi::Lun>>)>>,
+    luns: Mutex<HashMap<TargetId, LunCacheEntry>>,
 }
+
+/// Une liste de LUN en cache et l'instant de sa lecture.
+type LunCacheEntry = (std::time::Instant, Arc<Vec<iscsi::Lun>>);
 
 /// Durée pendant laquelle une liste de LUN reste valable après un échec.
 const LUN_CACHE_TTL: Duration = Duration::from_secs(3600);

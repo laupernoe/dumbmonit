@@ -5341,11 +5341,12 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             setup: Setup {
                 title: "Install the agent on the machine",
                 steps: &[
-                    "In DumbMonit, save the monitor: an enrollment token (dmon_…) is shown once, with the install command ready to copy for Linux and for Windows.",
+                    "In DumbMonit, add a monitor and pick Server with the agent, then choose how the machine reaches the server: directly, or through the relay of a remote site behind a firewall.",
+                    "An enrollment token (dmon_…) is shown once, with the install command ready to copy for Linux/macOS, Windows and Docker.",
                     "Run that install command on the machine, with elevated rights (sudo on Linux and macOS, an elevated PowerShell on Windows).",
-                    "The machine shows up within a few seconds, named after its host name.",
+                    "The page waits for the first report (a few seconds), then lets you name the machine, file it in a folder and place it at a site, on the spot.",
                     "Optional, for Docker: if the agent runs under a dedicated user, add that user to the \"docker\" group and restart the agent.\nusermod -aG docker dumbmonit",
-                    "For a fleet, or to revoke a lost token, use Settings → Agents.",
+                    "For a fleet (a playbook, a machine image), tick Several machines with this command; a whole Windows domain goes through the Active Directory kit, offered on the same page.",
                 ],
                 ports: &[to_server!(
                     8080,

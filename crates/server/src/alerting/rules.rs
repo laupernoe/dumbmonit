@@ -6159,8 +6159,6 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "Veeam job ended with a warning",
                 RuleKind::Threshold,
                 "dumbmonit_veeam_job_warning",
-    "dumbmonit_veeam_job_last_success_age_seconds",
-    "dumbmonit_veeam_job_next_run_seconds",
             )
         },
         // Aucune sauvegarde réussie depuis deux jours. La série n'existe que pour un
@@ -8496,6 +8494,8 @@ pub(crate) const PRODUITES: &[&str] = &[
     "dumbmonit_unraid_container_autostart_stopped",
     "dumbmonit_veeam_job_failed",
     "dumbmonit_veeam_job_warning",
+    "dumbmonit_veeam_job_last_success_age_seconds",
+    "dumbmonit_veeam_job_next_run_seconds",
     "dumbmonit_veeam_repository_used_percent",
     "dumbmonit_veeam_license_expiry_seconds",
     "dumbmonit_windows_services_auto_stopped",

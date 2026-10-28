@@ -468,7 +468,7 @@ pub async fn create_token(
 /// Source unique des commandes affichées par l'interface (création d'un jeton)
 /// et de tout générateur de déploiement (script GPO, Ansible…) : ceux-ci lisent
 /// `GET /api/agent/install` et remplacent `{TOKEN}` dans les gabarits, ou
-/// appellent [`install_parameters`] côté serveur.
+/// appellent [`install_parameters_via`] côté serveur.
 #[derive(Debug, Clone, Serialize)]
 pub struct InstallParams {
     /// URL du port de l'interface : scripts d'installation et binaires.
@@ -593,13 +593,9 @@ impl InstallParams {
 }
 
 /// Paramètres d'installation pour une URL de base donnée (celle par laquelle
-/// les machines joignent l'interface ; à défaut, l'adresse d'écoute).
-pub async fn install_parameters(state: &AppState, base_url: Option<&str>) -> InstallParams {
-    install_parameters_via(state, base_url, None).await
-}
-
-/// Les mêmes, à travers un agent relais : scripts, binaires et canal chiffré
-/// passent par sa passerelle. L'empreinte épinglée reste celle du serveur —
+/// les machines joignent l'interface ; à défaut, l'adresse d'écoute), en direct
+/// ou à travers un agent relais : scripts, binaires et canal chiffré passent
+/// alors par sa passerelle. L'empreinte épinglée reste celle du serveur —
 /// la session TLS va jusqu'à lui.
 pub async fn install_parameters_via(
     state: &AppState,

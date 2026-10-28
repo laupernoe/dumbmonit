@@ -456,7 +456,7 @@ mod tests {
 
     #[test]
     fn the_kit_keeps_the_encrypted_agent_channel_of_the_install_command() {
-        // La commande vient de `ingest::install_parameters` : canal chiffré et
+        // La commande vient de `ingest::install_parameters_via` : canal chiffré et
         // empreinte épinglée passent tels quels dans le script de la tâche.
         let pin = "a".repeat(64);
         let command = format!(

@@ -56,6 +56,7 @@ struct Family {
 /// Les familles d'échéances que les collecteurs produisent aujourd'hui.
 /// OVH n'en publie pas encore (à faire : `serviceInfos.expiration`).
 const FAMILIES: &[Family] = &[
+    Family { metric: "domain_expiry_days", unit: Unit::Days, kind: "domain", what: &[] },
     Family {
         metric: "probe_ssl_cert_expiry_days",
         unit: Unit::Days,

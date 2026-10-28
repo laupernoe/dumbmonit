@@ -198,8 +198,9 @@ fn node_target(node: &str) -> Option<TargetId> {
 /// Lit les mesures de ports. Une panne de VictoriaMetrics laisse les liens
 /// sans trafic : le reste de la carte reste exact.
 pub async fn read(state: &AppState, known: &[TargetId]) -> TrafficData {
+    let (rates_q, speed_q) = (rates_query(), speed_query());
     let (rates, speeds) =
-        tokio::join!(state.victoria.query(&rates_query()), state.victoria.query(&speed_query()));
+        tokio::join!(state.victoria.query(&rates_q), state.victoria.query(&speed_q));
     match (rates, speeds) {
         (Ok(rates), Ok(speeds)) => TrafficData::parse(&rates, &speeds, known),
         (rates, speeds) => {
@@ -272,19 +273,11 @@ pub async fn port_traffic(
     }
     let end_ms = chrono::Utc::now().timestamp_millis();
     let start_ms = end_ms - SPARK_SECS * 1000;
+    let in_q = spark_query("if_octets_in", id, &ports);
+    let out_q = spark_query("if_octets_out", id, &ports);
     let (inbound, outbound) = tokio::join!(
-        state.victoria.query_range(
-            &spark_query("if_octets_in", id, &ports),
-            start_ms,
-            end_ms,
-            SPARK_STEP
-        ),
-        state.victoria.query_range(
-            &spark_query("if_octets_out", id, &ports),
-            start_ms,
-            end_ms,
-            SPARK_STEP
-        ),
+        state.victoria.query_range(&in_q, start_ms, end_ms, SPARK_STEP),
+        state.victoria.query_range(&out_q, start_ms, end_ms, SPARK_STEP),
     );
     let unavailable = |error: anyhow::Error| {
         warn!(%error, "trafic des ports illisible");
