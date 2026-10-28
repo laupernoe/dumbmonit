@@ -151,11 +151,8 @@ impl TrafficData {
         }
         let bps_in: f64 = found.iter().map(|p| p.bps_in).sum();
         let bps_out: f64 = found.iter().map(|p| p.bps_out).sum();
-        let speed_bps = found
-            .iter()
-            .map(|p| p.speed_bps)
-            .sum::<Option<f64>>()
-            .filter(|speed| *speed > 0.0);
+        let speed_bps =
+            found.iter().map(|p| p.speed_bps).sum::<Option<f64>>().filter(|speed| *speed > 0.0);
         let ratio = |bps: f64| speed_bps.map(|speed| (bps / speed).clamp(0.0, 1.0));
         Some(EdgeTraffic {
             measured_on: node.to_string(),
@@ -356,10 +353,8 @@ mod tests {
             series("if_octets_in", 99, "Gi1", 1.0),
             series("if_octets_out", 2, "Gi1", f64::NAN),
         ];
-        let speeds = [
-            series("if_speed_bps", 1, "Gi24", 1e9),
-            series("if_speed_bps", 1, "Gi23", 1e9),
-        ];
+        let speeds =
+            [series("if_speed_bps", 1, "Gi24", 1e9), series("if_speed_bps", 1, "Gi23", 1e9)];
         TrafficData::parse(&rates, &speeds, &[1, 2])
     }
 

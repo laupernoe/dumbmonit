@@ -556,10 +556,25 @@ pub async fn mark_all_known(pool: &SqlitePool, schedule_id: Option<i64>) -> Resu
 /// Un élément encore inconnu, pour la mesure qui porte l'alerte.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Unknown {
-    Device { schedule_id: i64, cidr: String, ident: String },
-    Port { schedule_id: i64, cidr: String, ident: String, port: u16, protocol: String },
+    Device {
+        schedule_id: i64,
+        cidr: String,
+        ident: String,
+    },
+    Port {
+        schedule_id: i64,
+        cidr: String,
+        ident: String,
+        port: u16,
+        protocol: String,
+    },
     /// Appareil nouveau sur l'IP d'un appareil connu sous une autre MAC.
-    MacChange { schedule_id: i64, cidr: String, ident: String, previous_mac: String },
+    MacChange {
+        schedule_id: i64,
+        cidr: String,
+        ident: String,
+        previous_mac: String,
+    },
 }
 
 /// Appareils inconnus, et ports inconnus des appareils déjà connus (ceux d'un

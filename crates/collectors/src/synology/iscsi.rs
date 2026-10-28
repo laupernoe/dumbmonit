@@ -680,18 +680,13 @@ mod tests {
         ];
         let samples = volume_samples(&volumes, Some(&luns), 1000);
         let find = |metric: &str, id: &str| {
-            samples
-                .iter()
-                .find(|s| s.metric == metric && s.labels["volume"] == id)
-                .map(|s| s.value)
+            samples.iter().find(|s| s.metric == metric && s.labels["volume"] == id).map(|s| s.value)
         };
         let percent = find("synology_volume_effective_used_percent", "volume_1").unwrap();
         // 12 To, LUN épais de 9 Tio (9,9 To), 10,4 To utilisés : 0,5 To sur 2,1 To.
         assert!(percent > 20.0 && percent < 30.0, "le LUN épais n'est pas compté : {percent}");
-        let sample = samples
-            .iter()
-            .find(|s| s.metric == "synology_volume_effective_used_percent")
-            .unwrap();
+        let sample =
+            samples.iter().find(|s| s.metric == "synology_volume_effective_used_percent").unwrap();
         for key in ["volume", "name", "fs_type", "raid_type"] {
             assert!(sample.labels.contains_key(key), "étiquette {key} manquante");
         }
@@ -729,12 +724,9 @@ mod tests {
         assert_eq!(info.labels["provisioning"], "thick");
         assert!(!info.labels.contains_key("volume"), "pas d'étiquette `volume` sur un LUN");
         // Un LUN épais n'a ni allocation ni remplissage : le NAS ne voit pas dedans.
-        assert!(
-            !samples
-                .iter()
-                .any(|s| s.metric == "synology_lun_used_percent"
-                    && s.labels["name"] == "LUN-vmfs-prod")
-        );
+        assert!(!samples.iter().any(
+            |s| s.metric == "synology_lun_used_percent" && s.labels["name"] == "LUN-vmfs-prod"
+        ));
         let thin = samples
             .iter()
             .find(|s| s.metric == "synology_lun_used_percent" && s.labels["name"] == "LUN-backup")

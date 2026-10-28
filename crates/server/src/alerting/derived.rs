@@ -216,10 +216,9 @@ pub fn forecast_series(rule: &Rule, forecasts: &[SeriesForecast], now: DateTime<
             ),
             None => format!("at {}{unit}", short(f.current)),
         };
-        derived.annotations.insert(
-            fingerprint,
-            Annotation { score: None, detail: Some(detail), armed: true },
-        );
+        derived
+            .annotations
+            .insert(fingerprint, Annotation { score: None, detail: Some(detail), armed: true });
         derived.series.push(SeriesPoint {
             labels: item.labels.clone(),
             value: (days * 10.0).round() / 10.0,
@@ -283,11 +282,8 @@ pub async fn drift_rule(
         } else {
             "7-day median".to_string()
         };
-        let detail = format!(
-            "now {}, usual {} ({reference})",
-            short(value),
-            short(verdict.baseline)
-        );
+        let detail =
+            format!("now {}, usual {} ({reference})", short(value), short(verdict.baseline));
         derived.annotations.insert(
             fingerprint,
             Annotation { score: Some(verdict.score), detail: Some(detail), armed: verdict.armed },

@@ -158,13 +158,7 @@ mod tests {
     /// d'identité.
     fn is_session_only(path: &str) -> bool {
         let Some(rest) = path.strip_prefix("/api") else { return false };
-        const BY_HANDLER: &[&str] = &[
-            "/backup",
-            "/scim",
-            "/logs",
-            "/system/storage",
-            "/webpush",
-        ];
+        const BY_HANDLER: &[&str] = &["/backup", "/scim", "/logs", "/system/storage", "/webpush"];
         TOKEN_DENIED.iter().chain(BY_HANDLER.iter()).any(|prefix| {
             rest == *prefix || rest.strip_prefix(prefix).is_some_and(|r| r.starts_with('/'))
         })

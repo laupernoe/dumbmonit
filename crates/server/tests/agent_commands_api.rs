@@ -313,7 +313,8 @@ async fn a_bulk_policy_change_applies_to_every_named_container() {
     let reply =
         app.put(&bulk, json!({ "containers": ["web"], "auto_update": false }), Some(&admin)).await;
     assert_eq!(reply.body["results"][0]["policy"]["auto_update"], false);
-    let reply = app.put(&bulk, json!({ "containers": [], "auto_update": true }), Some(&admin)).await;
+    let reply =
+        app.put(&bulk, json!({ "containers": [], "auto_update": true }), Some(&admin)).await;
     assert_eq!(reply.status, StatusCode::BAD_REQUEST);
     let reply = app.put(&bulk, json!({ "containers": ["web"], "auto_update": true }), None).await;
     assert!(

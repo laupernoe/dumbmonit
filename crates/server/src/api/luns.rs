@@ -505,8 +505,7 @@ pub fn build_view(series: &[InstantSeries], prefix: &str) -> LunsView {
     luns.sort_by(|a, b| a.host_volume.cmp(&b.host_volume).then_with(|| a.name.cmp(&b.name)));
     view.luns = luns;
     // Seuls les volumes qui portent un LUN : les autres sont déjà dans le panneau.
-    view.volumes =
-        volumes.into_values().filter(|v| v.lun_count.is_some_and(|n| n > 0.0)).collect();
+    view.volumes = volumes.into_values().filter(|v| v.lun_count.is_some_and(|n| n > 0.0)).collect();
     view
 }
 

@@ -147,8 +147,7 @@ pub fn aggregate(
         }
     };
     for one in series {
-        let Some(target) = one.metric.get("target").and_then(|t| t.parse::<TargetId>().ok())
-        else {
+        let Some(target) = one.metric.get("target").and_then(|t| t.parse::<TargetId>().ok()) else {
             continue;
         };
         if !keep(target) {
