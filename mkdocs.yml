@@ -7,7 +7,6 @@ edit_uri: edit/main/docs/
 docs_dir: docs
 exclude_docs: |
   requirements.txt
-  assets/demo/
 
 # One language per build, chosen by READTHEDOCS_LANGUAGE (English by default): see
 # hooks/rtd_language.py. site_url, theme.language, the search language, the language

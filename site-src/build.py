@@ -489,12 +489,6 @@ def render_roadmap(ctx, roadmap):
     return "\n".join(out)
 
 
-# The demo video lives once in the repository, in docs/assets/demo/ (the README shows it from
-# there); the build copies what the home page plays into website/assets/demo/.
-DEMO_MEDIA = HERE.parent / "docs" / "assets" / "demo"
-DEMO_FILES = ("dumbmonit-demo.webm", "dumbmonit-demo.mp4", "demo-poster.jpg")
-
-
 def fragments(ctx, page, data):
     """The @@NAME@@ blocks a page template may contain."""
     t, link = ctx["t"], ctx["link"]
@@ -772,8 +766,6 @@ def main():
     for f in data["families"]:
         for k in (f"fam_{f['id']}_name", f"fam_{f['id']}_blurb"):
             assert k in base, f"missing string {k}"
-    missing = [n for n in DEMO_FILES if not (DEMO_MEDIA / n).exists()]
-    assert not missing, f"docs/assets/demo/: missing {missing}"
     pages = build_pages(data)
     files = {}
     for page in pages:
@@ -789,9 +781,6 @@ def main():
     if OUT.exists():
         shutil.rmtree(OUT)
     shutil.copytree(HERE / "static", OUT)
-    (OUT / "assets" / "demo").mkdir(parents=True, exist_ok=True)
-    for name in DEMO_FILES:
-        shutil.copy2(DEMO_MEDIA / name, OUT / "assets" / "demo" / name)
     for p, c in files.items():
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(c)
