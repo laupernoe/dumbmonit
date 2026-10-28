@@ -94,7 +94,53 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         msp_settings: crate::auth::settings::get::<Value>(pool, crate::auth::clients::SETTINGS_KEY)
             .await?,
         client_assignments: client_assignments(pool, &refs).await?,
+        netscan_schedules: netscan_schedules(pool, &refs).await?,
     })
+}
+
+/// Scans planifiés et leurs appareils connus ou ignorés.
+async fn netscan_schedules(
+    pool: &SqlitePool,
+    refs: &HashMap<i64, String>,
+) -> Result<Vec<BundleNetscanSchedule>> {
+    use crate::netinventory::store;
+    let schedules = store::list_schedules(pool).await?;
+    let devices = store::inventory(pool, None).await?;
+    let mut out = Vec::new();
+    for schedule in schedules {
+        // Un agent absent du lot : le scan ne peut pas lui être rattaché, et le
+        // restaurer au serveur changerait son périmètre. Il n'est pas exporté.
+        let agent = match schedule.agent_id {
+            Some(id) => match refs.get(&id) {
+                Some(reference) => Some(reference.clone()),
+                None => continue,
+            },
+            None => None,
+        };
+        out.push(BundleNetscanSchedule {
+            name: schedule.name,
+            cidr: schedule.cidr,
+            agent,
+            interval_secs: schedule.interval_secs,
+            depth: store::depth_name(schedule.depth).to_string(),
+            enabled: schedule.enabled,
+            devices: devices
+                .iter()
+                .filter(|d| d.schedule_id == schedule.id && d.known)
+                .map(|d| BundleNetscanDevice {
+                    ident: d.ident.clone(),
+                    mac: d.mac.clone(),
+                    ip: d.ip.clone(),
+                    hostname: d.hostname.clone(),
+                    vendor: d.vendor.clone(),
+                    ignored: d.ignored,
+                    first_seen: d.first_seen.clone(),
+                    last_seen: d.last_seen.clone(),
+                })
+                .collect(),
+        });
+    }
+    Ok(out)
 }
 
 async fn clients(pool: &SqlitePool) -> Result<Vec<BundleClient>> {
@@ -1010,6 +1056,10 @@ pub fn sections() -> BTreeMap<&'static str, &'static str> {
         ),
         ("instance", "Instance name, language, time zone and setup state."),
         ("clients", "MSP clients, their members, branding, and what belongs to each."),
+        (
+            "netscan_schedules",
+            "Scheduled network scans, with the devices you marked as known or ignored.",
+        ),
     ])
 }
 

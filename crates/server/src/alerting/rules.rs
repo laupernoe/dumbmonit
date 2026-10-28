@@ -7505,6 +7505,24 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_netscan_unknown_port",
             )
         },
+        Rule {
+            description: "A device appeared on the address of a known device, under another MAC \
+                          address: spoofing, or replaced hardware. It stays reported until it \
+                          is marked as known or ignored."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(60),
+            severity: Severity::Warning,
+            repeat_interval: None,
+            enabled: false,
+            ..base(
+                RULE_NETSCAN_MAC_CHANGE,
+                "MAC address changed for an IP",
+                RuleKind::Threshold,
+                "dumbmonit_netscan_mac_change",
+            )
+        },
     ];
     // Intégrations en nuage, un fichier par produit (`rules/cloud/`).
     rules.extend(cloud::rules());
@@ -7929,6 +7947,7 @@ fn apps_rules() -> Vec<Rule> {
 /// `uid` des règles d'inventaire du réseau, livrées désactivées.
 pub const RULE_NETSCAN_NEW_DEVICE: &str = "netscan_new_device";
 pub const RULE_NETSCAN_NEW_PORT: &str = "netscan_new_port";
+pub const RULE_NETSCAN_MAC_CHANGE: &str = "netscan_mac_change";
 
 /// Construit une requête prédictive « ce système de fichiers sera plein dans moins
 /// de `days` jours », pour l'assistant de création de règle de l'interface.
@@ -8454,6 +8473,7 @@ pub(crate) const PRODUITES: &[&str] = &[
     // Inventaire du réseau (`netinventory/mod.rs`).
     "dumbmonit_netscan_unknown_device",
     "dumbmonit_netscan_unknown_port",
+    "dumbmonit_netscan_mac_change",
     "dumbmonit_duplicati_backup_last_success_age_seconds",
     "dumbmonit_duplicati_backup_scheduled",
     "dumbmonit_kopia_source_last_snapshot_age_seconds",
@@ -9115,7 +9135,9 @@ mod tests {
     fn les_regles_livrees_sont_actives_et_sans_canal_impose() {
         for rule in builtin_rules() {
             // Les règles d'inventaire du réseau sont les seules livrées éteintes.
-            let off = rule.uid == RULE_NETSCAN_NEW_DEVICE || rule.uid == RULE_NETSCAN_NEW_PORT;
+            let off = rule.uid == RULE_NETSCAN_NEW_DEVICE
+                || rule.uid == RULE_NETSCAN_NEW_PORT
+                || rule.uid == RULE_NETSCAN_MAC_CHANGE;
             assert_eq!(rule.enabled, !off, "{} enabled flag", rule.uid);
             assert!(rule.builtin);
             assert!(rule.channels.is_empty(), "{} must not impose any channel", rule.uid);

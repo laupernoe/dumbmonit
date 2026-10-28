@@ -11,7 +11,11 @@
 //! - tant qu'un élément est inconnu, une mesure par élément est publiée
 //!   (`dumbmonit_netscan_unknown_device`, `dumbmonit_netscan_unknown_port`) : ce
 //!   sont elles que lisent les règles d'alerte livrées, désactivées par défaut.
-//!   Marquer l'élément connu arrête la mesure, et l'alerte se résout.
+//!   Marquer l'élément connu (ou l'ignorer) arrête la mesure, et l'alerte se
+//!   résout ;
+//! - un appareil nouveau qui prend l'IP d'un appareil connu sous une autre MAC
+//!   publie en plus `dumbmonit_netscan_mac_change` (usurpation ARP ou matériel
+//!   remplacé), jusqu'à ce qu'il soit marqué connu ou ignoré.
 //!
 //! Pas de chevauchement : un sous-réseau n'a jamais deux balayages en même
 //! temps, et le registre de découverte n'en tient qu'un par exécutant.
@@ -46,6 +50,8 @@ pub const MAX_SCHEDULES: i64 = 50;
 pub const METRIC_UNKNOWN_DEVICE: &str = "netscan_unknown_device";
 /// Mesure d'un port inconnu sur un appareil connu.
 pub const METRIC_UNKNOWN_PORT: &str = "netscan_unknown_port";
+/// Mesure d'un changement de MAC pour une IP (usurpation ou remplacement).
+pub const METRIC_MAC_CHANGE: &str = "netscan_mac_change";
 
 const TIME_FORMAT: &str = "%Y-%m-%dT%H:%M:%S";
 
@@ -143,6 +149,7 @@ async fn settle(state: &AppState, runs: &mut HashMap<i64, String>) {
                                 initialized = applied.initialized,
                                 new_devices = applied.new_devices,
                                 new_ports = applied.new_ports,
+                                mac_changes = applied.mac_changes,
                                 "scheduled network scan stored"
                             );
                             ("done", None)
@@ -185,6 +192,13 @@ pub fn unknown_samples(items: &[Unknown], ts_ms: i64) -> Vec<Sample> {
                     .with_label("device", ident.as_str())
                     .with_label("port", port.to_string())
                     .with_label("protocol", protocol.as_str())
+            }
+            Unknown::MacChange { schedule_id, cidr, ident, previous_mac } => {
+                Sample::new(METRIC_MAC_CHANGE, 1.0, MetricKind::Gauge, ts_ms)
+                    .with_label("scan", schedule_id.to_string())
+                    .with_label("subnet", cidr.as_str())
+                    .with_label("device", ident.as_str())
+                    .with_label("previous_mac", previous_mac.as_str())
             }
         })
         .collect()
@@ -263,6 +277,20 @@ mod tests {
         assert_eq!(samples[1].labels.get("port").map(String::as_str), Some("3389"));
         // Ni IP ni nom d'hôte : ils changent sans que l'élément soit nouveau.
         assert!(samples.iter().all(|s| !s.labels.contains_key("ip")));
+    }
+
+    #[test]
+    fn un_changement_de_mac_publie_sa_mesure() {
+        let items = [Unknown::MacChange {
+            schedule_id: 4,
+            cidr: "10.0.0.0/24".into(),
+            ident: "mac:bb".into(),
+            previous_mac: "aa".into(),
+        }];
+        let samples = unknown_samples(&items, 1_000);
+        assert_eq!(samples[0].metric, METRIC_MAC_CHANGE);
+        assert_eq!(samples[0].labels.get("previous_mac").map(String::as_str), Some("aa"));
+        assert!(!samples[0].labels.contains_key("ip"));
     }
 
     #[test]
