@@ -113,17 +113,37 @@ pub const FAMILIES: &[Family] = &[
         "dumbmonit_truenas_pool_size_bytes - dumbmonit_truenas_pool_free_bytes",
         "dumbmonit_truenas_pool_size_bytes",
     ),
+    // Zvols fins (sans `refreservation`) : ce qui est écrit, sur leur taille.
+    bytes(
+        "truenas_zvol",
+        "TrueNAS thin zvols",
+        "dumbmonit_truenas_zvol_used_percent",
+        "dumbmonit_truenas_zvol_allocated_bytes",
+        "dumbmonit_truenas_zvol_size_bytes",
+    ),
     pct(
         "truenas_dataset_quota",
         "TrueNAS dataset quotas",
         "dumbmonit_truenas_dataset_quota_used_percent",
     ),
+    // L'occupation *effective* : sans les réservations des LUN iSCSI épais, qui
+    // remplissent un volume par construction (`collectors/synology/iscsi.rs`).
+    // Sans LUN, elle vaut exactement l'occupation brute.
     bytes(
         "synology_volume",
         "Synology volumes",
-        "dumbmonit_synology_volume_used_percent",
-        "dumbmonit_synology_volume_used_bytes",
-        "dumbmonit_synology_volume_total_bytes",
+        "dumbmonit_synology_volume_effective_used_percent",
+        "dumbmonit_synology_volume_effective_used_bytes",
+        "dumbmonit_synology_volume_effective_total_bytes",
+    ),
+    // LUN fins : leur allocation se remplit ; un LUN épais n'a pas de série ici,
+    // le NAS ne voit pas l'intérieur.
+    bytes(
+        "synology_lun",
+        "Synology thin LUNs",
+        "dumbmonit_synology_lun_used_percent",
+        "dumbmonit_synology_lun_allocated_bytes",
+        "dumbmonit_synology_lun_size_bytes",
     ),
     bytes(
         "qnap_volume",

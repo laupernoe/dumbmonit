@@ -35,6 +35,7 @@ mod label_monitors;
 mod ldap;
 pub mod locations;
 mod logs;
+mod luns;
 mod mcp;
 mod metrics;
 mod monitor_imports;
@@ -255,6 +256,8 @@ pub fn router(state: AppState) -> Router {
         .merge(synology::routes())
         // Prévisions de remplissage d'un équipement (`forecasts.rs`).
         .merge(forecasts::routes())
+        // LUN iSCSI et zvols d'un NAS, et leur consommateur (`luns.rs`).
+        .merge(luns::routes())
         // Agents relais proposés par le formulaire d'équipement (`relay.rs`).
         .merge(relay::ui_routes())
         // Carte de topologie, construite à partir des liens connus (`topology.rs`).

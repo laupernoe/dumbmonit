@@ -270,28 +270,36 @@ fn memory_samples(memory: &MemoryUsage, ts_ms: i64) -> Vec<Sample> {
     samples
 }
 
+/// Étiquettes d'un volume, partagées par toutes ses séries — celles de ce module
+/// et les grandeurs effectives de [`super::iscsi`], que les règles rapprochent.
+pub(super) fn volume_labels(volume: &Volume) -> [(&'static str, String); 4] {
+    // DSM n'a pas de nom d'affichage garanti : `desc` est une description libre
+    // le plus souvent vide, et c'est le point de montage que l'utilisateur
+    // reconnaît. On retombe sur l'identifiant en dernier recours.
+    let name = [clean(&volume.desc), clean(&volume.vol_path)]
+        .into_iter()
+        .find(|candidat| !candidat.is_empty())
+        .unwrap_or_else(|| volume.id.clone());
+    [
+        ("volume", volume.id.clone()),
+        ("name", name),
+        ("fs_type", clean(&volume.fs_type)),
+        ("raid_type", clean(&volume.device_type)),
+    ]
+}
+
 /// Volumes de `SYNO.Storage.CGI.Storage&method=load_info`.
 pub fn volume_samples(volumes: &[Volume], ts_ms: i64) -> Vec<Sample> {
     let mut samples = Vec::new();
 
     for volume in volumes {
-        // DSM n'a pas de nom d'affichage garanti : `desc` est une description libre
-        // le plus souvent vide, et c'est le point de montage que l'utilisateur
-        // reconnaît. On retombe sur l'identifiant en dernier recours.
-        let name = [clean(&volume.desc), clean(&volume.vol_path)]
-            .into_iter()
-            .find(|candidat| !candidat.is_empty())
-            .unwrap_or_else(|| volume.id.clone());
-        let fs_type = clean(&volume.fs_type);
-        let raid_type = clean(&volume.device_type);
+        let labels = volume_labels(volume);
         let mut push = |sample: Sample| {
-            samples.push(
-                sample
-                    .with_label("volume", volume.id.clone())
-                    .with_label("name", name.clone())
-                    .with_label("fs_type", fs_type.clone())
-                    .with_label("raid_type", raid_type.clone()),
-            );
+            let mut sample = sample;
+            for (key, value) in &labels {
+                sample = sample.with_label(*key, value.clone());
+            }
+            samples.push(sample);
         };
 
         // L'état est publié même quand les tailles manquent : un volume écroulé

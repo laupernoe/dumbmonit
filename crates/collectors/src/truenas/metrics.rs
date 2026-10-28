@@ -340,6 +340,49 @@ pub fn dataset_views(datasets: &[Dataset], tasks: &[SnapshotTask]) -> Vec<Datase
     views
 }
 
+/// Zvols : l'équivalent ZFS d'un LUN, souvent exporté en iSCSI.
+///
+/// Un zvol **épais** porte une `refreservation` (sa taille, plus les
+/// métadonnées) ; un zvol **fin** (« sparse ») n'en a pas et n'occupe que ce qui
+/// y est écrit (`referenced`). Le taux d'occupation d'un pool, lui, est lu sur
+/// l'allocation physique (`allocated`), qui ne compte pas les réservations :
+/// un zvol épais ne fait donc pas paraître son pool plein, et il n'y a pas
+/// d'occupation « effective » à calculer ici, contrairement à DSM.
+///
+/// Mêmes étiquettes que les LUN Synology (`lun`, `name`, `host_volume` = le
+/// pool) : le serveur les lit avec le même code.
+pub fn zvol_samples(datasets: &[Dataset], ts_ms: i64) -> Vec<Sample> {
+    let zvols: Vec<&Dataset> = datasets
+        .iter()
+        .filter(|d| d.kind.as_deref().is_some_and(|k| k.eq_ignore_ascii_case("VOLUME")))
+        .collect();
+    let mut samples = vec![gauge("truenas_zvol_count", zvols.len() as f64, &[], ts_ms)];
+    for zvol in zvols.into_iter().take(MAX_SERIES_PER_FAMILY) {
+        let Some(name) = zvol.name.clone().or_else(|| zvol.id.clone()) else { continue };
+        let pool = zvol.pool.clone().unwrap_or_default();
+        let labels =
+            [("lun", name.as_str()), ("name", name.as_str()), ("host_volume", pool.as_str())];
+        let size = zvol.volsize.as_ref().and_then(|p| p.number());
+        let reservation =
+            zvol.refreservation.as_ref().and_then(|p| p.number()).filter(|r| *r > 0.0);
+        let written = zvol.referenced.as_ref().and_then(|p| p.number());
+        let thin = reservation.is_none();
+        let provisioning = if thin { "thin" } else { "thick" };
+        let mut info = labels.to_vec();
+        info.push(("provisioning", provisioning));
+        samples.push(gauge("truenas_zvol_info", 1.0, &info, ts_ms));
+        push(&mut samples, "truenas_zvol_size_bytes", size, &labels, ts_ms);
+        let reserved = if thin { written } else { reservation };
+        push(&mut samples, "truenas_zvol_reserved_bytes", reserved, &labels, ts_ms);
+        if thin {
+            push(&mut samples, "truenas_zvol_allocated_bytes", written, &labels, ts_ms);
+            let used = percent(written, size).map(|p| p.min(100.0));
+            push(&mut samples, "truenas_zvol_used_percent", used, &labels, ts_ms);
+        }
+    }
+    samples
+}
+
 pub fn dataset_samples(datasets: &[DatasetView], now_s: i64, ts_ms: i64) -> Vec<Sample> {
     let mut samples = Vec::new();
     for dataset in datasets {
@@ -644,6 +687,37 @@ pub fn service_samples(services: &[ServiceView], ts_ms: i64) -> Vec<Sample> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn un_zvol_fin_se_remplit_et_un_zvol_epais_reserve() {
+        let datasets: Vec<Dataset> = serde_json::from_str(
+            r#"[
+              {"id":"tank/media","type":"FILESYSTEM","name":"tank/media","pool":"tank"},
+              {"id":"tank/thin","type":"VOLUME","name":"tank/thin","pool":"tank",
+               "volsize":{"parsed":1000},"refreservation":{"parsed":null},
+               "referenced":{"parsed":250}},
+              {"id":"tank/thick","type":"VOLUME","name":"tank/thick","pool":"tank",
+               "volsize":{"parsed":1000},"refreservation":{"parsed":1032},
+               "referenced":{"parsed":100}}
+            ]"#,
+        )
+        .unwrap();
+        let samples = zvol_samples(&datasets, 1000);
+        let value = |metric: &str, name: &str| {
+            samples.iter().find(|s| s.metric == metric && s.labels["name"] == name).map(|s| s.value)
+        };
+        assert_eq!(samples.iter().find(|s| s.metric == "truenas_zvol_count").unwrap().value, 2.0);
+        assert_eq!(value("truenas_zvol_used_percent", "tank/thin"), Some(25.0));
+        assert_eq!(value("truenas_zvol_reserved_bytes", "tank/thin"), Some(250.0));
+        assert_eq!(value("truenas_zvol_reserved_bytes", "tank/thick"), Some(1032.0));
+        assert_eq!(value("truenas_zvol_used_percent", "tank/thick"), None, "opaque vu du NAS");
+        let info = samples
+            .iter()
+            .find(|s| s.metric == "truenas_zvol_info" && s.labels["name"] == "tank/thick")
+            .unwrap();
+        assert_eq!(info.labels["provisioning"], "thick");
+        assert_eq!(info.labels["host_volume"], "tank");
+    }
 
     #[test]
     fn le_html_des_alertes_est_retire() {

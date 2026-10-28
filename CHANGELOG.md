@@ -81,6 +81,16 @@ All notable changes to this project are documented here. The format follows
   usual, with a minimum value, a minimum gap and a minimum duration so that
   small or short-lived wobbles stay quiet. New rule types `forecast` and `drift`
   are available to custom rules.
+- **iSCSI-aware storage.** A Synology volume that hosts a thick-provisioned
+  iSCSI LUN no longer alerts as "almost full": the volume fill alert and the
+  fill-up forecast now use the effective usage (without thick reservations),
+  identical to the raw usage when there is no LUN. New built-in rules warn
+  about thin LUN over-allocation (more space promised than the volume has
+  free) and thin LUNs almost full. The Synology panel shows the volume as
+  reserved space plus data and lists each LUN with its type, size, real usage
+  and the monitor that uses it — matched by name and size, or linked by hand
+  (`PUT /api/targets/{id}/luns/{lun}/consumer`, saved in backups). TrueNAS
+  zvols are listed the same way. `GET /api/targets/{id}/luns` returns it all.
 
 ### Fixed
 
