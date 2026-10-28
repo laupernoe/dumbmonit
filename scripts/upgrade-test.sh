@@ -294,9 +294,11 @@ curl -fs "http://127.0.0.1:$PORT/api/public/status/upgrade-test" >/dev/null \
   && check ok "page de statut publique toujours servie" \
   || check KO "page de statut publique /api/public/status/upgrade-test indisponible"
 
-# L'historique : sur la même fenêtre, les points d'avant sont là, à l'identique.
+# L'historique : sur la même fenêtre, les points d'avant sont tous là (le
+# serveur d'avant peut encore en écrire un entre la mesure et son arrêt :
+# un point de plus n'est pas une perte), et le plus ancien n'a pas bougé.
 read -r AFTER_COUNT AFTER_OLDEST < <(history "$W_START" "$W_END" || echo "0 0")
-if [ "${AFTER_COUNT:-0}" -eq "$BEFORE_COUNT" ] \
+if [ "${AFTER_COUNT:-0}" -ge "$BEFORE_COUNT" ] \
    && python3 -I -c 'import sys; sys.exit(0 if float(sys.argv[1]) == float(sys.argv[2]) else 1)' "$AFTER_OLDEST" "$BEFORE_OLDEST"; then
   check ok "historique VictoriaMetrics conservé ($BEFORE_COUNT -> $AFTER_COUNT échantillons, plus ancien $BEFORE_OLDEST -> $AFTER_OLDEST)"
 else
