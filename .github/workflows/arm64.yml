@@ -1,0 +1,138 @@
+name: arm64 images
+
+# Adds linux/arm64 to the images of a stable release, built on a native ARM
+# runner (no QEMU), after release.yml has pushed the amd64 images:
+#   - automatically when the Release workflow of a tag vX.Y.Z completes;
+#   - by hand for an existing tag: push a branch named `arm64/vX.Y.Z`.
+# The arm64 image is pushed by digest, then each tag of the release
+# (:X.Y.Z, :X.Y, :X, :latest) becomes an index holding both platforms.
+# Pre-releases and :edge stay amd64 only.
+
+on:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+  push:
+    branches: ["arm64/v*"]
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/laupernoe/dumbmonit
+  AGENT_IMAGE: ghcr.io/laupernoe/dumbmonit-agent
+
+concurrency:
+  group: arm64-${{ github.event.workflow_run.head_branch || github.ref_name }}
+
+jobs:
+  arm64:
+    name: Build arm64 and merge the release tags
+    if: >-
+      github.event_name == 'push' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       startsWith(github.event.workflow_run.head_branch, 'v') &&
+       !contains(github.event.workflow_run.head_branch, '-'))
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 240
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Which tag
+        id: tag
+        env:
+          RUN_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          set -eu
+          if [ "$GITHUB_EVENT_NAME" = push ]; then tag="${GITHUB_REF_NAME#arm64/}"; else tag="$RUN_BRANCH"; fi
+          case "$tag" in v[0-9]*.[0-9]*.[0-9]*) ;; *) echo "::error::not a release tag: $tag"; exit 1 ;; esac
+          case "$tag" in *-*) echo "::error::pre-releases stay amd64 only: $tag"; exit 1 ;; esac
+          v="${tag#v}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "minor=${v%.*}" >> "$GITHUB_OUTPUT"
+          echo "major=${v%%.*}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ steps.tag.outputs.tag }}
+
+      - name: Commit date
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The amd64 images of the release must exist before the tags can be
+      # merged (a hand-started run may begin while release.yml still runs).
+      - name: Wait for the amd64 images
+        run: |
+          set -eu
+          for i in $(seq 1 120); do
+            if docker buildx imagetools inspect "$IMAGE:${{ steps.tag.outputs.version }}" >/dev/null 2>&1 &&
+               docker buildx imagetools inspect "$AGENT_IMAGE:${{ steps.tag.outputs.version }}" >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 60
+          done
+          echo "::error::the amd64 images of ${{ steps.tag.outputs.tag }} never appeared"
+          exit 1
+
+      # Same Ed25519 signatures as the amd64 image: the agent binaries are
+      # reproducible, so the `.sig` files attached to the release match.
+      - name: Agent signatures of the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p signatures
+          gh release download "${{ steps.tag.outputs.tag }}" -R "$GITHUB_REPOSITORY" -p 'dumbmonit-agent-*.sig' -D signatures || true
+          ls -l signatures
+
+      - id: server
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: .
+          platforms: linux/arm64
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true,rewrite-timestamp=true
+          build-args: DUMBMONIT_BUILD=${{ github.sha }}
+          build-contexts: agent-signatures=signatures
+          cache-from: type=gha,scope=arm64
+          cache-to: type=gha,scope=arm64,mode=max,ignore-error=true
+          sbom: true
+          provenance: mode=max
+
+      - id: agent
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: .
+          target: agent-image
+          platforms: linux/arm64
+          outputs: type=image,name=${{ env.AGENT_IMAGE }},push-by-digest=true,name-canonical=true,push=true,rewrite-timestamp=true
+          cache-from: type=gha,scope=arm64
+          sbom: true
+          provenance: mode=max
+
+      # Each tag of the release becomes an index of the existing amd64 image
+      # and the arm64 image just pushed. :latest only if this release is the
+      # newest stable one.
+      - name: Merge the tags
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          v="${{ steps.tag.outputs.version }}"
+          newest=$(gh release view -R "$GITHUB_REPOSITORY" --json tagName -q .tagName)
+          for pair in "$IMAGE@${{ steps.server.outputs.digest }}" "$AGENT_IMAGE@${{ steps.agent.outputs.digest }}"; do
+            name="${pair%@*}"
+            tags="-t $name:$v -t $name:${{ steps.tag.outputs.minor }} -t $name:${{ steps.tag.outputs.major }}"
+            [ "$newest" = "${{ steps.tag.outputs.tag }}" ] && tags="$tags -t $name:latest"
+            # shellcheck disable=SC2086
+            docker buildx imagetools create $tags "$name:$v" "$pair"
+            docker buildx imagetools inspect "$name:$v"
+          done
