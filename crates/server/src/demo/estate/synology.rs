@@ -97,9 +97,25 @@ async fn entry(RawQuery(query): RawQuery, body: String) -> Response {
                 .collect();
             ok(json!({"count": selected.len(), "results": selected}))
         }
+        // Un LUN iSCSI en provisionnement fin : le magasin de VM de l'hyperviseur.
+        ("SYNO.Core.ISCSI.LUN", "list") => ok(json!({"luns": [{
+            "uuid": LUN_UUID, "lun_id": 1, "name": "pve-vmstore", "description": "Proxmox VM disks",
+            "location": "/volume1", "size": 1_099_511_627_776_i64, "type": 259,
+            "type_str": "BLUN", "is_mapped": true, "status": "normal",
+            "allocated_size": 412_316_860_416_i64
+        }]})),
+        ("SYNO.Core.ISCSI.Target", "list") => ok(json!({"targets": [{
+            "target_id": 1, "name": "pve-iscsi",
+            "iqn": "iqn.2000-01.com.synology:nas.pve-iscsi.5e11a4", "status": "connected",
+            "mapped_luns": [{"lun_uuid": LUN_UUID, "mapping_index": 0}],
+            "connected_sessions": [{"iqn": "iqn.1993-08.org.debian:01:pve-a4bf012c", "ip": "192.168.1.10"}]
+        }]})),
         _ => fail(102),
     }
 }
+
+/// Le LUN iSCSI du NAS, monté par l'hyperviseur.
+const LUN_UUID: &str = "6c3f1a2e-0d1b-4c55-9a51-5e11a4000001";
 
 fn catalog() -> Value {
     let mut apis = json!({
@@ -108,6 +124,9 @@ fn catalog() -> Value {
         "SYNO.Core.System.Utilization": {"path": "entry.cgi", "minVersion": 1, "maxVersion": 1},
         "SYNO.Storage.CGI.Storage": {"path": "entry.cgi", "minVersion": 1, "maxVersion": 1},
     });
+    for api in ["SYNO.Core.ISCSI.LUN", "SYNO.Core.ISCSI.Target"] {
+        apis[api] = json!({"path": "entry.cgi", "minVersion": 1, "maxVersion": 1});
+    }
     for api in ["SYNO.ActiveBackup.Task", "SYNO.ActiveBackup.Log"] {
         apis[api] = json!({"path": "entry.cgi", "minVersion": 1, "maxVersion": 2});
     }

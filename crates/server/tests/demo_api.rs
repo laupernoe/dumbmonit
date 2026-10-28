@@ -61,16 +61,21 @@ async fn le_compte_demo_se_connecte_et_lit_le_parc() {
         targets.body.as_array().unwrap().iter().filter_map(|t| t["name"].as_str()).collect();
     assert!(names.contains(&"nextcloud.home.arpa"), "{names:?}");
     assert!(names.contains(&"docker01.home.arpa"), "l'agent simulé s'est enregistré : {names:?}");
-    // Tout est fictif : des noms en `.home.arpa`, les domaines surveillés et la
-    // zone Cloudflare.
+    // Tout est fictif : des noms en `.home.arpa`, les domaines surveillés, la
+    // zone Cloudflare et les domaines publics des deux clients.
     assert!(
         names.iter().all(|name| {
             name.contains("home.arpa")
+                || name.contains("dupont.ch")
+                || name.contains("muller-archi.ch")
                 || *name == demo::extras::CLOUDFLARE_HOST
                 || demo::extras::DOMAINS.iter().any(|(domain, _, _)| domain == name)
         }),
         "{names:?}"
     );
+    for host in demo::synthetic::AGENT_HOSTS {
+        assert!(names.contains(&host.hostname), "agent {} : {names:?}", host.hostname);
+    }
 
     for uri in
         ["/api/alerts/rules", "/api/alerts/history", "/api/notify/channels", "/api/status-pages"]
@@ -114,9 +119,11 @@ async fn le_semis_montre_les_nouveautes() {
             (page["slug"].as_str().unwrap().to_string(), scenes[0].as_str().unwrap().to_string())
         })
         .collect();
+    let expected = [("home", "paris"), ("lab", "tokyo"), ("photos", "newyork"), ("muller", "dubai")];
     assert_eq!(
         scenes,
-        [("home".to_string(), "paris".to_string()), ("lab".to_string(), "tokyo".to_string())]
+        expected.map(|(slug, scene)| (slug.to_string(), scene.to_string())),
+        "les quatre scènes de nuit"
     );
     let lab = app.get("/api/public/status/lab", None).await;
     assert_eq!(lab.status, StatusCode::OK, "{:?}", lab.body);
@@ -129,6 +136,85 @@ async fn le_semis_montre_les_nouveautes() {
     assert_eq!(schedule["unknown_devices"], 1, "{schedule}");
     assert_eq!(schedule["unknown_ports"], 1, "{schedule}");
     assert!(schedule["devices"].as_i64().unwrap() >= 8, "{schedule}");
+}
+
+/// Longueur d'un tableau JSON, à la racine ou sous `key`.
+fn count(body: &Value, key: Option<&str>) -> usize {
+    let list = match key {
+        Some(key) => &body[key],
+        None => body,
+    };
+    list.as_array().map_or(0, Vec::len)
+}
+
+#[tokio::test]
+async fn chaque_page_cle_a_des_donnees() {
+    let app = demo_app().await;
+    let cookie = demo_cookie(&app).await;
+    // (route, clé du tableau, minimum attendu).
+    let pages: &[(&str, Option<&str>, usize)] = &[
+        ("/api/targets", None, 25),
+        ("/api/alerts/rules", None, 10),
+        ("/api/alerts/history", None, 2),
+        ("/api/alerts/silences", None, 2),
+        ("/api/notify/channels", None, 7),
+        ("/api/status-pages", None, 4),
+        ("/api/incidents", None, 3),
+        ("/api/oncall/schedules", None, 2),
+        ("/api/oncall/policies", None, 2),
+        ("/api/oncall/people", None, 4),
+        ("/api/runbooks", None, 4),
+        ("/api/dashboards", None, 2),
+        ("/api/reports/schedules", None, 2),
+        ("/api/teams", Some("teams"), 1),
+        ("/api/clients", Some("clients"), 2),
+        ("/api/clients/overview", None, 2),
+        ("/api/locations", Some("locations"), 3),
+        ("/api/relays", None, 3),
+        ("/api/security/cves", Some("findings"), 4),
+        ("/api/discovery/inventory", Some("devices"), 8),
+        ("/api/agent/tokens", None, 3),
+    ];
+    for (uri, key, minimum) in pages {
+        let reply = app.get(uri, Some(&cookie)).await;
+        assert_eq!(reply.status, StatusCode::OK, "{uri} : {:?}", reply.body);
+        let found = count(&reply.body, *key);
+        assert!(found >= *minimum, "{uri} : {found} < {minimum} : {}", reply.body);
+    }
+
+    // Le mode MSP est allumé, avec le bureau de Genève comme second client.
+    let clients = app.get("/api/clients", Some(&cookie)).await;
+    assert_eq!(clients.body["settings"]["enabled"], true, "{}", clients.body);
+    assert!(clients.body.to_string().contains(demo::workspace::OFFICE_CLIENT));
+
+    // Le relais du bureau sert les sondes du site, qui passent par lui.
+    let relays = app.get("/api/relays", Some(&cookie)).await;
+    let relay = relays
+        .body
+        .as_array()
+        .and_then(|list| list.iter().find(|r| r["relay"] == true))
+        .cloned()
+        .unwrap_or_default();
+    assert_eq!(relay["name"], demo::synthetic::RELAY_HOST, "{}", relays.body);
+    assert_eq!(relay["site"], demo::synthetic::OFFICE_SITE);
+    let relayed = relay["relayed"].as_u64().unwrap_or(0) as usize;
+    assert!(relayed >= demo::workspace::OFFICE_CHECKS.len(), "{relay}");
+
+    // Les failles : activées, une exploitée, rien de téléchargé.
+    let cves = app.get("/api/security/cves", Some(&cookie)).await;
+    assert_eq!(cves.body["enabled"], true, "{}", cves.body);
+    assert!(cves.body.to_string().contains("CVE-2025-32463"), "{}", cves.body);
+
+    // Les tableaux de bord semés passent la validation de l'API.
+    let dashboards = app.get("/api/dashboards", Some(&cookie)).await;
+    for dashboard in dashboards.body.as_array().unwrap() {
+        assert!(count(&dashboard["widgets"], None) >= 5, "{dashboard}");
+    }
+
+    // La page publique du bureau a son incident en cours.
+    let office = app.get("/api/public/status/muller", None).await;
+    assert_eq!(office.status, StatusCode::OK, "{:?}", office.body);
+    assert!(office.body.to_string().contains("Delays on incoming email"), "{}", office.body);
 }
 
 #[tokio::test]
@@ -182,7 +268,9 @@ async fn toute_ecriture_est_refusee_avec_ou_sans_session() {
     let targets = app.get("/api/targets", Some(&cookie)).await;
     assert!(!targets.body.to_string().contains("169.254.169.254"));
     let users = app.get("/api/users", Some(&cookie)).await;
-    assert_eq!(users.body.as_array().map(Vec::len), Some(1), "{:?}", users.body);
+    let accounts = users.body.as_array().map(Vec::len).unwrap_or(0);
+    assert_eq!(accounts, 4, "le visiteur et les trois comptes du semis : {:?}", users.body);
+    assert!(!users.body.to_string().contains("\"eve\""));
 
     // Se déconnecter reste possible.
     let logout = app.post("/api/auth/logout", json!({}), Some(&cookie)).await;

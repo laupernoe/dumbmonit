@@ -235,6 +235,15 @@ pub fn probe_samples(kind: &str, name: &str, ts_ms: i64) -> Result<Vec<Sample>, 
             labelled(gauge("probe_tls_handshake_seconds", 0.011 + 0.02 * load, ts_ms));
             labelled(gauge("probe_duration_seconds", 0.015 + 0.025 * load, ts_ms));
         }
+        "dns" => {
+            // Le résolveur de la maison (Unbound sur le pare-feu) : quelques
+            // millisecondes, davantage quand la réponse n'est pas en cache.
+            let cold = noise(seed, ts_ms.div_euclid(300_000)) > 0.85;
+            let lookup = 0.002 + 0.006 * load + if cold { 0.035 } else { 0.0 };
+            labelled(gauge("probe_dns_lookup_seconds", lookup, ts_ms));
+            labelled(gauge("probe_dns_answer_records", 1.0 + (seed % 2) as f64, ts_ms));
+            labelled(gauge("probe_duration_seconds", lookup + 0.0005, ts_ms));
+        }
         _ => {
             let rtt = 0.0004 + 0.0015 * load + (seed % 5) as f64 * 0.0002;
             labelled(gauge("probe_icmp_packets_sent", 3.0, ts_ms));
@@ -434,7 +443,258 @@ pub fn agent_samples(ts_ms: i64) -> Vec<Sample> {
             ts_ms,
         )));
     }
+    samples.extend(machine_health(
+        host_seed,
+        ts_ms,
+        &[
+            ("jellyfin", 18.0, 1.4e9),
+            ("dockerd", 4.0, 2.1e8),
+            ("postgres", 6.5, 6.8e8),
+            ("php-fpm", 9.0, 4.2e8),
+            ("python3", 3.0, 3.5e8),
+            ("traefik", 1.5, 9.0e7),
+        ],
+    ));
+    // Pression (PSI) et inodes : Linux seulement.
+    let pressure = [("cpu", 3.0, None), ("memory", 0.4, Some(0.1)), ("io", 1.8, Some(0.6))];
+    for (resource, some, full) in pressure {
+        samples.push(
+            gauge("agent_pressure_some_percent", some * (0.4 + 1.2 * load), ts_ms)
+                .with_label("resource", resource),
+        );
+        if let Some(full) = full {
+            samples.push(
+                gauge("agent_pressure_full_percent", full * (0.4 + 1.2 * load), ts_ms)
+                    .with_label("resource", resource),
+            );
+        }
+    }
+    for (mount, device, fstype, percent) in
+        [("/", "/dev/nvme0n1p2", "ext4", 21.0), ("/srv/data", "/dev/md0", "xfs", 4.0)]
+    {
+        for (metric, value) in
+            [("filesystem_inodes_total", 7_864_320.0), ("filesystem_inodes_used_percent", percent)]
+        {
+            samples.push(
+                gauge(metric, value, ts_ms)
+                    .with_label("mountpoint", mount)
+                    .with_label("device", device)
+                    .with_label("fstype", fstype),
+            );
+        }
+    }
+    samples.push(counter("agent_oom_kills_total", 1.0, ts_ms));
     samples
+}
+
+/// Carte « santé de la machine », commune à Linux et Windows : processus les
+/// plus gourmands (nom, part de processeur, mémoire résidente), horloge.
+fn machine_health(host_seed: u64, ts_ms: i64, processes: &[(&str, f64, f64)]) -> Vec<Sample> {
+    let load = activity(host_seed, ts_ms);
+    let mut out = Vec::new();
+    for (index, (name, cpu, rss)) in processes.iter().enumerate() {
+        let own = activity(host_seed.wrapping_add(100 + index as u64), ts_ms);
+        out.push(
+            gauge("agent_process_cpu_percent", cpu * (0.3 + 1.4 * own), ts_ms)
+                .with_label("process", *name),
+        );
+        out.push(
+            gauge("agent_process_memory_bytes", rss * (0.9 + 0.2 * load), ts_ms)
+                .with_label("process", *name),
+        );
+    }
+    // Quelques millisecondes d'écart, synchronisé (chrony, w32time).
+    let offset = 0.0008 + 0.004 * (noise(host_seed, ts_ms.div_euclid(600_000)) - 0.5);
+    out.push(gauge("agent_clock_offset_seconds", offset, ts_ms));
+    out.push(gauge("agent_clock_synchronized", 1.0, ts_ms));
+    out
+}
+
+/// Machines équipées de l'agent dans le parc fictif : la machine Docker de la
+/// maison, le contrôleur de domaine Windows du client PME, et le relais posé
+/// dans son bureau.
+pub struct AgentHost {
+    pub hostname: &'static str,
+    pub os: &'static str,
+    pub os_version: &'static str,
+    pub kernel: &'static str,
+    pub machine_id: &'static str,
+    /// Relais : interroge les équipements du site (`via_agent`).
+    pub relay: bool,
+    pub site: Option<&'static str>,
+    /// Port de la passerelle des agents du site, sur un relais.
+    pub gateway: Option<u16>,
+    pub samples: fn(i64) -> Vec<Sample>,
+}
+
+/// Contrôleur de domaine Windows du client PME.
+pub const WINDOWS_HOST: &str = "srv-dc01.muller.home.arpa";
+/// Relais du bureau du client PME.
+pub const RELAY_HOST: &str = "relay-geneva.muller.home.arpa";
+/// Site du bureau, tel que les agents le déclarent.
+pub const OFFICE_SITE: &str = "Geneva office";
+
+pub const AGENT_HOSTS: &[AgentHost] = &[
+    AgentHost {
+        hostname: AGENT_HOST,
+        os: "linux",
+        os_version: "Debian GNU/Linux 13 (trixie)",
+        kernel: "6.12.48-amd64",
+        machine_id: "demo-docker01",
+        relay: false,
+        site: None,
+        gateway: None,
+        samples: agent_samples,
+    },
+    AgentHost {
+        hostname: WINDOWS_HOST,
+        os: "windows",
+        os_version: "Windows Server 2025 Standard",
+        kernel: "10.0.26100.32995",
+        machine_id: "demo-srv-dc01",
+        relay: false,
+        site: Some(OFFICE_SITE),
+        gateway: None,
+        samples: windows_samples,
+    },
+    AgentHost {
+        hostname: RELAY_HOST,
+        os: "linux",
+        os_version: "Debian GNU/Linux 13 (trixie)",
+        kernel: "6.12.48-arm64",
+        machine_id: "demo-relay-geneva",
+        relay: true,
+        site: Some(OFFICE_SITE),
+        gateway: Some(8443),
+        samples: relay_samples,
+    },
+];
+
+/// L'hôte d'agent nommé `name`, s'il est du parc fictif.
+pub fn agent_host(name: &str) -> Option<&'static AgentHost> {
+    AGENT_HOSTS.iter().find(|host| host.hostname == name)
+}
+
+/// Processeur, mémoire, disques et réseau d'une machine : la base commune.
+#[allow(clippy::too_many_arguments)]
+fn host_basics(
+    name: &str,
+    ts_ms: i64,
+    cores: u32,
+    memory_gib: f64,
+    disks: &[(&str, &str, &str, f64, f64)],
+    nic: &str,
+    rx: f64,
+    tx: f64,
+) -> Vec<Sample> {
+    let host_seed = seed(name);
+    let load = activity(host_seed, ts_ms);
+    let memory = memory_gib * 1_073_741_824.0;
+    let used = 0.38 + 0.22 * load;
+    let mut out = vec![
+        gauge("cpu_usage_percent", 3.0 + 41.0 * load, ts_ms),
+        gauge("cpu_count", f64::from(cores), ts_ms),
+        gauge("memory_total_bytes", memory, ts_ms),
+        gauge("memory_used_bytes", memory * used, ts_ms),
+        gauge("memory_available_bytes", memory * (1.0 - used), ts_ms),
+        gauge("memory_used_percent", 100.0 * used, ts_ms),
+        gauge("uptime_seconds", (ts_ms.rem_euclid(23 * 86_400_000) / 1000) as f64, ts_ms),
+        gauge("process_count", 140.0 + 40.0 * load, ts_ms),
+    ];
+    for core in 0..cores {
+        let core_load = activity(host_seed.wrapping_add(u64::from(core)), ts_ms);
+        out.push(
+            gauge("cpu_core_usage_percent", 2.0 + 48.0 * core_load, ts_ms)
+                .with_label("core", core.to_string()),
+        );
+    }
+    for (mount, device, fstype, total_gb, fraction) in disks {
+        let total = total_gb * 1_000_000_000.0;
+        let used = total * fraction;
+        for (metric, value) in [
+            ("filesystem_total_bytes", total),
+            ("filesystem_used_bytes", used),
+            ("filesystem_free_bytes", total - used),
+            ("filesystem_used_percent", 100.0 * fraction),
+        ] {
+            out.push(
+                gauge(metric, value, ts_ms)
+                    .with_label("mountpoint", *mount)
+                    .with_label("device", *device)
+                    .with_label("fstype", *fstype),
+            );
+        }
+    }
+    for (metric, rate) in [("if_octets_in", rx), ("if_octets_out", tx)] {
+        let seed = seed(&format!("{name}{nic}{metric}"));
+        out.push(counter(metric, cumulative(seed, rate, ts_ms), ts_ms).with_label("ifname", nic));
+    }
+    for metric in ["if_errors_in", "if_errors_out"] {
+        out.push(counter(metric, 0.0, ts_ms).with_label("ifname", nic));
+    }
+    out
+}
+
+/// Ce que l'agent du contrôleur de domaine Windows enverrait à `ts_ms`.
+pub fn windows_samples(ts_ms: i64) -> Vec<Sample> {
+    let host_seed = seed(WINDOWS_HOST);
+    let load = activity(host_seed, ts_ms);
+    let mut out = host_basics(
+        WINDOWS_HOST,
+        ts_ms,
+        4,
+        16.0,
+        &[("C:\\", "C:", "NTFS", 128.0, 0.47), ("D:\\", "D:", "NTFS", 512.0, 0.63)],
+        "Ethernet0",
+        8.0e5,
+        2.4e6,
+    );
+    for (service, up) in [
+        ("NTDS", true),
+        ("DNS", true),
+        ("Netlogon", true),
+        ("W32Time", true),
+        ("DFSR", true),
+        ("Spooler", false),
+    ] {
+        out.push(gauge("service_up", f64::from(u8::from(up)), ts_ms).with_label("service", service));
+    }
+    out.push(gauge("agent_windows_processor_queue_length", 0.5 + 2.5 * load, ts_ms));
+    out.push(gauge("agent_windows_memory_pages_per_second", 40.0 + 380.0 * load, ts_ms));
+    out.push(gauge("agent_windows_disk_queue_length", 0.1 + 0.9 * load, ts_ms));
+    out.extend(machine_health(
+        host_seed,
+        ts_ms,
+        &[
+            ("lsass.exe", 3.5, 1.9e8),
+            ("dns.exe", 1.2, 1.4e8),
+            ("svchost.exe", 2.8, 2.6e8),
+            ("MsMpEng.exe", 4.5, 3.1e8),
+            ("dfsrs.exe", 0.8, 9.0e7),
+            ("dumbmonit-agent.exe", 0.3, 2.4e7),
+        ],
+    ));
+    out
+}
+
+/// Ce que le relais du bureau (un petit boîtier ARM) enverrait à `ts_ms`.
+pub fn relay_samples(ts_ms: i64) -> Vec<Sample> {
+    let mut out = host_basics(
+        RELAY_HOST,
+        ts_ms,
+        4,
+        4.0,
+        &[("/", "/dev/mmcblk0p2", "ext4", 32.0, 0.29)],
+        "eth0",
+        1.5e5,
+        2.2e5,
+    );
+    out.extend(machine_health(
+        seed(RELAY_HOST),
+        ts_ms,
+        &[("dumbmonit-agent", 2.0, 4.8e7), ("systemd-journald", 0.2, 2.2e7), ("sshd", 0.1, 8.0e6)],
+    ));
+    out
 }
 
 #[cfg(test)]

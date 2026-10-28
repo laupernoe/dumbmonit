@@ -36,11 +36,12 @@ export function toWallSceneChoice(value: string | null): WallSceneChoice | null 
 	return LEGACY_CITIES[value] ?? null;
 }
 
-export function readWallScene(): WallSceneChoice {
+/** The saved choice; `fallback` when nothing is saved (the public demo shows a city). */
+export function readWallScene(fallback: WallSceneChoice = 'none'): WallSceneChoice {
 	try {
-		return toWallSceneChoice(localStorage.getItem(STORAGE_KEY)) ?? 'none';
+		return toWallSceneChoice(localStorage.getItem(STORAGE_KEY)) ?? fallback;
 	} catch {
-		return 'none';
+		return fallback;
 	}
 }
 

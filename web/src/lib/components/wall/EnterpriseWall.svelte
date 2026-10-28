@@ -274,7 +274,7 @@
 	const animate = !calmMotion();
 
 	// --- The backdrop ----------------------------------------------------------
-	let sceneChoice = $state<WallSceneChoice>(readWallScene());
+	let sceneChoice = $state<WallSceneChoice>(readWallScene(auth.demo ? 'auto' : 'none'));
 	const forcedScene = $derived(parseForcedWallScene(page.url.searchParams.get('city')));
 	const sceneCity = $derived(resolveWallScene(forcedScene ?? sceneChoice));
 	const SceneCity = $derived(sceneCity ? SCENE_COMPONENTS[sceneCity] : null);

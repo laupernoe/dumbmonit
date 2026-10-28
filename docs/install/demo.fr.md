@@ -23,25 +23,32 @@ l'installer pour de vrai, ou pour mettre une vitrine sur votre propre site.
   et `{"error": "This is a read-only demo…", "demo": true}`. Se connecter et se
   déconnecter sont les seules écritures permises. L'interface affiche le
   message là où le clic a eu lieu.
-- **Un parc fictif et fixe.** Au démarrage, la base de données est recréée et
-  peuplée avec un petit homelab sous `*.home.arpa` : un cluster Proxmox VE, un
-  NAS Synology, un Proxmox Backup Server, un TrueNAS, un pare-feu OPNsense, un
-  serveur Redfish avec une pièce défaillante, quelques vérifications HTTP, TLS
-  et ping, un hôte avec agent et une page d'état. Les surveillances sont répondues
-  par de faux répondeurs à l'intérieur du serveur, liés à `127.0.0.1` et
-  rejouant des réponses d'API enregistrées, si bien que les vrais collecteurs
-  et panneaux de surveillance fonctionnent. Redémarrer donne le même parc.
-- **Trente jours d'historique.** Des métriques synthétiques sont écrites dans
-  VictoriaMetrics au démarrage (la dernière semaine au pas de cinq minutes), si
-  bien que les graphiques, *7 derniers jours*, la disponibilité sur 30 jours,
-  les prévisions (« plein dans environ N jours ») et l'historique des alertes
-  sont remplis, et quelques alertes sont actives pour que *À traiter* contienne
-  quelque chose. Un commutateur avec ses ports et son trafic, une carte des
-  menaces alimentée par de faux comptes CrowdSec et Cloudflare, des échéances de
-  domaines et de licence, une matrice de sauvegardes avec quelques nuits en
-  échec, un appareil trouvé par le balayage réseau et deux pages d'état avec
-  leurs scènes de nuit complètent le tableau. Tout est calculé en mémoire à
-  partir d'une graine fixe : rien n'est récupéré sur le réseau.
+- **Deux clients fictifs.** Au démarrage, la base de données est recréée et
+  remplie d'un homelab sous `*.home.arpa` — Proxmox VE, un NAS Synology avec un
+  LUN iSCSI, Proxmox Backup Server, TrueNAS, OPNsense, UniFi, Kopia, un serveur
+  Redfish avec une pièce en panne, un commutateur SNMP, des sondes HTTP, TLS,
+  DNS et ping, un agent Linux qui fait tourner Docker — et, en mode MSP, d'un
+  petit bureau d'architectes à Genève : un contrôleur de domaine Windows et son
+  agent, Veeam Backup & Replication, un réseau Omada, Microsoft 365 et
+  Entra ID, interrogés par un agent relais posé dans le bureau. Les
+  surveillances sont servies par de faux équipements internes au serveur,
+  liés à `127.0.0.1`, qui rejouent des réponses d'API enregistrées : les vrais
+  collecteurs et les vrais panneaux tournent. Un redémarrage redonne le même
+  parc.
+- **Trente jours d'historique, et le reste du produit.** Des métriques
+  synthétiques sont écrites dans VictoriaMetrics au démarrage, par blocs
+  bornés (la dernière semaine au pas de cinq minutes) : graphiques, *7 derniers
+  jours*, disponibilité sur 30 jours, prévisions, matrice des sauvegardes et
+  historique des alertes sont remplis, et quelques alertes sont actives. Le
+  semis remplit aussi ce qui se règle d'habitude à la main : équipes et
+  dossiers, comptes et plannings d'astreinte avec politiques d'escalade,
+  silences, consignes, deux tableaux de bord, rapports planifiés, canaux de
+  notification (jamais utilisés), sites sur la carte du monde, failles
+  connues, quatre pages de statut (une par scène de nuit) avec un incident en
+  cours, et un balayage réseau avec un appareil nouveau. Tout est calculé à
+  partir d'une graine fixe : rien n'est récupéré sur le réseau, pas même les
+  sources de failles. La recherche dans les journaux reste éteinte : la démo
+  n'a pas de magasin de journaux.
 - **Rien ne sort du serveur.** Aucune notification n'est jamais envoyée, et
   aucune sonde ne part vers une adresse tapée par un visiteur.
 - **Une visite guidée** s'ouvre après la première connexion ; le bandeau la
