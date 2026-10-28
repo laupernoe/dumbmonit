@@ -29,6 +29,20 @@
 //! L'état des grappes RAID (dégradée, reconstruction) n'est pas lu : aucun
 //! client de référence ne le documente.
 //!
+//! # LUN iSCSI : volontairement non lues
+//!
+//! Le pendant de `synology/iscsi.rs` (occupation effective d'un LUN léger, règle de
+//! sur-allocation) n'est pas implémenté, faute de source fiable pour la donnée qui
+//! compte. La seule référence publique est le pilote OpenStack Cinder pour QNAP : il
+//! liste les LUN par `/cgi-bin/disk/iscsi_portal_setting.cgi?func=extra_get&lunList=1`
+//! (éléments `LUNInfo` : `LUNIndex`, `LUNName`, `LUNNAA`, `LUNThinAllocate`,
+//! `LUNStatus`, `LUNPath`, `LUNTargetList`), mais n'y lit ni la capacité ni
+//! l'espace réellement alloué d'un LUN (le pilote ne s'en sert pas : il passe la
+//! taille voulue à la création). Aucune MIB SNMP QNAP publique n'expose non plus de
+//! table de LUN. Sans capacité ni occupation, on ne pourrait publier que l'existence
+//! et l'état des LUN, sans les règles de sur-allocation : à reprendre quand des
+//! relevés réels de cette page (QTS 5.x, QuTS hero) seront disponibles.
+//!
 //! # Réglages, portés par les étiquettes de la cible
 //!
 //! | Étiquette | Défaut | Rôle |

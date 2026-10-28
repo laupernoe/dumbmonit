@@ -2348,6 +2348,8 @@
 	"devices_timeline_notified_some": "Notified {sent} of {total}",
 	"devices_timeline_phase_change": "{from} → {to}",
 	"devices_timeline_phase_firing": "Firing",
+	"devices_chart_event_host_restart": "Restart",
+	"devices_chart_event_container_restart": "{name} restarted",
 	"devices_timeline_phase_ok": "OK",
 	"devices_timeline_phase_pending": "Building up",
 	"devices_timeline_phase_resolved": "Resolved",

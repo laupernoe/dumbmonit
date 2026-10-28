@@ -11,6 +11,7 @@ metrics:
   - { name: infomaniak_product_locked, label: "Product locked", unit: "bool" }
   - { name: infomaniak_product_maintenance, label: "Product maintenance", unit: "bool" }
   - { name: infomaniak_product_operation_in_progress, label: "Product operation in progress", unit: "bool" }
+  - { name: infomaniak_region_products, label: "Products per region" }
 views:
   - view: stat
     title: "Current values"

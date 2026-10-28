@@ -1,6 +1,6 @@
 /**
  * Pure part of the backup matrix (jobs x days): turns the stored series of a
- * backup integration (Veeam, Duplicati, Kopia, Active Backup, Plakar) into one
+ * backup integration (Veeam, Duplicati, Kopia, Active Backup, Hyper Backup, Plakar) into one
  * row per job and one state per day. No Svelte, no network: the component
  * loads the series, this module reads them. Tested in `tests/backup-history.test.mjs`.
  *
@@ -159,6 +159,21 @@ export const SOURCES: Record<string, HistorySource> = {
 		keyLabels: ['task_id', 'task'],
 		titleLabel: 'task',
 		subtitleLabel: ''
+	},
+	// Synology Hyper Backup. `synology_backup_last_result` is a severity: 0 normal, 1 to watch
+	// (never run, cancelled, partial...), 2 failure. Dates are ages computed against the NAS clock.
+	hyperbackup: {
+		id: 'hyperbackup',
+		roles: {
+			runAge: { metric: 'dumbmonit_synology_backup_last_run_age_seconds' },
+			successAge: { metric: 'dumbmonit_synology_backup_last_success_age_seconds' },
+			failed: { metric: 'dumbmonit_synology_backup_last_result', map: (v) => (v >= 2 ? 1 : 0) },
+			warning: { metric: 'dumbmonit_synology_backup_last_result', map: (v) => (v >= 1 && v < 2 ? 1 : 0) },
+			running: { metric: 'dumbmonit_synology_backup_running' }
+		},
+		keyLabels: ['task'],
+		titleLabel: 'name',
+		subtitleLabel: 'target_type'
 	},
 	// `backup_last_status`: 1 snapshot without errors, 0 errors or unreadable kloset.
 	plakar: {
