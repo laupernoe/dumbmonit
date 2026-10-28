@@ -323,10 +323,5 @@
  "badge_beta": "Beta",
  "badge_agent": "Via agente",
  "fam_more_name": "Mais integrações",
- "fam_more_blurb": "Os tipos de monitor mais recentes, ainda sem família.",
- "vid_eyebrow": "Em movimento",
- "vid_h": "Um minuto na consola",
- "vid_p": "A vista geral, um monitor, o mapa, o mapa em direto de uma firewall, uma página de estado pública e o ecrã mural, na demo online.",
- "vid_alt": "Vídeo da consola DumbMonit: a vista geral com o seu banner do tempo, o detalhe de um monitor, o mapa da infraestrutura, o mapa em direto de uma firewall, uma página de estado pública e o ecrã mural.",
- "vid_dl": "Transferir o vídeo (MP4)"
+ "fam_more_blurb": "Os tipos de monitor mais recentes, ainda sem família."
 }

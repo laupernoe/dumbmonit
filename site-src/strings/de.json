@@ -323,10 +323,5 @@
  "badge_beta": "Beta",
  "badge_agent": "Über den Agent",
  "fam_more_name": "Weitere Integrationen",
- "fam_more_blurb": "Die neuesten Monitortypen, noch keiner Familie zugeordnet.",
- "vid_eyebrow": "In Bewegung",
- "vid_h": "Eine Minute in der Konsole",
- "vid_p": "Die Übersicht, ein Monitor, die Karte, die Live-Karte einer Firewall, eine öffentliche Statusseite und die Wandanzeige, in der Live-Demo.",
- "vid_alt": "Video der DumbMonit-Konsole: die Übersicht mit dem Wetterbanner, die Details eines Monitors, die Infrastrukturkarte, die Live-Karte einer Firewall, eine öffentliche Statusseite und die Wandanzeige.",
- "vid_dl": "Video herunterladen (MP4)"
+ "fam_more_blurb": "Die neuesten Monitortypen, noch keiner Familie zugeordnet."
 }
