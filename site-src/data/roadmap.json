@@ -15,20 +15,6 @@
    },
    "items": [
     {
-     "status": "progress",
-     "text": {
-      "fr": "Une seule interface : la console Entreprise devient l'interface unique, le mode Homelab est retiré",
-      "en": "One interface: the Enterprise console becomes the only interface and Homelab mode is retired",
-      "de": "Eine Oberfläche: Die Enterprise-Konsole wird die einzige Oberfläche, der Homelab-Modus entfällt",
-      "es": "Una sola interfaz: la consola Empresa pasa a ser la única interfaz y se retira el modo Homelab",
-      "it": "Un'unica interfaccia: la console Enterprise diventa l'unica interfaccia e la modalità Homelab viene ritirata",
-      "pt": "Uma só interface: a consola Empresa passa a ser a única interface e o modo Homelab é retirado",
-      "ru": "Один интерфейс: консоль Enterprise становится единственной, режим Homelab убирается",
-      "zh-Hans": "统一界面：企业控制台成为唯一界面，家庭实验室模式将被移除",
-      "pt-BR": "Uma só interface: o console Empresa passa a ser a única interface e o modo Homelab é removido"
-     }
-    },
-    {
      "status": "planned",
      "text": {
       "fr": "Appli mobile native avec alertes critiques",
@@ -1506,6 +1492,36 @@
    },
    "items": [
     {
+     "status": "progress",
+     "version": "0.14.3",
+     "text": {
+      "fr": "ports Omada et Aruba ; capteurs SNMP ; Hyper Backup ; échéances OVH ; santé machine Windows ; images arm64",
+      "en": "Omada and Aruba ports; SNMP sensors; Hyper Backup; OVH deadlines; Windows machine health; arm64 images",
+      "de": "Omada- und Aruba-Ports; SNMP-Sensoren; Hyper Backup; OVH-Fristen; Maschinenzustand unter Windows; arm64-Images",
+      "es": "puertos Omada y Aruba; sensores SNMP; Hyper Backup; vencimientos de OVH; salud de la máquina en Windows; imágenes arm64",
+      "it": "porte Omada e Aruba; sensori SNMP; Hyper Backup; scadenze OVH; salute della macchina su Windows; immagini arm64",
+      "pt": "portas Omada e Aruba; sensores SNMP; Hyper Backup; prazos da OVH; saúde da máquina no Windows; imagens arm64",
+      "ru": "порты Omada и Aruba; датчики SNMP; Hyper Backup; сроки OVH; состояние машины на Windows; образы arm64",
+      "zh-Hans": "Omada 与 Aruba 端口；SNMP 传感器；Hyper Backup；OVH 到期；Windows 机器健康；arm64 镜像",
+      "pt-BR": "portas Omada e Aruba; sensores SNMP; Hyper Backup; vencimentos da OVH; saúde da máquina no Windows; imagens arm64"
+     }
+    },
+    {
+     "status": "delivered",
+     "version": "0.14.2",
+     "text": {
+      "fr": "interface unique (la console Entreprise) ; agents installables derrière un relais ; scènes de nuit sur les pages de statut (Paris, New York, Tokyo, Dubaï) ; graphiques triés par intégration ; alertes de prévision et de dérive ; carte du monde et des menaces ; topologie avec trafic ; frise des échéances ; matrice des sauvegardes ; actions groupées et statistiques Docker ; santé de la machine ; surveillance des scans réseau ; panneau de switch ; NAS conscient des LUN iSCSI",
+      "en": "one interface (the Enterprise console); agents installed behind a relay; night scenes on status pages (Paris, New York, Tokyo, Dubai); charts sorted by integration; forecast and drift alerts; world and threat maps; topology with traffic; deadlines timeline; backup matrix; Docker bulk actions and stats; machine health; network scan watch; switch panel; NAS aware of iSCSI LUNs",
+      "de": "eine Oberfläche (die Enterprise-Konsole); Agenten hinter einem Relay installierbar; Nachtszenen auf Statusseiten (Paris, New York, Tokio, Dubai); nach Integration sortierte Diagramme; Prognose- und Drift-Warnungen; Welt- und Bedrohungskarte; Topologie mit Datenverkehr; Fristen-Zeitleiste; Backup-Matrix; Docker-Sammelaktionen und -Statistiken; Maschinenzustand; Überwachung von Netzwerk-Scans; Switch-Panel; NAS mit iSCSI-LUN-Erkennung",
+      "es": "una sola interfaz (la consola Empresa); agentes instalables detrás de un relé; escenas nocturnas en las páginas de estado (París, Nueva York, Tokio, Dubái); gráficos ordenados por integración; alertas de previsión y de deriva; mapa del mundo y de amenazas; topología con tráfico; cronología de vencimientos; matriz de copias de seguridad; acciones en lote y estadísticas de Docker; salud de la máquina; vigilancia de los escaneos de red; panel de switch; NAS que reconoce los LUN iSCSI",
+      "it": "un'unica interfaccia (la console Enterprise); agenti installabili dietro un relay; scene notturne nelle pagine di stato (Parigi, New York, Tokyo, Dubai); grafici ordinati per integrazione; avvisi di previsione e di deriva; mappa del mondo e delle minacce; topologia con traffico; cronologia delle scadenze; matrice dei backup; azioni di gruppo e statistiche Docker; salute della macchina; sorveglianza delle scansioni di rete; pannello dello switch; NAS consapevole dei LUN iSCSI",
+      "pt": "uma só interface (a consola Empresa); agentes instaláveis atrás de um relé; cenas noturnas nas páginas de estado (Paris, Nova Iorque, Tóquio, Dubai); gráficos ordenados por integração; alertas de previsão e de desvio; mapa do mundo e das ameaças; topologia com tráfego; cronologia de prazos; matriz de cópias de segurança; ações em lote e estatísticas do Docker; saúde da máquina; vigilância das análises de rede; painel do switch; NAS com reconhecimento dos LUN iSCSI",
+      "ru": "единый интерфейс (консоль Enterprise); агенты за ретранслятором; ночные сцены на страницах статуса (Париж, Нью-Йорк, Токио, Дубай); графики, отсортированные по интеграциям; оповещения о прогнозе и дрейфе; карта мира и угроз; топология с трафиком; лента сроков; матрица резервных копий; групповые действия и статистика Docker; состояние машины; контроль сканирований сети; панель коммутатора; NAS с поддержкой LUN iSCSI",
+      "zh-Hans": "统一界面（企业控制台）；可在中继之后安装代理；状态页夜景（巴黎、纽约、东京、迪拜）；按集成排序的图表；预测与漂移告警；世界与威胁地图；带流量的拓扑；到期时间线；备份矩阵；Docker 批量操作与统计；机器健康；网络扫描监视；交换机面板；识别 iSCSI LUN 的 NAS",
+      "pt-BR": "uma só interface (o console Empresa); agentes instaláveis atrás de um relay; cenas noturnas nas páginas de status (Paris, Nova York, Tóquio, Dubai); gráficos ordenados por integração; alertas de previsão e de desvio; mapa do mundo e de ameaças; topologia com tráfego; linha do tempo de vencimentos; matriz de backups; ações em lote e estatísticas do Docker; saúde da máquina; vigilância das varreduras de rede; painel do switch; NAS ciente dos LUNs iSCSI"
+     }
+    },
+    {
      "status": "delivered",
      "version": "0.14.1",
      "text": {
@@ -1524,15 +1540,15 @@
      "status": "delivered",
      "version": "0.14.0",
      "text": {
-      "fr": "modes Homelab et Entreprise avec assistant de démarrage ; mode multi-clients (MSP) avec rapports par client ; équipes, droits par dossier, SAML et SCIM ; astreinte et escalade ; tableaux de bord et explorateur de métriques ; GitOps, CLI et Terraform ; journaux centralisés, syslog et traps SNMP ; OpenTelemetry et exporteurs Prometheus ; sondes multisites ; tickets, procédures et remédiation ; intégrations cloud, réseau, stockage, applications et bases de données ; Windows sans agent ; topologie LLDP ; sauvegarde des configurations réseau",
-      "en": "Homelab and Enterprise modes with a setup wizard; multi-client (MSP) mode with per-client reports; teams, per-folder rights, SAML and SCIM; on-call and escalation; dashboards and a metrics explorer; GitOps, CLI and Terraform; central logs, syslog and SNMP traps; OpenTelemetry and Prometheus exporters; multi-location probes; tickets, runbooks and remediation; cloud, network, storage, application and database integrations; agentless Windows; LLDP topology; network configuration backups",
-      "de": "Modi Homelab und Enterprise mit Einrichtungsassistent; Mandantenmodus (MSP) mit Berichten pro Kunde; Teams, Rechte pro Ordner, SAML und SCIM; Bereitschaft und Eskalation; Dashboards und Metrik-Explorer; GitOps, CLI und Terraform; zentrale Logs, Syslog und SNMP-Traps; OpenTelemetry und Prometheus-Exporter; Prüfungen von mehreren Standorten; Tickets, Runbooks und Behebung; Cloud-, Netzwerk-, Speicher-, Anwendungs- und Datenbank-Integrationen; Windows ohne Agent; LLDP-Topologie; Sicherung von Netzwerkkonfigurationen",
-      "es": "modos Homelab y Empresa con asistente de configuración; modo multicliente (MSP) con informes por cliente; equipos, permisos por carpeta, SAML y SCIM; guardias y escalado; paneles y explorador de métricas; GitOps, CLI y Terraform; registros centralizados, syslog y traps SNMP; OpenTelemetry y exportadores de Prometheus; sondas desde varias ubicaciones; tickets, runbooks y remediación; integraciones de nube, red, almacenamiento, aplicaciones y bases de datos; Windows sin agente; topología LLDP; copia de seguridad de configuraciones de red",
-      "it": "modalità Homelab ed Enterprise con procedura guidata; modalità multi-cliente (MSP) con report per cliente; team, permessi per cartella, SAML e SCIM; reperibilità ed escalation; dashboard ed esploratore di metriche; GitOps, CLI e Terraform; log centralizzati, syslog e trap SNMP; OpenTelemetry ed exporter Prometheus; sonde da più sedi; ticket, runbook e remediation; integrazioni cloud, rete, storage, applicazioni e database; Windows senza agente; topologia LLDP; backup delle configurazioni di rete",
-      "pt": "modos Homelab e Empresa com assistente de configuração; modo multicliente (MSP) com relatórios por cliente; equipas, permissões por pasta, SAML e SCIM; prevenção e escalonamento; painéis e explorador de métricas; GitOps, CLI e Terraform; registos centralizados, syslog e traps SNMP; OpenTelemetry e exportadores Prometheus; sondas a partir de vários locais; tickets, runbooks e remediação; integrações de cloud, rede, armazenamento, aplicações e bases de dados; Windows sem agente; topologia LLDP; cópia de segurança das configurações de rede",
-      "ru": "режимы Homelab и Enterprise с мастером настройки; мультиклиентский режим (MSP) с отчётами по клиентам; команды, права на папки, SAML и SCIM; дежурства и эскалация; дашборды и обозреватель метрик; GitOps, CLI и Terraform; централизованные журналы, syslog и SNMP-трапы; OpenTelemetry и экспортеры Prometheus; проверки из нескольких точек; тикеты, ранбуки и автоматическое устранение; интеграции облаков, сетей, хранилищ, приложений и баз данных; Windows без агента; топология LLDP; резервное копирование конфигураций сетевых устройств",
-      "zh-Hans": "家庭实验室与企业两种模式及设置向导；多客户（MSP）模式及按客户报告；团队、按文件夹权限、SAML 与 SCIM；值班与升级；仪表板与指标浏览器；GitOps、CLI 与 Terraform；集中日志、syslog 与 SNMP trap；OpenTelemetry 与 Prometheus exporter；多地点探测；工单、运行手册与自动修复；云、网络、存储、应用与数据库集成；无代理 Windows；LLDP 拓扑；网络设备配置备份",
-      "pt-BR": "modos Homelab e Empresa com assistente de configuração; modo multicliente (MSP) com relatórios por cliente; equipes, permissões por pasta, SAML e SCIM; plantão e escalonamento; painéis e explorador de métricas; GitOps, CLI e Terraform; logs centralizados, syslog e traps SNMP; OpenTelemetry e exportadores Prometheus; sondas a partir de vários locais; tickets, runbooks e remediação; integrações de nuvem, rede, armazenamento, aplicativos e bancos de dados; Windows sem agente; topologia LLDP; backup das configurações de rede"
+      "fr": "mode multi-clients (MSP) avec rapports par client ; équipes, droits par dossier, SAML et SCIM ; astreinte et escalade ; tableaux de bord et explorateur de métriques ; GitOps, CLI et Terraform ; journaux centralisés, syslog et traps SNMP ; OpenTelemetry et exporteurs Prometheus ; sondes multisites ; tickets, procédures et remédiation ; intégrations cloud, réseau, stockage, applications et bases de données ; Windows sans agent ; topologie LLDP ; sauvegarde des configurations réseau",
+      "en": "multi-client (MSP) mode with per-client reports; teams, per-folder rights, SAML and SCIM; on-call and escalation; dashboards and a metrics explorer; GitOps, CLI and Terraform; central logs, syslog and SNMP traps; OpenTelemetry and Prometheus exporters; multi-location probes; tickets, runbooks and remediation; cloud, network, storage, application and database integrations; agentless Windows; LLDP topology; network configuration backups",
+      "de": "Mandantenmodus (MSP) mit Berichten pro Kunde; Teams, Rechte pro Ordner, SAML und SCIM; Bereitschaft und Eskalation; Dashboards und Metrik-Explorer; GitOps, CLI und Terraform; zentrale Logs, Syslog und SNMP-Traps; OpenTelemetry und Prometheus-Exporter; Prüfungen von mehreren Standorten; Tickets, Runbooks und Behebung; Cloud-, Netzwerk-, Speicher-, Anwendungs- und Datenbank-Integrationen; Windows ohne Agent; LLDP-Topologie; Sicherung von Netzwerkkonfigurationen",
+      "es": "modo multicliente (MSP) con informes por cliente; equipos, permisos por carpeta, SAML y SCIM; guardias y escalado; paneles y explorador de métricas; GitOps, CLI y Terraform; registros centralizados, syslog y traps SNMP; OpenTelemetry y exportadores de Prometheus; sondas desde varias ubicaciones; tickets, runbooks y remediación; integraciones de nube, red, almacenamiento, aplicaciones y bases de datos; Windows sin agente; topología LLDP; copia de seguridad de configuraciones de red",
+      "it": "modalità multi-cliente (MSP) con report per cliente; team, permessi per cartella, SAML e SCIM; reperibilità ed escalation; dashboard ed esploratore di metriche; GitOps, CLI e Terraform; log centralizzati, syslog e trap SNMP; OpenTelemetry ed exporter Prometheus; sonde da più sedi; ticket, runbook e remediation; integrazioni cloud, rete, storage, applicazioni e database; Windows senza agente; topologia LLDP; backup delle configurazioni di rete",
+      "pt": "modo multicliente (MSP) com relatórios por cliente; equipas, permissões por pasta, SAML e SCIM; prevenção e escalonamento; painéis e explorador de métricas; GitOps, CLI e Terraform; registos centralizados, syslog e traps SNMP; OpenTelemetry e exportadores Prometheus; sondas a partir de vários locais; tickets, runbooks e remediação; integrações de cloud, rede, armazenamento, aplicações e bases de dados; Windows sem agente; topologia LLDP; cópia de segurança das configurações de rede",
+      "ru": "мультиклиентский режим (MSP) с отчётами по клиентам; команды, права на папки, SAML и SCIM; дежурства и эскалация; дашборды и обозреватель метрик; GitOps, CLI и Terraform; централизованные журналы, syslog и SNMP-трапы; OpenTelemetry и экспортеры Prometheus; проверки из нескольких точек; тикеты, ранбуки и автоматическое устранение; интеграции облаков, сетей, хранилищ, приложений и баз данных; Windows без агента; топология LLDP; резервное копирование конфигураций сетевых устройств",
+      "zh-Hans": "多客户（MSP）模式及按客户报告；团队、按文件夹权限、SAML 与 SCIM；值班与升级；仪表板与指标浏览器；GitOps、CLI 与 Terraform；集中日志、syslog 与 SNMP trap；OpenTelemetry 与 Prometheus exporter；多地点探测；工单、运行手册与自动修复；云、网络、存储、应用与数据库集成；无代理 Windows；LLDP 拓扑；网络设备配置备份",
+      "pt-BR": "modo multicliente (MSP) com relatórios por cliente; equipes, permissões por pasta, SAML e SCIM; plantão e escalonamento; painéis e explorador de métricas; GitOps, CLI e Terraform; logs centralizados, syslog e traps SNMP; OpenTelemetry e exportadores Prometheus; sondas a partir de vários locais; tickets, runbooks e remediação; integrações de nuvem, rede, armazenamento, aplicativos e bancos de dados; Windows sem agente; topologia LLDP; backup das configurações de rede"
      }
     },
     {
@@ -1614,15 +1630,15 @@
      "status": "delivered",
      "version": "0.10.0",
      "text": {
-      "fr": "réputation des serveurs mail et des plages IP, widgets et usage Claude/OpenAI sur le mur, plus de défilement latéral sur mobile",
-      "en": "mail server and IP range reputation, widgets and Claude/OpenAI usage on the wall, no more sideways scrolling on phones",
-      "de": "Reputation von Mailservern und IP-Bereichen, Widgets und Claude/OpenAI-Nutzung auf der Wand, kein seitliches Scrollen mehr auf Smartphones",
-      "es": "reputación de servidores de correo y rangos de IP, widgets y uso de Claude/OpenAI en el modo pared, sin desplazamiento lateral en móviles",
-      "it": "reputazione di server di posta e intervalli IP, widget e utilizzo di Claude/OpenAI sulla parete, niente più scorrimento laterale su smartphone",
-      "pt": "reputação de servidores de correio e intervalos de IP, widgets e utilização do Claude/OpenAI no modo parede, sem deslocamento lateral nos telemóveis",
-      "ru": "репутация почтовых серверов и диапазонов IP, виджеты и расход Claude/OpenAI на стене, больше нет горизонтальной прокрутки на телефонах",
-      "zh-Hans": "邮件服务器与 IP 段信誉检查、墙屏上的小组件及 Claude/OpenAI 用量、手机上不再横向滚动",
-      "pt-BR": "reputação de servidores de e-mail e faixas de IP, widgets e uso do Claude/OpenAI no modo parede, sem rolagem lateral no celular"
+      "fr": "réputation des serveurs mail et des plages IP, plus de défilement latéral sur mobile",
+      "en": "mail server and IP range reputation, no more sideways scrolling on phones",
+      "de": "Reputation von Mailservern und IP-Bereichen, kein seitliches Scrollen mehr auf Smartphones",
+      "es": "reputación de servidores de correo y rangos de IP, sin desplazamiento lateral en móviles",
+      "it": "reputazione di server di posta e intervalli IP, niente più scorrimento laterale su smartphone",
+      "pt": "reputação de servidores de correio e intervalos de IP, sem deslocamento lateral nos telemóveis",
+      "ru": "репутация почтовых серверов и диапазонов IP, больше нет горизонтальной прокрутки на телефонах",
+      "zh-Hans": "邮件服务器与 IP 段信誉检查、手机上不再横向滚动",
+      "pt-BR": "reputação de servidores de e-mail e faixas de IP, sem rolagem lateral no celular"
      }
     },
     {
@@ -1659,15 +1675,15 @@
      "status": "delivered",
      "version": "0.1.0-alpha.8",
      "text": {
-      "fr": "actualités sur le mur, modules de l'agent au choix, catégories de sites web, changements de site web surlignés",
-      "en": "news on the wall, choosable agent modules, website categories, highlighted website changes",
-      "de": "Nachrichten auf der Wand, wählbare Agent-Module, Website-Kategorien, hervorgehobene Website-Änderungen",
-      "es": "noticias en el modo pared, módulos del agente a elegir, categorías de sitios web, cambios de sitios web resaltados",
-      "it": "notizie sulla parete, moduli dell'agente a scelta, categorie di siti web, modifiche dei siti web evidenziate",
-      "pt": "notícias no modo parede, módulos do agente à escolha, categorias de sítios web, alterações de sítios web realçadas",
-      "ru": "новости на стене, выбор модулей агента, категории сайтов, подсветка изменений на сайтах",
-      "zh-Hans": "墙屏新闻、可选的代理模块、网站分类、高亮显示网站变更",
-      "pt-BR": "notícias no modo parede, módulos do agente à escolha, categorias de sites, mudanças de sites destacadas"
+      "fr": "modules de l'agent au choix, catégories de sites web, changements de site web surlignés",
+      "en": "choosable agent modules, website categories, highlighted website changes",
+      "de": "wählbare Agent-Module, Website-Kategorien, hervorgehobene Website-Änderungen",
+      "es": "módulos del agente a elegir, categorías de sitios web, cambios de sitios web resaltados",
+      "it": "moduli dell'agente a scelta, categorie di siti web, modifiche dei siti web evidenziate",
+      "pt": "módulos do agente à escolha, categorias de sítios web, alterações de sítios web realçadas",
+      "ru": "выбор модулей агента, категории сайтов, подсветка изменений на сайтах",
+      "zh-Hans": "可选的代理模块、网站分类、高亮显示网站变更",
+      "pt-BR": "módulos do agente à escolha, categorias de sites, mudanças de sites destacadas"
      }
     },
     {
