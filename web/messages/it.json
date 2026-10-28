@@ -2348,6 +2348,8 @@
 	"devices_timeline_notified_some": "Notificato {sent} su {total}",
 	"devices_timeline_phase_change": "{from} → {to}",
 	"devices_timeline_phase_firing": "Attiva",
+	"devices_chart_event_host_restart": "Riavvio",
+	"devices_chart_event_container_restart": "{name} riavviato",
 	"devices_timeline_phase_ok": "OK",
 	"devices_timeline_phase_pending": "In accumulo",
 	"devices_timeline_phase_resolved": "Risolta",

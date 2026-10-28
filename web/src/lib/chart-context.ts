@@ -5,6 +5,7 @@
 import type { AlertHistoryEntry, AlertRule, AlertSeverity, TargetId } from '#lib/api/index.js';
 import type { ChartEvent, ChartTone, Threshold } from '#lib/components/Chart.svelte';
 import { parseServerDate } from '#lib/format.js';
+import type { RestartEvent } from '#lib/restart-events.js';
 import { m } from '#lib/paraglide/messages.js';
 
 function severityTone(severity: AlertSeverity): ChartTone {
@@ -72,4 +73,16 @@ export function eventsFromHistory(
 		});
 	}
 	return events.sort((a, b) => a.at - b.at);
+}
+
+/** Restart markers (agent reboot, Docker container restart), as chart events. */
+export function eventsFromRestarts(restarts: RestartEvent[]): ChartEvent[] {
+	return restarts.map((restart) => ({
+		at: restart.at,
+		label:
+			restart.kind === 'host'
+				? m.devices_chart_event_host_restart()
+				: m.devices_chart_event_container_restart({ name: restart.name || '?' }),
+		tone: 'info' as ChartTone
+	}));
 }

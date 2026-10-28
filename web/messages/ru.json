@@ -2368,6 +2368,8 @@
 	"devices_timeline_notified_some": "Уведомлено {sent} из {total}",
 	"devices_timeline_phase_change": "{from} → {to}",
 	"devices_timeline_phase_firing": "Активна",
+	"devices_chart_event_host_restart": "Перезагрузка",
+	"devices_chart_event_container_restart": "{name} перезапущен",
 	"devices_timeline_phase_ok": "ОК",
 	"devices_timeline_phase_pending": "Нарастает",
 	"devices_timeline_phase_resolved": "Устранена",
