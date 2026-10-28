@@ -271,7 +271,11 @@ fn confidence(
     let coverage = if window_secs > 0.0 { (span / (window_secs * 0.5)).min(1.0) } else { 1.0 };
     let residuals: Vec<f64> =
         points.iter().map(|(t, v)| (v - (intercept + slope * (t - t0))).abs()).collect();
-    let noise = MAD_TO_SIGMA * median(&residuals).unwrap_or(0.0);
+    // Écart absolu moyen, ramené à un écart type (√(π/2)) : la médiane des
+    // résidus vaut zéro dès que la droite passe par la moitié des points, ce qui
+    // rendrait invisible un bruit alterné régulier.
+    let mean_abs = residuals.iter().sum::<f64>() / residuals.len().max(1) as f64;
+    let noise = (std::f64::consts::PI / 2.0).sqrt() * mean_abs;
     let trend = slope.abs() * span;
     let fit = if trend + noise > 0.0 { trend / (trend + 2.0 * noise) } else { 0.0 };
     let value = (count * coverage * fit).clamp(0.0, 1.0);

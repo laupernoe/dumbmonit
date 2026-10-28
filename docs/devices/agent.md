@@ -128,7 +128,7 @@ critical**, **Hyper-V host CPU high** and **Hyper-V virtual disk errors** (see
 
 The steps below are the ones the notice next to the form shows. There is no account to create on the machine: the enrollment token is the only secret.
 
-1. In DumbMonit, add a monitor and pick **Server with the agent**. Choose how the machine reaches the server: **Directly**, or **Through a relay** of a remote site behind a firewall (see [Monitor a remote site](../install/remote-site.md#5-install-agents-behind-the-relay)). An enrollment token (dmon_…) is shown once, with the install command ready to copy for Linux/macOS, Windows and Docker.
+1. In DumbMonit, add a monitor and pick Server with the agent, then choose how the machine reaches the server: directly, or through the relay of a remote site behind a firewall. An enrollment token (dmon_…) is shown once, with the install command ready to copy for Linux/macOS, Windows and Docker. See [Monitor a remote site](../install/remote-site.md#5-install-agents-behind-the-relay) for the relay.
 2. Run that install command on the machine, with elevated rights (sudo on Linux and macOS, an elevated PowerShell on Windows).
 3. The page waits for the first report (a few seconds), then lets you name the machine, file it in a folder and place it at a site, on the spot.
 4. Optional, for Docker: if the agent runs under a dedicated user, add that user to the "docker" group and restart the agent.
@@ -137,7 +137,7 @@ The steps below are the ones the notice next to the form shows. There is no acco
     usermod -aG docker dumbmonit
     ```
 
-5. For a fleet (a playbook, a machine image), tick *Several machines with this command* before creating the command; a whole Windows domain goes through the [Active Directory kit](agent-active-directory.md), offered on the same page. Revoke a lost token in Settings → Agents.
+5. For a fleet (a playbook, a machine image), tick Several machines with this command; a whole Windows domain goes through the Active Directory kit, offered on the same page. Revoke a lost token in Settings → Agents. See [Active Directory](agent-active-directory.md).
 
 !!! warning
     The agent contacts the server, never the other way round: no port needs to be opened on the monitored machine.

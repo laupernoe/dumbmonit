@@ -682,6 +682,18 @@ mod tests {
                     .collect();
             Ok(vec![SeriesPoint { labels, value: *value, ts_ms: 0 }])
         }
+
+        /// Pas d'historique : les règles de prévision ne trouvent rien à prévoir.
+        async fn range(
+            &self,
+            _query: &str,
+            _start_s: i64,
+            _end_s: i64,
+            _step_secs: u64,
+            _filter: Option<&str>,
+        ) -> Result<Vec<crate::alerting::source::SeriesRange>> {
+            Ok(Vec::new())
+        }
     }
 
     /// Source qui échoue systématiquement, pour vérifier qu'une panne de la base de
