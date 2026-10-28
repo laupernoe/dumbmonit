@@ -61,7 +61,16 @@ async fn le_compte_demo_se_connecte_et_lit_le_parc() {
         targets.body.as_array().unwrap().iter().filter_map(|t| t["name"].as_str()).collect();
     assert!(names.contains(&"nextcloud.home.arpa"), "{names:?}");
     assert!(names.contains(&"docker01.home.arpa"), "l'agent simulé s'est enregistré : {names:?}");
-    assert!(names.iter().all(|name| name.contains("home.arpa")), "{names:?}");
+    // Tout est fictif : des noms en `.home.arpa`, les domaines surveillés et la
+    // zone Cloudflare.
+    assert!(
+        names.iter().all(|name| {
+            name.contains("home.arpa")
+                || *name == demo::extras::CLOUDFLARE_HOST
+                || demo::extras::DOMAINS.iter().any(|(domain, _, _)| domain == name)
+        }),
+        "{names:?}"
+    );
 
     for uri in
         ["/api/alerts/rules", "/api/alerts/history", "/api/notify/channels", "/api/status-pages"]
@@ -76,6 +85,50 @@ async fn le_compte_demo_se_connecte_et_lit_le_parc() {
     // renverrait de toute façon que `has_secret`.
     let channels = app.get("/api/notify/channels", Some(&cookie)).await;
     assert!(!channels.body.to_string().contains("secret_enc"));
+}
+
+#[tokio::test]
+async fn le_semis_montre_les_nouveautes() {
+    let app = demo_app().await;
+    let cookie = demo_cookie(&app).await;
+
+    // Les types simulés en mémoire : commutateur, menaces, échéances, licence.
+    let targets = app.get("/api/targets", Some(&cookie)).await;
+    let kinds: Vec<&str> =
+        targets.body.as_array().unwrap().iter().filter_map(|t| t["kind"].as_str()).collect();
+    for kind in demo::extras::KINDS {
+        assert!(kinds.contains(kind), "{kind} : {kinds:?}");
+    }
+    let domains = kinds.iter().filter(|kind| **kind == "domain").count();
+    assert_eq!(domains, demo::extras::DOMAINS.len());
+
+    // Deux pages de statut, chacune sous sa scène de nuit.
+    let pages = app.get("/api/status-pages", Some(&cookie)).await;
+    let scenes: Vec<(String, String)> = pages
+        .body
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|page| {
+            let scenes = page["scenes"].as_array().unwrap();
+            (page["slug"].as_str().unwrap().to_string(), scenes[0].as_str().unwrap().to_string())
+        })
+        .collect();
+    assert_eq!(
+        scenes,
+        [("home".to_string(), "paris".to_string()), ("lab".to_string(), "tokyo".to_string())]
+    );
+    let lab = app.get("/api/public/status/lab", None).await;
+    assert_eq!(lab.status, StatusCode::OK, "{:?}", lab.body);
+
+    // Le réseau : un balayage terminé, un appareil nouveau, un port inattendu.
+    let schedules = app.get("/api/discovery/schedules", Some(&cookie)).await;
+    let schedule = &schedules.body["schedules"][0];
+    assert_eq!(schedule["last_status"], "done", "{schedule}");
+    assert_eq!(schedule["initialized"], true);
+    assert_eq!(schedule["unknown_devices"], 1, "{schedule}");
+    assert_eq!(schedule["unknown_ports"], 1, "{schedule}");
+    assert!(schedule["devices"].as_i64().unwrap() >= 8, "{schedule}");
 }
 
 #[tokio::test]
