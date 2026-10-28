@@ -239,6 +239,21 @@ mod tests {
     }
 
     #[test]
+    fn les_capteurs_entity_sensor_combinent_echelle_et_precision() {
+        let (_, samples) = run(POE, Some("ethernet-switch"));
+        let temp = on_index(&samples, "sensor_temperature_celsius", "1001").unwrap();
+        assert!((temp.value - 45.3).abs() < 1e-9, "{}", temp.value);
+        assert_eq!(temp.labels["sensor"], "Board temp");
+        assert_eq!(on_index(&samples, "sensor_fan_rpm", "1002").unwrap().value, 4200.0);
+        let volts = on_index(&samples, "sensor_voltage_volts", "1003").unwrap();
+        assert!((volts.value - 12.05).abs() < 1e-9, "{}", volts.value);
+        // Un capteur indisponible (état 2) n'émet rien, et chaque type va à sa famille.
+        assert!(on_index(&samples, "sensor_temperature_celsius", "1004").is_none());
+        assert!(on_index(&samples, "sensor_fan_rpm", "1001").is_none());
+        assert_eq!(values(&samples, "sensor_temperature_celsius").len(), 1);
+    }
+
+    #[test]
     fn le_bmc_reel_reste_sur_host_resources_et_livre_memoire_et_charge() {
         let (profile, samples) = run(BMC, None);
         assert_eq!(profile, "host-resources", "Net-SNMP 8072 : le profil générique suffit");

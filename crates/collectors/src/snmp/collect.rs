@@ -123,6 +123,8 @@ async fn collect_scalars(
         for oid in std::iter::once(&resolved.metric.oid)
             .chain(resolved.metric.labels.values())
             .chain(resolved.metric.multiply_by.iter())
+            .chain(resolved.metric.entity_scale.iter())
+            .chain(resolved.metric.entity_precision.iter())
         {
             if !wanted.contains(oid) {
                 wanted.push(oid.clone());
@@ -139,9 +141,7 @@ async fn collect_scalars(
         let Some(raw) = values.get(&metric.oid).and_then(SnmpValue::as_f64) else {
             continue;
         };
-        let Some(value) =
-            apply_factors(raw, metric.scale, metric.multiply_by.as_ref(), |oid| values.get(oid))
-        else {
+        let Some(value) = apply_metric_factors(raw, metric, |oid| values.get(oid)) else {
             continue;
         };
 
@@ -170,6 +170,8 @@ async fn collect_table(
     // toutes les métriques du profil, et l'emprunt immuable qui suit l'exige.
     let mut auxiliary: Vec<ObjectId> = metric.labels.values().cloned().collect();
     auxiliary.extend(metric.multiply_by.iter().cloned());
+    auxiliary.extend(metric.entity_scale.iter().cloned());
+    auxiliary.extend(metric.entity_precision.iter().cloned());
     if let Some(filters) = &resolved.filters {
         auxiliary.extend(filters.required_oids().into_iter().cloned());
     }
@@ -218,7 +220,7 @@ async fn collect_table(
             continue;
         }
 
-        let Some(value) = apply_factors(raw, metric.scale, metric.multiply_by.as_ref(), |base| {
+        let Some(value) = apply_metric_factors(raw, metric, |base| {
             cache.columns.get(base).and_then(|column| column.get(&index))
         }) else {
             continue;
@@ -233,6 +235,32 @@ async fn collect_table(
 
     debug!(metric = metric.name, kept = samples.len(), dropped, "table collectée");
     Ok(samples)
+}
+
+/// Tous les facteurs d'une métrique : échelle fixe, colonne multiplicatrice,
+/// puis échelle et précision ENTITY-SENSOR-MIB quand le profil les déclare.
+/// Une colonne déclarée mais absente donne `None` : mieux vaut ne rien émettre
+/// qu'une valeur dans une unité inconnue.
+fn apply_metric_factors<'a>(
+    raw: f64,
+    metric: &super::profile::Metric,
+    lookup: impl Fn(&ObjectId) -> Option<&'a SnmpValue>,
+) -> Option<f64> {
+    let value = apply_factors(raw, metric.scale, metric.multiply_by.as_ref(), &lookup)?;
+    if metric.entity_scale.is_none() && metric.entity_precision.is_none() {
+        return Some(value);
+    }
+    let scale = match &metric.entity_scale {
+        Some(base) => lookup(base)?.as_f64()?,
+        // Sans colonne d'échelle, les unités (9) : seule la précision s'applique.
+        None => 9.0,
+    };
+    let precision = match &metric.entity_precision {
+        Some(base) => lookup(base)?.as_f64()?,
+        None => 0.0,
+    };
+    let result = value * super::profile::entity_sensor_factor(scale, precision)?;
+    result.is_finite().then_some(result)
 }
 
 /// Applique le facteur d'échelle puis, s'il y a lieu, la colonne multiplicatrice.
@@ -300,6 +328,38 @@ mod tests {
 
     fn colonne(entries: &[(&str, SnmpValue)]) -> Column {
         entries.iter().map(|(index, value)| ((*index).to_string(), value.clone())).collect()
+    }
+
+    #[test]
+    fn capteur_entity_sensor_echelle_et_precision() {
+        use super::super::profile::entity_sensor_factor as f;
+        // 3 chiffres après la virgule, en unités : 45123 -> 45,123.
+        assert!((45123.0 * f(9.0, 3.0).unwrap() - 45.123).abs() < 1e-9);
+        // Millivolts (milli = 8) : 12050 mV -> 12,05 V.
+        assert!((12050.0 * f(8.0, 0.0).unwrap() - 12.05).abs() < 1e-9);
+        // Échelle et précision se combinent : 1205 en milli avec 2 décimales -> 0,01205.
+        assert!((1205.0 * f(8.0, 2.0).unwrap() - 0.01205).abs() < 1e-12);
+        // Kilo, précision négative : aucun décalage.
+        assert_eq!(f(10.0, -2.0), Some(1000.0));
+        assert_eq!(f(0.0, 0.0), None);
+        assert_eq!(f(18.0, 0.0), None);
+    }
+
+    #[test]
+    fn metrique_entity_sensor_lit_ses_colonnes() {
+        let source = "id: x\nname: X\nmetrics:\n  - name: t\n    oid: 1.3.6.1.2.1.99.1.1.1.4\n    \
+            kind: gauge\n    walk: true\n    entity_scale: 1.3.6.1.2.1.99.1.1.1.2\n    \
+            entity_precision: 1.3.6.1.2.1.99.1.1.1.3\n";
+        let profile = Profile::parse(source).unwrap();
+        let metric = &profile.metrics[0];
+        let columns: HashMap<ObjectId, SnmpValue> = HashMap::from([
+            (oid("1.3.6.1.2.1.99.1.1.1.2"), SnmpValue::Integer(8)),
+            (oid("1.3.6.1.2.1.99.1.1.1.3"), SnmpValue::Integer(2)),
+        ]);
+        let value = apply_metric_factors(4512.0, metric, |base| columns.get(base)).unwrap();
+        assert!((value - 0.04512).abs() < 1e-12, "{value}");
+        // Précision introuvable : pas de valeur.
+        assert_eq!(apply_metric_factors(4512.0, metric, |_| None), None);
     }
 
     #[test]
