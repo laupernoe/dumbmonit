@@ -53,7 +53,7 @@ parada é o sinal mais próximo que a API dá de uma VM que parou contra a sua
 vontade; se desligar uma VM protegida de propósito, retire primeiro a sua
 prioridade de reinício.
 
-As [regras incorporadas](../alerting/rules.md#xcp-ng-xenserver) que se aplicam:
+As [regras incorporadas](../alerting/rules.md) que se aplicam:
 
 - **XCP-ng host offline**: o heartbeat de um anfitrião não chega ao
   coordenador há cinco minutos (Warning).
