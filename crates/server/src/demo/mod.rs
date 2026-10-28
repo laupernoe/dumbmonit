@@ -65,7 +65,7 @@ pub fn register_synthetic(registry: &mut crate::collectors::Registry) {
     // Commutateur SNMP, CrowdSec, Cloudflare, domaines, licence : simulés en
     // mémoire, sans le moindre appel sortant (voir [`extras`]).
     for kind in extras::KINDS {
-        registry.register(std::sync::Arc::new(synthetic::SyntheticProbe::new(*kind)));
+        registry.register(std::sync::Arc::new(synthetic::SyntheticProbe::new(kind)));
     }
     // Les équipements simulés gardent leur vrai collecteur, avec un temps de
     // réponse en plus : la colonne « Latency » de la console n'a pas de trous.
