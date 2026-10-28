@@ -31,10 +31,17 @@ l'installer pour de vrai, ou pour mettre une vitrine sur votre propre site.
   par de faux répondeurs à l'intérieur du serveur, liés à `127.0.0.1` et
   rejouant des réponses d'API enregistrées, si bien que les vrais collecteurs
   et panneaux de surveillance fonctionnent. Redémarrer donne le même parc.
-- **Sept jours d'historique.** Des métriques synthétiques sont écrites dans
-  VictoriaMetrics au démarrage, si bien que les graphiques, *7 derniers jours*,
-  les prévisions et l'historique des alertes sont remplis, et quelques alertes
-  sont actives pour que *À traiter* contienne quelque chose.
+- **Trente jours d'historique.** Des métriques synthétiques sont écrites dans
+  VictoriaMetrics au démarrage (la dernière semaine au pas de cinq minutes), si
+  bien que les graphiques, *7 derniers jours*, la disponibilité sur 30 jours,
+  les prévisions (« plein dans environ N jours ») et l'historique des alertes
+  sont remplis, et quelques alertes sont actives pour que *À traiter* contienne
+  quelque chose. Un commutateur avec ses ports et son trafic, une carte des
+  menaces alimentée par de faux comptes CrowdSec et Cloudflare, des échéances de
+  domaines et de licence, une matrice de sauvegardes avec quelques nuits en
+  échec, un appareil trouvé par le balayage réseau et deux pages d'état avec
+  leurs scènes de nuit complètent le tableau. Tout est calculé en mémoire à
+  partir d'une graine fixe : rien n'est récupéré sur le réseau.
 - **Rien ne sort du serveur.** Aucune notification n'est jamais envoyée, et
   aucune sonde ne part vers une adresse tapée par un visiteur.
 - **Une visite guidée** s'ouvre après la première connexion ; le bandeau la
