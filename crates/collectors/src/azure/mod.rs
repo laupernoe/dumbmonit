@@ -516,11 +516,8 @@ mod tests {
         );
         assert_eq!(value(&s, "azure_figure", &[("name", "Resources")]), 6.0);
         // Étiquette de région pour la carte : la ligne de l'abonnement (« global ») n'en est pas une.
-        let resources: f64 = s
-            .iter()
-            .filter(|x| x.metric == "azure_location_resources")
-            .map(|x| x.value)
-            .sum();
+        let resources: f64 =
+            s.iter().filter(|x| x.metric == "azure_location_resources").map(|x| x.value).sum();
         assert_eq!(resources, 6.0, "every resource has one location");
         assert_eq!(value(&s, "azure_location_resources", &[("location", "westeurope")]), 6.0);
         assert_eq!(value(&s, "azure_location_unhealthy", &[("location", "westeurope")]), 2.0);

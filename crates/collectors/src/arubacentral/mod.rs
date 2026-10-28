@@ -368,8 +368,7 @@ pub fn parse_ports(reply: &Value) -> Vec<Port> {
                 full_duplex: pick_text(item, &["duplex", "duplexMode"])
                     .map(|d| d.to_ascii_lowercase().contains("full")),
                 uplink: pick_bool(item, &["uplink"]).unwrap_or(false),
-                poe_enabled: pick_bool(item, &["poeEnabled"])
-                    .or_else(|| poe_watts.map(|_| true)),
+                poe_enabled: pick_bool(item, &["poeEnabled"]).or_else(|| poe_watts.map(|_| true)),
                 poe_watts,
                 rx_bytes: pick_number(item, &["rxBytes", "rxOctets"]),
                 tx_bytes: pick_number(item, &["txBytes", "txOctets"]),
@@ -380,8 +379,7 @@ pub fn parse_ports(reply: &Value) -> Vec<Port> {
                     .map(|n| {
                         (
                             n.to_string(),
-                            pick_text(item, &["neighbourPort", "neighborPort"])
-                                .map(str::to_string),
+                            pick_text(item, &["neighbourPort", "neighborPort"]).map(str::to_string),
                         )
                     }),
             })
