@@ -5,6 +5,36 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.14.3 — 2026-10-28
+
+### Added
+
+- **Machine health on Windows.** The agent now fills the machine health card on
+  Windows too: top processes by CPU and memory, processor queue length, memory
+  pages per second and disk queue length (`agent_windows_*`, shown among the
+  current values), and the clock offset and synchronisation read from
+  `w32tm /query /status /verbose` (same `agent_clock_*` series as on Linux).
+- **Switch panel for Omada and Aruba Central.** Switches managed by an Omada
+  controller or by Aruba Central show their ports (state, speed, PoE) in the
+  switch panel, like SNMP switches.
+- **ENTITY-SENSOR-MIB sensors in SNMP profiles.** A new `entity-sensors` profile
+  reads temperatures, voltages, currents, fan speeds and power from ENTITY-SENSOR-MIB, with
+  the scale and precision each sensor reports.
+- **Restart markers on device charts.** Host reboots (uptime going back) and
+  container restarts are marked on the charts of the device page.
+- **Expiries in deadlines.** OVH services report their expiry date and are listed
+  in deadlines; the Veeam support contract has an expiry rule and a deadline.
+- **Region map.** Azure and Infomaniak resources carry a region label and are
+  placed on the region map.
+- **Hyper Backup in the backup matrix.** Synology Hyper Backup tasks appear in the
+  backup history and matrix.
+
+### Changed
+
+- **Terraform provider.** Built with Go 1.27.3 and up-to-date dependencies
+  (gRPC, `golang.org/x/net`, `x/text`, `x/sys`), which closes the open advisories
+  on them; a new workflow builds, vets and scans it with `govulncheck`.
+
 ## 0.14.2 — 2026-10-28
 
 ### Added
