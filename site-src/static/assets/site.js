@@ -328,7 +328,8 @@
 	var io = new IntersectionObserver(function (entries) {
 		entries.forEach(function (en) {
 			if (en.isIntersecting) {
-				v.preload = 'auto';
+				if (v.preload !== 'auto') { v.preload = 'auto'; v.load(); }
+				v.muted = true;
 				var p = v.play();
 				if (p && p.catch) p.catch(function () { v.controls = true; });
 			} else {
