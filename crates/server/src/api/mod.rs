@@ -12,6 +12,7 @@ mod auth;
 mod backends;
 mod backup;
 mod blacklist;
+mod deadlines;
 mod channels;
 pub(crate) mod clients;
 mod collectors;
@@ -299,6 +300,8 @@ pub fn router(state: AppState) -> Router {
         .merge(proxies::routes())
         // Listes noires DNS : serveur mail et plage d'adresses (`blacklist.rs`).
         .merge(blacklist::routes())
+        // Frise des échéances : domaines, certificats, secrets, licences (`deadlines.rs`).
+        .merge(deadlines::routes())
         // Moniteurs en poussée : jeton d'une cible et sa régénération (`push.rs`).
         .merge(push::ui_routes())
         // Sauvegarde et restauration de l'instance (`backup.rs`).

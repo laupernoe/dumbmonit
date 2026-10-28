@@ -112,6 +112,17 @@ All notable changes to this project are documented here. The format follows
   state. AWS, Hetzner and OVHcloud panels map their regions and datacenters from a
   built-in table (AWS, Azure, Hetzner, OVHcloud, Infomaniak), with no request out.
 
+### Added
+
+- **Deadlines timeline** on the Reports page: domains, certificates, Entra
+  application secrets, Infomaniak products, Tailscale keys and licenses (FortiGate,
+  Meraki, Palo Alto, Veeam, GitLab) on one 90-day axis, with the soonest as a
+  list on phones. Each monitor page shows its own expiry dates. Served by the new
+  `GET /api/deadlines` (soonest first, `target` and `max_days` filters).
+- **Domain changes**: the domain monitor now reads the name servers and
+  fingerprints them and the registrar. New default rules alert on a change of
+  name servers, a change of registrar, and DNSSEC lost.
+
 ## 0.14.1 — 2026-10-28
 
 ### Added

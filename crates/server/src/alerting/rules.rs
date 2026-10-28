@@ -5392,6 +5392,40 @@ pub fn builtin_rules() -> Vec<Rule> {
             repeat_interval: Some(Duration::from_secs(12 * 3600)),
             ..base("domain_redemption", "Domain in redemption", RuleKind::Threshold, "dumbmonit_domain_redemption")
         },
+        // Changements de délégation (`collectors/domain`) : les empreintes ne
+        // bougent que si la liste change, et `changes_prometheus` ignore la
+        // première valeur d'une série neuve. Un jour de fenêtre : l'alerte se
+        // résout seule ensuite.
+        Rule {
+            description: "The name servers of the domain changed: expected after a migration, a sign of hijacking otherwise."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("domain_nameservers_changed", "Domain name servers changed", RuleKind::Threshold, "changes_prometheus(dumbmonit_domain_nameservers_fingerprint[1d])")
+        },
+        Rule {
+            description: "The registrar of the domain changed: a transfer happened. Check that it was yours."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("domain_registrar_changed", "Domain registrar changed", RuleKind::Threshold, "changes_prometheus(dumbmonit_domain_registrar_fingerprint[1d])")
+        },
+        Rule {
+            description: "DNSSEC was active on the domain in the last seven days and is not any more: validating resolvers may refuse the domain, or the signature was stripped."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("domain_dnssec_lost", "Domain DNSSEC lost", RuleKind::Threshold, "(dumbmonit_domain_dnssec == 0) and (max_over_time(dumbmonit_domain_dnssec[7d]) == 1)")
+        },
         // --- Listes noires DNS (`collectors/blacklist`) ---
         // Un passage n'a lieu que toutes les six heures et son résultat est
         // réécrit à chaque sonde : la durée minimale ne sert qu'à laisser passer
@@ -8277,6 +8311,9 @@ pub(crate) const PRODUITES: &[&str] = &[
     "dumbmonit_domain_expiry_days",
     "dumbmonit_domain_on_hold",
     "dumbmonit_domain_redemption",
+    "dumbmonit_domain_dnssec",
+    "dumbmonit_domain_nameservers_fingerprint",
+    "dumbmonit_domain_registrar_fingerprint",
     // Listes noires DNS (`collectors/blacklist/scan.rs`).
     "dumbmonit_blacklist_listed_lists",
     "dumbmonit_blacklist_listed_major_lists",
@@ -8903,6 +8940,9 @@ mod tests {
             "domain_expiring_soon",
             "domain_on_hold",
             "domain_redemption",
+            "domain_nameservers_changed",
+            "domain_registrar_changed",
+            "domain_dnssec_lost",
             "dns_answer_changed",
             "webchange_detected",
             "netconfig_changed",

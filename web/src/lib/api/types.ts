@@ -6566,3 +6566,23 @@ export interface TargetRemediation {
 	} | null;
 	runs: RemediationRun[];
 }
+
+// --- Deadlines (crates/server/src/api/deadlines.rs) ----------------------------
+// Expiry dates collected across the instance: domains, certificates,
+// application secrets, products, device keys, licences.
+
+export type DeadlineKind = 'domain' | 'certificate' | 'credential' | 'product' | 'key' | 'license';
+
+export interface Deadline {
+	target: TargetId;
+	target_name: string;
+	target_kind: string;
+	/** Unknown kinds are rendered as is. */
+	kind: DeadlineKind | (string & {});
+	/** The object that expires: host, application, device… */
+	what: string;
+	/** UTC, no suffix (`parseServerDate` adds the `Z`). */
+	expires_at: string;
+	/** Negative once expired. */
+	days_left: number;
+}

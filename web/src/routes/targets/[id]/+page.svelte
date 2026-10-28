@@ -99,6 +99,7 @@
 	import DockerPanel from '#lib/components/devices/docker/DockerPanel.svelte';
 	import DockerStrip from '#lib/components/devices/docker/DockerStrip.svelte';
 	import { isDockerDevice } from '#lib/components/devices/agent/services.js';
+	import TargetDeadlines from '#lib/components/deadlines/TargetDeadlines.svelte';
 	import {
 		Button,
 		Confirm,
@@ -840,6 +841,9 @@
 	{/if}
 
 	<CveDeviceCard targetId={target.id} />
+
+	<!-- Expiry dates this monitor reports (certificates, domain, licences…); absent when it has none. -->
+	<TargetDeadlines target={target.id} class="mt-6" />
 
 	<!-- Containers at a glance, with the fleet-wide policies; the list itself sits with the metrics.
 	     Docker is a device of its own under the machine whose agent found it. -->
