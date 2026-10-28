@@ -2575,3 +2575,20 @@ footer {
 		width: 150px;
 	}
 }
+
+/* ---- video tour ---- */
+.vid-fig {
+	max-width: 960px;
+	margin: 0 auto;
+	overflow: hidden;
+	border: 1px solid var(--c-line-strong);
+	border-radius: 14px;
+	background: var(--c-canvas);
+	box-shadow: var(--shadow-float);
+}
+.vid-fig video {
+	display: block;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 16 / 10;
+}
