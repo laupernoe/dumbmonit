@@ -323,10 +323,5 @@
  "badge_beta": "Beta",
  "badge_agent": "Vía agente",
  "fam_more_name": "Más integraciones",
- "fam_more_blurb": "Los últimos tipos de monitor, aún sin familia.",
- "vid_eyebrow": "En movimiento",
- "vid_h": "Un minuto en la consola",
- "vid_p": "La vista general, un monitor, el mapa, el mapa en directo de un cortafuegos, una página de estado pública y la pantalla mural, en la demo en línea.",
- "vid_alt": "Vídeo de la consola de DumbMonit: la vista general con su banner del tiempo, el detalle de un monitor, el mapa de la infraestructura, el mapa en directo de un cortafuegos, una página de estado pública y la pantalla mural.",
- "vid_dl": "Descargar el vídeo (MP4)"
+ "fam_more_blurb": "Los últimos tipos de monitor, aún sin familia."
 }
