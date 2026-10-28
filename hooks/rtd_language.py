@@ -96,12 +96,7 @@ def _site_nav(code: str, docs_home: str) -> dict:
     home = SITE + _site_dir(code)
     links = [
         (home, "nav_product", ""),
-        (home + "features/", "nav_features", ""),
-        (home + "devices/", "nav_integrations", ""),
         (docs_home, "nav_docs", "current"),
-        (home + "roadmap/", "nav_roadmap", ""),
-        (home + "community/", "nav_community", ""),
-        (home + "install/", "nav_download", "download"),
         (REPO, "k010", "github"),
     ]
     return {

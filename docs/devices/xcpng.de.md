@@ -55,7 +55,7 @@ eine VM liefert, die gegen Ihren Willen gestoppt wurde; wenn Sie eine
 geschützte VM absichtlich herunterfahren, entfernen Sie zuerst ihre
 Neustartpriorität.
 
-Die zutreffenden [integrierten Regeln](../alerting/rules.md#xcp-ng-xenserver):
+Die zutreffenden [integrierten Regeln](../alerting/rules.md):
 
 - **XCP-ng-Host offline**: Der Heartbeat eines Hosts hat den Koordinator
   fünf Minuten lang nicht erreicht (Warnung).

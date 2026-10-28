@@ -54,7 +54,7 @@ ferma è il segnale più vicino che l'API fornisce di una VM che si è fermata
 contro la tua volontà; se spegni di proposito una VM protetta, rimuovi prima
 la sua priorità di riavvio.
 
-Le [regole integrate](../alerting/rules.md#xcp-ng-xenserver) che si applicano:
+Le [regole integrate](../alerting/rules.md) che si applicano:
 
 - **Host XCP-ng offline**: l'heartbeat di un host non raggiunge il
   coordinatore da cinque minuti (Avvertenza).
