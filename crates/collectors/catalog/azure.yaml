@@ -13,6 +13,8 @@ metrics:
   - { name: azure_resources_unavailable, label: "Resources unavailable" }
   - { name: azure_resources_unknown, label: "Resources unknown" }
   - { name: azure_resource_unhealthy, label: "Resource unhealthy", better: "lower" }
+  - { name: azure_location_resources, label: "Resources per region" }
+  - { name: azure_location_unhealthy, label: "Unhealthy per region", better: "lower" }
 views:
   - view: stat
     title: "Current values"

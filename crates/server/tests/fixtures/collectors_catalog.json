@@ -2537,6 +2537,17 @@
         "label": "Resource unhealthy",
         "kind": "gauge",
         "better": "lower"
+      },
+      {
+        "name": "azure_location_resources",
+        "label": "Resources per region",
+        "kind": "gauge"
+      },
+      {
+        "name": "azure_location_unhealthy",
+        "label": "Unhealthy per region",
+        "kind": "gauge",
+        "better": "lower"
       }
     ],
     "views": [
@@ -8241,6 +8252,17 @@
         "group": ""
       },
       {
+        "key": "region",
+        "label": "Data center",
+        "help": "Optional. Where the products are hosted (geneva, dc3-a, dc4-a, dc5, winterthur), shown on the region map. The product API does not tell.",
+        "placeholder": "geneva",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
         "key": "request_timeout_seconds",
         "label": "Timeout per request (seconds)",
         "help": "Time allowed for each call, from 1 to 120.",
@@ -8300,6 +8322,11 @@
         "name": "infomaniak_product_operation_in_progress",
         "label": "Product operation in progress",
         "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "infomaniak_region_products",
+        "label": "Products per region",
         "kind": "gauge"
       }
     ],

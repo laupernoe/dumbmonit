@@ -23,6 +23,7 @@
 //! |---|---|---|
 //! | `account_id` | vide | Compte à lire ; vide = tous les comptes visibles du jeton (10 au plus). |
 //! | `service_names` | vide | Services à lire (`domain, hosting`) ; vide = tous. |
+//! | `region` | vide | Centre de données (`geneva`, `dc3-a`, `winterthur`…) : l'API des produits ne le dit pas ; publié en `infomaniak_region_products` pour la carte. |
 //! | `request_timeout_seconds` | `15` | Délai par requête HTTP. |
 
 use async_trait::async_trait;
@@ -154,7 +155,8 @@ impl Collector for InfomaniakCollector {
     }
 
     async fn probe(&self, target: &Target) -> Result<Vec<Sample>, ProbeError> {
-        Ok(samples(&products(target).await?, now_ms()))
+        let region = tag(target, "region").map(str::to_string);
+        Ok(samples(&products(target).await?, region.as_deref(), now_ms()))
     }
 
     async fn discover(&self, target: &Target) -> Result<Option<String>, ProbeError> {
@@ -183,7 +185,7 @@ fn flagged(product: &Value, key: &str) -> bool {
     number(product.get(key)).is_some_and(|v| v != 0.0)
 }
 
-pub fn samples(products: &[Value], ts_ms: i64) -> Vec<Sample> {
+pub fn samples(products: &[Value], region: Option<&str>, ts_ms: i64) -> Vec<Sample> {
     let now_s = ts_ms as f64 / 1000.0;
     let mut out = Vec::new();
     let (mut expiring, mut expired, mut locked, mut maintenance) = (0, 0, 0, 0);
@@ -232,6 +234,14 @@ pub fn samples(products: &[Value], ts_ms: i64) -> Vec<Sample> {
             "OK"
         };
         out.push(cloud::item(PREFIX, "Products", &name, detail == "OK", detail, ts_ms));
+    }
+    // L'API des produits ne dit pas où ils sont : la région vient du réglage `region`. Le point
+    // vaut le nombre de produits, pour la carte des régions.
+    if let Some(region) = region.map(str::trim).filter(|r| !r.is_empty()) {
+        out.push(
+            gauge("infomaniak_region_products", products.len() as f64, ts_ms)
+                .with_label("region", region),
+        );
     }
     out.push(gauge("infomaniak_products", products.len() as f64, ts_ms));
     out.push(gauge("infomaniak_products_expiring", expiring as f64, ts_ms));
@@ -322,7 +332,10 @@ mod tests {
 
     #[test]
     fn produits_du_compte() {
-        let s = samples(&produits(), NOW_S * 1000);
+        let s = samples(&produits(), Some("geneva"), NOW_S * 1000);
+        assert_eq!(value(&s, "infomaniak_region_products", &[("region", "geneva")]), 4.0);
+        let none = samples(&produits(), None, NOW_S * 1000);
+        assert!(find(&none, "infomaniak_region_products", &[]).is_none());
         let acme = [("product", "acme.ch")];
         assert_eq!(value(&s, "infomaniak_product_expiry_seconds", &acme), 5.0 * 86_400.0);
         assert_eq!(
