@@ -9,6 +9,7 @@ import { m } from '#lib/paraglide/messages.js';
  * `keep_metric_names`, so the two answers fold back into one list of groups.
  */
 import { queryRange, type MetricSeries, type TargetId } from '#lib/api/index.js';
+import { COUNTER_SELECTOR, unitFor } from '#lib/viz/infer.js';
 import type { Serie } from '#lib/components/Chart.svelte';
 
 /** A curve with the labels it came from, so sections can sort it by label. */
@@ -25,41 +26,9 @@ export interface DeviceMetricGroup {
 	series: DeviceSerie[];
 }
 
-/**
- * Families that only ever grow: charted as a per-second rate.
- *
- * The query API does not carry the sample kind, so the counters are named
- * here explicitly — the ones the agent and the SNMP profiles emit as such. A
- * `_total` suffix is not a hint: Proxmox and PBS totals ("backup guests
- * total") are plain gauges.
- */
-const COUNTER =
-	/_(octets|packets|errors|discards)_(in|out)$|^dumbmonit_(disk_(read|written)_bytes|printer_pages_printed|ups_input_line_bads|agent_dropped_samples)$|^dumbmonit_(victoriametrics|victorialogs|loki|graylog)_\w+_total$/;
-const COUNTER_SELECTOR =
-	'dumbmonit_(.+_(octets|packets|errors|discards)_(in|out)|disk_(read|written)_bytes|printer_pages_printed|ups_input_line_bads|agent_dropped_samples|(victoriametrics|victorialogs|loki|graylog)_.+_total)';
-
 /** About 300 points per chart, as in `#lib/metrics.js`. */
 function stepFor(seconds: number): number {
 	return Math.max(10, Math.round(seconds / 300));
-}
-
-function unitFor(name: string): string {
-	if (COUNTER.test(name)) {
-		if (/_octets_|_bytes$|_bytes(_ingested)?_total$/.test(name)) return 'B/s';
-		if (/_packets_/.test(name)) return 'pkt/s';
-		if (/_errors_/.test(name)) return 'err/s';
-		if (/_discards_/.test(name)) return 'pkt/s';
-		if (/_pages_/.test(name)) return 'pages/s';
-		return '/s';
-	}
-	if (name.endsWith('_percent')) return '%';
-	if (name.endsWith('_bytes')) return 'B';
-	if (name.endsWith('_bytes_per_second')) return 'B/s';
-	if (name.endsWith('_seconds')) return 's';
-	if (name.endsWith('_celsius')) return '°C';
-	if (name.endsWith('_volts')) return 'V';
-	if (name.endsWith('_watts')) return 'W';
-	return '';
 }
 
 /** "Cpu usage percent" from `dumbmonit_cpu_usage_percent`; "Interface octets in" from `dumbmonit_if_octets_in`. */
