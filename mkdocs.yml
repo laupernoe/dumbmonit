@@ -1,9 +1,6 @@
 site_name: DumbMonit
 site_description: Simple monitoring from homelabs to mid-sized companies. One container, one IP address, useful alerts in a minute.
 site_url: https://dumbmonit.readthedocs.io/en/latest/
-repo_url: https://github.com/laupernoe/dumbmonit
-repo_name: laupernoe/dumbmonit
-edit_uri: edit/main/docs/
 docs_dir: docs
 exclude_docs: |
   requirements.txt
@@ -23,7 +20,6 @@ validation:
     anchors: warn
     absolute_links: warn
     unrecognized_links: warn
-copyright: MIT — DumbMonit
 
 theme:
   name: material
@@ -49,12 +45,9 @@ theme:
         icon: material/weather-sunny
         name: Switch to light mode
   features:
-    - navigation.tabs
     - navigation.sections
-    - navigation.top
     - search.suggest
     - content.code.copy
-    - content.tabs.link
 
 extra_css:
   - assets/extra.css
@@ -82,7 +75,6 @@ plugins:
 
 nav:
   - Home: index.md
-  - Live demo: https://demo.dumbmonit.app
   - Install:
       - Docker: install/docker.md
       - Add your first monitor: install/first-device.md
