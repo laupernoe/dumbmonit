@@ -14,7 +14,7 @@
 
 	interface Props {
 		target: Target;
-		/** Key of `SOURCES`: `veeam`, `duplicati`, `kopia`, `abb` or `plakar`. */
+		/** Key of `SOURCES`: `veeam`, `duplicati`, `kopia`, `abb`, `hyperbackup` or `plakar`. */
 		source: string;
 	}
 
