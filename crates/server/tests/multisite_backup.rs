@@ -72,3 +72,47 @@ async fn le_reglage_multi_emplacements_est_restaure() {
     let again = restore(&pool, &cipher, &lot, true).await.expect("seconde restauration");
     assert_eq!(counts(&again, "targets"), (0, 0, 3), "rien ne bouge : {again:#?}");
 }
+
+#[tokio::test]
+async fn les_politiques_de_conteneurs_voyagent_avec_la_sauvegarde() {
+    let source_dir = tempfile::tempdir().unwrap();
+    let (source, cipher) = instance(&source_dir).await;
+    sqlx::query(
+        "INSERT INTO targets (id, name, address, kind, interval_secs, enabled, tags)
+         VALUES (1, 'nas', 'nas', 'agent', 60, 1, '{}')",
+    )
+    .execute(&source)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO container_policies
+             (target_id, container, auto_restart, auto_update, prune_old_image, only_in_maintenance)
+         VALUES (1, 'web', 1, 1, 0, 0), (1, 'db', 1, 0, 1, 1)",
+    )
+    .execute(&source)
+    .await
+    .unwrap();
+
+    let lot = collect(&source, &cipher, ExportOptions::default()).await.expect("export");
+    let nas = lot.targets.iter().find(|t| t.name == "nas").expect("nas");
+    assert_eq!(nas.container_policies.len(), 2);
+
+    let target_dir = tempfile::tempdir().unwrap();
+    let (pool, cipher) = instance(&target_dir).await;
+    restore(&pool, &cipher, &lot, true).await.expect("restauration");
+    let id: i64 = sqlx::query_scalar("SELECT id FROM targets WHERE name = 'nas'")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    let web = dumbmonit_server::collectors::agent::commands::get_policy(&pool, id, "web")
+        .await
+        .unwrap();
+    assert!(web.auto_restart && web.auto_update && !web.prune_old_image && !web.only_in_maintenance);
+    let db = dumbmonit_server::collectors::agent::commands::get_policy(&pool, id, "db")
+        .await
+        .unwrap();
+    assert!(db.auto_restart && !db.auto_update);
+
+    let again = restore(&pool, &cipher, &lot, true).await.expect("seconde restauration");
+    assert_eq!(counts(&again, "targets"), (0, 0, 1), "rien ne bouge : {again:#?}");
+}

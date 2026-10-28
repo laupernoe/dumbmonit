@@ -95,6 +95,29 @@ export function setContainerPolicy(
 	});
 }
 
+/** Fields a bulk change may set; an omitted one keeps each container's stored value. */
+export type ContainerPolicyChange = Partial<ContainerPolicy>;
+
+/** Outcome for one container of a bulk policy change. */
+export interface BulkPolicyResult {
+	name: string;
+	ok: boolean;
+	policy?: ContainerPolicy;
+	error?: string;
+}
+
+/** One transaction on the server; a refused name is reported without stopping the others. */
+export function setContainerPolicies(
+	id: TargetId,
+	containers: string[],
+	change: ContainerPolicyChange
+): Promise<{ results: BulkPolicyResult[] }> {
+	return request<{ results: BulkPolicyResult[] }>(`/targets/${id}/containers/policy`, {
+		method: 'PUT',
+		body: { containers, ...change }
+	});
+}
+
 export function restartContainer(id: TargetId, name: string): Promise<CommandView> {
 	return request<CommandView>(`/targets/${id}/containers/${encodeURIComponent(name)}/restart`, {
 		method: 'POST'
