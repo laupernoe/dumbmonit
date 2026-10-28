@@ -186,3 +186,23 @@ test('every source reads metrics that exist, once each in the selector', () => {
 	}
 	assert.ok(metricNames(SOURCES.veeam).includes('dumbmonit_veeam_job_last_duration_seconds'));
 });
+
+test('Hyper Backup: severity splits into failed and warning, keyed by task', () => {
+	const labels = (name, extra = {}) => ({ __name__: name, target: 't1', task: '3', name: 'Offsite', target_type: 'image', ...extra });
+	const rows = groupSeries(
+		[
+			{ metric: labels('dumbmonit_synology_backup_last_result', { result: 'done' }), values: [[D0, '0'], [D0 + HOUR, '1'], [D0 + 2 * HOUR, '2']] },
+			{ metric: labels('dumbmonit_synology_backup_last_run_age_seconds'), values: [[D0, '60']] },
+			{ metric: labels('dumbmonit_synology_backup_running'), values: [[D0, '0']] },
+			{ metric: { __name__: 'dumbmonit_synology_backup_tasks', target: 't1' }, values: [[D0, '1']] }
+		],
+		SOURCES.hyperbackup
+	);
+	assert.equal(rows.length, 1);
+	assert.equal(rows[0].title, 'Offsite');
+	assert.equal(rows[0].subtitle, 'image');
+	assert.deepEqual(rows[0].failed, [[D0, 0], [D0 + HOUR, 0], [D0 + 2 * HOUR, 1]]);
+	assert.deepEqual(rows[0].warning, [[D0, 0], [D0 + HOUR, 1], [D0 + 2 * HOUR, 0]]);
+	assert.deepEqual(rows[0].runAge, [[D0, 60]]);
+	assert.ok(metricNames(SOURCES.hyperbackup).includes('dumbmonit_synology_backup_last_result'));
+});
