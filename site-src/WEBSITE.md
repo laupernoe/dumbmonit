@@ -2,35 +2,49 @@
 
 Sources in `site-src/` (templates, strings, `static/` files); `website/` is the build output.
 
-The static page published at **https://dumbmonit.app/**. Plain
-HTML and CSS, a few lines of JavaScript for the copy buttons, no build step,
-no analytics, no third-party requests. Fonts (Geist and Geist Mono, SIL OFL)
+The static page published at **https://dumbmonit.app/**, with the documentation under
+**https://dumbmonit.app/docs/**. Plain HTML and CSS, a little JavaScript (copy buttons, the hero
+demo), no analytics, no third-party requests. Fonts (Geist and Geist Mono, SIL OFL)
 are self-hosted in `assets/fonts/`. Colours and type are those of the app's Enterprise theme
 (`web/src/app.css`, `html.mode-enterprise`), always dark; the layout is a plain product site (top
 navigation, full-width sections, footer in columns). The hero plays a short scripted demo in a
-browser frame (`site.js`, still under `prefers-reduced-motion`), and the diagrams are drawn in HTML
-and CSS (`DIAGRAMS` in `build.py`) so their text wraps and translates.
+browser frame (`site.js`); the first click, tap or keyboard focus hands it to the visitor (pick a
+row, acknowledge the alert, Escape closes the detail, arrow keys move between rows, Replay), and
+the script resumes after 20 s without input. Under `prefers-reduced-motion` it is a still frame
+that can be used the same way. The diagrams are drawn in HTML and CSS (`DIAGRAMS` in `build.py`)
+so their text wraps and translates; each one lays itself out from its own width (container
+queries), horizontal when it has the room, vertical otherwise.
+
+A recorded demo shows up as a "See it in action" block on the home page as soon as a video is
+present in `static/assets/media/` (`demo.webm` and/or `demo.mp4`, poster `demo.webp`, `.jpg` or
+`.png`, or `demo-poster.*`); without one, the block is left out (never a broken reference).
 
 ## One-time setup
 
 In the GitHub repository: **Settings → Pages → Build and deployment → Source:
 GitHub Actions**. That is the only switch.
 
-After that, `.github/workflows/site.yml` builds the site and deploys it on every push to
-`main` that touches `site-src/**`, and can be run by hand from the **Actions** tab
-(*Site → Run workflow*). The first run creates the `github-pages` environment;
-the URL appears in the run summary.
+After that, `.github/workflows/site.yml` builds the site and the docs and deploys them on every
+push to `main` or `dev` that touches `site-src/**`, `docs/**`, `mkdocs.yml`, `overrides/**` or
+`hooks/**`, and can be run by hand from the **Actions** tab (*Site → Run workflow*). To deploy from
+`dev`, allow it in *Settings → Environments → github-pages → Deployment branches*. The site is
+updated without a release, but **what it announces as available comes from the latest stable
+release tag**: the integrations, their count, the channels and the version are read with
+`git show vX.Y.Z:<path>` (`extract.py`), while the texts, the roadmap and the docs come from the
+pushed branch.
 
 ## Preview locally
 
-Pages serves the site under `/dumbmonit/`, and `404.html` uses absolute
-`/dumbmonit/…` paths, so preview it under the same prefix:
-
 ```sh
-mkdir -p /tmp/preview && ln -sfn "$PWD/site" /tmp/preview/dumbmonit
-python3 -m http.server 4321 --directory /tmp/preview
-# open http://localhost:4321/dumbmonit/
+python3 site-src/build.py                                  # product data from the latest tag
+DUMBMONIT_SITE_REF=worktree python3 site-src/build.py      # or from the working tree
+python3 -m http.server 4321 --directory website            # open http://localhost:4321/
 ```
+
+The docs are built separately (a venv with `docs/requirements.txt`), one build per language:
+`READTHEDOCS_LANGUAGE=fr DUMBMONIT_DOCS_BASE=https://dumbmonit.app/docs/ mkdocs build -d website/docs/fr`
+(English goes to `website/docs`). The links between the site and the docs are relative on the site
+side (`DOCS_DIR` in `build.py`) and absolute on the docs side (`hooks/rtd_language.py`).
 
 ## Contents
 
@@ -57,17 +71,24 @@ per kind of page, one string file per language. Edit the templates and
 English), then run `python3 site-src/build.py` to preview: it writes `website/`, which is git-ignored and
 never committed. The Site workflow builds it again before publishing.
 
-The device pages are generated from the project itself: `python3 site-src/extract.py` reads the
-collector catalogue (`crates/server/tests/fixtures/collectors_catalog.json`), `docs/devices/` and
-`docs/alerting/rules.md` and writes `site-src/data/devices.json`. Run it after adding a collector
-(it fails if a type is missing from a family in `extract.py`), then `build.py`. Device and rule
-texts are English; only the labels around them are translated. The locales are those of `web/messages/`.
+The device pages are generated from the project itself at every build: `extract.py` (called by
+`build.py`) reads, at the latest release tag, the collector catalogue
+(`crates/server/tests/fixtures/collectors_catalog.json`), `docs/devices/` and
+`docs/alerting/rules.md`. There is no list to maintain: a new collector appears on the site with
+the release that ships it. `FAMILIES` in `extract.py` only sorts types into families; a type it
+does not know yet lands in "More integrations" until it is given one. The badges come from the
+catalogue wording: *Beta* ("(beta)" in the label or a summary starting with "Beta.") and *Via
+agent* (a summary starting with "Needs the agent"). `python3 site-src/extract.py` prints what the
+site would show. Device and rule texts are English; only the labels around them are translated.
+The locales are those of `web/messages/`.
 
 - The browser language picks the page on the first visit to the root (English if none of the
   nine matches); the selector in the header remembers an explicit choice.
 - Every page carries `lang`, `hreflang` alternates (and the sitemap too).
-- Links to the documentation go through the single constant `DOCS_HOST` in `build.py`
-  (`@@DOCS@@` in the strings); non-English pages point to the matching docs language.
+- Links to the documentation go through the single constant `DOCS_DIR` in `build.py`
+  (`@@DOCS@@` in the strings): `docs/` on the same site, `docs/<lang>/` for the other languages.
+  The docs header repeats the site's navigation (`overrides/partials/header.html`, labels from
+  `site-src/strings/<lang>.json`). Read the Docs keeps a mirror.
 
 ## Roadmap page
 

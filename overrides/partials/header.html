@@ -1,0 +1,91 @@
+{#-
+  Material's header (mkdocs-material 9.8.0, partials/header.html) with the navigation of the
+  product website added: the docs read as one more page of dumbmonit.app. The links and their
+  labels come from hooks/rtd_language.py (config.extra.site). Wide screens show them in the
+  bar (in place of the page title and the repository widget, GitHub is one of the links);
+  narrower ones get them behind a menu button. Keep the rest in step with Material on upgrade.
+-#}
+{% set class = "md-header" %}
+{% if "navigation.tabs.sticky" in features %}
+  {% set class = class ~ " md-header--shadow md-header--lifted" %}
+{% elif "navigation.tabs" not in features %}
+  {% set class = class ~ " md-header--shadow" %}
+{% endif %}
+<header class="{{ class }}" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="{{ lang.t('header') }}">
+    <a href="{{ config.extra.homepage | d(nav.homepage.url, true) | url }}" title="{{ config.site_name | e }}" class="md-header__button md-logo" aria-label="{{ config.site_name }}" data-md-component="logo">
+      {% include "partials/logo.html" %}
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      {% set icon = config.theme.icon.menu or "material/menu" %}
+      {% include ".icons/" ~ icon ~ ".svg" %}
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            {{ config.site_name }}
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            {% if page.meta and page.meta.title %}
+              {{ page.meta.title }}
+            {% else %}
+              {{ page.title }}
+            {% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+    {% set site = config.extra.site %}
+    {% if site %}
+      <nav class="dm-site" aria-label="{{ site.label | e }}">
+        {% for l in site.links %}
+          <a href="{{ l.url }}" class="dm-site__link{% if l.kind %} dm-site__link--{{ l.kind }}{% endif %}"{% if l.kind == "current" %} aria-current="page"{% endif %}>{{ l.label | e }}</a>
+        {% endfor %}
+      </nav>
+      <details class="dm-site-menu">
+        <summary class="md-header__button md-icon" aria-label="{{ site.menu | e }}" title="{{ site.menu | e }}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        </summary>
+        <nav class="dm-site-menu__pop" aria-label="{{ site.label | e }}">
+          {% for l in site.links %}
+            <a href="{{ l.url }}"{% if l.kind == "current" %} aria-current="page"{% endif %}>{{ l.label | e }}</a>
+          {% endfor %}
+        </nav>
+      </details>
+    {% endif %}
+    {% if config.theme.palette %}
+      {% if not config.theme.palette is mapping %}
+        {% include "partials/palette.html" %}
+      {% endif %}
+    {% endif %}
+    {% if not config.theme.palette is mapping %}
+      {% include "partials/javascripts/palette.html" %}
+    {% endif %}
+    {% if config.extra.alternate %}
+      {% include "partials/alternate.html" %}
+    {% endif %}
+    {% if "material/search" in config.plugins %}
+      {% set search = config.plugins["material/search"] | attr("config") %}
+      {% if search.enabled %}
+        <label class="md-header__button md-icon" for="__search">
+          {% set icon = config.theme.icon.search or "material/magnify" %}
+          {% include ".icons/" ~ icon ~ ".svg" %}
+        </label>
+        {% include "partials/search.html" %}
+      {% endif %}
+    {% endif %}
+    {% if config.repo_url %}
+      <div class="md-header__source">
+        {% include "partials/source.html" %}
+      </div>
+    {% endif %}
+  </nav>
+  {% if "navigation.tabs.sticky" in features %}
+    {% if "navigation.tabs" in features %}
+      {% include "partials/tabs.html" %}
+    {% endif %}
+  {% endif %}
+</header>

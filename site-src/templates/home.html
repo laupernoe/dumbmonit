@@ -13,26 +13,26 @@
 			</div>
 		</div>
 		<figure class="demo-fig">
-			<div class="demo" id="demo" role="img" aria-label="{{dm_alt}}">
+			<div class="demo" id="demo" role="group" aria-label="{{dm_alt}}">
 				<div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>dumbmonit.example.com</span></div>
-				<div class="demo-app" aria-hidden="true">
-					<div class="d-head"><b>{{cm_crumb}}</b><span class="c-live">{{cm_live}}</span></div>
-					<ul class="d-list">
-						<li><span class="mk mk-up">{{cm_s_up}}</span><span class="nm">fw-edge</span><span class="ty">OPNsense</span><span class="n">3 ms</span></li>
-						<li class="d-target"><span class="d-st"><span class="mk mk-up d-ok">{{cm_s_up}}</span><span class="mk mk-down d-bad">{{cm_s_down}}</span></span><span class="nm">nas-02</span><span class="ty">Synology DSM</span><span class="n"><span class="d-ok">12 ms</span><span class="d-bad">—</span></span></li>
-						<li><span class="mk mk-up">{{cm_s_up}}</span><span class="nm">pve-01</span><span class="ty">Proxmox VE</span><span class="n">8 ms</span></li>
-						<li><span class="mk mk-up">{{cm_s_up}}</span><span class="nm">sw-core-01</span><span class="ty">SNMP</span><span class="n">2 ms</span></li>
-						<li><span class="mk mk-up">{{cm_s_up}}</span><span class="nm">dc01</span><span class="ty">Active Directory</span><span class="n">6 ms</span></li>
-						<li><span class="mk mk-up">{{cm_s_up}}</span><span class="nm">www.example.com</span><span class="ty">HTTP</span><span class="n">118 ms</span></li>
+				<div class="demo-app">
+					<div class="d-head"><b>{{cm_crumb}}</b><span class="c-live">{{cm_live}}</span><span class="d-hint">{{dm_hint}}</span><button class="d-replay" type="button">@@ICON:replay@@<span>{{dm_replay}}</span></button></div>
+					<ul class="d-list" aria-label="{{dm_list}}">
+						<li data-ms="3"><button class="d-row" type="button" aria-pressed="false" aria-controls="d-panel"><span class="d-st"><span class="mk mk-up d-up">{{cm_s_up}}</span><span class="mk mk-down d-down">{{cm_s_down}}</span><span class="mk mk-deg d-acked">{{dm_s_ack}}</span></span><span class="nm">fw-edge</span><span class="ty">OPNsense</span><span class="n"><span class="d-up">3 ms</span><span class="d-down">—</span><span class="d-acked">—</span></span></button></li>
+						<li class="d-target" data-ms="12"><button class="d-row" type="button" aria-pressed="false" aria-controls="d-panel"><span class="d-st"><span class="mk mk-up d-up">{{cm_s_up}}</span><span class="mk mk-down d-down">{{cm_s_down}}</span><span class="mk mk-deg d-acked">{{dm_s_ack}}</span></span><span class="nm">nas-02</span><span class="ty">Synology DSM</span><span class="n"><span class="d-up">12 ms</span><span class="d-down">—</span><span class="d-acked">—</span></span></button></li>
+						<li data-ms="8"><button class="d-row" type="button" aria-pressed="false" aria-controls="d-panel"><span class="d-st"><span class="mk mk-up d-up">{{cm_s_up}}</span><span class="mk mk-down d-down">{{cm_s_down}}</span><span class="mk mk-deg d-acked">{{dm_s_ack}}</span></span><span class="nm">pve-01</span><span class="ty">Proxmox VE</span><span class="n"><span class="d-up">8 ms</span><span class="d-down">—</span><span class="d-acked">—</span></span></button></li>
+						<li data-ms="2"><button class="d-row" type="button" aria-pressed="false" aria-controls="d-panel"><span class="d-st"><span class="mk mk-up d-up">{{cm_s_up}}</span><span class="mk mk-down d-down">{{cm_s_down}}</span><span class="mk mk-deg d-acked">{{dm_s_ack}}</span></span><span class="nm">sw-core-01</span><span class="ty">SNMP</span><span class="n"><span class="d-up">2 ms</span><span class="d-down">—</span><span class="d-acked">—</span></span></button></li>
+						<li data-ms="6"><button class="d-row" type="button" aria-pressed="false" aria-controls="d-panel"><span class="d-st"><span class="mk mk-up d-up">{{cm_s_up}}</span><span class="mk mk-down d-down">{{cm_s_down}}</span><span class="mk mk-deg d-acked">{{dm_s_ack}}</span></span><span class="nm">dc01</span><span class="ty">Active Directory</span><span class="n"><span class="d-up">6 ms</span><span class="d-down">—</span><span class="d-acked">—</span></span></button></li>
+						<li data-ms="118"><button class="d-row" type="button" aria-pressed="false" aria-controls="d-panel"><span class="d-st"><span class="mk mk-up d-up">{{cm_s_up}}</span><span class="mk mk-down d-down">{{cm_s_down}}</span><span class="mk mk-deg d-acked">{{dm_s_ack}}</span></span><span class="nm">www.example.com</span><span class="ty">HTTP</span><span class="n"><span class="d-up">118 ms</span><span class="d-down">—</span><span class="d-acked">—</span></span></button></li>
 					</ul>
-					<div class="d-toast"><span class="d-bell">@@ICON:bell@@</span><span><b>{{dm_toast_h}}</b><span>nas-02 · {{dm_toast_p}}</span></span></div>
-					<div class="d-panel">
-						<div class="d-ph"><b>nas-02</b><span class="ty">Synology DSM</span></div>
+					<button class="d-toast" type="button" aria-controls="d-panel"><span class="d-bell">@@ICON:bell@@</span><span><b>{{dm_toast_h}}</b><span>nas-02 · {{dm_toast_p}}</span></span></button>
+					<div class="d-panel" id="d-panel" role="region" aria-label="nas-02">
+						<div class="d-ph"><b class="d-pn">nas-02</b><span class="ty d-pt">Synology DSM</span><span class="d-pst"></span><button class="d-x" type="button" aria-label="{{dm_close}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
 						<p class="d-cap">{{dm_chart}}</p>
-						<svg class="d-chart" viewBox="0 0 240 60" preserveAspectRatio="none"><path class="d-grid" d="M0 15H240M0 30H240M0 45H240"/><path class="d-line" pathLength="1" d="M0 46 L16 44 L32 47 L48 43 L64 45 L80 42 L96 46 L112 41 L128 44 L144 40 L156 43 L166 30 L174 12 L184 7 L240 7"/></svg>
-						<span class="d-ack"><span class="a1">{{dm_ack}}</span><span class="a2">{{dm_acked}}</span></span>
+						<div class="d-chart"><svg viewBox="0 0 240 60" preserveAspectRatio="none" aria-hidden="true"><path class="d-line" d="M0 46 L16 44 L32 47 L48 43 L64 45 L80 42 L96 46 L112 41 L128 44 L144 40 L156 43 L166 30 L174 12 L184 7 L240 7"/></svg></div>
+						<div class="d-foot"><button class="d-ack" type="button"><span class="a1">{{dm_ack}}</span><span class="a2">{{dm_acked}}</span></button><span class="d-quiet">{{dm_quiet}}</span></div>
 					</div>
-					<svg class="d-cursor" viewBox="0 0 16 20"><path d="M1.5 1.5v15.5l4.3-3.9 2.9 6.3 2.6-1.2-2.9-6.2h5.7Z"/></svg>
+					<svg class="d-cursor" viewBox="0 0 16 20" aria-hidden="true"><path d="M1.5 1.5v15.5l4.3-3.9 2.9 6.3 2.6-1.2-2.9-6.2h5.7Z"/></svg>
 				</div>
 			</div>
 		</figure>
@@ -71,6 +71,7 @@
 	</div>
 </section>
 
+@@VIDEO@@
 <section class="block alt" id="integrations">
 	<div class="wrap">
 		<div class="section-head center">
@@ -159,7 +160,7 @@
 				<a class="btn btn-secondary btn-lg" href="https://demo.dumbmonit.app">{{k008}}</a>
 			</div>
 		</div>
-		<div class="notice" role="note" style="margin-top:24px">
+		<div class="notice final-note" role="note">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 16.5v.01"/></svg>
 			<p>{{k021}}</p>
 		</div>
