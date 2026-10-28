@@ -13184,6 +13184,10 @@ components:
         uptime_seconds: { type: [integer, "null"] }
         image_age_seconds: { type: [integer, "null"] }
         update_available: { type: [boolean, "null"] }
+        cpu_percent: { type: [number, "null"], description: "CPU as a percentage of one core (100 = one full core). Null: no statistics, stopped, or first reading." }
+        memory_bytes: { type: [integer, "null"], description: Memory in use, page cache excluded. }
+        memory_limit_bytes: { type: [integer, "null"], description: Memory limit of the container; null when it has none. }
+        restarts_15m: { type: [integer, "null"], description: Restarts over the last fifteen minutes; three or more is a restart loop. }
         policy: { $ref: "#/components/schemas/ContainerPolicy" }
         last_command:
           oneOf:

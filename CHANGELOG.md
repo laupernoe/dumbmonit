@@ -173,6 +173,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Docker consumption**: the agent now reads each running container's
+  statistics (one-shot `stats`, a bounded number in parallel, with a time
+  budget) and reports CPU (% of a core), memory (cache excluded) against its
+  limit, network and block I/O, and process count; `system/df` gives the disk
+  taken by images, containers, volumes and build cache, and what a prune would
+  free (read every ten minutes). The Docker panel shows CPU and memory meters
+  on every row, a top-5 by CPU and by memory, and a "restart loop" badge for a
+  container that restarted three times or more in fifteen minutes. Linux only,
+  as the rest of the Docker module. `GET /api/targets/{id}/containers` gains
+  `cpu_percent`, `memory_bytes`, `memory_limit_bytes` and `restarts_15m`.
 - **Docker bulk actions**: tick containers (or use "select all" and the quick
   filters "no auto-update" / "no auto-restart") to enable or disable
   auto-update and auto-restart for all of them, or update them now. A failure
