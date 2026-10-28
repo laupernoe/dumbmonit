@@ -93,15 +93,20 @@ const DATASET_QUERY: [(&str, &str); 4] = [
     ("extra.flat", "true"),
     ("extra.retrieve_user_props", "false"),
     ("extra.snapshots_count", "true"),
-    ("extra.properties", r#"["used","available","quota","refquota"]"#),
+    ("extra.properties", DATASET_PROPERTIES),
 ];
 
 /// La même sans le décompte d'instantanés, pour une version qui le refuserait.
 const DATASET_QUERY_BASIC: [(&str, &str); 3] = [
     ("extra.flat", "true"),
     ("extra.retrieve_user_props", "false"),
-    ("extra.properties", r#"["used","available","quota","refquota"]"#),
+    ("extra.properties", DATASET_PROPERTIES),
 ];
+
+/// Propriétés ZFS lues sur chaque jeu de données ; les trois dernières ne
+/// servent qu'aux zvols (taille, réservation, écrit).
+const DATASET_PROPERTIES: &str =
+    r#"["used","available","quota","refquota","volsize","refreservation","referenced"]"#;
 
 #[derive(Default)]
 pub struct TruenasCollector {
@@ -209,6 +214,7 @@ impl Collector for TruenasCollector {
         if let Some(datasets) =
             datasets.and_then(|outcome| settle(outcome, &mut errors, target.id, "pool/dataset"))
         {
+            samples.extend(metrics::zvol_samples(&datasets, ts_ms));
             view.datasets = metrics::dataset_views(&datasets, &snapshot_tasks);
             samples.extend(metrics::dataset_samples(&view.datasets, now_s, ts_ms));
             view.snapshots_total =

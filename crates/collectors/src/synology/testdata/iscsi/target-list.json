@@ -1,0 +1,30 @@
+{
+  "data": {
+    "targets": [
+      {
+        "target_id": 1,
+        "name": "Target-esxi",
+        "iqn": "iqn.2000-01.com.synology:nas.Target-esxi.0a1b2c",
+        "status": "connected",
+        "mapped_luns": [
+          { "lun_uuid": "6c3f1a2e-0d1b-4c55-9a51-000000000001", "mapping_index": 0 }
+        ],
+        "connected_sessions": [
+          { "iqn": "iqn.1998-01.com.vmware:esxi-01-4f2a", "ip": "10.0.20.11" },
+          { "iqn": "iqn.1998-01.com.vmware:esxi-02-77c1", "ip": "10.0.20.12" }
+        ]
+      },
+      {
+        "target_id": 2,
+        "name": "Target-backup",
+        "iqn": "iqn.2000-01.com.synology:nas.Target-backup.0a1b2c",
+        "status": "offline",
+        "mapped_luns": [
+          { "lun_uuid": "6c3f1a2e-0d1b-4c55-9a51-000000000002", "mapping_index": 0 }
+        ],
+        "connected_sessions": []
+      }
+    ]
+  },
+  "success": true
+}

@@ -204,6 +204,9 @@ pub struct Bundle {
     /// n'y sont pas : sans décision, ils se signalent de nouveau.
     #[serde(default)]
     pub netscan_schedules: Vec<BundleNetscanSchedule>,
+    /// Liens manuels entre un LUN d'un NAS et l'équipement qui l'utilise.
+    #[serde(default)]
+    pub lun_links: Vec<BundleLunLink>,
 }
 
 impl Bundle {
@@ -236,6 +239,7 @@ impl Bundle {
             ("netconfig_versions".to_string(), self.netconfig_versions.len()),
             ("clients".to_string(), self.clients.len()),
             ("netscan_schedules".to_string(), self.netscan_schedules.len()),
+            ("lun_links".to_string(), self.lun_links.len()),
         ])
     }
 }
@@ -324,6 +328,20 @@ pub struct BundleNode {
     pub target: String,
     #[serde(default)]
     pub child: Option<String>,
+}
+
+/// Un lien « ce LUN est l'entité `entity` de la famille `family` sur
+/// l'équipement `consumer` » (table `lun_links`). Les deux équipements sont
+/// désignés par [`target_ref`].
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleLunLink {
+    pub target: String,
+    pub lun: String,
+    pub consumer: String,
+    pub family: String,
+    pub entity: String,
+    #[serde(default)]
+    pub author: String,
 }
 
 /// Une correction de la carte de topologie.

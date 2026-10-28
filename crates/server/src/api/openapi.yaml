@@ -8248,6 +8248,79 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "502": { $ref: "#/components/responses/BadGateway" }
 
+  /api/targets/{id}/luns:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getTargetLuns
+      tags: [Integrations]
+      summary: iSCSI LUNs (Synology) or zvols (TrueNAS) of a NAS, and what uses them
+      description: >-
+        One entry per LUN or zvol, read from the last probe: provisioning
+        (`thick`, `thin`, `unknown`), size, what it takes on its volume, the
+        written share of a thin LUN, the iSCSI targets and connected initiators.
+        A thick LUN is opaque from the NAS: `consumer` gives the monitor that
+        uses it (a manual link, or an automatic match on name and size when it
+        is unambiguous) and that monitor's own fill level. For a Synology, the
+        volumes that host LUNs come with their effective usage (without
+        thick reservations) and their thin over-allocation.
+      x-token-scope: read
+      responses:
+        "200":
+          description: LUNs and the volumes hosting them.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TargetLuns" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/luns/{lun}/consumer:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: lun
+        in: path
+        required: true
+        description: The `id` of the LUN (DSM UUID, zvol name), URL-encoded.
+        schema: { type: string }
+    put:
+      operationId: linkLunConsumer
+      tags: [Integrations]
+      summary: Say which monitor uses a LUN
+      description: >-
+        Manual link "this LUN is entity X of monitor Y". `family` and `entity`
+        name a capacity entity as `GET /api/targets/{id}/forecasts` returns it
+        (for example `vsphere_datastore` and `datastore1`, or `filesystem` and
+        `/srv`). Replaces any previous link of the LUN. Saved in backups.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_id, family, entity]
+              properties:
+                target_id: { type: integer, format: int64, description: The consuming monitor. }
+                family: { type: string, examples: [vsphere_datastore, filesystem, proxmox_storage] }
+                entity: { type: string, examples: [datastore1, /srv] }
+      responses:
+        "204": { description: Link saved. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: unlinkLunConsumer
+      tags: [Integrations]
+      summary: Remove the manual link of a LUN
+      x-token-scope: write
+      responses:
+        "204": { description: Link removed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   # ---------------------------------------------------------------- sécurité
   /api/targets/{id}/security:
     parameters:
@@ -14300,6 +14373,76 @@ components:
         tasks: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
         devices: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
         utc_offset_s: { type: integer }
+    TargetLuns:
+      type: object
+      required: [luns, volumes, sampled_at]
+      properties:
+        luns:
+          type: array
+          items:
+            type: object
+            required: [id, name, host_volume, provisioning, lun_type, status, size_bytes, reserved_bytes, allocated_bytes, used_percent, mapped, sessions, targets, consumer]
+            properties:
+              id: { type: string, description: "DSM UUID or zvol name: the `lun` label." }
+              name: { type: string }
+              host_volume: { type: string, description: Host volume (Synology) or pool (TrueNAS). }
+              provisioning: { type: string, enum: [thick, thin, unknown] }
+              lun_type: { type: string, examples: [BLUN_THICK, BLUN, FILE] }
+              status: { type: string }
+              size_bytes: { type: [number, "null"] }
+              reserved_bytes: { type: [number, "null"], description: "Space taken on the volume: the size if thick, the written space if thin." }
+              allocated_bytes: { type: [number, "null"], description: Written space of a thin LUN. }
+              used_percent: { type: [number, "null"], description: Written share of a thin LUN; null for a thick one. }
+              mapped: { type: [boolean, "null"] }
+              sessions: { type: [number, "null"] }
+              targets:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    iqn: { type: string }
+                    name: { type: string }
+                    sessions: { type: number }
+                    initiators: { type: array, items: { type: string } }
+              consumer:
+                oneOf:
+                  - type: "null"
+                  - type: object
+                    required: [source, target_id, target_name, family, family_label, entity, used_percent, used_bytes, size_bytes]
+                    properties:
+                      source: { type: string, enum: [manual, auto] }
+                      target_id: { type: integer, format: int64 }
+                      target_name: { type: string }
+                      family: { type: string }
+                      family_label: { type: string }
+                      entity: { type: string }
+                      used_percent: { type: [number, "null"] }
+                      used_bytes: { type: [number, "null"] }
+                      size_bytes: { type: [number, "null"] }
+        volumes:
+          type: array
+          description: Synology volumes hosting at least one LUN; empty elsewhere.
+          items:
+            type: object
+            additionalProperties: true
+            properties:
+              volume: { type: string }
+              name: { type: string }
+              total_bytes: { type: [number, "null"] }
+              used_bytes: { type: [number, "null"] }
+              used_percent: { type: [number, "null"] }
+              lun_count: { type: [number, "null"] }
+              reserved_bytes: { type: [number, "null"], description: Sum of the thick LUN sizes. }
+              thin_allocated_bytes: { type: [number, "null"] }
+              thin_provisioned_bytes: { type: [number, "null"] }
+              thin_promised_bytes: { type: [number, "null"], description: Promised to thin LUNs and not written yet. }
+              data_bytes: { type: [number, "null"], description: Data outside LUNs. }
+              effective_total_bytes: { type: [number, "null"] }
+              effective_used_bytes: { type: [number, "null"] }
+              effective_used_percent: { type: [number, "null"] }
+              overcommit_percent: { type: [number, "null"], description: Promised thin space as a percentage of the free space. }
+              fully_reserved: { type: [boolean, "null"] }
+        sampled_at: { type: [number, "null"] }
 
     # -------------------------------------------------------------- sécurité
     SecurityGrade:
