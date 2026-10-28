@@ -228,3 +228,111 @@ input {
   font-weight: 400;
   color: var(--md-default-fg-color--light);
 }
+
+/* ---- the website's navigation in the header (overrides/partials/header.html) ----
+   Wide screens: the links sit in the bar, in place of the page title and the repository
+   widget (GitHub is one of the links). Narrower: a menu button opens the same list. */
+.dm-site {
+  display: none;
+}
+
+.dm-site-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.dm-site-menu > summary {
+  display: block;
+  list-style: none;
+  cursor: pointer;
+}
+
+.dm-site-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.dm-site-menu > summary svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.dm-site-menu__pop {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  right: 0;
+  z-index: 5;
+  display: grid;
+  min-width: 11rem;
+  max-width: calc(100vw - 1.6rem);
+  padding: 0.3rem;
+  border: 1px solid var(--dm-line);
+  border-radius: var(--dm-radius);
+  background-color: var(--md-primary-fg-color);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
+}
+
+.dm-site-menu__pop a {
+  display: flex;
+  align-items: center;
+  min-height: 2.2rem;
+  padding: 0 0.6rem;
+  border-radius: calc(var(--dm-radius) - 2px);
+  color: var(--md-primary-bg-color);
+  font-size: 0.75rem;
+}
+
+.dm-site-menu__pop a:hover,
+.dm-site-menu__pop a:focus-visible {
+  background-color: var(--md-code-bg-color);
+}
+
+.dm-site-menu__pop a[aria-current] {
+  color: var(--md-accent-fg-color);
+  font-weight: 600;
+}
+
+@media screen and (min-width: 76.25em) {
+  .md-header__title,
+  .md-header__source,
+  .dm-site-menu {
+    display: none;
+  }
+
+  .dm-site {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 0.1rem;
+    min-width: 0;
+    margin-inline: 0.4rem;
+  }
+
+  .dm-site__link {
+    display: inline-flex;
+    align-items: center;
+    height: 2rem;
+    padding: 0 0.55rem;
+    border-radius: var(--dm-radius);
+    color: var(--md-primary-bg-color--light);
+    font-size: 0.7rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .dm-site__link:hover,
+  .dm-site__link:focus-visible {
+    color: var(--md-primary-bg-color);
+    background-color: var(--md-code-bg-color);
+  }
+
+  .dm-site__link[aria-current] {
+    color: var(--md-primary-bg-color);
+    font-weight: 600;
+  }
+
+  .dm-site__link--download {
+    margin-inline-start: auto;
+    border: 1px solid var(--dm-line);
+    color: var(--md-primary-bg-color);
+  }
+}
