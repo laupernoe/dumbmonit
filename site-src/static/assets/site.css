@@ -1046,7 +1046,7 @@ main {
 	margin-top: 28px;
 }
 
-/* the scripted demo in the hero: a framed browser window that plays by itself */
+/* the demo in the hero: a framed browser window that plays by itself, then hands over to the visitor */
 .demo-fig {
 	min-width: 0;
 }
@@ -1092,6 +1092,7 @@ main {
 	transform: translateX(-14px);
 }
 .demo-app {
+	container: demo / inline-size;
 	position: relative;
 	height: 330px;
 	overflow: hidden;
@@ -1143,17 +1144,41 @@ main {
 	background: var(--c-surface);
 }
 .d-list li {
+	border-top: 1px solid var(--c-line);
+}
+.d-list li:first-child {
+	border-top: 0;
+}
+.d-row {
 	display: grid;
 	grid-template-columns: 5.6rem minmax(0, 1fr) minmax(0, 0.9fr) 3.6rem;
 	gap: 10px;
 	align-items: center;
-	height: 36px;
+	width: 100%;
+	height: 40px;
 	padding: 0 12px;
-	border-top: 1px solid var(--c-line);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
 	transition: background-color 0.4s;
 }
-.d-list li:first-child {
-	border-top: 0;
+.d-row:hover {
+	background: var(--c-ghost);
+}
+.d-row[aria-pressed='true'] {
+	background: var(--c-info-soft);
+	box-shadow: inset 2px 0 0 var(--c-info);
+}
+.d-row:focus-visible,
+.d-replay:focus-visible,
+.d-toast:focus-visible,
+.d-x:focus-visible,
+.d-ack:focus-visible {
+	outline: 2px solid var(--c-info);
+	outline-offset: -2px;
 }
 .d-list .nm {
 	overflow: hidden;
@@ -1171,41 +1196,113 @@ main {
 	text-overflow: ellipsis;
 }
 .d-list .n {
+	display: grid;
+	justify-items: end;
 	color: var(--c-ink-2);
 	font-family: var(--font-code);
 	font-size: 0.6875rem;
 	text-align: right;
 }
 @media (max-width: 479px) {
-	.d-list li {
+	.d-row {
 		grid-template-columns: 5.2rem minmax(0, 1fr) 3.2rem;
 	}
 	.d-list .ty {
 		display: none;
 	}
 }
+/* a row shows one of three states: up, down, acknowledged (word and shape, not colour alone) */
 .d-st {
 	display: grid;
+	min-width: 0;
 }
 .d-st > *,
-.d-target .n > * {
+.d-list .n > * {
 	grid-area: 1 / 1;
 }
-.d-target .n {
-	display: grid;
-	justify-items: end;
+.d-st > .mk {
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
-.d-bad {
+.d-list .d-down,
+.d-list .d-acked,
+.st-down .d-up,
+.st-ack .d-up {
 	visibility: hidden;
 }
-.s-down .d-target {
+.st-down .d-down,
+.st-ack .d-acked {
+	visibility: visible;
+}
+.st-down .d-row {
 	background: var(--c-warning-soft);
 }
-.s-down .d-target .d-ok {
-	visibility: hidden;
+.st-ack .d-row {
+	background: var(--c-advisory-soft);
 }
-.s-down .d-target .d-bad {
-	visibility: visible;
+.st-down .d-row[aria-pressed='true'],
+.st-ack .d-row[aria-pressed='true'] {
+	box-shadow: inset 2px 0 0 var(--c-info);
+}
+.d-head .d-hint {
+	margin-inline-start: auto;
+	overflow: hidden;
+	color: var(--c-ink-3);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	opacity: 0;
+	transition: opacity 0.4s;
+}
+.s-manual:not(.s-panel) .d-hint {
+	opacity: 1;
+}
+.d-replay {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 6px;
+	height: 28px;
+	margin-inline-start: auto;
+	padding: 0 10px;
+	border: 1px solid var(--c-line-strong);
+	border-radius: 7px;
+	background: var(--c-surface);
+	color: var(--c-ink-2);
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+}
+.d-hint + .d-replay {
+	margin-inline-start: 10px;
+}
+.d-replay:hover {
+	border-color: var(--c-ink-3);
+	color: var(--c-ink);
+}
+.d-replay svg {
+	width: 13px;
+	height: 13px;
+}
+/* the tap target grows past the drawn button without moving the layout */
+.d-replay,
+.d-x,
+.d-ack {
+	position: relative;
+}
+.d-replay::after,
+.d-x::after,
+.d-ack::after {
+	content: '';
+	position: absolute;
+	inset: -6px;
+}
+@container demo (max-width: 460px) {
+	.d-head .d-hint {
+		display: none;
+	}
+	.d-head .d-replay {
+		margin-inline-start: auto;
+	}
 }
 .d-toast {
 	position: absolute;
@@ -1221,9 +1318,14 @@ main {
 	border-radius: 10px;
 	background: var(--c-surface-2);
 	box-shadow: var(--shadow-float);
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
 	opacity: 0;
+	visibility: hidden;
 	transform: translateX(calc(100% + 20px));
-	transition: transform 0.5s var(--ease), opacity 0.5s var(--ease);
+	transition: transform 0.5s var(--ease), opacity 0.5s var(--ease), visibility 0s 0.5s;
 }
 .d-toast b {
 	display: block;
@@ -1239,7 +1341,9 @@ main {
 }
 .s-toast .d-toast {
 	opacity: 1;
+	visibility: visible;
 	transform: none;
+	transition: transform 0.5s var(--ease), opacity 0.5s var(--ease), visibility 0s;
 }
 .d-panel {
 	position: absolute;
@@ -1254,60 +1358,108 @@ main {
 	border-radius: 10px;
 	background: var(--c-surface-2);
 	box-shadow: var(--shadow-float);
+	visibility: hidden;
 	transform: translateY(calc(100% + 16px));
-	transition: transform 0.55s var(--ease);
+	transition: transform 0.55s var(--ease), visibility 0s 0.55s;
 }
 .s-panel .d-panel {
+	visibility: visible;
 	transform: none;
+	transition: transform 0.55s var(--ease), visibility 0s;
 }
 .d-ph {
 	display: flex;
-	align-items: baseline;
+	align-items: center;
 	gap: 10px;
 	min-width: 0;
 }
 .d-ph b {
 	font-family: var(--font-code);
 	font-weight: 600;
+	white-space: nowrap;
+}
+.d-pst {
+	display: inline-flex;
+}
+.d-x {
+	display: inline-grid;
+	place-items: center;
+	flex-shrink: 0;
+	width: 28px;
+	height: 28px;
+	margin-inline-start: auto;
+	margin-block: -4px;
+	border: 0;
+	border-radius: 7px;
+	background: transparent;
+	color: var(--c-ink-2);
+	cursor: pointer;
+}
+.d-x:hover {
+	background: var(--c-ghost);
+	color: var(--c-ink);
+}
+.d-x svg {
+	width: 14px;
+	height: 14px;
 }
 .d-cap {
 	color: var(--c-ink-3);
 	font-size: 0.6875rem;
 }
+/* the graph: grid lines drawn by the box, the curve uncovered left to right (a clip, never a
+   dash: a dashed stroke with a non-scaling width is measured differently by each browser) */
 .d-chart {
-	width: 100%;
 	height: 56px;
+	background:
+		linear-gradient(var(--c-line-strong), var(--c-line-strong)) 0 25% / 100% 1px no-repeat,
+		linear-gradient(var(--c-line-strong), var(--c-line-strong)) 0 50% / 100% 1px no-repeat,
+		linear-gradient(var(--c-line-strong), var(--c-line-strong)) 0 75% / 100% 1px no-repeat;
 }
-.d-grid {
-	fill: none;
-	stroke: var(--c-line-strong);
-	stroke-width: 1;
-	vector-effect: non-scaling-stroke;
+.d-chart svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+	clip-path: inset(-4px 100% -4px 0);
+}
+.d-chart.drawn svg {
+	clip-path: inset(-4px -4px -4px 0);
+	transition: clip-path 1.4s cubic-bezier(0.3, 0.6, 0.2, 1) 0.15s;
 }
 .d-line {
 	fill: none;
 	stroke: var(--c-advisory);
 	stroke-width: 1.8;
 	stroke-linejoin: round;
+	stroke-linecap: round;
 	vector-effect: non-scaling-stroke;
-	stroke-dasharray: 1;
-	stroke-dashoffset: 1;
-	transition: stroke-dashoffset 1.6s cubic-bezier(0.3, 0.6, 0.2, 1) 0.3s;
 }
-.s-panel .d-line {
-	stroke-dashoffset: 0;
+.d-chart.calm .d-line {
+	stroke: var(--c-signal);
+}
+.d-foot {
+	display: flex;
+	align-items: center;
+	min-height: 30px;
 }
 .d-ack {
 	display: inline-grid;
-	justify-self: start;
 	align-items: center;
 	height: 30px;
 	padding: 0 12px;
+	border: 0;
 	border-radius: 7px;
 	background: var(--c-primary);
 	color: var(--c-on-primary);
+	font: inherit;
 	font-weight: 600;
+	cursor: pointer;
 	transition: background-color 0.3s, color 0.3s;
+}
+.d-ack[hidden],
+.d-quiet[hidden] {
+	display: none;
 }
 .d-ack > span {
 	grid-area: 1 / 1;
@@ -1315,15 +1467,19 @@ main {
 .d-ack .a2 {
 	visibility: hidden;
 }
-.s-ack .d-ack {
+.d-ack.done {
 	background: var(--c-signal-soft);
 	color: var(--c-signal-ink);
+	cursor: default;
 }
-.s-ack .d-ack .a1 {
+.d-ack.done .a1 {
 	visibility: hidden;
 }
-.s-ack .d-ack .a2 {
+.d-ack.done .a2 {
 	visibility: visible;
+}
+.d-quiet {
+	color: var(--c-ink-2);
 }
 .d-cursor {
 	position: absolute;
@@ -1336,6 +1492,7 @@ main {
 	stroke: var(--c-canvas);
 	stroke-width: 1.2;
 	opacity: 0;
+	pointer-events: none;
 	transform: translate(70%, 280px);
 	transition: transform 0.95s cubic-bezier(0.45, 0, 0.2, 1), opacity 0.3s;
 	filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.6));
@@ -1532,6 +1689,21 @@ main {
 }
 .final-box .code-note {
 	text-align: center;
+}
+/* the warning under the box: same column, same width */
+.final-note {
+	box-sizing: border-box;
+	max-width: 46rem;
+	margin: 24px auto 0;
+}
+.dev-badge {
+	height: 18px;
+	padding: 0 6px;
+	font-size: 0.625rem;
+	letter-spacing: 0.02em;
+}
+.toc a .dev-badge {
+	margin-inline-start: 6px;
 }
 
 /* audience: two side-by-side panels */
@@ -2291,8 +2463,21 @@ footer {
 	}
 }
 
-/* ---- diagrams: real text in boxes, wires that carry a packet ---- */
+/* ---- diagrams: real text in boxes, wires that carry a packet ----
+   Each diagram lays itself out from its own width (container queries), not the window's:
+   the same diagram is horizontal when it has the room and vertical in a half-width card or on
+   a phone, and a box never gets so narrow that a word has to break. */
+.dg-fig {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	height: 100%;
+}
 .dg {
+	container: dg / inline-size;
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
 	min-width: 0;
 	padding: 18px;
 	border: 1px solid var(--c-line);
@@ -2314,6 +2499,11 @@ footer {
 }
 .dg-title {
 	margin-bottom: 14px;
+}
+/* the drawing sits in the middle of the card, so two cards side by side keep the same height */
+.dg > .flow,
+.dg > .arch {
+	margin-block: auto;
 }
 .flow {
 	display: flex;
@@ -2339,7 +2529,8 @@ footer {
 	align-items: center;
 	gap: 8px;
 	font-weight: 600;
-	overflow-wrap: anywhere;
+	overflow-wrap: break-word;
+	hyphens: manual;
 }
 .node b svg {
 	width: 15px;
@@ -2448,7 +2639,7 @@ footer {
 		opacity: 0;
 	}
 }
-@media (min-width: 760px) {
+@container dg (min-width: 720px) {
 	.flow.row {
 		flex-direction: row;
 		align-items: center;
@@ -2487,6 +2678,47 @@ footer {
 	color: var(--c-ink-2);
 	font-size: 0.8125rem;
 }
+/* the alert path: four steps need more room than the other rows before they sit side by side */
+@container dg (max-width: 839px) {
+	.flow.row.steps-dg {
+		flex-direction: column;
+		align-items: stretch;
+	}
+	.flow.row.steps-dg > .node {
+		flex: none;
+	}
+	.flow.row.steps-dg > .wire {
+		flex: 0 0 26px;
+		width: 1px;
+		height: 26px;
+	}
+	.flow.row.steps-dg > .wire::after {
+		top: 0;
+		animation-name: pkt-y;
+	}
+}
+.steps-dg .node {
+	grid-template-columns: auto minmax(0, 1fr);
+	column-gap: 10px;
+	align-items: baseline;
+}
+.steps-dg .node > * {
+	grid-column: 2;
+}
+.steps-dg .node > .n {
+	grid-column: 1;
+	grid-row: 1 / span 2;
+}
+@container dg (min-width: 840px) {
+	.steps-dg .node {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.steps-dg .node > *,
+	.steps-dg .node > .n {
+		grid-column: 1;
+		grid-row: auto;
+	}
+}
 /* the alert path: the steps light up one after the other, once in view */
 .steps-dg .node .n {
 	color: var(--c-ink-3);
@@ -2524,7 +2756,8 @@ footer {
 }
 .dg-grid {
 	display: grid;
-	gap: 12px;
+	gap: 16px;
+	align-items: stretch;
 }
 @media (min-width: 1000px) {
 	.dg-grid {
@@ -2540,7 +2773,12 @@ footer {
 	display: grid;
 	gap: 8px;
 }
-@media (min-width: 760px) {
+@container dg (min-width: 440px) and (max-width: 759px) {
+	.arch .ins {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+@container dg (min-width: 760px) {
 	.arch {
 		grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1.5fr);
 		align-items: center;
@@ -2566,7 +2804,7 @@ footer {
 	display: grid;
 	gap: 8px;
 }
-@media (min-width: 760px) {
+@container dg (min-width: 720px) {
 	.flow.row > .zone.grow {
 		flex-grow: 1.6;
 	}
@@ -2574,4 +2812,21 @@ footer {
 		flex-basis: 150px;
 		width: 150px;
 	}
+}
+
+/* ---- video tour ---- */
+.vid-fig {
+	max-width: 960px;
+	margin: 0 auto;
+	overflow: hidden;
+	border: 1px solid var(--c-line-strong);
+	border-radius: 14px;
+	background: var(--c-canvas);
+	box-shadow: var(--shadow-float);
+}
+.vid-fig video {
+	display: block;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 16 / 10;
 }
