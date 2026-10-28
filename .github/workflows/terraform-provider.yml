@@ -1,0 +1,44 @@
+name: Terraform provider
+
+# Compiles and vets the Terraform provider (integrations/terraform-provider-dumbmonit),
+# which the Rust CI does not touch, and checks its dependencies against the Go
+# vulnerability database. Not a required check: it only runs when the provider
+# or this workflow changes.
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - "integrations/terraform-provider-dumbmonit/**"
+      - ".github/workflows/terraform-provider.yml"
+  pull_request:
+    paths:
+      - "integrations/terraform-provider-dumbmonit/**"
+      - ".github/workflows/terraform-provider.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-provider-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and vet
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: integrations/terraform-provider-dumbmonit
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: integrations/terraform-provider-dumbmonit/go.mod
+          cache-dependency-path: integrations/terraform-provider-dumbmonit/go.sum
+      - run: go mod verify
+      - run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+      - run: go vet ./...
+      - run: go build ./...
+      - run: go test ./...
+      - run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...

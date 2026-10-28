@@ -33,6 +33,10 @@
 //! omise et `ovh_dedicated_readable` vaut 0. La sonde n'échoue que si aucune
 //! des deux familles n'est lisible, ou si l'identifiant est refusé.
 //!
+//! `GET /{famille}/{nom}/serviceInfos` donne la date d'expiration du service
+//! (`ovh_service_expiry_seconds`, secondes jusqu'à minuit UTC de cette date), reprise
+//! par `GET /api/deadlines` ; une lecture refusée ou absente est simplement omise.
+//!
 //! Les 30 premiers serveurs de chaque famille sont décrits ; les comptes
 //! restent exacts au-delà.
 //!
@@ -190,6 +194,8 @@ pub struct Server {
     pub detail: Value,
     /// Tâches en attente ou en cours ; `None` quand elles n'ont pas pu être lues.
     pub tasks: Option<usize>,
+    /// `serviceInfos.expiration` (`AAAA-MM-JJ`) ; `None` quand elle n'est pas lisible.
+    pub expiration: Option<String>,
 }
 
 #[derive(Default)]
@@ -231,7 +237,14 @@ async fn server(
         return Ok(None);
     };
     let tasks = active_tasks(session, base, name, api).await;
-    Ok(Some(Server { name: name.to_string(), detail, tasks }))
+    // Facultatif : une clé sans le droit sur `serviceInfos` ne fait pas échouer la sonde.
+    let expiration = session
+        .json(&format!("{base}/{name}/serviceInfos"))
+        .await
+        .ok()
+        .flatten()
+        .and_then(|info| text(&info, "expiration").map(str::to_string));
+    Ok(Some(Server { name: name.to_string(), detail, tasks, expiration }))
 }
 
 async fn fleet(
@@ -317,6 +330,23 @@ fn dedicated_up(state: &str, power: Option<&str>) -> bool {
     state == "ok" && power != Some("poweroff")
 }
 
+/// Secondes restantes avant la date `AAAA-MM-JJ` d'OVHcloud (minuit UTC ; négatif : échue).
+fn seconds_until(expiration: &str, ts_ms: i64) -> Option<f64> {
+    let date = chrono::NaiveDate::parse_from_str(expiration.get(..10)?, "%Y-%m-%d").ok()?;
+    let end = date.and_hms_opt(0, 0, 0)?.and_utc().timestamp();
+    Some((end - ts_ms / 1000) as f64)
+}
+
+/// L'échéance d'un service (`ovh_service_expiry_seconds`), lue par `GET /api/deadlines`.
+fn expiry(server: &Server, family: &str, ts_ms: i64) -> Option<Sample> {
+    let left = seconds_until(server.expiration.as_deref()?, ts_ms)?;
+    Some(
+        gauge(&format!("{PREFIX}_service_expiry_seconds"), left, ts_ms)
+            .with_label("service", server.name.as_str())
+            .with_label("family", family),
+    )
+}
+
 pub fn samples(snapshot: &Snapshot, ts_ms: i64) -> Vec<Sample> {
     let g = |name: &str, value: f64| gauge(&format!("{PREFIX}_{name}"), value, ts_ms);
     let mut out = Vec::new();
@@ -346,6 +376,7 @@ pub fn samples(snapshot: &Snapshot, ts_ms: i64) -> Vec<Sample> {
             }
             let shown = text(&server.detail, "displayName").unwrap_or(&server.name);
             out.push(cloud::item(PREFIX, "VPS", shown, up, state, ts_ms));
+            out.extend(expiry(server, "vps", ts_ms));
         }
     }
     if let Some(fleet) = &snapshot.dedicated {
@@ -381,6 +412,7 @@ pub fn samples(snapshot: &Snapshot, ts_ms: i64) -> Vec<Sample> {
                 "ok"
             };
             out.push(cloud::item(PREFIX, "Dedicated servers", &server.name, up, detail, ts_ms));
+            out.extend(expiry(server, "dedicated", ts_ms));
         }
     }
 
@@ -474,6 +506,9 @@ mod tests {
             "/1.0/vps/vps-aaa111.vps.ovh.net" => ok(VPS_RUNNING),
             "/1.0/vps/vps-bbb222.vps.ovh.net" => ok(VPS_STOPPED),
             "/1.0/vps/vps-bbb222.vps.ovh.net/tasks?state=todo" => ok("[2001]"),
+            "/1.0/vps/vps-aaa111.vps.ovh.net/serviceInfos" => {
+                ok(r#"{"status":"ok","expiration":"2099-01-01","renew":{"automatic":true}}"#)
+            }
             "/1.0/dedicated/server" => ok(r#"["ns100.ip-1-2-3.eu","ns200.ip-1-2-4.eu"]"#),
             "/1.0/dedicated/server/ns100.ip-1-2-3.eu" => ok(DEDICATED_OK),
             "/1.0/dedicated/server/ns200.ip-1-2-4.eu" => ok(DEDICATED_ERROR),
@@ -548,6 +583,41 @@ mod tests {
         assert_eq!(item.value, 0.0);
         assert_eq!(item.labels["detail"], "stopped");
         assert_eq!(value(&s, "ovh_figure", &[("name", "Servers down")]), 2.0);
+    }
+
+    #[test]
+    fn l_echeance_du_service_en_secondes() {
+        // 1_700_000_000 = 2023-11-14T22:13:20Z ; minuit UTC du 15 : 6400 s plus tard.
+        assert_eq!(seconds_until("2023-11-15", 1_700_000_000_000), Some(6400.0));
+        assert_eq!(seconds_until("2023-11-14T00:00:00Z", 1_700_000_000_000), Some(-80_000.0));
+        assert_eq!(seconds_until("pas une date", 0), None);
+        let server = Server {
+            name: "vps-x".into(),
+            detail: Value::Null,
+            tasks: None,
+            expiration: Some("2023-11-15".into()),
+        };
+        let sample = expiry(&server, "vps", 1_700_000_000_000).unwrap();
+        assert_eq!(sample.metric, "ovh_service_expiry_seconds");
+        assert_eq!(sample.value, 6400.0);
+        assert_eq!(sample.labels["service"], "vps-x");
+        let none = Server { expiration: None, ..server };
+        assert!(expiry(&none, "vps", 0).is_none());
+    }
+
+    #[tokio::test]
+    async fn les_echeances_sont_lues_et_une_lecture_refusee_est_ignoree() {
+        let address = serveur("ok").await;
+        let s = OvhCollector::new().probe(&cible_ovh(&address, "secret:consumer")).await.unwrap();
+        let found =
+            find(&s, "ovh_service_expiry_seconds", &[("service", "vps-aaa111.vps.ovh.net")])
+                .unwrap();
+        assert!(found.value > 0.0);
+        assert_eq!(found.labels["family"], "vps");
+        // Les autres serveurs n'ont pas de serviceInfos (404) : pas de série, pas d'échec.
+        assert!(
+            find(&s, "ovh_service_expiry_seconds", &[("service", "ns100.ip-1-2-3.eu")]).is_none()
+        );
     }
 
     #[tokio::test]

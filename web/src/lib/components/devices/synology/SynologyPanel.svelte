@@ -380,5 +380,6 @@
 			<AbbDevices {abb} />
 			<BackupHistory {target} source="abb" />
 		{/if}
+		<BackupHistory {target} source="hyperbackup" />
 	</div>
 {/if}

@@ -68,6 +68,9 @@ metrics:
   - { name: hyperv_vms_health_critical, label: "Hyper-V VMs critical", better: "lower" }
   - { name: hyperv_host_cpu_percent, label: "Hyper-V host CPU", unit: "%" }
   - { name: mdaemon_queue_messages, label: "MDaemon queue" }
+  - { name: agent_windows_processor_queue_length, label: "Processor queue length", better: "lower" }
+  - { name: agent_windows_memory_pages_per_second, label: "Memory pages per second", unit: "/s", better: "lower" }
+  - { name: agent_windows_disk_queue_length, label: "Disk queue length", better: "lower" }
 views:
   - view: stat
     title: "Current values"
@@ -98,6 +101,9 @@ views:
       - hyperv_vms_health_critical
       - hyperv_host_cpu_percent
       - mdaemon_queue_messages
+      - agent_windows_processor_queue_length
+      - agent_windows_memory_pages_per_second
+      - agent_windows_disk_queue_length
       - agent_firewall_active
       - agent_ssh_root_login
       - agent_buffered_samples

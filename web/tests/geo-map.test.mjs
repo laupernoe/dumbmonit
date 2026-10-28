@@ -116,7 +116,7 @@ test('OVHcloud places read both VPS zones and dedicated datacenters', () => {
 		]
 	);
 	assert.deepEqual(cloudMetrics('ovh'), ['dumbmonit_ovh_vps_info', 'dumbmonit_ovh_dedicated_info']);
-	assert.deepEqual(cloudMetrics('infomaniak'), []);
+	assert.deepEqual(cloudMetrics('nowhere'), []);
 });
 
 test("an account's own region is a place even with nothing listed", () => {
@@ -125,4 +125,26 @@ test("an account's own region is a place even with nothing listed", () => {
 		places.map((p) => [p.name, p.total]),
 		[['Zurich', 0]]
 	);
+});
+
+test('Azure and Infomaniak places count resources from the value of the region series', () => {
+	const azure = cloudPlaces(table, 'azure', [
+		{ metric: { __name__: 'dumbmonit_azure_location_resources', location: 'westeurope' }, values: [[1, '6']] },
+		{ metric: { __name__: 'dumbmonit_azure_location_unhealthy', location: 'westeurope' }, values: [[1, '2']] },
+		{ metric: { __name__: 'dumbmonit_azure_location_resources', location: 'switzerlandnorth' }, values: [[1, '1']] },
+		{ metric: { __name__: 'dumbmonit_azure_location_resources', location: 'atlantis' }, values: [[1, '1']] }
+	]);
+	assert.deepEqual(
+		azure.places.map((p) => [p.code, p.total, p.down]),
+		[
+			['westeurope', 6, 2],
+			['switzerlandnorth', 1, 0]
+		]
+	);
+	assert.equal(azure.unknown, 1);
+	assert.deepEqual(cloudMetrics('azure'), ['dumbmonit_azure_location_resources', 'dumbmonit_azure_location_unhealthy']);
+	const info = cloudPlaces(table, 'infomaniak', [
+		{ metric: { __name__: 'dumbmonit_infomaniak_region_products', region: 'geneva' }, values: [[1, '4']] }
+	]);
+	assert.deepEqual(info.places.map((p) => [p.code, p.total, p.down]), [['geneva', 4, 0]]);
 });

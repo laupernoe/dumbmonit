@@ -4,9 +4,9 @@
 # (FDB), la table ARP et les agrégats LAG, dont la carte de topologie tire les
 # liens de niveau 2. S'y ajoutent, pour le panneau de commutateur, l'état de
 # tous les ports physiques, le VLAN natif (Q-BRIDGE-MIB) et le PoE
-# (POWER-ETHERNET-MIB). ENTITY-SENSOR-MIB n'est pas lue : sa valeur ne se lit
-# qu'avec l'échelle (une énumération de puissances de dix) et la précision de
-# chaque capteur, ce que le moteur de profils ne sait pas combiner.
+# (POWER-ETHERNET-MIB). Les capteurs d'ENTITY-SENSOR-MIB (températures,
+# ventilateurs, tensions) viennent du profil inclus « entity-sensors », qui
+# combine l'échelle et la précision de chaque capteur.
 #
 # Ce profil ne s'attribue à aucun sysObjectID : les MIB qu'il lit sont
 # standard, mais seuls les commutateurs les remplissent vraiment. Il est inclus
@@ -17,7 +17,7 @@
 id: ethernet-switch
 name: Ethernet switch (EtherLike-MIB, LLDP)
 
-include: [if-mib]
+include: [if-mib, entity-sensors]
 
 metrics:
   # dot3StatsTable est indexée par ifIndex (dot3StatsIndex = ifIndex) : la
