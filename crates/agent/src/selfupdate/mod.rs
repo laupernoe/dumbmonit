@@ -608,12 +608,7 @@ fn copy_synced(from: &Path, to: &Path) -> Result<()> {
 /// pas ici (architecture, bibliothèque manquante) est écarté avant d'avoir
 /// remplacé quoi que ce soit.
 async fn preflight(binary: &Path, version: &str) -> Result<(), String> {
-    let run = tokio::process::Command::new(binary)
-        .arg("--version")
-        .stdin(std::process::Stdio::null())
-        .kill_on_drop(true)
-        .output();
-    let output = tokio::time::timeout(PREFLIGHT_TIMEOUT, run)
+    let output = tokio::time::timeout(PREFLIGHT_TIMEOUT, run_version(binary))
         .await
         .map_err(|_| "the new binary did not answer --version in time".to_string())?
         .map_err(|error| format!("the new binary does not start on this machine: {error}"))?;
@@ -626,6 +621,38 @@ async fn preflight(binary: &Path, version: &str) -> Result<(), String> {
             "the new binary does not report version {version} (printed '{}')",
             printed.trim()
         ))
+    }
+}
+
+/// Essais de lancement tolérés quand le noyau répond ETXTBSY.
+const BUSY_RETRIES: u32 = 20;
+/// Pause entre deux essais après ETXTBSY.
+const BUSY_PAUSE: Duration = Duration::from_millis(50);
+
+/// Lance `binary --version`. Un fichier tout juste écrit peut être refusé à
+/// l'exécution (ETXTBSY, « Text file busy ») tant qu'un autre processus, créé
+/// par un `fork` concurrent pendant l'écriture, garde un descripteur ouvert en
+/// écriture dessus : il le referme à son propre `exec`, d'où quelques essais
+/// rapprochés plutôt qu'un échec définitif de la mise à jour.
+async fn run_version(binary: &Path) -> std::io::Result<std::process::Output> {
+    let mut attempt = 0;
+    loop {
+        let run = tokio::process::Command::new(binary)
+            .arg("--version")
+            .stdin(std::process::Stdio::null())
+            .kill_on_drop(true)
+            .output()
+            .await;
+        match run {
+            Err(error)
+                if error.kind() == std::io::ErrorKind::ExecutableFileBusy
+                    && attempt < BUSY_RETRIES =>
+            {
+                attempt += 1;
+                tokio::time::sleep(BUSY_PAUSE).await;
+            }
+            other => return other,
+        }
     }
 }
 

@@ -95,15 +95,39 @@ export interface CloudPlace {
 /** A stored series, as `queryInstant` hands it over (only the labels matter here). */
 export interface LabelledSeries {
 	metric: Record<string, string>;
+	/** Stored samples, newest last; read by the sources that carry a count in their value. */
+	values?: [number, string][];
 }
 
+interface CloudSource {
+	metric: string;
+	label: string;
+	/** Per-resource series: when one is up. Unused with `count`. */
+	up: (labels: Record<string, string>) => boolean;
+	/** The value is a number of resources: added to the place's `total`, or to its `down`. */
+	count?: 'total' | 'down';
+}
+
+const lastValue = (one: LabelledSeries): number => {
+	const raw = one.values?.at(-1)?.[1];
+	const n = raw === undefined ? Number.NaN : Number(raw);
+	return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+};
+
 /** Which series locates a provider's resources, by which label, and when one is up. */
-const CLOUD_SOURCES: Record<string, { metric: string; label: string; up: (labels: Record<string, string>) => boolean }[]> = {
+const CLOUD_SOURCES: Record<string, CloudSource[]> = {
 	hetzner: [{ metric: 'dumbmonit_hetzner_server_info', label: 'location', up: (l) => l.status === 'running' }],
 	ovh: [
 		{ metric: 'dumbmonit_ovh_vps_info', label: 'zone', up: (l) => l.state === 'running' || l.state === 'backuping' },
 		{ metric: 'dumbmonit_ovh_dedicated_info', label: 'datacenter', up: (l) => l.state === 'ok' && l.power !== 'poweroff' }
-	]
+	],
+	// Azure: one series per region, the value counts resources (and those degraded or unavailable).
+	azure: [
+		{ metric: 'dumbmonit_azure_location_resources', label: 'location', up: () => true, count: 'total' },
+		{ metric: 'dumbmonit_azure_location_unhealthy', label: 'location', up: () => true, count: 'down' }
+	],
+	// Infomaniak: the data center comes from the target's `region` option; the value counts products.
+	infomaniak: [{ metric: 'dumbmonit_infomaniak_region_products', label: 'region', up: () => true, count: 'total' }]
 };
 
 /** The series names to ask for a provider's places; empty when it has none. */
@@ -144,8 +168,12 @@ export function cloudPlaces(
 				unknown++;
 				continue;
 			}
-			place.total++;
-			if (!source.up(one.metric)) place.down++;
+			if (source.count === 'total') place.total += lastValue(one);
+			else if (source.count === 'down') place.down += lastValue(one);
+			else {
+				place.total++;
+				if (!source.up(one.metric)) place.down++;
+			}
 		}
 	}
 	const sorted = [...places.values()].sort((a, b) => b.down - a.down || b.total - a.total || a.name.localeCompare(b.name));
