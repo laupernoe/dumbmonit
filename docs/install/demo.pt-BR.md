@@ -21,26 +21,31 @@ verdade, ou para colocar uma vitrine no seu próprio site.
   `{"error": "This is a read-only demo…", "demo": true}`. Entrar e sair são as
   únicas escritas permitidas. A interface mostra a mensagem onde o clique
   aconteceu.
-- **Um acervo fixo e fictício.** Na inicialização o banco de dados é criado do
-  zero e populado com um pequeno homelab sob `*.home.arpa`: um cluster Proxmox
-  VE, um NAS Synology, um Proxmox Backup Server, um TrueNAS, um firewall
-  OPNsense, um servidor Redfish com uma peça falhando, algumas verificações
-  HTTP, TLS e ping, um host com agente e uma página de status. Os monitores
-  são respondidos por simuladores falsos dentro do servidor, vinculados a
-  `127.0.0.1` e reproduzindo respostas de API gravadas, então os coletores e
-  painéis de monitor reais são executados. Reiniciar entrega o mesmo
-  acervo.
-- **Trinta dias de histórico.** Métricas sintéticas são gravadas no
-  VictoriaMetrics na inicialização (a última semana com resolução de cinco
-  minutos), então gráficos, *Últimos 7 dias*, disponibilidade em 30 dias,
-  previsões ("cheio em cerca de N dias") e histórico de alertas ficam
-  populados, e alguns alertas estão disparando para que *Precisa de você*
-  tenha algo. Um switch central com suas portas e seu tráfego, um mapa de
-  ameaças alimentado por contagens inventadas do CrowdSec e da Cloudflare,
-  vencimentos de domínios e licenças, uma matriz de backups com algumas noites
-  com falha, um dispositivo encontrado pela varredura de rede e duas páginas de
-  status com cenas noturnas completam o quadro. Tudo é calculado em memória a
-  partir de uma semente fixa: nada é buscado na rede.
+- **Dois clientes fictícios.** Na inicialização, o banco de dados é recriado e
+  preenchido com um homelab em `*.home.arpa` — Proxmox VE, um NAS Synology com
+  um LUN iSCSI, Proxmox Backup Server, TrueNAS, OPNsense, UniFi, Kopia, um
+  servidor Redfish com uma peça com defeito, um switch SNMP, verificações HTTP,
+  TLS, DNS e ping, um agente Linux rodando Docker — e, no modo MSP, com um
+  pequeno escritório de arquitetura em Genebra: um controlador de domínio
+  Windows com seu agente, Veeam Backup & Replication, uma rede Omada,
+  Microsoft 365 e Entra ID, consultados por um agente relay instalado no
+  escritório. Os monitores são respondidos por equipamentos simulados dentro
+  do servidor, ligados a `127.0.0.1`, que reproduzem respostas de API
+  gravadas: os coletores e painéis reais funcionam. Reiniciar dá o mesmo
+  parque.
+- **Trinta dias de histórico, e o resto do produto.** Na inicialização,
+  métricas sintéticas são gravadas no VictoriaMetrics, em blocos limitados (a
+  última semana com resolução de cinco minutos): gráficos, *Últimos 7 dias*,
+  disponibilidade em 30 dias, previsões, a matriz de backups e o histórico de
+  alertas ficam preenchidos, e alguns alertas estão ativos. A semente também
+  preenche o que normalmente se configura à mão: equipes e pastas, contas e
+  escalas de plantão com políticas de escalonamento, silêncios, runbooks, dois
+  painéis, relatórios agendados, canais de notificação (nunca usados), locais
+  no mapa-múndi, vulnerabilidades conhecidas, quatro páginas de status (uma
+  por cena noturna) com um incidente em andamento, e uma varredura de rede com
+  um dispositivo novo. Tudo é calculado a partir de uma semente fixa: nada é
+  baixado da rede, nem mesmo as fontes de vulnerabilidades. A busca de logs
+  fica desligada: a demo não tem armazenamento de logs.
 - **Nada sai do servidor.** Nenhuma notificação é enviada, e nenhuma sondagem
   vai a um endereço que um visitante tenha digitado.
 - **Um tour guiado** abre após o primeiro login; o banner o reabre.

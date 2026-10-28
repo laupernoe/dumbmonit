@@ -695,7 +695,9 @@ pub fn spawn(state: AppState) {
             match enabled(&state.pool).await {
                 Ok(true) => {
                     let due = last_compute.is_none_or(|t| t.elapsed() >= RECOMPUTE_EVERY);
-                    if forced || due {
+                    // La démonstration publique a ses verdicts écrits d'avance
+                    // (`demo::workspace`) : aucune source n'est jamais demandée.
+                    if (forced || due) && !state.config.demo {
                         runtime().refreshing.store(true, Ordering::SeqCst);
                         if let Err(error) = run_cycle(&state, forced).await {
                             warn!(?error, "CVE scan failed");
