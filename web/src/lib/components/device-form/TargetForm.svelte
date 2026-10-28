@@ -56,7 +56,6 @@
 	import { DEFAULT_INTERVAL, INTERVALS, SNMP_KIND, suggestName } from './kinds';
 	import { firstReason, identitySummary, testBlocker } from './test-connection';
 	import { seedFromPrefill, type Prefill } from './discovery-prefill';
-	import { mode } from '#lib/stores/mode.svelte.js';
 
 	interface Props {
 		collector: CollectorInfo;
@@ -160,28 +159,9 @@
 	let saving = $state(false);
 	let serverError = $state<unknown>(null);
 
-	// Homelab keeps the form short: required settings and the first one; the
-	// rest waits behind "More options". Enterprise shows three up front and
-	// opens "More options" from the start.
-	const PRIMARY_COUNT = untrack(() => (mode.enterprise ? 3 : 1));
-
-	// "More options" opens by itself when an edited device already uses one.
-	let more = $state(
-		untrack(
-			() =>
-				mode.enterprise ||
-				(!target && collector.options.some((o, i) => !(o.required || i < PRIMARY_COUNT) && o.key in seed.tags)) ||
-				(!!target &&
-				(target.parent_id !== null ||
-					target.via_agent !== null ||
-					target.multisite !== null ||
-					target.interval_secs !== DEFAULT_INTERVAL ||
-					!target.enabled ||
-					target.group_name !== '' ||
-					(target.location_id ?? null) !== null ||
-					Object.keys(target.tags).some((key) => !collector.options.some((o) => o.key === key))))
-		)
-	);
+	// Three settings up front; "More options" is open from the start.
+	const PRIMARY_COUNT = 3;
+	let more = $state(true);
 
 	function touch(field: string) {
 		if (!touched.has(field)) touched = new Set(touched).add(field);

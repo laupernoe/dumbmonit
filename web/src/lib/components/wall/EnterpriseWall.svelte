@@ -9,7 +9,7 @@
 	 * 30 s; the river and the figures from the fleet store). Escape or Exit
 	 * goes back to the console. The screen stays awake while the wall is open.
 	 */
-	import { untrack } from 'svelte';
+	import { untrack, type Snippet } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { AlertTriangle, CircleAlert, CircleCheck, CircleDashed, X } from 'lucide-svelte';
 	import { getOnCallNow, listAlertRules, listOnCallPeople, type AlertRule, type OnCallEntry, type Person } from '#lib/api/index.js';
@@ -26,9 +26,15 @@
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { mode } from '#lib/stores/mode.svelte.js';
+	import { instanceStore } from '#lib/stores/instance.svelte.js';
 	import { consoleState } from '#lib/stores/console.svelte.js';
 	import { Button, calmMotion } from '#lib/ui/index.js';
+
+	interface Props {
+		/** Optional backdrop under the board (e.g. a night scene); none by default. */
+		scene?: Snippet;
+	}
+	let { scene }: Props = $props();
 
 	const ALERT_ROWS = 7;
 
@@ -262,10 +268,14 @@
 <svelte:window onkeydown={onKeydown} />
 
 <div class="ent-wall fixed inset-0 z-[60] box-border overflow-y-auto bg-canvas pt-[var(--safe-top)] pr-[var(--safe-right)] pb-[var(--safe-bottom)] pl-[var(--safe-left)] text-ink">
-	<div class="mx-auto flex min-h-full w-full max-w-[120rem] flex-col gap-5 px-5 py-5 lg:gap-6 lg:px-10 lg:py-8">
+	{#if scene}
+		<!-- Hook for a backdrop (a night scene), drawn under the board. -->
+		<div class="pointer-events-none fixed inset-0" aria-hidden="true">{@render scene()}</div>
+	{/if}
+	<div class="relative mx-auto flex min-h-full w-full max-w-[120rem] flex-col gap-5 px-5 py-5 lg:gap-6 lg:px-10 lg:py-8">
 		<header class="flex flex-wrap items-start justify-between gap-x-10 gap-y-3">
 			<div class="min-w-0">
-				<p class="m-0 truncate text-sm text-ink-2 lg:text-base">{mode.displayName}</p>
+				<p class="m-0 truncate text-sm text-ink-2 lg:text-base">{instanceStore.displayName}</p>
 				<div class={`mt-2 flex items-center gap-3 lg:gap-5 ${VERDICT_TEXT[verdict.tone]}`} aria-live="polite">
 					<Icon class="size-9 shrink-0 lg:size-14" strokeWidth={1.6} aria-hidden="true" />
 					<h1 class="m-0 text-[2.25rem] leading-none font-semibold tracking-[-0.035em] lg:text-[4rem]">{verdict.text}</h1>

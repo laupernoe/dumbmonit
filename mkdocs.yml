@@ -201,10 +201,10 @@ nav:
       - Runbooks and remediation: alerting/remediation.md
       - Notification channels: notifications.md
   - Using DumbMonit:
-      - Product modes and setup wizard: using/product-modes.md
+      - Interface and setup wizard: using/product-modes.md
       - Overview page: using/overview.md
       - Network discovery: using/discovery.md
-      - Wall mode and music: using/wall.md
+      - Wall mode: using/wall.md
       - Monitors page: using/devices.md
       - Monitors from Docker labels: using/docker-labels.md
       - Import from other tools: using/imports.md

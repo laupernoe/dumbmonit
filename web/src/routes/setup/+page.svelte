@@ -11,7 +11,6 @@
 	import { auth, PASSWORD_MIN_LENGTH, validatePassword } from '#lib/stores/auth.svelte.js';
 	import { Button, ClickSpark, DotField, ErrorNotice, Field } from '#lib/ui/index.js';
 	import Logo from '#lib/components/Logo.svelte';
-	import ThemeToggle from '#lib/components/ThemeToggle.svelte';
 	import PasswordInput from '#lib/components/settings/PasswordInput.svelte';
 	import Mascot from '#lib/components/Mascot.svelte';
 
@@ -75,10 +74,6 @@
 
 <div class="relative min-h-screen overflow-hidden bg-canvas">
 	<DotField opacity={1} dotSpacing={13} />
-
-	<div class="absolute top-3 right-3 z-20 sm:top-4 sm:right-4">
-		<ThemeToggle />
-	</div>
 
 	<main class="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-12">
 		<section class="gate-panel rise-in relative w-full max-w-sm rounded-[var(--radius-card)] border border-line p-6 shadow-float sm:p-7" aria-labelledby="gate-title">

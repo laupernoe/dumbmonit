@@ -1,16 +1,15 @@
-//! Réglages d'instance choisis au premier lancement : mode produit, nom,
-//! langue et fuseau par défaut, et la fin de l'assistant de démarrage.
-//!
-//! Le **mode produit** ne change que la présentation : `homelab` simplifie
-//! l'interface (navigation réduite, réglages avancés repliés), `enterprise`
-//! ouvre l'interface dense et sombre avec les options avancées en vue. Aucune
-//! donnée n'en dépend côté serveur, et passer de l'un à l'autre ne supprime
-//! rien : c'est pour cela qu'il tient dans un simple réglage.
+//! Réglages d'instance choisis au premier lancement : nom, langue et fuseau
+//! par défaut, et la fin de l'assistant de démarrage.
 //!
 //! Le tout est rangé sous une seule clé JSON de la table `settings`. Une
 //! instance antérieure à ce réglage a été marquée par la migration 0180
-//! (`homelab`, assistant terminé) pour ne pas se voir proposer un tutoriel de
-//! premier lancement le jour de la mise à jour.
+//! (assistant terminé) pour ne pas se voir proposer un tutoriel de premier
+//! lancement le jour de la mise à jour.
+//!
+//! Il n'y a plus qu'une interface. L'ancien champ `product_mode`
+//! (`homelab` / `enterprise`), encore présent dans les bases et les
+//! sauvegardes d'avant, est simplement ignoré à la lecture (serde laisse
+//! passer les champs inconnus) et n'est plus réécrit.
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -27,40 +26,9 @@ pub const MAX_NAME_LEN: usize = 80;
 /// Langues de l'interface, telles que Paraglide les nomme.
 pub const LANGUAGES: [&str; 9] = ["en", "fr", "de", "es", "it", "pt", "pt-BR", "ru", "zh-Hans"];
 
-/// Présentation choisie par l'administrateur.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum ProductMode {
-    /// Interface simple, défaut des instances existantes.
-    #[default]
-    Homelab,
-    /// Interface dense et sombre, options avancées en vue.
-    Enterprise,
-}
-
-impl ProductMode {
-    /// Lit la valeur envoyée par l'interface. `None` pour une valeur inconnue.
-    pub fn parse(value: &str) -> Option<Self> {
-        match value.trim() {
-            "homelab" => Some(Self::Homelab),
-            "enterprise" => Some(Self::Enterprise),
-            _ => None,
-        }
-    }
-
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Self::Homelab => "homelab",
-            Self::Enterprise => "enterprise",
-        }
-    }
-}
-
 /// Ce qui est écrit en base, et ce qui voyage dans la sauvegarde.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct InstanceSettings {
-    #[serde(default)]
-    pub product_mode: ProductMode,
     /// Vrai une fois l'assistant de démarrage terminé (ou passé en entier).
     #[serde(default)]
     pub setup_completed: bool,
@@ -106,34 +74,28 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_default_is_homelab_with_the_wizard_ahead() {
+    fn the_default_has_the_wizard_ahead() {
         let value = InstanceSettings::default();
-        assert_eq!(value.product_mode, ProductMode::Homelab);
         assert!(!value.setup_completed);
-    }
-
-    #[test]
-    fn the_mode_travels_in_lower_case() {
-        let json = serde_json::to_value(InstanceSettings {
-            product_mode: ProductMode::Enterprise,
-            ..InstanceSettings::default()
-        })
-        .unwrap();
-        assert_eq!(json["product_mode"], "enterprise");
+        assert!(value.name.is_empty());
     }
 
     #[test]
     fn a_partial_record_reads_with_defaults() {
         let value: InstanceSettings = serde_json::from_str(r#"{"setup_completed":true}"#).unwrap();
-        assert_eq!(value.product_mode, ProductMode::Homelab);
         assert!(value.setup_completed);
         assert!(value.name.is_empty());
     }
 
     #[test]
-    fn unknown_modes_are_refused() {
-        assert_eq!(ProductMode::parse("enterprise"), Some(ProductMode::Enterprise));
-        assert_eq!(ProductMode::parse(" homelab "), Some(ProductMode::Homelab));
-        assert_eq!(ProductMode::parse("pro"), None);
+    fn the_old_product_mode_is_read_and_dropped() {
+        let value: InstanceSettings = serde_json::from_str(
+            r#"{"product_mode":"enterprise","setup_completed":true,"name":"Lab"}"#,
+        )
+        .unwrap();
+        assert!(value.setup_completed);
+        assert_eq!(value.name, "Lab");
+        let json = serde_json::to_value(&value).unwrap();
+        assert!(json.get("product_mode").is_none(), "{json}");
     }
 }

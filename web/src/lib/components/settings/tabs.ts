@@ -14,6 +14,7 @@ export const TAB_IDS: readonly SettingsTab[] = ['general', 'account', 'team', 'm
 /** Which tab holds each section (by its anchor id). */
 export const SECTION_TAB: Record<string, SettingsTab> = {
 	general: 'general',
+	// Former anchor of the Homelab / Enterprise choice.
 	'product-mode': 'general',
 	'setup-wizard': 'general',
 	appearance: 'account',
@@ -36,6 +37,7 @@ export const SECTION_TAB: Record<string, SettingsTab> = {
 	'notifications-policy': 'notifications',
 	'quiet-hours': 'notifications',
 	wall: 'wall',
+	// Former anchors of the wall's music, news and widgets.
 	music: 'wall',
 	news: 'wall',
 	widgets: 'wall',
@@ -102,7 +104,7 @@ export function searchIndex(): SearchEntry[] {
 		keywords
 	});
 	return [
-		entry('product-mode', m.settings_general_mode_title(), m.settings_search_kw_general()),
+		entry('general', m.settings_general_instance_title(), m.settings_search_kw_instance()),
 		entry('appearance', m['settings.section.appearance'](), m.settings_search_kw_appearance()),
 		entry('security', m['settings.section.security'](), m.settings_search_kw_security()),
 		entry('push', m.settings_nav_push(), m.settings_search_kw_push()),
@@ -121,8 +123,6 @@ export function searchIndex(): SearchEntry[] {
 		entry('notifications-channels', m.notifications_channels_title(), m.settings_search_kw_notifications()),
 		entry('notifications-policy', m.notifications_policy_title(), m.settings_search_kw_policy()),
 		entry('wall', m.settings_appearance_wall_title(), m.settings_search_kw_wall()),
-		entry('music', m['settings.section.music'](), m.settings_search_kw_music()),
-		entry('widgets', m.settings_widgets_title(), `${m.settings_search_kw_widgets()} ${m.settings_search_kw_news()}`),
 		entry('backup', m['settings.section.backup'](), m.settings_search_kw_backup()),
 		entry('config-files', m.settings_config_title(), m.settings_config_search_kw()),
 		entry('self-monitoring', m.settings_selfmon_title(), m.settings_search_kw_selfmon()),
