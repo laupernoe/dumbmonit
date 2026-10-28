@@ -7,7 +7,7 @@
 //!
 //! Ce que la sonde retient : la date d'expiration (et donc les jours restants),
 //! les statuts EPP (`clientHold`, `redemptionPeriod`…), le bureau
-//! d'enregistrement et la signature DNSSEC de la délégation. Un domaine en
+//! d'enregistrement, les serveurs de noms et la signature DNSSEC de la délégation. Un domaine en
 //! `clientHold` ou `serverHold` n'est plus publié dans le DNS : tout ce qui en
 //! dépend tombe, souvent pour une facture impayée ou une adresse de contact non
 //! vérifiée. Un domaine en `redemptionPeriod` a déjà expiré.
@@ -354,6 +354,14 @@ pub struct Registration {
     pub registrar: Option<String>,
     /// Délégation signée (DNSSEC) ; `None` si le registre ne le dit pas.
     pub dnssec: Option<bool>,
+    /// Serveurs de noms de la délégation, en minuscules, triés, sans doublon.
+    pub nameservers: Vec<String>,
+}
+
+#[derive(Deserialize)]
+struct RawNameserver {
+    #[serde(rename = "ldhName", default)]
+    ldh_name: String,
 }
 
 #[derive(Deserialize)]
@@ -368,6 +376,8 @@ struct RawDomain {
     entities: Vec<RawEntity>,
     #[serde(rename = "secureDNS", default)]
     secure_dns: Option<RawSecureDns>,
+    #[serde(default)]
+    nameservers: Vec<RawNameserver>,
 }
 
 #[derive(Deserialize)]
@@ -450,8 +460,33 @@ impl Registration {
             registrar: registrar
                 .and_then(|r| r.vcard.as_ref().and_then(vcard_name).or_else(|| r.handle.clone())),
             dnssec: raw.secure_dns.and_then(|s| s.delegation_signed),
+            nameservers: {
+                let mut names: Vec<String> = raw
+                    .nameservers
+                    .iter()
+                    .map(|n| n.ldh_name.trim().trim_end_matches('.').to_ascii_lowercase())
+                    .filter(|n| !n.is_empty())
+                    .collect();
+                names.sort();
+                names.dedup();
+                names
+            },
         })
     }
+}
+
+/// Empreinte FNV-1a de textes, tronquée à 52 bits : exacte en `f64`, et stable
+/// d'une version à l'autre (un hachage de la bibliothèque standard ne l'est pas,
+/// et déclencherait une fausse alerte à chaque mise à jour).
+fn fingerprint(parts: &[&str]) -> f64 {
+    let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
+    for part in parts {
+        for byte in part.bytes().chain(std::iter::once(0u8)) {
+            hash ^= u64::from(byte);
+            hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+        }
+    }
+    (hash & ((1u64 << 52) - 1)) as f64
 }
 
 pub fn samples(registration: &Registration, now_s: i64, ts_ms: i64) -> Vec<Sample> {
@@ -471,6 +506,14 @@ pub fn samples(registration: &Registration, now_s: i64, ts_ms: i64) -> Vec<Sampl
     }
     if let Some(registrar) = &registration.registrar {
         out.push(gauge("domain_registrar_info", 1.0).with_label("registrar", registrar.clone()));
+        out.push(gauge("domain_registrar_fingerprint", fingerprint(&[registrar.as_str()])));
+    }
+    // Un changement de délégation (détournement, migration non annoncée) se voit
+    // à l'empreinte : `changes(...)` dans la règle d'alerte, sans liste de séries.
+    if !registration.nameservers.is_empty() {
+        let names: Vec<&str> = registration.nameservers.iter().map(String::as_str).collect();
+        out.push(gauge("domain_nameservers", names.len() as f64));
+        out.push(gauge("domain_nameservers_fingerprint", fingerprint(&names)));
     }
     if let Some(signed) = registration.dnssec {
         out.push(gauge("domain_dnssec", flag(signed)));
@@ -517,7 +560,13 @@ mod tests {
             ["clientDeleteProhibited", "clientTransferProhibited", "clientUpdateProhibited"]
         );
         assert_eq!(com.dnssec, Some(true));
+        assert!(!com.nameservers.is_empty());
+        assert!(com.nameservers.windows(2).all(|w| w[0] < w[1]), "triés, sans doublon");
         let out = samples(&com, NOW, 0);
+        assert_eq!(
+            find(&out, "domain_nameservers", &[]).unwrap().value,
+            com.nameservers.len() as f64
+        );
         // 2027-08-13T04:00:00Z.
         let days = find(&out, "domain_expiry_days", &[]).unwrap().value;
         assert!((days - 316.17).abs() < 0.01, "{days}");
@@ -539,6 +588,22 @@ mod tests {
         let out = samples(&ch, NOW, 0);
         assert_eq!(find(&out, "domain_expiry_published", &[]).unwrap().value, 0.0);
         assert!(find(&out, "domain_expiry_days", &[]).is_none());
+    }
+
+    #[test]
+    fn l_empreinte_change_avec_la_delegation_et_le_bureau() {
+        let mut a = Registration::parse(COM).unwrap();
+        let before = samples(&a, NOW, 0);
+        let ns = |out: &[Sample]| find(out, "domain_nameservers_fingerprint", &[]).unwrap().value;
+        let reg = |out: &[Sample]| find(out, "domain_registrar_fingerprint", &[]).unwrap().value;
+        // Même réponse, même empreinte ; rien ne change entre deux lectures.
+        assert_eq!(ns(&before), ns(&samples(&a, NOW + 3600, 0)));
+        a.nameservers = vec!["ns1.pirate.example".to_string()];
+        a.registrar = Some("Autre bureau".to_string());
+        let after = samples(&a, NOW, 0);
+        assert_ne!(ns(&before), ns(&after));
+        assert_ne!(reg(&before), reg(&after));
+        assert!(ns(&after) < 2f64.powi(52));
     }
 
     #[test]
