@@ -25,6 +25,7 @@ use crate::collect::mail_server::PlatformProbe as MailServerProbe;
 use crate::collect::perf_counters::PlatformProbe as PerfCountersProbe;
 use crate::collect::plakar::PlakarProbe;
 use crate::collect::registry::UpdateChecker;
+use crate::collect::machine::MachineProbe;
 use crate::collect::sensors::SensorsProbe;
 use crate::collect::smart::SmartProbe;
 use crate::collect::speedtest::SpeedtestProbe;
@@ -102,6 +103,8 @@ pub struct Agent {
     /// Matériel : sondes de température, santé des disques, pools ZFS. Chacun
     /// se tait complètement là où la machine n'a rien à en dire.
     sensors: SensorsProbe,
+    /// Top processus, PSI, inodes, horloge, OOM kills : muet hors Linux.
+    machine: MachineProbe,
     smart: SmartProbe,
     zfs: ZfsProbe,
     /// Domaines KVM et pools libvirt. Muet sans `virsh` ni domaine.
@@ -239,6 +242,7 @@ impl Agent {
             ipsec: IpsecProbe::new(&config.ipsec),
             speedtest: SpeedtestProbe::new(&config.speedtest),
             sensors: SensorsProbe::new(config.sensors),
+            machine: MachineProbe::new(),
             smart: SmartProbe::new(&config.smart),
             zfs: ZfsProbe::new(&config.zfs),
             libvirt: LibvirtProbe::new(&config.libvirt),
@@ -308,6 +312,7 @@ impl Agent {
             snapshot.speedtest = self.speedtest.read().await;
         }
         snapshot.sensors = self.sensors.read();
+        snapshot.machine = self.machine.read(&snapshot.filesystems).await;
         snapshot.smart = self.smart.read().await;
         if self.wants("zfs") {
             snapshot.zfs = self.zfs.read().await;
