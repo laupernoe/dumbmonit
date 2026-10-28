@@ -2,29 +2,32 @@
 
 ![Settings: seven tabs, here My account with appearance, account & security and push notifications](../assets/screenshots/settings-light.png){ loading=lazy }
 
-Settings holds what is administrative: your account, who can sign in and how, the tokens that let agents and assistants in, backing the instance up, the theme, and the server's health. It is split into seven tabs, each with its own address. A rail on a wide screen, a strip of chips on a phone and a search box over the section names help you find a section.
+Settings holds what is administrative: the instance itself, your account, who can sign in and how, the agents, the notification channels, backing the instance up, and the server's health. It is split into seven tabs, each with its own address. A rail on a wide screen, a strip of chips on a phone and a search box over the section names help you find a section.
 
 | Tab | Address | What it holds |
 |---|---|---|
-| My account | `/settings/account` | Appearance, Account & security (password, two-factor, security log), Push notifications, On-call contacts and quiet hours ([On-call](../alerting/oncall.md)) |
-| Team & access | `/settings/team` | Users, Single sign-on |
-| Monitoring | `/settings/monitoring` | Agents, Integration packs, [Security score](security-score.md) |
-| Notifications | `/settings/notifications` | Channels, Notification policy, Quiet hours ([Notification channels](../notifications.md)) |
-| Wall display | `/settings/wall` | Wall mode, Wall music, Wall widgets, news included ([Wall mode](overview.md#wall-mode)) |
-| System | `/settings/system` | Data & retention, Backup, DumbMonit itself, API & assistants, About |
+| General | `/settings/general` | Instance name, language and time zone, the setup wizard ([Interface and setup wizard](product-modes.md)) |
+| My account | `/settings/account` | Language, Account & security (password, two-factor, security log), Push notifications, On-call contacts and quiet hours ([On-call](../alerting/oncall.md)) |
+| Team & access | `/settings/team` | Users, Teams, Clients, Single sign-on, SAML, SCIM, LDAP |
+| Monitoring | `/settings/monitoring` | Agents, Integration packs, [Security score](security-score.md), Locations |
+| Notifications | `/settings/notifications` | Channels, Notification policy ([Notification channels](../notifications.md)) |
+| Wall display | `/settings/wall` | Wall mode: what it shows, and the way in ([Wall mode](wall.md)) |
+| System | `/settings/system` | Backup, Configuration files, DumbMonit itself, Data & retention, Logs, API & assistants, About |
 
-Each section keeps its own anchor: `/settings#agents` forwards to `/settings/monitoring#agents`. The old links (`/alerts#notifications`) forward to the new place too. Status pages and reports are not in Settings any more: they have their own pages, **Status pages** (`/status`) and **Reports** (`/reports`); `/settings/status` and `/settings/reports` forward there.
+Each section keeps its own anchor: `/settings#agents` forwards to `/settings/monitoring#agents`. The old links (`/alerts#notifications`) forward to the new place too. Status pages and reports are not in Settings any more: they have their own pages, **Status pages** (`/status`) and **Reports** (`/reports`); `/settings/status` and `/settings/reports` forward there. The wall's music, news and widgets are gone: their old links (`#music`, `#news`, `#widgets`) open the Wall display tab.
 
-## Appearance
+## Appearance {#appearance}
 
-Three tiles, each previewing its own theme: **System** (follows your device and
-switches with it), **Day** (the "chart paper" theme) and **Night** (the
-"radar" theme). The choice is stored in the browser. The header's toggle and
-the command palette's *Toggle theme* switch between day and night.
+The language of the interface, saved in this browser. The console has a single
+dark look, so there is no theme to pick; public status pages keep their own
+light and dark themes.
 
-**Open wall mode** sits at the bottom of the section: the bulletin alone, full
-screen, for a monitor in the room. ++esc++ leaves it, and the command palette
-opens it from anywhere — see [Wall mode](overview.md#wall-mode).
+## Wall display {#wall}
+
+**Open wall mode**: the console's board, full screen, for a monitor in the
+room. ++esc++ leaves it, and the command palette opens it from anywhere. The
+wall has no music, news or widgets any more; an optional night city can sit
+behind its verdict. See [Wall mode](wall.md).
 
 ## Account & security
 
@@ -179,20 +182,19 @@ Admins only. SAML 2.0 single sign-on, SCIM provisioning, and teams that limit
 each account to some folders of monitors. See [SAML 2.0](saml.md),
 [SCIM provisioning](scim.md) and [Teams and permissions](teams.md).
 
-## Agents
+## Agents {#agents}
 
-Enrollment tokens for the [Linux, macOS, FreeBSD and Windows agent](../devices/agent.md).
-Create one with a name ("File server", "Home fleet"): the token is shown once,
-with the Linux and Windows install commands ready to copy. Each command carries
-the SHA-256 checksums of the agent binaries this server ships, and the
-installer refuses a download that does not match; the checksums are also
-listed below the commands, to compare by hand. The list shows each token's prefix, creation date, last use
-and whether it was revoked. **Revoke** stops every agent using that token at
-its next push.
+Only what is shared by every [agent](../devices/agent.md), for admins: the
+encrypted agent channel (certificates and their authority, see
+[Agent security](../install/agent-security.md)), automatic agent updates, and
+the enrolment tokens already issued. Each token shows its scope, creation date
+and last use; **Revoke** stops every agent using it at its next push, without
+deleting the monitors.
 
-One token can enrol several machines. Revoking it does not delete the monitors.
-The token list, creating and revoking are for admins; viewers and operators
-see the section without the list.
+Adding a machine (token, install command, first connection, a route through a
+relay, the Active Directory kit) happens in the add flow, **New monitor →
+Agent** (`/targets/new?kind=agent`), not here. The agents themselves are on
+their own pages.
 
 ## Security score {#security-score}
 

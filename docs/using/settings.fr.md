@@ -2,31 +2,33 @@
 
 ![Réglages : sept onglets, ici Mon compte avec apparence, compte et sécurité et notifications push](../assets/screenshots/settings-light.png){ loading=lazy }
 
-Réglages contient ce qui est administratif : votre compte, qui peut se connecter et comment, les jetons qui laissent entrer agents et assistants, la sauvegarde de l'instance, le thème, et la santé du serveur. Il est découpé en sept onglets, chacun avec sa propre adresse. Un rail sur grand écran, une bande de puces sur téléphone et une recherche sur les noms de sections aident à trouver une section.
+Réglages contient ce qui est administratif : l'instance elle-même, votre compte, qui peut se connecter et comment, les agents, les canaux de notification, la sauvegarde de l'instance et la santé du serveur. Il est découpé en sept onglets, chacun avec sa propre adresse. Un rail sur grand écran, une bande de puces sur téléphone et une recherche sur les noms de sections aident à trouver une section.
 
 | Onglet | Adresse | Contenu |
 |---|---|---|
-| Mon compte | `/settings/account` | Apparence, Compte et sécurité (mot de passe, double authentification, journal de sécurité), Notifications push, Contacts d'astreinte et heures calmes ([Astreintes](../alerting/oncall.md)) |
-| Équipe et accès | `/settings/team` | Utilisateurs, Authentification unique |
-| Supervision | `/settings/monitoring` | Agents, Packs d'intégration, [Score de sécurité](security-score.md) |
-| Notifications | `/settings/notifications` | Canaux, Politique de notification, Heures de silence ([Canaux de notification](../notifications.md)) |
-| Mur | `/settings/wall` | Mode mural, Musique murale, Actualités murales ([Mode mural](overview.md#wall-mode)) |
-| Système | `/settings/system` | Données et rétention, Sauvegarde, DumbMonit lui-même, API et assistants, À propos |
+| Général | `/settings/general` | Nom de l'instance, langue et fuseau horaire, assistant de démarrage ([Interface et assistant de démarrage](product-modes.md)) |
+| Mon compte | `/settings/account` | Langue, Compte et sécurité (mot de passe, double authentification, journal de sécurité), Notifications push, Contacts d'astreinte et heures calmes ([Astreintes](../alerting/oncall.md)) |
+| Équipe et accès | `/settings/team` | Utilisateurs, Équipes, Clients, Authentification unique, SAML, SCIM, LDAP |
+| Supervision | `/settings/monitoring` | Agents, Packs d'intégration, [Score de sécurité](security-score.md), Emplacements |
+| Notifications | `/settings/notifications` | Canaux, Politique de notification ([Canaux de notification](../notifications.md)) |
+| Mur | `/settings/wall` | Mode mural : ce qu'il montre, et comment l'ouvrir ([Mode mur](wall.md)) |
+| Système | `/settings/system` | Sauvegarde, Fichiers de configuration, DumbMonit lui-même, Données et rétention, Journaux, API et assistants, À propos |
 
-Chaque section garde son ancre : `/settings#agents` redirige vers `/settings/monitoring#agents`. Les anciens liens (`/alerts#notifications`) redirigent aussi vers le nouvel emplacement. Les pages de statut et les rapports ne sont plus dans les Réglages : ils ont leur propre page, **Pages de statut** (`/status`) et **Rapports** (`/reports`) ; `/settings/status` et `/settings/reports` y redirigent.
+Chaque section garde son ancre : `/settings#agents` redirige vers `/settings/monitoring#agents`. Les anciens liens (`/alerts#notifications`) redirigent aussi vers le nouvel emplacement. Les pages de statut et les rapports ne sont plus dans les Réglages : ils ont leur propre page, **Pages de statut** (`/status`) et **Rapports** (`/reports`) ; `/settings/status` et `/settings/reports` y redirigent. La musique, les actualités et les widgets du mur ont disparu : leurs anciens liens (`#music`, `#news`, `#widgets`) ouvrent l'onglet Mur.
 
-## Apparence
+## Apparence {#appearance}
 
-Trois tuiles, chacune prévisualisant son propre thème : **Système** (suit
-votre appareil et change avec lui), **Jour** (le thème « papier
-graphique ») et **Nuit** (le thème « radar »). Le choix est stocké dans
-le navigateur. L'interrupteur de l'en-tête et le *Basculer le thème* de
-la palette de commandes alternent entre jour et nuit.
+La langue de l'interface, enregistrée dans ce navigateur. La console n'a
+qu'une apparence sombre : il n'y a pas de thème à choisir. Les pages de statut
+publiques gardent leurs thèmes clair et sombre.
 
-**Ouvrir le mode mur** se trouve en bas de la section : le bulletin
-seul, plein écran, pour un moniteur dans la pièce. ++esc++ le quitte, et
-la palette de commandes l'ouvre depuis n'importe où — voir
-[Mode mur](overview.md#wall-mode).
+## Mur {#wall}
+
+**Ouvrir le mode mural** : le tableau de la console, en plein écran, pour un
+moniteur dans la pièce. ++esc++ le quitte, et la palette de commandes l'ouvre
+depuis n'importe où. Le mur n'a plus de musique, d'actualités ni de widgets ;
+une ville de nuit peut, au choix, s'afficher derrière son verdict. Voir
+[Mode mur](wall.md).
 
 ## Compte et sécurité
 
@@ -208,22 +210,20 @@ Administrateurs seulement. Connexion unique SAML 2.0, provisionnement SCIM, et
 équipes qui limitent chaque compte à certains dossiers d'équipements. Voir
 [SAML 2.0](saml.md), [SCIM](scim.md) et [Équipes et droits](teams.md).
 
-## Agents
+## Agents {#agents}
 
-Jetons d'enrôlement pour l'[agent Linux, macOS, FreeBSD et
-Windows](../devices/agent.md). Créez-en un avec un nom (« Serveur de
-fichiers », « Parc maison ») : le jeton est montré une fois, avec les
-commandes d'installation Linux et Windows prêtes à copier. Chaque
-commande porte les sommes de contrôle SHA-256 des binaires d'agent que ce
-serveur fournit, et l'installateur refuse un téléchargement qui ne
-correspond pas ; les sommes de contrôle sont aussi listées sous les
-commandes, pour comparer à la main. La liste montre le préfixe de chaque
-jeton, sa date de création, sa dernière utilisation et s'il a été révoqué.
-**Révoquer** arrête chaque agent utilisant ce jeton à son prochain push.
+Seulement ce qui est commun à tous les [agents](../devices/agent.md), pour les
+administrateurs : le canal chiffré des agents (certificats et leur autorité,
+voir [Sécurité de l'agent](../install/agent-security.md)), les mises à jour
+automatiques des agents et les jetons d'enrôlement déjà émis. Chaque jeton
+indique sa portée, sa date de création et sa dernière utilisation ;
+**Révoquer** arrête tous les agents qui l'utilisent à leur prochain envoi, sans
+supprimer les surveillances.
 
-Un jeton peut enrôler plusieurs machines. Le révoquer ne supprime pas les
-surveillances. Les lecteurs voient la liste et la section lit *Lecteur —
-lecture seule* ; créer et révoquer sont réservés aux administrateurs.
+Ajouter une machine (jeton, commande d'installation, première connexion,
+passage par un relais, kit Active Directory) se fait dans le parcours d'ajout,
+**Nouvelle surveillance → Agent** (`/targets/new?kind=agent`), pas ici. Les
+agents eux-mêmes ont leurs propres pages.
 
 ## Score de sécurité {#security-score}
 
