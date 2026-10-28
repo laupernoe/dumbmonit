@@ -66,7 +66,7 @@ Toutes les métriques sont préfixées `dumbmonit_arubacentral_`.
 | `devices_by_health` | `type`, `health` | Appareils par groupe de santé. |
 | `devices_poor_health` | | Appareils du groupe `poor`. |
 
-Les [règles intégrées](../alerting/rules.md#aruba-central) qui s'appliquent :
+Les [règles intégrées](../alerting/rules.md) qui s'appliquent :
 
 - **Aruba Central device offline** : Central voit un appareil hors ligne
   pendant dix minutes (Avis).

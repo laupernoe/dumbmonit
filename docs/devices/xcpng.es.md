@@ -53,7 +53,7 @@ detenida es lo más cercano que da la API a una VM que se paró contra tu
 voluntad; si apagas una VM protegida a propósito, quítale antes su prioridad
 de reinicio.
 
-Las [reglas integradas](../alerting/rules.md#xcp-ng-xenserver) que se aplican:
+Las [reglas integradas](../alerting/rules.md) que se aplican:
 
 - **XCP-ng host offline**: el latido de un host no ha llegado al coordinador
   durante cinco minutos (Warning).
