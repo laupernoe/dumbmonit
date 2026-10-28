@@ -64,7 +64,7 @@ All metrics are prefixed `dumbmonit_arubacentral_`.
 | `devices_by_health` | `type`, `health` | Devices per health group. |
 | `devices_poor_health` | | Devices in the `poor` group. |
 
-The [built-in rules](../alerting/rules.md#aruba-central) that apply:
+The [built-in rules](../alerting/rules.md) that apply:
 
 - **Aruba Central device offline**: Central sees a device offline for ten
   minutes (Advisory).
