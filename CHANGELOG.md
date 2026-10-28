@@ -40,6 +40,13 @@ All notable changes to this project are documented here. The format follows
   the security policy no longer allows Spotify's player or any frame. Place
   search for locations (`/api/locations/geocode`) stays.
 
+### Added
+
+- **Richer charts** on a device page: alert-rule threshold lines, markers for the
+  device's alerts and resolutions, one cursor shared by all its charts, a
+  "Compare to last week" switch (dashed overlay) and a mirrored in/out view for
+  interface traffic.
+
 ## 0.14.1 — 2026-10-28
 
 ### Added

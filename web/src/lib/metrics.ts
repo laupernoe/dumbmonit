@@ -138,6 +138,35 @@ export async function loadTargetMetrics(
 	return group(series);
 }
 
+/** Same window one week back, for the chart's "last week" overlay (seconds in, seconds out). */
+async function queryWindow(
+	query: string,
+	window: { start: number; end: number },
+	signal?: AbortSignal
+): Promise<MetricSeries[]> {
+	const span = Math.max(window.end - window.start, 1);
+	return queryRange(
+		{ query, start: window.start * 1000, end: window.end * 1000, step: stepFor(span) },
+		signal
+	);
+}
+
+/** Response time of a service over a past window, in milliseconds. */
+export async function loadResponseTimesWindow(
+	targetId: TargetId,
+	window: { start: number; end: number },
+	signal?: AbortSignal
+): Promise<Serie[]> {
+	const series = await queryWindow(`dumbmonit_probe_duration_seconds{target="${targetId}"}`, window, signal);
+	return series
+		.map((item) => ({
+			label: m.devices_chart_response_time(),
+			points: toPoints(item).map(([ts, value]) => [ts, Math.round(value * 1000)] as [number, number])
+		}))
+		.filter((serie) => serie.points.length > 0)
+		.slice(0, 1);
+}
+
 /**
  * Loads a single representative curve, for a card's sparkline.
  *
