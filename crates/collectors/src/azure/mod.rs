@@ -334,6 +334,8 @@ pub fn samples(health: &[Value], alerts: Option<&[Value]>, ts_ms: i64) -> Vec<Sa
     let (mut total, mut available, mut degraded, mut unavailable, mut stopped, mut unknown) =
         (0usize, 0usize, 0usize, 0usize, 0usize, 0usize);
     let mut named = 0usize;
+    // Par région Azure : (ressources, en panne ou dégradées), pour la carte des régions.
+    let mut locations: std::collections::BTreeMap<String, (usize, usize)> = Default::default();
     for entry in health {
         let Some(resource) = text(entry, "id").and_then(Resource::parse) else { continue };
         let properties = entry.get("properties");
@@ -341,6 +343,14 @@ pub fn samples(health: &[Value], alerts: Option<&[Value]>, ts_ms: i64) -> Vec<Sa
         let reason = properties.and_then(|p| text(p, "reasonType")).unwrap_or_default();
         let verdict = classify(state, reason);
         total += 1;
+        if let Some(location) = text(entry, "location")
+            .map(|l| l.trim().to_ascii_lowercase())
+            .filter(|l| !l.is_empty() && l != "global")
+        {
+            let slot = locations.entry(location).or_default();
+            slot.0 += 1;
+            slot.1 += usize::from(matches!(verdict, Health::Degraded | Health::Unavailable));
+        }
         let (detail, ok) = match verdict {
             Health::Available => {
                 available += 1;
@@ -378,6 +388,12 @@ pub fn samples(health: &[Value], alerts: Option<&[Value]>, ts_ms: i64) -> Vec<Sa
                     .with_label("state", detail),
             );
         }
+    }
+    for (location, (count, unhealthy)) in &locations {
+        out.push(g("location_resources", *count as f64).with_label("location", location.as_str()));
+        out.push(
+            g("location_unhealthy", *unhealthy as f64).with_label("location", location.as_str()),
+        );
     }
     out.push(g("resources", total as f64));
     out.push(g("resources_available", available as f64));
@@ -499,6 +515,15 @@ mod tests {
             0.0
         );
         assert_eq!(value(&s, "azure_figure", &[("name", "Resources")]), 6.0);
+        // Étiquette de région pour la carte : la ligne de l'abonnement (« global ») n'en est pas une.
+        let resources: f64 = s
+            .iter()
+            .filter(|x| x.metric == "azure_location_resources")
+            .map(|x| x.value)
+            .sum();
+        assert_eq!(resources, 6.0, "every resource has one location");
+        assert_eq!(value(&s, "azure_location_resources", &[("location", "westeurope")]), 6.0);
+        assert_eq!(value(&s, "azure_location_unhealthy", &[("location", "westeurope")]), 2.0);
         assert_eq!(value(&s, "azure_figure", &[("name", "Unavailable")]), 1.0);
     }
 
