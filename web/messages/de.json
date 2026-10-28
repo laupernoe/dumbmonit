@@ -2348,6 +2348,8 @@
 	"devices_timeline_notified_some": "{sent} von {total} benachrichtigt",
 	"devices_timeline_phase_change": "{from} → {to}",
 	"devices_timeline_phase_firing": "Ausgelöst",
+	"devices_chart_event_host_restart": "Neustart",
+	"devices_chart_event_container_restart": "{name} neu gestartet",
 	"devices_timeline_phase_ok": "OK",
 	"devices_timeline_phase_pending": "Baut sich auf",
 	"devices_timeline_phase_resolved": "Behoben",

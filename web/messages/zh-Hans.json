@@ -2317,6 +2317,8 @@
 	"devices_timeline_notified_some": "已通知 {sent}/{total}",
 	"devices_timeline_phase_change": "{from} → {to}",
 	"devices_timeline_phase_firing": "触发中",
+	"devices_chart_event_host_restart": "重启",
+	"devices_chart_event_container_restart": "{name} 已重启",
 	"devices_timeline_phase_ok": "正常",
 	"devices_timeline_phase_pending": "累积中",
 	"devices_timeline_phase_resolved": "已解决",

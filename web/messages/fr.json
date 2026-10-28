@@ -2348,6 +2348,8 @@
 	"devices_timeline_notified_some": "Notifiée {sent} fois sur {total}",
 	"devices_timeline_phase_change": "{from} → {to}",
 	"devices_timeline_phase_firing": "Déclenchée",
+	"devices_chart_event_host_restart": "Redémarrage",
+	"devices_chart_event_container_restart": "{name} a redémarré",
 	"devices_timeline_phase_ok": "OK",
 	"devices_timeline_phase_pending": "En montée",
 	"devices_timeline_phase_resolved": "Résolue",
