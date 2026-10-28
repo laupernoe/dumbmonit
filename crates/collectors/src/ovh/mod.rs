@@ -609,12 +609,15 @@ mod tests {
     async fn les_echeances_sont_lues_et_une_lecture_refusee_est_ignoree() {
         let address = serveur("ok").await;
         let s = OvhCollector::new().probe(&cible_ovh(&address, "secret:consumer")).await.unwrap();
-        let found = find(&s, "ovh_service_expiry_seconds", &[("service", "vps-aaa111.vps.ovh.net")])
-            .unwrap();
+        let found =
+            find(&s, "ovh_service_expiry_seconds", &[("service", "vps-aaa111.vps.ovh.net")])
+                .unwrap();
         assert!(found.value > 0.0);
         assert_eq!(found.labels["family"], "vps");
         // Les autres serveurs n'ont pas de serviceInfos (404) : pas de série, pas d'échec.
-        assert!(find(&s, "ovh_service_expiry_seconds", &[("service", "ns100.ip-1-2-3.eu")]).is_none());
+        assert!(
+            find(&s, "ovh_service_expiry_seconds", &[("service", "ns100.ip-1-2-3.eu")]).is_none()
+        );
     }
 
     #[tokio::test]

@@ -388,9 +388,9 @@ pub fn parse_w32tm_status(text: &str) -> Option<ClockStat> {
     };
 
     let cleaned = text.replace('\r', "");
-    let mut blocks = cleaned.split("\n\n").map(|block| {
-        block.lines().filter(|l| !l.trim().is_empty()).collect::<Vec<_>>()
-    });
+    let mut blocks = cleaned
+        .split("\n\n")
+        .map(|block| block.lines().filter(|l| !l.trim().is_empty()).collect::<Vec<_>>());
     let first = blocks.next()?;
     let leap = leading_number(&value_of(first.first()?)?)?;
     let stratum = first.get(1).and_then(|l| value_of(l)).and_then(|v| leading_number(&v));
@@ -891,11 +891,15 @@ mod tests {
             .expect("load");
         assert_eq!(load.processor_queue, Some(3.0));
         assert_eq!((load.pages_per_second, load.disk_queue), (None, None));
-        assert_eq!(windows_load_from(&[Reading::Missing, Reading::Missing, Reading::Missing]), None);
+        assert_eq!(
+            windows_load_from(&[Reading::Missing, Reading::Missing, Reading::Missing]),
+            None
+        );
         let out = samples(&MachineStat { windows_load: Some(load), ..MachineStat::default() }, 0);
         assert_eq!(value_of(&out, "agent_windows_processor_queue_length", None), Some(3.0));
         assert_eq!(out.len(), 1);
-        let empty = MachineStat { windows_load: Some(WindowsLoad::default()), ..Default::default() };
+        let empty =
+            MachineStat { windows_load: Some(WindowsLoad::default()), ..Default::default() };
         assert!(empty.is_empty());
     }
 }
