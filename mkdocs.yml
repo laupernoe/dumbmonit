@@ -5,10 +5,16 @@ repo_url: https://github.com/laupernoe/dumbmonit
 repo_name: laupernoe/dumbmonit
 edit_uri: edit/main/docs/
 docs_dir: docs
+exclude_docs: |
+  requirements.txt
+  assets/demo/
 
 # One language per build, chosen by READTHEDOCS_LANGUAGE (English by default): see
 # hooks/rtd_language.py. site_url, theme.language, the search language, the language
 # switcher (extra.alternate) and the navigation titles are set there.
+# Published twice: on the product website under /docs/ (DUMBMONIT_DOCS_BASE, built by
+# .github/workflows/site.yml) and on Read the Docs as a mirror (the site_url below).
+# The header carries the website's navigation (overrides/partials/header.html).
 hooks:
   - hooks/rtd_language.py
 
