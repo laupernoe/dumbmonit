@@ -10,6 +10,7 @@
 	import { ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import ClientDevicesTable from '../ClientDevicesTable.svelte';
+	import SwitchPanel from '#lib/components/devices/switch/SwitchPanel.svelte';
 	import { formatCount, formatSpan } from '../truenas/format';
 	import { formatPercent, readings, selector } from '../instant';
 	import {
@@ -206,5 +207,7 @@
 		{/if}
 	</Panel>
 {/if}
+
+<SwitchPanel {target} class="mt-6" />
 
 <ClientDevicesTable {target} />

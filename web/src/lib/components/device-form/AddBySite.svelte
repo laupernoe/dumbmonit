@@ -227,6 +227,26 @@
 
 				{#if error}<ErrorNotice {error} class="mt-3" />{/if}
 
+				<!-- A server of this site with the agent: installed through the site's relay when it has one. -->
+				<div class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+					<Button
+						size="sm"
+						variant="secondary"
+						href={`${formHref}?${params({ kind: 'agent' })}`}
+						{target}
+						onclick={(event: MouseEvent) => {
+							if (!onkind || newTab) return;
+							event.preventDefault();
+							onkind('agent', computed);
+						}}
+					>
+						<KindIcon kind="agent" class="size-4" />{m.deviceform_site_agent()}
+					</Button>
+					{#if relayName}
+						<span class="text-[0.8125rem] text-ink-2">{m.deviceform_site_agent_via({ relay: relayName })}</span>
+					{/if}
+				</div>
+
 				{#if kinds.length > 0}
 					<h3 class="mt-4 text-sm font-semibold text-ink">{m.deviceform_site_kinds()}</h3>
 					<div class="mt-2 flex flex-wrap gap-2">

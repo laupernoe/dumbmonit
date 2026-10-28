@@ -1,181 +1,174 @@
 <script lang="ts">
 	/**
-	 * Paris, the Eiffel tower. Its lights go out on `down`, flicker back on `up`, and on `resolved` the tower glitters like it does on the hour.
-	 * `mood` is the weather (ok/calm clear, warn/clouded cloud, critical/storm rain
-	 * and lightning); `pulse` replays one gesture whenever its `at` changes.
-	 * Reduced motion freezes everything.
+	 * Paris by night from the Seine: the Eiffel Tower in its golden lights with
+	 * the lighthouse beam turning at the top, Haussmann roofs, the gilded dome
+	 * of the Invalides, the Sacré-Cœur on its hill, a bateau-mouche gliding by.
+	 * On `down` the tower goes dark, on `up` it lights again, on `resolved` it
+	 * sparkles like it does on the hour.
 	 */
-	import SceneWeather from './SceneWeatherC.svelte';
-	import { usePulse, weatherOf, type SceneMood, type ScenePulse } from './scenePulseC.svelte.js';
+	import NightScene from './NightScene.svelte';
+	import NightBlocks from './NightBlocks.svelte';
+	import { pointsInTower, row, type CityProps } from './nightScene';
 
-	let { mood = 'ok', pulse = null }: { mood?: SceneMood; pulse?: ScenePulse } = $props();
-	const wx = $derived(weatherOf(mood));
-	const pl = usePulse(() => pulse);
-	// Lamps along both flanks of the tower and its three platforms (tower-local coordinates).
-	const LAMPS: [number, number][] = (() => {
-		const pts: [number, number][] = [];
-		const edge: [number, number][] = [[-95, 0], [-58, -78], [-34, -150], [-9, -345]];
-		for (let i = 0; i < edge.length - 1; i++) {
-			const [x1, y1] = edge[i];
-			const [x2, y2] = edge[i + 1];
-			const n = Math.max(3, Math.round(Math.hypot(x2 - x1, y2 - y1) / 22));
-			for (let k = 0; k < n; k++) {
-				const t = k / n;
-				const x = x1 + (x2 - x1) * t;
-				const y = y1 + (y2 - y1) * t;
-				pts.push([x, y], [-x, y]);
-			}
-		}
-		for (const [y, w] of [[-84, 64], [-158, 40], [-350, 14]]) for (let x = -w; x <= w; x += 16) pts.push([x, y]);
-		return pts;
-	})();
+	let { mood = 'ok', pulse = null, frame = 'banner', focus, paused = false, sparkle = false }: CityProps = $props();
+
+	// Tower-local outline (base at 0, scaled 1.3 in place).
+	const TOWER =
+		'M-95 0H-58C-58-30-30-52 0-52C30-52 58-30 58 0H95C80-30 64-56 58-78C48-100 40-125 34-150C26-200 16-280 9-345H-9C-16-280-26-200-34-150C-40-125-48-100-58-78C-64-56-80-30-95 0Z';
+	const LATTICE =
+		'M-100 0L-52-40M-52 0L-100-40M100 0L52-40M52 0L100-40M-100-40L-52-78M-52-40L-100-78M100-40L52-78M52-40L100-78' +
+		'M-70-96L70-150M70-96L-70-150M0-78V-150M-40-150L40-196M40-150L-40-196M-40-196L40-244M40-196L-40-244M-40-244L40-292M40-244L-40-292M-40-292L40-340M40-292L-40-340' +
+		'M-50-120H50M-50-170H50M-50-220H50M-50-268H50M-50-316H50M-80-30H80M-66-60H66';
+	const SPARKS = pointsInTower(
+		[
+			[-4, 92],
+			[-78, 58],
+			[-150, 34],
+			[-345, 9]
+		],
+		90,
+		5
+	).filter(([x, y]) => !(y > -56 && Math.abs(x) < 56));
+
+	const FAR = row(-600, 2520, 31, { h: [34, 80], w: [40, 90], roofs: ['flat', 'mansard'] });
+	const HAUSSMANN = row(-600, 2520, 32, {
+		h: [96, 150],
+		w: [86, 120],
+		roofs: ['mansard'],
+		gap: 2,
+		skip: [1120, 1600]
+	});
+	const LAMPS = [1010, 1100, 1190, 1530, 1620, 1710, 1820, 1930, 860, 740, 620, 2040];
 </script>
 
-<div class="scene scene-paris" class:p-down={pl.kind === 'down'} class:p-up={pl.kind === 'up'} class:p-ok={pl.kind === 'resolved'} aria-hidden="true">
-  <svg viewBox="560 80 1220 540" preserveAspectRatio="xMidYMid slice" fill="none">
-    <defs>
-      <!-- fenêtres haussmanniennes : une trame de 32 x 28 -->
-      <pattern id="paris-win" width="32" height="28" patternUnits="userSpaceOnUse">
-        <path d="M9 23V9a7 7 0 0 1 14 0v14z" fill="var(--paris-win)" />
-      </pattern>
-      <clipPath id="paris-eif">
-        <path d="M-95 0H-58C-58-30-30-52 0-52C30-52 58-30 58 0H95C80-30 64-56 58-78C48-100 40-125 34-150C26-200 16-280 9-345H-9C-16-280-26-200-34-150C-40-125-48-100-58-78C-64-56-80-30-95 0Z" />
-      </clipPath>
-      <!-- immeubles : A (haut) et B (bas) ; origine = pied, coin gauche -->
-      <g id="paris-bldg-a">
-        <rect y="-118" width="96" height="118" fill="var(--paris-stone)" />
-        <rect y="-112" width="96" height="112" fill="url(#paris-win)" />
-        <path d="M0-61h96v3H0zM0-5h96v3H0z" fill="var(--paris-trim)" />
-        <rect y="-12" width="96" height="12" fill="var(--paris-stone2)" />
-        <path d="M-4-118L8-152H88L100-118z" fill="var(--paris-zinc)" />
-        <path d="M-4-118H100v4H-4z" fill="var(--paris-zinc2)" />
-        <path d="M17-152v-16h9v16zM68-152v-20h9v20z" fill="var(--paris-stone2)" />
-        <path d="M22-130h12v12H22zM42-130h12v12H42zM62-130h12v12H62z" fill="var(--paris-stone)" />
-        <path d="M24-124h8v6h-8zM44-124h8v6h-8zM64-124h8v6h-8z" fill="var(--paris-win)" />
-      </g>
-      <g id="paris-bldg-b">
-        <rect y="-90" width="96" height="90" fill="var(--paris-stone)" />
-        <rect y="-84" width="96" height="84" fill="url(#paris-win)" />
-        <path d="M0-33h96v3H0z" fill="var(--paris-trim)" />
-        <rect y="-12" width="96" height="12" fill="var(--paris-stone2)" />
-        <path d="M-4-90L8-122H88L100-90z" fill="var(--paris-zinc2)" />
-        <path d="M-4-90H100v4H-4z" fill="var(--paris-zinc)" />
-        <path d="M70-122v-14h8v14z" fill="var(--paris-stone2)" />
-        <path d="M24-112h12v12H24zM60-112h12v12H60z" fill="var(--paris-stone)" />
-        <path d="M26-107h8v7h-8zM62-107h8v7h-8z" fill="var(--paris-win)" />
-      </g>
-    </defs>
+<NightScene {mood} {pulse} {frame} {focus} {paused} {sparkle} glow="#6b4a2c" seed={17}>
+	{#snippet children(uid)}
+		<defs>
+			<clipPath id="{uid}-eif"><path d={TOWER} /></clipPath>
+			<radialGradient id="{uid}-gold">
+				<stop offset="0" stop-color="#ffb648" stop-opacity=".5" />
+				<stop offset=".55" stop-color="#e58a2a" stop-opacity=".16" />
+				<stop offset="1" stop-color="#e58a2a" stop-opacity="0" />
+			</radialGradient>
+			<linearGradient id="{uid}-beam" x1="0" y1="0" x2="1" y2="0">
+				<stop offset="0" stop-color="#fff4d0" stop-opacity=".55" />
+				<stop offset="1" stop-color="#fff4d0" stop-opacity="0" />
+			</linearGradient>
+		</defs>
 
-    <!-- astre, étoiles et nuage -->
-    <circle cx="1470" cy="196" r="44" fill="var(--sun)" />
-    <circle cx="1456" cy="186" r="7" fill="var(--crater)" /><circle cx="1484" cy="208" r="5" fill="var(--crater)" />
-    <g fill="var(--star)"><circle cx="1010" cy="130" r="2" /><circle cx="1360" cy="118" r="2.4" /><circle cx="1560" cy="130" r="2" /><circle cx="1330" cy="250" r="1.8" /><circle cx="1620" cy="260" r="2.2" /><circle cx="1090" cy="104" r="1.8" /><circle cx="1220" cy="96" r="2" /></g>
-    <g fill="var(--cloud)" opacity=".7"><ellipse cx="1000" cy="132" rx="64" ry="13" /><ellipse cx="1030" cy="121" rx="38" ry="13" /><ellipse cx="1640" cy="170" rx="60" ry="11" /></g>
+		<!-- Montmartre and the Sacré-Cœur, far off, floodlit white -->
+		<path d="M120 860C260 800 420 712 560 704C700 712 820 790 980 860z" fill="#0a1124" />
+		<g transform="translate(560 706)">
+			<path d="M-60 0V-18H60V0zM-26-18V-40H26V-18z" fill="#7d89ab" />
+			<path d="M-26-40C-26-82 26-82 26-40z" fill="#a9b4d1" />
+			<path d="M-56-18C-56-42-30-42-30-18zM30-18C30-42 56-42 56-18z" fill="#97a3c3" />
+			<path d="M-3-80h6v-20h-6z" fill="#a9b4d1" />
+			<path d="M62 0V-56h14V0zM62-56C62-70 76-70 76-56z" fill="#8a96b8" />
+			<path d="M16-40C16-70 26-62 26-40z" fill="#d7def0" opacity=".6" />
+		</g>
 
-    <SceneWeather mood={wx} layer="back" />
+		<NightBlocks blocks={FAR} depth="far" look={{ win: [2, 3], pitch: [7, 9], lit: 0.22, seed: 3 }} />
 
-    <!-- second plan : butte Montmartre, Sacré-Cœur et toits lointains -->
-    <g fill="var(--paris-far)">
-      <path d="M540 482V396C620 366 700 340 780 346C860 352 910 420 960 482z" />
-      <path d="M940 482V420h40v-10h50v16h60v-14h50v18h60v-10h70v20h80v-14h70v12h90v-10h80v30h60v14h60v-10h50v22z" />
-    </g>
-<g transform="translate(704 350)" fill="var(--paris-church)">
-      <rect x="-60" y="-14" width="120" height="16" /><rect x="-26" y="-34" width="52" height="22" />
-      <path d="M-26-34C-26-76 26-76 26-34z" /><rect x="-3" y="-96" width="6" height="22" />
-      <path d="M-58-14C-58-40-26-40-26-14zM26-14C26-40 58-40 58-14z" />
-      <rect x="62" y="-52" width="16" height="52" /><path d="M62-52C62-66 78-66 78-52z" />
-    </g>
+		<!-- the Invalides: a gilded dome over the roofs -->
+		<g transform="translate(880 760)">
+			<path d="M-90 0V-26H90V0z" fill="#121b33" />
+			<path d="M-34-26V-62H34V-26z" fill="#18223d" />
+			<path d="M-30-62C-30-108 30-108 30-62z" fill="#d79a3a" />
+			<path d="M-30-62C-30-108 0-110 0-105C-14-98-18-80-18-62z" fill="#f2c26a" opacity=".55" />
+			<path d="M-6-104h12v-14H-6zM-1.5-118h3l-1.5-22z" fill="#e8b65a" />
+			<path d="M-30-62H30" stroke="#f2c26a" stroke-width="2" />
+		</g>
 
-    <!-- Tour Eiffel, trois niveaux -->
-    <g transform="translate(1230 482) scale(.92)">
-      <path d="M-95 0H-58C-58-30-30-52 0-52C30-52 58-30 58 0H95C80-30 64-56 58-78C48-100 40-125 34-150C26-200 16-280 9-345H-9C-16-280-26-200-34-150C-40-125-48-100-58-78C-64-56-80-30-95 0Z" fill="var(--paris-iron)" />
-      <g clip-path="url(#paris-eif)" stroke="var(--paris-lat)" stroke-width="2" opacity=".6">
-        <path d="M-100 0L-52-40M-52 0L-100-40M100 0L52-40M52 0L100-40M-100-40L-52-78M-52-40L-100-78M100-40L52-78M52-40L100-78" />
-        <path d="M-70-96L70-150M70-96L-70-150M0-78V-150M-40-150L40-196M40-150L-40-196M-40-196L40-244M40-196L-40-244M-40-244L40-292M40-244L-40-292M-40-292L40-340M40-292L-40-340M-50-120H50M-50-170H50M-50-220H50M-50-268H50M-50-316H50" />
-      </g>
-      <g fill="var(--paris-iron2)">
-        <rect x="-68" y="-84" width="136" height="9" rx="2" /><rect x="-42" y="-158" width="84" height="8" rx="2" />
-        <rect x="-16" y="-354" width="32" height="9" rx="2" /><rect x="-8" y="-370" width="16" height="16" rx="3" />
-        <path d="M-2.5-370h5L1-398h-2z" /><path d="M-64-84v-8h128v8z" opacity=".6" />
-      </g>
-      <path d="M0-398V-412M0-410l12 3-12 3z" stroke="var(--paris-iron2)" stroke-width="2" />
-      <g class="lamps">
-        {#each LAMPS as [x, y], i}<circle class="lamp" cx={x} cy={y} r="2.8" style="--i:{i % 9}" />{/each}
-        <circle class="lamp" cy="-402" r="4" style="--i:0" />
-      </g>
-    </g>
-    <!-- Champ-de-Mars : arbres -->
-    <g fill="var(--paris-green)">
-      <circle cx="1118" cy="464" r="20" /><circle cx="1150" cy="472" r="14" /><circle cx="1310" cy="472" r="14" /><circle cx="1342" cy="464" r="20" />
-    </g>
+		<!-- the Eiffel Tower -->
+		<g transform="translate(1360 860) scale(1.3)">
+			<ellipse cx="0" cy="-190" rx="170" ry="280" fill="url(#{uid}-gold)" class="lights" />
+			<path d={TOWER} fill="#2a1b0e" />
+			<g class="lights">
+				<g clip-path="url(#{uid}-eif)">
+					<path d={LATTICE} stroke="#f5b245" stroke-width="2.4" opacity=".9" />
+					<path d={TOWER} fill="#c77d22" opacity=".28" />
+				</g>
+				<path d={TOWER} stroke="#ffd27a" stroke-width="1.6" />
+				<g fill="#ffe2a0">
+					<rect x="-68" y="-84" width="136" height="8" rx="2" />
+					<rect x="-42" y="-158" width="84" height="7" rx="2" />
+					<rect x="-16" y="-354" width="32" height="8" rx="2" />
+					<rect x="-8" y="-370" width="16" height="16" rx="3" />
+				</g>
+				<path d="M-2.5-370h5L1-404h-2z" fill="#ffd27a" />
+			</g>
+			<!-- the lighthouse beam at the top -->
+			<g class="beam-wrap">
+				<path class="beam" d="M0-386L520-414V-358z" fill="url(#{uid}-beam)" />
+			</g>
+			<circle cy="-386" r="3.4" fill="#fffbe8" />
+			<g fill="#fffdf2">
+				{#each SPARKS as [x, y], i (i)}
+					<circle class="sparkle" cx={x} cy={y} r="1.9" style="--d:{(i * 137) % 1100}ms" />
+				{/each}
+			</g>
+		</g>
 
-    <!-- bâtiments haussmanniens : rive gauche puis rive droite -->
-    <g transform="translate(0 482)">
-      <use href="#paris-bldg-a" x="600" /><use href="#paris-bldg-b" x="696" /><use href="#paris-bldg-a" x="792" />
-      <use href="#paris-bldg-b" x="888" /><use href="#paris-bldg-a" x="984" />
-      <use href="#paris-bldg-a" x="1380" /><use href="#paris-bldg-b" x="1476" /><use href="#paris-bldg-a" x="1572" /><use href="#paris-bldg-b" x="1668" />
-    </g>
+		<!-- Champ-de-Mars trees, lit from below -->
+		<g fill="#0e1d22">
+			<circle cx="1180" cy="836" r="30" /><circle cx="1222" cy="846" r="22" /><circle cx="1140" cy="848" r="18" />
+			<circle cx="1540" cy="836" r="30" /><circle cx="1498" cy="846" r="22" /><circle cx="1580" cy="848" r="18" />
+		</g>
+		<g fill="#2f5a3e" opacity=".45">
+			<path d="M1152 852a30 14 0 0 0 58 0zM1512 852a30 14 0 0 0 58 0z" />
+		</g>
 
-    <!-- quai de Seine, réverbère et rides -->
-    <rect x="540" y="482" width="1260" height="8" fill="var(--paris-stone2)" />
-    <path d="M1098 482V440M1098 440q0-8 8-8M1092 432h12" stroke="var(--paris-iron)" stroke-width="3" stroke-linecap="round" />
-    <g stroke="var(--paris-ripple)" stroke-width="2" stroke-linecap="round" opacity=".6"><path d="M600 512h70M760 540h110M1260 510h90M1420 536h120M1180 560h100M640 580h90" /></g>
+		<NightBlocks blocks={HAUSSMANN} depth="mid" body="#141b31" look={{ win: [6, 10], pitch: [16, 22], lit: 0.34, cool: 0.08, seed: 9 }} />
 
-    <!-- bateau-mouche -->
-    <g transform="translate(930 498)">
-      <path d="M0 4H150L136 20H12z" fill="var(--paris-boat)" />
-      <path d="M12 20H136l-3 5H15z" fill="var(--paris-zinc2)" />
-      <path d="M16 4V-8H134V4z" fill="var(--paris-boat)" />
-      <path d="M22 -2V-18H128V-2z" fill="var(--paris-glass)" />
-      <path d="M52-18V-2M80-18V-2M108-18V-2" stroke="var(--paris-boat)" stroke-width="3" />
-      <path d="M30-18l8-8H112l8 8z" fill="var(--paris-boat)" /><path d="M92-26V-38l12 5z" fill="var(--paris-flag)" />
-    </g>
+		<!-- quay lamps -->
+		<g>
+			{#each LAMPS as x (x)}
+				<path d="M{x} 860v-30M{x - 5} 830h10" stroke="#1d2640" stroke-width="2.5" />
+				<circle cx={x} cy="826" r="9" fill="#ffcf7a" opacity=".22" />
+				<circle cx={x} cy="826" r="3.2" fill="#ffe2a6" />
+			{/each}
+		</g>
+		<use href="#dm-mascot" transform="translate(1060 836) scale(.08)" />
+	{/snippet}
 
-    <SceneWeather mood={wx} layer="front" />
-
-    <!-- mascottes : sur le quai et sur un toit -->
-    <use href="#dm-mascot" transform="translate(1034 452) scale(.1)" />
-    <use href="#dm-mascot" transform="translate(1432 300) scale(.1)" />
-  </svg>
-</div>
+	{#snippet front()}
+		<!-- a bateau-mouche on the Seine -->
+		<g class="boat">
+			<g transform="translate(860 900)">
+				<path d="M0 4H170L154 22H14z" fill="#0f1730" />
+				<path d="M18 4V-10H152V4z" fill="#18223d" />
+				<path d="M26-3V-18H144V-3z" fill="#ffd58a" opacity=".85" />
+				<path d="M56-18V-3M86-18V-3M116-18V-3" stroke="#18223d" stroke-width="3" />
+				<path d="M14 22H154l-2 3H16z" fill="#93a8dc" opacity=".4" />
+				<path d="M20 30h130" stroke="#ffd58a" stroke-width="2" opacity=".25" />
+			</g>
+		</g>
+	{/snippet}
+</NightScene>
 
 <style>
-  .scene {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    background: linear-gradient(180deg, var(--sky1), var(--sky2) 73.5%, var(--water1) 74.4%, var(--water1) 80%, var(--water2));
-  }
-  .scene svg {
-    display: block;
-    width: 100%;
-    height: 100%;
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 80%, transparent 99%);
-    mask-image: linear-gradient(90deg, transparent, #000 9%, #000 80%, transparent 99%);
-  }
-  .lamp { fill: #ffd25e; opacity: 0.85; filter: drop-shadow(0 0 3px #ffd25e); }
-  @media (prefers-reduced-motion: no-preference) {
-    .p-down .lamp { animation: paris-out 5s ease-out both; }
-    .p-up .lamp { animation: paris-on 2.6s ease-out both; animation-delay: calc(var(--i) * 60ms); }
-    .p-ok .lamp { animation: paris-glitter 1.1s ease-in-out 5 both; animation-delay: calc(var(--i) * 110ms); }
-  }
-  @keyframes paris-out { 0% { opacity: 0.85; } 10% { opacity: 0.1; } 18% { opacity: 0.7; } 30%, 82% { opacity: 0; } 100% { opacity: 0.85; } }
-  @keyframes paris-on { 0% { opacity: 0; } 30% { opacity: 1; } 45% { opacity: 0.2; } 65%, 100% { opacity: 0.85; } }
-  @keyframes paris-glitter { 0%, 100% { opacity: 0.85; } 40% { opacity: 0.05; } 60% { opacity: 1; filter: drop-shadow(0 0 7px #fff2b0); } }
-  .scene-paris {
-    --sky1: #c6dbf0; --sky2: #f9eddb; --sun: #ffe3a3; --water1: #a8c5d8; --water2: #7da2ba; --cloud: #fff;
-    --crater: transparent; --star: transparent;
-    --paris-stone: #f1e7d3; --paris-stone2: #dccfb4; --paris-trim: #c9b48c; --paris-win: #5a6684;
-    --paris-zinc: #7f8da6; --paris-zinc2: #66748e; --paris-iron: #735a4d; --paris-iron2: #98806f; --paris-lat: #f9eddb;
-    --paris-far: #c5d2e4; --paris-church: #f3efe8; --paris-green: #8fb597; --paris-ripple: #fff;
-    --paris-boat: #fbf7ee; --paris-glass: #8fb2c9; --paris-flag: #c8402f;
-  }
-  :global(.dark) .scene-paris {
-    --sky1: #0b1229; --sky2: #1b2850; --sun: #e8eef8; --water1: #162a4b; --water2: #0a1428; --cloud: #2a3658;
-    --crater: #b9c4dc; --star: #e8eef8;
-    --paris-stone: #727b96; --paris-stone2: #565f7a; --paris-trim: #444d68; --paris-win: #f5c76a;
-    --paris-zinc: #3b4766; --paris-zinc2: #2e3856; --paris-iron: #c9984a; --paris-iron2: #e8bd4f; --paris-lat: #1b2850;
-    --paris-far: #1c2848; --paris-church: #2d3b60; --paris-green: #1f4a4f; --paris-ripple: #5f7aa8;
-    --paris-boat: #8b92a8; --paris-glass: #f5c76a; --paris-flag: #ff6b5a;
-  }
+	.beam {
+		transform-box: fill-box;
+		transform-origin: left center;
+		transform: scaleX(0.8);
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		.beam {
+			animation: paris-beam 14s ease-in-out infinite alternate;
+		}
+		.boat {
+			animation: paris-boat 120s linear infinite;
+		}
+	}
+	/* The beam swings from one side to the other, seen from afar. */
+	@keyframes paris-beam {
+		0% { transform: scaleX(1); opacity: 1; }
+		48% { transform: scaleX(0.05); opacity: 0.4; }
+		52% { transform: scaleX(-0.05); opacity: 0.4; }
+		100% { transform: scaleX(-1); opacity: 1; }
+	}
+	@keyframes paris-boat {
+		from { transform: translateX(-1500px); }
+		to { transform: translateX(1700px); }
+	}
 </style>

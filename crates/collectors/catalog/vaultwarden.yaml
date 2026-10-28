@@ -1,0 +1,24 @@
+# Mesures et vues du type « vaultwarden » (format : crates/collectors/src/catalog.rs).
+source: selfhosted
+prefixes: [vaultwarden_]
+metrics:
+  - { name: vaultwarden_users, label: "Users" }
+  - { name: vaultwarden_users_disabled, label: "Users disabled" }
+  - { name: vaultwarden_users_without_2fa, label: "Users without 2fa" }
+  - { name: vaultwarden_items, label: "Items" }
+  - { name: vaultwarden_signups_open, label: "Signups open", unit: "bool" }
+  - { name: vaultwarden_admin_readable, label: "Admin readable", unit: "bool" }
+  - { name: vaultwarden_version_info, label: "Version", kind: info }
+  - { name: vaultwarden_up, label: "Up" }
+  - { name: vaultwarden_scrape_errors, label: "Scrape errors", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - vaultwarden_users
+      - vaultwarden_users_disabled
+      - vaultwarden_users_without_2fa
+      - vaultwarden_items
+      - vaultwarden_signups_open
+      - vaultwarden_admin_readable
+      - vaultwarden_version_info

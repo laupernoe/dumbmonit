@@ -4,7 +4,8 @@ Installez l'agent sur tous les serveurs Windows d'un domaine avec une seule
 stratégie de groupe (GPO), au lieu de lancer la commande d'installation serveur
 par serveur.
 
-Dans **Settings → Agents**, **Deploy with Active Directory** crée un jeton de
+En ajoutant une surveillance **Serveur avec l'agent** (ou dans l'assistant de
+démarrage), **Deploy with Active Directory** crée un jeton de
 flotte limité à votre domaine (réutilisable, valable 30 jours par défaut, avec
 un nombre maximal de serveurs facultatif) et télécharge `Deploy-DumbMonit.ps1`.
 Vous lancez ce script une seule fois, en Domain Admin, sur un contrôleur de
@@ -18,10 +19,15 @@ dossier **Active Directory &lt;domaine&gt;**, avec les tags `ad=<domaine>` et
 
 ## Étapes
 
-1. Dans Settings → Agents, cliquez sur **Deploy with Active Directory**.
-   Saisissez le domaine, le nom (FQDN) ou l'adresse du serveur DumbMonit que
-   les agents doivent contacter (par défaut l'adresse que vous utilisez) et,
-   facultativement, un serveur DNS qui résout ce nom, ajustez les options si
+1. Ajoutez une surveillance, choisissez **Serveur avec l'agent**, puis
+   cliquez sur **Deploy with Active Directory**. Saisissez le domaine, le nom
+   (FQDN) ou l'adresse du serveur DumbMonit que les agents doivent contacter
+   (par défaut l'adresse que vous utilisez) et, facultativement, un serveur
+   DNS qui résout ce nom — ou, pour un domaine sur un site derrière un
+   pare-feu, choisissez un relais sous **Chemin** : les serveurs téléchargent
+   alors l'agent depuis la passerelle du relais et remontent à travers elle,
+   chiffrés de bout en bout jusqu'au serveur (voir
+   [Surveiller un site distant](../install/remote-site.fr.md#5-installer-des-agents-derriere-le-relais)) — ajustez les options si
    besoin, créez le jeton et téléchargez `Deploy-DumbMonit.ps1`. Le jeton n'est
    affiché qu'à ce moment. Le format du nom et du serveur DNS est vérifié, ils
    sont écrits dans le script et rappelés dans le récapitulatif de l'étape
@@ -188,7 +194,7 @@ et ajoute la mise à jour de l'agent et la vérification de son SHA-256.
 ## Linux : Ansible ou SSH
 
 Il n'y a pas d'équivalent de la GPO sous Linux, mais un jeton **réutilisable**
-(cochez *Reusable for a fleet* dans Settings → Agents) permet d'exécuter telle
+(cochez *Plusieurs machines avec cette commande* en ajoutant un serveur avec l'agent) permet d'exécuter telle
 quelle, sur autant de machines que voulu, la commande d'installation affichée
 par le serveur.
 

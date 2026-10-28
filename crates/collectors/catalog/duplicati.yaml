@@ -1,0 +1,46 @@
+# Mesures et vues du type « duplicati » (format : crates/collectors/src/catalog.rs).
+source: duplicati
+prefixes: [duplicati_]
+metrics:
+  - { name: duplicati_backup_last_duration_seconds, label: "Backup last duration", unit: "s", better: "lower" }
+  - { name: duplicati_backup_source_bytes, label: "Backup source", unit: "B" }
+  - { name: duplicati_backup_target_bytes, label: "Backup target", unit: "B" }
+  - { name: duplicati_backup_failed, label: "Backup failed", unit: "bool", better: "lower" }
+  - { name: duplicati_backup_running, label: "Backup running", unit: "bool" }
+  - { name: duplicati_backup_scheduled, label: "Backup scheduled" }
+  - { name: duplicati_backup_last_success_age_seconds, label: "Backup last success age", unit: "s" }
+  - { name: duplicati_backup_source_files, label: "Backup source files" }
+  - { name: duplicati_backup_versions, label: "Backup versions" }
+  - { name: duplicati_backup_last_result_info, label: "Backup last result", kind: info }
+  - { name: duplicati_backup_last_warnings, label: "Backup last warnings" }
+  - { name: duplicati_backup_last_errors, label: "Backup last errors", better: "lower" }
+  - { name: duplicati_backup_last_error_info, label: "Backup last error", kind: info }
+  - { name: duplicati_backup_progress_percent, label: "Backup progress", unit: "%", min: 0, max: 100 }
+  - { name: duplicati_server_paused, label: "Server paused", unit: "bool" }
+  - { name: duplicati_backups, label: "Backups" }
+  - { name: duplicati_backups_failed, label: "Backups failed", better: "lower" }
+  - { name: duplicati_backups_running, label: "Backups running" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - duplicati_backups_failed
+      - duplicati_backup_last_success_age_seconds
+      - duplicati_backups
+      - duplicati_backup_failed
+      - duplicati_backup_running
+      - duplicati_backup_source_files
+      - duplicati_backup_versions
+      - duplicati_backup_last_result_info
+      - duplicati_backup_last_warnings
+      - duplicati_backup_last_errors
+      - duplicati_backup_last_error_info
+      - duplicati_backup_progress_percent
+      - duplicati_server_paused
+      - duplicati_backups_running
+  - view: timeseries
+    title: "Backup duration"
+    metrics: [duplicati_backup_last_duration_seconds]
+  - view: timeseries
+    title: "Backup size"
+    metrics: [duplicati_backup_source_bytes, duplicati_backup_target_bytes]

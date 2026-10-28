@@ -8,6 +8,7 @@
 //! - [`ui_routes`] : la liste des agents capables de relayer, pour que le
 //!   formulaire d'équipement propose « Reached through ».
 
+use std::sync::LazyLock;
 use std::time::Duration;
 
 use axum::extract::{Extension, Path, Query, State};
@@ -152,7 +153,33 @@ async fn discovery_report(
 // ---------------------------------------------------------------- UI side
 
 pub fn ui_routes() -> Router<AppState> {
-    Router::new().route("/relays", get(list))
+    Router::new().route("/relays", get(list)).route("/relays/kinds", get(kinds))
+}
+
+/// Types qu'un agent relais sait interroger : ceux de son registre
+/// (`Registry::remote`, le même que celui de l'agent), plus la sauvegarde de
+/// configuration, qu'il mène à part. Calculé une fois.
+static RELAY_KINDS: LazyLock<Vec<String>> = LazyLock::new(|| {
+    let mut kinds: Vec<String> = dumbmonit_collectors::Registry::remote(Duration::from_secs(10))
+        .kinds()
+        .iter()
+        .map(|kind| kind.to_string())
+        .collect();
+    kinds.push(dumbmonit_collectors::netconfig::KIND.to_string());
+    kinds.sort();
+    kinds.dedup();
+    kinds
+});
+
+/// Vrai si un équipement de ce type peut être interrogé par un agent relais.
+pub fn relayable(kind: &str) -> bool {
+    RELAY_KINDS.iter().any(|known| known == kind)
+}
+
+/// `GET /api/relays/kinds` : les types qu'on peut faire passer par un relais.
+/// Les formulaires d'ajout n'offrent le choix du relais que pour eux.
+pub async fn kinds() -> Json<Vec<String>> {
+    Json(RELAY_KINDS.clone())
 }
 
 /// Un agent tel que le formulaire d'équipement le propose comme relais.
@@ -169,6 +196,13 @@ pub struct RelayView {
     pub last_seen_at: Option<String>,
     /// Nombre d'équipements qui passent par cet agent.
     pub relayed: usize,
+    /// Passerelle des agents du site : port demandé (`None` : fermée), port
+    /// sur lequel le relais écoute vraiment, adresse vue du site.
+    pub gateway_wanted: Option<u16>,
+    pub gateway_port: Option<u16>,
+    pub gateway_host: Option<String>,
+    /// Client (MSP) de l'agent : un relais ne sert que les machines du sien.
+    pub client_id: Option<i64>,
 }
 
 /// `GET /api/relays` : toutes les machines à agent, avec ce qu'elles relaient.
@@ -178,15 +212,20 @@ pub struct RelayView {
 pub async fn list(State(state): State<AppState>) -> ApiResult<Json<Vec<RelayView>>> {
     let hosts = agent::list_hosts(&state.pool).await?;
     let counts = db::targets::relayed_counts(&state.pool).await?;
+    let owners = crate::auth::clients::target_clients(&state.pool).await?;
     let mut views: Vec<RelayView> = hosts
         .into_iter()
         .map(|(target_id, name, info)| RelayView {
             id: target_id,
             name,
-            site: info.site,
+            site: info.site.or(info.relay_wanted_site),
             relay: info.relay,
             last_seen_at: info.last_seen_at,
             relayed: counts.get(&target_id).copied().unwrap_or(0),
+            gateway_wanted: info.relay_gateway_wanted,
+            gateway_port: info.relay_gateway_port,
+            gateway_host: info.relay_gateway_host,
+            client_id: owners.get(&target_id).copied(),
         })
         .collect();
     // Les relais déclarés d'abord, puis par nom : c'est l'ordre du menu.

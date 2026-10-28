@@ -1,0 +1,58 @@
+# Mesures et vues du type « winrm » (format : crates/collectors/src/catalog.rs).
+source: winrm
+prefixes: [winrm_]
+metrics:
+  - { name: cpu_usage_percent, label: "CPU usage", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: cpu_core_usage_percent, label: "CPU core usage", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: memory_used_percent, label: "Memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: swap_used_percent, label: "Swap used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: filesystem_used_percent, label: "Filesystem used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: windows_eventlog_errors, label: "Windows eventlog errors", better: "lower" }
+  - { name: windows_eventlog_events, label: "Windows eventlog events" }
+  - { name: memory_total_bytes, label: "Memory total", unit: "B" }
+  - { name: memory_used_bytes, label: "Memory used", unit: "B" }
+  - { name: memory_available_bytes, label: "Memory available", unit: "B", better: "higher" }
+  - { name: uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: boot_time_seconds, label: "Boot time", unit: "s" }
+  - { name: process_count, label: "Process count" }
+  - { name: cpu_count, label: "CPU count" }
+  - { name: swap_total_bytes, label: "Swap total", unit: "B" }
+  - { name: swap_used_bytes, label: "Swap used", unit: "B" }
+  - { name: filesystem_total_bytes, label: "Filesystem total", unit: "B" }
+  - { name: filesystem_used_bytes, label: "Filesystem used", unit: "B" }
+  - { name: filesystem_free_bytes, label: "Filesystem free", unit: "B", better: "higher" }
+  - { name: windows_services_auto_stopped, label: "Windows services auto stopped" }
+  - { name: service_up, label: "Service up", unit: "bool" }
+  - { name: windows_version_info, label: "Windows version", kind: info }
+  - { name: winrm_section_readable, label: "Section readable", unit: "bool" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - windows_services_auto_stopped
+      - uptime_seconds
+      - process_count
+      - memory_total_bytes
+      - cpu_count
+      - swap_total_bytes
+      - filesystem_total_bytes
+      - filesystem_free_bytes
+      - service_up
+      - windows_version_info
+      - winrm_section_readable
+      - cpu_core_usage_percent
+  - view: timeseries
+    title: "CPU"
+    metrics: [cpu_usage_percent]
+  - view: timeseries
+    title: "Memory"
+    metrics: [memory_used_percent, swap_used_percent]
+  - view: topn
+    title: "Disk used"
+    metrics: [filesystem_used_percent]
+    group_by: mountpoint
+    options:
+      limit: "10"
+  - view: timeseries
+    title: "Event log"
+    metrics: [windows_eventlog_errors, windows_eventlog_events]

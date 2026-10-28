@@ -25,7 +25,7 @@ otra máquina, ni siquiera falsificando sus etiquetas.
 | Discos (contadores) | `disk_read_bytes`, `disk_written_bytes`, una serie por dispositivo de bloque | `device` |
 | Host | `uptime_seconds`, `process_count` | |
 | Servicios | `service_up` (1 = en ejecución) | `service` |
-| Contenedores | `container_up`, `container_count`, `container_running_count`, `container_series_skipped` (contenedores más allá de `docker_max_containers`) | `container`, `image` |
+| Contenedores | `container_up`, `container_stop_expected` (solo contenedores parados: 1 cuando Docker no lo reiniciaría), `container_count`, `container_running_count`, `container_series_skipped` (contenedores más allá de `docker_max_containers`), `container_cpu_percent` (porcentaje de un núcleo, desde el segundo ciclo), `container_memory_bytes` (sin caché), `container_memory_limit_bytes` y `container_memory_percent` (solo con límite), `container_net_rx_bytes` / `container_net_tx_bytes` y `container_block_read_bytes` / `container_block_write_bytes` (contadores acumulados), `container_pids` y, para todo el host, `container_df_images_bytes`, `container_df_containers_bytes`, `container_df_volumes_bytes`, `container_df_build_cache_bytes`, `container_df_reclaimable_bytes` (leídos cada diez minutos) | `container`, `image` |
 | Sensores | `agent_sensor_temperature_celsius`, `agent_sensor_temperature_critical_celsius` (el umbral que el propio hardware declara), `agent_sensor_fan_rpm` | `sensor`, `fan` |
 | Salud de disco (SMART) | `agent_disk_smart_ok` (1 = el disco pasa su propia autoevaluación), `agent_disk_temperature_celsius`, `agent_disk_power_on_hours`, `agent_disk_wearout_percent`, `agent_disk_reallocated_sectors`, `agent_disk_pending_sectors`, `agent_disk_media_errors` | `device`, `model` |
 | KVM / libvirt | `agent_libvirt_domains`, `agent_libvirt_domains_running`, `agent_libvirt_pools`; por dominio `agent_libvirt_domain_state_info`, `agent_libvirt_domain_running`, `agent_libvirt_domain_crashed`, `agent_libvirt_domain_vcpus`, `agent_libvirt_domain_memory_max_bytes`, `agent_libvirt_domain_memory_used_bytes`; por pool de almacenamiento `agent_libvirt_pool_state_info`, `agent_libvirt_pool_active`, `agent_libvirt_pool_capacity_bytes`, `agent_libvirt_pool_allocation_bytes`, `agent_libvirt_pool_used_percent` — consulta [Máquinas virtuales KVM con libvirt](#kvm-virtual-machines-through-libvirt) | `domain`, `pool`, `state` |
@@ -128,25 +128,10 @@ Los pasos de abajo son los que muestra el aviso junto al formulario.
 No hay ninguna cuenta que crear en la máquina: el token de inscripción
 es el único secreto.
 
-1. Guarda el monitor en DumbMonit: un token de inscripción
-   (dmon_…) se muestra una vez, con el comando de instalación listo
-   para copiar para Linux y para Windows. (Un token también se puede
-   crear en **Settings → Agents**.)
-2. Ese token es la clave del agente para enviar sus mediciones a
-   DumbMonit. No es una cuenta en la máquina: nada que crear ahí. Un
-   token creado desde el formulario de monitor es de un solo uso:
-   inscribe esa única máquina y nada más. Para una flota, crea un
-   token reutilizable en Settings → Agents.
-3. Ejecuta el comando de instalación en la máquina a monitorizar, con
-   derechos elevados (sudo en Linux y macOS, un PowerShell elevado en
-   Windows). Descarga el agente, escribe el token en agent.yaml e
-   inicia el servicio.
-4. La máquina aparece por sí sola en unos segundos, nombrada según su
-   nombre de host. En ese primer lote el servidor le da al agente un
-   secreto propio y lo guarda en `/etc/dumbmonit/agent-secret`,
-   legible por nadie más: desde entonces, esa máquina es la única que
-   puede reportar bajo este monitor. ¿Perdiste el token?
-   Settings → Agents te permite revocarlo y crear otro.
+1. En DumbMonit, añade un monitor y elige **Servidor con el agente**. Elige cómo llega la máquina al servidor: **Directamente** o a través de un **relé** de un sitio remoto tras un cortafuegos (consulta [Supervisar un sitio remoto](../install/remote-site.md#5-install-agents-behind-the-relay)). Se muestra una vez un token de inscripción (dmon_…), con el comando de instalación listo para copiar para Linux/macOS, Windows y Docker.
+2. Ese token es la clave del agente para enviar sus mediciones; no hay ninguna cuenta que crear en la máquina. Por defecto es de un solo uso: inscribe esta máquina y nada más. Para una flota (un playbook, una imagen de máquina), marca *Varias máquinas con este comando* antes de crear el comando; un dominio Windows entero pasa por el [kit de Active Directory](agent-active-directory.md), ofrecido en la misma página. Un token perdido se revoca en Ajustes → Agentes.
+3. Ejecuta el comando de instalación en la máquina a supervisar, con privilegios elevados (sudo en Linux y macOS, un PowerShell como administrador en Windows).
+4. La página espera el primer envío (unos segundos) y luego te deja nombrar la máquina, archivarla en una carpeta y situarla en un sitio, al momento. En ese primer lote el servidor da al agente un secreto propio (`/etc/dumbmonit/agent-secret`, legible solo por él): desde entonces, esa máquina es la única que puede informar bajo este monitor.
 5. Docker: para ver los contenedores y permitir que DumbMonit los
    reinicie o actualice, el agente debe alcanzar el socket de Docker.
    El servicio que registra el instalador ya puede; si ejecutas el
@@ -356,7 +341,7 @@ incluido, en cada sistema.
 
     Los checksums cambian con cada versión del servidor: tras
     actualizar DumbMonit, copia un comando de instalación nuevo desde
-    **Settings → Agents** (o desde un token nuevo) en lugar de volver
+    el alta (**Nuevo monitor → Servidor con el agente**) (o desde un token nuevo) en lugar de volver
     a ejecutar uno antiguo, que se detendría con «checksum mismatch».
     Los mismos checksums se muestran bajo el comando de instalación, y
     se publican en `/download/<archivo>.sha256`.
@@ -631,6 +616,9 @@ usable en un contenedor sin montar un archivo:
 | `DUMBMONIT_AGENT_LOG` | `trace`, `debug`, `info`, `warn`, `error` |
 | `DUMBMONIT_AGENT_RELAY` | `true` para ejecutar, por el servidor, las sondas de los monitores asignados a este agente (consulta [Ejecutar el agente en Docker / en otra red](#run-the-agent-in-docker--on-another-network)) |
 | `DUMBMONIT_AGENT_SITE` | Etiqueta de sitio mostrada junto al agente cuando se ofrece como relay |
+| `DUMBMONIT_AGENT_GATEWAY_LISTEN` | Pasarela de un relé para los agentes de su sitio, por ejemplo `0.0.0.0:8443` (`gateway_listen:`); prevalece sobre el puerto fijado en la interfaz (consulta [Instalar agentes detrás del relé](../install/remote-site.md#5-install-agents-behind-the-relay)) |
+| `DUMBMONIT_AGENT_GATEWAY_MAX_CONNECTIONS` | Conexiones que la pasarela mantiene a la vez, 64 por defecto (`gateway_max_connections:`) |
+| `DUMBMONIT_AGENT_GATEWAY_RATE_KIB` | Caudal de cada túnel a través de la pasarela, por sentido, en KiB/s, 4096 por defecto (`gateway_rate_kib:`) |
 
 ## Contadores de rendimiento de Windows {#windows-performance-counters}
 
@@ -891,8 +879,8 @@ delante de DumbMonit, se registra y se reintenta conservando el secreto.
 
 ## Tokens de inscripción {#enrolment-tokens}
 
-- Los tokens se crean en **Settings → Agents** o al añadir un
-  monitor de tipo agent. El servidor solo conserva una huella: el
+- Los tokens se crean al añadir un monitor de tipo agent (de un solo
+  uso o para varias máquinas) y con el kit de Active Directory. El servidor solo conserva una huella: el
   token en claro se muestra una vez, en la respuesta de creación, con
   los dos comandos de instalación.
 - El agente lo envía como `Authorization: Bearer dmon_…` en `POST
@@ -948,14 +936,14 @@ tail -f /var/log/dumbmonit-agent.log   # registro del servicio (OpenRC)
 |---|---|
 | El instalador dice «could not reach the server» | URL o token incorrectos. La configuración se escribe: corrige `agent.yaml`, y luego reinicia el servicio. |
 | La descarga falla con 404 | El servidor no tiene binarios de agente (`DUMBMONIT_AGENT_DIR` vacío). Usa `--bin=RUTA` con un binario que hayas compilado. |
-| El instalador se detiene con «checksum mismatch» | El comando se copió antes de una actualización del servidor (copia uno nuevo desde Settings → Agents), o el binario recibido no es el que sirve el servidor: un proxy o una caché en el camino, o una descarga manipulada. |
+| El instalador se detiene con «checksum mismatch» | El comando se copió antes de una actualización del servidor (copia uno nuevo al añadir un servidor con el agente), o el binario recibido no es el que sirve el servidor: un proxy o una caché en el camino, o una descarga manipulada. |
 | El instalador se detiene con «no expected checksum» | El comando no tiene `--sha256` para esta plataforma: un comando antiguo, o un binario de macOS (no distribuido por el servidor). Copia un comando nuevo, o pasa `--sha256=<plataforma>-<arch>:<hex>` del `.sha256` de la versión. |
 | La máquina nunca aparece | El envío va a `/api/ingest` en la URL del comando de instalación; detrás de un proxy inverso, asegúrate de que se reenvía y que se permiten cuerpos de hasta 16 MB. |
 | *Unreachable* aunque el agente se ejecute | El token se revocó, o los envíos se rechazan. Comprueba `journalctl -u dumbmonit-agent`: el error se registra ahí. |
 | El registro dice «this agent is not recognised for this machine» | La máquina está vinculada a una instalación de agente cuyo secreto este agente no tiene — una reinstalación, o un contenedor recreado sin su volumen de estado. Abre la página del monitor y haz clic en **Allow re-enrolment**; consulta [Reinscripción tras una reinstalación](#re-enrolment-after-a-reinstall). |
 | El registro dice «this machine was enrolled before agent binding» | Un host que nunca se vinculó a su agente. Haz clic en **Allow re-enrolment** en su página de monitor, y luego reinicia el agente; consulta [Hosts anteriores a la vinculación](#hosts-that-predate-binding). |
 | El registro dice «this agent is too old to be bound to its machine» | El binario del agente no puede guardar un secreto de vinculación. Vuelve a ejecutar el comando de instalación en el host; si el monitor ya existe, haz clic primero en **Allow re-enrolment**. |
-| El registro dice «this enrollment token has already enrolled all the machines it was allowed to» | Se está reutilizando un token de un solo uso. Crea uno nuevo, o un token reutilizable en Settings → Agents. |
+| El registro dice «this enrollment token has already enrolled all the machines it was allowed to» | Se está reutilizando un token de un solo uso. Crea uno nuevo, o marca *Varias máquinas con este comando* al añadir el servidor. |
 | Windows | Las partes de servicio de Windows no se habían probado en la imagen de compilación del proyecto en el momento de escribir esto; reporta problemas en GitHub. |
 
 ## Contenedores Docker {#docker-containers}

@@ -1,0 +1,18 @@
+# Mesures et vues du type « sonicwall » (format : crates/collectors/src/catalog.rs).
+source: sonicwall
+prefixes: [sonicwall_]
+metrics:
+  - { name: sonicwall_interfaces, label: "Interfaces" }
+  - { name: sonicwall_interfaces_down, label: "Interfaces down", better: "lower" }
+  - { name: sonicwall_interface_link_up, label: "Interface link up", unit: "bool" }
+  - { name: sonicwall_interface_down, label: "Interface down", unit: "bool", better: "lower" }
+  - { name: sonicwall_version_info, label: "Version", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - sonicwall_interfaces
+      - sonicwall_interfaces_down
+      - sonicwall_interface_link_up
+      - sonicwall_interface_down
+      - sonicwall_version_info

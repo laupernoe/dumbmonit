@@ -1,0 +1,33 @@
+# Mesures et vues du type « paperless » (format : crates/collectors/src/catalog.rs).
+source: selfhosted
+prefixes: [paperless_]
+metrics:
+  - { name: paperless_storage_used_percent, label: "Storage used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: paperless_storage_available_bytes, label: "Storage available", unit: "B", better: "higher" }
+  - { name: paperless_storage_total_bytes, label: "Storage total", unit: "B" }
+  - { name: paperless_documents, label: "Documents" }
+  - { name: paperless_documents_inbox, label: "Documents inbox" }
+  - { name: paperless_tasks_failed_recent, label: "Tasks failed recent" }
+  - { name: paperless_task_failed, label: "Task failed", unit: "bool", better: "lower" }
+  - { name: paperless_component_status, label: "Component status", unit: "bool" }
+  - { name: paperless_unapplied_migrations, label: "Unapplied migrations" }
+  - { name: paperless_update_available, label: "Update available", unit: "bool", better: "higher" }
+  - { name: paperless_version_info, label: "Version", kind: info }
+  - { name: paperless_scrape_errors, label: "Scrape errors", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - paperless_storage_available_bytes
+      - paperless_storage_total_bytes
+      - paperless_documents
+      - paperless_documents_inbox
+      - paperless_tasks_failed_recent
+      - paperless_task_failed
+      - paperless_component_status
+      - paperless_unapplied_migrations
+      - paperless_update_available
+      - paperless_version_info
+  - view: timeseries
+    title: "Storage used"
+    metrics: [paperless_storage_used_percent]

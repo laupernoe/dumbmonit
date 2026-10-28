@@ -32,7 +32,7 @@ cannot write into another machine's series, even by forging its labels.
 | Disks (counters) | `disk_read_bytes`, `disk_written_bytes`, one series per block device | `device` |
 | Host | `uptime_seconds`, `process_count` | |
 | Services | `service_up` (1 = running) | `service` |
-| Containers | `container_up`, `container_stop_expected` (stopped containers only: 1 when Docker would not restart it — one-shot run finished, never started, stopped by hand without a restart policy), `container_count`, `container_running_count`, `container_series_skipped` (containers beyond `docker_max_containers`) | `container`, `image` |
+| Containers | `container_up`, `container_stop_expected` (stopped containers only: 1 when Docker would not restart it — one-shot run finished, never started, stopped by hand without a restart policy), `container_count`, `container_running_count`, `container_series_skipped` (containers beyond `docker_max_containers`), `container_cpu_percent` (percent of one core, from the second cycle), `container_memory_bytes` (cache excluded), `container_memory_limit_bytes` and `container_memory_percent` (only with a limit), `container_net_rx_bytes` / `container_net_tx_bytes` and `container_block_read_bytes` / `container_block_write_bytes` (cumulative counters), `container_pids`, and the host-wide `container_df_images_bytes`, `container_df_containers_bytes`, `container_df_volumes_bytes`, `container_df_build_cache_bytes`, `container_df_reclaimable_bytes` (read every ten minutes) | `container`, `image` |
 | Sensors | `agent_sensor_temperature_celsius`, `agent_sensor_temperature_critical_celsius` (the threshold the hardware itself declares), `agent_sensor_fan_rpm` | `sensor`, `fan` |
 | Disk health (SMART) | `agent_disk_smart_ok` (1 = the disk passes its own self-assessment), `agent_disk_temperature_celsius`, `agent_disk_power_on_hours`, `agent_disk_wearout_percent`, `agent_disk_reallocated_sectors`, `agent_disk_pending_sectors`, `agent_disk_media_errors` | `device`, `model` |
 | KVM / libvirt | `agent_libvirt_domains`, `agent_libvirt_domains_running`, `agent_libvirt_pools`; per domain `agent_libvirt_domain_state_info`, `agent_libvirt_domain_running`, `agent_libvirt_domain_crashed`, `agent_libvirt_domain_vcpus`, `agent_libvirt_domain_memory_max_bytes`, `agent_libvirt_domain_memory_used_bytes`; per storage pool `agent_libvirt_pool_state_info`, `agent_libvirt_pool_active`, `agent_libvirt_pool_capacity_bytes`, `agent_libvirt_pool_allocation_bytes`, `agent_libvirt_pool_used_percent` — see [KVM virtual machines through libvirt](#kvm-virtual-machines-through-libvirt) | `domain`, `pool`, `state` |
@@ -128,16 +128,16 @@ critical**, **Hyper-V host CPU high** and **Hyper-V virtual disk errors** (see
 
 The steps below are the ones the notice next to the form shows. There is no account to create on the machine: the enrollment token is the only secret.
 
-1. In DumbMonit, save the monitor: an enrollment token (dmon_…) is shown once, with the install command ready to copy for Linux and for Windows.
+1. In DumbMonit, add a monitor and pick Server with the agent, then choose how the machine reaches the server: directly, or through the relay of a remote site behind a firewall. An enrollment token (dmon_…) is shown once, with the install command ready to copy for Linux/macOS, Windows and Docker. See [Monitor a remote site](../install/remote-site.md#5-install-agents-behind-the-relay) for the relay.
 2. Run that install command on the machine, with elevated rights (sudo on Linux and macOS, an elevated PowerShell on Windows).
-3. The machine shows up within a few seconds, named after its host name.
+3. The page waits for the first report (a few seconds), then lets you name the machine, file it in a folder and place it at a site, on the spot.
 4. Optional, for Docker: if the agent runs under a dedicated user, add that user to the "docker" group and restart the agent.
 
     ```
     usermod -aG docker dumbmonit
     ```
 
-5. For a fleet, or to revoke a lost token, use Settings → Agents.
+5. For a fleet (a playbook, a machine image), tick Several machines with this command; a whole Windows domain goes through the Active Directory kit, offered on the same page. Revoke a lost token in Settings → Agents. See [Active Directory](agent-active-directory.md).
 
 !!! warning
     The agent contacts the server, never the other way round: no port needs to be opened on the monitored machine.
@@ -146,8 +146,8 @@ The steps below are the ones the notice next to the form shows. There is no acco
 
 The token is the agent's key to push its measurements to DumbMonit. It is not an
 account on the machine. A token created from the monitor form is single use: it
-enrols this one machine and nothing else. For a fleet, create a reusable token
-in Settings → Agents. On that first batch the server gives the agent a secret of
+enrols this one machine and nothing else. For a fleet, tick *Several machines
+with this command* in the same flow. On that first batch the server gives the agent a secret of
 its own and stores it in `/etc/dumbmonit/agent-secret`, readable by nobody else:
 from then on, that machine is the only one that can report under this monitor.
 
@@ -339,8 +339,7 @@ on every system.
     or when no SHA-256 tool (`sha256sum`, `shasum`, `sha256`) is available.
 
     The checksums change with every server release: after upgrading DumbMonit,
-    copy a fresh install command from **Settings → Agents** (or from a new
-    token) rather than re-running an old one, which would stop with
+    copy a fresh install command (add a monitor, **Server with the agent**) rather than re-running an old one, which would stop with
     "checksum mismatch". The same checksums are shown under the install
     command, and published at `/download/<file>.sha256`.
 
@@ -380,7 +379,7 @@ Take the command from the current server; the binary now lives in
 Both scripts are idempotent: running the install command again, with the same
 token and URL, replaces the binary, rewrites the configuration and restarts the
 service. That is the upgrade procedure. Take the command from the current
-server (Settings → Agents): its `--sha256` must match the binaries of the
+server (add a monitor, **Server with the agent**): its `--sha256` must match the binaries of the
 server version you upgraded to.
 
 The same command migrates a machine still running the EzyMonit agent, on Linux
@@ -783,6 +782,9 @@ a container without mounting a file:
 | `DUMBMONIT_AGENT_LOG` | `trace`, `debug`, `info`, `warn`, `error` |
 | `DUMBMONIT_AGENT_RELAY` | `true` to run, for the server, the probes of the monitors assigned to this agent (see [Run the agent in Docker / on another network](#run-the-agent-in-docker--on-another-network)) |
 | `DUMBMONIT_AGENT_SITE` | Site label shown next to the agent when it is offered as a relay |
+| `DUMBMONIT_AGENT_GATEWAY_LISTEN` | A relay's gateway for the agents of its site, for example `0.0.0.0:8443` (`gateway_listen:`); wins over the port set in the UI (see [Install agents behind the relay](../install/remote-site.md#5-install-agents-behind-the-relay)) |
+| `DUMBMONIT_AGENT_GATEWAY_MAX_CONNECTIONS` | Connections the gateway holds at once, 64 by default (`gateway_max_connections:`) |
+| `DUMBMONIT_AGENT_GATEWAY_RATE_KIB` | Rate of each tunnel through the gateway, per direction, in KiB/s, 4096 by default (`gateway_rate_kib:`) |
 
 ## Windows performance counters
 
@@ -1033,8 +1035,8 @@ DumbMonit, is logged and retried with the secret kept.
 
 ## Enrolment tokens
 
-- Tokens are created in **Settings → Agents** or when adding a monitor of type
-  agent. The server keeps only a fingerprint: the clear token is shown once, in
+- Tokens are created when adding a monitor of type agent (single use, or
+  reusable for several machines) and by the Active Directory kit. The server keeps only a fingerprint: the clear token is shown once, in
   the creation response, with the two install commands.
 - The agent sends it as `Authorization: Bearer dmon_…` on `POST /api/ingest`.
   It never appears in the agent's logs, not even truncated.
@@ -1086,14 +1088,14 @@ tail -f /var/log/dumbmonit-agent.log   # service log (OpenRC)
 |---|---|
 | Installer says "could not reach the server" | Wrong URL or token. The configuration is written: fix `agent.yaml`, then restart the service. |
 | Download fails with 404 | The server has no agent binaries (`DUMBMONIT_AGENT_DIR` empty). Use `--bin=PATH` with a binary you built. |
-| Installer stops with "checksum mismatch" | The command was copied before a server upgrade (copy a fresh one from Settings → Agents), or the binary received is not the one the server serves: a proxy or a cache in the way, or a tampered download. |
+| Installer stops with "checksum mismatch" | The command was copied before a server upgrade (copy a fresh one when adding a server with the agent), or the binary received is not the one the server serves: a proxy or a cache in the way, or a tampered download. |
 | Installer stops with "no expected checksum" | The command has no `--sha256` for this platform: an old command, or a macOS binary (not shipped by the server). Copy a fresh command, or pass `--sha256=<platform>-<arch>:<hex>` from the release's `.sha256`. |
 | Machine never appears | The push goes to `/api/ingest` on the URL in the install command; behind a reverse proxy, make sure it is forwarded and that bodies up to 16 MB are allowed. |
 | *Unreachable* although the agent runs | The token was revoked, or the pushes are rejected. Check `journalctl -u dumbmonit-agent`: the error is logged there. |
 | Log says "this agent is not recognised for this machine" | The machine is bound to an agent installation whose secret this one does not have — a reinstall, or a container recreated without its state volume. Open the monitor page and click **Allow re-enrolment**; see [Re-enrolment after a reinstall](#re-enrolment-after-a-reinstall). |
 | Log says "this machine was enrolled before agent binding" | A host that never bound to its agent. Click **Allow re-enrolment** on its monitor page, then restart the agent; see [Hosts that predate binding](#hosts-that-predate-binding). |
 | Log says "this agent is too old to be bound to its machine" | The agent binary cannot store a binding secret. Re-run the install command on the host; if the monitor already exists, click **Allow re-enrolment** first. |
-| Log says "this enrollment token has already enrolled all the machines it was allowed to" | A single-use token being reused. Create a new one, or a reusable token in Settings → Agents. |
+| Log says "this enrollment token has already enrolled all the machines it was allowed to" | A single-use token being reused. Create a new one, or tick *Several machines with this command* when adding the server. |
 | Windows | The Windows service parts had not been exercised in the project's build image at the time of writing; report issues on GitHub. |
 
 ## Docker containers

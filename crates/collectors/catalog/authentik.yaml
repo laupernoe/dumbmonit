@@ -1,0 +1,33 @@
+# Mesures et vues du type « authentik » (format : crates/collectors/src/catalog.rs).
+source: selfhosted
+prefixes: [authentik_]
+metrics:
+  - { name: authentik_workers, label: "Workers" }
+  - { name: authentik_workers_version_mismatch, label: "Workers version mismatch" }
+  - { name: authentik_tasks_failed, label: "Tasks failed", better: "lower" }
+  - { name: authentik_tasks_warning, label: "Tasks warning" }
+  - { name: authentik_task_failed, label: "Task failed", unit: "bool", better: "lower" }
+  - { name: authentik_outposts_total, label: "Outposts" }
+  - { name: authentik_outposts_disconnected, label: "Outposts disconnected" }
+  - { name: authentik_users, label: "Users" }
+  - { name: authentik_live, label: "Live", unit: "bool" }
+  - { name: authentik_ready, label: "Ready", unit: "bool" }
+  - { name: authentik_update_available, label: "Update available", unit: "bool", better: "higher" }
+  - { name: authentik_version_info, label: "Version", kind: info }
+  - { name: authentik_scrape_errors, label: "Scrape errors", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - authentik_workers
+      - authentik_workers_version_mismatch
+      - authentik_tasks_failed
+      - authentik_tasks_warning
+      - authentik_task_failed
+      - authentik_outposts_total
+      - authentik_outposts_disconnected
+      - authentik_users
+      - authentik_live
+      - authentik_ready
+      - authentik_update_available
+      - authentik_version_info

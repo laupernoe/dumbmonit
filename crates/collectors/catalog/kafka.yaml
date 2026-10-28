@@ -1,0 +1,32 @@
+# Mesures et vues du type « kafka » (format : crates/collectors/src/catalog.rs).
+source: kafka
+prefixes: [kafka_]
+metrics:
+  - { name: kafka_consumer_group_lag, label: "Consumer group lag" }
+  - { name: kafka_consumer_group_lag_total, label: "Consumer group lag" }
+  - { name: kafka_brokers, label: "Brokers" }
+  - { name: kafka_cluster_info, label: "Cluster", kind: info }
+  - { name: kafka_controller_present, label: "Controller present", unit: "bool" }
+  - { name: kafka_topics, label: "Topics" }
+  - { name: kafka_partitions, label: "Partitions" }
+  - { name: kafka_under_replicated_partitions, label: "Under replicated partitions" }
+  - { name: kafka_offline_partitions, label: "Offline partitions" }
+  - { name: kafka_topic_under_replicated_partitions, label: "Topic under replicated partitions" }
+  - { name: kafka_topic_offline_partitions, label: "Topic offline partitions" }
+  - { name: kafka_consumer_groups, label: "Consumer groups" }
+  - { name: kafka_unreachable_brokers, label: "Unreachable brokers" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - kafka_offline_partitions
+      - kafka_under_replicated_partitions
+      - kafka_unreachable_brokers
+      - kafka_brokers
+      - kafka_controller_present
+      - kafka_topics
+      - kafka_partitions
+      - kafka_consumer_groups
+  - view: timeseries
+    title: "Consumer lag"
+    metrics: [kafka_consumer_group_lag, kafka_consumer_group_lag_total]

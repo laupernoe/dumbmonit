@@ -1,0 +1,33 @@
+# Mesures et vues du type « tailscale » (format : crates/collectors/src/catalog.rs).
+source: tailscale
+prefixes: [tailscale_]
+metrics:
+  - { name: tailscale_devices, label: "Devices" }
+  - { name: tailscale_devices_online, label: "Devices online" }
+  - { name: tailscale_devices_external, label: "Devices external" }
+  - { name: tailscale_devices_unauthorized, label: "Devices unauthorized" }
+  - { name: tailscale_devices_watched_offline, label: "Devices watched offline", better: "lower" }
+  - { name: tailscale_devices_update_available, label: "Devices update available", better: "higher" }
+  - { name: tailscale_device_online, label: "Device online", unit: "bool" }
+  - { name: tailscale_device_authorized, label: "Device authorized", unit: "bool" }
+  - { name: tailscale_device_watched, label: "Device watched", unit: "bool" }
+  - { name: tailscale_device_update_available, label: "Device update available", unit: "bool", better: "higher" }
+  - { name: tailscale_device_offline_seconds, label: "Device offline", unit: "s" }
+  - { name: tailscale_device_key_expiry_seconds, label: "Device key expiry", unit: "s" }
+  - { name: tailscale_device_info, label: "Device", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - tailscale_devices_online
+      - tailscale_devices
+      - tailscale_devices_watched_offline
+      - tailscale_devices_unauthorized
+      - tailscale_devices_external
+      - tailscale_devices_update_available
+      - tailscale_device_online
+      - tailscale_device_authorized
+      - tailscale_device_watched
+      - tailscale_device_update_available
+      - tailscale_device_offline_seconds
+      - tailscale_device_key_expiry_seconds

@@ -1,0 +1,37 @@
+# Mesures et vues du type « keycloak » (format : crates/collectors/src/catalog.rs).
+source: selfhosted
+prefixes: [keycloak_]
+metrics:
+  - { name: keycloak_memory_used_percent, label: "Memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: keycloak_sessions_active, label: "Sessions active" }
+  - { name: keycloak_realm_sessions, label: "Realm sessions" }
+  - { name: keycloak_realm_offline_sessions, label: "Realm offline sessions" }
+  - { name: keycloak_health_check_up, label: "Health check up", unit: "bool" }
+  - { name: keycloak_live, label: "Live", unit: "bool" }
+  - { name: keycloak_ready, label: "Ready", unit: "bool" }
+  - { name: keycloak_realms_total, label: "Realms" }
+  - { name: keycloak_realms_disabled, label: "Realms disabled" }
+  - { name: keycloak_realm_users, label: "Realm users" }
+  - { name: keycloak_admin_readable, label: "Admin readable", unit: "bool" }
+  - { name: keycloak_uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: keycloak_version_info, label: "Version", kind: info }
+  - { name: keycloak_scrape_errors, label: "Scrape errors", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - keycloak_health_check_up
+      - keycloak_live
+      - keycloak_ready
+      - keycloak_realms_total
+      - keycloak_realms_disabled
+      - keycloak_realm_users
+      - keycloak_admin_readable
+      - keycloak_uptime_seconds
+      - keycloak_version_info
+  - view: timeseries
+    title: "JVM memory"
+    metrics: [keycloak_memory_used_percent]
+  - view: timeseries
+    title: "Sessions"
+    metrics: [keycloak_sessions_active, keycloak_realm_sessions, keycloak_realm_offline_sessions]

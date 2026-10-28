@@ -91,6 +91,16 @@ pub enum RuleKind {
     /// par VictoriaLogs, par cible ou en global.
     #[serde(rename = "log_pattern")]
     LogPattern,
+    /// Prévision de remplissage : « plein dans N jours », calculée par
+    /// [`crate::alerting::forecast`] sur l'historique des familles de capacité
+    /// ([`crate::alerting::capacity`]), robuste aux trous et aux paliers. La
+    /// valeur comparée au seuil est un nombre de jours.
+    Forecast,
+    /// Dérive de baseline : écart à la normale (même heure, mêmes jours des
+    /// semaines précédentes, ou médiane mobile) calculé par
+    /// [`crate::alerting::drift`]. La valeur comparée au seuil est le rapport
+    /// entre la mesure et sa normale.
+    Drift,
 }
 
 impl RuleKind {
@@ -100,6 +110,8 @@ impl RuleKind {
             Self::Anomaly => "anomaly",
             Self::Predict => "predict",
             Self::LogPattern => "log_pattern",
+            Self::Forecast => "forecast",
+            Self::Drift => "drift",
         }
     }
 
@@ -108,6 +120,8 @@ impl RuleKind {
             "anomaly" => Self::Anomaly,
             "predict" => Self::Predict,
             "log_pattern" => Self::LogPattern,
+            "forecast" => Self::Forecast,
+            "drift" => Self::Drift,
             _ => Self::Threshold,
         }
     }
@@ -243,6 +257,105 @@ pub struct AnomalyParams {
     /// pour l'ensemble.
     #[serde(default = "default_log_per_target")]
     pub log_per_target: bool,
+    /// Règle de prévision : profondeur de l'historique régressé, en jours.
+    #[serde(default = "default_forecast_window_days")]
+    pub forecast_window_days: u32,
+    /// Règle de prévision : en dessous de ce nombre de jours, l'alerte passe au
+    /// moins en avertissement, quelle que soit la sévérité de la règle.
+    #[serde(default = "default_forecast_warning_days")]
+    pub forecast_warning_days: f64,
+    /// Règle de prévision : en dessous de ce nombre de jours, l'alerte devient
+    /// critique.
+    #[serde(default = "default_forecast_critical_days")]
+    pub forecast_critical_days: f64,
+    /// Règle de prévision : confiance minimale (0 à 1) pour qu'une prévision ait
+    /// le droit d'alerter. En dessous, elle reste visible dans l'API.
+    #[serde(default = "default_forecast_min_confidence")]
+    pub forecast_min_confidence: f64,
+    /// Règle de prévision sur une requête personnalisée : valeur à laquelle la
+    /// série est « pleine ». Les familles livrées sont en pourcentage (100).
+    #[serde(default = "default_forecast_limit")]
+    pub forecast_limit: f64,
+    /// Règle de dérive : fenêtre de la mesure courante, en secondes.
+    #[serde(default = "default_drift_window")]
+    pub drift_window_secs: u64,
+    /// Règle de dérive : nombre de semaines précédentes comparées à la même
+    /// heure (saisonnalité). Zéro : médiane mobile sur sept jours seulement.
+    #[serde(default = "default_drift_weeks")]
+    pub drift_weeks: u32,
+    /// Règle de dérive : nombre minimal de points dans la fenêtre courante.
+    /// En dessous, la mesure est trop maigre pour être jugée.
+    #[serde(default = "default_drift_min_samples")]
+    pub drift_min_samples: u32,
+    /// Règle de dérive : valeur en deçà de laquelle l'écart ne compte pas (une
+    /// latence qui passe de 2 à 6 ms triple sans que personne ne s'en soucie).
+    #[serde(default)]
+    pub drift_min_value: f64,
+    /// Règle de dérive : écart absolu minimal entre la mesure et sa normale.
+    #[serde(default)]
+    pub drift_min_delta: f64,
+    /// Règle de dérive : sens surveillé.
+    #[serde(default)]
+    pub drift_direction: DriftDirection,
+}
+
+/// Sens d'une dérive surveillée.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum DriftDirection {
+    /// La mesure monte au-dessus de sa normale : latence, erreurs.
+    #[default]
+    Up,
+    /// La mesure tombe sous sa normale : trafic, taux de cache.
+    Down,
+    Both,
+}
+
+/// Valeurs par défaut des règles de prévision : sept jours d'historique,
+/// avertissement sous quatorze jours, critique sous sept.
+pub const DEFAULT_FORECAST_WINDOW_DAYS: u32 = 7;
+pub const DEFAULT_FORECAST_WARNING_DAYS: f64 = 14.0;
+pub const DEFAULT_FORECAST_CRITICAL_DAYS: f64 = 7.0;
+pub const DEFAULT_FORECAST_MIN_CONFIDENCE: f64 = 0.5;
+/// Bornes de la fenêtre d'une règle de prévision, en jours.
+pub const MIN_FORECAST_WINDOW_DAYS: u32 = 2;
+pub const MAX_FORECAST_WINDOW_DAYS: u32 = 90;
+/// Fenêtre par défaut de la mesure courante d'une règle de dérive.
+pub const DEFAULT_DRIFT_WINDOW_SECS: u64 = 900;
+pub const DEFAULT_DRIFT_WEEKS: u32 = 4;
+pub const MAX_DRIFT_WEEKS: u32 = 8;
+pub const DEFAULT_DRIFT_MIN_SAMPLES: u32 = 5;
+
+fn default_forecast_window_days() -> u32 {
+    DEFAULT_FORECAST_WINDOW_DAYS
+}
+
+fn default_forecast_warning_days() -> f64 {
+    DEFAULT_FORECAST_WARNING_DAYS
+}
+
+fn default_forecast_critical_days() -> f64 {
+    DEFAULT_FORECAST_CRITICAL_DAYS
+}
+
+fn default_forecast_min_confidence() -> f64 {
+    DEFAULT_FORECAST_MIN_CONFIDENCE
+}
+
+fn default_forecast_limit() -> f64 {
+    100.0
+}
+
+fn default_drift_window() -> u64 {
+    DEFAULT_DRIFT_WINDOW_SECS
+}
+
+fn default_drift_weeks() -> u32 {
+    DEFAULT_DRIFT_WEEKS
+}
+
+fn default_drift_min_samples() -> u32 {
+    DEFAULT_DRIFT_MIN_SAMPLES
 }
 
 /// Fenêtre par défaut d'une règle « motif de journal » : cinq minutes.
@@ -269,6 +382,17 @@ impl Default for AnomalyParams {
             min_samples: 3,
             log_window_secs: DEFAULT_LOG_WINDOW_SECS,
             log_per_target: true,
+            forecast_window_days: DEFAULT_FORECAST_WINDOW_DAYS,
+            forecast_warning_days: DEFAULT_FORECAST_WARNING_DAYS,
+            forecast_critical_days: DEFAULT_FORECAST_CRITICAL_DAYS,
+            forecast_min_confidence: DEFAULT_FORECAST_MIN_CONFIDENCE,
+            forecast_limit: 100.0,
+            drift_window_secs: DEFAULT_DRIFT_WINDOW_SECS,
+            drift_weeks: DEFAULT_DRIFT_WEEKS,
+            drift_min_samples: DEFAULT_DRIFT_MIN_SAMPLES,
+            drift_min_value: 0.0,
+            drift_min_delta: 0.0,
+            drift_direction: DriftDirection::Up,
         }
     }
 }

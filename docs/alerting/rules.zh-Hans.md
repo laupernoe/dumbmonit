@@ -276,7 +276,9 @@
 | Synology SSD 磨损 | SSD 少于 10% 其额定寿命(`dumbmonit_synology_disk_remaining_life_percent`);在 12% 上清除。 | < 10 % | 1 小时 | 通知 (`warning`) | 7 天 |
 | Synology 卷降级 | 卷已降级或崩溃:其冗余已丧失(`dumbmonit_synology_volume_status`)。 | ≥ 2 | 5 分钟 | 警告 (`critical`) | 6 小时 |
 | Synology 存储池降级 | 存储池或 SSD 缓存已降级或崩溃:磁盘失败冗余已丧失或重建中(`dumbmonit_synology_pool_status or dumbmonit_synology_ssd_cache_status`)。 | ≥ 2 | 5 分钟 | 警告 (`critical`) | 6 小时 |
-| Synology 卷即将满 | 卷已 90% 或更多(`dumbmonit_synology_volume_used_percent`);在 88% 下清除。 | ≥ 90 % | 15 分钟 | 通知 (`warning`),24 小时后升级 | 6 小时 |
+| Synology 卷即将满 | 卷已 90% 或更多，不计厚置备 iSCSI LUN 预留的空间（`dumbmonit_synology_volume_effective_used_percent`，没有 LUN 时等于原始占用）；在 88% 下清除。被厚 LUN 占满的卷按设计就是满的，不会告警。 | ≥ 90 % | 15 分钟 | 通知 (`warning`),24 小时后升级 | 6 小时 |
+| Synology 精简 LUN 超额分配 | 卷上的精简 LUN 承诺的空间多于卷剩余的可用空间（`dumbmonit_synology_volume_thin_overcommit_percent`：已承诺但未写入的空间占可用空间的百分比）；在 95% 下清除。 | ≥ 100 % | 1 小时 | 通知 (`warning`) | 24 小时 |
+| Synology 精简 LUN 即将满 | 精简 LUN 已写入其大小的 95% 或更多（`dumbmonit_synology_lun_used_percent`）。厚 LUN 从 NAS 看不到内部：由使用它的监控项（数据存储、文件系统）的规则告警。 | ≥ 95 % | 30 分钟 | 通知 (`warning`) | 24 小时 |
 | Synology 温度高 | 磁盘在 55°C 以上,或 DSM 提升其自己的温度警告(`dumbmonit_synology_disk_temperature_celsius`、`dumbmonit_synology_temperature_warning`);在 52°C 下清除。 | > 55°C | 15 分钟 | 通知 (`warning`) | 6 小时 |
 | Synology 内存高 | NAS 的内存使用超过 95%(`dumbmonit_synology_memory_usage_percent`);在 90% 下清除。 | > 95 % | 15 分钟 | 通知 (`warning`) | 6 小时 |
 | Active Backup 任务失败 | Active Backup for Business 任务最后一次运行失败,或仅备份其监控项的一部分(`dumbmonit_abb_task_last_status == bool 0`)。通知命名任务。 | > 0 | 10 分钟 | 警告 (`critical`) | 24 小时 |
@@ -500,6 +502,9 @@ Traefik、Caddy、Nginx Proxy Manager 和域名注册([Traefik](../devices/traef
 | 域名马上到期 | 域名将在 7 天内到期,或已到期(`dumbmonit_domain_expiry_days`)。 | < 7 d | 1 小时 | 警告 (`critical`) | 12 小时 |
 | 域名被冻结 | 注册局将域名置于 `clientHold` 或 `serverHold`:它已从 DNS 中移除(`dumbmonit_domain_on_hold`)。 | > 0 | 30 分钟 | 警告 (`critical`) | 6 小时 |
 | 域名处于赎回期 | 域名处于 `redemptionPeriod`、`pendingDelete` 或 `pendingRestore`:它已过期(`dumbmonit_domain_redemption`)。 | > 0 | 30 分钟 | 警告 (`critical`) | 12 小时 |
+| 域名服务器已变化 | 委派的域名服务器与上一次读取不同（`changes_prometheus(dumbmonit_domain_nameservers_fingerprint[1d])`）。一天后自行解决。 | > 0 | 1 分钟 | 通知 (`warning`) | 24 小时 |
+| 域名注册商已变化 | 注册商与上一次读取不同：发生了转移（`changes_prometheus(dumbmonit_domain_registrar_fingerprint[1d])`）。 | > 0 | 1 分钟 | 通知 (`warning`) | 24 小时 |
+| 域名 DNSSEC 丢失 | 过去 7 天内 DNSSEC 已签名，现在不再签名（`dumbmonit_domain_dnssec`）。 | < 1 | 1 小时 | 通知 (`warning`) | 24 小时 |
 | DNS 应答已变化 | 启用*应答变化时告警*的 DNS 检查,其应答与之前不同(`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`)。一小时后自行解决。 | > 0 | 1 分钟 | 通知 (`warning`) | 24 小时 |
 
 ### DNS 黑名单 {#dns-blocklists}
@@ -583,6 +588,131 @@ Traefik、Caddy、Nginx Proxy Manager 和域名注册([Traefik](../devices/traef
 |---|---|---|---|---|---|
 | Veeam 作业失败 | 已启用的 Veeam 作业上一次运行失败:它保护的对象没有新的还原点(`dumbmonit_veeam_job_failed`)。 | > 0 | 5 分钟 | 警告 (`critical`) | 1 天 |
 | Veeam 作业以警告结束 | 已启用的 Veeam 作业上一次运行以警告结束:部分对象可能未受保护(`dumbmonit_veeam_job_warning`)。 | > 0 | 5 分钟 | 通知 (`warning`) | 1 天 |
+|
+ 
+V
+e
+e
+a
+m
+ 
+备
+份
+过
+旧
+ 
+|
+ 
+至
+少
+每
+天
+计
+划
+运
+行
+的
+作
+业
+超
+过
+两
+天
+没
+有
+成
+功
+运
+行
+（
+`
+d
+u
+m
+b
+m
+o
+n
+i
+t
+_
+v
+e
+e
+a
+m
+_
+j
+o
+b
+_
+l
+a
+s
+t
+_
+s
+u
+c
+c
+e
+s
+s
+_
+a
+g
+e
+_
+s
+e
+c
+o
+n
+d
+s
+`
+）
+。
+ 
+|
+ 
+>
+ 
+2
+ 
+天
+ 
+|
+ 
+1
+ 
+小
+时
+ 
+|
+ 
+通
+知
+ 
+(
+`
+w
+a
+r
+n
+i
+n
+g
+`
+)
+ 
+|
+ 
+1
+ 
+天
+ 
+|
 | Veeam 存储库几乎已满 | Veeam 备份存储库已满超过 90 %:接下来的作业将因空间不足而失败(`dumbmonit_veeam_repository_used_percent`)。 | > 90 % | 30 分钟 | 通知 (`warning`) | 1 天 |
 | Veeam 许可证即将到期 | Veeam 许可证将在 30 天内到期:宽限期结束后作业将停止(`dumbmonit_veeam_license_expiry_seconds`)。 | < 30 d | 1 小时 | 通知 (`warning`) | 1 天 |
 
@@ -668,6 +798,16 @@ Traefik、Caddy、Nginx Proxy Manager 和域名注册([Traefik](../devices/traef
 |---|---|---|---|---|---|
 | 安全评分下降 | 评分相比最近 24 小时的最佳值下降了 10 分或以上(`max_over_time(dumbmonit_security_score[1d]) - dumbmonit_security_score`):某项检查开始失败。 | ≥ 10 分 | 30 分钟 | 通知 (`warning`) | 24 小时 |
 | 安全评分低 | 评分低于 40,等级 F(`dumbmonit_security_score`)。可调高或调低阈值以符合您自己的标准。 | < 40 | 1 小时 | 信息 (`info`) | 7 天 |
+
+### 网络清单 {#network-inventory}
+
+由计划的网络扫描及其清单触发（参见[计划扫描与清单](../using/discovery.md#scheduled-scans-and-inventory)）。**三条规则默认都已禁用**；前两条严重级别为 `info`，MAC 变化那条为 `warning`：需要时在规则列表中启用。每个新设备或新端口对应一个序列，也就是一条告警；它会一直保持打开，直到该项被标记为已知（指标停止，告警在几分钟内解决），且没有提醒。对一个网络的首次扫描从不触发任何告警。
+
+| 规则 | 内容 | 默认阈值 | 保持 | 严重级别 | 提醒 |
+|---|---|---|---|---|---|
+| New device on the network | 计划扫描发现了一台不在清单中的设备（`dumbmonit_netscan_unknown_device`）。 | > 0 | 无 | 信息 (`info`)，**已禁用** | 无 |
+| New open port on the network | 计划扫描在已知设备上发现了新的开放端口（`dumbmonit_netscan_unknown_port`）。 | > 0 | 无 | 信息 (`info`)，**已禁用** | 无 |
+| MAC address changed for an IP | 一台新设备以另一个 MAC 地址占用了已知设备的地址：欺骗或更换了硬件（`dumbmonit_netscan_mac_change`）。保持打开，直到被标记为已知或忽略。 | > 0 | 无 | 通知 (`warning`)，**已禁用** | 无 |
 
 ### DumbMonit 自身 {#dumbmonit-itself}
 

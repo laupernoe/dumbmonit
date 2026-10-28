@@ -1,0 +1,58 @@
+# Mesures et vues du type « vsphere » (format : crates/collectors/src/catalog.rs).
+source: vsphere
+prefixes: [vsphere_]
+metrics:
+  - { name: vsphere_host_cpu_percent, label: "Host CPU", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: vsphere_host_memory_percent, label: "Host memory", unit: "%", min: 0, max: 100 }
+  - { name: vsphere_datastore_used_percent, label: "Datastore used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: vsphere_hosts, label: "Hosts" }
+  - { name: vsphere_vms, label: "VMs" }
+  - { name: vsphere_templates, label: "Templates" }
+  - { name: vsphere_datastores, label: "Datastores" }
+  - { name: vsphere_host_connection_state, label: "Host connection state", unit: "bool" }
+  - { name: vsphere_host_power_state, label: "Host power state", unit: "bool" }
+  - { name: vsphere_host_maintenance, label: "Host maintenance", unit: "bool" }
+  - { name: vsphere_host_status, label: "Host status" }
+  - { name: vsphere_host_memory_bytes, label: "Host memory", unit: "B" }
+  - { name: vsphere_host_uptime_seconds, label: "Host uptime", unit: "s" }
+  - { name: vsphere_vm_power_state, label: "VM power state", unit: "bool" }
+  - { name: vsphere_vm_status, label: "VM status" }
+  - { name: vsphere_vm_tools_status, label: "VM tools status" }
+  - { name: vsphere_vm_ip_info, label: "VM IP", kind: info }
+  - { name: vsphere_datastore_accessible, label: "Datastore accessible", unit: "bool" }
+  - { name: vsphere_datastore_status, label: "Datastore status" }
+  - { name: vsphere_datastore_capacity_bytes, label: "Datastore capacity", unit: "B" }
+  - { name: vsphere_datastore_free_bytes, label: "Datastore free", unit: "B", better: "higher" }
+  - { name: vsphere_alarms, label: "Alarms" }
+  - { name: vsphere_alarms_acknowledged, label: "Alarms acknowledged" }
+  - { name: vsphere_alarm, label: "Alarm", unit: "bool" }
+  - { name: vsphere_info, label: "Info", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - vsphere_alarms
+      - vsphere_hosts
+      - vsphere_vms
+      - vsphere_datastores
+      - vsphere_templates
+      - vsphere_host_connection_state
+      - vsphere_host_power_state
+      - vsphere_host_maintenance
+      - vsphere_host_status
+      - vsphere_host_memory_bytes
+      - vsphere_host_uptime_seconds
+      - vsphere_vm_power_state
+      - vsphere_vm_status
+      - vsphere_vm_tools_status
+      - vsphere_datastore_accessible
+      - vsphere_datastore_status
+      - vsphere_datastore_capacity_bytes
+      - vsphere_alarms_acknowledged
+      - vsphere_alarm
+  - view: timeseries
+    title: "Host load"
+    metrics: [vsphere_host_cpu_percent, vsphere_host_memory_percent]
+  - view: timeseries
+    title: "Datastores used"
+    metrics: [vsphere_datastore_used_percent]

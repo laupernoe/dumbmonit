@@ -25,7 +25,9 @@
 mod listener;
 pub mod pki;
 mod routes;
+mod tunnel;
 
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex, RwLock};
 
 use anyhow::{Context, Result};
@@ -35,7 +37,7 @@ use rustls::crypto::CryptoProvider;
 use rustls::server::WebPkiClientVerifier;
 use sqlx::SqlitePool;
 
-pub use listener::{AgentListener, AgentPeer, listen};
+pub use listener::{AgentIo, AgentListener, AgentPeer, Transport, listen};
 pub use routes::{AgentCert, router};
 
 use crate::auth::rate_limit::Buckets;
@@ -61,6 +63,11 @@ pub struct AgentTls {
     pins: RwLock<Vec<String>>,
     /// Tentatives d'enrôlement manquées, par adresse.
     limits: Mutex<Buckets>,
+    /// File des connexions établies du port des agents : les tunnels des
+    /// relais y déposent les leurs. `None` tant que le port n'écoute pas.
+    ready: Mutex<Option<listener::Ready>>,
+    /// Tunnels ouverts, par agent relais.
+    tunnels: Arc<Mutex<HashMap<TargetId, usize>>>,
 }
 
 impl Default for AgentTls {
@@ -75,6 +82,8 @@ impl AgentTls {
             server_config: RwLock::new(None),
             pins: RwLock::new(Vec::new()),
             limits: Mutex::new(Buckets::new()),
+            ready: Mutex::new(None),
+            tunnels: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -90,6 +99,27 @@ impl AgentTls {
 
     pub(crate) fn limits(&self) -> std::sync::MutexGuard<'_, Buckets> {
         self.limits.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
+    fn set_ready(&self, ready: listener::Ready) {
+        if let Ok(mut slot) = self.ready.lock() {
+            *slot = Some(ready);
+        }
+    }
+
+    fn ready(&self) -> Option<listener::Ready> {
+        self.ready.lock().ok().and_then(|slot| slot.clone())
+    }
+
+    /// Réserve une place de tunnel pour ce relais, ou `None` s'il a atteint
+    /// son plafond. La place se libère quand la connexion se ferme.
+    fn reserve_tunnel(&self, relay: TargetId) -> Option<tunnel::Slot> {
+        tunnel::Slot::reserve(&self.tunnels, relay, tunnel::MAX_TUNNELS_PER_RELAY)
+    }
+
+    /// Tunnels ouverts par un relais en ce moment.
+    pub fn tunnels_of(&self, relay: TargetId) -> usize {
+        self.tunnels.lock().map(|open| open.get(&relay).copied().unwrap_or(0)).unwrap_or(0)
     }
 
     fn install(&self, config: Arc<ServerConfig>, pins: Vec<String>) {
@@ -236,13 +266,14 @@ pub async fn required_setting(pool: &SqlitePool) -> Result<bool> {
     Ok(read_setting(pool, SETTING_REQUIRED).await?.as_deref() == Some("on"))
 }
 
-/// Note par quel canal une machine vient de parler.
+/// Note par quel canal une machine vient de parler, et par quel relais.
 pub async fn note_channel(
     pool: &SqlitePool,
     target_id: TargetId,
     cert: Option<&AgentCert>,
 ) -> Result<()> {
     let now = chrono::Utc::now().timestamp_millis();
+    note_route(pool, target_id, cert.and_then(|cert| cert.via_relay)).await?;
     match cert {
         Some(cert) => {
             sqlx::query("UPDATE agent_hosts SET tls_seen_ms = ?, tls_group = ? WHERE target_id = ?")
@@ -260,6 +291,29 @@ pub async fn note_channel(
                 .await?
         }
     };
+    Ok(())
+}
+
+/// Range le relais par lequel une machine à agent joint le serveur (`None` :
+/// en direct). C'est `via_agent` de sa cible : la topologie en fait son parent,
+/// et la suppression des alertes la tient pour « derrière » ce relais — s'il
+/// tombe, la machine passe en `suppressed`, pas en panne. Sans effet quand rien
+/// ne change.
+pub async fn note_route(
+    pool: &SqlitePool,
+    target_id: TargetId,
+    via_relay: Option<TargetId>,
+) -> Result<()> {
+    sqlx::query(
+        "UPDATE targets SET via_agent = ? \
+         WHERE id = ? AND kind = 'agent' AND via_agent IS NOT ?",
+    )
+    .bind(via_relay)
+    .bind(target_id)
+    .bind(via_relay)
+    .execute(pool)
+    .await
+    .context("recording the relay of an agent")?;
     Ok(())
 }
 

@@ -66,12 +66,12 @@ export function severityRank(severity: AlertSeverity): number {
 const FORECAST_HINTS = ['soon', 'forecast', 'predict', 'baseline'];
 
 /**
- * A "forecast" alert predicts rather than reports: a baseline anomaly, or a
- * rule whose name betrays a prediction (disk full soon…). Threshold rules that
+ * A "forecast" alert predicts rather than reports: a baseline anomaly or drift,
+ * a fill-up forecast, or a rule whose name betrays a prediction (disk full soon…). Threshold rules that
  * simply crossed a line are not forecasts.
  */
 export function isForecast(alert: Alert, rule: AlertRule | undefined): boolean {
-	if (rule && (rule.kind === 'anomaly' || rule.kind === 'predict')) return true;
+	if (rule && ['anomaly', 'predict', 'forecast', 'drift'].includes(rule.kind)) return true;
 	const haystack = `${alert.rule_uid} ${alert.rule_name}`.toLowerCase();
 	return FORECAST_HINTS.some((hint) => haystack.includes(hint));
 }

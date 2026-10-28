@@ -298,7 +298,9 @@ Reported by the agent; see [Agent](../devices/agent.md).
 | Synology SSD wearing out | An SSD has less than 10 % of its rated life left (`dumbmonit_synology_disk_remaining_life_percent`); clears above 12 %. | < 10 % | 1 h | Advisory (`warning`) | 7 d |
 | Synology volume degraded | A volume is degraded or crashed: its redundancy is gone (`dumbmonit_synology_volume_status`). | ≥ 2 | 5 min | Warning (`critical`) | 6 h |
 | Synology storage pool degraded | A storage pool or SSD cache is degraded or crashed: a disk failed and the redundancy is gone or rebuilding (`dumbmonit_synology_pool_status or dumbmonit_synology_ssd_cache_status`). | ≥ 2 | 5 min | Warning (`critical`) | 6 h |
-| Synology volume almost full | A volume is 90 % full or more (`dumbmonit_synology_volume_used_percent`); clears below 88 %. | ≥ 90 % | 15 min | Advisory (`warning`), escalates after 24 h | 6 h |
+| Synology volume almost full | A volume is 90 % full or more, not counting the space reserved by thick-provisioned iSCSI LUNs (`dumbmonit_synology_volume_effective_used_percent`, equal to the raw usage without LUNs); clears below 88 %. A volume filled by a thick LUN is full by design and does not alert. | ≥ 90 % | 15 min | Advisory (`warning`), escalates after 24 h | 6 h |
+| Synology thin LUN over-allocation | The thin LUNs of a volume were promised more space than the volume still has free (`dumbmonit_synology_volume_thin_overcommit_percent`: promised and unwritten space as a percentage of the free space); clears below 95 %. | ≥ 100 % | 1 h | Advisory (`warning`) | 24 h |
+| Synology thin LUN almost full | A thin LUN has 95 % or more of its size written (`dumbmonit_synology_lun_used_percent`). A thick LUN is opaque from the NAS: the rules of the monitor that uses it (datastore, filesystem) alert instead. | ≥ 95 % | 30 min | Advisory (`warning`) | 24 h |
 | Synology temperature high | A disk is above 55 °C, or DSM raised its own temperature warning (`dumbmonit_synology_disk_temperature_celsius`, `dumbmonit_synology_temperature_warning`); clears below 52 °C. | > 55 °C | 15 min | Advisory (`warning`) | 6 h |
 | Synology memory high | Memory usage of the NAS above 95 % (`dumbmonit_synology_memory_usage_percent`); clears below 90 %. | > 95 % | 15 min | Advisory (`warning`) | 6 h |
 | Active Backup task failed | The last run of an Active Backup for Business task failed, or backed up only part of its devices (`dumbmonit_abb_task_last_status == bool 0`). The notification names the task. | > 0 | 10 min | Warning (`critical`) | 24 h |
@@ -599,6 +601,9 @@ Traefik, Caddy, Nginx Proxy Manager and domain registrations ([Traefik](../devic
 | Domain about to expire | The domain expires in less than 7 days, or has expired (`dumbmonit_domain_expiry_days`). | < 7 d | 1 h | Warning (`critical`) | 12 h |
 | Domain on hold | The registry put the domain in `clientHold` or `serverHold`: it is out of the DNS (`dumbmonit_domain_on_hold`). | > 0 | 30 min | Warning (`critical`) | 6 h |
 | Domain in redemption | The domain is in `redemptionPeriod`, `pendingDelete` or `pendingRestore`: it has expired (`dumbmonit_domain_redemption`). | > 0 | 30 min | Warning (`critical`) | 12 h |
+| Domain name servers changed | The name servers of the delegation differ from the previous reading (`changes_prometheus(dumbmonit_domain_nameservers_fingerprint[1d])`). Resolves by itself a day later. | > 0 | 1 min | Advisory (`warning`) | 24 h |
+| Domain registrar changed | The registrar differs from the previous reading: a transfer happened (`changes_prometheus(dumbmonit_domain_registrar_fingerprint[1d])`). | > 0 | 1 min | Advisory (`warning`) | 24 h |
+| Domain DNSSEC lost | DNSSEC was signed in the last 7 days and is not any more (`dumbmonit_domain_dnssec`). | < 1 | 1 h | Advisory (`warning`) | 24 h |
 | DNS answer changed | The answer of a DNS check with *Alert when the answer changes* differs from the one before (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Resolves by itself an hour later. | > 0 | 1 min | Advisory (`warning`) | 24 h |
 
 ### DNS blocklists
@@ -694,6 +699,7 @@ See [Veeam Backup & Replication](../devices/veeam.md). Jobs are labelled `job` a
 |---|---|---|---|---|---|
 | Veeam job failed | The last run of an enabled Veeam job failed: what it protects has no new restore point (`dumbmonit_veeam_job_failed`). | > 0 | 5 min | Warning (`critical`) | 1 d |
 | Veeam job ended with a warning | The last run of an enabled Veeam job ended with a warning: some objects may not be protected (`dumbmonit_veeam_job_warning`). | > 0 | 5 min | Advisory (`warning`) | 1 d |
+| Veeam backup too old | No successful run of a job scheduled at least daily for more than two days (`dumbmonit_veeam_job_last_success_age_seconds`). | > 2 d | 1 h | Advisory (`warning`) | 1 d |
 | Veeam repository nearly full | A Veeam backup repository is more than 90 % full: the next jobs will fail for lack of space (`dumbmonit_veeam_repository_used_percent`). | > 90 % | 30 min | Advisory (`warning`) | 1 d |
 | Veeam license expiring | The Veeam license expires in less than 30 days: jobs stop at the end of the grace period (`dumbmonit_veeam_license_expiry_seconds`). | < 30 d | 1 h | Advisory (`warning`) | 1 d |
 
@@ -987,12 +993,13 @@ Computed by the server every 15 minutes for every monitor whose kind has securit
 
 ### Network inventory {#network-inventory}
 
-Raised from the scheduled network scans and their inventory (see [Scheduled scans and inventory](../using/discovery.md#scheduled-scans-and-inventory)). **Both rules are disabled by default** and have severity `info`: turn them on in the rules list when you want them. There is one series, so one alert, per new device or port; it stays open until the item is marked as known (the metric stops, the alert resolves within a few minutes) and has no reminder. The first scan of a network never raises anything.
+Raised from the scheduled network scans and their inventory (see [Scheduled scans and inventory](../using/discovery.md#scheduled-scans-and-inventory)). **All three rules are disabled by default**; the first two have severity `info`, the MAC change one `warning`: turn them on in the rules list when you want them. There is one series, so one alert, per new device or port; it stays open until the item is marked as known (the metric stops, the alert resolves within a few minutes) and has no reminder. The first scan of a network never raises anything.
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
 | New device on the network | A scheduled scan found a device that is not in the inventory (`dumbmonit_netscan_unknown_device`). | > 0 | none | Info (`info`), **disabled** | none |
 | New open port on the network | A scheduled scan found a new open port on a known device (`dumbmonit_netscan_unknown_port`). | > 0 | none | Info (`info`), **disabled** | none |
+| MAC address changed for an IP | A new device took the address of a known device under another MAC address: spoofing or replaced hardware (`dumbmonit_netscan_mac_change`). Open until marked as known or ignored. | > 0 | none | Advisory (`warning`), **disabled** | none |
 
 ### DumbMonit itself
 

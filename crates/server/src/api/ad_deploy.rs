@@ -82,6 +82,14 @@ pub struct AdKitPayload {
     /// résolveur du serveur visé n'y arrive pas.
     #[serde(default)]
     pub dns_server: Option<String>,
+    /// Site derrière un pare-feu : les serveurs du domaine s'installent et
+    /// joignent DumbMonit à travers cet agent relais (sa passerelle), chiffrés
+    /// de bout en bout. Remplace `base_url` et `server_host`.
+    #[serde(default)]
+    pub relay_id: Option<dumbmonit_proto::TargetId>,
+    /// Adresse du relais vue des serveurs du domaine. Absente : celle réglée.
+    #[serde(default)]
+    pub relay_host: Option<String>,
 }
 
 /// Réponse : le jeton (montré cette fois seulement) et le script qui le porte.
@@ -312,6 +320,8 @@ pub async fn create_kit(
         "reusable": true,
         "max_uses": payload.max_uses,
         "expires_in_days": expires_in_days,
+        "relay_id": payload.relay_id,
+        "relay_host": payload.relay_host,
     }))
     .map_err(|error| ApiError::Internal(error.into()))?;
     let (_, Json(created)) = ingest::create_token(
@@ -343,7 +353,15 @@ pub async fn create_kit(
         .unwrap_or_default();
     let generated = chrono::Utc::now().format("%Y-%m-%d %H:%M").to_string();
 
-    let agent_port = state.config.agent_port().map(|port| port.to_string()).unwrap_or_default();
+    // À travers un relais, c'est le port de sa passerelle que les serveurs
+    // joignent ; la session TLS va toujours jusqu'au serveur.
+    let agent_port = match payload.relay_id {
+        Some(relay) => ingest::relay_route(&state, relay, payload.relay_host.as_deref(), None)
+            .await?
+            .port
+            .to_string(),
+        None => state.config.agent_port().map(|port| port.to_string()).unwrap_or_default(),
+    };
     let script = render_deploy_script(&KitParams {
         domain: &domain,
         url: &url,
@@ -438,7 +456,7 @@ mod tests {
 
     #[test]
     fn the_kit_keeps_the_encrypted_agent_channel_of_the_install_command() {
-        // La commande vient de `ingest::install_parameters` : canal chiffré et
+        // La commande vient de `ingest::install_parameters_via` : canal chiffré et
         // empreinte épinglée passent tels quels dans le script de la tâche.
         let pin = "a".repeat(64);
         let command = format!(

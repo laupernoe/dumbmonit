@@ -2,32 +2,33 @@
 
 ![Settings: siete pestañas, aquí Mi cuenta con apariencia, cuenta y seguridad y notificaciones push](../assets/screenshots/settings-light.png){ loading=lazy }
 
-Settings contiene lo administrativo: tu cuenta, quién puede iniciar sesión y cómo, los tokens que dejan entrar a agentes y asistentes, hacer copia de seguridad de la instancia, el tema, y la salud del servidor. Se divide en siete pestañas, cada una con su propia dirección. Una barra lateral en pantalla ancha, una franja de chips en un teléfono y un buscador sobre los nombres de las secciones ayudan a encontrar una sección.
+Ajustes reúne lo administrativo: la propia instancia, tu cuenta, quién puede iniciar sesión y cómo, los agentes, los canales de notificación, la copia de seguridad de la instancia y la salud del servidor. Se divide en siete pestañas, cada una con su propia dirección. Un riel en pantalla ancha, una fila de chips en el teléfono y un buscador sobre los nombres de las secciones ayudan a encontrar una sección.
 
 | Pestaña | Dirección | Qué contiene |
 |---|---|---|
-| Mi cuenta | `/settings/account` | Apariencia, Cuenta y seguridad (contraseña, dos factores, registro de seguridad), Notificaciones push |
-| Equipo y acceso | `/settings/team` | Usuarios, Inicio de sesión único |
-| Supervisión | `/settings/monitoring` | Agentes, Paquetes de integración, [Puntuación de seguridad](security-score.md) |
-| Notificaciones e informes | `/settings/notifications` | Canales, Política de notificaciones, Horas de silencio ([Canales de notificación](../notifications.md)), Informes |
-| Páginas de estado | `/settings/status` | Páginas de estado y anuncios ([Páginas de estado](status-pages.md)) |
-| Pantalla de pared | `/settings/wall` | Modo pared, Música de la pared, Noticias de la pared ([Modo pared](overview.md#wall-mode)) |
-| Sistema | `/settings/system` | Copia de seguridad, El propio DumbMonit, API y asistentes, Acerca de |
+| General | `/settings/general` | Nombre de la instancia, idioma y zona horaria, el asistente de configuración ([Interfaz y asistente de configuración](product-modes.md)) |
+| Mi cuenta | `/settings/account` | Idioma, Cuenta y seguridad (contraseña, dos factores, registro de seguridad), Notificaciones push, Contactos de guardia y horas de silencio ([Guardias](../alerting/oncall.md)) |
+| Equipo y acceso | `/settings/team` | Usuarios, Equipos, Clientes, Inicio de sesión único, SAML, SCIM, LDAP |
+| Supervisión | `/settings/monitoring` | Agentes, Paquetes de integración, [Puntuación de seguridad](security-score.md), Ubicaciones |
+| Notificaciones | `/settings/notifications` | Canales, Política de notificaciones ([Canales de notificación](../notifications.md)) |
+| Pantalla de pared | `/settings/wall` | Modo pared: qué muestra y cómo abrirlo ([Modo pared](wall.md)) |
+| Sistema | `/settings/system` | Copia de seguridad, Archivos de configuración, El propio DumbMonit, Datos y retención, Registros, API y asistentes, Acerca de |
 
-Cada sección conserva su ancla: `/settings#agents` redirige a `/settings/monitoring#agents`. Los enlaces antiguos (`/alerts#notifications`, `/status`) también redirigen al nuevo lugar.
+Cada sección conserva su ancla: `/settings#agents` redirige a `/settings/monitoring#agents`. Los enlaces antiguos (`/alerts#notifications`) también redirigen al nuevo lugar. Las páginas de estado y los informes ya no están en Ajustes: tienen sus propias páginas, **Páginas de estado** (`/status`) e **Informes** (`/reports`); `/settings/status` y `/settings/reports` redirigen allí. La música, las noticias y los widgets de la pared han desaparecido: sus enlaces antiguos (`#music`, `#news`, `#widgets`) abren la pestaña Pantalla de pared.
 
-## Appearance
+## Apariencia {#appearance}
 
-Tres tarjetas, cada una previsualizando su propio tema: **System**
-(sigue a tu dispositivo y cambia con él), **Day** (el tema «papel de
-gráfica») y **Night** (el tema «radar»). La elección se guarda en el
-navegador. El interruptor de la cabecera y el *Toggle theme* de la
-paleta de comandos cambian entre día y noche.
+El idioma de la interfaz, guardado en este navegador. La consola tiene un solo
+aspecto oscuro, así que no hay tema que elegir; las páginas de estado públicas
+conservan sus temas claro y oscuro.
 
-**Open wall mode** se sitúa al final de la sección: solo el boletín, a
-pantalla completa, para un monitor en la sala. ++esc++ lo abandona, y la
-paleta de comandos lo abre desde cualquier sitio — consulta [Modo
-pared](overview.md#wall-mode).
+## Pantalla de pared {#wall}
+
+**Abrir el modo pared**: el tablero de la consola, a pantalla completa, para un
+monitor en la sala. ++esc++ sale, y la paleta de comandos lo abre desde
+cualquier sitio. La pared ya no tiene música, noticias ni widgets; si quieres,
+una ciudad de noche puede ir detrás de su veredicto. Consulta
+[Modo pared](wall.md).
 
 ## Account & security {#account-security}
 
@@ -197,22 +198,20 @@ anteriores trataban «nunca definido» como activado; el panel Single
 sign-on ahora indica cuándo se aplica este valor por defecto. Un valor
 que guardaste explícitamente se conserva tal cual.
 
-## Agents
+## Agentes {#agents}
 
-Tokens de inscripción para el [agente de Linux, macOS, FreeBSD y
-Windows](../devices/agent.md). Crea uno con un nombre («File server»,
-«Home fleet»): el token se muestra una vez, con los comandos de
-instalación de Linux y Windows listos para copiar. Cada comando lleva
-los checksums SHA-256 de los binarios de agente que distribuye este
-servidor, y el instalador rechaza una descarga que no coincida; los
-checksums también se listan bajo los comandos, para comparar a mano. La
-lista muestra el prefijo de cada token, fecha de creación, último uso y
-si fue revocado. **Revoke** detiene cada agente que use ese token en su
-siguiente envío.
+Solo lo que comparten todos los [agentes](../devices/agent.md), para los
+administradores: el canal cifrado de los agentes (certificados y su autoridad,
+consulta [Seguridad del agente](../install/agent-security.md)), las
+actualizaciones automáticas de los agentes y los tokens de inscripción ya
+emitidos. Cada token muestra su alcance, su fecha de creación y su último uso;
+**Revocar** detiene todos los agentes que lo usan en su próximo envío, sin
+borrar los monitores.
 
-Un token puede inscribir varias máquinas. Revocarlo no elimina los
-monitores. La lista de tokens, crear y revocar son para administradores;
-los visores y operadores ven la sección sin la lista.
+Añadir una máquina (token, comando de instalación, primera conexión, paso por
+un relé, kit de Active Directory) se hace en el flujo de alta, **Nuevo monitor
+→ Agente** (`/targets/new?kind=agent`), no aquí. Los propios agentes tienen sus
+páginas.
 
 ## Puntuación de seguridad {#security-score}
 

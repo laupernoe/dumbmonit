@@ -1,0 +1,69 @@
+# Mesures et vues du type « fortigate » (format : crates/collectors/src/catalog.rs).
+source: fortigate
+prefixes: [fortigate_]
+metrics:
+  - { name: fortigate_cpu_usage_percent, label: "CPU usage", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: fortigate_memory_used_percent, label: "Memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: fortigate_disk_used_percent, label: "Disk used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: fortigate_ha_member_cpu_usage_percent, label: "HA member CPU usage", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: fortigate_ha_member_memory_used_percent, label: "HA member memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: fortigate_sessions, label: "Sessions" }
+  - { name: fortigate_interface_bytes_in_total, label: "Interface bytes in", unit: "B", kind: counter }
+  - { name: fortigate_interface_bytes_out_total, label: "Interface bytes out", unit: "B", kind: counter }
+  - { name: fortigate_ipsec_tunnel_bytes_in_total, label: "IPsec tunnel bytes in", unit: "B", kind: counter }
+  - { name: fortigate_ipsec_tunnel_bytes_out_total, label: "IPsec tunnel bytes out", unit: "B", kind: counter }
+  - { name: fortigate_session_setup_rate, label: "Session setup rate" }
+  - { name: fortigate_interface_errors_in_total, label: "Interface errors in", kind: counter }
+  - { name: fortigate_interface_errors_out_total, label: "Interface errors out", kind: counter }
+  - { name: fortigate_version_info, label: "Version", kind: info }
+  - { name: fortigate_log_disk_ok, label: "Log disk ok", unit: "bool" }
+  - { name: fortigate_firmware_update_available, label: "Firmware update available", unit: "bool", better: "higher" }
+  - { name: fortigate_firmware_latest_info, label: "Firmware latest", kind: info }
+  - { name: fortigate_ha_in_sync, label: "HA in sync", unit: "bool" }
+  - { name: fortigate_ha_members, label: "HA members" }
+  - { name: fortigate_interface_down, label: "Interface down", unit: "bool", better: "lower" }
+  - { name: fortigate_interface_link_up, label: "Interface link up", unit: "bool" }
+  - { name: fortigate_interface_enabled, label: "Interface enabled", unit: "bool" }
+  - { name: fortigate_interface_speed_mbps, label: "Interface speed mbps", unit: "Mbit/s" }
+  - { name: fortigate_interface_address_info, label: "Interface address", kind: info }
+  - { name: fortigate_interfaces_down, label: "Interfaces down", better: "lower" }
+  - { name: fortigate_ipsec_tunnel_up, label: "IPsec tunnel up", unit: "bool" }
+  - { name: fortigate_ipsec_phase2_up, label: "IPsec phase2 up", unit: "bool" }
+  - { name: fortigate_ipsec_tunnel_info, label: "IPsec tunnel", kind: info }
+  - { name: fortigate_ipsec_tunnels, label: "IPsec tunnels" }
+  - { name: fortigate_ipsec_tunnels_down, label: "IPsec tunnels down", better: "lower" }
+  - { name: fortigate_license_status_info, label: "License status", kind: info }
+  - { name: fortigate_license_expired, label: "License expired", unit: "bool" }
+  - { name: fortigate_license_expiry_seconds, label: "License expiry", unit: "s" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - fortigate_interfaces_down
+      - fortigate_ipsec_tunnels_down
+      - fortigate_ha_in_sync
+      - fortigate_license_expired
+      - fortigate_interface_errors_in_total
+      - fortigate_interface_errors_out_total
+      - fortigate_version_info
+      - fortigate_log_disk_ok
+      - fortigate_firmware_update_available
+      - fortigate_firmware_latest_info
+      - fortigate_ha_members
+      - fortigate_interface_down
+      - fortigate_ipsec_tunnel_up
+      - fortigate_ipsec_tunnels
+      - fortigate_license_status_info
+      - fortigate_license_expiry_seconds
+  - view: timeseries
+    title: "CPU, memory and disk"
+    metrics: [fortigate_cpu_usage_percent, fortigate_memory_used_percent, fortigate_disk_used_percent, fortigate_ha_member_cpu_usage_percent, fortigate_ha_member_memory_used_percent]
+  - view: timeseries
+    title: "Sessions"
+    metrics: [fortigate_sessions]
+  - view: timeseries
+    title: "Interface throughput"
+    metrics: [fortigate_interface_bytes_in_total, fortigate_interface_bytes_out_total]
+  - view: timeseries
+    title: "IPsec tunnel throughput"
+    metrics: [fortigate_ipsec_tunnel_bytes_in_total, fortigate_ipsec_tunnel_bytes_out_total]

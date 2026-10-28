@@ -15,7 +15,7 @@ an email.
 
 ## 1. Create a page
 
-**Status pages** (the Enterprise rail; **More** in Homelab) → **New page**. That page lists your status pages
+**Status pages** (in the icon rail) → **New page**. That page lists your status pages
 (open, edit, delete) with the announcements under them; the editor opens on
 its own route (`/status/new`, `/status/<id>`). The public rendering is at
 `/s/<address>`. Status pages used to sit in Settings: `/settings/status` and its
@@ -73,10 +73,11 @@ opening it to arbitrary code:
 
 The **Scene** setting draws a city skyline behind the banner. New pages start with Paris,
 and existing pages that had no scene now show it too; untick it for a plain
-banner, or turn on **Simple mode** to drop scenes altogether. Pick as many as you like, in the order you want them. Four scenes ship: Paris, Tokyo, New York and the Matterhorn. Pages that used one of the retired scenes (the other cities, the wonders, the Swiss towns and the playful ones) were moved to the nearest of the four: European cities and the ancient world to Paris, Asia and the sea or space scenes to Tokyo, the Americas to New York, the Alps and the north to the Matterhorn; the same goes for backups and API calls that still name them. With more than one, **Rotation** decides when the page
+banner, or turn on **Simple mode** to drop scenes altogether. Pick as many as you like, in the order you want them. Four scenes ship, all four cities at night under the moon and the stars, their landmark lit: Paris (the Eiffel Tower), Tokyo (Tokyo Tower), New York (the Empire State and Chrysler buildings) and Dubai (the Burj Khalifa). The weather follows the page: a clear starry sky when all is well, clouds on a warning, a storm when something is down. Being night scenes, the title and status over them always use the dark colours, whatever the page theme. Dubai replaced the Matterhorn: pages that showed it (or one of the scenes folded onto it) now show Dubai. Pages that used one of the retired scenes (the other cities, the wonders, the Swiss towns and the playful ones) were moved to the nearest of the four: European cities and the ancient world to Paris, Asia and the sea or space scenes to Tokyo, the Americas to New York, the Alps and the north to Dubai; the same goes for backups and API calls that still name them. With more than one, **Rotation** decides when the page
 moves to the next: at every visit (default), every minute, every ten minutes or
 every hour. The scenes are a closed set of drawings shipped with DumbMonit —
-nothing is uploaded or interpreted.
+nothing is uploaded or interpreted. The same four cities can also sit behind the [wall](wall.md#backdrop)'s verdict
+(**Backdrop**).
 
 There is deliberately no custom CSS or HTML: a status page is public and lives
 on the same origin as your admin interface, under the same

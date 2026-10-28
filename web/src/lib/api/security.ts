@@ -7,7 +7,7 @@
  * without touching it.
  */
 import { request } from './client';
-import type { SecurityReport, SecuritySettings, SecuritySummary, TargetId } from './types';
+import type { SecurityReport, SecuritySettings, SecuritySummary, TargetId, ThreatMap } from './types';
 
 /**
  * The security report of one device. 404 only when the device itself does
@@ -30,4 +30,14 @@ export function getSecuritySettings(signal?: AbortSignal): Promise<SecuritySetti
 /** Turn the security score on or off (administrators). */
 export function setSecuritySettings(enabled: boolean): Promise<SecuritySettings> {
 	return request<SecuritySettings>('/security/settings', { method: 'PUT', body: { enabled } });
+}
+
+/**
+ * The threat map: attacks stopped by country, every source together
+ * (CrowdSec alerts, firewall blocks, Cloudflare threats). `target` keeps one
+ * device's sources only. Answers `partial: true` rather than failing when
+ * VictoriaMetrics is unreachable.
+ */
+export function getThreatMap(target?: TargetId, signal?: AbortSignal): Promise<ThreatMap> {
+	return request<ThreatMap>('/security/threats', { query: target === undefined ? undefined : { target }, signal });
 }

@@ -29,10 +29,19 @@
 //! Les règles d'anomalie ([`baseline`]) suivent le même chemin ; seule l'étape 1
 //! change, la comparaison à un seuil étant remplacée par un écart à la baseline
 //! saisonnière de la série.
+//!
+//! Les règles dérivées ([`derived`]) aussi : la prévision de remplissage
+//! ([`forecast`], sur les familles de [`capacity`]) rend un nombre de jours, la
+//! dérive de baseline ([`drift`]) un rapport à la normale, et ces séries passent
+//! ensuite par les étapes 2 à 6 comme les autres.
 
 pub mod baseline;
+pub mod capacity;
 pub mod cycle;
+pub mod derived;
+pub mod drift;
 pub mod engine;
+pub mod forecast;
 pub mod group;
 pub mod log_source;
 pub mod machine;

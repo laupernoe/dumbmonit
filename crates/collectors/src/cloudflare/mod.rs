@@ -10,7 +10,10 @@
 //! * **les certificats** (`Zone → SSL and Certificates → Read`) : la date
 //!   d'expiration de chaque lot de certificats actif de chaque zone ;
 //! * **le trafic** (`Zone → Analytics → Read`, GraphQL) : requêtes et réponses
-//!   5xx de la dernière heure complète et de l'heure en cours, par zone ;
+//!   5xx de la dernière heure complète et de l'heure en cours, par zone, et les
+//!   menaces arrêtées par pays d'origine (`countryMap`), toutes zones réunies,
+//!   pour la carte des menaces. Les pays sont lus par une requête à part : si
+//!   le schéma ou l'offre la refuse, seul le relevé des menaces manque ;
 //! * **les répartiteurs de charge** (`Account → Load Balancing: Monitors And
 //!   Pools → Read`) : santé de chaque groupe d'origines (« pool »).
 //!
@@ -61,6 +64,14 @@ const TRAFFIC_QUERY: &str = "query ($zones: [string!], $since: Time!, $until: Ti
 viewer { zones(filter: {zoneTag_in: $zones}) { zoneTag \
 httpRequests1hGroups(limit: 10, filter: {datetime_geq: $since, datetime_lt: $until}) { \
 sum { requests responseStatusMap { edgeResponseStatus requests } } } } } }";
+
+/// Menaces par pays, sur le même jeu de données (`httpRequests1hGroups`,
+/// `sum.countryMap`), interrogées à part : une erreur GraphQL sur ce champ rend
+/// `data: null` pour toute la requête, et ne doit pas emporter le trafic.
+const THREATS_QUERY: &str = "query ($zones: [string!], $since: Time!, $until: Time!) { \
+viewer { zones(filter: {zoneTag_in: $zones}) { zoneTag \
+httpRequests1hGroups(limit: 10, filter: {datetime_geq: $since, datetime_lt: $until}) { \
+sum { countryMap { clientCountryName threats } } } } } }";
 
 #[derive(Default)]
 pub struct CloudflareCollector;
@@ -370,6 +381,68 @@ pub fn traffic_samples(
     Some(out)
 }
 
+/// Menaces par pays de la réponse à `THREATS_QUERY`, une série par zone et par
+/// pays (`merge_country_threats` les additionne ensuite) ; `None` quand la
+/// réponse n'a pas la forme attendue.
+pub fn threat_samples(
+    reply: &Value,
+    zones: &[(String, String)],
+    ts_ms: i64,
+) -> Option<Vec<Sample>> {
+    let entries = reply.pointer("/data/viewer/zones").and_then(Value::as_array)?;
+    let mut out = Vec::new();
+    for entry in entries {
+        let Some(zone_tag) = text(entry, "zoneTag") else { continue };
+        if !zones.iter().any(|(id, _)| id == zone_tag) {
+            continue;
+        }
+        for (country, count) in country_threats(entry) {
+            let sample = gauge("cloudflare_country_threats", count, ts_ms);
+            out.push(sample.with_label("country", country));
+        }
+    }
+    Some(out)
+}
+
+/// Menaces d'une zone par pays d'origine (codes ISO alpha-2 ; `XX` inconnu et
+/// `T1` Tor laissés de côté), sur les groupes horaires lus.
+fn country_threats(entry: &Value) -> BTreeMap<String, f64> {
+    let mut by_country = BTreeMap::new();
+    let groups = entry.get("httpRequests1hGroups").and_then(Value::as_array).into_iter().flatten();
+    for group in groups {
+        let map = group.pointer("/sum/countryMap").and_then(Value::as_array).into_iter().flatten();
+        for row in map {
+            let code = text(row, "clientCountryName").unwrap_or_default().to_ascii_uppercase();
+            let threats = number(row.get("threats")).unwrap_or(0.0);
+            let valid = code.len() == 2 && code.bytes().all(|b| b.is_ascii_uppercase());
+            if valid && code != "XX" && threats > 0.0 {
+                *by_country.entry(code).or_default() += threats;
+            }
+        }
+    }
+    by_country
+}
+
+/// Additionne les menaces par pays de toutes les zones lues : une série par
+/// pays pour la cible, jamais une par zone et par pays.
+pub fn merge_country_threats(samples: Vec<Sample>) -> Vec<Sample> {
+    let mut threats: BTreeMap<String, (f64, i64)> = BTreeMap::new();
+    let mut out = Vec::with_capacity(samples.len());
+    for sample in samples {
+        if sample.metric == "cloudflare_country_threats" {
+            let country = sample.labels.get("country").cloned().unwrap_or_default();
+            let slot = threats.entry(country).or_insert((0.0, sample.ts_ms));
+            slot.0 += sample.value;
+        } else {
+            out.push(sample);
+        }
+    }
+    for (country, (count, ts_ms)) in threats {
+        out.push(gauge("cloudflare_country_threats", count, ts_ms).with_label("country", country));
+    }
+    out
+}
+
 /// Santé des pools d'origines (un pool désactivé n'est pas une panne).
 pub fn pool_samples(pools: &[Value], ts_ms: i64) -> Vec<Sample> {
     let mut out = Vec::new();
@@ -540,13 +613,7 @@ async fn gather(
                 "query": TRAFFIC_QUERY,
                 "variables": {"zones": ids, "since": since, "until": until},
             });
-            let path = format!("{API}/graphql");
-            let parsed = match client.post_json(&path, &body).await {
-                Ok((status, raw)) if status.is_success() => {
-                    serde_json::from_str::<Value>(&raw).ok()
-                }
-                _ => None,
-            };
+            let parsed = graphql(client, &body).await;
             match parsed.and_then(|reply| traffic_samples(&reply, chunk, ts_ms)) {
                 Some(samples) => {
                     for sample in &samples {
@@ -560,7 +627,18 @@ async fn gather(
                 }
                 None => analytics_ok = false,
             }
+            // Les pays, à part : un refus ici ne touche ni le trafic ni sa série
+            // `analytics_readable`, la carte des menaces reste simplement vide.
+            let body = json!({
+                "query": THREATS_QUERY,
+                "variables": {"zones": ids, "since": since, "until": until},
+            });
+            let threats = graphql(client, &body).await;
+            if let Some(samples) = threats.and_then(|reply| threat_samples(&reply, chunk, ts_ms)) {
+                out.extend(samples);
+            }
         }
+        out = merge_country_threats(out);
         if analytics_ok {
             out.push(figure("cloudflare", "Requests", "", requests, ts_ms));
             out.push(figure("cloudflare", "5xx responses", "", errors, ts_ms));
@@ -604,6 +682,14 @@ async fn gather(
     }
     out.push(readable("lb", balancers_ok, ts_ms));
     Ok(out)
+}
+
+/// Une requête GraphQL ; `None` sur un refus HTTP ou une réponse illisible.
+async fn graphql(client: &RestClient, body: &Value) -> Option<Value> {
+    match client.post_json(&format!("{API}/graphql"), body).await {
+        Ok((status, raw)) if status.is_success() => serde_json::from_str::<Value>(&raw).ok(),
+        _ => None,
+    }
 }
 
 async fn zones_of(client: &RestClient) -> Result<Vec<Value>, ProbeError> {
@@ -734,9 +820,25 @@ mod tests {
             find(&s, "cloudflare_zone_http_5xx_percent", &[("zone", "shop.example.com")]).is_none(),
             "forty requests are too few for a percentage"
         );
+        assert!(find(&s, "cloudflare_country_threats", &[]).is_none(), "read apart");
+        // Menaces par pays : additionnées sur les zones, une série par pays.
+        let threats = threat_samples(&reply, &zones, now()).unwrap();
+        let merged = merge_country_threats(threats);
+        assert_eq!(value(&merged, "cloudflare_country_threats", &[("country", "CN")]), 35.0);
+        assert_eq!(value(&merged, "cloudflare_country_threats", &[("country", "US")]), 12.0);
+        let countries: Vec<&str> = merged
+            .iter()
+            .filter(|s| s.metric == "cloudflare_country_threats")
+            .map(|s| s.labels["country"].as_str())
+            .collect();
+        assert_eq!(countries, ["CN", "US"], "no unknown, Tor or zero-threat country");
+        for sample in merged.iter().filter(|s| s.metric == "cloudflare_country_threats") {
+            assert!(!sample.labels.contains_key("zone"), "{:?}", sample.labels);
+        }
         let failed: Value =
             serde_json::from_str(r#"{"data":null,"errors":[{"message":"denied"}]}"#).unwrap();
         assert!(traffic_samples(&failed, &zones, now()).is_none());
+        assert!(threat_samples(&failed, &zones, now()).is_none());
     }
 
     #[test]

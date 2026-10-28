@@ -1,27 +1,20 @@
 # Die Übersichtsseite
 
-Die Startseite beantwortet "ist alles in Ordnung?" in etwa einer
-Sekunde, und lässt Sie dann auf Wunsch tiefer graben.
+Die Startseite beantwortet „Ist alles in Ordnung?“ in etwa einer Sekunde und
+lässt Sie dann nach Bedarf in die Details gehen.
 
-![Die Übersicht](../assets/screenshots/overview-light.png){ loading=lazy }
+## Das Statusbanner {#the-bulletin}
 
-## Das Bulletin
+Ein Band oben zeigt einen festen Nachthimmel: funkelnde Sterne, eine Mondsichel
+und eine Taube, die ihn durchquert, ohne je zu landen. Der Himmel ändert sich
+nicht mit dem Wetter; der Satz an seinem Fuß sagt in Worten, wie es steht. „Alle
+146 Monitore laufen.“, wenn nichts Ihre Aufmerksamkeit braucht, sonst „pve-02 ist
+ausgefallen.“ oder „pve-02 braucht einen Blick.“, gefolgt in leiserem Ton von dem,
+was das System getan hat („3 Gäste zurückgehalten, Alarm gesendet.“). Tippen Sie
+auf die Taube, und sie macht eine Rolle. Mit `prefers-reduced-motion` bleibt die
+Taube aus dem Himmel und die Sterne stehen still.
 
-Das Band oben ist ein Wetterbericht für Ihr Netzwerk. Ein Satz
-beschreibt den Himmel: "Clear skies." wenn nichts Ihre Aufmerksamkeit
-braucht, sonst eine Zählung dessen, was sie braucht ("9 advisories, 1
-unreachable."). Darunter zählen Anzeigen melde Monitore und nicht
-erreichbare, mit der Zeit der letzten Prüfung, und drei Anzeigen:
-**Reporting**, **Needs you**, **Forecasts**.
-
-Das Wetterfenster rechts folgt dem Netzwerk: klar, bewölkt, bedeckt oder
-Sturm, je danach, wie viele Alarme feuern und wie schwer sie sind, mit
-der über den Himmel fliegenden Taube. Unter
-`prefers-reduced-motion` steht alles still.
-
-Die einzige primäre Aktion der Seite ist **Add a monitor**.
-
-## Die Erstlauf-Anleitung
+## Die Erstlauf-Anleitung {#the-first-run-guide}
 
 Auf einer neuen Instanz ist die Seite unter dem Bulletin nicht leer: Es
 ist eine dreistufige Anleitung — ein Monitor hinzufügen, eine Art,
@@ -32,54 +25,40 @@ der Instanz gespeichert, sodass ein zweiter Browser die Anleitung nicht
 neu beginnt. Siehe
 [Ihren ersten Monitor hinzufügen](../install/first-device.md#the-three-first-steps).
 
-## Needs you
+## Die fünf Kennzahlen und der Health River {#the-figures}
 
-Die Liste dessen, was jetzt Ihre Aufmerksamkeit braucht, am schwersten
-zuerst: nicht erreichbare Monitore, dann feuernde Alarme nach Schweregrad.
-Jede Zeile benennt die Regel, den Monitor, den aktuellen Wert, wie lange
-es schon geht, und ob es mehrere Zeitreihen gruppiert ("×4" für vier
-Dateisysteme auf demselben Monitor). Vier Aktionen: **Ack** (diesen
-Alarm für 1 h, 4 h, 24 h oder bis zur Behebung bestätigen — Erinnerungen
-pausieren, die Behebung wird trotzdem gemeldet), **Snooze** (nur diesen
-Alarm für 1 h, 8 h, 1 Tag oder bis zur Behebung ausblenden), **Ignore**
-(diese Regel davon abhalten, je wieder auf diesem Monitor zu alarmieren,
-reversibel), und **Open monitor**.
+Unter dem Banner stehen fünf Kennzahlen: **Monitors up** (von der Gesamtzahl, mit
+den Zahlen ausgefallener und pausierter Monitore), **Availability 30 d**,
+**p95 response time**, **Open alerts** (kritisch und Warnung) und **MTTR 30 d**
+(mittlere Zeit bis zur Behebung). Der Zeitraum in der Kopfzeile steuert p95 und
+den River.
 
-Bestätigte und stummgeschaltete Alarme wandern in ihre eigene ruhigere
-Gruppe unter der Liste und verlassen die *Needs you*-Zählung. Ein
-ignorierter Alarm verschwindet ganz — er ist nicht "bekannt", er ist
-für diesen Monitor abgeschaltet. Siehe
-[Einen Alarm loswerden](alerts.md#getting-rid-of-an-alert).
+Der **Health River** ist ein Streifen pro Monitor, eine Zelle pro Abschnitt des
+Zeitraums, die schlechtesten Monitore oben. Ein Zustand steht immer neben einer
+Form (Kreis aktiv, Raute beeinträchtigt, Quadrat ausgefallen), nie allein als
+Farbe.
 
-## Monitorübersicht
+## Die Monitortabelle {#the-monitor-table}
 
-Eine Zeile: wie viele Monitore, wie viele melden, wie viele nicht
-erreichbar sind, und ein Link zur vollständigen Monitors-Seite. Die
-Übersicht listet nie Monitore: Das Rack lebt auf [Monitors](devices.md).
+Die Tabelle listet jeden Monitor, den schlechtesten zuerst. Sie filtert nach Zustand,
+Typ und Text, lässt Sie Spalten hinzufügen (Adresse, Ordner) oder entfernen und
+wird per Tastatur bedient: ++j++ / ++k++ bewegen, ++enter++ wählt, ++o++ öffnet.
 
-## Vorhersagen und letzte 24 Stunden
-
-**Forecasts** zeigt, was vorhergesagt statt beobachtet wird: die
-saisonale Baseline-Anomalie, die "voll innerhalb von vier Tagen"-
-Extrapolationen, die PBS-Füllstandsschätzung, und Regeln, deren Name
-eine Vorhersage ankündigt. Während eine Baseline lernt, sagen ihre
-Einträge das.
-
-**Last 24 hours** listet die feuernden Übergänge des Tages, mit einem
-Link zur vollständigen Historie auf der Alerts-Seite.
+Der gewählte Monitor speist das **Kontextpanel** rechts, wie ein Inspektor: was
+Aufmerksamkeit braucht (mit den Alarmaktionen, siehe [Alerts-Seite](alerts.md)),
+**Check now** und **Silence 1 h**, die nächsten Vorhersagen und wer Bereitschaft
+hat. ++i++ blendet es ein oder aus; auf schmaleren Bildschirmen öffnet es sich als
+Schublade. Die vollständige Liste steht auf der [Monitors-Seite](devices.md).
 
 ## Wall-Modus {#wall-mode}
 
-`/wall` zeigt nur das Bulletin, im Vollbild, für einen Raummonitor: den
-Satz, die Zählungen und die *Needs you*-Liste, alle 20 Sekunden
-aktualisiert, mit wachgehaltenem Bildschirm. ++esc++ oder **Exit**
-führt zur Übersicht zurück. Öffnen Sie es aus der Befehlspalette
-("Wall mode") oder durch Eingabe der URL. Es kann auch Musik abspielen,
-von Ihrem Telefon gestartet: siehe [Wall-Modus und Musik](wall.md).
+`/wall` zeigt eine Tafel für einen Monitor im Raum: das Urteil, die Uhr, die fünf
+Kennzahlen, den Health River, die offenen Alarme und wer Bereitschaft hat. Öffnen
+Sie sie mit dem Symbol **Wall mode** in der oberen Leiste oder über die
+Befehlspalette; ++esc++ oder **Exit** führt zurück zur Konsole. Siehe
+[Wall-Modus](wall.md).
 
-![Wall-Modus](../assets/screenshots/wall-light.png){ loading=lazy }
-
-## Auf einem Telefon installieren
+## Auf einem Telefon installieren {#install-it-on-a-phone}
 
 Die Oberfläche liefert ein Web-Manifest, sodass ein Telefon sie dem
 Homescreen hinzufügen kann: **Share → Add to Home Screen** auf iOS,
@@ -93,7 +72,7 @@ nicht erreichen kann: Der ganze Sinn ist, dass das, was Sie lesen,
 aktuell ist. Ohne Worker wird auch ein aktualisierter Server sofort
 ausgeliefert, ohne veralteten Build zu löschen.
 
-## Befehlspalette
+## Befehlspalette {#command-palette}
 
 ++cmd+k++ auf macOS, ++ctrl+k++ sonst, öffnet die Befehlspalette: ein
 Eingabefeld, Ergebnisse in drei Gruppen.
@@ -101,27 +80,27 @@ Eingabefeld, Ergebnisse in drei Gruppen.
 | Gruppe | Einträge |
 |---|---|
 | Pages | Overview, Monitors, Alerts, Notifications, Status pages, Settings, Wall mode, Documentation |
-| Actions | Add a monitor, Scan my network, Schedule maintenance, Add notification channel, New status page, Announce an incident, Toggle theme |
+| Actions | Add a monitor, Scan my network, Schedule maintenance, Add notification channel, New status page, Announce an incident |
 | Monitors | Jeder Monitor, mit seiner Zustands-LED; ++enter++ öffnet ihn |
 
-## Navigation
+## Navigation {#navigation}
 
-Die obere Leiste hat Overview, Monitors, Alerts (mit der Anzahl dessen,
-was Ihre Aufmerksamkeit braucht) und Settings, den Paletten-Shortcut und
-den Theme-Umschalter. Auf einem Telefon wird sie zu einer unteren Tab-Leiste
-mit diesen vier Tabs und **More**, das den Wall-Modus und die Dokumentation
-enthält.
+Eine schmale **Icon-Leiste** links listet jedes Ziel: Overview, Monitors, Alerts
+(mit der Anzahl dessen, was Ihre Aufmerksamkeit braucht), Dashboards, Explore, die
+Topologiekarte, Security, Logs, Status pages, Reports und Settings. Unten stehen
+die Dokumentation, GitHub und Ihr Konto. Die Kopfzeile zeigt, wo Sie sind, den
+Schalter **LIVE**, der die eigenen Aktualisierungen der Konsole pausiert, den
+Zeitraum, die Palette, **Wall mode** und **New monitor**. Auf einem Telefon wird
+die Leiste zu einer unteren Tab-Leiste mit dem Wichtigsten und **More**.
 
-- **Overview** — das Bulletin: ist alles in Ordnung, und was Ihre
-  Aufmerksamkeit braucht.
-- **Monitors** — das Rack; jede überwachte Quelle. Siehe
-  [Monitors-Seite](devices.md).
-- **Alerts** — was feuert, Wartungsfenster, Historie und die Regeln.
-  Siehe [Alerts-Seite](alerts.md).
-- **Settings** — Ihr Konto, Benutzer und Single Sign-On, Agent- und
-  Assistant-Tokens, Benachrichtigungskanäle und Reports, öffentliche
-  Statusseiten, Erscheinungsbild, About. Siehe
-  [Settings](settings.md). Nichts auf der Oberfläche vermittelt Status
-  allein durch Farbe: Eine Anzeige oder LED kommt immer mit einem Wort
-  (Reporting, Unreachable, Advisory, Warning, Suppressed by parent,
-  Building up).
+- **Overview**: ist alles in Ordnung, und was braucht Sie.
+- **Monitors**: jede überwachte Quelle. Siehe [Monitors-Seite](devices.md).
+- **Alerts**: was feuert, Wartungsfenster, Historie und die Regeln. Siehe
+  [Alerts-Seite](alerts.md).
+- **Settings**: Ihr Konto, Benutzer und Single Sign-On, Tokens,
+  Benachrichtigungskanäle, Erscheinungsbild, About. Siehe
+  [Settings](settings.md).
+
+Die Oberfläche ist dunkel, und nichts darauf vermittelt Status allein durch
+Farbe: Eine Markierung kommt immer mit einem Wort (Reporting, Unreachable,
+Advisory, Warning, Suppressed by parent, Building up).

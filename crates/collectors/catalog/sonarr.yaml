@@ -1,0 +1,35 @@
+# Mesures et vues du type « sonarr » (format : crates/collectors/src/catalog.rs).
+source: selfhosted
+prefixes: [sonarr_]
+metrics:
+  - { name: sonarr_queue_total, label: "Queue" }
+  - { name: sonarr_queue_has_errors, label: "Queue has errors", better: "lower" }
+  - { name: sonarr_queue_has_warnings, label: "Queue has warnings" }
+  - { name: sonarr_queue_unknown, label: "Queue unknown" }
+  - { name: sonarr_health_errors, label: "Health errors", better: "lower" }
+  - { name: sonarr_health_warnings, label: "Health warnings" }
+  - { name: sonarr_health_issue, label: "Health issue" }
+  - { name: sonarr_disk_used_percent, label: "Disk used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: sonarr_disk_free_bytes, label: "Disk free", unit: "B", better: "higher" }
+  - { name: sonarr_indexers_disabled, label: "Indexers disabled" }
+  - { name: sonarr_update_available, label: "Update available", unit: "bool", better: "higher" }
+  - { name: sonarr_version_info, label: "Version", kind: info }
+  - { name: sonarr_scrape_errors, label: "Scrape errors", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - sonarr_queue_has_errors
+      - sonarr_queue_has_warnings
+      - sonarr_queue_unknown
+      - sonarr_health_errors
+      - sonarr_health_warnings
+      - sonarr_health_issue
+      - sonarr_disk_used_percent
+      - sonarr_disk_free_bytes
+      - sonarr_indexers_disabled
+      - sonarr_update_available
+      - sonarr_version_info
+  - view: timeseries
+    title: "Queue"
+    metrics: [sonarr_queue_total]

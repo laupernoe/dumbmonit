@@ -18,7 +18,7 @@ use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
 use dumbmonit_collectors::log_gate::LogGate;
-use dumbmonit_proto::{AGENT_SECRET_HEADER, PushBatch};
+use dumbmonit_proto::{AGENT_SECRET_HEADER, PushBatch, TargetId};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
@@ -347,6 +347,14 @@ pub struct TokenPayload {
     /// défaut.
     #[serde(default)]
     pub client_id: Option<i64>,
+    /// Installation à travers un agent relais (site derrière un pare-feu) : les
+    /// commandes visent sa passerelle, que le serveur ouvre au besoin.
+    #[serde(default)]
+    pub relay_id: Option<TargetId>,
+    /// Adresse par laquelle les machines du site joignent ce relais. Absente :
+    /// celle déjà réglée, à défaut son nom d'hôte.
+    #[serde(default)]
+    pub relay_host: Option<String>,
 }
 
 impl TokenPayload {
@@ -411,7 +419,26 @@ pub async fn create_token(
     if !clients::exists(&state.pool, client).await? {
         return Err(ApiError::BadRequest("This client does not exist.".into()));
     }
-    let (mut record, secret) = agent::create_token(&state.pool, &name, payload.policy()?).await?;
+    if payload.relay && payload.relay_id.is_some() {
+        return Err(ApiError::BadRequest(
+            "A relay connects to the server directly: it cannot be installed through another relay."
+                .into(),
+        ));
+    }
+    let route = match payload.relay_id {
+        Some(relay) => {
+            Some(relay_route(&state, relay, payload.relay_host.as_deref(), Some(client)).await?)
+        }
+        None => None,
+    };
+    let policy = payload.policy()?;
+    if let Some(route) = &route {
+        // Choisir ce relais pour une installation, c'est lui demander d'ouvrir
+        // sa passerelle : il l'ouvre à son prochain lot.
+        agent::set_relay_gateway(&state.pool, route.relay_id, Some(route.port), Some(&route.host))
+            .await?;
+    }
+    let (mut record, secret) = agent::create_token(&state.pool, &name, policy).await?;
     clients::assign(&state.pool, clients::Kind::AgentToken, &[record.id], Some(client))
         .await
         .map_err(super::clients::api_error)?;
@@ -421,7 +448,7 @@ pub async fn create_token(
         record.relay_site = site;
     }
     audit::record(&state.pool, Some(&me.username), "agent_token.created", Some(&name), ip).await;
-    let params = install_parameters(&state, payload.base_url.as_deref()).await;
+    let params = install_parameters_via(&state, payload.base_url.as_deref(), route).await;
 
     let mut token = TokenView::from(record);
     token.client_id = client;
@@ -441,7 +468,7 @@ pub async fn create_token(
 /// Source unique des commandes affichées par l'interface (création d'un jeton)
 /// et de tout générateur de déploiement (script GPO, Ansible…) : ceux-ci lisent
 /// `GET /api/agent/install` et remplacent `{TOKEN}` dans les gabarits, ou
-/// appellent [`install_parameters`] côté serveur.
+/// appellent [`install_parameters_via`] côté serveur.
 #[derive(Debug, Clone, Serialize)]
 pub struct InstallParams {
     /// URL du port de l'interface : scripts d'installation et binaires.
@@ -456,6 +483,76 @@ pub struct InstallParams {
     pub linux_template: String,
     /// Commande PowerShell, jeton à remplacer : `{TOKEN}`.
     pub windows_template: String,
+    /// Relais par lequel passent ces commandes, s'il y en a un : `base_url` et
+    /// `agent_url` sont alors ceux de sa passerelle.
+    pub via_relay: Option<RelayRoute>,
+}
+
+/// Passage par un agent relais : sa passerelle, telle que les machines du site
+/// la joignent.
+#[derive(Debug, Clone, Serialize)]
+pub struct RelayRoute {
+    pub relay_id: TargetId,
+    pub relay_name: String,
+    pub site: Option<String>,
+    /// Adresse du relais vue du site (IP ou nom local).
+    pub host: String,
+    pub port: u16,
+    /// Vrai si le relais déclare déjà écouter sur ce port.
+    pub listening: bool,
+}
+
+/// Résout le passage par `relay` : un agent en mode relais, du client donné
+/// (`None` : sans contrôle, lecture seule), avec l'adresse de sa passerelle.
+pub async fn relay_route(
+    state: &AppState,
+    relay: TargetId,
+    host: Option<&str>,
+    client: Option<i64>,
+) -> ApiResult<RelayRoute> {
+    let not_relay = || ApiError::BadRequest(format!("Monitor {relay} is not a relay agent."));
+    let info = agent::host(&state.pool, relay).await?.ok_or_else(not_relay)?;
+    if !(info.relay || info.relay_wanted) {
+        return Err(ApiError::BadRequest(
+            "This agent is not a relay: switch relay mode on for it first.".into(),
+        ));
+    }
+    if let Some(client) = client
+        && clients::target_client(&state.pool, relay).await? != Some(client)
+    {
+        return Err(ApiError::BadRequest(
+            "This relay belongs to another client: pick a relay of the same client.".into(),
+        ));
+    }
+    let typed = agent::clean_gateway_host(host).map_err(|e| ApiError::BadRequest(e.into()))?;
+    let host = match typed {
+        Some(host) => host,
+        None => match info.relay_gateway_host.clone() {
+            Some(host) => host,
+            None => {
+                agent::clean_gateway_host(Some(&info.hostname)).ok().flatten().ok_or_else(|| {
+                    ApiError::BadRequest("Give the address the site reaches this relay at.".into())
+                })?
+            }
+        },
+    };
+    let port = info
+        .relay_gateway_wanted
+        .or(info.relay_gateway_port)
+        .unwrap_or(dumbmonit_proto::DEFAULT_RELAY_GATEWAY_PORT);
+    let relay_name: String = sqlx::query_scalar("SELECT name FROM targets WHERE id = ?")
+        .bind(relay)
+        .fetch_one(&state.pool)
+        .await
+        .map_err(anyhow::Error::from)?;
+    Ok(RelayRoute {
+        relay_id: relay,
+        relay_name,
+        site: info.site.clone().or(info.relay_wanted_site.clone()),
+        listening: info.relay_gateway_port == Some(port),
+        host,
+        port,
+    })
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -496,17 +593,31 @@ impl InstallParams {
 }
 
 /// Paramètres d'installation pour une URL de base donnée (celle par laquelle
-/// les machines joignent l'interface ; à défaut, l'adresse d'écoute).
-pub async fn install_parameters(state: &AppState, base_url: Option<&str>) -> InstallParams {
-    let base_url = normalise_base_url(base_url, state.config.bind);
+/// les machines joignent l'interface ; à défaut, l'adresse d'écoute), en direct
+/// ou à travers un agent relais : scripts, binaires et canal chiffré passent
+/// alors par sa passerelle. L'empreinte épinglée reste celle du serveur —
+/// la session TLS va jusqu'à lui.
+pub async fn install_parameters_via(
+    state: &AppState,
+    base_url: Option<&str>,
+    route: Option<RelayRoute>,
+) -> InstallParams {
+    let base_url = match &route {
+        Some(route) => format!("http://{}:{}", route.host, route.port),
+        None => normalise_base_url(base_url, state.config.bind),
+    };
     let checksums = crate::api::agent_files::platform_checksums(&state.config.agent_dir)
         .await
         .into_iter()
         .map(|(platform, sha256)| InstallChecksum { platform, sha256 })
         .collect();
     let offer = crate::agent_tls::offer(state);
-    let agent_url =
-        offer.as_ref().and_then(|offer| dumbmonit_proto::agent_channel_url(&base_url, offer.port));
+    let agent_url = match &route {
+        Some(route) => offer.as_ref().map(|_| format!("https://{}:{}", route.host, route.port)),
+        None => offer
+            .as_ref()
+            .and_then(|offer| dumbmonit_proto::agent_channel_url(&base_url, offer.port)),
+    };
     // L'autorité active seule : une suivante (rotation en cours) est apprise
     // par le canal chiffré lui-même.
     let ca_pin = offer.and_then(|offer| offer.pins.into_iter().next());
@@ -517,6 +628,7 @@ pub async fn install_parameters(state: &AppState, base_url: Option<&str>) -> Ins
         checksums,
         linux_template: String::new(),
         windows_template: String::new(),
+        via_relay: route,
     };
     params.linux_template = params.linux_command(TOKEN_PLACEHOLDER);
     params.windows_template = params.windows_command(TOKEN_PLACEHOLDER);
@@ -527,6 +639,11 @@ pub async fn install_parameters(state: &AppState, base_url: Option<&str>) -> Ins
 pub struct InstallQuery {
     #[serde(default)]
     pub base_url: Option<String>,
+    /// Commandes à travers ce relais.
+    #[serde(default)]
+    pub relay_id: Option<TargetId>,
+    #[serde(default)]
+    pub relay_host: Option<String>,
 }
 
 /// `GET /api/agent/install?base_url=…` : paramètres et gabarits de la commande
@@ -538,7 +655,22 @@ pub async fn install_params(
     State(state): State<AppState>,
     Query(query): Query<InstallQuery>,
 ) -> ApiResult<Json<InstallParams>> {
-    Ok(Json(install_parameters(&state, query.base_url.as_deref()).await))
+    let route = match query.relay_id {
+        Some(relay) => Some(relay_route(&state, relay, query.relay_host.as_deref(), None).await?),
+        None => None,
+    };
+    Ok(Json(install_parameters_via(&state, query.base_url.as_deref(), route).await))
+}
+
+/// `GET /api/agent/tokens/{id}/machines` : machines enrôlées par ce jeton, la
+/// plus récente d'abord. Le flux d'ajout d'un agent l'interroge pour constater
+/// la première connexion, puis nommer et ranger la machine sur place.
+pub async fn token_machines(
+    _: AdminIdentity,
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+) -> ApiResult<Json<Vec<agent::TokenMachine>>> {
+    Ok(Json(agent::token_machines(&state.pool, id).await?))
 }
 
 pub async fn revoke_token(
@@ -682,6 +814,7 @@ mod tests {
             checksums: Vec::new(),
             linux_template: String::new(),
             windows_template: String::new(),
+            via_relay: None,
         };
         let linux = params.linux_command("dmon_abc");
         assert!(linux.ends_with(&format!(" --tls-url=https://s:8443 --ca-pin={pin}")), "{linux}");

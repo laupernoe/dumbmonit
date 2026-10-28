@@ -65,6 +65,10 @@ tiene uno), `mac`, `model` y `type` (`gateway`, `switch`,
 | `clients_by_type` | `wireless`, `wired`, `guest`, `vpn` (cuenta View Only) | `type` |
 | `alarms` | entradas del registro crítico del sistema de las últimas 24 horas, o alarmas no archivadas | |
 | `scrape_errors` | llamadas que fallaron en la última sonda | |
+| `port_enabled`, `port_up`, `port_speed_bps`, `port_full_duplex`, `port_uplink` | puertos de cada conmutador o pasarela en línea (cuenta de solo lectura, `port_table`); `port_up` falta en un puerto desactivado | `device`, `mac`, `port` (número del frontal), `port_name` |
+| `port_poe_enabled`, `port_poe_watts` | PoE de cada puerto | las mismas |
+| `port_rx_bytes_total`, `port_tx_bytes_total`, `port_rx_errors_total`, `port_tx_errors_total` | contadores por puerto, dibujados por el panel del conmutador | las mismas |
+| `port_neighbor_info` | valor 1, vecino LLDP del puerto (`lldp_table`) | las mismas, `remote_chassis`, `remote_port` |
 
 Las [reglas integradas](../alerting/rules.md#unifi-network) que se
 aplican: UniFi device offline, UniFi Internet down, UniFi WAN link

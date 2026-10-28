@@ -57,6 +57,10 @@ seine MAC-Adresse, wenn er keinen hat), `mac`, `model` und `type` (`gateway`, `s
 | `clients_by_type` | `wireless`, `wired`, `guest`, `vpn` (Konto Nur Ansicht) | `type` |
 | `alarms` | kritische Systemlog-Einträge der letzten 24 Stunden oder nicht archivierte Alarme | |
 | `scrape_errors` | bei der letzten Prüfung fehlgeschlagene Aufrufe | |
+| `port_enabled`, `port_up`, `port_speed_bps`, `port_full_duplex`, `port_uplink` | Ports jedes erreichbaren Switches oder Gateways (Nur-Lese-Konto, `port_table`); `port_up` fehlt bei einem deaktivierten Port | `device`, `mac`, `port` (Nummer an der Front), `port_name` |
+| `port_poe_enabled`, `port_poe_watts` | PoE jedes Ports | dieselben |
+| `port_rx_bytes_total`, `port_tx_bytes_total`, `port_rx_errors_total`, `port_tx_errors_total` | Zähler pro Port, vom Switch-Panel gezeichnet | dieselben |
+| `port_neighbor_info` | Wert 1, LLDP-Nachbar des Ports (`lldp_table`) | dieselben, `remote_chassis`, `remote_port` |
 
 Die zutreffenden [integrierten Regeln](../alerting/rules.md#unifi-network): UniFi-Gerät offline,
 UniFi-Internet ausgefallen, UniFi-WAN-Verbindung ausgefallen, UniFi-Gateway-CPU hoch,

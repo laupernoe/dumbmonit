@@ -222,6 +222,10 @@ snmp_profiles:
       - name: acme_ups_battery_percent   # muss mit dem Paket-Präfix beginnen
         oid: 1.3.6.1.4.1.99999.1.1.0
         kind: gauge
+        label: Akkuladung                 # optional, auf der Geräteseite gezeigt
+        unit: "%"                         # optional: %, s, B, °C, bool…
+        view: timeseries                  # optional: stat, timeseries, topn oder heatmap
+        view_title: Akku                  # Metriken mit gleicher Ansicht und gleichem Titel teilen ein Diagramm
 ```
 
 Der SNMP-Katalog wird beim Start gelesen: Starten Sie DumbMonit nach

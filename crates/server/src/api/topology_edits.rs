@@ -560,6 +560,7 @@ pub fn apply(
             rule_id: None,
             from_port: None,
             to_port: None,
+            traffic: None,
         });
     }
 
@@ -595,6 +596,7 @@ pub fn apply(
             rule_id: None,
             from_port: None,
             to_port: None,
+            traffic: None,
         });
     }
 
@@ -623,6 +625,7 @@ pub fn apply(
                 rule_id: Some(rule.id),
                 from_port: None,
                 to_port: None,
+                traffic: None,
             });
             ruled.insert(id);
             *matches.entry(rule.id).or_default() += 1;

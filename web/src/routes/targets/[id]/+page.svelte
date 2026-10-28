@@ -17,12 +17,16 @@
 		ApiError,
 		deleteTarget,
 		getTarget,
+		listAlertHistory,
+		listAlertRules,
 		listAlerts,
 		listCollectors,
 		probeTarget,
 		queryInstant,
 		updateTarget,
 		type Alert,
+		type AlertRule,
+		type AlertHistoryEntry,
 		type CollectorInfo,
 		type ProbeReport,
 		type Target,
@@ -44,6 +48,7 @@
 	import {
 		HISTORY_SLOTS,
 		loadProbeStatuses,
+		loadResponseTimesWindow,
 		loadHttpPhases,
 		loadResponseTimes,
 		PHASE_TOKENS,
@@ -55,6 +60,7 @@
 		type UptimeSummary
 	} from '#lib/metrics.js';
 	import Chart, { type Serie } from '#lib/components/Chart.svelte';
+	import { eventsFromHistory, thresholdsFor } from '#lib/chart-context.js';
 	import Readout from '#lib/components/Readout.svelte';
 	import Figure from '#lib/components/devices/Figure.svelte';
 	import Segmented from '#lib/components/devices/Segmented.svelte';
@@ -67,6 +73,7 @@
 	import { countAlertsByTarget } from '#lib/alerts-attention.js';
 	import SecurityBadge from '#lib/components/devices/SecurityBadge.svelte';
 	import CveDeviceCard from '#lib/components/cves/CveDeviceCard.svelte';
+	import MachineHealthCard from '#lib/components/devices/agent/MachineHealthCard.svelte';
 	import TargetRemediation from '#lib/components/remediation/TargetRemediation.svelte';
 	import SecurityReport from '#lib/components/devices/SecurityReport.svelte';
 	import { getTargetSecurity } from '#lib/api/security.js';
@@ -78,11 +85,14 @@
 		isVirtualInterface,
 		lastValue,
 		loadDeviceMetrics,
+		loadDeviceMetricsWindow,
 		sectionize,
 		steadyValue,
 		type DeviceMetricGroup,
 		type MetricRow
 	} from '#lib/components/devices/metrics.js';
+	import { catalogLayout, ratedFamilies, withCatalogUnits } from '#lib/components/devices/catalog.js';
+	import CatalogViews from '#lib/components/devices/CatalogViews.svelte';
 	import SilenceControl from '#lib/components/devices/SilenceControl.svelte';
 	import ManagedNotice from '#lib/components/devices/ManagedNotice.svelte';
 	import { auth } from '#lib/stores/auth.svelte.js';
@@ -90,6 +100,7 @@
 	import DockerPanel from '#lib/components/devices/docker/DockerPanel.svelte';
 	import DockerStrip from '#lib/components/devices/docker/DockerStrip.svelte';
 	import { isDockerDevice } from '#lib/components/devices/agent/services.js';
+	import TargetDeadlines from '#lib/components/deadlines/TargetDeadlines.svelte';
 	import {
 		Button,
 		Confirm,
@@ -242,15 +253,23 @@
 	let loadingMetrics = $state(true);
 	let metricsError = $state<unknown>(null);
 
-	const sections = $derived(sectionize(groups));
+	/** Counters the kind's catalogue charts: asked as rates, reloaded once the catalogue arrives. */
+	const rated = $derived(ratedFamilies(collector));
+	const ratedKey = $derived(rated.join(','));
+	/** Families with the catalogue's units and labels; its views, when the kind declares some. */
+	const shown = $derived(withCatalogUnits(groups, collector));
+	const sections = $derived(sectionize(shown));
+	const layout = $derived(catalogLayout(shown, collector));
+	/** The fold under the charts: everything else, or every family when the catalogue picked the charts. */
+	const tail = $derived(layout ? sections.rest : sections.other);
 
 	/** Interface rows unfolded by the user; the search over the long tail. */
 	let openInterfaces = $state<Record<string, boolean>>({});
 	let otherQuery = $state('');
 	const otherShown = $derived.by(() => {
 		const q = otherQuery.trim().toLowerCase();
-		if (!q) return sections.other;
-		return sections.other.filter(
+		if (!q) return tail;
+		return tail.filter(
 			(g) => g.name.toLowerCase().includes(q) || g.title.toLowerCase().includes(q)
 		);
 	});
@@ -313,6 +332,45 @@
 	// --- Alerts on this device -----------------------------------------------
 
 	let alerts = $state<Alert[]>([]);
+
+	// Context laid over this page's charts: rule thresholds and alert transitions.
+	let chartRules = $state.raw<AlertRule[]>([]);
+	let chartHistory = $state.raw<AlertHistoryEntry[]>([]);
+	const chartEvents = $derived(eventsFromHistory(chartHistory, chartRules, id));
+	/** One cursor for every chart of this device page. */
+	const syncKey = $derived(`target-${id}`);
+	const thresholdsOf = (metric: string, unit: string, scale = 1) =>
+		thresholdsFor(chartRules, id, metric, unit, scale);
+	/** One query serves every chart that asks for last week's window (5 min buckets). */
+	let previousCache: { key: string; groups: Promise<DeviceMetricGroup[]> } | null = null;
+	const previousOf = (metric: string) => async (window: { start: number; end: number }) => {
+		const key = `${id}|${Math.floor(window.start / 300)}|${Math.floor(window.end / 300)}`;
+		if (previousCache?.key !== key) {
+			const groups = loadDeviceMetricsWindow(id, window);
+			groups.catch(() => {
+				if (previousCache?.groups === groups) previousCache = null;
+			});
+			previousCache = { key, groups };
+		}
+		return (await previousCache.groups).find((g) => g.name === metric)?.series ?? [];
+	};
+	const previousResponse = (window: { start: number; end: number }) => loadResponseTimesWindow(id, window);
+
+	$effect(() => {
+		const targetId = id;
+		const seconds = rangeSeconds;
+		const controller = new AbortController();
+		const since = new Date(Date.now() - seconds * 1000).toISOString();
+		void Promise.all([
+			listAlertRules(controller.signal).catch(() => null),
+			listAlertHistory({ since, limit: 500 }, controller.signal).catch(() => null)
+		]).then(([rules, history]) => {
+			if (controller.signal.aborted || targetId !== id) return;
+			if (rules) chartRules = rules;
+			if (history) chartHistory = history;
+		});
+		return () => controller.abort();
+	});
 	/** Bell in the header: this monitor's active alerts, counted like the list does. */
 	const headerAlertCounts = $derived(countAlertsByTarget(alerts).get(id));
 	/** Bumped on each 30 s refresh so the timeline and the silence plate follow. */
@@ -460,7 +518,7 @@
 	async function loadMetrics(signal?: AbortSignal) {
 		metricsError = null;
 		try {
-			groups = await loadDeviceMetrics(id, rangeSeconds, signal);
+			groups = await loadDeviceMetrics(id, rangeSeconds, signal, rated);
 		} catch (cause) {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
 			metricsError = cause;
@@ -533,6 +591,7 @@
 	// Instruments need the kind (service or device) and follow the range.
 	$effect(() => {
 		void rangeSeconds;
+		void ratedKey;
 		const kind = target?.kind;
 		if (!kind) return;
 		const controller = new AbortController();
@@ -782,7 +841,17 @@
 		<ProbeLocationsCard targetId={target.id} {refreshKey} />
 	{/if}
 
+	<!-- What makes a machine slow, at a glance (agent hosts only) -->
+	{#if target.kind === 'agent'}
+		{#key target.id}
+			<MachineHealthCard {target} {refreshKey} />
+		{/key}
+	{/if}
+
 	<CveDeviceCard targetId={target.id} />
+
+	<!-- Expiry dates this monitor reports (certificates, domain, licences…); absent when it has none. -->
+	<TargetDeadlines target={target.id} class="mt-6" />
 
 	<!-- Containers at a glance, with the fleet-wide policies; the list itself sits with the metrics.
 	     Docker is a device of its own under the machine whose agent found it. -->
@@ -866,7 +935,7 @@
 				<Panel title={m.devices_target_response_time()} class="mt-4">
 					{#snippet aside()}<span class="label-tape label-tape-unit">ms</span>{/snippet}
 					{#if responseTimes.length > 0}
-						<Chart series={responseTimes} unit="ms" height={220} />
+						<Chart series={responseTimes} unit="ms" height={220} {syncKey} events={chartEvents} thresholds={thresholdsOf('dumbmonit_probe_duration_seconds', 'ms', 1000)} loadPrevious={previousResponse} />
 					{:else}
 						<EmptyState title={m.devices_target_no_check_title()} description={target.enabled ? m.devices_target_no_check_desc() : m.devices_target_disabled_empty()}>
 							{#snippet action()}
@@ -881,7 +950,7 @@
 				{#if phaseTimes.length > 0}
 					<Panel title={m.monitor_phases_title()} description={m.monitor_phases_desc()} class="mt-4">
 						{#snippet aside()}<span class="label-tape label-tape-unit">ms</span>{/snippet}
-						<Chart series={phaseTimes} unit="ms" height={220} stacked colorTokens={[...PHASE_TOKENS]} />
+						<Chart series={phaseTimes} unit="ms" height={220} stacked colorTokens={[...PHASE_TOKENS]} {syncKey} events={chartEvents} />
 						<div class="mt-4 border-t border-line pt-4">
 							<PhaseBreakdown series={phaseTimes} />
 						</div>
@@ -904,8 +973,13 @@
 			</EmptyState>
 		{:else}
 			<div class="flex flex-col gap-4">
-				<!-- Essentials: the handful of charts that answer "is it fine?" -->
-				{#if sections.essentials.length > 0}
+				<!-- Essentials: the handful of charts that answer "is it fine?" — the ones the
+				     kind's catalogue declares, or the generic cpu / memory / disk / network -->
+				{#if layout}
+					<FoldSection kind="essentials" title={m.devices_target_essentials()} defaultOpen summary={layout.charts.length === 1 ? m.devices_target_charts_one({ count: 1 }) : m.devices_target_charts_other({ count: layout.charts.length })} class="rise-in">
+						<CatalogViews {layout} />
+					</FoldSection>
+				{:else if sections.essentials.length > 0}
 					<FoldSection kind="essentials" title={m.devices_target_essentials()} defaultOpen summary={sections.essentials.length === 1 ? m.devices_target_charts_one({ count: 1 }) : m.devices_target_charts_other({ count: sections.essentials.length })} class="rise-in">
 						<div class="grid gap-4 px-4 py-4 sm:px-5 lg:grid-cols-2">
 							{#each sections.essentials as group, i (group.name)}
@@ -914,7 +988,7 @@
 										<h3 class="text-sm font-semibold text-ink">{group.title}</h3>
 										{#if group.unit}<span class="label-tape label-tape-unit">{group.unit}</span>{/if}
 									</div>
-									<Chart series={group.series} unit={group.unit} height={200} />
+									<Chart series={group.series} unit={group.unit} height={200} {syncKey} events={chartEvents} thresholds={thresholdsOf(group.name, group.unit)} loadPrevious={previousOf(group.name)} />
 								</div>
 							{/each}
 						</div>
@@ -953,7 +1027,7 @@
 													<span class="text-sm font-semibold text-ink">{chart.title}</span>
 													{#if chart.unit}<span class="label-tape label-tape-unit">{chart.unit}</span>{/if}
 												</div>
-												<Chart series={chart.series} unit={chart.unit} height={140} />
+												<Chart series={chart.series} unit={chart.unit} height={140} pair={chart.series.length === 2 && chart.series[0].label === m.devices_metrics_in() && chart.series[1].label === m.devices_metrics_out()} {syncKey} events={chartEvents} thresholds={thresholdsOf(chart.name, chart.unit)} />
 											</div>
 										{/each}
 									</div>
@@ -964,12 +1038,12 @@
 				{/if}
 
 				<!-- The long tail, alphabetical, searchable -->
-				{#if sections.other.length > 0}
+				{#if tail.length > 0}
 					<FoldSection
-						kind="other"
-						title={m.devices_target_everything_else()}
-						defaultOpen={sections.essentials.length === 0}
-						summary={otherQuery.trim() ? m.devices_target_families_filtered({ shown: otherShown.length, total: sections.other.length }) : sections.other.length === 1 ? m.devices_target_families_one({ count: 1 }) : m.devices_target_families_other({ count: sections.other.length })}
+						kind={layout ? 'all-measurements' : 'other'}
+						title={layout ? m.devices_target_all_measurements() : m.devices_target_everything_else()}
+						defaultOpen={!layout && sections.essentials.length === 0}
+						summary={otherQuery.trim() ? m.devices_target_families_filtered({ shown: otherShown.length, total: tail.length }) : tail.length === 1 ? m.devices_target_families_one({ count: 1 }) : m.devices_target_families_other({ count: tail.length })}
 						class="rise-in"
 					>
 						{#snippet aside()}
@@ -990,7 +1064,7 @@
 												<h3 class="text-sm font-semibold text-ink" title={group.name}>{group.title}</h3>
 												{#if group.unit}<span class="label-tape label-tape-unit">{group.unit}</span>{/if}
 											</div>
-											<Chart series={group.series} unit={group.unit} height={180} />
+											<Chart series={group.series} unit={group.unit} height={180} {syncKey} events={chartEvents} thresholds={thresholdsOf(group.name, group.unit)} loadPrevious={previousOf(group.name)} />
 										</div>
 									{/each}
 								</div>

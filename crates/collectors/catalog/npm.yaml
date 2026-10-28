@@ -1,0 +1,24 @@
+# Mesures et vues du type « npm » (format : crates/collectors/src/catalog.rs).
+source: npm
+prefixes: [npm_]
+metrics:
+  - { name: npm_version_info, label: "Version", kind: info }
+  - { name: npm_hosts, label: "Hosts" }
+  - { name: npm_hosts_enabled, label: "Hosts enabled" }
+  - { name: npm_hosts_disabled, label: "Hosts disabled" }
+  - { name: npm_hosts_offline, label: "Hosts offline", better: "lower" }
+  - { name: npm_host_online, label: "Host online", unit: "bool" }
+  - { name: npm_host_error_info, label: "Host error", kind: info }
+  - { name: npm_certificates_read, label: "Certificates read", unit: "bool" }
+  - { name: npm_certificates_checked, label: "Certificates checked" }
+  - { name: npm_cert_expiry_days, label: "Cert expiry days", unit: "days" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - npm_hosts_offline
+      - npm_cert_expiry_days
+      - npm_hosts
+      - npm_hosts_enabled
+      - npm_hosts_disabled
+      - npm_host_online

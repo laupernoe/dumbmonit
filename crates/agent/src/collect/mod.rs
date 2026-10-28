@@ -14,11 +14,13 @@
 pub mod backup_repos;
 pub mod docker;
 pub mod docker_labels;
+pub mod docker_stats;
 pub mod eventlog;
 pub mod filter;
 pub mod inventory;
 pub mod ipsec;
 pub mod libvirt;
+pub mod machine;
 pub mod mail_server;
 pub mod perf_counters;
 pub mod plakar;
@@ -39,10 +41,11 @@ use sysinfo::{
 };
 
 use crate::collect::backup_repos::BackupReposReport;
-use crate::collect::docker::ContainerInventory;
+use crate::collect::docker::{ContainerInventory, ContainerStat, ContainerUsage};
 use crate::collect::filter::NameFilter;
 use crate::collect::ipsec::IpsecReport;
 use crate::collect::libvirt::LibvirtReport;
+use crate::collect::machine::MachineStat;
 use crate::collect::mail_server::MailServerReport;
 use crate::collect::perf_counters::PerfReport;
 use crate::collect::plakar::PlakarReport;
@@ -269,6 +272,9 @@ pub struct Snapshot {
     /// Domaines KVM et pools libvirt. `None` : pas de `virsh` sur cette machine,
     /// ou première lecture en cours.
     pub libvirt: Option<LibvirtReport>,
+    /// Causes de lenteur : top processus, PSI, inodes, horloge, OOM kills (Linux
+    /// seulement). `None` : rien de lisible ici.
+    pub machine: Option<MachineStat>,
 }
 
 impl Snapshot {
@@ -291,6 +297,9 @@ impl Snapshot {
         }
         if let Some(health) = &self.system_health {
             samples.extend(system_health::samples(health, now_ms));
+        }
+        if let Some(machine) = &self.machine {
+            samples.extend(machine::samples(machine, now_ms));
         }
         if let Some(backups) = &self.backups {
             samples.extend(plakar::samples(backups, now_ms));
@@ -492,6 +501,9 @@ pub fn container_samples(inventory: &ContainerInventory, now_ms: i64) -> Vec<Sam
             None => -1.0,
         };
         samples.push(labelled(gauge("container_update_available", update, now_ms)));
+        if let Some(usage) = &container.usage {
+            samples.extend(usage_samples(container, usage, now_ms).into_iter().map(labelled));
+        }
         // Seulement à l'arrêt : 1 quand l'arrêt est voulu (conteneur ponctuel
         // terminé), 0 sinon. La règle « Container stopped » écarte les premiers.
         if !container.running {
@@ -501,6 +513,42 @@ pub fn container_samples(inventory: &ContainerInventory, now_ms: i64) -> Vec<Sam
                 now_ms,
             )));
         }
+    }
+    if let Some(disk) = &inventory.disk {
+        for (metric, bytes) in [
+            ("container_df_images_bytes", disk.images_bytes),
+            ("container_df_containers_bytes", disk.containers_bytes),
+            ("container_df_volumes_bytes", disk.volumes_bytes),
+            ("container_df_build_cache_bytes", disk.build_cache_bytes),
+            ("container_df_reclaimable_bytes", disk.reclaimable_bytes),
+        ] {
+            samples.push(gauge(metric, bytes as f64, now_ms));
+        }
+    }
+    samples
+}
+
+/// Consommation d'un conteneur en marche. Sans étiquette : l'appelant pose
+/// `container` et `image`. Réseau et E/S de bloc sont des compteurs cumulés
+/// (le serveur en tire un débit) ; le CPU est un pourcentage de cœur, donc 100
+/// pour un cœur plein et davantage sur plusieurs ; la mémoire exclut le cache.
+fn usage_samples(container: &ContainerStat, usage: &ContainerUsage, now_ms: i64) -> Vec<Sample> {
+    let mut samples = vec![gauge("container_memory_bytes", usage.memory_bytes as f64, now_ms)];
+    if let Some(centi) = usage.cpu_centipercent {
+        samples.push(gauge("container_cpu_percent", centi as f64 / 100.0, now_ms));
+    }
+    // Sans limite, « pourcentage de la limite » n'aurait pas de sens : le
+    // conteneur est alors borné par la machine, que `memory_*` de l'hôte dit déjà.
+    if let Some(limit) = container.memory_limit_bytes {
+        samples.push(gauge("container_memory_limit_bytes", limit as f64, now_ms));
+        samples.push(gauge("container_memory_percent", percent(usage.memory_bytes, limit), now_ms));
+    }
+    samples.push(counter("container_net_rx_bytes", usage.net_rx_bytes, now_ms));
+    samples.push(counter("container_net_tx_bytes", usage.net_tx_bytes, now_ms));
+    samples.push(counter("container_block_read_bytes", usage.block_read_bytes, now_ms));
+    samples.push(counter("container_block_write_bytes", usage.block_write_bytes, now_ms));
+    if let Some(pids) = usage.pids {
+        samples.push(gauge("container_pids", pids as f64, now_ms));
     }
     samples
 }
@@ -604,6 +652,7 @@ impl SystemProbe {
             speedtest: None,
             backup_repos: None,
             libvirt: None,
+            machine: None,
         }
     }
 
@@ -1054,6 +1103,70 @@ mod tests {
     }
 
     #[test]
+    fn container_usage_and_docker_disk_become_series() {
+        use crate::collect::docker_stats::DiskUsage;
+        let usage = ContainerUsage {
+            cpu_centipercent: Some(12_550),
+            memory_bytes: 250,
+            net_rx_bytes: 7,
+            net_tx_bytes: 8,
+            block_read_bytes: 9,
+            block_write_bytes: 10,
+            pids: Some(3),
+        };
+        let running = ContainerStat {
+            name: "web".into(),
+            image: "web:1".into(),
+            running: true,
+            memory_limit_bytes: Some(1_000),
+            usage: Some(usage.clone()),
+            ..ContainerStat::default()
+        };
+        let unlimited = ContainerStat {
+            name: "db".into(),
+            image: "db:1".into(),
+            running: true,
+            usage: Some(ContainerUsage { cpu_centipercent: None, pids: None, ..usage }),
+            ..ContainerStat::default()
+        };
+        let mut inventory = ContainerInventory::new(vec![running, unlimited], 200);
+        inventory.disk = Some(DiskUsage {
+            images_bytes: 1,
+            containers_bytes: 2,
+            volumes_bytes: 3,
+            build_cache_bytes: 4,
+            reclaimable_bytes: 5,
+        });
+        let samples = container_samples(&inventory, 0);
+        let web = r#"{container="web",image="web:1"}"#;
+        assert_eq!(value_of(&samples, &format!("container_cpu_percent{web}")), Some(125.5));
+        assert_eq!(value_of(&samples, &format!("container_memory_bytes{web}")), Some(250.0));
+        let limit_key = format!("container_memory_limit_bytes{web}");
+        assert_eq!(value_of(&samples, &limit_key), Some(1_000.0));
+        assert_eq!(value_of(&samples, &format!("container_memory_percent{web}")), Some(25.0));
+        assert_eq!(value_of(&samples, &format!("container_net_rx_bytes{web}")), Some(7.0));
+        assert_eq!(value_of(&samples, &format!("container_block_write_bytes{web}")), Some(10.0));
+        assert_eq!(value_of(&samples, &format!("container_pids{web}")), Some(3.0));
+        // Sans limite ni premier relevé : pas de série plutôt qu'un zéro trompeur.
+        let db = r#"{container="db",image="db:1"}"#;
+        assert_eq!(value_of(&samples, &format!("container_memory_bytes{db}")), Some(250.0));
+        for absent in ["container_cpu_percent", "container_memory_percent", "container_pids"] {
+            assert_eq!(value_of(&samples, &format!("{absent}{db}")), None, "{absent}");
+        }
+        for (metric, kind) in [
+            ("container_net_rx_bytes", MetricKind::Counter),
+            ("container_block_read_bytes", MetricKind::Counter),
+            ("container_memory_bytes", MetricKind::Gauge),
+            ("container_cpu_percent", MetricKind::Gauge),
+        ] {
+            let sample = samples.iter().find(|s| s.metric == metric).unwrap();
+            assert_eq!(sample.kind, kind, "{metric}");
+        }
+        assert_eq!(value_of(&samples, "container_df_images_bytes"), Some(1.0));
+        assert_eq!(value_of(&samples, "container_df_reclaimable_bytes"), Some(5.0));
+    }
+
+    #[test]
     fn beyond_the_cap_containers_are_counted_but_not_detailed() {
         let containers: Vec<ContainerStat> = (0..5)
             .map(|i| ContainerStat {
@@ -1224,6 +1337,7 @@ mod tests {
                     available_bytes: Some(60),
                 }],
             }),
+            machine: Some(MachineStat { oom_kills: Some(1), ..MachineStat::default() }),
         };
 
         let samples = snapshot.to_samples(1_700_000_000_000);
@@ -1259,6 +1373,7 @@ mod tests {
             "agent_libvirt_domains",
             "agent_libvirt_domain_running",
             "agent_libvirt_pool_active",
+            "agent_oom_kills_total",
         ] {
             assert!(samples.iter().any(|s| s.metric == family), "famille absente : {family}");
         }

@@ -35,11 +35,11 @@ export const KUMA_DB_MAX_BYTES = 512 * 1024 * 1024;
  * Import of an Uptime Kuma 1.x backup (the parsed JSON file). `dryRun` previews only;
  * `rows` (row numbers of the preview) limits the import to the ticked ones.
  */
-export function importKuma(backup: unknown, dryRun: boolean, rows?: number[]): Promise<KumaImportReport> {
+export function importKuma(backup: unknown, dryRun: boolean, rows?: number[], viaAgent?: number | null): Promise<KumaImportReport> {
 	return request<KumaImportReport>('/targets/import/kuma', {
 		method: 'POST',
 		body: backup,
-		query: { dry_run: dryRun ? true : undefined, rows: rowsParam(rows) }
+		query: { dry_run: dryRun ? true : undefined, rows: rowsParam(rows), via_agent: viaAgent ?? undefined }
 	});
 }
 
@@ -47,11 +47,11 @@ export function importKuma(backup: unknown, dryRun: boolean, rows?: number[]): P
  * Import of an Uptime Kuma 1.x or 2.x database (`data/kuma.db`, uploaded as is). Preview and
  * import read the same file and number the rows the same way, so `rows` can be the ticked ones.
  */
-export function importKumaDb(file: File, dryRun: boolean, rows?: number[]): Promise<KumaImportReport> {
+export function importKumaDb(file: File, dryRun: boolean, rows?: number[], viaAgent?: number | null): Promise<KumaImportReport> {
 	return request<KumaImportReport>('/targets/import/kuma-db', {
 		method: 'POST',
 		body: file,
-		query: { dry_run: dryRun ? true : undefined, rows: rowsParam(rows) }
+		query: { dry_run: dryRun ? true : undefined, rows: rowsParam(rows), via_agent: viaAgent ?? undefined }
 	});
 }
 
@@ -70,7 +70,8 @@ export type ServiceImport =
 /** Largest CSV/YAML accepted by the server. */
 export const SERVICE_IMPORT_MAX_BYTES = 4 * 1024 * 1024;
 
-export function importFromService(source: ServiceImport, dryRun: boolean, rows?: number[]): Promise<KumaImportReport> {
+/** `viaAgent`: a relay agent that probes the imported monitors (a remote site); ignored for kinds it cannot probe. */
+export function importFromService(source: ServiceImport, dryRun: boolean, rows?: number[], viaAgent?: number | null): Promise<KumaImportReport> {
 	let body: Record<string, unknown>;
 	if (source.provider === 'gatus') body = { yaml: source.yaml };
 	else if (source.provider === 'healthchecks') body = { api_key: source.apiKey, base_url: source.baseUrl || undefined };
@@ -78,6 +79,6 @@ export function importFromService(source: ServiceImport, dryRun: boolean, rows?:
 	return request<KumaImportReport>(`/targets/import/${source.provider}`, {
 		method: 'POST',
 		body,
-		query: { dry_run: dryRun ? true : undefined, rows: rowsParam(rows) }
+		query: { dry_run: dryRun ? true : undefined, rows: rowsParam(rows), via_agent: viaAgent ?? undefined }
 	});
 }

@@ -1,0 +1,39 @@
+# Mesures et vues du type « victorialogs » (format : crates/collectors/src/catalog.rs).
+source: observability
+prefixes: [victorialogs_]
+metrics:
+  - { name: victorialogs_healthy, label: "Healthy", unit: "bool" }
+  - { name: victorialogs_version_info, label: "Version", kind: info }
+  - { name: victorialogs_uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: victorialogs_bytes_ingested_total, label: "Bytes ingested", unit: "B", kind: counter }
+  - { name: victorialogs_rows_ingested_total, label: "Rows ingested", kind: counter }
+  - { name: victorialogs_data_size_bytes, label: "Data size", unit: "B" }
+  - { name: victorialogs_disk_free_bytes, label: "Disk free", unit: "B", better: "higher" }
+  - { name: victorialogs_disk_total_bytes, label: "Disk total", unit: "B" }
+  - { name: victorialogs_disk_free_limit_bytes, label: "Disk free limit", unit: "B" }
+  - { name: victorialogs_disk_headroom_percent, label: "Disk headroom", unit: "%", better: "higher", min: 0, max: 100 }
+  - { name: victorialogs_http_errors_total, label: "HTTP errors", kind: counter, better: "lower" }
+  - { name: victorialogs_log_errors_total, label: "Log errors", kind: counter, better: "lower" }
+  - { name: victorialogs_memory_resident_bytes, label: "Memory resident", unit: "B" }
+  - { name: victorialogs_read_only, label: "Read only", unit: "bool" }
+  - { name: victorialogs_rows_rejected_total, label: "Rows rejected", kind: counter, better: "lower" }
+  - { name: victorialogs_rows_rejected_reason_total, label: "Rows rejected reason", kind: counter }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - victorialogs_read_only
+      - victorialogs_data_size_bytes
+      - victorialogs_healthy
+      - victorialogs_uptime_seconds
+      - victorialogs_http_errors_total
+      - victorialogs_log_errors_total
+      - victorialogs_memory_resident_bytes
+      - victorialogs_rows_rejected_total
+      - victorialogs_rows_rejected_reason_total
+  - view: timeseries
+    title: "Ingestion"
+    metrics: [victorialogs_bytes_ingested_total]
+  - view: timeseries
+    title: "Disk headroom"
+    metrics: [victorialogs_disk_headroom_percent]

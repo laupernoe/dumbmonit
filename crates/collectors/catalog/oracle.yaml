@@ -1,0 +1,26 @@
+# Mesures et vues du type « oracle » (format : crates/collectors/src/catalog.rs).
+source: oracle
+prefixes: [oracle_]
+metrics:
+  - { name: oracle_version_info, label: "Version", kind: info }
+  - { name: oracle_database_info, label: "Database", kind: info }
+  - { name: oracle_uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: oracle_instance_open, label: "Instance open", unit: "bool" }
+  - { name: oracle_tablespace_used_percent, label: "Tablespace used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: oracle_recovery_area_used_percent, label: "Recovery area used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: oracle_scheduler_jobs_failed_24h, label: "Scheduler jobs failed 24 h" }
+  - { name: oracle_dataguard_transport_lag_seconds, label: "Dataguard transport lag", unit: "s", better: "lower" }
+  - { name: oracle_dataguard_apply_lag_seconds, label: "Dataguard apply lag", unit: "s", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - oracle_instance_open
+      - oracle_scheduler_jobs_failed_24h
+      - oracle_uptime_seconds
+  - view: timeseries
+    title: "Storage used"
+    metrics: [oracle_tablespace_used_percent, oracle_recovery_area_used_percent]
+  - view: timeseries
+    title: "Data Guard lag"
+    metrics: [oracle_dataguard_transport_lag_seconds, oracle_dataguard_apply_lag_seconds]

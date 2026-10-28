@@ -291,7 +291,8 @@ async fn other_hosts_keep_the_whole_instance() {
         let reply = on_host(&app, "GET", "/api/auth/status", host, None, None, None).await;
         assert_eq!(reply.status, StatusCode::OK, "{host:?}");
         let root = on_host(&app, "GET", "/", host, None, None, None).await;
-        assert!(!root.text.contains("dumbmonit-status-page"), "{host:?}");
+        // La balise que le serveur injecte, pas le script de `app.html` qui la cherche.
+        assert!(!root.text.contains("<meta name=\"dumbmonit-status-page\""), "{host:?}");
     }
 
     // `X-Forwarded-Host` d'un client qui n'est pas un mandataire de confiance :

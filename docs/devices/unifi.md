@@ -68,6 +68,10 @@ name, or its MAC address when it has none), `mac`, `model` and `type`
 | `clients_by_type` | `wireless`, `wired`, `guest`, `vpn` (View Only account) | `type` |
 | `alarms` | critical system log entries of the last 24 hours, or unarchived alarms | |
 | `scrape_errors` | calls that failed on the last probe | |
+| `port_enabled`, `port_up`, `port_speed_bps`, `port_full_duplex`, `port_uplink` | ports of each online switch or gateway (View Only account, `port_table`); `port_up` is absent for a disabled port | `device`, `mac`, `port` (front-panel number), `port_name` |
+| `port_poe_enabled`, `port_poe_watts` | PoE of each port | same |
+| `port_rx_bytes_total`, `port_tx_bytes_total`, `port_rx_errors_total`, `port_tx_errors_total` | per-port counters, drawn by the switch panel | same |
+| `port_neighbor_info` | value 1, LLDP neighbour of the port (`lldp_table`) | same, `remote_chassis`, `remote_port` |
 
 The [built-in rules](../alerting/rules.md#unifi-network) that apply: UniFi
 device offline, UniFi Internet down, UniFi WAN link down, UniFi gateway CPU

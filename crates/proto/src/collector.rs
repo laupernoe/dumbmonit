@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::{Fingerprint, KindDescription, Sample, Target};
+use crate::{Fingerprint, KindDescription, Measures, Sample, Target};
 
 /// Ce qui peut mal se passer pendant une interrogation.
 ///
@@ -54,6 +54,14 @@ pub trait Collector: Send + Sync {
     /// `None` ; un collecteur que ces tables ignorent se décrit ici. Le serveur
     /// y remplace `kind` par [`Collector::kind`].
     fn description(&self) -> Option<KindDescription> {
+        None
+    }
+
+    /// Familles de mesures et vues recommandées pour `kind`, quand elles ne
+    /// s'écrivent pas une fois pour toutes dans `crates/collectors/catalog/` : les
+    /// profils SNMP actifs, par exemple. `None` par défaut : le registre retombe
+    /// sur le catalogue embarqué.
+    fn measures(&self, _kind: &str) -> Option<Measures> {
         None
     }
 

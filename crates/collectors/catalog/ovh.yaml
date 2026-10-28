@@ -1,0 +1,32 @@
+# Mesures et vues du type « ovh » (format : crates/collectors/src/catalog.rs).
+source: ovh
+prefixes: [ovh_]
+metrics:
+  - { name: ovh_vps_info, label: "Vps", kind: info }
+  - { name: ovh_vps_up, label: "Vps up", unit: "bool" }
+  - { name: ovh_vps_tasks_active, label: "Vps tasks active" }
+  - { name: ovh_vps_readable, label: "Vps readable", unit: "bool" }
+  - { name: ovh_dedicated_info, label: "Dedicated", kind: info }
+  - { name: ovh_dedicated_up, label: "Dedicated up", unit: "bool" }
+  - { name: ovh_dedicated_monitoring, label: "Dedicated monitoring", unit: "bool" }
+  - { name: ovh_dedicated_readable, label: "Dedicated readable", unit: "bool" }
+  - { name: ovh_dedicated_tasks_active, label: "Dedicated tasks active" }
+  - { name: ovh_tasks_active, label: "Tasks active" }
+  - { name: ovh_tasks_readable, label: "Tasks readable", unit: "bool" }
+  - { name: ovh_servers, label: "Servers" }
+  - { name: ovh_servers_down, label: "Servers down", better: "lower" }
+  - { name: ovh_item_ok, label: "Item ok", unit: "bool" }
+  - { name: ovh_figure, label: "Figure" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - ovh_servers_down
+      - ovh_servers
+      - ovh_tasks_active
+      - ovh_vps_up
+      - ovh_vps_tasks_active
+      - ovh_dedicated_up
+      - ovh_dedicated_tasks_active
+      - ovh_item_ok
+      - ovh_figure

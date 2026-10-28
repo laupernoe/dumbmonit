@@ -14,10 +14,12 @@
 	import type { Target } from '#lib/api/index.js';
 	import { fetchAgentChecksums, unixSha256Argument } from '#lib/api/agent_files.js';
 	import { formatDuration, formatRelative } from '#lib/format.js';
-	import { Button, Confirm, CopyBlock, ErrorNotice, Led, Plate, Skeleton, Toggle, type Tone } from '#lib/ui/index.js';
+	import { Button, Confirm, CopyBlock, ErrorNotice, Led, Plate, SelectionBar, Skeleton, Toggle, type Tone } from '#lib/ui/index.js';
 	import Chart from '#lib/components/Chart.svelte';
+	import { CapacityBar, TopN } from '#lib/viz/index.js';
 	import FoldSection from '../FoldSection.svelte';
 	import FoldRow from '../FoldRow.svelte';
+	import Segmented from '../Segmented.svelte';
 	import type { DeviceMetricGroup } from '../metrics';
 	import {
 		cancelCommand,
@@ -29,8 +31,11 @@
 		type CommandStatus,
 		type CommandView,
 		type ContainerPolicy,
+		formatBytes,
 		type ContainerView
 	} from './api';
+	import UsageMeters from './UsageMeters.svelte';
+	import { isCrashLooping, memoryRatio, topBy } from './usage';
 	import { fleetFor } from './fleet.svelte';
 	import { agentHostOf } from '#lib/components/devices/agent/services.js';
 
@@ -63,6 +68,7 @@
 		const total = fleet.containers.length;
 		const parts = [`${total}`, m.devices_docker_running({ count: fleet.running })];
 		if (fleet.running < total) parts.push(m.devices_docker_stopped_n({ count: total - fleet.running }));
+		if (looping.length > 0) parts.push(m.devices_docker_crashloop_n({ count: looping.length }));
 		if (fleet.updates > 0) {
 			parts.push(
 				fleet.updates === 1
@@ -77,6 +83,8 @@
 	function statusLine(c: ContainerView): string {
 		const parts: string[] = [];
 		if (c.up && c.uptime_seconds !== null) parts.push(m.devices_docker_up_for({ duration: formatDuration(c.uptime_seconds) }));
+		if (c.policy.auto_update) parts.push(m.devices_docker_bulk_tag_auto_update());
+		if (c.policy.auto_restart) parts.push(m.devices_docker_bulk_tag_auto_restart());
 		parts.push(
 			c.restart_count === 1
 				? m.devices_docker_restarts_one({ count: c.restart_count })
@@ -84,6 +92,106 @@
 		);
 		if (c.image_age_seconds !== null) parts.push(m.devices_docker_image_old({ duration: formatDuration(c.image_age_seconds) }));
 		return parts.join(' · ');
+	}
+
+	// --- Consumption ---------------------------------------------------------------
+
+	const topCpu = $derived(topBy(fleet.containers, 'cpu_percent'));
+	const topMemory = $derived(topBy(fleet.containers, 'memory_bytes'));
+	/** The rankings only earn their place once there is something to rank. */
+	const showTop = $derived(topCpu.length >= 2 || topMemory.length >= 2);
+	const looping = $derived(fleet.containers.filter((c) => isCrashLooping(c)));
+
+	function openRow(name: string) {
+		openRows = { ...openRows, [name]: true };
+	}
+
+	// --- Bulk selection -----------------------------------------------------------
+
+	type QuickFilter = 'all' | 'no_update' | 'no_restart';
+	let quickFilter = $state<QuickFilter>('all');
+	/** Container names ticked by the user. */
+	let selected = $state<Record<string, boolean>>({});
+	let bulkBusy = $state(false);
+	/** Outcome of the last bulk action: what worked, and each container that did not. */
+	let bulkReport = $state<{ ok: string; total: number; failed: { name: string; reason: string }[] } | null>(null);
+
+	const visible = $derived(
+		fleet.containers.filter((c) =>
+			quickFilter === 'no_update' ? !c.policy.auto_update : quickFilter === 'no_restart' ? !c.policy.auto_restart : true
+		)
+	);
+	const filterOptions = $derived([
+		{ id: 'all' as const, label: m.devices_docker_bulk_filter_all(), count: fleet.containers.length },
+		{ id: 'no_update' as const, label: m.devices_docker_bulk_filter_no_update(), count: fleet.containers.filter((c) => !c.policy.auto_update).length },
+		{ id: 'no_restart' as const, label: m.devices_docker_bulk_filter_no_restart(), count: fleet.containers.filter((c) => !c.policy.auto_restart).length }
+	]);
+	/** Ticked containers that still exist (a removed one drops out by itself). */
+	const picked = $derived(fleet.containers.filter((c) => selected[c.name]));
+	const visiblePicked = $derived(visible.filter((c) => selected[c.name]).length);
+	const selectionState = $derived<'none' | 'some' | 'all'>(
+		visiblePicked === 0 ? 'none' : visiblePicked === visible.length ? 'all' : 'some'
+	);
+	let masterBox = $state<HTMLInputElement | null>(null);
+	$effect(() => {
+		if (masterBox) masterBox.indeterminate = selectionState === 'some';
+	});
+
+	function tick(name: string, on: boolean) {
+		selected = { ...selected, [name]: on };
+	}
+
+	/** "Select all" acts on what the quick filter shows, so a filter is also a fast way to pick. */
+	function tickAll(on: boolean) {
+		const next = { ...selected };
+		for (const c of visible) next[c.name] = on;
+		selected = next;
+	}
+
+	function clearSelection() {
+		selected = {};
+	}
+
+	function reasonOf(cause: unknown): string {
+		return cause instanceof Error ? cause.message : String(cause);
+	}
+
+	/** Keeps only the failed containers ticked, so a retry is one click. */
+	function settle(okLabel: string, total: number, failed: { name: string; reason: string }[]) {
+		bulkReport = { ok: okLabel, total, failed };
+		selected = Object.fromEntries(failed.map((f) => [f.name, true]));
+	}
+
+	async function bulkPolicy(change: Partial<ContainerPolicy>) {
+		const names = picked.map((c) => c.name);
+		if (names.length === 0) return;
+		bulkBusy = true;
+		bulkReport = null;
+		try {
+			const results = await fleet.setPolicies(names, change);
+			const failed = results.filter((r) => !r.ok).map((r) => ({ name: r.name, reason: r.error ?? '' }));
+			settle(m.devices_docker_bulk_applied({ count: results.length - failed.length }), results.length, failed);
+		} catch (cause) {
+			settle('', names.length, names.map((name) => ({ name, reason: reasonOf(cause) })));
+		} finally {
+			bulkBusy = false;
+		}
+	}
+
+	async function bulkUpdate() {
+		const targets = picked.filter((c) => !isPending(c.last_command));
+		if (targets.length === 0) return;
+		bulkBusy = true;
+		bulkReport = null;
+		const outcomes = await Promise.allSettled(targets.map((c) => updateContainer(target.id, c.name, c.policy.prune_old_image)));
+		const failed: { name: string; reason: string }[] = [];
+		outcomes.forEach((outcome, i) => {
+			if (outcome.status === 'rejected') failed.push({ name: targets[i].name, reason: reasonOf(outcome.reason) });
+			else targets[i].last_command = outcome.value;
+		});
+		settle(m.devices_docker_bulk_queued({ count: targets.length - failed.length }), targets.length, failed);
+		bulkBusy = false;
+		await fleet.load();
 	}
 
 	// --- Presentation -----------------------------------------------------------
@@ -228,23 +336,100 @@
 				</div>
 			</div>
 		{/if}
+		<div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line px-4 py-2 sm:px-5">
+			<label class="inline-flex min-h-10 cursor-pointer items-center gap-2 text-[0.8125rem] font-semibold text-ink">
+				<input
+					bind:this={masterBox}
+					type="checkbox"
+					class="size-5 accent-[var(--c-signal)]"
+					checked={selectionState === 'all'}
+					disabled={visible.length === 0}
+					onchange={(e) => tickAll((e.currentTarget as HTMLInputElement).checked)}
+				/>
+				{m.devices_docker_bulk_select_all({ count: visible.length })}
+			</label>
+			<Segmented label={m.devices_docker_bulk_filter_aria()} size="sm" options={filterOptions} value={quickFilter} onchange={(v) => (quickFilter = v)} />
+		</div>
+		{#if bulkReport}
+			<div class="border-b border-line px-4 py-3 sm:px-5" role={bulkReport.failed.length > 0 ? 'alert' : 'status'}>
+				{#if bulkReport.failed.length > 0}
+					<Plate tone="warning" label={m.devices_docker_bulk_partial_title({ failed: bulkReport.failed.length, total: bulkReport.total })} />
+				{/if}
+				{#if bulkReport.ok}
+					<p class="text-sm text-ink">{bulkReport.ok}</p>
+				{/if}
+				{#if bulkReport.failed.length > 0}
+					<ul class="mt-1.5 flex flex-col gap-1 text-sm text-ink-2">
+						{#each bulkReport.failed as f (f.name)}
+							<li class="break-words">{m.devices_docker_bulk_failed_line({ name: f.name, reason: f.reason })}</li>
+						{/each}
+					</ul>
+				{/if}
+				<Button size="sm" variant="ghost" class="mt-1 min-h-10 sm:min-h-0" onclick={() => (bulkReport = null)}>{m.devices_docker_bulk_dismiss()}</Button>
+			</div>
+		{/if}
+		{#if visible.length === 0}
+			<p class="px-4 py-4 text-sm text-ink-2 sm:px-5">{m.devices_docker_bulk_filter_empty()}</p>
+		{/if}
+		{#if showTop}
+			<div class="grid gap-x-8 gap-y-4 border-b border-line px-4 py-3 sm:px-5 md:grid-cols-2">
+				{#if topCpu.length >= 2}
+					<section>
+						<h3 class="text-sm font-semibold text-ink">{m.devices_docker_top_cpu_title()}</h3>
+						<TopN
+							items={topCpu}
+							limit={5}
+							max={Math.max(100, topCpu[0].value)}
+							format={(v: number) => `${v.toFixed(v >= 10 ? 0 : 1)}%`}
+							label={m.devices_docker_top_cpu_aria()}
+							onselect={openRow}
+						/>
+					</section>
+				{/if}
+				{#if topMemory.length >= 2}
+					<section>
+						<h3 class="text-sm font-semibold text-ink">{m.devices_docker_top_mem_title()}</h3>
+						<TopN
+							items={topMemory}
+							limit={5}
+							format={formatBytes}
+							label={m.devices_docker_top_mem_aria()}
+							onselect={openRow}
+						/>
+					</section>
+				{/if}
+			</div>
+		{/if}
 		<ul class="divide-y divide-line">
-			{#each fleet.containers as c, i (c.name)}
+			{#each visible as c, i (c.name)}
 				{@const s = stateOf(c)}
 				{@const saving = fleet.saving[c.name] ?? false}
 				{@const working = (acting[c.name] ?? false) || isPending(c.last_command)}
 				{@const charts = metrics.get(c.name) ?? []}
 				<FoldRow id={`container-${target.id}-${i}`} bind:open={openRows[c.name]} class="rise-in" style="--rise-delay: {Math.min(i, 8) * 40}ms">
+					{#snippet leading()}
+						<input
+							type="checkbox"
+							class="size-5 shrink-0 accent-[var(--c-signal)]"
+							checked={selected[c.name] ?? false}
+							aria-label={m.devices_docker_bulk_select_row({ name: c.name })}
+							onchange={(e) => tick(c.name, (e.currentTarget as HTMLInputElement).checked)}
+						/>
+					{/snippet}
 					{#snippet header()}
 						<span class="flex min-w-0 items-center gap-2">
 							<Led tone={s.tone} blink={s.blink} label={s.word} />
 							<span class="truncate font-semibold text-ink">{c.name}</span>
 							<Plate tone={s.tone} label={s.word} bare />
+							{#if isCrashLooping(c)}
+								<Plate tone="warning" label={m.devices_docker_crashloop({ count: c.restarts_15m ?? 0 })} bare />
+							{/if}
 							{#if c.update_available === true}
 								<Plate tone="info" label={m.devices_docker_update_available()} bare />
 							{/if}
 						</span>
 						<span class="tnum truncate text-[0.8125rem] text-ink-2">{statusLine(c)}</span>
+						{#if c.up}<UsageMeters container={c} />{/if}
 					{/snippet}
 					{#snippet trailing()}
 						{#if c.last_command && isPending(c.last_command)}
@@ -253,6 +438,22 @@
 					{/snippet}
 
 					<p class="text-sm text-ink-2 break-all">{c.image}</p>
+
+					{#if c.up && c.memory_bytes != null}
+						{@const ratio = memoryRatio(c)}
+						{#if ratio !== null && c.memory_limit_bytes}
+							<CapacityBar
+								used={c.memory_bytes}
+								capacity={c.memory_limit_bytes}
+								format={formatBytes}
+								label={m.devices_docker_mem_limit_label()}
+							/>
+						{:else}
+							<p class="text-sm text-ink-2">
+								{m.devices_docker_mem_no_limit({ used: formatBytes(c.memory_bytes) })}
+							</p>
+						{/if}
+					{/if}
 
 					<!-- Policy switches and actions -->
 					<div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -316,6 +517,25 @@
 				</FoldRow>
 			{/each}
 		</ul>
+
+		{#if picked.length > 0}
+			<SelectionBar
+				label={m.devices_docker_bulk_aria()}
+				countLabel={m.devices_docker_bulk_selected({ count: picked.length })}
+				selectAllLabel={m.devices_docker_bulk_select_all({ count: visible.length })}
+				exitLabel={m.devices_docker_bulk_clear()}
+				selection={selectionState === 'none' ? 'some' : selectionState}
+				empty={visible.length === 0}
+				onselectall={tickAll}
+				onexit={clearSelection}
+			>
+				<Button size="sm" variant="secondary" class="min-h-10" disabled={bulkBusy || !canAct} onclick={() => void bulkPolicy({ auto_update: true })}>{m.devices_docker_bulk_update_on()}</Button>
+				<Button size="sm" variant="secondary" class="min-h-10" disabled={bulkBusy || !canAct} onclick={() => void bulkPolicy({ auto_update: false })}>{m.devices_docker_bulk_update_off()}</Button>
+				<Button size="sm" variant="secondary" class="min-h-10" disabled={bulkBusy || !canAct} onclick={() => void bulkPolicy({ auto_restart: true })}>{m.devices_docker_bulk_restart_on()}</Button>
+				<Button size="sm" variant="secondary" class="min-h-10" disabled={bulkBusy || !canAct} onclick={() => void bulkPolicy({ auto_restart: false })}>{m.devices_docker_bulk_restart_off()}</Button>
+				<Confirm size="sm" variant="secondary" class="min-h-10" confirmLabel={m.devices_docker_bulk_update_now_confirm({ count: picked.length })} loading={bulkBusy} disabled={bulkBusy || !canAct} onconfirm={bulkUpdate}>{m.devices_docker_bulk_update_now({ count: picked.length })}</Confirm>
+			</SelectionBar>
+		{/if}
 
 		<!-- History of what was asked of the agent -->
 		<div class="graticule border-t border-line px-4 py-4 sm:px-5">

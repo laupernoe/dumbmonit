@@ -16,8 +16,9 @@ path = "src/main.rs"
 [dependencies]
 dumbmonit-proto = { path = "../proto" }
 # Les collecteurs du serveur, pour le mode relais : un agent posé dans un autre
-# réseau interroge les équipements de son site à la place du serveur.
-dumbmonit-collectors = { path = "../collectors" }
+# réseau interroge les équipements de son site à la place du serveur. Sans le
+# catalogue des vues (fonctionnalité `catalog`), qui ne sert qu'à l'interface.
+dumbmonit-collectors = { path = "../collectors", default-features = false }
 
 anyhow.workspace = true
 chrono.workspace = true
@@ -70,6 +71,11 @@ regex = { version = "1", default-features = false, features = ["std", "unicode-p
 # WMI, pour une lecture qui exige de toute façon des droits d'administration.
 [target.'cfg(not(windows))'.dependencies]
 sysinfo = { version = "0.39", default-features = false, features = ["component"] }
+
+# Inodes (`statvfs`) et taille de page, sous Linux seulement : déjà dans l'arbre
+# de dépendances (serveur), donc sans poids ni licence de plus.
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = "0.2"
 
 [dev-dependencies]
 # Répertoires jetables pour les tests du secret de liaison : ils écrivent un

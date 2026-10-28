@@ -1,0 +1,19 @@
+# Mesures et vues du type « dns » (format : crates/collectors/src/catalog.rs).
+source: uptime
+prefixes: [probe_]
+metrics:
+  - { name: probe_success, label: "Up", unit: "bool" }
+  - { name: probe_duration_seconds, label: "Probe duration", unit: "s", better: "lower" }
+  - { name: probe_failure_info, label: "Failure reason", kind: info }
+  - { name: probe_dns_lookup_seconds, label: "Lookup time", unit: "s", better: "lower" }
+  - { name: probe_dns_answer_records, label: "Answer records" }
+  - { name: probe_dns_answer_fingerprint, label: "Answer fingerprint" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - probe_dns_answer_records
+      - probe_dns_answer_fingerprint
+  - view: timeseries
+    title: "Response time"
+    metrics: [probe_duration_seconds, probe_dns_lookup_seconds]
