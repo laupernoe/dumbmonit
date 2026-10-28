@@ -61,6 +61,10 @@ DumbMonit также запрашивает у классического API с
 | `clients_by_type` | `wireless`, `wired`, `guest`, `vpn` (учётная запись View Only) | `type` |
 | `alarms` | записи критического системного журнала за последние 24 часа или неархивированные тревоги | |
 | `scrape_errors` | вызовы, завершившиеся ошибкой при последнем опросе | |
+| `port_enabled`, `port_up`, `port_speed_bps`, `port_full_duplex`, `port_uplink` | порты каждого доступного коммутатора или шлюза (учётная запись только для чтения, `port_table`); у отключённого порта `port_up` нет | `device`, `mac`, `port` (номер на передней панели), `port_name` |
+| `port_poe_enabled`, `port_poe_watts` | PoE каждого порта | те же |
+| `port_rx_bytes_total`, `port_tx_bytes_total`, `port_rx_errors_total`, `port_tx_errors_total` | счётчики по портам, их рисует панель коммутатора | те же |
+| `port_neighbor_info` | значение 1, LLDP-сосед порта (`lldp_table`) | те же, `remote_chassis`, `remote_port` |
 
 Применяемые [встроенные правила](../alerting/rules.md#unifi-network): UniFi device
 offline, UniFi Internet down, UniFi WAN link down, UniFi gateway CPU high, UniFi
