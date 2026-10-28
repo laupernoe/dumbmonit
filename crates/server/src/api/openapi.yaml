@@ -2402,6 +2402,10 @@ paths:
         - name: dry_run
           in: query
           schema: { type: boolean, default: false }
+        - name: via_agent
+          in: query
+          schema: { type: integer, format: int64 }
+          description: Relay agent that probes the imported monitors (a remote site). Ignored for kinds a relay cannot probe.
         - name: rows
           in: query
           description: >-
@@ -2456,6 +2460,10 @@ paths:
         - name: dry_run
           in: query
           schema: { type: boolean, default: false }
+        - name: via_agent
+          in: query
+          schema: { type: integer, format: int64 }
+          description: Relay agent that probes the imported monitors (a remote site). Ignored for kinds a relay cannot probe.
         - name: rows
           in: query
           description: >-
@@ -2502,6 +2510,10 @@ paths:
         - name: dry_run
           in: query
           schema: { type: boolean, default: false }
+        - name: via_agent
+          in: query
+          schema: { type: integer, format: int64 }
+          description: Relay agent that probes the imported monitors (a remote site). Ignored for kinds a relay cannot probe.
         - name: rows
           in: query
           description: >-
@@ -2551,6 +2563,10 @@ paths:
         - name: dry_run
           in: query
           schema: { type: boolean, default: false }
+        - name: via_agent
+          in: query
+          schema: { type: integer, format: int64 }
+          description: Relay agent that probes the imported monitors (a remote site). Ignored for kinds a relay cannot probe.
         - name: rows
           in: query
           schema: { type: string, example: "1,4,5" }
@@ -2599,6 +2615,10 @@ paths:
         - name: dry_run
           in: query
           schema: { type: boolean, default: false }
+        - name: via_agent
+          in: query
+          schema: { type: integer, format: int64 }
+          description: Relay agent that probes the imported monitors (a remote site). Ignored for kinds a relay cannot probe.
         - name: rows
           in: query
           schema: { type: string, example: "1,4,5" }
@@ -4790,6 +4810,39 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/agent/tokens/{id}/machines:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: listAgentTokenMachines
+      tags: [Agents]
+      summary: Machines enrolled with a token, newest first
+      description: >-
+        Administrator only. The add-an-agent flow polls it after showing the
+        install command, to see the first connection and then name the machine,
+        file it in a folder and place it at a site without leaving the flow.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Up to 50 machines.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, name, hostname, os]
+                  properties:
+                    id: { type: integer, format: int64, description: Id of the `agent` device. }
+                    name: { type: string }
+                    hostname: { type: string }
+                    os: { type: string }
+                    last_seen_at: { type: [string, "null"] }
+                    via_agent: { type: [integer, "null"], format: int64, description: Relay the machine connects through. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/agent/tokens/{id}/close:
     parameters:
       - $ref: "#/components/parameters/Id"
@@ -4854,6 +4907,16 @@ paths:
           required: false
           schema: { type: string }
           description: The URL machines reach this server at; the listen address by default.
+        - name: relay_id
+          in: query
+          required: false
+          schema: { type: integer, format: int64 }
+          description: "Commands through this relay agent: scripts, binaries and the encrypted channel go through its gateway, end-to-end encrypted to this server."
+        - name: relay_host
+          in: query
+          required: false
+          schema: { type: string }
+          description: Address the site reaches the relay at; the one set on the relay, else its host name.
       responses:
         "200":
           description: Install parameters.
@@ -5085,6 +5148,23 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/relays/kinds:
+    get:
+      operationId: listRelayKinds
+      tags: [Agents]
+      summary: Device kinds a relay agent can probe
+      description: The add forms only offer "Reached through" (and the gateway route) for these kinds.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Kinds, sorted.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
 
   /api/relays:
     get:
@@ -5738,6 +5818,14 @@ paths:
               properties:
                 enabled: { type: boolean }
                 site: { type: [string, "null"], maxLength: 80, description: Site of this relay. }
+                gateway:
+                  type: object
+                  description: "Gateway for the agents of its site: they connect to the relay, which carries their TLS sessions, unread, to this server. Absent: unchanged."
+                  required: [enabled]
+                  properties:
+                    enabled: { type: boolean }
+                    port: { type: [integer, "null"], minimum: 1, maximum: 65535, default: 8443 }
+                    host: { type: [string, "null"], maxLength: 253, description: Address the site reaches the relay at. }
       responses:
         "200":
           description: The machine after the change.
@@ -10647,6 +10735,21 @@ components:
               sha256: { type: string }
         linux_template: { type: string, description: "Unix install command; replace `{TOKEN}`." }
         windows_template: { type: string, description: "PowerShell install command; replace `{TOKEN}`." }
+        via_relay:
+          oneOf:
+            - type: "null"
+            - $ref: "#/components/schemas/RelayRoute"
+    RelayRoute:
+      type: object
+      required: [relay_id, relay_name, host, port, listening]
+      description: The relay gateway the commands go through.
+      properties:
+        relay_id: { type: integer, format: int64 }
+        relay_name: { type: string }
+        site: { type: [string, "null"] }
+        host: { type: string, description: Address of the relay as seen from its site. }
+        port: { type: integer, description: Port of its gateway. }
+        listening: { type: boolean, description: The relay reports its gateway open on that port. }
     AgentChannel:
       type: object
       required: [enabled, required, required_setting, protocol, key_exchange, agents]
@@ -10755,6 +10858,8 @@ components:
         relay: { type: boolean, default: false, description: Make the enrolled machine a relay for a remote site. }
         site: { type: [string, "null"], maxLength: 80, description: Site of that relay. }
         client_id: { type: [integer, "null"], format: int64, description: "MSP mode: the client the token enrols into. Absent: the default client." }
+        relay_id: { type: [integer, "null"], format: int64, description: "Install through this relay agent (a site behind a firewall): the commands point at its gateway, which the server asks the relay to open. The relay must belong to the same client." }
+        relay_host: { type: [string, "null"], maxLength: 253, description: Address the site reaches the relay at (host name or IP, no scheme or port). }
     CreatedAgentToken:
       allOf:
         - $ref: "#/components/schemas/AgentToken"
@@ -10778,6 +10883,8 @@ components:
         sysvol_binary: { type: boolean, default: false, description: Also copy the agent binary to SYSVOL for servers without outbound access. }
         server_host: { type: [string, "null"], description: 'DNS name (FQDN) or IPv4 address of this server that agents contact, with an optional :port. Replaces the host of base_url.' }
         dns_server: { type: [string, "null"], description: IP address of a DNS server used to resolve server_host on machines that cannot. }
+        relay_id: { type: [integer, "null"], format: int64, description: "Servers of a site behind a firewall install and report through this relay agent (its gateway). Replaces base_url and server_host." }
+        relay_host: { type: [string, "null"], maxLength: 253, description: Address the servers reach the relay at. }
     CreatedAgentAdKit:
       type: object
       required: [token, secret, script, filename, folder, install_windows, server_url]
@@ -12423,6 +12530,10 @@ components:
         relay: { type: boolean, description: The agent declared `relay true` in its last batch. }
         last_seen_at: { type: [string, "null"] }
         relayed: { type: integer, description: Devices reached through this agent. }
+        gateway_wanted: { type: [integer, "null"], description: Gateway port asked from the UI; null when closed. }
+        gateway_port: { type: [integer, "null"], description: Port the relay reports its gateway listening on. }
+        gateway_host: { type: [string, "null"], description: Address the site reaches the relay at. }
+        client_id: { type: [integer, "null"], format: int64, description: Client of the agent; a relay only carries machines of its own client. }
     DashboardWidget:
       type: object
       required: [id, type, x, y, w, h]
@@ -12884,6 +12995,10 @@ components:
         bound: { type: boolean }
         bound_at: { type: [string, "null"] }
         rebind_until: { type: [string, "null"] }
+        gateway_wanted: { type: [integer, "null"], description: Gateway port asked from the UI; null when closed. }
+        gateway_port: { type: [integer, "null"], description: Port the relay reports its gateway listening on. }
+        gateway_host: { type: [string, "null"], description: Address the agents of its site reach it at. }
+        gateway_tunnels: { type: integer, description: Agents of its site connected through it right now. }
     RebindWindow:
       type: object
       required: [rebind_until, minutes]

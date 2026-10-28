@@ -38,6 +38,7 @@ pub fn detect(config: &Config) -> AgentIdentity {
         // Complété par la boucle de l'agent (empreinte, capacité, dernière
         // tentative) : `run::Agent::new`.
         self_update: None,
+        relay_gateway: None,
         // Relu du disque à chaque démarrage : ajouter un manifeste demande de
         // redémarrer l'agent, comme toute modification de agent.yaml.
         remediation: Some(crate::remediation::describe(&config.actions)),
@@ -151,6 +152,7 @@ mod tests {
             actions: crate::remediation::ActionsConfig::default(),
             relay: false,
             site: None,
+            gateway: crate::gateway::GatewayConfig::default(),
             probe: crate::collect::ProbeConfig::default(),
             system_health: crate::collect::system_health::SystemHealthConfig::default(),
             plakar: crate::collect::plakar::PlakarConfig::default(),

@@ -14,6 +14,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { importFromService, SERVICE_IMPORT_MAX_BYTES, type ServiceImport } from '#lib/api/targetsImport.js';
 	import { importableRows, selectionState, tickedRows, toggleRow } from './kuma-import.js';
+	import RelayPick from './RelayPick.svelte';
 	import type { KumaImportReport, TargetImportStatus } from '#lib/api/types.js';
 	import { Button, ErrorNotice, Field, Plate } from '#lib/ui/index.js';
 	import type { Tone } from '#lib/ui/index.js';
@@ -28,6 +29,8 @@
 	let { provider, ondone }: Props = $props();
 
 	let open = $state(false);
+	/** Relay agent that probes the imported monitors; `null`: this server. */
+	let viaAgent = $state<number | null>(null);
 	let busy = $state(false);
 	let error = $state<unknown>(null);
 	let notice = $state('');
@@ -105,7 +108,7 @@
 		error = null;
 		try {
 			const rows = dryRun ? undefined : tickedRows(selected, preview?.rows ?? []);
-			const answer = await importFromService(request, dryRun, rows);
+			const answer = await importFromService(request, dryRun, rows, viaAgent);
 			if (dryRun) {
 				source = request;
 				preview = answer;
@@ -203,6 +206,9 @@
 					void run(true, describe());
 				}}
 			>
+				{#if provider !== 'healthchecks'}
+					<RelayPick id={`${provider}-via-agent`} bind:value={viaAgent} />
+				{/if}
 				{#if provider === 'gatus'}
 					<Field label={m.devices_svc_yaml_label()} for="svc-yaml" help={m.devices_svc_yaml_help()}>
 						<textarea id="svc-yaml" class="input min-h-40 font-mono text-[0.8125rem]" spellcheck="false" bind:value={text} placeholder={'endpoints:\n  - name: Website\n    url: "https://example.org"'}></textarea>

@@ -1599,6 +1599,25 @@ export interface AgentTokenPayload {
 	site?: string | null;
 	/** MSP mode: the client the token enrols into. Absent: the default client. */
 	client_id?: number;
+	/**
+	 * Install through this relay agent (a site behind a firewall): the commands
+	 * point at its gateway, which the server asks the relay to open.
+	 */
+	relay_id?: TargetId | null;
+	/** Address the site reaches the relay at. Left out: the one set, else its host name. */
+	relay_host?: string | null;
+}
+
+/** A machine enrolled with a token. `GET /api/agent/tokens/{id}/machines`. */
+export interface TokenMachine {
+	/** Id of the agent's target. */
+	id: TargetId;
+	name: string;
+	hostname: string;
+	os: string;
+	last_seen_at: string | null;
+	/** Relay the machine connects through, if any. */
+	via_agent: TargetId | null;
 }
 
 /** Response of `POST /api/agent/tokens`: the only chance to see the token in clear. */
@@ -1657,6 +1676,10 @@ export interface AdKitPayload {
 	server_host?: string | null;
 	/** IP address of a DNS server that resolves `server_host` on machines that cannot. */
 	dns_server?: string | null;
+	/** Servers of a site behind a firewall go through this relay agent. Replaces `base_url` and `server_host`. */
+	relay_id?: TargetId | null;
+	/** Address the servers reach the relay at. */
+	relay_host?: string | null;
 }
 
 /** Response of `POST /api/agent/ad-kit`: the only chance to see the token and script. */
@@ -1726,6 +1749,15 @@ export interface AgentHost {
 	binding_supported: boolean;
 	/** End of a re-enrolment window someone opened, while it still runs. */
 	rebind_until: string | null;
+	/**
+	 * Gateway for the agents of its site (a relay only): port asked from the UI
+	 * (`null`: closed), port it reports listening on, address the site reaches
+	 * it at, agents connected through it right now. Absent on an older server.
+	 */
+	gateway_wanted?: number | null;
+	gateway_port?: number | null;
+	gateway_host?: string | null;
+	gateway_tunnels?: number;
 }
 
 /** Response of `POST /api/targets/{id}/agent/rebind`. */
@@ -2652,6 +2684,14 @@ export interface RelayAgent {
 	last_seen_at: string | null;
 	/** Devices reached through this agent. */
 	relayed: number;
+	/** Gateway port asked from the UI; `null` when closed. Absent on an older server. */
+	gateway_wanted?: number | null;
+	/** Port the relay reports its gateway listening on. */
+	gateway_port?: number | null;
+	/** Address the site reaches the relay at. */
+	gateway_host?: string | null;
+	/** Client of the agent: a relay only carries machines of its own client. */
+	client_id?: number | null;
 }
 
 // --- Topology map -------------------------------------------------------------

@@ -20,9 +20,11 @@
 		hostname?: string | null;
 		/** Tighter layout for the graph cards. */
 		compact?: boolean;
+		/** Relay agent whose scan found it: the monitor goes through it too. */
+		viaAgent?: number | null;
 	}
 
-	let { service, ip, hostname = null, compact = false }: Props = $props();
+	let { service, ip, hostname = null, compact = false, viaAgent = null }: Props = $props();
 
 	const low = $derived(service.confidence === 'low');
 	const suggestedName = $derived(hostname ? `${hostname} · ${service.product}` : `${ip} · ${service.product}`);
@@ -60,7 +62,7 @@
 			<Button
 				size="sm"
 				variant="secondary"
-				href={addUrl(service.kind, service.prefill, suggestedName)}
+				href={addUrl(service.kind, service.prefill, suggestedName, viaAgent)}
 				aria-label={m.deviceform_scan_add_aria({ product: service.product, kind: kindLabel(service.kind), ip })}
 			>
 				{m.deviceform_scan_add()}

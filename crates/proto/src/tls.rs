@@ -56,6 +56,29 @@ pub const MTLS_REQUIRED: &str = "This server only accepts agents over its encryp
      channel (TLS 1.3 with client certificates). Update the agent by re-running the install \
      command shown in DumbMonit, and make sure the agent port of the server is reachable.";
 
+/// Tunnel ouvert par un agent relais pour un agent de son site.
+///
+/// Le relais, déjà authentifié par son propre certificat client, demande ici
+/// une mise à niveau HTTP (`Upgrade:` [`RELAY_TUNNEL_PROTOCOL`]). Le serveur
+/// traite ensuite le flux comme une connexion neuve à son port des agents : la
+/// poignée de main TLS 1.3 et le certificat client sont ceux de l'agent du
+/// site, de bout en bout. Le relais ne transporte que des octets chiffrés — il
+/// ne lit rien, ne peut rien modifier sans être détecté, et ne peut pas se
+/// faire passer pour l'agent : il n'a ni sa clé privée ni son jeton.
+pub const RELAY_TUNNEL_PATH: &str = "/api/agent/relay/tunnel";
+
+/// Protocole de la mise à niveau HTTP d'un tunnel de relais.
+pub const RELAY_TUNNEL_PROTOCOL: &str = "dumbmonit-tunnel/1";
+
+/// Scripts d'installation et binaires servis à un agent relais, pour les
+/// machines de son site qui ne joignent pas le serveur : `…/files/install.sh`,
+/// `…/files/install.ps1`, `…/files/download/<nom>`. Le binaire est vérifié par
+/// le script contre l'empreinte SHA-256 que porte la commande d'installation.
+pub const RELAY_FILES_PATH: &str = "/api/agent/relay/files";
+
+/// Port d'écoute par défaut de la passerelle d'un relais (côté site).
+pub const DEFAULT_RELAY_GATEWAY_PORT: u16 = 8443;
+
 /// Durée de vie d'un certificat client, en jours.
 pub const CLIENT_CERT_DAYS: i64 = 30;
 

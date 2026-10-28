@@ -134,6 +134,11 @@ pub struct Agent {
     /// réception le porte. `None` tant que le serveur n'en a rien dit (serveur
     /// antérieur) : seule la configuration locale compte alors.
     server_relay: Option<RelaySetting>,
+    /// Passerelle du relais pour les agents de son site, quand elle écoute.
+    gateway: Option<GatewayTask>,
+    /// Dernière adresse que la passerelle n'a pas pu ouvrir : l'échec n'est
+    /// journalisé qu'une fois, la tentative reprend à chaque lot.
+    gateway_failed: Option<std::net::SocketAddr>,
     /// Collecte de journaux de cette machine, et le réglage que le dernier accusé
     /// de réception portait (`None` : serveur antérieur, rien n'est collecté).
     logs: LogRunner,
@@ -249,6 +254,8 @@ impl Agent {
             commands,
             relay: None,
             server_relay: None,
+            gateway: None,
+            gateway_failed: None,
             logs,
             server_logs: None,
             binding,
@@ -473,6 +480,7 @@ impl Agent {
                             // de lui demander s'il attend quelque chose de nous.
                             self.commands.poll().await;
                             self.sync_relay(&shutdown);
+                            self.sync_gateway(&shutdown).await;
                             self.logs.apply(self.server_logs.clone(), &shutdown);
                             if self.apply_update().await {
                                 break;
@@ -504,6 +512,11 @@ impl Agent {
         }
 
         self.commands.finish(SHUTDOWN_COMMAND_TIMEOUT).await;
+        if let Some(gateway) = self.gateway.take() {
+            // Les tunnels en cours se ferment avec elle : les agents du site se
+            // reconnecteront d'eux-mêmes au retour du relais.
+            gateway.handle.abort();
+        }
         if let Some(relay) = self.relay.take() {
             if self.after_stop.is_some() {
                 // Arrêt pour la mise à jour : le signal d'arrêt n'a pas été
@@ -605,6 +618,59 @@ impl Agent {
             }
             _ => {}
         }
+    }
+
+    /// Adresse où la passerelle doit écouter : `gateway_listen` en local, qui
+    /// prime, sinon le port réglé dans l'interface — et seulement en mode relais.
+    fn gateway_wanted(&self) -> Option<std::net::SocketAddr> {
+        if !self.relay_wanted() {
+            return None;
+        }
+        self.config.gateway.listen.or_else(|| {
+            let port = self.server_relay.as_ref()?.gateway_port?;
+            Some(std::net::SocketAddr::from(([0, 0, 0, 0], port)))
+        })
+    }
+
+    /// Ouvre, déplace ou ferme la passerelle selon le réglage en vigueur, à
+    /// chaud, et reporte dans l'identité le port sur lequel elle écoute.
+    async fn sync_gateway(&mut self, shutdown: &Shutdown) {
+        if self.gateway.as_ref().is_some_and(|gateway| gateway.handle.is_finished()) {
+            self.gateway = None;
+        }
+        let wanted = self.gateway_wanted();
+        if self.gateway.as_ref().map(|gateway| gateway.addr) != wanted {
+            if let Some(gateway) = self.gateway.take() {
+                gateway.handle.abort();
+                info!(listen = %gateway.addr, "relay gateway closed");
+            }
+            if let Some(addr) = wanted {
+                match crate::gateway::bind(addr).await {
+                    Ok(listener) => {
+                        let upstream = std::sync::Arc::new(crate::gateway::ServerUpstream::new(
+                            self.client.clone(),
+                        ));
+                        let handle = tokio::spawn(crate::gateway::serve(
+                            listener,
+                            upstream,
+                            self.config.gateway.clone(),
+                            shutdown.clone(),
+                        ));
+                        self.gateway = Some(GatewayTask { addr, handle });
+                        self.gateway_failed = None;
+                    }
+                    Err(error) => {
+                        if self.gateway_failed == Some(addr) {
+                            debug!(listen = %addr, %error, "relay gateway still cannot listen");
+                        } else {
+                            warn!(listen = %addr, %error, "relay gateway cannot listen");
+                            self.gateway_failed = Some(addr);
+                        }
+                    }
+                }
+            }
+        }
+        self.identity.relay_gateway = self.gateway.as_ref().map(|gateway| gateway.addr.port());
     }
 
     /// Envoie un lot prélevé dans le tampon.
@@ -1079,6 +1145,12 @@ fn initial_tls(config: &Config, stored: Option<TlsState>) -> Option<TlsState> {
     }
 }
 
+/// Passerelle du relais en service.
+struct GatewayTask {
+    addr: std::net::SocketAddr,
+    handle: tokio::task::JoinHandle<()>,
+}
+
 #[derive(Debug)]
 enum FlushOutcome {
     /// Rien à envoyer.
@@ -1111,6 +1183,7 @@ mod tests {
             actions: crate::remediation::ActionsConfig::default(),
             relay: false,
             site: None,
+            gateway: crate::gateway::GatewayConfig::default(),
             probe: crate::collect::ProbeConfig::default(),
             system_health: crate::collect::system_health::SystemHealthConfig::default(),
             plakar: crate::collect::plakar::PlakarConfig::default(),
@@ -1154,7 +1227,7 @@ mod tests {
     }
 
     fn setting(enabled: bool, site: Option<&str>) -> Option<RelaySetting> {
-        Some(RelaySetting { enabled, site: site.map(str::to_string) })
+        Some(RelaySetting { enabled, site: site.map(str::to_string), gateway_port: None })
     }
 
     #[tokio::test]
@@ -1189,6 +1262,38 @@ mod tests {
         assert!(!agent.identity.relay);
         assert_eq!(agent.identity.site, None);
         trigger.fire();
+    }
+
+    #[tokio::test]
+    async fn the_gateway_opens_with_the_relay_on_the_port_set_from_the_server() {
+        let mut agent = Agent::new(config()).expect("agent");
+        let (_trigger, shutdown) = crate::shutdown::channel();
+        // Un port libre, pour ne gêner personne.
+        let port = std::net::TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap().port();
+
+        // Pas de mode relais : pas de passerelle, même avec un port.
+        agent.adopt_relay(Some(RelaySetting {
+            enabled: false,
+            site: None,
+            gateway_port: Some(port),
+        }));
+        agent.sync_gateway(&shutdown).await;
+        assert!(agent.gateway.is_none());
+        assert_eq!(agent.identity.relay_gateway, None);
+
+        agent.adopt_relay(Some(RelaySetting {
+            enabled: true,
+            site: None,
+            gateway_port: Some(port),
+        }));
+        agent.sync_gateway(&shutdown).await;
+        assert_eq!(agent.identity.relay_gateway, Some(port), "le port est annoncé au serveur");
+
+        // Relais sans passerelle : elle se ferme, le relais continue.
+        agent.adopt_relay(Some(RelaySetting { enabled: true, site: None, gateway_port: None }));
+        agent.sync_gateway(&shutdown).await;
+        assert!(agent.gateway.is_none());
+        assert_eq!(agent.identity.relay_gateway, None);
     }
 
     #[tokio::test]
