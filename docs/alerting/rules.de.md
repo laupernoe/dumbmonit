@@ -281,7 +281,9 @@ Vom Agenten gemeldet; siehe [Agent](../devices/agent.md).
 | Synology-SSD verschleißt | Eine SSD hat weniger als 10 % ihrer Nennlebensdauer übrig (`dumbmonit_synology_disk_remaining_life_percent`); löst sich über 12 %. | < 10 % | 1 h | Hinweis (`warning`) | 7 T. |
 | Synology-Volume degradiert | Ein Volume ist degradiert oder abgestürzt: Seine Redundanz ist weg (`dumbmonit_synology_volume_status`). | ≥ 2 | 5 Min. | Warnung (`critical`) | 6 h |
 | Synology-Speicherpool degradiert | Ein Speicherpool oder SSD-Cache ist degradiert oder abgestürzt: Eine Platte ist ausgefallen, und die Redundanz ist weg oder wird neu aufgebaut (`dumbmonit_synology_pool_status or dumbmonit_synology_ssd_cache_status`). | ≥ 2 | 5 Min. | Warnung (`critical`) | 6 h |
-| Synology-Volume fast voll | Ein Volume ist zu 90 % oder mehr voll (`dumbmonit_synology_volume_used_percent`); löst sich unter 88 %. | ≥ 90 % | 15 Min. | Hinweis (`warning`), eskaliert nach 24 h | 6 h |
+| Synology-Volume fast voll | Ein Volume ist zu 90 % oder mehr voll, ohne den von iSCSI-LUNs mit Thick Provisioning reservierten Platz (`dumbmonit_synology_volume_effective_used_percent`, ohne LUNs gleich der Rohbelegung); löst sich unter 88 %. Ein von einer Thick-LUN gefülltes Volume ist konstruktionsbedingt voll und alarmiert nicht. | ≥ 90 % | 15 Min. | Hinweis (`warning`), eskaliert nach 24 h | 6 h |
+| Synology-Thin-LUNs überbucht | Den Thin-LUNs eines Volumes wurde mehr Platz versprochen, als das Volume noch frei hat (`dumbmonit_synology_volume_thin_overcommit_percent`: versprochener, noch nicht geschriebener Platz in Prozent des freien Platzes); löst sich unter 95 %. | ≥ 100 % | 1 h | Hinweis (`warning`) | 24 h |
+| Synology-Thin-LUN fast voll | Eine Thin-LUN ist zu 95 % oder mehr ihrer Größe beschrieben (`dumbmonit_synology_lun_used_percent`). Eine Thick-LUN ist vom NAS aus undurchsichtig: Dann alarmieren die Regeln des Monitors, der sie nutzt (Datastore, Dateisystem). | ≥ 95 % | 30 Min. | Hinweis (`warning`) | 24 h |
 | Synology-Temperatur hoch | Eine Platte liegt über 55 °C, oder DSM hat seine eigene Temperaturwarnung ausgelöst (`dumbmonit_synology_disk_temperature_celsius`, `dumbmonit_synology_temperature_warning`); löst sich unter 52 °C. | > 55 °C | 15 Min. | Hinweis (`warning`) | 6 h |
 | Synology-Speicher hoch | Speicherauslastung des NAS über 95 % (`dumbmonit_synology_memory_usage_percent`); löst sich unter 90 %. | > 95 % | 15 Min. | Hinweis (`warning`) | 6 h |
 | Active-Backup-Task fehlgeschlagen | Der letzte Lauf eines Active-Backup-for-Business-Tasks ist fehlgeschlagen oder hat nur einen Teil seiner Geräte gesichert (`dumbmonit_abb_task_last_status == bool 0`). Die Benachrichtigung nennt den Task. | > 0 | 10 Min. | Warnung (`critical`) | 24 h |
@@ -505,6 +507,9 @@ Traefik, Caddy, Nginx Proxy Manager und Domainregistrierungen ([Traefik](../devi
 | Domain läuft gleich ab | Die Domain läuft in weniger als 7 Tagen ab oder ist abgelaufen (`dumbmonit_domain_expiry_days`). | < 7 T. | 1 h | Warnung (`critical`) | 12 h |
 | Domain auf Hold | Die Registry hat die Domain auf `clientHold` oder `serverHold` gesetzt: Sie ist aus dem DNS (`dumbmonit_domain_on_hold`). | > 0 | 30 Min. | Warnung (`critical`) | 6 h |
 | Domain in der Redemption-Phase | Die Domain ist in `redemptionPeriod`, `pendingDelete` oder `pendingRestore`: Sie ist abgelaufen (`dumbmonit_domain_redemption`). | > 0 | 30 Min. | Warnung (`critical`) | 12 h |
+| Nameserver der Domain geändert | Die Nameserver der Delegation weichen von der vorigen Abfrage ab (`changes_prometheus(dumbmonit_domain_nameservers_fingerprint[1d])`). Löst sich einen Tag später von selbst auf. | > 0 | 1 Min. | Hinweis (`warning`) | 24 h |
+| Registrar der Domain geändert | Der Registrar weicht von der vorigen Abfrage ab: Es gab einen Transfer (`changes_prometheus(dumbmonit_domain_registrar_fingerprint[1d])`). | > 0 | 1 Min. | Hinweis (`warning`) | 24 h |
+| DNSSEC der Domain verloren | DNSSEC war in den letzten 7 Tagen signiert und ist es nicht mehr (`dumbmonit_domain_dnssec`). | < 1 | 1 h | Hinweis (`warning`) | 24 h |
 | DNS-Antwort geändert | Die Antwort einer DNS-Prüfung mit *Alarm bei Änderung der Antwort* weicht von der davor ab (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Löst sich eine Stunde später von selbst auf. | > 0 | 1 Min. | Hinweis (`warning`) | 24 h |
 
 ### DNS-Blocklisten {#dns-blocklists}
@@ -591,6 +596,217 @@ Siehe [Veeam Backup & Replication](../devices/veeam.md). Jobs tragen die Labels 
 |---|---|---|---|---|---|
 | Veeam-Job fehlgeschlagen | Der letzte Lauf eines aktivierten Veeam-Jobs ist fehlgeschlagen: Was er schützt, hat keinen neuen Wiederherstellungspunkt (`dumbmonit_veeam_job_failed`). | > 0 | 5 Min. | Warnung (`critical`) | 1 T. |
 | Veeam-Job mit Warnung beendet | Der letzte Lauf eines aktivierten Veeam-Jobs endete mit einer Warnung: Manche Objekte sind möglicherweise nicht geschützt (`dumbmonit_veeam_job_warning`). | > 0 | 5 Min. | Hinweis (`warning`) | 1 T. |
+|
+ 
+V
+e
+e
+a
+m
+-
+S
+i
+c
+h
+e
+r
+u
+n
+g
+ 
+z
+u
+ 
+a
+l
+t
+ 
+|
+ 
+S
+e
+i
+t
+ 
+m
+e
+h
+r
+ 
+a
+l
+s
+ 
+z
+w
+e
+i
+ 
+T
+a
+g
+e
+n
+ 
+k
+e
+i
+n
+ 
+e
+r
+f
+o
+l
+g
+r
+e
+i
+c
+h
+e
+r
+ 
+L
+a
+u
+f
+ 
+e
+i
+n
+e
+s
+ 
+m
+i
+n
+d
+e
+s
+t
+e
+n
+s
+ 
+t
+ä
+g
+l
+i
+c
+h
+ 
+g
+e
+p
+l
+a
+n
+t
+e
+n
+ 
+J
+o
+b
+s
+ 
+(
+`
+d
+u
+m
+b
+m
+o
+n
+i
+t
+_
+v
+e
+e
+a
+m
+_
+j
+o
+b
+_
+l
+a
+s
+t
+_
+s
+u
+c
+c
+e
+s
+s
+_
+a
+g
+e
+_
+s
+e
+c
+o
+n
+d
+s
+`
+)
+.
+ 
+|
+ 
+>
+ 
+2
+ 
+T
+.
+ 
+|
+ 
+1
+ 
+h
+ 
+|
+ 
+H
+i
+n
+w
+e
+i
+s
+ 
+(
+`
+w
+a
+r
+n
+i
+n
+g
+`
+)
+ 
+|
+ 
+1
+ 
+T
+.
+ 
+|
 | Veeam-Repository fast voll | Ein Veeam-Backup-Repository ist zu mehr als 90 % voll: Die nächsten Jobs scheitern mangels Platz (`dumbmonit_veeam_repository_used_percent`). | > 90 % | 30 Min. | Hinweis (`warning`) | 1 T. |
 | Veeam-Lizenz läuft ab | Die Veeam-Lizenz läuft in weniger als 30 Tagen ab: Jobs stoppen am Ende der Karenzzeit (`dumbmonit_veeam_license_expiry_seconds`). | < 30 T. | 1 h | Hinweis (`warning`) | 1 T. |
 
@@ -676,6 +892,16 @@ Vom Server alle 15 Minuten für jeden Monitor berechnet, dessen Art Sicherheitsp
 |---|---|---|---|---|---|
 | Sicherheitswert gefallen | Der Wert ist gegenüber seinem besten Wert der letzten 24 Stunden um 10 Punkte oder mehr gefallen (`max_over_time(dumbmonit_security_score[1d]) - dumbmonit_security_score`): Eine Prüfung schlägt neuerdings fehl. | ≥ 10 Pkt. | 30 Min. | Hinweis (`warning`) | 24 h |
 | Sicherheitswert niedrig | Der Wert liegt unter 40, Note F (`dumbmonit_security_score`). Erhöhen oder senken Sie die Schwelle passend zu Ihrem eigenen Anspruch. | < 40 | 1 h | Info (`info`) | 7 T. |
+
+### Netzwerkinventar {#network-inventory}
+
+Ausgelöst von den geplanten Netzwerkscans und ihrem Inventar (siehe [Geplante Scans und Inventar](../using/discovery.md#scheduled-scans-and-inventory)). **Alle drei Regeln sind standardmäßig deaktiviert**; die ersten beiden haben den Schweregrad `info`, die zum MAC-Wechsel `warning`: Aktivieren Sie sie in der Regelliste, wenn Sie sie wollen. Es gibt eine Serie, also einen Alarm, pro neuem Gerät oder Port; er bleibt offen, bis das Element als bekannt markiert ist (die Messung endet, der Alarm löst sich binnen weniger Minuten), und hat keine Erinnerung. Der erste Scan eines Netzes löst nie etwas aus.
+
+| Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
+|---|---|---|---|---|---|
+| New device on the network | Ein geplanter Scan hat ein Gerät gefunden, das nicht im Inventar ist (`dumbmonit_netscan_unknown_device`). | > 0 | keine | Info (`info`), **deaktiviert** | keine |
+| New open port on the network | Ein geplanter Scan hat einen neuen offenen Port auf einem bekannten Gerät gefunden (`dumbmonit_netscan_unknown_port`). | > 0 | keine | Info (`info`), **deaktiviert** | keine |
+| MAC address changed for an IP | Ein neues Gerät hat die Adresse eines bekannten Geräts mit einer anderen MAC-Adresse übernommen: Spoofing oder ersetzte Hardware (`dumbmonit_netscan_mac_change`). Offen, bis es als bekannt oder ignoriert markiert ist. | > 0 | keine | Hinweis (`warning`), **deaktiviert** | keine |
 
 ### DumbMonit selbst {#dumbmonit-itself}
 

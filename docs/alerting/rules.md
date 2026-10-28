@@ -999,7 +999,7 @@ Raised from the scheduled network scans and their inventory (see [Scheduled scan
 |---|---|---|---|---|---|
 | New device on the network | A scheduled scan found a device that is not in the inventory (`dumbmonit_netscan_unknown_device`). | > 0 | none | Info (`info`), **disabled** | none |
 | New open port on the network | A scheduled scan found a new open port on a known device (`dumbmonit_netscan_unknown_port`). | > 0 | none | Info (`info`), **disabled** | none |
-| MAC address changed for an IP | A new device took the address of a known device under another MAC address: spoofing or replaced hardware (`dumbmonit_netscan_mac_change`). Open until marked as known or ignored. | > 0 | none | Warning (`warning`), **disabled** | none |
+| MAC address changed for an IP | A new device took the address of a known device under another MAC address: spoofing or replaced hardware (`dumbmonit_netscan_mac_change`). Open until marked as known or ignored. | > 0 | none | Advisory (`warning`), **disabled** | none |
 
 ### DumbMonit itself
 

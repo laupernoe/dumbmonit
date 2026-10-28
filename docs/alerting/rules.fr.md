@@ -647,6 +647,9 @@ Les séries portent `router`, `service`, `server`, `upstream`, `host` ou
 | Domaine proche de l'expiration | Le domaine expire dans moins de 7 jours, ou a expiré (`dumbmonit_domain_expiry_days`). | < 7 j | 1 h | Avertissement (`critical`) | 12 h |
 | Domaine suspendu | Le registre a mis le domaine en `clientHold` ou `serverHold` : il est hors du DNS (`dumbmonit_domain_on_hold`). | > 0 | 30 min | Avertissement (`critical`) | 6 h |
 | Domaine en rachat | Le domaine est en `redemptionPeriod`, `pendingDelete` ou `pendingRestore` : il a expiré (`dumbmonit_domain_redemption`). | > 0 | 30 min | Avertissement (`critical`) | 12 h |
+| Serveurs de noms du domaine changés | Les serveurs de noms de la délégation diffèrent de la lecture précédente (`changes_prometheus(dumbmonit_domain_nameservers_fingerprint[1d])`). Se résout seule un jour plus tard. | > 0 | 1 min | Avis (`warning`) | 24 h |
+| Registraire du domaine changé | Le registraire diffère de la lecture précédente : il y a eu un transfert (`changes_prometheus(dumbmonit_domain_registrar_fingerprint[1d])`). | > 0 | 1 min | Avis (`warning`) | 24 h |
+| DNSSEC du domaine perdu | DNSSEC était signé ces 7 derniers jours et ne l'est plus (`dumbmonit_domain_dnssec`). | < 1 | 1 h | Avis (`warning`) | 24 h |
 | Réponse DNS changée | La réponse d'une vérification DNS avec *Alerter quand la réponse change* diffère de la précédente (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Se résout d'elle-même une heure plus tard. | > 0 | 1 min | Avis (`warning`) | 24 h |
 
 ### Listes noires DNS {#dns-blocklists}
@@ -749,6 +752,7 @@ Voir [Veeam Backup & Replication](../devices/veeam.md). Les jobs sont
 |---|---|---|---|---|---|
 | Job Veeam en échec | La dernière exécution d'un job Veeam activé a échoué : ce qu'il protège n'a pas de nouveau point de restauration (`dumbmonit_veeam_job_failed`). | > 0 | 5 min | Avertissement (`critical`) | 1 j |
 | Job Veeam terminé avec un avertissement | La dernière exécution d'un job Veeam activé s'est terminée avec un avertissement : certains objets ne sont peut-être pas protégés (`dumbmonit_veeam_job_warning`). | > 0 | 5 min | Avis (`warning`) | 1 j |
+| Sauvegarde Veeam trop ancienne | Aucune exécution réussie d'un job planifié au moins chaque jour depuis plus de deux jours (`dumbmonit_veeam_job_last_success_age_seconds`). | > 2 j | 1 h | Avis (`warning`) | 1 j |
 | Dépôt Veeam presque plein | Un dépôt de sauvegarde Veeam est plein à plus de 90 % : les prochains jobs échoueront par manque d'espace (`dumbmonit_veeam_repository_used_percent`). | > 90 % | 30 min | Avis (`warning`) | 1 j |
 | Licence Veeam arrivant à expiration | La licence Veeam expire dans moins de 30 jours : les jobs s'arrêtent à la fin de la période de grâce (`dumbmonit_veeam_license_expiry_seconds`). | < 30 j | 1 h | Avis (`warning`) | 1 j |
 
@@ -1056,7 +1060,7 @@ Déclenchées par les balayages réseau planifiés et leur inventaire (voir [Sca
 |---|---|---|---|---|---|
 | New device on the network | Un balayage planifié a trouvé un appareil absent de l'inventaire (`dumbmonit_netscan_unknown_device`). | > 0 | aucun | Info (`info`), **désactivée** | aucun |
 | New open port on the network | Un balayage planifié a trouvé un nouveau port ouvert sur un appareil connu (`dumbmonit_netscan_unknown_port`). | > 0 | aucun | Info (`info`), **désactivée** | aucun |
-| MAC address changed for an IP | Un nouvel appareil a pris l'adresse d'un appareil connu avec une autre adresse MAC : usurpation ou matériel remplacé (`dumbmonit_netscan_mac_change`). Ouverte jusqu'à ce qu'il soit marqué connu ou ignoré. | > 0 | aucun | Avertissement (`warning`), **désactivée** | aucun |
+| MAC address changed for an IP | Un nouvel appareil a pris l'adresse d'un appareil connu avec une autre adresse MAC : usurpation ou matériel remplacé (`dumbmonit_netscan_mac_change`). Ouverte jusqu'à ce qu'il soit marqué connu ou ignoré. | > 0 | aucun | Avis (`warning`), **désactivée** | aucun |
 
 ### DumbMonit lui-même
 
