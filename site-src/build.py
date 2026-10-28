@@ -35,7 +35,7 @@ SITE = "https://dumbmonit.app/"
 # Where the documentation lives. One constant: change it here if the layout moves.
 # One Read the Docs project per language: <DOCS_HOST><rtd code>/latest/.
 DOCS_HOST = "https://dumbmonit.readthedocs.io/"
-LASTMOD = "2026-10-15"
+LASTMOD = "2026-10-27"
 
 
 def project_version():
@@ -71,6 +71,123 @@ GLOBE = (
 SEVERITY = {"warning": ("sev_warning", "plate-warning"), "advisory": ("sev_advisory", "plate-advisory"), "info": ("sev_info", "plate-info")}
 # Rules listed in full up to this many, the rest behind a "show more".
 RULES_SHOWN = 6
+
+# Line icons (lucide-like, 24 x 24, stroke): the rail, the highlight cells and the diagrams.
+_SV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+ICONS = {
+    "home": _SV + '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1Z"/></svg>',
+    "features": _SV + '<path d="m12 3 9 5-9 5-9-5Z"/><path d="m3 13 9 5 9-5"/></svg>',
+    "server": _SV + '<rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>',
+    "download": _SV + '<path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>',
+    "roadmap": _SV + '<path d="M9 4 3 6.5v13L9 17l6 3 6-2.5v-13L15 7Z"/><path d="M9 4v13M15 7v13"/></svg>',
+    "users": _SV + '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14a6.5 6.5 0 0 1 3.5 6"/></svg>',
+    "docs": _SV + '<path d="M2 4.5h6a4 4 0 0 1 4 4V21a3 3 0 0 0-3-3H2Z"/><path d="M22 4.5h-6a4 4 0 0 0-4 4V21a3 3 0 0 1 3-3h7Z"/></svg>',
+    "github": '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.42c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>',
+    "box": _SV + '<path d="M21 8 12 3 3 8v8l9 5 9-5Z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg>',
+    "bell": _SV + '<path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
+    "globe": _SV + '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3Z"/></svg>',
+    "code": _SV + '<path d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></svg>',
+    "cpu": _SV + '<rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>',
+    "relay": _SV + '<circle cx="12" cy="12" r="2"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/></svg>',
+    "monitor": _SV + '<rect x="2.5" y="4" width="19" height="13" rx="1.5"/><path d="M8 21h8M12 17v4"/></svg>',
+    "cloud": _SV + '<path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9.5a4 4 0 0 1-.5 8.5Z"/></svg>',
+    "shield": _SV + '<path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.3 7.5 9.5 4.3-1.2 7.5-4.9 7.5-9.5V6Z"/></svg>',
+    "layers": _SV + '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>',
+    "disk": _SV + '<ellipse cx="12" cy="5.5" rx="8" ry="2.5"/><path d="M4 5.5v13c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-13M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/></svg>',
+    "check": _SV + '<circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16.5 9.5"/></svg>',
+    "route": _SV + '<circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></svg>',
+    "apps": _SV + '<rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><path d="M17.25 13.5v7.5M13.5 17.25H21"/></svg>',
+    "mail": _SV + '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg>',
+    "chart": _SV + '<path d="M3 3v18h18"/><path d="m7 15 4-5 3 3 5-7"/></svg>',
+    "lock": _SV + '<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>',
+    "zap": _SV + '<path d="M3 12h4l3-8 4 16 3-8h4"/></svg>',
+    "net": _SV + '<rect x="9" y="2.5" width="6" height="5" rx="1"/><rect x="2.5" y="16.5" width="6" height="5" rx="1"/><rect x="15.5" y="16.5" width="6" height="5" rx="1"/><path d="M12 7.5V12M5.5 16.5V12h13v4.5"/></svg>',
+}
+
+# Diagrams: real text in boxes (it wraps and translates), wires drawn in CSS. Vertical on
+# phones, horizontal on wide screens. Product names stay as they are; the rest are {{keys}}.
+FAMILY_ICONS = {
+    "servers": "server", "network": "net", "cloud": "cloud", "firewalls": "shield", "hypervisors": "layers",
+    "storage": "disk", "checks": "check", "proxies": "route", "apps": "apps", "mail": "mail", "data": "chart",
+}
+
+DIAGRAMS = {
+    "arch": """<figure class="dg-fig">
+<div class="dg">
+	<p class="label-tape dg-title">{{dg1_t}}</p>
+	<div class="arch">
+		<div class="ins">
+			<div class="node"><b>@@ICON:monitor@@{{dg1_browser}}</b><span class="tag">:8080</span></div>
+			<div class="node"><b>@@ICON:cpu@@{{dg1_agents}}</b><span class="tag">:8443 · mTLS</span></div>
+			<div class="node"><b>@@ICON:net@@{{dg1_devices}}</b><span>{{dg1_devices_s}}</span></div>
+		</div>
+		<span class="wire"></span>
+		<div class="zone"><span class="label-tape">{{dg1_box}}</span>
+			<div class="node main"><b>@@ICON:box@@{{dg1_bin}}</b><span>{{dg1_bin_s}}</span><span class="tag">Rust</span></div>
+			<div class="pair">
+				<div><span class="wire ok" style="--d:.6s"></span><div class="node"><b>VictoriaMetrics</b><span>{{dg1_vm_s}}</span></div></div>
+				<div><span class="wire ok" style="--d:1.4s"></span><div class="node"><b>SQLite</b><span>{{dg1_db_s}}</span></div></div>
+			</div>
+		</div>
+	</div>
+</div>
+<figcaption>{{dg1_cap}}</figcaption>
+</figure>""",
+    "alert": """<figure class="dg-fig">
+<div class="dg">
+	<p class="label-tape dg-title">{{dg3_t}}</p>
+	<div class="flow row steps-dg">
+		<div class="node"><span class="n">01</span><b>{{dg3_s1}}</b><span>{{dg3_s1s}}</span></div>
+		<span class="wire"></span>
+		<div class="node"><span class="n">02</span><b>{{dg3_s2}}</b><span>{{dg3_s2s}}</span></div>
+		<span class="wire" style="--d:.8s"></span>
+		<div class="node"><span class="n">03</span><b>{{dg3_s3}}</b><span>{{dg3_s3s}}</span></div>
+		<span class="wire ok" style="--d:1.6s"></span>
+		<div class="node main"><span class="n">04</span><b>@@ICON:bell@@{{dg3_s4}}</b><span>{{dg3_s4s}}</span></div>
+	</div>
+</div>
+<figcaption>{{dg3_cap}}</figcaption>
+</figure>""",
+    "relay": """<figure class="dg-fig">
+<div class="dg">
+	<p class="label-tape dg-title">{{dg2_t}}</p>
+	<div class="flow row">
+		<div class="zone grow"><span class="label-tape">{{dg2_site}}</span>
+			<div class="flow row">
+				<div class="node"><b>@@ICON:net@@{{dg1_devices}}</b><span>{{dg1_devices_s}}</span></div>
+				<span class="wire"></span>
+				<div class="node"><b>@@ICON:relay@@{{dg2_relay}}</b><span>{{dg2_relay_s}}</span></div>
+			</div>
+		</div>
+		<span class="wire wide ok"><em>mTLS · TLS 1.3 · :8443</em></span>
+		<div class="zone"><span class="label-tape">{{dg2_main}}</span>
+			<div class="node main"><b>@@ICON:box@@{{dg1_bin}}</b><span>{{dg2_server_s}}</span></div>
+		</div>
+	</div>
+	<p class="dg-note">{{dg2_note}}</p>
+</div>
+<figcaption>{{dg2_cap}}</figcaption>
+</figure>""",
+    "msp": """<figure class="dg-fig">
+<div class="dg">
+	<p class="label-tape dg-title">{{dg4_t}}</p>
+	<div class="flow row">
+		<div class="zone grow"><span class="label-tape">{{dg4_clients}}</span>
+			<div class="dg-clients">
+				<div class="node"><b>{{dg4_client}} A</b><span>{{dg4_client_s}}</span></div>
+				<div class="node"><b>{{dg4_client}} B</b><span>{{dg4_client_s}}</span></div>
+				<div class="node"><b>{{dg4_client}} C</b><span>{{dg4_client_s}}</span></div>
+			</div>
+		</div>
+		<span class="wire"><em>mTLS</em></span>
+		<div class="node main"><b>@@ICON:box@@DumbMonit</b><span>{{dg4_srv_s}}</span></div>
+		<span class="wire ok" style="--d:.8s"></span>
+		<div class="node"><b>@@ICON:users@@{{dg4_out}}</b><span>{{dg4_out_s}}</span></div>
+	</div>
+</div>
+<figcaption>{{dg4_cap}}</figcaption>
+</figure>""",
+}
 
 KEY = r"[A-Za-z_][A-Za-z0-9_]*"
 # Strings whose counters (@@NDEV@@...) show as animated figures; never ones used in attributes.
@@ -193,7 +310,7 @@ def family_card(ctx, fam, n):
     t = ctx["t"]
     link = ctx["link"](f"devices/{fam['id']}/")
     return (
-        f'\t\t\t<li class="card"><h3><a href="{link}">{esc(fam_name(t, fam["id"]))}</a></h3>'
+        f'\t\t\t<li class="card"><span class="icon" aria-hidden="true">{ICONS[FAMILY_ICONS.get(fam["id"], "box")]}</span><h3><a href="{link}">{esc(fam_name(t, fam["id"]))}</a></h3>'
         f'<p>{esc(t[f"fam_{fam["id"]}_blurb"])}</p>'
         f'<p class="label-tape">{esc(t["fp_n"]).replace("{n}", f'<span class="num" data-n="{n}">{n}</span>')}</p></li>'
     )
@@ -369,7 +486,11 @@ def fragments(ctx, page, data):
             for f in data["families"]
         ),
         "CATALOG": "\n".join(device_card(ctx, d) for d in devs),
+        "N_DEV": str(len(devs)),
+        "N_CH": str(len(data["channels"])),
     }
+    for name, value in DIAGRAMS.items():
+        frag[f"DIAGRAM:{name}"] = value
     if page["tmpl"] == "roadmap":
         frag["ROADMAP"] = render_roadmap(ctx, data["roadmap"])
     if page["tmpl"] == "family":
@@ -438,6 +559,11 @@ DEVICES_SCRIPT = """(function () {
 		});
 	});
 	q.addEventListener('input', apply);
+	// The search box of the home page lands here as ?q=.
+	try {
+		var given = new URLSearchParams(location.search).get('q');
+		if (given) { q.value = given; apply(); }
+	} catch (e) {}
 })();"""
 
 
@@ -481,17 +607,29 @@ def build_page(templates, svgs, strings, data, page, code):
     for name, value in frag.items():
         body = body.replace(f"@@{name}@@", value)
 
+    # Top navigation, as on a product site: Product (home), Features, Integrations, Docs (external),
+    # Roadmap, Community, Download (the install page). GitHub sits beside it as a button.
     nav_items = [
+        ("", t["nav_product"]),
         ("features/", t["nav_features"]),
-        ("devices/", t["nav_devices"]),
-        ("install/", t["nav_install"]),
+        ("devices/", t["nav_integrations"]),
+        (None, t["nav_docs"]),
         ("roadmap/", t["nav_roadmap"]),
         ("community/", t["nav_community"]),
+        ("install/", t["nav_download"]),
     ]
+    docs_home = DOCS_HOST + docs_dir + "/latest/"
     nav = "\n".join(
-        f'\t\t\t<a href="{link(p)}"' + (' aria-current="page"' if page["nav"] == p else "") + f">{esc(label)}</a>"
+        f'\t\t\t<a href="{link(p) if p is not None else docs_home}"'
+        + (' aria-current="page"' if p is not None and (page["nav"] or "") == p else "")
+        + (' class="nav-dl"' if p == "install/" else "")
+        + f">{esc(label)}</a>"
         for p, label in nav_items
     )
+    foot_langs = "\t\t\t\t<ul>\n" + "\n".join(
+        f'\t\t\t\t\t<li><a href="{rel(code, path, c, path)}" hreflang="{c}" lang="{c}"' + (' aria-current="true"' if c == code else "") + f">{n}</a></li>"
+        for c, n, *_ in LANGS
+    ) + "\n\t\t\t\t</ul>"
     items = []
     for c, n, _s, _o, _d in LANGS:
         cur = ' aria-current="true"' if c == code else ""
@@ -525,7 +663,7 @@ def build_page(templates, svgs, strings, data, page, code):
     t_full = templates["base"].replace("@@BODY@@", body)
     for name, value in {
         "TITLE": esc(title), "DESC": esc(desc), "URL": url, "LANG": code, "OGLOCALE": og,
-        "ALTERNATES": alternates, "NAV": nav, "SWITCHER": switcher, "ROOT": root_of(code, path),
+        "ALTERNATES": alternates, "NAV": nav, "FOOT_LANGS": foot_langs, "SWITCHER": switcher, "ROOT": root_of(code, path),
         "JSONLD": jsonld, "SCRIPT": script,
         "DETECT": detect_script(code, path) if code == "en" else "",
     }.items():
@@ -538,20 +676,11 @@ def build_page(templates, svgs, strings, data, page, code):
     t_full = t_full.replace("@@DOCS@@", DOCS_HOST + docs_dir + "/latest/")
     t_full = t_full.replace("@@VERSION@@", VERSION)
     t_full = re.sub(r"@@LINK:([^@]*)@@", lambda m: link(m.group(1)), t_full)
-    t_full = re.sub(r'<h1 class="blur-in">([^<]*)</h1>', lambda m: '<h1 class="blur-in">' + blur_words(m.group(1), code) + "</h1>", t_full)
+    t_full = re.sub(r"@@ICON:([a-z]+)@@", lambda m: ICONS[m.group(1)], t_full)
     t_full = t_full.replace('<script>\n\n</script>', "")
     leftover = re.search(r"@@[A-Za-z:_]+@@|\{\{[^}]*\}\}", t_full)
     assert not leftover, f"unfilled placeholder {leftover.group(0)} in {code}/{path}"
     return t_full
-
-
-def blur_words(text, code):
-    """A title that arrives word by word out of a blur (CSS only, site.css .blur-in): each word
-    gets its own span and rank. Chinese has no spaces: one span per character. Spaces stay
-    outside the spans, so the title wraps and reads exactly as before."""
-    words = list(text) if code == "zh-Hans" else text.split(" ")
-    sep = "" if code == "zh-Hans" else " "
-    return sep.join(f'<span class="w" style="--i:{min(i, 12)}">{w}</span>' for i, w in enumerate(words) if w)
 
 
 def _link(code, path, target):
@@ -587,17 +716,19 @@ NOT_FOUND = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Page not found · DumbMonit</title>
 <meta name="robots" content="noindex">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#07080a">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/assets/site.css">
 </head>
 <body>
-<main id="main" class="wrap" style="min-height:100vh;display:grid;place-content:center;justify-items:center;text-align:center;gap:20px;padding-block:48px">
-	<img src="/assets/mascot.svg" alt="" width="140" height="160">
-	<h1 style="font-size:clamp(2rem,1.5rem + 2vw,3rem)">This page flew off.</h1>
-	<p class="muted">Nothing lives at this address.</p>
-	<p style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center">
-		<a class="btn btn-primary" href="/">Back to DumbMonit</a>
+<main id="main" class="lost">
+	<img src="/favicon.svg" alt="" width="56" height="56">
+	<p class="label-tape">404</p>
+	<h1>Nothing lives at this address.</h1>
+	<p class="muted">The page may have moved. Start again from one of these.</p>
+	<p class="cta" style="justify-content:center">
+		<a class="btn btn-primary" href="/">DumbMonit</a>
 		<a class="btn btn-secondary" href="/devices/">Monitors</a>
 		<a class="btn btn-secondary" href="/install/">Install</a>
 	</p>
