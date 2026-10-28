@@ -489,38 +489,10 @@ def render_roadmap(ctx, roadmap):
     return "\n".join(out)
 
 
-MEDIA = HERE / "static" / "assets" / "media"
-VIDEO_TYPES = {".webm": "video/webm", ".mp4": "video/mp4"}
-POSTER_EXT = (".avif", ".webp", ".jpg", ".png")
-
-
-def video_section(root):
-    """The "See it in action" block, only when a demo video is present in static/assets/media/
-    (<stem>.webm and/or <stem>.mp4, poster <stem>.webp/.jpg/.png or <stem>-poster.*): never a
-    reference to a missing file. Click to play: no autoplay, so reduced motion is respected."""
-    if not MEDIA.is_dir():
-        return ""
-    vids = sorted((f for f in MEDIA.iterdir() if f.suffix in VIDEO_TYPES), key=lambda f: (f.stem != "demo", f.suffix != ".webm", f.name))
-    if not vids:
-        return ""
-    stem = vids[0].stem
-    sources = "".join(
-        f'<source src="{root}assets/media/{f.name}" type="{VIDEO_TYPES[f.suffix]}">' for f in vids if f.stem == stem
-    )
-    poster = next((f for e in POSTER_EXT for f in (MEDIA / f"{stem}{e}", MEDIA / f"{stem}-poster{e}") if f.exists()), None)
-    poster_attr = f' poster="{root}assets/media/{poster.name}"' if poster else ""
-    return f"""<section class="block" id="see">
-	<div class="wrap">
-		<div class="section-head center">
-			<p class="eyebrow">{{{{vd_eyebrow}}}}</p>
-			<h2>{{{{vd_h}}}}</h2>
-			<p>{{{{vd_p}}}}</p>
-		</div>
-		<figure class="video-fig">
-			<video controls playsinline preload="none"{poster_attr} aria-label="{{{{vd_h}}}}">{sources}<p>{{{{vd_fallback}}}}</p></video>
-		</figure>
-	</div>
-</section>"""
+# The demo video lives once in the repository, in docs/assets/demo/ (the README shows it from
+# there); the build copies what the home page plays into website/assets/demo/.
+DEMO_MEDIA = HERE.parent / "docs" / "assets" / "demo"
+DEMO_FILES = ("dumbmonit-demo.webm", "dumbmonit-demo.mp4", "demo-poster.jpg")
 
 
 def fragments(ctx, page, data):
@@ -538,7 +510,6 @@ def fragments(ctx, page, data):
         "CATALOG": "\n".join(device_card(ctx, d) for d in devs),
         "N_DEV": str(len(devs)),
         "N_CH": str(len(data["channels"])),
-        "VIDEO": video_section(ctx["root"]) if page["tmpl"] == "home" else "",
     }
     for name, value in DIAGRAMS.items():
         frag[f"DIAGRAM:{name}"] = value
@@ -801,6 +772,8 @@ def main():
     for f in data["families"]:
         for k in (f"fam_{f['id']}_name", f"fam_{f['id']}_blurb"):
             assert k in base, f"missing string {k}"
+    missing = [n for n in DEMO_FILES if not (DEMO_MEDIA / n).exists()]
+    assert not missing, f"docs/assets/demo/: missing {missing}"
     pages = build_pages(data)
     files = {}
     for page in pages:
@@ -816,6 +789,9 @@ def main():
     if OUT.exists():
         shutil.rmtree(OUT)
     shutil.copytree(HERE / "static", OUT)
+    (OUT / "assets" / "demo").mkdir(parents=True, exist_ok=True)
+    for name in DEMO_FILES:
+        shutil.copy2(DEMO_MEDIA / name, OUT / "assets" / "demo" / name)
     for p, c in files.items():
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(c)

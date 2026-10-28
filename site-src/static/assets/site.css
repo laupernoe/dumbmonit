@@ -1696,24 +1696,6 @@ main {
 	max-width: 46rem;
 	margin: 24px auto 0;
 }
-/* "See it in action": the recorded demo, played on request */
-.video-fig {
-	max-width: 960px;
-	margin-inline: auto;
-	overflow: hidden;
-	border: 1px solid var(--c-line-strong);
-	border-radius: 14px;
-	background: var(--c-canvas-deep);
-	box-shadow: var(--shadow-float);
-}
-.video-fig video {
-	display: block;
-	width: 100%;
-	height: auto;
-	aspect-ratio: 16 / 10;
-	object-fit: contain;
-	background: var(--c-canvas-deep);
-}
 .dev-badge {
 	height: 18px;
 	padding: 0 6px;
@@ -2830,4 +2812,21 @@ footer {
 		flex-basis: 150px;
 		width: 150px;
 	}
+}
+
+/* ---- video tour ---- */
+.vid-fig {
+	max-width: 960px;
+	margin: 0 auto;
+	overflow: hidden;
+	border: 1px solid var(--c-line-strong);
+	border-radius: 14px;
+	background: var(--c-canvas);
+	box-shadow: var(--shadow-float);
+}
+.vid-fig video {
+	display: block;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 16 / 10;
 }
