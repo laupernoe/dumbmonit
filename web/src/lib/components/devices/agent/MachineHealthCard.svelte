@@ -12,9 +12,10 @@
 	 * simply stays out.
 	 */
 	import { m } from '#lib/paraglide/messages.js';
-	import { queryInstant, queryRange, type MetricSeries, type Target } from '#lib/api/index.js';
-	import { Gauge, Heatmap, Sparkline, TopN, type Cell, type Threshold, type TopItem } from '#lib/viz/index.js';
-	import { formatBytes } from '#lib/components/devices/observability/format.js';
+	import { queryInstant, queryRange, type CapacityForecast, type MetricSeries, type Target } from '#lib/api/index.js';
+	import { getTargetForecasts } from '#lib/api/forecasts.js';
+	import { CapacityBar, Gauge, Heatmap, Sparkline, TopN, type Cell, type Threshold, type TopItem } from '#lib/viz/index.js';
+	import { formatBytes } from '#lib/components/devices/docker/api.js';
 	import { Panel, Plate } from '#lib/ui/index.js';
 
 	interface Props {
@@ -35,6 +36,8 @@
 	let range = $state<MetricSeries[]>([]);
 	let oomKills = $state<number | null>(null);
 	let loaded = $state(false);
+	/** Fill forecasts of the real mounts (`filesystem` family), fullest first. */
+	let fills = $state<CapacityForecast[]>([]);
 
 	$effect(() => {
 		const id = target.id;
@@ -68,6 +71,17 @@
 			.catch(() => {
 				// The card is additive: a failed read hides it rather than shouting.
 				if (!controller.signal.aborted) loaded = true;
+			});
+		// Read apart: a forecast that fails only hides the disk bars.
+		getTargetForecasts(id, controller.signal)
+			.then((all) => {
+				fills = all
+					.filter((f) => f.family === 'filesystem' && !RUNTIME_MOUNT.test(f.entity))
+					.filter((f) => (f.used !== null && f.size !== null && f.size > 0) || f.used_percent !== null)
+					.sort((a, b) => (b.used_percent ?? 0) - (a.used_percent ?? 0));
+			})
+			.catch(() => {
+				if (!controller.signal.aborted) fills = [];
 			});
 		return () => controller.abort();
 	});
@@ -270,6 +284,33 @@
 						label={m.devices_machine_heat_label()}
 						tickEvery={6}
 					/>
+				</div>
+			{/if}
+
+			<!-- Each real mount, with the day it fills up at the current pace -->
+			{#if fills.length > 0}
+				<div class="mt-6">
+					<h3 class="text-sm font-medium text-ink">{m.devices_machine_disks_title()}</h3>
+					<p class="mb-2 text-sm text-ink-2">{m.devices_machine_disks_hint()}</p>
+					<ul class="m-0 grid list-none gap-3 p-0 lg:grid-cols-2">
+						{#each fills as fill (fill.entity)}
+							{@const raw = fill.used !== null && fill.size !== null && fill.size > 0}
+							{@const days = fill.days_to_full === null ? null : Math.round(fill.days_to_full)}
+							<li class="min-w-0">
+								<CapacityBar
+									label={fill.entity || m.devices_machine_disk()}
+									used={raw ? (fill.used ?? 0) : (fill.used_percent ?? 0)}
+									capacity={raw ? (fill.size ?? 0) : 100}
+									format={raw ? formatBytes : (v) => pct(v)}
+									warnAt={0.85}
+									criticalAt={0.95}
+									forecastDays={days}
+									forecastLabel={days === null ? '' : m.storage_full_in({ count: days })}
+									{toneLabels}
+								/>
+							</li>
+						{/each}
+					</ul>
 				</div>
 			{/if}
 

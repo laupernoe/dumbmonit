@@ -8793,6 +8793,8 @@
 	"devices_machine_ram": "Arbeitsspeicher",
 	"devices_machine_disk": "Festplatte",
 	"devices_machine_disk_worst": "Festplatte {mount}",
+	"devices_machine_disks_title": "Datenträger",
+	"devices_machine_disks_hint": "Wie voll jeder Datenträger ist und, beim aktuellen Tempo, wann er voll sein wird.",
 	"devices_machine_tone_signal": "Normal",
 	"devices_machine_tone_advisory": "Erhöht",
 	"devices_machine_tone_warning": "Hoch",

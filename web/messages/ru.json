@@ -8959,6 +8959,8 @@
 	"devices_machine_ram": "Память",
 	"devices_machine_disk": "Диск",
 	"devices_machine_disk_worst": "Диск {mount}",
+	"devices_machine_disks_title": "Диски",
+	"devices_machine_disks_hint": "Заполненность каждого диска и, при текущем темпе, когда он заполнится.",
 	"devices_machine_tone_signal": "Норма",
 	"devices_machine_tone_advisory": "Повышено",
 	"devices_machine_tone_warning": "Высоко",
