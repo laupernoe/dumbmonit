@@ -341,14 +341,14 @@ pub fn group_by_name(
 }
 
 /// Chemins PDH de la pression approchée, dans l'ordre de [`windows_load_from`].
-#[cfg(any(windows, test))]
+#[cfg(windows)]
 pub const WINDOWS_LOAD_COUNTERS: [&str; 3] = [
     r"\System\Processor Queue Length",
     r"\Memory\Pages/sec",
     r"\PhysicalDisk(_Total)\Current Disk Queue Length",
 ];
 
-/// Assemble les trois lectures PDH (même ordre que [`WINDOWS_LOAD_COUNTERS`]).
+/// Assemble les trois lectures PDH (même ordre que `WINDOWS_LOAD_COUNTERS`).
 /// Une valeur négative ou non finie est écartée plutôt que remontée.
 #[cfg(any(windows, test))]
 pub fn windows_load_from(
