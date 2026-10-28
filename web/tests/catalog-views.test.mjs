@@ -146,3 +146,20 @@ test('a ranking adds counters of one entity, keeps the worst of other families',
 	assert.deepEqual(catalogLayout(pools, ranked('gauge')).charts[0].rows, [{ key: 'tank', value: 70 }]);
 	assert.deepEqual(catalogLayout(pools, ranked('counter')).charts[0].rows, [{ key: 'tank', value: 110 }]);
 });
+
+test('a heatmap spreads its ranked entities over time slices', () => {
+	const collector = {
+		kind: 'demo',
+		metrics: [metric('demo_load', { entity: 'disk' })],
+		views: [{ view: 'heatmap', title: 'Disks', metrics: ['demo_load'], group_by: '', options: {} }]
+	};
+	const values = Array.from({ length: 48 }, (_, i) => (i < 24 ? 1 : 9));
+	const disks = [group('demo_load', [serie('sda', { disk: 'sda' }, values), serie('sdb', { disk: 'sdb' }, values.map(() => 0))])];
+	const chart = catalogLayout(disks, collector).charts[0];
+	assert.deepEqual(chart.rows, [{ key: 'sda', value: 9 }], 'an entity never above zero is left out');
+	assert.equal(chart.grid.cols.length, 24);
+	const cells = chart.grid.cells.filter((c) => c.row === 'sda');
+	assert.equal(cells.length, 24);
+	assert.equal(cells[0].value, 1);
+	assert.equal(cells[23].value, 9);
+});

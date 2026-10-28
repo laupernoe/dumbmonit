@@ -11,6 +11,7 @@
  * the logic runs under `node --test`.
  */
 import type { CollectorInfo, MetricDescription, ViewDescription } from '#lib/api/index.js';
+import type { Cell } from '#lib/viz/index.js';
 import type { DeviceMetricGroup, DeviceSerie } from './metrics.js';
 
 /** The server stores every family with this prefix; the catalogue omits it. */
@@ -18,6 +19,8 @@ export const PREFIX = 'dumbmonit_';
 
 /** At most this many entities in a ranking unless the view says otherwise. */
 const DEFAULT_LIMIT = 10;
+/** Time columns of a catalogue heatmap. */
+const HEAT_COLUMNS = 24;
 
 /** Interfaces Docker and the kernel make up: hidden from charts when a real one exists. */
 const VIRTUAL_IF = /^(lo|veth.*|br-.*|docker\d*|virbr\d*|vnet\d*|tap\d*|cni\d*|flannel.*|dummy\d*)$/;
@@ -138,7 +141,7 @@ function statOf(metric: MetricDescription, group: DeviceMetricGroup, rated: Read
 
 // --- Charts ----------------------------------------------------------------------
 
-/** One entity of a ranking (`topn`, provisional `heatmap`). */
+/** One entity of a ranking (`topn`, and the rows of a `heatmap`). */
 export interface RankRow {
 	key: string;
 	value: number;
@@ -153,6 +156,14 @@ export interface CatalogChart {
 	series: DeviceSerie[];
 	/** Entities, largest first, for `topn` and `heatmap`. */
 	rows: RankRow[];
+	/** Entity × time cells of a `heatmap` (rows keyed by `RankRow.key`); empty otherwise. */
+	grid: HeatGrid;
+}
+
+export interface HeatGrid {
+	/** Time buckets, oldest first; `key` is the bucket start in seconds. */
+	cols: { key: string; label: string }[];
+	cells: Cell[];
 }
 
 export interface CatalogLayout {
@@ -207,6 +218,65 @@ function ranking(
 }
 
 /**
+ * The ranked entities spread over the window: one column per slice of time, a
+ * cell holding the worst value of that slice (counters of one entity add up,
+ * as in the ranking).
+ */
+function heatGrid(
+	view: ViewDescription,
+	members: { metric: MetricDescription; group: DeviceMetricGroup }[],
+	rows: RankRow[]
+): HeatGrid {
+	const wanted = new Set(rows.map((r) => r.key));
+	const add = members.every(({ metric }) => metric.kind === 'counter');
+	const picked: { key: string; serie: DeviceSerie }[] = [];
+	let from = Infinity;
+	let to = -Infinity;
+	for (const { metric, group } of members) {
+		for (const serie of physicalOnly(group.series)) {
+			const key =
+				(view.group_by && serie.labels[view.group_by]) ||
+				(metric.entity && serie.labels[metric.entity]) ||
+				serie.label;
+			if (!wanted.has(key) || serie.points.length === 0) continue;
+			picked.push({ key, serie });
+			from = Math.min(from, serie.points[0][0]);
+			to = Math.max(to, serie.points[serie.points.length - 1][0]);
+		}
+	}
+	if (picked.length === 0 || !(to > from)) return { cols: [], cells: [] };
+	const step = (to - from) / HEAT_COLUMNS;
+	const slot = (t: number) => Math.min(HEAT_COLUMNS - 1, Math.floor((t - from) / step));
+	const values = new Map<string, number>();
+	for (const { key, serie } of picked) {
+		// Each series first keeps its own worst value per slot, then entities combine.
+		const own = new Map<number, number>();
+		for (const [t, v] of serie.points) {
+			if (!Number.isFinite(v)) continue;
+			const i = slot(t);
+			own.set(i, Math.max(own.get(i) ?? -Infinity, v));
+		}
+		for (const [i, v] of own) {
+			const id = `${key}\u0000${i}`;
+			const known = values.get(id);
+			values.set(id, known === undefined ? v : add ? known + v : Math.max(known, v));
+		}
+	}
+	const cols = Array.from({ length: HEAT_COLUMNS }, (_, i) => {
+		const start = Math.round(from + i * step);
+		const label = new Date(start * 1000).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+		return { key: String(start), label };
+	});
+	const cells: Cell[] = [];
+	for (const row of rows) {
+		cols.forEach((col, i) => {
+			cells.push({ row: row.key, col: col.key, value: values.get(`${row.key}\u0000${i}`) ?? null });
+		});
+	}
+	return { cols, cells };
+}
+
+/**
  * The declared views filled with the device's families. `null` when the kind
  * declares none, or when the device has none of the declared families: the page
  * then keeps its generic layout. A view whose families the device does not have
@@ -253,13 +323,15 @@ export function catalogLayout(
 		}
 		const unit = displayUnit(members[0].metric, rated) || members[0].group.unit;
 		const known = view.view === 'topn' || view.view === 'heatmap';
+		const rows = known ? ranking(view, members) : [];
 		const chart: CatalogChart = {
 			key: `${index}-${view.title}`,
 			title: view.title || members[0].metric.label || members[0].group.title,
 			view: view.view,
 			unit,
 			series: known ? [] : timeseries(members),
-			rows: known ? ranking(view, members) : []
+			rows,
+			grid: view.view === 'heatmap' ? heatGrid(view, members, rows) : { cols: [], cells: [] }
 		};
 		if (chart.series.length > 0 || known) charts.push(chart);
 	});
