@@ -718,6 +718,57 @@
 	"auth_setup_title": "Creiamo il tuo account.",
 	"auth_setup_username_required": "Scegli un nome utente.",
 	"auth_setup_username_spaces": "Il nome utente non può contenere spazi.",
+	"cloudregions_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} regione",
+				"countPlural=other": "{count} regioni"
+			}
+		}
+	],
+	"cloudregions_description": "Dove girano le risorse di questo account.",
+	"cloudregions_map_label": "Mappa delle regioni di {name}",
+	"cloudregions_pin_down": "{region}: {resources}, {down} ferme",
+	"cloudregions_pin_home": "{region}: la regione dell'account",
+	"cloudregions_pin_ok": "{region}: {resources}, tutte attive",
+	"cloudregions_resources": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} risorsa",
+				"countPlural=other": "{count} risorse"
+			}
+		}
+	],
+	"cloudregions_title": "Regioni",
+	"cloudregions_unknown": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} risorsa si trova in una regione assente dalla mappa.",
+				"countPlural=other": "{count} risorse si trovano in regioni assenti dalla mappa."
+			}
+		}
+	],
 	"dash_add": "Aggiungi: {kind}",
 	"dash_add_group": "Aggiungi un widget",
 	"dash_alerts_more": "Vedi tutti gli avvisi (+{count})",
@@ -8645,6 +8696,84 @@
 	"deviceform_site_added": "{name} aggiunto.",
 	"deviceform_site_open": "Apri",
 	"deviceform_site_kinds": "Comuni qui",
+	"geomap_country_none": "{country}: niente",
+	"geomap_country_value": "{country}: {value}",
+	"geomap_legend": "Legenda",
+	"geomap_legend_fewer": "Meno",
+	"geomap_legend_link_down": "Relay non raggiungibile",
+	"geomap_legend_link_idle": "Relay non sondato",
+	"geomap_legend_link_ok": "Relay attivo",
+	"geomap_legend_link_warn": "Relay da controllare",
+	"geomap_legend_more": "Di più (fino a {max})",
+	"geomap_legend_step": "Da {value}",
+	"geomap_list_countries": "Paesi",
+	"geomap_list_links": "Collegamenti",
+	"geomap_list_places": "Luoghi",
+	"geomap_list_toggle": "Vedi come elenco ({count})",
+	"geomap_relay_link": "Il relay {relay} collega {site} a {main}: {state}",
+	"threatmap_crowdsec_hint": "Scegliete Account macchina come credenziale di questo monitor (cscli machines add) per vedere da dove arrivano i suoi avvisi, per paese.",
+	"threatmap_description": "Da dove arrivano gli attacchi fermati dalle vostre difese, per paese.",
+	"threatmap_empty_body": "Date un account macchina a un monitor CrowdSec, aprite la mappa in diretta di un firewall OPNsense o aggiungete Cloudflare con l'analisi del traffico: gli attacchi che fermano appaiono qui, per paese.",
+	"threatmap_empty_title": "Nessuna fonte alimenta ancora la mappa delle minacce",
+	"threatmap_err_load": "Impossibile caricare la mappa delle minacce",
+	"threatmap_map_label": "Mappa del mondo degli attacchi fermati, per paese",
+	"threatmap_partial": "L'archivio delle metriche non ha risposto: sono contate solo le mappe in diretta dei firewall.",
+	"threatmap_privacy": "Solo paesi: nessun indirizzo viene conservato né mostrato.",
+	"threatmap_quiet": "Niente fermato nel periodo coperto.",
+	"threatmap_source_cloudflare": "Minacce Cloudflare",
+	"threatmap_source_crowdsec": "Avvisi CrowdSec",
+	"threatmap_source_firewall": "Blocchi dei firewall (mappa in diretta)",
+	"threatmap_sources": "Fonti",
+	"threatmap_split_cloudflare": "Cloudflare {count}",
+	"threatmap_split_crowdsec": "CrowdSec {count}",
+	"threatmap_split_firewall": "Firewall {count}",
+	"threatmap_title": "Mappa delle minacce",
+	"threatmap_top": "Paesi più attivi",
+	"threatmap_value": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{shown} attacco fermato",
+				"countPlural=other": "{shown} attacchi fermati"
+			}
+		}
+	],
+	"threatmap_window_hours": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Ultima {count} ora",
+				"countPlural=other": "Ultime {count} ore"
+			}
+		}
+	],
+	"threatmap_window_minutes": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Ultimo {count} minuto",
+				"countPlural=other": "Ultimi {count} minuti"
+			}
+		}
+	],
 	"devices_chart_label": "Grafico",
 	"devices_chart_last_week_series": "Settimana scorsa: {label}",
 	"devices_chart_compare_week": "Confronta con la settimana scorsa",

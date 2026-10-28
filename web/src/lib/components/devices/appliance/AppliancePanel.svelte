@@ -16,11 +16,14 @@
 	import { queryInstant, type Target } from '#lib/api/index.js';
 	import { ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
 	import ClientDevicesTable from '../ClientDevicesTable.svelte';
+	import CloudRegions from '#lib/components/geomap/CloudRegions.svelte';
 	import Figure from '../Figure.svelte';
 	import { FOLDS, type ApplianceView } from './folds';
 
 	/** Kinds whose devices page also shows the client-devices table. */
 	const WITH_DEVICES = new Set(['veeam', 'tailscale']);
+	/** Cloud kinds whose devices page also maps their regions. */
+	const WITH_REGIONS = new Set(['aws', 'azure', 'hetzner', 'ovh', 'infomaniak']);
 
 	interface Props {
 		target: Target;
@@ -109,4 +112,8 @@
 
 {#if WITH_DEVICES.has(target.kind)}
 	<ClientDevicesTable {target} />
+{/if}
+
+{#if WITH_REGIONS.has(target.kind) && !variant}
+	<CloudRegions {target} />
 {/if}

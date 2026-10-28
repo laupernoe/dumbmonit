@@ -718,6 +718,57 @@
 	"auth_setup_title": "Let's create your account.",
 	"auth_setup_username_required": "Choose a username.",
 	"auth_setup_username_spaces": "The username cannot contain spaces.",
+	"cloudregions_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} region",
+				"countPlural=other": "{count} regions"
+			}
+		}
+	],
+	"cloudregions_description": "Where this account's resources run.",
+	"cloudregions_map_label": "Map of the regions of {name}",
+	"cloudregions_pin_down": "{region}: {resources}, {down} not running",
+	"cloudregions_pin_home": "{region}: the account's region",
+	"cloudregions_pin_ok": "{region}: {resources}, all running",
+	"cloudregions_resources": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} resource",
+				"countPlural=other": "{count} resources"
+			}
+		}
+	],
+	"cloudregions_title": "Regions",
+	"cloudregions_unknown": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} resource is in a region not on the map.",
+				"countPlural=other": "{count} resources are in regions not on the map."
+			}
+		}
+	],
 	"dash_add": "Add {kind}",
 	"dash_add_group": "Add a widget",
 	"dash_alerts_more": "See all alerts (+{count})",
@@ -8645,6 +8696,84 @@
 	"deviceform_site_added": "{name} added.",
 	"deviceform_site_open": "Open",
 	"deviceform_site_kinds": "Common here",
+	"geomap_country_none": "{country}: nothing",
+	"geomap_country_value": "{country}: {value}",
+	"geomap_legend": "Legend",
+	"geomap_legend_fewer": "Fewer",
+	"geomap_legend_link_down": "Relay down",
+	"geomap_legend_link_idle": "Relay not probed",
+	"geomap_legend_link_ok": "Relay up",
+	"geomap_legend_link_warn": "Relay needs a look",
+	"geomap_legend_more": "More (up to {max})",
+	"geomap_legend_step": "From {value}",
+	"geomap_list_countries": "Countries",
+	"geomap_list_links": "Links",
+	"geomap_list_places": "Places",
+	"geomap_list_toggle": "View as a list ({count})",
+	"geomap_relay_link": "Relay {relay} links {site} to {main}: {state}",
+	"threatmap_crowdsec_hint": "Choose Machine login as this monitor's credential (cscli machines add) to see where its alerts come from, by country.",
+	"threatmap_description": "Where the attacks your defences stopped come from, by country.",
+	"threatmap_empty_body": "Give a CrowdSec monitor a machine login, open the live map of an OPNsense firewall, or add Cloudflare with traffic analytics: the attacks they stop appear here, by country.",
+	"threatmap_empty_title": "No source feeds the threat map yet",
+	"threatmap_err_load": "Could not load the threat map",
+	"threatmap_map_label": "World map of stopped attacks, by country",
+	"threatmap_partial": "The metrics store did not answer: only the firewalls' live maps are counted.",
+	"threatmap_privacy": "Countries only: no address is kept or shown.",
+	"threatmap_quiet": "Nothing stopped over the period covered.",
+	"threatmap_source_cloudflare": "Cloudflare threats",
+	"threatmap_source_crowdsec": "CrowdSec alerts",
+	"threatmap_source_firewall": "Firewall blocks (live map)",
+	"threatmap_sources": "Sources",
+	"threatmap_split_cloudflare": "Cloudflare {count}",
+	"threatmap_split_crowdsec": "CrowdSec {count}",
+	"threatmap_split_firewall": "Firewall {count}",
+	"threatmap_title": "Threat map",
+	"threatmap_top": "Top countries",
+	"threatmap_value": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{shown} attack stopped",
+				"countPlural=other": "{shown} attacks stopped"
+			}
+		}
+	],
+	"threatmap_window_hours": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Last {count} hour",
+				"countPlural=other": "Last {count} hours"
+			}
+		}
+	],
+	"threatmap_window_minutes": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Last {count} minute",
+				"countPlural=other": "Last {count} minutes"
+			}
+		}
+	],
 	"devices_chart_label": "Chart",
 	"devices_chart_last_week_series": "Last week: {label}",
 	"devices_chart_compare_week": "Compare to last week",

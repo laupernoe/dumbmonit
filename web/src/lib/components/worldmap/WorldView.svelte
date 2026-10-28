@@ -6,29 +6,36 @@
 	 * location's monitors.
 	 *
 	 * Locations and their members come from `GET /api/locations` (assignment,
-	 * then site, then main site); states from the shared store.
+	 * then site, then main site); states from the shared store. Relay agents
+	 * (`GET /api/relays`, administrators and unrestricted accounts) draw a link
+	 * from their site's location to the main site, in the relay's own state.
 	 */
 	import { m } from '#lib/paraglide/messages.js';
 	import { listLocations, getBasemap } from '#lib/api/locations.js';
-	import type { Basemap, Locations, MapLocation, Target, TargetId } from '#lib/api/index.js';
+	import { listRelays } from '#lib/api/relay.js';
+	import type { Basemap, Locations, MapLocation, RelayAgent, Target, TargetId } from '#lib/api/index.js';
 	import { displayState, STATE_LABEL, STATE_TONE, type TargetState } from '#lib/format.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, EmptyState, ErrorNotice, Led, Skeleton } from '#lib/ui/index.js';
 	import { pinCount, sortByVerdict, tally, verdict, type Tally, type Verdict } from '#lib/map/aggregate.js';
-	import WorldMap, { type WorldPin } from './WorldMap.svelte';
+	import type { WorldPin } from './WorldMap.svelte';
+	import GeoMap, { type GeoArc, type GeoTone } from '#lib/components/geomap/GeoMap.svelte';
 	import { Globe2, X } from 'lucide-svelte';
 
 	let data = $state<Locations | null>(null);
+	let relays = $state<RelayAgent[]>([]);
 	let basemap = $state<Basemap>({ mode: 'offline', url: '', attribution: '' });
 	let loadError = $state<unknown>(null);
 	let selected = $state<string | null>(null);
 
 	async function load(signal?: AbortSignal) {
 		try {
-			const [locations, background] = await Promise.all([listLocations(signal), getBasemap(signal)]);
+			// The relay list is not open to team-restricted accounts: no links then, the map stays.
+			const [locations, background, agents] = await Promise.all([listLocations(signal), getBasemap(signal), listRelays(signal).catch(() => [] as RelayAgent[])]);
 			data = locations;
 			basemap = background;
+			relays = agents;
 			loadError = null;
 		} catch (error) {
 			if (signal?.aborted) return;
@@ -105,6 +112,36 @@
 		}))
 	);
 
+	const LINK_TONE: Record<Verdict, GeoTone> = { down: 'down', warn: 'warn', ok: 'ok', idle: 'idle', empty: 'idle' };
+
+	/** A link per relay agent: from its site's location to the main site's. */
+	const relayArcs = $derived.by((): GeoArc[] => {
+		const locations = data?.locations ?? [];
+		const main = locations.find((l) => l.main_site);
+		if (!main) return [];
+		const bySite = new Map<string, MapLocation>();
+		for (const location of locations) {
+			const site = location.site.trim().toLowerCase();
+			if (site && !bySite.has(site)) bySite.set(site, location);
+		}
+		const arcs: GeoArc[] = [];
+		for (const relay of relays) {
+			const from = relay.relay && relay.site ? bySite.get(relay.site.trim().toLowerCase()) : undefined;
+			if (!from || from.id === main.id) continue;
+			const target = targets.get(relay.id);
+			const v = target ? verdict(tally([stateOf(target)])) : 'idle';
+			arcs.push({
+				id: `relay:${relay.id}`,
+				from: [from.latitude, from.longitude],
+				to: [main.latitude, main.longitude],
+				tone: LINK_TONE[v],
+				label: m.geomap_relay_link({ relay: relay.name, site: from.name, main: main.name, state: verdictText(v) })
+			});
+		}
+		return arcs;
+	});
+	const linkTones = $derived(new Set(relayArcs.map((a) => a.tone)));
+
 	const current = $derived(rows.find((r) => String(r.location.id) === selected) ?? null);
 	const STATE_RANK: Record<TargetState, number> = { down: 0, offline: 0, misconfigured: 1, pending: 1, online: 2, unknown: 3, disabled: 4 };
 	const currentMonitors = $derived(
@@ -129,6 +166,13 @@
 	const settingsHref = '/settings/monitoring#locations';
 </script>
 
+{#snippet linkLegend()}
+	{#if linkTones.has('ok')}<li class="inline-flex items-center gap-1.5"><span class="gm-key gm-key--line gm-key--ok" aria-hidden="true"></span>{m.geomap_legend_link_ok()}</li>{/if}
+	{#if linkTones.has('warn')}<li class="inline-flex items-center gap-1.5"><span class="gm-key gm-key--line gm-key--warn" aria-hidden="true"></span>{m.geomap_legend_link_warn()}</li>{/if}
+	{#if linkTones.has('down')}<li class="inline-flex items-center gap-1.5"><span class="gm-key gm-key--line gm-key--down" aria-hidden="true"></span>{m.geomap_legend_link_down()}</li>{/if}
+	{#if linkTones.has('idle')}<li class="inline-flex items-center gap-1.5"><span class="gm-key gm-key--line gm-key--idle" aria-hidden="true"></span>{m.geomap_legend_link_idle()}</li>{/if}
+{/snippet}
+
 {#if loadError && !data}
 	<ErrorNotice error={loadError} title={m.worldmap_err_load()} />
 {:else if !data}
@@ -143,7 +187,18 @@
 	</EmptyState>
 {:else}
 	<div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_20rem]">
-		<WorldMap {pins} {basemap} {selected} cluster onselect={(id) => (selected = selected === id ? null : id)} label={m.worldmap_map_label()} class="h-[60vh] min-h-[360px] lg:h-[72vh]" />
+		<GeoMap
+			{pins}
+			{basemap}
+			{selected}
+			cluster
+			arcs={relayArcs}
+			listPins={false}
+			legend={relayArcs.length > 0 ? linkLegend : undefined}
+			onselect={(id) => (selected = selected === id ? null : id)}
+			label={m.worldmap_map_label()}
+			class="h-[60vh] min-h-[360px] lg:h-[72vh]"
+		/>
 
 		<section class="flex min-h-0 flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface shadow-lift lg:h-[72vh]" aria-live="polite">
 			{#if current}

@@ -8118,6 +8118,36 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/security/threats:
+    get:
+      operationId: getSecurityThreats
+      tags: [Security]
+      summary: Threat map, by country, every source together
+      description: >-
+        Attacks stopped, counted by country of origin: CrowdSec alerts of the
+        last 24 hours (`source.cn`, needs a machine login on the CrowdSec
+        monitor), inbound connections blocked by the OPNsense live map (its
+        15-minute window, only while someone watches it) and Cloudflare threats
+        by country (traffic analytics). Countries only: no address is ever read,
+        stored or returned. A team-restricted account sees its own devices'
+        sources only.
+      x-token-scope: read
+      parameters:
+        - name: target
+          in: query
+          required: false
+          schema: { type: integer, format: int64 }
+          description: Only the sources of this device (the CrowdSec panel).
+      responses:
+        "200":
+          description: Countries, busiest first, and the sources that feed the map.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ThreatMap" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/security/settings:
     get:
       operationId: getSecuritySettings
@@ -14173,6 +14203,36 @@ components:
               fail: { type: integer }
               unknown: { type: integer }
               top_failures: { type: array, items: { type: string } }
+
+    ThreatMap:
+      type: object
+      required: [countries, sources, partial, evaluated_at]
+      properties:
+        countries:
+          type: array
+          description: Busiest first.
+          items:
+            type: object
+            required: [code, total, crowdsec, firewall, cloudflare]
+            properties:
+              code: { type: string, description: ISO 3166-1 alpha-2 country code. }
+              total: { type: integer }
+              crowdsec: { type: integer }
+              firewall: { type: integer }
+              cloudflare: { type: integer }
+        sources:
+          type: array
+          description: Sources plugged in, even with nothing seen; empty when none is.
+          items:
+            type: object
+            required: [source, targets, total, window_secs]
+            properties:
+              source: { type: string, enum: [crowdsec, firewall, cloudflare] }
+              targets: { type: array, items: { type: integer, format: int64 } }
+              total: { type: integer }
+              window_secs: { type: integer, description: Time span the counts of this source cover. }
+        partial: { type: boolean, description: "`true`: VictoriaMetrics did not answer, only the firewall live windows are counted." }
+        evaluated_at: { type: string }
 
     CveState:
       type: string

@@ -696,6 +696,54 @@
 	"auth_setup_title": "来创建你的账户吧。",
 	"auth_setup_username_required": "请选择一个用户名。",
 	"auth_setup_username_spaces": "用户名不能包含空格。",
+	"cloudregions_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个区域"
+			}
+		}
+	],
+	"cloudregions_description": "此账户的资源运行在哪里。",
+	"cloudregions_map_label": "{name} 的区域地图",
+	"cloudregions_pin_down": "{region}：{resources}，{down} 个未运行",
+	"cloudregions_pin_home": "{region}：账户所在区域",
+	"cloudregions_pin_ok": "{region}：{resources}，全部运行中",
+	"cloudregions_resources": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个资源"
+			}
+		}
+	],
+	"cloudregions_title": "区域",
+	"cloudregions_unknown": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个资源位于地图上没有的区域。"
+			}
+		}
+	],
 	"dash_add": "添加：{kind}",
 	"dash_add_group": "添加小组件",
 	"dash_alerts_more": "查看全部告警（+{count}）",
@@ -8557,6 +8605,81 @@
 	"deviceform_site_added": "已添加 {name}。",
 	"deviceform_site_open": "打开",
 	"deviceform_site_kinds": "此处常用",
+	"geomap_country_none": "{country}：无",
+	"geomap_country_value": "{country}：{value}",
+	"geomap_legend": "图例",
+	"geomap_legend_fewer": "较少",
+	"geomap_legend_link_down": "中继离线",
+	"geomap_legend_link_idle": "中继未探测",
+	"geomap_legend_link_ok": "中继正常",
+	"geomap_legend_link_warn": "中继需要查看",
+	"geomap_legend_more": "较多（最多 {max}）",
+	"geomap_legend_step": "自 {value} 起",
+	"geomap_list_countries": "国家/地区",
+	"geomap_list_links": "连接",
+	"geomap_list_places": "地点",
+	"geomap_list_toggle": "以列表查看（{count}）",
+	"geomap_relay_link": "中继 {relay} 将 {site} 连接到 {main}：{state}",
+	"threatmap_crowdsec_hint": "将此监控的凭据设为“机器账户”（cscli machines add），即可按国家/地区查看其告警来源。",
+	"threatmap_description": "按国家/地区显示被您的防御拦截的攻击来自何处。",
+	"threatmap_empty_body": "为 CrowdSec 监控设置机器账户、打开 OPNsense 防火墙的实时地图，或添加启用流量分析的 Cloudflare：它们拦截的攻击会按国家/地区显示在这里。",
+	"threatmap_empty_title": "尚无数据源为威胁地图提供数据",
+	"threatmap_err_load": "无法加载威胁地图",
+	"threatmap_map_label": "按国家/地区划分的已拦截攻击世界地图",
+	"threatmap_partial": "指标存储没有响应：仅统计防火墙的实时地图。",
+	"threatmap_privacy": "仅显示国家/地区：不保存也不显示任何地址。",
+	"threatmap_quiet": "所覆盖的时间段内没有拦截任何内容。",
+	"threatmap_source_cloudflare": "Cloudflare 威胁",
+	"threatmap_source_crowdsec": "CrowdSec 告警",
+	"threatmap_source_firewall": "防火墙拦截（实时地图）",
+	"threatmap_sources": "数据源",
+	"threatmap_split_cloudflare": "Cloudflare {count}",
+	"threatmap_split_crowdsec": "CrowdSec {count}",
+	"threatmap_split_firewall": "防火墙 {count}",
+	"threatmap_title": "威胁地图",
+	"threatmap_top": "最活跃的国家/地区",
+	"threatmap_value": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "已拦截 {shown} 次攻击"
+			}
+		}
+	],
+	"threatmap_window_hours": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "最近 {count} 小时"
+			}
+		}
+	],
+	"threatmap_window_minutes": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "最近 {count} 分钟"
+			}
+		}
+	],
 	"devices_chart_label": "图表",
 	"devices_chart_last_week_series": "上周：{label}",
 	"devices_chart_compare_week": "与上周对比",
