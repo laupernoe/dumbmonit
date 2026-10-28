@@ -32,10 +32,17 @@ installarlo per davvero, o per mettere una vetrina sul tuo stesso sito.
   a `127.0.0.1` e che riproducono risposte API registrate, così i collector e
   i pannelli dei monitor reali funzionano. Riavviando si ottiene lo
   stesso patrimonio.
-- **Sette giorni di cronologia.** Metriche sintetiche vengono scritte in
-  VictoriaMetrics all'avvio, così i grafici, *Last 7 days*, le previsioni e la
-  cronologia degli avvisi sono popolati, e alcuni avvisi sono attivi affinché
-  *Needs you* contenga qualcosa.
+- **Trenta giorni di cronologia.** Metriche sintetiche vengono scritte in
+  VictoriaMetrics all'avvio (l'ultima settimana con risoluzione di cinque
+  minuti), così i grafici, *Last 7 days*, la disponibilità a 30 giorni, le
+  previsioni («pieno tra circa N giorni») e la cronologia degli avvisi sono
+  popolati, e alcuni avvisi sono attivi affinché *Needs you* contenga qualcosa.
+  Uno switch centrale con le sue porte e il suo traffico, una mappa delle
+  minacce alimentata da conteggi inventati di CrowdSec e Cloudflare, scadenze
+  di domini e licenze, una matrice dei backup con alcune notti fallite, un
+  dispositivo trovato dalla scansione di rete e due pagine di stato con scene
+  notturne completano il quadro. Tutto è calcolato in memoria da un seme fisso:
+  nulla viene scaricato dalla rete.
 - **Niente lascia il server.** Nessuna notifica viene mai inviata, e nessuna
   sonda raggiunge un indirizzo digitato da un visitatore.
 - **Un tour guidato** si apre dopo il primo accesso; il banner lo riapre.

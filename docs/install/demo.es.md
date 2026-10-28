@@ -33,10 +33,17 @@ instalarlo de verdad, o para poner una vitrina en tu propio sitio.
   respuestas de API grabadas, así que los recolectores y paneles de
   monitor reales se ejecutan de verdad. Reiniciar da el mismo
   patrimonio.
-- **Siete días de historial.** Se escriben métricas sintéticas en
-  VictoriaMetrics al iniciar, así que las gráficas, *Last 7 days*, los
-  pronósticos y el historial de alertas están poblados, y hay algunas
-  alertas activas para que *Needs you* tenga contenido.
+- **Treinta días de historial.** Se escriben métricas sintéticas en
+  VictoriaMetrics al iniciar (la última semana con resolución de cinco
+  minutos), así que las gráficas, *Last 7 days*, la disponibilidad a 30 días,
+  los pronósticos («lleno en unos N días») y el historial de alertas están
+  poblados, y hay algunas alertas activas para que *Needs you* tenga contenido.
+  Un switch central con sus puertos y su tráfico, un mapa de amenazas
+  alimentado con cifras inventadas de CrowdSec y Cloudflare, vencimientos de
+  dominios y licencias, una matriz de copias de seguridad con algunas noches
+  fallidas, un dispositivo encontrado por el escaneo de red y dos páginas de
+  estado con escenas nocturnas completan el cuadro. Todo se calcula en memoria
+  a partir de una semilla fija: no se descarga nada de la red.
 - **Nada sale del servidor.** Nunca se envía ninguna notificación, y
   ninguna sonda va a una dirección que un visitante haya escrito.
 - **Un recorrido guiado** se abre tras el primer inicio de sesión; el
