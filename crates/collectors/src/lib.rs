@@ -381,7 +381,7 @@ impl Registry {
     pub fn measures(&self, kind: &str) -> Option<Measures> {
         self.get(kind)
             .and_then(|collector| collector.measures(kind))
-            .or_else(|| catalog::embedded(kind))
+            .or_else(|| embedded_measures(kind))
     }
 
     pub fn kinds(&self) -> Vec<Arc<str>> {
@@ -495,6 +495,18 @@ impl Registry {
         }
         Ok(samples)
     }
+}
+
+/// Le catalogue embarqué (`catalog/`), quand le paquet est construit avec.
+#[cfg(feature = "catalog")]
+fn embedded_measures(kind: &str) -> Option<Measures> {
+    catalog::embedded(kind)
+}
+
+/// Sans la fonctionnalité `catalog` (l'agent relais) : aucune vue déclarée.
+#[cfg(not(feature = "catalog"))]
+fn embedded_measures(_kind: &str) -> Option<Measures> {
+    None
 }
 
 #[cfg(test)]

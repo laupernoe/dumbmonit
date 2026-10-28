@@ -22,11 +22,15 @@
 //! serveur ajoute à l'écriture. Les profils SNMP portent leurs vues eux-mêmes
 //! (`Catalog::measures`) et l'agent est décrit par le serveur.
 
-use std::collections::{BTreeMap, HashSet};
+use std::collections::HashSet;
+#[cfg(feature = "catalog")]
+use std::collections::BTreeMap;
+#[cfg(feature = "catalog")]
 use std::sync::OnceLock;
 
 use dumbmonit_proto::{Measures, MetricDescription, ViewDescription};
 use serde::Deserialize;
+#[cfg(feature = "catalog")]
 use tracing::error;
 
 /// Vues que l'interface sait rendre. Une autre est refusée à la lecture : une
@@ -136,6 +140,9 @@ fn contains_word(text: &str, word: &str) -> bool {
 }
 
 /// Les fichiers du catalogue, incorporés au binaire comme les profils SNMP.
+/// Seulement avec la fonctionnalité `catalog` (le serveur) : l'agent relais n'en
+/// a pas l'usage.
+#[cfg(feature = "catalog")]
 const EMBEDDED: &[(&str, &str)] = &[
     ("activedirectory", include_str!("../catalog/activedirectory.yaml")),
     ("adguard", include_str!("../catalog/adguard.yaml")),
@@ -246,6 +253,7 @@ const EMBEDDED: &[(&str, &str)] = &[
 
 /// Mesures et vues du type `kind` d'après le catalogue embarqué ; `None` pour un
 /// type qui n'y figure pas (rendu générique).
+#[cfg(feature = "catalog")]
 pub fn embedded(kind: &str) -> Option<Measures> {
     static TABLE: OnceLock<BTreeMap<&'static str, Measures>> = OnceLock::new();
     TABLE
@@ -268,18 +276,22 @@ pub fn embedded(kind: &str) -> Option<Measures> {
 }
 
 /// Les types que décrit le catalogue embarqué.
+#[cfg(feature = "catalog")]
 pub fn embedded_kinds() -> impl Iterator<Item = &'static str> {
     EMBEDDED.iter().map(|(kind, _)| *kind)
 }
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "catalog")]
     use std::path::Path;
+    #[cfg(feature = "catalog")]
     use std::time::Duration;
 
     use super::*;
 
     /// Le texte de tous les fichiers `.rs` sous `dir`.
+    #[cfg(feature = "catalog")]
     fn sources(dir: &Path) -> String {
         let mut text = String::new();
         let mut pending = vec![dir.to_path_buf()];
@@ -296,6 +308,7 @@ mod tests {
         text
     }
 
+    #[cfg(feature = "catalog")]
     #[test]
     fn chaque_fichier_du_catalogue_se_lit() {
         for (kind, text) in EMBEDDED {
@@ -306,6 +319,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "catalog")]
     #[test]
     fn chaque_mesure_declaree_est_emise_par_son_collecteur() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
@@ -322,6 +336,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "catalog")]
     #[tokio::test]
     async fn le_catalogue_ne_decrit_que_des_types_enregistres() {
         let registry = crate::Registry::remote(Duration::from_secs(5));
