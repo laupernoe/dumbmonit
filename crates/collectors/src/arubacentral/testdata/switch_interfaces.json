@@ -1,0 +1,6 @@
+{"items":[
+{"name":"1/1/1","description":"AP-PORT","status":"Up","uplink":false,"portError":"","neighbour":"ap-lobby","neighbourPort":"eth0","speed":"1 Gbps","duplex":"Full","poePower":7.5,"rxErrors":0,"txErrors":1},
+{"name":"1/1/2","description":"","status":"Down","uplink":false,"neighbour":""},
+{"name":"1/1/3","description":"to core","status":"Up","uplink":true,"speed":"10G","duplex":"Full"},
+{"name":"1/1/4","description":"spare","status":"Admin Disabled"}
+],"count":4,"total":4,"next":null}

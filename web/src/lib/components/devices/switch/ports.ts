@@ -13,6 +13,9 @@
  *   `index` label, the ifIndex.
  * - `unifi`: `unifi_port_*` from `port_table` / `lldp_table`, one unit per
  *   switch or gateway (`mac`).
+ * - `omada`, `arubacentral`: the same `<kind>_port_*` series as UniFi, read
+ *   from the controller's REST API (the unit is the switch MAC, or its serial
+ *   for Aruba Central). Field names of those two APIs are partly unverified.
  * - `mikrotik`: `mikrotik_interface_*` of the `ether` interfaces; RouterOS
  *   reports neither speed, PoE nor neighbours through the readings stored.
  *
@@ -378,7 +381,11 @@ const snmp: PortSource = {
 
 const UNIFI = 'dumbmonit_unifi_port_';
 
-export function foldUnifi(state: MetricSeries[], day: MetricSeries[]): SwitchUnit[] {
+export function foldUnifi(
+	state: MetricSeries[],
+	day: MetricSeries[],
+	prefix: string = UNIFI
+): SwitchUnit[] {
 	const units = new Map<string, SwitchUnit>();
 	const readings = new Map<SwitchPort, Record<string, number>>();
 	const port = (m: Record<string, string>): SwitchPort | null => {
@@ -398,7 +405,7 @@ export function foldUnifi(state: MetricSeries[], day: MetricSeries[]): SwitchUni
 		return p;
 	};
 	for (const serie of state) {
-		const name = nameOf(serie, UNIFI);
+		const name = nameOf(serie, prefix);
 		const value = last(serie);
 		const p = name && value !== null ? port(serie.metric) : null;
 		if (!p || value === null) continue;
@@ -433,20 +440,28 @@ export function foldUnifi(state: MetricSeries[], day: MetricSeries[]): SwitchUni
 	return out.sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true }));
 }
 
-const unifi: PortSource = {
-	instant: (target) => [
-		`{__name__=~"dumbmonit_unifi_port_(enabled|up|speed_bps|full_duplex|uplink|poe_enabled|poe_watts|neighbor_info)", target="${target}"}`,
-		`sum by (mac, port) (increase_prometheus({__name__=~"dumbmonit_unifi_port_(rx|tx)_errors_total", target="${target}"}[24h]))`
-	],
-	fold: ([state = [], day = []]) => foldUnifi(state, day),
-	traffic: (target, unit, port) => ({
-		in: `rate(dumbmonit_unifi_port_rx_bytes_total{target="${target}", mac=${quote(unit)}, port=${quote(port)}}[5m]) * 8`,
-		out: `rate(dumbmonit_unifi_port_tx_bytes_total{target="${target}", mac=${quote(unit)}, port=${quote(port)}}[5m]) * 8`
-	}),
-	heatmap: (target, unit) =>
-		`max by (port) (rate({__name__=~"dumbmonit_unifi_port_(rx|tx)_bytes_total", target="${target}", mac=${quote(unit)}}[5m])) * 8`,
-	heatKey: (metric) => metric.port ?? null
-};
+/** Sources that store `<kind>_port_*` series with the UniFi layout and labels. */
+function cloudSource(kind: string): PortSource {
+	const prefix = `dumbmonit_${kind}_port_`;
+	return {
+		instant: (target) => [
+			`{__name__=~"dumbmonit_${kind}_port_(enabled|up|speed_bps|full_duplex|uplink|poe_enabled|poe_watts|neighbor_info)", target="${target}"}`,
+			`sum by (mac, port) (increase_prometheus({__name__=~"dumbmonit_${kind}_port_(rx|tx)_errors_total", target="${target}"}[24h]))`
+		],
+		fold: ([state = [], day = []]) => foldUnifi(state, day, prefix),
+		traffic: (target, unit, port) => ({
+			in: `rate(dumbmonit_${kind}_port_rx_bytes_total{target="${target}", mac=${quote(unit)}, port=${quote(port)}}[5m]) * 8`,
+			out: `rate(dumbmonit_${kind}_port_tx_bytes_total{target="${target}", mac=${quote(unit)}, port=${quote(port)}}[5m]) * 8`
+		}),
+		heatmap: (target, unit) =>
+			`max by (port) (rate({__name__=~"dumbmonit_${kind}_port_(rx|tx)_bytes_total", target="${target}", mac=${quote(unit)}}[5m])) * 8`,
+		heatKey: (metric) => metric.port ?? null
+	};
+}
+
+const unifi = cloudSource('unifi');
+const omada = cloudSource('omada');
+const arubacentral = cloudSource('arubacentral');
 
 // --- MikroTik -----------------------------------------------------------------
 
@@ -487,4 +502,4 @@ const mikrotik: PortSource = {
 };
 
 /** Kinds whose stored readings describe switch ports. */
-export const SOURCES: Record<string, PortSource> = { snmp, unifi, mikrotik };
+export const SOURCES: Record<string, PortSource> = { snmp, unifi, omada, arubacentral, mikrotik };

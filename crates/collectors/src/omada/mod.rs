@@ -1,5 +1,8 @@
 //! TP-Link Omada, par l'API ouverte du contrôleur (`/openapi/v1/{omadacId}/…`).
 //!
+//! Ports des commutateurs (via `crate::switch_ports`), au schéma d'UniFi :
+//! `omada_port_enabled`, `omada_port_up`, `omada_port_speed_bps`, `omada_port_full_duplex`, `omada_port_uplink`, `omada_port_poe_enabled`, `omada_port_poe_watts`, `omada_port_rx_bytes_total`, `omada_port_tx_bytes_total`, `omada_port_rx_errors_total`, `omada_port_tx_errors_total`, `omada_port_neighbor_info`.
+//!
 //! Un client OpenAPI créé dans le contrôleur (Paramètres de la plateforme →
 //! Intégrations → Open API, mode « Client ») avec le rôle Observateur : son
 //! identifiant et son secret s'échangent (`grant_type=client_credentials`)
@@ -46,6 +49,9 @@ use serde_json::{Value, json};
 
 use crate::rest::{MAX_NAMED, RestClient, TokenCache, flag, gauge, now_ms, number, text};
 use crate::selfhosted::options::tag;
+use crate::switch_ports::{
+    self, DevicePorts, MAX_PORTED_DEVICES, Port, pick, pick_bool, pick_number, pick_text,
+};
 
 pub const DEFAULT_PORT: u16 = 8043;
 const TOKEN_PATH: &str = "/openapi/authorize/token?grant_type=client_credentials";
@@ -228,6 +234,42 @@ impl Session<'_> {
         Ok(out)
     }
 
+    /// Les ports des commutateurs en ligne, un par un : lecture facultative
+    /// (un rôle ou une version de contrôleur sans cette route ne fait rien échouer).
+    async fn switch_ports(
+        &mut self,
+        sites_path: &str,
+        site_id: &str,
+        devices: &[Value],
+    ) -> Result<Vec<DevicePorts>, ProbeError> {
+        let mut out = Vec::new();
+        let switches = devices
+            .iter()
+            .filter(|d| is_switch(d) && state_of(d) == Some(State::Online))
+            .take(MAX_PORTED_DEVICES);
+        for device in switches {
+            let Some(mac) = text(device, "mac") else { continue };
+            if !mac.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == ':') {
+                continue;
+            }
+            // À vérifier contre la référence de l'API ouverte du contrôleur :
+            // le détail d'un commutateur porte la liste `ports`.
+            match self.get(&format!("{sites_path}/{site_id}/switches/{mac}")).await {
+                Ok(detail) => out.push(DevicePorts {
+                    device: text(device, "name").unwrap_or(mac).to_string(),
+                    unit: mac.to_string(),
+                    ports: parse_ports(&detail),
+                }),
+                Err(error) if error.means_down() => return Err(error),
+                Err(error) => {
+                    tracing::debug!(%error, mac, "Omada : ports du commutateur indisponibles");
+                    break;
+                }
+            }
+        }
+        Ok(out)
+    }
+
     async fn collect(&mut self, wanted_site: Option<&str>) -> Result<Vec<Site>, ProbeError> {
         let sites_path = format!("/openapi/v1/{}/sites", self.omadac);
         let sites = self.rows(&sites_path, 100).await?;
@@ -272,7 +314,8 @@ impl Session<'_> {
                     None
                 }
             };
-            out.push(Site { name, devices, clients });
+            let ports = self.switch_ports(&sites_path, id, &devices).await?;
+            out.push(Site { name, devices, clients, ports });
         }
         Ok(out)
     }
@@ -318,11 +361,83 @@ pub struct Site {
     pub name: String,
     pub devices: Vec<Value>,
     pub clients: Option<f64>,
+    /// Ports des commutateurs en ligne (facultatif).
+    pub ports: Vec<DevicePorts>,
 }
 
 pub struct Replies {
     pub info: Option<Value>,
     pub sites: Vec<Site>,
+}
+
+fn is_switch(device: &Value) -> bool {
+    text(device, "type").or_else(|| text(device, "deviceType")).is_some_and(|t| t == "switch")
+}
+
+/// Vitesse d'un port : l'énumération de l'API (1 = 10M, 2 = 100M, 3 = 1G,
+/// 4 = 2,5G, 5 = 10G, 6 = 25G), ou directement des Mbit/s. À vérifier.
+fn link_speed_bps(raw: f64) -> Option<f64> {
+    let mbps = match raw as i64 {
+        1 => 10.0,
+        2 => 100.0,
+        3 => 1000.0,
+        4 => 2500.0,
+        5 => 10_000.0,
+        6 => 25_000.0,
+        n if n >= 10 => n as f64,
+        _ => return None,
+    };
+    Some(mbps * 1e6)
+}
+
+/// Les ports du détail d'un commutateur (`ports`). Les noms de champs sont
+/// ceux de la documentation de l'API ouverte, avec quelques variantes : à
+/// vérifier sur un contrôleur réel.
+pub fn parse_ports(detail: &Value) -> Vec<Port> {
+    detail
+        .get("ports")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|port| {
+            let index = match pick(port, &["port", "portId", "id"])? {
+                Value::String(s) => s.clone(),
+                other => (number(Some(other))? as i64).to_string(),
+            };
+            let up = pick_bool(port, &["status", "linkStatus"]);
+            let poe_enabled = pick_bool(port, &["poe", "poeEnable", "poeStatus"]);
+            Some(Port {
+                index,
+                name: pick_text(port, &["name", "portName"]).map(str::to_string),
+                enabled: pick_bool(port, &["portEnable", "enable", "enabled"]),
+                up,
+                speed_bps: pick_number(port, &["linkSpeed", "speed"]).and_then(link_speed_bps),
+                // `duplex`: 1 demi, 2 plein (0 = automatique, inconnu). À vérifier.
+                full_duplex: pick_number(port, &["duplex", "linkDuplex"]).and_then(|d| {
+                    match d as i64 {
+                        1 => Some(false),
+                        2 => Some(true),
+                        _ => None,
+                    }
+                }),
+                uplink: pick_bool(port, &["uplink", "isUplink"]).unwrap_or(false),
+                poe_enabled,
+                poe_watts: pick_number(port, &["poePower", "power"]),
+                rx_bytes: pick_number(port, &["rx", "rxBytes"]),
+                tx_bytes: pick_number(port, &["tx", "txBytes"]),
+                rx_errors: pick_number(port, &["rxErrors", "rxErr"]),
+                tx_errors: pick_number(port, &["txErrors", "txErr"]),
+                neighbor: pick_text(port, &["lldpSystemName", "neighborName", "lldpName"]).map(
+                    |name| {
+                        (
+                            name.to_string(),
+                            pick_text(port, &["lldpPortId", "neighborPort"]).map(str::to_string),
+                        )
+                    },
+                ),
+            })
+        })
+        .collect()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -438,6 +553,11 @@ pub fn samples(r: &Replies, ts_ms: i64) -> Vec<Sample> {
             }
         }
     }
+    out.extend(switch_ports::samples(
+        "omada",
+        &r.sites.iter().flat_map(|site| site.ports.iter().cloned()).collect::<Vec<_>>(),
+        ts_ms,
+    ));
     for (status, count) in [("online", online), ("offline", offline), ("pending", pending)] {
         out.push(g("omada_devices", count as f64).with_label("status", status));
     }
@@ -473,6 +593,9 @@ mod tests {
     const DEVICES_DEFAULT: &str = include_str!("testdata/devices_default.json");
     const DEVICES_BRANCH: &str = include_str!("testdata/devices_branch.json");
     const CLIENTS: &str = include_str!("testdata/clients.json");
+    // Détail d'un commutateur : noms de champs d'après la documentation, à
+    // confirmer sur un contrôleur réel.
+    const SWITCH_DETAIL: &str = include_str!("testdata/switch_detail.json");
 
     const NOW: i64 = 1_790_000_000_000;
     const OMADAC: &str = "a3f1c0d2e4b5967788990011aabbccdd";
@@ -493,8 +616,18 @@ mod tests {
                     name: "Default".into(),
                     devices: data(DEVICES_DEFAULT),
                     clients: Some(42.0),
+                    ports: vec![DevicePorts {
+                        device: "SW-Core".into(),
+                        unit: "AA-BB-CC-00-00-02".into(),
+                        ports: parse_ports(&result(SWITCH_DETAIL)),
+                    }],
                 },
-                Site { name: "Branch".into(), devices: data(DEVICES_BRANCH), clients: Some(42.0) },
+                Site {
+                    name: "Branch".into(),
+                    devices: data(DEVICES_BRANCH),
+                    clients: Some(42.0),
+                    ports: vec![],
+                },
             ],
         }
     }
@@ -524,6 +657,28 @@ mod tests {
         );
         assert_eq!(value(&s, "omada_site_clients", &[("site", "Default")]), 42.0);
         assert_eq!(value(&s, "omada_clients", &[]), 84.0);
+    }
+
+    #[test]
+    fn ports_du_commutateur() {
+        let s = samples(&replies(), NOW);
+        let key = [("device", "SW-Core"), ("port", "1")];
+        assert_eq!(value(&s, "omada_port_up", &key), 1.0);
+        assert_eq!(value(&s, "omada_port_speed_bps", &key), 1e9);
+        assert_eq!(value(&s, "omada_port_full_duplex", &key), 1.0);
+        assert_eq!(value(&s, "omada_port_poe_watts", &key), 6.5);
+        assert_eq!(value(&s, "omada_port_rx_bytes_total", &key), 123456.0);
+        let n = find(&s, "omada_port_neighbor_info", &key).unwrap();
+        assert_eq!(n.labels["remote_chassis"], "ap-hall");
+        assert_eq!(n.labels["remote_port"], "eth0");
+        let two = [("device", "SW-Core"), ("port", "2")];
+        assert_eq!(value(&s, "omada_port_up", &two), 0.0);
+        assert!(find(&s, "omada_port_speed_bps", &two).is_none());
+        assert_eq!(value(&s, "omada_port_full_duplex", &[("port", "3")]), 0.0);
+        let off = [("device", "SW-Core"), ("port", "4")];
+        assert_eq!(value(&s, "omada_port_enabled", &off), 0.0);
+        assert!(find(&s, "omada_port_up", &off).is_none());
+        assert_eq!(value(&s, "omada_port_speed_bps", &[("port", "5")]), 10e9);
     }
 
     #[test]
@@ -589,6 +744,13 @@ mod tests {
                         DEVICES_BRANCH
                     }
                     p if p == format!("/openapi/v1/{OMADAC}/sites/site-default/clients") => CLIENTS,
+                    p if p
+                        == format!(
+                            "/openapi/v1/{OMADAC}/sites/site-default/switches/AA-BB-CC-00-00-02"
+                        ) =>
+                    {
+                        SWITCH_DETAIL
+                    }
                     // Un rôle sans droit sur les clients du second site.
                     _ => return (StatusCode::FORBIDDEN, "").into_response(),
                 };
@@ -607,6 +769,7 @@ mod tests {
         assert_eq!(value(&s, "omada_site_clients", &[("site", "Default")]), 42.0);
         assert!(find(&s, "omada_site_clients", &[("site", "Branch")]).is_none());
         assert!(find(&s, "omada_controller_info", &[]).is_some());
+        assert_eq!(value(&s, "omada_port_up", &[("device", "SW-Core"), ("port", "1")]), 1.0);
 
         // Le jeton est gardé : pas de nouvelle connexion au passage suivant.
         collector.probe(&target).await.unwrap();
