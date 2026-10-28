@@ -585,6 +585,7 @@ mod tests {
         );
         assert_eq!(value(&s, "veeam_license_valid", &[]), 1.0);
         assert_eq!(value(&s, "veeam_license_expiry_seconds", &[]), 20.0 * 86_400.0 - 9.0 * 3600.0);
+        assert_eq!(value(&s, "veeam_support_expiry_seconds", &[]), 20.0 * 86_400.0 - 9.0 * 3600.0);
         assert_eq!(value(&s, "veeam_section_readable", &[("section", "license")]), 1.0);
 
         assert_eq!(value(&s, "veeam_section_readable", &[("section", "restore_points")]), 1.0);
