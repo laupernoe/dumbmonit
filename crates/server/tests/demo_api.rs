@@ -119,7 +119,8 @@ async fn le_semis_montre_les_nouveautes() {
             (page["slug"].as_str().unwrap().to_string(), scenes[0].as_str().unwrap().to_string())
         })
         .collect();
-    let expected = [("home", "paris"), ("lab", "tokyo"), ("photos", "newyork"), ("muller", "dubai")];
+    let expected =
+        [("home", "paris"), ("lab", "tokyo"), ("photos", "newyork"), ("muller", "dubai")];
     assert_eq!(
         scenes,
         expected.map(|(slug, scene)| (slug.to_string(), scene.to_string())),

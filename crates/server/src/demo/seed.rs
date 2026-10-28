@@ -419,9 +419,10 @@ async fn seed_status_pages(
 
     // Un incident en cours sur la page du bureau, la dégradation d'Exchange
     // Online que remonte Microsoft 365, et sa maintenance planifiée.
-    let office: Option<i64> = sqlx::query_scalar("SELECT id FROM status_pages WHERE slug = 'muller'")
-        .fetch_optional(pool)
-        .await?;
+    let office: Option<i64> =
+        sqlx::query_scalar("SELECT id FROM status_pages WHERE slug = 'muller'")
+            .fetch_optional(pool)
+            .await?;
     if let Some(office) = office {
         sqlx::query(
             "UPDATE status_pages SET client_id = (SELECT id FROM clients WHERE name = ?)

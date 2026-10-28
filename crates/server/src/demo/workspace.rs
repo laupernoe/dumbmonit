@@ -206,9 +206,10 @@ async fn seed_clients(pool: &SqlitePool) -> Result<i64> {
     .fetch_one(pool)
     .await
     .context("demo office client")?;
-    for (_, names) in FOLDERS.iter().filter(|(folder, _)| {
-        *folder == "Geneva office" || *folder == "Microsoft 365"
-    }) {
+    for (_, names) in FOLDERS
+        .iter()
+        .filter(|(folder, _)| *folder == "Geneva office" || *folder == "Microsoft 365")
+    {
         for name in *names {
             sqlx::query("UPDATE targets SET client_id = ? WHERE name = ?")
                 .bind(office)
@@ -648,15 +649,21 @@ async fn seed_vulnerabilities(
         .context("demo CVE")?;
     }
     for (id, added, name) in [
-        ("CVE-2025-32463", "2025-09-29", "Sudo Inclusion of Functionality from Untrusted Control Sphere"),
+        (
+            "CVE-2025-32463",
+            "2025-09-29",
+            "Sudo Inclusion of Functionality from Untrusted Control Sphere",
+        ),
         ("CVE-2025-33073", "2025-10-20", "Microsoft Windows SMB Client Improper Access Control"),
     ] {
-        sqlx::query("INSERT INTO cve_kev (cve_id, date_added, ransomware, name) VALUES (?, ?, 0, ?)")
-            .bind(id)
-            .bind(added)
-            .bind(name)
-            .execute(pool)
-            .await?;
+        sqlx::query(
+            "INSERT INTO cve_kev (cve_id, date_added, ransomware, name) VALUES (?, ?, 0, ?)",
+        )
+        .bind(id)
+        .bind(added)
+        .bind(name)
+        .execute(pool)
+        .await?;
     }
     #[rustfmt::skip]
     let findings: &[Component] = &[
@@ -705,14 +712,12 @@ async fn seed_vulnerabilities(
         .context("demo CVE finding")?;
     }
     for source in ["scan", "nvd", "debian", "osv", "kev"] {
-        sqlx::query(
-            "INSERT INTO cve_sources (name, last_attempt, last_success) VALUES (?, ?, ?)",
-        )
-        .bind(source)
-        .bind(stamp(now - chrono::Duration::hours(5)))
-        .bind(stamp(now - chrono::Duration::hours(5)))
-        .execute(pool)
-        .await?;
+        sqlx::query("INSERT INTO cve_sources (name, last_attempt, last_success) VALUES (?, ?, ?)")
+            .bind(source)
+            .bind(stamp(now - chrono::Duration::hours(5)))
+            .bind(stamp(now - chrono::Duration::hours(5)))
+            .execute(pool)
+            .await?;
     }
     Ok(())
 }

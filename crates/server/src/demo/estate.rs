@@ -217,10 +217,7 @@ pub async fn start() -> anyhow::Result<Estate> {
                 name: M365_NAME,
                 kind: "m365",
                 address: GRAPH.into(),
-                tags: vec![
-                    ("tenant_id", graph::TENANT.into()),
-                    ("login_url", GRAPH.into()),
-                ],
+                tags: vec![("tenant_id", graph::TENANT.into()), ("login_url", GRAPH.into())],
                 credential: Credential::UsernamePassword {
                     username: "00000000-0000-0000-0000-00000000d3m0".into(),
                     password: "demonstration".into(),
@@ -235,10 +232,7 @@ pub async fn start() -> anyhow::Result<Estate> {
                 name: ENTRA_NAME,
                 kind: "entra",
                 address: GRAPH.into(),
-                tags: vec![
-                    ("tenant_id", graph::TENANT.into()),
-                    ("login_url", GRAPH.into()),
-                ],
+                tags: vec![("tenant_id", graph::TENANT.into()), ("login_url", GRAPH.into())],
                 credential: Credential::UsernamePassword {
                     username: "00000000-0000-0000-0000-00000000d3m0".into(),
                     password: "demonstration".into(),

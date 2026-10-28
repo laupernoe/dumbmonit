@@ -134,9 +134,10 @@ async fn synthetic_history(
         let services = service_labels(state, *id).await?;
         for ts in timeline.iter().copied() {
             let (samples, healthy) = match kind.as_str() {
-                "agent" if synthetic::agent_host(name).is_some() => {
-                    (synthetic::agent_host(name).map(|host| (host.samples)(ts)).unwrap_or_default(), true)
-                }
+                "agent" if synthetic::agent_host(name).is_some() => (
+                    synthetic::agent_host(name).map(|host| (host.samples)(ts)).unwrap_or_default(),
+                    true,
+                ),
                 "http" | "tls" | "ping" | "dns" => match synthetic::probe_samples(kind, name, ts) {
                     Ok(samples) => (samples, true),
                     // Une machine en panne a répondu jusqu'à la veille : sans série
@@ -188,7 +189,8 @@ async fn device_history(
     let mut buffer = Vec::with_capacity(CHUNK);
     for (id, _, kind) in targets {
         // Les types simulés par [`extras`] ont déjà leur historique complet.
-        if matches!(kind.as_str(), "agent" | "http" | "tls" | "ping" | "dns") || extras::handles(kind)
+        if matches!(kind.as_str(), "agent" | "http" | "tls" | "ping" | "dns")
+            || extras::handles(kind)
         {
             continue;
         }
