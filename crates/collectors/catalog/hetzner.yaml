@@ -1,0 +1,49 @@
+# Mesures et vues du type « hetzner » (format : crates/collectors/src/catalog.rs).
+source: hetzner
+prefixes: [hetzner_]
+metrics:
+  - { name: hetzner_server_cpu_percent, label: "Server CPU", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: hetzner_server_disk_read_bytes_per_second, label: "Server disk read", unit: "B/s" }
+  - { name: hetzner_server_disk_write_bytes_per_second, label: "Server disk write", unit: "B/s" }
+  - { name: hetzner_server_network_in_bytes_per_second, label: "Server network in", unit: "B/s" }
+  - { name: hetzner_server_network_out_bytes_per_second, label: "Server network out", unit: "B/s" }
+  - { name: hetzner_server_running, label: "Server running", unit: "bool" }
+  - { name: hetzner_server_info, label: "Server", kind: info }
+  - { name: hetzner_server_backups_enabled, label: "Server backups enabled", unit: "bool" }
+  - { name: hetzner_server_backup_age_seconds, label: "Server backup age", unit: "s" }
+  - { name: hetzner_servers, label: "Servers" }
+  - { name: hetzner_servers_running, label: "Servers running" }
+  - { name: hetzner_servers_not_running, label: "Servers not running" }
+  - { name: hetzner_volumes, label: "Volumes" }
+  - { name: hetzner_volumes_unattached, label: "Volumes unattached" }
+  - { name: hetzner_volume_attached, label: "Volume attached", unit: "bool" }
+  - { name: hetzner_volume_size_gigabytes, label: "Volume size gigabytes", unit: "GB" }
+  - { name: hetzner_backups_readable, label: "Backups readable", unit: "bool" }
+  - { name: hetzner_metrics_readable, label: "Metrics readable", unit: "bool" }
+  - { name: hetzner_volumes_readable, label: "Volumes readable", unit: "bool" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - hetzner_servers_not_running
+      - hetzner_servers
+      - hetzner_volumes_unattached
+      - hetzner_server_running
+      - hetzner_server_backups_enabled
+      - hetzner_server_backup_age_seconds
+      - hetzner_servers_running
+      - hetzner_volumes
+      - hetzner_volume_attached
+      - hetzner_volume_size_gigabytes
+      - hetzner_backups_readable
+      - hetzner_metrics_readable
+      - hetzner_volumes_readable
+  - view: timeseries
+    title: "Server CPU"
+    metrics: [hetzner_server_cpu_percent]
+  - view: timeseries
+    title: "Disk throughput"
+    metrics: [hetzner_server_disk_read_bytes_per_second, hetzner_server_disk_write_bytes_per_second]
+  - view: timeseries
+    title: "Network throughput"
+    metrics: [hetzner_server_network_in_bytes_per_second, hetzner_server_network_out_bytes_per_second]

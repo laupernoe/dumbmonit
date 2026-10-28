@@ -1,0 +1,109 @@
+# Mesures et vues du type « pdm » (format : crates/collectors/src/catalog.rs).
+source: pdm
+prefixes: [pdm_]
+metrics:
+  - { name: pdm_up, label: "Up", unit: "bool" }
+  - { name: pdm_scrape_errors, label: "Scrape errors", better: "lower" }
+  - { name: pdm_version_info, label: "Version", kind: info }
+  - { name: pdm_feature_skipped_info, label: "Feature skipped", kind: info }
+  - { name: pdm_tasks_total, label: "Tasks" }
+  - { name: pdm_tasks_running, label: "Tasks running" }
+  - { name: pdm_tasks_failed, label: "Tasks failed", better: "lower" }
+  - { name: pdm_guests_running, label: "Guests running" }
+  - { name: pdm_guests_stopped, label: "Guests stopped" }
+  - { name: pdm_subscription_total_nodes, label: "Subscription total nodes" }
+  - { name: pdm_subscription_active_nodes, label: "Subscription active nodes" }
+  - { name: pdm_remote_subscription_active, label: "Remote subscription active", unit: "bool" }
+  - { name: pdm_remotes_total, label: "Remotes" }
+  - { name: pdm_remotes_failed, label: "Remotes failed", better: "lower" }
+  - { name: pdm_remote_reachable, label: "Remote reachable", unit: "bool" }
+  - { name: pdm_remote_version_info, label: "Remote version", kind: info }
+  - { name: pdm_remote_version_behind, label: "Remote version behind" }
+  - { name: pdm_remote_updates_pending, label: "Remote updates pending" }
+  - { name: pdm_remote_tasks_failed, label: "Remote tasks failed", better: "lower" }
+  - { name: pdm_remote_last_collection_age_seconds, label: "Remote last collection age", unit: "s" }
+  - { name: pdm_remote_nodes_online, label: "Remote nodes online" }
+  - { name: pdm_remote_nodes_offline, label: "Remote nodes offline", better: "lower" }
+  - { name: pdm_remote_guests_running, label: "Remote guests running" }
+  - { name: pdm_remote_guests_stopped, label: "Remote guests stopped" }
+  - { name: pdm_remote_datastores, label: "Remote datastores" }
+  - { name: pdm_remote_cpu_used_percent, label: "Remote CPU used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: pdm_remote_cpu_used_cores, label: "Remote CPU used cores" }
+  - { name: pdm_remote_cpu_total_cores, label: "Remote CPU total cores" }
+  - { name: pdm_remote_memory_used_bytes, label: "Remote memory used", unit: "B" }
+  - { name: pdm_remote_memory_total_bytes, label: "Remote memory total", unit: "B" }
+  - { name: pdm_remote_storage_used_bytes, label: "Remote storage used", unit: "B" }
+  - { name: pdm_remote_storage_total_bytes, label: "Remote storage total", unit: "B" }
+  - { name: pdm_cpu_used_cores, label: "CPU used cores" }
+  - { name: pdm_cpu_total_cores, label: "CPU total cores" }
+  - { name: pdm_memory_used_percent, label: "Memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: pdm_memory_used_bytes, label: "Memory used", unit: "B" }
+  - { name: pdm_memory_total_bytes, label: "Memory total", unit: "B" }
+  - { name: pdm_storage_used_percent, label: "Storage used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: pdm_storage_used_bytes, label: "Storage used", unit: "B" }
+  - { name: pdm_storage_total_bytes, label: "Storage total", unit: "B" }
+  - { name: pdm_datastores_total, label: "Datastores" }
+  - { name: pdm_nodes_online, label: "Nodes online" }
+  - { name: pdm_nodes_offline, label: "Nodes offline", better: "lower" }
+  - { name: pdm_node_uptime_seconds, label: "Node uptime", unit: "s" }
+  - { name: pdm_node_updates_pending, label: "Node updates pending" }
+  - { name: pdm_node_swap_used_bytes, label: "Node swap used", unit: "B" }
+  - { name: pdm_node_swap_total_bytes, label: "Node swap total", unit: "B" }
+  - { name: pdm_node_rootfs_used_bytes, label: "Node root FS used", unit: "B" }
+  - { name: pdm_node_rootfs_total_bytes, label: "Node root FS total", unit: "B" }
+  - { name: pdm_node_rootfs_percent, label: "Node root FS", unit: "%", min: 0, max: 100 }
+  - { name: pdm_node_memory_used_percent, label: "Node memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: pdm_node_memory_used_bytes, label: "Node memory used", unit: "B" }
+  - { name: pdm_node_memory_total_bytes, label: "Node memory total", unit: "B" }
+  - { name: pdm_node_load1, label: "Node load1" }
+  - { name: pdm_node_iowait_percent, label: "Node I/O wait", unit: "%", min: 0, max: 100 }
+  - { name: pdm_node_cpu_percent, label: "Node CPU", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: pdm_node_cpu_count, label: "Node CPU count" }
+  - { name: pdm_node_kernel_info, label: "Node kernel", kind: info }
+  - { name: pdm_node_certificate_expiry_days, label: "Node certificate expiry days", unit: "days" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - pdm_remotes_failed
+      - pdm_tasks_failed
+      - pdm_nodes_offline
+      - pdm_remotes_total
+      - pdm_guests_running
+      - pdm_memory_used_percent
+      - pdm_tasks_total
+      - pdm_tasks_running
+      - pdm_guests_stopped
+      - pdm_subscription_total_nodes
+      - pdm_subscription_active_nodes
+      - pdm_remote_subscription_active
+      - pdm_remote_reachable
+      - pdm_remote_version_behind
+      - pdm_remote_updates_pending
+      - pdm_remote_tasks_failed
+      - pdm_remote_last_collection_age_seconds
+      - pdm_remote_nodes_online
+      - pdm_remote_nodes_offline
+      - pdm_remote_guests_running
+      - pdm_remote_guests_stopped
+      - pdm_remote_datastores
+      - pdm_remote_memory_used_bytes
+      - pdm_remote_storage_used_bytes
+      - pdm_datastores_total
+      - pdm_nodes_online
+      - pdm_node_uptime_seconds
+      - pdm_node_updates_pending
+      - pdm_node_load1
+      - pdm_node_certificate_expiry_days
+  - view: timeseries
+    title: "Node CPU and memory"
+    metrics: [pdm_node_cpu_percent, pdm_node_iowait_percent, pdm_node_memory_used_percent]
+  - view: timeseries
+    title: "Storage used"
+    metrics: [pdm_storage_used_percent, pdm_node_rootfs_percent]
+  - view: topn
+    title: "Remote CPU"
+    metrics: [pdm_remote_cpu_used_percent]
+    group_by: remote
+    options:
+      limit: "10"

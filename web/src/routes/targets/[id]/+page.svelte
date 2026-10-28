@@ -90,6 +90,8 @@
 		type DeviceMetricGroup,
 		type MetricRow
 	} from '#lib/components/devices/metrics.js';
+	import { catalogLayout, ratedFamilies, withCatalogUnits } from '#lib/components/devices/catalog.js';
+	import CatalogViews from '#lib/components/devices/CatalogViews.svelte';
 	import SilenceControl from '#lib/components/devices/SilenceControl.svelte';
 	import ManagedNotice from '#lib/components/devices/ManagedNotice.svelte';
 	import { auth } from '#lib/stores/auth.svelte.js';
@@ -249,15 +251,23 @@
 	let loadingMetrics = $state(true);
 	let metricsError = $state<unknown>(null);
 
-	const sections = $derived(sectionize(groups));
+	/** Counters the kind's catalogue charts: asked as rates, reloaded once the catalogue arrives. */
+	const rated = $derived(ratedFamilies(collector));
+	const ratedKey = $derived(rated.join(','));
+	/** Families with the catalogue's units and labels; its views, when the kind declares some. */
+	const shown = $derived(withCatalogUnits(groups, collector));
+	const sections = $derived(sectionize(shown));
+	const layout = $derived(catalogLayout(shown, collector));
+	/** The fold under the charts: everything else, or every family when the catalogue picked the charts. */
+	const tail = $derived(layout ? sections.rest : sections.other);
 
 	/** Interface rows unfolded by the user; the search over the long tail. */
 	let openInterfaces = $state<Record<string, boolean>>({});
 	let otherQuery = $state('');
 	const otherShown = $derived.by(() => {
 		const q = otherQuery.trim().toLowerCase();
-		if (!q) return sections.other;
-		return sections.other.filter(
+		if (!q) return tail;
+		return tail.filter(
 			(g) => g.name.toLowerCase().includes(q) || g.title.toLowerCase().includes(q)
 		);
 	});
@@ -506,7 +516,7 @@
 	async function loadMetrics(signal?: AbortSignal) {
 		metricsError = null;
 		try {
-			groups = await loadDeviceMetrics(id, rangeSeconds, signal);
+			groups = await loadDeviceMetrics(id, rangeSeconds, signal, rated);
 		} catch (cause) {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
 			metricsError = cause;
@@ -579,6 +589,7 @@
 	// Instruments need the kind (service or device) and follow the range.
 	$effect(() => {
 		void rangeSeconds;
+		void ratedKey;
 		const kind = target?.kind;
 		if (!kind) return;
 		const controller = new AbortController();
@@ -950,8 +961,13 @@
 			</EmptyState>
 		{:else}
 			<div class="flex flex-col gap-4">
-				<!-- Essentials: the handful of charts that answer "is it fine?" -->
-				{#if sections.essentials.length > 0}
+				<!-- Essentials: the handful of charts that answer "is it fine?" — the ones the
+				     kind's catalogue declares, or the generic cpu / memory / disk / network -->
+				{#if layout}
+					<FoldSection kind="essentials" title={m.devices_target_essentials()} defaultOpen summary={layout.charts.length === 1 ? m.devices_target_charts_one({ count: 1 }) : m.devices_target_charts_other({ count: layout.charts.length })} class="rise-in">
+						<CatalogViews {layout} />
+					</FoldSection>
+				{:else if sections.essentials.length > 0}
 					<FoldSection kind="essentials" title={m.devices_target_essentials()} defaultOpen summary={sections.essentials.length === 1 ? m.devices_target_charts_one({ count: 1 }) : m.devices_target_charts_other({ count: sections.essentials.length })} class="rise-in">
 						<div class="grid gap-4 px-4 py-4 sm:px-5 lg:grid-cols-2">
 							{#each sections.essentials as group, i (group.name)}
@@ -1010,12 +1026,12 @@
 				{/if}
 
 				<!-- The long tail, alphabetical, searchable -->
-				{#if sections.other.length > 0}
+				{#if tail.length > 0}
 					<FoldSection
-						kind="other"
-						title={m.devices_target_everything_else()}
-						defaultOpen={sections.essentials.length === 0}
-						summary={otherQuery.trim() ? m.devices_target_families_filtered({ shown: otherShown.length, total: sections.other.length }) : sections.other.length === 1 ? m.devices_target_families_one({ count: 1 }) : m.devices_target_families_other({ count: sections.other.length })}
+						kind={layout ? 'all-measurements' : 'other'}
+						title={layout ? m.devices_target_all_measurements() : m.devices_target_everything_else()}
+						defaultOpen={!layout && sections.essentials.length === 0}
+						summary={otherQuery.trim() ? m.devices_target_families_filtered({ shown: otherShown.length, total: tail.length }) : tail.length === 1 ? m.devices_target_families_one({ count: 1 }) : m.devices_target_families_other({ count: tail.length })}
 						class="rise-in"
 					>
 						{#snippet aside()}

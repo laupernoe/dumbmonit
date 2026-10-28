@@ -1,0 +1,30 @@
+# Mesures et vues du type « azure » (format : crates/collectors/src/catalog.rs).
+source: azure
+prefixes: [azure_]
+metrics:
+  - { name: azure_alerts_active, label: "Alerts active" }
+  - { name: azure_alerts_high_active, label: "Alerts high active" }
+  - { name: azure_alerts_total, label: "Alerts" }
+  - { name: azure_alerts_readable, label: "Alerts readable", unit: "bool" }
+  - { name: azure_resources, label: "Resources" }
+  - { name: azure_resources_available, label: "Resources available", better: "higher" }
+  - { name: azure_resources_degraded, label: "Resources degraded", better: "lower" }
+  - { name: azure_resources_stopped, label: "Resources stopped" }
+  - { name: azure_resources_unavailable, label: "Resources unavailable" }
+  - { name: azure_resources_unknown, label: "Resources unknown" }
+  - { name: azure_resource_unhealthy, label: "Resource unhealthy", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - azure_alerts_high_active
+      - azure_alerts_active
+      - azure_resource_unhealthy
+      - azure_resources
+      - azure_alerts_total
+      - azure_alerts_readable
+      - azure_resources_available
+      - azure_resources_degraded
+      - azure_resources_stopped
+      - azure_resources_unavailable
+      - azure_resources_unknown

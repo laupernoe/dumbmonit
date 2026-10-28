@@ -7,6 +7,7 @@
 use std::collections::BTreeMap;
 use std::sync::{Arc, OnceLock};
 
+use dumbmonit_proto::{Measures, MetricDescription, Text, ViewDescription};
 use serde::Deserialize;
 use tracing::error;
 
@@ -214,6 +215,24 @@ pub struct Metric {
     /// Filtre propre à cette métrique ; à défaut, celui du profil s'applique.
     #[serde(default)]
     pub filters: Option<Filters>,
+    /// Libellé affiché par l'interface ; à défaut, elle le tire du nom.
+    #[serde(default)]
+    pub label: Option<String>,
+    /// Unité de la valeur (`%`, `B`, `°C`, `bool`…) ; pour un compteur, celle du
+    /// cumul (`B`), l'interface traçant son taux.
+    #[serde(default)]
+    pub unit: Option<String>,
+    /// Étiquette qui nomme l'objet mesuré (`ifname`, `storage`…).
+    #[serde(default)]
+    pub entity: Option<String>,
+    /// Vue de la page de détail : `stat` (chiffre en tête), `timeseries`, `topn`
+    /// ou `heatmap`. Absente : la famille ne figure que sous « Toutes les mesures ».
+    #[serde(default)]
+    pub view: Option<String>,
+    /// Titre de la vue. Les métriques qui partagent une vue et un titre partagent
+    /// un graphique, d'un profil à l'autre.
+    #[serde(default)]
+    pub view_title: Option<String>,
 }
 
 /// Un profil de collecte, tel qu'écrit dans `profiles/`.
@@ -371,6 +390,73 @@ impl Catalog {
 
     pub fn profiles(&self) -> &[Profile] {
         &self.profiles
+    }
+
+    /// Les familles et les vues que déclarent tous les profils connus, pour le
+    /// catalogue du type `snmp` : une rangée de chiffres faite de toutes les
+    /// métriques `view: stat`, puis un graphique par couple (vue, titre).
+    ///
+    /// Une famille commune à plusieurs profils (`cpu_load_percent`) n'est décrite
+    /// qu'une fois, par le premier profil qui la déclare.
+    pub fn measures(&self) -> Measures {
+        let mut metrics: Vec<MetricDescription> = Vec::new();
+        let mut stat: Vec<Text> = Vec::new();
+        let mut views: Vec<ViewDescription> = Vec::new();
+        for metric in self.profiles.iter().flat_map(|profile| &profile.metrics) {
+            if !metrics.iter().any(|known| known.name == metric.name) {
+                metrics.push(MetricDescription {
+                    name: metric.name.clone().into(),
+                    label: metric.label.clone().unwrap_or_default().into(),
+                    unit: metric.unit.clone().unwrap_or_default().into(),
+                    kind: match metric.kind {
+                        MetricKindSpec::Counter => "counter",
+                        MetricKindSpec::Gauge => "gauge",
+                    }
+                    .into(),
+                    entity: metric.entity.clone().unwrap_or_default().into(),
+                    ..MetricDescription::default()
+                });
+            }
+            let Some(view) = metric.view.as_deref() else { continue };
+            let name: Text = metric.name.clone().into();
+            if view == "stat" {
+                if !stat.contains(&name) {
+                    stat.push(name);
+                }
+                continue;
+            }
+            let title = metric.view_title.clone().unwrap_or_else(|| metric.name.clone());
+            match views.iter_mut().find(|known| known.view == view && known.title == title) {
+                Some(known) if !known.metrics.contains(&name) => known.metrics.push(name),
+                Some(_) => {}
+                None => views.push(ViewDescription {
+                    view: view.to_string().into(),
+                    title: title.into(),
+                    metrics: vec![name],
+                    group_by: metric.entity.clone().unwrap_or_default().into(),
+                    ..ViewDescription::default()
+                }),
+            }
+        }
+        // Les courbes d'abord, les classements ensuite : sur un serveur, la charge
+        // passe avant les ports. Tri stable : l'ordre des profils est gardé.
+        views.sort_by_key(|view| match &*view.view {
+            "timeseries" => 0,
+            "topn" => 1,
+            _ => 2,
+        });
+        if !stat.is_empty() {
+            views.insert(
+                0,
+                ViewDescription {
+                    view: "stat".into(),
+                    title: "Current values".into(),
+                    metrics: stat,
+                    ..ViewDescription::default()
+                },
+            );
+        }
+        Measures { metrics, views }
     }
 
     /// Choisit le profil le plus spécifique pour un équipement identifié.
@@ -816,5 +902,54 @@ filters:
 
         // Sans la colonne, la liste blanche ne peut pas être satisfaite.
         assert!(!filters.keeps(&labels, |_| None));
+    }
+
+    #[test]
+    fn les_vues_des_profils_livres_sont_connues_du_catalogue() {
+        let measures = embedded().measures();
+        for view in &measures.views {
+            assert!(
+                crate::catalog::VIEWS.contains(&&*view.view),
+                "vue « {} » inconnue ({})",
+                view.view,
+                view.title
+            );
+            for name in &view.metrics {
+                assert!(
+                    measures.metrics.iter().any(|metric| metric.name == *name),
+                    "« {name} » cité par « {} » sans être décrit",
+                    view.title
+                );
+            }
+        }
+        // Une seule rangée de chiffres, en tête, pour tous les profils.
+        assert_eq!(measures.views.iter().filter(|view| view.view == "stat").count(), 1);
+        assert_eq!(measures.views[0].view, "stat");
+    }
+
+    #[test]
+    fn les_metriques_d_une_meme_vue_partagent_un_graphique() {
+        let measures = embedded().measures();
+        let ports = measures
+            .views
+            .iter()
+            .find(|view| view.title == "Busiest ports")
+            .expect("classement des ports d'IF-MIB");
+        assert_eq!(ports.view, "topn");
+        assert_eq!(ports.metrics, ["if_octets_in", "if_octets_out"]);
+        assert_eq!(ports.group_by, "ifname");
+        // `cpu_load_percent`, commun à trois profils, n'est décrit qu'une fois.
+        let cpu = measures.metrics.iter().filter(|m| m.name == "cpu_load_percent").count();
+        assert_eq!(cpu, 1);
+        let octets = measures.metrics.iter().find(|m| m.name == "if_octets_in").unwrap();
+        assert_eq!((&*octets.kind, &*octets.unit), ("counter", "B"));
+    }
+
+    #[test]
+    fn une_metrique_sans_vue_reste_hors_des_vues() {
+        let catalog = Catalog::from_sources([("if-mib.yaml", IF_MIB)]);
+        let measures = catalog.measures();
+        assert_eq!(measures.metrics.len(), 1);
+        assert!(measures.views.is_empty());
     }
 }

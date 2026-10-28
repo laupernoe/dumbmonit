@@ -1,0 +1,42 @@
+# Mesures et vues du type « gitlab » (format : crates/collectors/src/catalog.rs).
+source: selfhosted
+prefixes: [gitlab_]
+metrics:
+  - { name: gitlab_sidekiq_queue_backlog, label: "Sidekiq queue backlog" }
+  - { name: gitlab_sidekiq_queue_latency_seconds, label: "Sidekiq queue latency", unit: "s", better: "lower" }
+  - { name: gitlab_runners_total, label: "Runners" }
+  - { name: gitlab_runners_online, label: "Runners online" }
+  - { name: gitlab_runners_offline, label: "Runners offline", better: "lower" }
+  - { name: gitlab_runner_offline, label: "Runner offline", unit: "bool", better: "lower" }
+  - { name: gitlab_migrations_pending, label: "Migrations pending" }
+  - { name: gitlab_migration_pending, label: "Migration pending", unit: "bool" }
+  - { name: gitlab_license_info, label: "License", kind: info }
+  - { name: gitlab_license_expiry_seconds, label: "License expiry", unit: "s" }
+  - { name: gitlab_license_expired, label: "License expired", unit: "bool" }
+  - { name: gitlab_pipelines_failed_recent, label: "Pipelines failed recent" }
+  - { name: gitlab_pipelines_pending, label: "Pipelines pending" }
+  - { name: gitlab_readiness_check, label: "Readiness check", unit: "bool" }
+  - { name: gitlab_signup_enabled, label: "Signup enabled", unit: "bool" }
+  - { name: gitlab_two_factor_required, label: "Two factor required" }
+  - { name: gitlab_version_info, label: "Version", kind: info }
+  - { name: gitlab_scrape_errors, label: "Scrape errors", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - gitlab_runners_total
+      - gitlab_runners_online
+      - gitlab_runners_offline
+      - gitlab_runner_offline
+      - gitlab_migrations_pending
+      - gitlab_migration_pending
+      - gitlab_license_expiry_seconds
+      - gitlab_license_expired
+      - gitlab_pipelines_failed_recent
+      - gitlab_pipelines_pending
+      - gitlab_readiness_check
+      - gitlab_version_info
+      - gitlab_sidekiq_queue_latency_seconds
+  - view: timeseries
+    title: "Sidekiq backlog"
+    metrics: [gitlab_sidekiq_queue_backlog]

@@ -1,0 +1,56 @@
+# Mesures et vues du type « graylog » (format : crates/collectors/src/catalog.rs).
+source: observability
+prefixes: [graylog_]
+metrics:
+  - { name: graylog_version_info, label: "Version", kind: info }
+  - { name: graylog_scrape_errors, label: "Scrape errors", better: "lower" }
+  - { name: graylog_cluster_nodes, label: "Cluster nodes" }
+  - { name: graylog_indexer_status, label: "Indexer status" }
+  - { name: graylog_indexer_shards, label: "Indexer shards" }
+  - { name: graylog_inputs_running, label: "Inputs running" }
+  - { name: graylog_inputs_failed, label: "Inputs failed", better: "lower" }
+  - { name: graylog_input_failed, label: "Input failed", better: "lower" }
+  - { name: graylog_running, label: "Running", unit: "bool" }
+  - { name: graylog_processing, label: "Processing", unit: "bool" }
+  - { name: graylog_lb_alive, label: "LB alive", unit: "bool" }
+  - { name: graylog_notifications, label: "Notifications" }
+  - { name: graylog_notifications_urgent, label: "Notifications urgent" }
+  - { name: graylog_notification, label: "Notification" }
+  - { name: graylog_journal_used_percent, label: "Journal used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: graylog_journal_size_bytes, label: "Journal size", unit: "B" }
+  - { name: graylog_journal_size_limit_bytes, label: "Journal size limit", unit: "B" }
+  - { name: graylog_journal_append_per_second, label: "Journal append per second", unit: "/s" }
+  - { name: graylog_journal_read_per_second, label: "Journal read per second", unit: "/s" }
+  - { name: graylog_journal_uncommitted_entries, label: "Journal uncommitted entries" }
+  - { name: graylog_buffer_used_percent, label: "Buffer used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: graylog_messages_in_total, label: "Messages in", kind: counter }
+  - { name: graylog_messages_out_total, label: "Messages out", kind: counter }
+  - { name: graylog_invalid_timestamps_total, label: "Invalid timestamps", kind: counter }
+  - { name: graylog_output_failures_total, label: "Output failures", kind: counter, better: "lower" }
+  - { name: graylog_processing_failures_total, label: "Processing failures", kind: counter, better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - graylog_inputs_failed
+      - graylog_notifications_urgent
+      - graylog_processing
+      - graylog_cluster_nodes
+      - graylog_indexer_status
+      - graylog_indexer_shards
+      - graylog_inputs_running
+      - graylog_input_failed
+      - graylog_running
+      - graylog_lb_alive
+      - graylog_notifications
+      - graylog_notification
+      - graylog_invalid_timestamps_total
+      - graylog_output_failures_total
+      - graylog_processing_failures_total
+      - graylog_journal_uncommitted_entries
+  - view: timeseries
+    title: "Journal and buffers"
+    metrics: [graylog_journal_used_percent, graylog_buffer_used_percent]
+  - view: timeseries
+    title: "Throughput"
+    metrics: [graylog_journal_append_per_second, graylog_journal_read_per_second, graylog_messages_in_total, graylog_messages_out_total]

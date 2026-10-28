@@ -1,0 +1,47 @@
+# Mesures et vues du type « nutanix » (format : crates/collectors/src/catalog.rs).
+source: nutanix
+prefixes: [nutanix_]
+metrics:
+  - { name: nutanix_vm_vcpus, label: "VM vCPUs" }
+  - { name: nutanix_vms, label: "VMs" }
+  - { name: nutanix_vms_running, label: "VMs running" }
+  - { name: nutanix_vm_power_state_info, label: "VM power state", kind: info }
+  - { name: nutanix_vm_running, label: "VM running", unit: "bool" }
+  - { name: nutanix_vm_memory_bytes, label: "VM memory", unit: "B" }
+  - { name: nutanix_storage_container_used_bytes, label: "Storage container used", unit: "B" }
+  - { name: nutanix_storage_container_capacity_bytes, label: "Storage container capacity", unit: "B" }
+  - { name: nutanix_storage_containers, label: "Storage containers" }
+  - { name: nutanix_hosts, label: "Hosts" }
+  - { name: nutanix_host_info, label: "Host", kind: info }
+  - { name: nutanix_host_cpu_cores, label: "Host CPU cores" }
+  - { name: nutanix_host_memory_bytes, label: "Host memory", unit: "B" }
+  - { name: nutanix_host_maintenance, label: "Host maintenance", unit: "bool" }
+  - { name: nutanix_host_degraded, label: "Host degraded", unit: "bool", better: "lower" }
+  - { name: nutanix_clusters, label: "Clusters" }
+  - { name: nutanix_cluster_info, label: "Cluster", kind: info }
+  - { name: nutanix_cluster_available, label: "Cluster available", unit: "bool", better: "higher" }
+  - { name: nutanix_alerts_critical, label: "Alerts critical" }
+  - { name: nutanix_alerts_warning, label: "Alerts warning" }
+  - { name: nutanix_alerts_unresolved, label: "Alerts unresolved" }
+  - { name: nutanix_storage_container_used_percent, label: "Storage container used", unit: "%", better: "lower", min: 0, max: 100 }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - nutanix_alerts_critical
+      - nutanix_host_degraded
+      - nutanix_alerts_warning
+      - nutanix_vms
+      - nutanix_hosts
+      - nutanix_vms_running
+      - nutanix_vm_running
+      - nutanix_vm_memory_bytes
+      - nutanix_storage_containers
+      - nutanix_host_memory_bytes
+      - nutanix_host_maintenance
+      - nutanix_clusters
+      - nutanix_cluster_available
+      - nutanix_alerts_unresolved
+  - view: timeseries
+    title: "Storage containers used"
+    metrics: [nutanix_storage_container_used_percent]

@@ -10691,6 +10691,18 @@ components:
           type: array
           description: Settings read from the device's `tags`, in display order.
           items: { $ref: "#/components/schemas/OptionDescription" }
+        metrics:
+          type: array
+          description: >-
+            Metric families this type emits, with unit and kind. Omitted when the type declares
+            none: the interface then guesses from the name suffixes.
+          items: { $ref: "#/components/schemas/MetricDescription" }
+        views:
+          type: array
+          description: >-
+            Views recommended for the device page, in display order: a row of figures (`stat`)
+            and up to four charts. Omitted when the type declares none: every family is charted.
+          items: { $ref: "#/components/schemas/ViewDescription" }
         requirements:
           type: array
           description: >-
@@ -10698,6 +10710,44 @@ components:
             with whether the server found it in place. Omitted when the type needs nothing. The
             interface writes the sentences from `id` and shows the notice while `satisfied` is false.
           items: { $ref: "#/components/schemas/Requirement" }
+    MetricDescription:
+      type: object
+      required: [name, kind]
+      properties:
+        name: { type: string, description: 'Name as the collector emits it, without the `dumbmonit_` prefix the server adds when storing it.' }
+        label: { type: string }
+        unit: { type: string, description: '`%`, `s`, `ms`, `B`, `B/s`, `°C`, `bool`, `days`, `timestamp`…; for a counter, the unit of the running total (charted as a rate). Omitted: a plain number.' }
+        kind: { type: string, enum: [gauge, counter, info, state] }
+        better: { type: string, enum: [higher, lower], description: Which way a good figure goes. Omitted when neither. }
+        min: { type: number }
+        max: { type: number }
+        max_from: { type: string, description: Family giving the maximum of each series. }
+        entity: { type: string, description: 'Label that names the measured object (`ifname`, `disk`, `pool`…).' }
+        states:
+          type: array
+          description: For `kind = state`, what each code means.
+          items:
+            type: object
+            required: [value, label]
+            properties:
+              value: { type: number }
+              label: { type: string }
+              tone: { type: string, enum: [ok, warning, critical, neutral] }
+    ViewDescription:
+      type: object
+      required: [view, metrics]
+      properties:
+        view: { type: string, description: '`stat`, `timeseries`, `topn`, `heatmap`, `gauge`, `table`; an unknown view is drawn as curves.' }
+        title: { type: string }
+        metrics:
+          type: array
+          description: Families shown, by `MetricDescription.name`.
+          items: { type: string }
+        group_by: { type: string, description: 'Label that tells entities apart (`topn`, `heatmap`); omitted: every series.' }
+        options:
+          type: object
+          additionalProperties: { type: string }
+          description: 'View settings, e.g. `limit`.'
     Requirement:
       type: object
       required: [id, satisfied, doc_url, compose_snippet]

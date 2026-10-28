@@ -1,0 +1,23 @@
+# Mesures et vues du type « openvpn » (format : crates/collectors/src/catalog.rs).
+source: openvpn
+prefixes: [openvpn_]
+metrics:
+  - { name: openvpn_server_up, label: "Server up", unit: "bool" }
+  - { name: openvpn_server_info, label: "Server", kind: info }
+  - { name: openvpn_clients_connected, label: "Clients connected" }
+  - { name: openvpn_client_bytes_sent, label: "Client bytes sent", unit: "B", kind: counter, entity: "common_name" }
+  - { name: openvpn_client_bytes_received, label: "Client bytes received", unit: "B", kind: counter, entity: "common_name" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - openvpn_server_up
+  - view: timeseries
+    title: "Connected clients"
+    metrics: [openvpn_clients_connected]
+  - view: topn
+    title: "Traffic per client"
+    metrics: [openvpn_client_bytes_received, openvpn_client_bytes_sent]
+    group_by: common_name
+    options:
+      limit: "10"

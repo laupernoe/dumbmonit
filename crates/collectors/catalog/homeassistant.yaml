@@ -1,0 +1,34 @@
+# Mesures et vues du type « homeassistant » (format : crates/collectors/src/catalog.rs).
+source: homeassistant
+prefixes: [homeassistant_]
+metrics:
+  - { name: homeassistant_entities_unavailable, label: "Entities unavailable" }
+  - { name: homeassistant_entities_unknown, label: "Entities unknown" }
+  - { name: homeassistant_info, label: "Info", kind: info }
+  - { name: homeassistant_running, label: "Running" }
+  - { name: homeassistant_recovery_mode, label: "Recovery mode", unit: "bool" }
+  - { name: homeassistant_entities, label: "Entities" }
+  - { name: homeassistant_entity_unavailable, label: "Entity unavailable" }
+  - { name: homeassistant_batteries, label: "Batteries" }
+  - { name: homeassistant_batteries_low, label: "Batteries low" }
+  - { name: homeassistant_battery_low, label: "Battery low" }
+  - { name: homeassistant_repairs, label: "Repairs" }
+  - { name: homeassistant_repair, label: "Repair" }
+  - { name: homeassistant_updates_available, label: "Updates available", better: "higher" }
+  - { name: homeassistant_update_available, label: "Update available", better: "higher" }
+  - { name: homeassistant_scrape_errors, label: "Scrape errors", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - homeassistant_repairs
+      - homeassistant_updates_available
+      - homeassistant_batteries_low
+      - homeassistant_entities
+      - homeassistant_info
+      - homeassistant_recovery_mode
+      - homeassistant_batteries
+      - homeassistant_battery_low
+  - view: timeseries
+    title: "Unavailable entities"
+    metrics: [homeassistant_entities_unavailable, homeassistant_entities_unknown]

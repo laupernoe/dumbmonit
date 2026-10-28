@@ -1,0 +1,129 @@
+# Mesures et vues du type « pmg » (format : crates/collectors/src/catalog.rs).
+source: pmg
+prefixes: [pmg_]
+metrics:
+  - { name: pmg_node_cpu_percent, label: "Node CPU", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: pmg_node_iowait_percent, label: "Node I/O wait", unit: "%", min: 0, max: 100 }
+  - { name: pmg_node_cpu_count, label: "Node CPU count" }
+  - { name: pmg_node_memory_used_percent, label: "Node memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: pmg_node_swap_used_bytes, label: "Node swap used", unit: "B" }
+  - { name: pmg_node_memory_used_bytes, label: "Node memory used", unit: "B" }
+  - { name: pmg_node_memory_total_bytes, label: "Node memory total", unit: "B" }
+  - { name: pmg_node_swap_total_bytes, label: "Node swap total", unit: "B" }
+  - { name: pmg_node_rootfs_percent, label: "Node root FS", unit: "%", min: 0, max: 100 }
+  - { name: pmg_node_rootfs_used_bytes, label: "Node root FS used", unit: "B" }
+  - { name: pmg_node_rootfs_avail_bytes, label: "Node root FS avail", unit: "B" }
+  - { name: pmg_node_rootfs_total_bytes, label: "Node root FS total", unit: "B" }
+  - { name: pmg_node_uptime_seconds, label: "Node uptime", unit: "s" }
+  - { name: pmg_node_clock_offset_seconds, label: "Node clock offset", unit: "s" }
+  - { name: pmg_node_insync, label: "Node insync", unit: "bool" }
+  - { name: pmg_node_kernel_info, label: "Node kernel", kind: info }
+  - { name: pmg_node_version_info, label: "Node version", kind: info }
+  - { name: pmg_node_updates_pending, label: "Node updates pending" }
+  - { name: pmg_node_updates_security_pending, label: "Node updates security pending" }
+  - { name: pmg_queue_messages, label: "Queue messages" }
+  - { name: pmg_queue_oldest_age_seconds, label: "Queue oldest age", unit: "s" }
+  - { name: pmg_queue_domains, label: "Queue domains" }
+  - { name: pmg_mail_count_in, label: "Mail count in" }
+  - { name: pmg_mail_count_out, label: "Mail count out" }
+  - { name: pmg_mail_bytes_in, label: "Mail bytes in", unit: "B" }
+  - { name: pmg_mail_bytes_out, label: "Mail bytes out", unit: "B" }
+  - { name: pmg_mail_spam_in, label: "Mail spam in" }
+  - { name: pmg_mail_spam_out, label: "Mail spam out" }
+  - { name: pmg_mail_virus_in, label: "Mail virus in" }
+  - { name: pmg_mail_virus_out, label: "Mail virus out" }
+  - { name: pmg_mail_bounces_in, label: "Mail bounces in" }
+  - { name: pmg_mail_bounces_out, label: "Mail bounces out" }
+  - { name: pmg_mail_junk_in, label: "Mail junk in" }
+  - { name: pmg_mail_junk_out, label: "Mail junk out" }
+  - { name: pmg_mail_junk_percent, label: "Mail junk", unit: "%", min: 0, max: 100 }
+  - { name: pmg_mail_greylisted, label: "Mail greylisted" }
+  - { name: pmg_mail_spf_rejects, label: "Mail SPF rejects" }
+  - { name: pmg_mail_rbl_rejects, label: "Mail RBL rejects" }
+  - { name: pmg_mail_pregreet_rejects, label: "Mail pregreet rejects" }
+  - { name: pmg_mail_avg_processing_seconds, label: "Mail avg processing", unit: "s", better: "lower" }
+  - { name: pmg_mail_rate_in_per_minute, label: "Mail rate in per minute", unit: "/min" }
+  - { name: pmg_mail_rate_out_per_minute, label: "Mail rate out per minute", unit: "/min" }
+  - { name: pmg_spam_score_messages, label: "Spam score messages" }
+  - { name: pmg_virus_detections, label: "Virus detections" }
+  - { name: pmg_spam, label: "Spam" }
+  - { name: pmg_virus, label: "Virus" }
+  - { name: pmg_attachment, label: "Attachment" }
+  - { name: pmg_quarantine_avg_spam_level, label: "Quarantine avg spam level" }
+  - { name: pmg_service_running, label: "Service running", unit: "bool" }
+  - { name: pmg_signature_age_seconds, label: "Signature age", unit: "s" }
+  - { name: pmg_signature_count, label: "Signature count" }
+  - { name: pmg_signature_update_available, label: "Signature update available", unit: "bool", better: "higher" }
+  - { name: pmg_certificate_expires_in_seconds, label: "Certificate expires in", unit: "s" }
+  - { name: pmg_subscription_active, label: "Subscription active", unit: "bool" }
+  - { name: pmg_cluster_nodes, label: "Cluster nodes" }
+  - { name: pmg_cluster_node_insync, label: "Cluster node insync", unit: "bool" }
+  - { name: pmg_cluster_node_healthy, label: "Cluster node healthy", unit: "bool" }
+  - { name: pmg_up, label: "Up" }
+  - { name: pmg_scrape_errors, label: "Scrape errors", better: "lower" }
+  - { name: pmg_scrape_duration_seconds, label: "Scrape duration", unit: "s", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - pmg_queue_messages
+      - pmg_mail_count_in
+      - pmg_mail_spam_in
+      - pmg_mail_virus_in
+      - pmg_service_running
+      - pmg_node_updates_pending
+      - pmg_node_cpu_count
+      - pmg_node_memory_total_bytes
+      - pmg_node_swap_total_bytes
+      - pmg_node_rootfs_total_bytes
+      - pmg_node_uptime_seconds
+      - pmg_node_clock_offset_seconds
+      - pmg_node_insync
+      - pmg_node_version_info
+      - pmg_node_updates_security_pending
+      - pmg_queue_domains
+      - pmg_mail_count_out
+      - pmg_mail_bytes_in
+      - pmg_mail_bytes_out
+      - pmg_mail_spam_out
+      - pmg_mail_virus_out
+      - pmg_mail_bounces_in
+      - pmg_mail_bounces_out
+      - pmg_mail_junk_in
+      - pmg_mail_junk_out
+      - pmg_mail_junk_percent
+      - pmg_mail_greylisted
+      - pmg_mail_spf_rejects
+      - pmg_mail_rbl_rejects
+      - pmg_mail_pregreet_rejects
+      - pmg_mail_avg_processing_seconds
+      - pmg_mail_rate_in_per_minute
+      - pmg_mail_rate_out_per_minute
+      - pmg_spam_score_messages
+      - pmg_virus_detections
+      - pmg_spam
+      - pmg_virus
+      - pmg_attachment
+      - pmg_quarantine_avg_spam_level
+      - pmg_signature_age_seconds
+      - pmg_signature_count
+      - pmg_signature_update_available
+      - pmg_certificate_expires_in_seconds
+      - pmg_subscription_active
+      - pmg_cluster_nodes
+      - pmg_cluster_node_insync
+      - pmg_cluster_node_healthy
+      - pmg_node_swap_used_bytes
+      - pmg_queue_oldest_age_seconds
+  - view: timeseries
+    title: "Node CPU"
+    metrics: [pmg_node_cpu_percent, pmg_node_iowait_percent]
+  - view: timeseries
+    title: "Node memory"
+    metrics: [pmg_node_memory_used_percent]
+  - view: timeseries
+    title: "Disk used"
+    metrics: [pmg_node_rootfs_percent]
+  - view: timeseries
+    title: "Mail queue"
+    metrics: [pmg_queue_messages]

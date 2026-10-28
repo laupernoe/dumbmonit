@@ -11,6 +11,9 @@ import { m } from '#lib/paraglide/messages.js';
 import { queryRange, type MetricSeries, type TargetId } from '#lib/api/index.js';
 import { COUNTER_SELECTOR, unitFor } from '#lib/viz/infer.js';
 import type { Serie } from '#lib/components/Chart.svelte';
+import { isVirtualInterface } from './catalog.js';
+
+export { isVirtualInterface };
 
 /** A curve with the labels it came from, so sections can sort it by label. */
 export interface DeviceSerie extends Serie {
@@ -91,11 +94,15 @@ function group(series: MetricSeries[]): Map<string, DeviceMetricGroup> {
 /**
  * Loads every family of a device over the range: gauges as they are, counters
  * as a per-second rate. Two queries, in parallel, one list back.
+ *
+ * `rated`: more families to ask as rates, full names — the counters the kind's
+ * catalogue charts (`ratedFamilies` in `catalog.ts`).
  */
 export async function loadDeviceMetrics(
 	targetId: TargetId,
 	rangeSeconds: number,
-	signal?: AbortSignal
+	signal?: AbortSignal,
+	rated: readonly string[] = []
 ): Promise<DeviceMetricGroup[]> {
 	const end = Date.now();
 	return loadDeviceMetricsBetween(targetId, end - rangeSeconds * 1000, end, rangeSeconds, signal);
@@ -122,10 +129,12 @@ async function loadDeviceMetricsBetween(
 	// The rate window must cover at least two samples at the slowest cadence
 	// and at least one step, or the curve is full of holes.
 	const window = Math.max(120, step * 2);
+	const extra = rated.filter((name) => /^dumbmonit_[a-z0-9_]+$/.test(name));
+	const selector = extra.length > 0 ? `${COUNTER_SELECTOR}|${extra.join('|')}` : COUNTER_SELECTOR;
 	const [gauges, counters] = await Promise.all([
 		queryRange(
 			{
-				query: `{__name__=~"dumbmonit_.+", __name__!~"${COUNTER_SELECTOR}", target="${targetId}"}`,
+				query: `{__name__=~"dumbmonit_.+", __name__!~"${selector}", target="${targetId}"}`,
 				start,
 				end,
 				step
@@ -134,7 +143,7 @@ async function loadDeviceMetricsBetween(
 		),
 		queryRange(
 			{
-				query: `rate({__name__=~"${COUNTER_SELECTOR}", target="${targetId}"}[${window}s]) keep_metric_names`,
+				query: `rate({__name__=~"${selector}", target="${targetId}"}[${window}s]) keep_metric_names`,
 				start,
 				end,
 				step
@@ -186,13 +195,8 @@ export interface MetricSections {
 	containers: Map<string, DeviceMetricGroup[]>;
 	interfaces: MetricRow[];
 	other: DeviceMetricGroup[];
-}
-
-/** Interfaces Docker and the kernel make up: shown, but not in the essentials. */
-const VIRTUAL_IF = /^(lo|veth.*|br-.*|docker\d*|virbr\d*|vnet\d*|tap\d*|cni\d*|flannel.*|dummy\d*)$/;
-
-export function isVirtualInterface(name: string): boolean {
-	return VIRTUAL_IF.test(name);
+	/** Every family outside containers and interfaces, essentials included: "All measurements". */
+	rest: DeviceMetricGroup[];
 }
 
 function pick(groups: DeviceMetricGroup[], name: string): DeviceMetricGroup | undefined {
@@ -340,8 +344,12 @@ export function sectionize(groups: DeviceMetricGroup[]): MetricSections {
 	const other = groups
 		.filter((g) => !used.has(g.name) && !g.name.endsWith('_info'))
 		.sort((a, b) => a.title.localeCompare(b.title, 'en'));
+	const elsewhere = new Set([...containerGroups, ...interfaceGroups].map((g) => g.name));
+	const rest = groups
+		.filter((g) => !elsewhere.has(g.name) && !g.name.endsWith('_info'))
+		.sort((a, b) => a.title.localeCompare(b.title, 'en'));
 
-	return { essentials, containers, interfaces, other };
+	return { essentials, containers, interfaces, other, rest };
 }
 
 /** Last value of a series, or `null` when it holds none. */

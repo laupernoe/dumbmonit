@@ -32,8 +32,9 @@ pub use credential::{
     SnmpV3Privacy, SnmpV3PrivacyInput, SnmpV3PrivacyProtocol,
 };
 pub use description::{
-    CredentialDescription, CredentialFieldDescription, KindDescription, OptionColumn,
-    OptionDescription, OptionItem, PortDescription, Requirement, SetupDescription, Text,
+    CredentialDescription, CredentialFieldDescription, KindDescription, Measures,
+    MetricDescription, OptionColumn, OptionDescription, OptionItem, PortDescription, Requirement,
+    SetupDescription, StateMap, Text, ViewDescription,
 };
 pub use discovery::{
     AddressForm, CMD_DISCOVERY_SCAN, Confidence, DISCOVERY_REPORT_PATH, DiscoveredHost,

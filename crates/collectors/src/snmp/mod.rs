@@ -27,7 +27,7 @@ use std::sync::{Arc, LazyLock};
 use std::time::Duration;
 
 use async_trait::async_trait;
-use dumbmonit_proto::{Collector, ProbeError, Sample, Target};
+use dumbmonit_proto::{Collector, Measures, ProbeError, Sample, Target};
 use tracing::{debug, warn};
 
 use oid::ObjectId;
@@ -249,6 +249,11 @@ impl SnmpCollector {
 impl Collector for SnmpCollector {
     fn kind(&self) -> &'static str {
         "snmp"
+    }
+
+    /// Les vues déclarées dans les profils (`unit`, `view`… de chaque métrique).
+    fn measures(&self, _kind: &str) -> Option<Measures> {
+        Some(self.catalog.measures())
     }
 
     async fn probe(&self, target: &Target) -> Result<Vec<Sample>, ProbeError> {

@@ -1,0 +1,73 @@
+# Mesures et vues du type « nut » (format : crates/collectors/src/catalog.rs).
+source: nut
+prefixes: [nut_]
+metrics:
+  - { name: nut_ups_info, label: "UPS", kind: info }
+  - { name: nut_server_info, label: "Server", kind: info }
+  - { name: nut_server_ups, label: "Server UPS" }
+  - { name: nut_ups_status_info, label: "UPS status", kind: info }
+  - { name: nut_ups_driver_connected, label: "UPS driver connected", unit: "bool" }
+  - { name: nut_ups_data_stale, label: "UPS data stale", unit: "bool" }
+  - { name: nut_ups_self_test_failed, label: "UPS self test failed", better: "lower" }
+  - { name: nut_ups_alarm, label: "UPS alarm" }
+  - { name: nut_ups_on_battery, label: "UPS on battery" }
+  - { name: nut_ups_low_battery, label: "UPS low battery" }
+  - { name: nut_ups_overload, label: "UPS overload" }
+  - { name: nut_ups_forced_shutdown, label: "UPS forced shutdown" }
+  - { name: nut_ups_replace_battery, label: "UPS replace battery" }
+  - { name: nut_ups_boost, label: "UPS boost" }
+  - { name: nut_ups_bypass, label: "UPS bypass" }
+  - { name: nut_ups_calibrating, label: "UPS calibrating" }
+  - { name: nut_ups_charging, label: "UPS charging" }
+  - { name: nut_ups_discharging, label: "UPS discharging" }
+  - { name: nut_ups_high_battery, label: "UPS high battery" }
+  - { name: nut_ups_off, label: "UPS off" }
+  - { name: nut_ups_on_line, label: "UPS on line" }
+  - { name: nut_ups_trim, label: "UPS trim" }
+  - { name: nut_ups_power_nominal_va, label: "UPS power nominal va", unit: "VA" }
+  - { name: nut_ups_power_va, label: "UPS power va", unit: "VA" }
+  - { name: nut_ups_realpower_nominal_watts, label: "UPS realpower nominal power", unit: "W" }
+  - { name: nut_ups_realpower_watts, label: "UPS realpower power", unit: "W" }
+  - { name: nut_ups_load_percent, label: "UPS load", unit: "%", min: 0, max: 100 }
+  - { name: nut_ups_temperature_celsius, label: "UPS temperature", unit: "°C" }
+  - { name: nut_battery_charge_percent, label: "Battery charge", unit: "%", min: 0, max: 100 }
+  - { name: nut_battery_charge_low_percent, label: "Battery charge low", unit: "%", min: 0, max: 100 }
+  - { name: nut_battery_runtime_seconds, label: "Battery runtime", unit: "s" }
+  - { name: nut_battery_runtime_low_seconds, label: "Battery runtime low", unit: "s" }
+  - { name: nut_battery_temperature_celsius, label: "Battery temperature", unit: "°C" }
+  - { name: nut_battery_voltage_volts, label: "Battery voltage", unit: "V" }
+  - { name: nut_battery_age_seconds, label: "Battery age", unit: "s" }
+  - { name: nut_input_voltage_volts, label: "Input voltage", unit: "V" }
+  - { name: nut_output_voltage_volts, label: "Output voltage", unit: "V" }
+  - { name: nut_input_voltage_nominal_volts, label: "Input voltage nominal", unit: "V" }
+  - { name: nut_input_frequency_hertz, label: "Input frequency hertz", unit: "Hz" }
+  - { name: nut_output_frequency_hertz, label: "Output frequency hertz", unit: "Hz" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - nut_ups_on_battery
+      - nut_ups_low_battery
+      - nut_battery_runtime_seconds
+      - nut_ups_replace_battery
+      - nut_ups_realpower_watts
+      - nut_server_ups
+      - nut_ups_driver_connected
+      - nut_ups_data_stale
+      - nut_ups_self_test_failed
+      - nut_ups_alarm
+      - nut_ups_overload
+      - nut_ups_forced_shutdown
+      - nut_ups_temperature_celsius
+      - nut_battery_temperature_celsius
+      - nut_battery_voltage_volts
+      - nut_battery_age_seconds
+  - view: timeseries
+    title: "Load"
+    metrics: [nut_ups_load_percent]
+  - view: timeseries
+    title: "Battery charge"
+    metrics: [nut_battery_charge_percent]
+  - view: timeseries
+    title: "Voltages"
+    metrics: [nut_input_voltage_volts, nut_output_voltage_volts]

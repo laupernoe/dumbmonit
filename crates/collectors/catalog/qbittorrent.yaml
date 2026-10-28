@@ -1,0 +1,29 @@
+# Mesures et vues du type « qbittorrent » (format : crates/collectors/src/catalog.rs).
+source: selfhosted
+prefixes: [qbittorrent_]
+metrics:
+  - { name: qbittorrent_download_speed_bytes, label: "Download speed", unit: "B/s" }
+  - { name: qbittorrent_upload_speed_bytes, label: "Upload speed", unit: "B/s" }
+  - { name: qbittorrent_torrents_total, label: "Torrents" }
+  - { name: qbittorrent_torrents, label: "Torrents" }
+  - { name: qbittorrent_torrents_errored, label: "Torrents errored" }
+  - { name: qbittorrent_torrent_error, label: "Torrent error", unit: "bool" }
+  - { name: qbittorrent_free_space_bytes, label: "Free space", unit: "B" }
+  - { name: qbittorrent_dht_nodes, label: "DHT nodes" }
+  - { name: qbittorrent_connected, label: "Connected", unit: "bool" }
+  - { name: qbittorrent_version_info, label: "Version", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - qbittorrent_torrents_total
+      - qbittorrent_torrents
+      - qbittorrent_torrents_errored
+      - qbittorrent_torrent_error
+      - qbittorrent_free_space_bytes
+      - qbittorrent_dht_nodes
+      - qbittorrent_connected
+      - qbittorrent_version_info
+  - view: timeseries
+    title: "Throughput"
+    metrics: [qbittorrent_download_speed_bytes, qbittorrent_upload_speed_bytes]

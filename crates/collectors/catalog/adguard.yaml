@@ -1,0 +1,57 @@
+# Mesures et vues du type « adguard » (format : crates/collectors/src/catalog.rs).
+source: adguard
+prefixes: [adguard_]
+metrics:
+  - { name: adguard_avg_processing_seconds, label: "Avg processing", unit: "s", better: "lower" }
+  - { name: adguard_upstream_avg_seconds, label: "Upstream avg", unit: "s" }
+  - { name: adguard_dns_queries, label: "DNS queries" }
+  - { name: adguard_blocked_filtering, label: "Blocked filtering" }
+  - { name: adguard_replaced_safebrowsing, label: "Replaced safebrowsing" }
+  - { name: adguard_replaced_safesearch, label: "Replaced safesearch" }
+  - { name: adguard_replaced_parental, label: "Replaced parental" }
+  - { name: adguard_blocked_percent, label: "Blocked", unit: "%", min: 0, max: 100 }
+  - { name: adguard_upstream_responses, label: "Upstream responses" }
+  - { name: adguard_upstream_up, label: "Upstream up", unit: "bool" }
+  - { name: adguard_running, label: "Running" }
+  - { name: adguard_protection_enabled, label: "Protection enabled", unit: "bool" }
+  - { name: adguard_protection_paused_seconds, label: "Protection paused", unit: "s" }
+  - { name: adguard_filtering_enabled, label: "Filtering enabled", unit: "bool" }
+  - { name: adguard_filters, label: "Filters" }
+  - { name: adguard_filters_enabled, label: "Filters enabled" }
+  - { name: adguard_filters_never_updated, label: "Filters never updated" }
+  - { name: adguard_filter_rules, label: "Filter rules" }
+  - { name: adguard_filter_rules_count, label: "Filter rules count" }
+  - { name: adguard_filter_oldest_update_age_seconds, label: "Filter oldest update age", unit: "s" }
+  - { name: adguard_filter_update_age_seconds, label: "Filter update age", unit: "s" }
+  - { name: adguard_filter_update_interval_hours, label: "Filter update interval hours" }
+  - { name: adguard_stats_enabled, label: "Stats enabled" }
+  - { name: adguard_stats_window_seconds, label: "Stats window", unit: "s" }
+  - { name: adguard_update_available, label: "Update available", unit: "bool", better: "higher" }
+  - { name: adguard_update_check_enabled, label: "Update check enabled", unit: "bool" }
+  - { name: adguard_version_info, label: "Version", kind: info }
+  - { name: adguard_scrape_errors, label: "Scrape errors", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - adguard_protection_enabled
+      - adguard_upstream_up
+      - adguard_filters_never_updated
+      - adguard_update_available
+      - adguard_protection_paused_seconds
+      - adguard_filtering_enabled
+      - adguard_filters
+      - adguard_filters_enabled
+      - adguard_filter_rules
+      - adguard_filter_oldest_update_age_seconds
+      - adguard_filter_update_age_seconds
+      - adguard_version_info
+  - view: timeseries
+    title: "DNS latency"
+    metrics: [adguard_avg_processing_seconds, adguard_upstream_avg_seconds]
+  - view: timeseries
+    title: "DNS queries"
+    metrics: [adguard_dns_queries, adguard_blocked_filtering, adguard_replaced_safebrowsing, adguard_replaced_safesearch, adguard_replaced_parental]
+  - view: timeseries
+    title: "Blocked share"
+    metrics: [adguard_blocked_percent]

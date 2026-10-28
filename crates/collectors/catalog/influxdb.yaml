@@ -1,0 +1,31 @@
+# Mesures et vues du type « influxdb » (format : crates/collectors/src/catalog.rs).
+source: influxdb
+prefixes: [influxdb_]
+metrics:
+  - { name: influxdb_http_requests_total, label: "HTTP requests", kind: counter }
+  - { name: influxdb_http_requests_5xx_total, label: "HTTP requests 5xx", kind: counter }
+  - { name: influxdb_memory_resident_bytes, label: "Memory resident", unit: "B" }
+  - { name: influxdb_open_fds_percent, label: "Open FDs", unit: "%", min: 0, max: 100 }
+  - { name: influxdb_goroutines, label: "Goroutines" }
+  - { name: influxdb_open_fds, label: "Open FDs" }
+  - { name: influxdb_healthy, label: "Healthy", unit: "bool" }
+  - { name: influxdb_ready, label: "Ready", unit: "bool" }
+  - { name: influxdb_uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: influxdb_version_info, label: "Version", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - influxdb_healthy
+      - influxdb_ready
+      - influxdb_uptime_seconds
+      - influxdb_version_info
+  - view: timeseries
+    title: "HTTP requests"
+    metrics: [influxdb_http_requests_total, influxdb_http_requests_5xx_total]
+  - view: timeseries
+    title: "Resident memory"
+    metrics: [influxdb_memory_resident_bytes]
+  - view: timeseries
+    title: "Open file descriptors"
+    metrics: [influxdb_open_fds_percent]

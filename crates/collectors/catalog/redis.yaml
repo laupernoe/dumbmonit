@@ -1,0 +1,90 @@
+# Mesures et vues du type « redis » (format : crates/collectors/src/catalog.rs).
+source: redis
+prefixes: [redis_]
+metrics:
+  - { name: redis_memory_used_bytes, label: "Memory used", unit: "B" }
+  - { name: redis_memory_rss_bytes, label: "Memory RSS", unit: "B" }
+  - { name: redis_memory_peak_bytes, label: "Memory peak", unit: "B" }
+  - { name: redis_ops_per_second, label: "Ops per second", unit: "/s" }
+  - { name: redis_connected_clients, label: "Connected clients" }
+  - { name: redis_blocked_clients, label: "Blocked clients" }
+  - { name: redis_keyspace_hits_total, label: "Keyspace hits", kind: counter }
+  - { name: redis_keyspace_misses_total, label: "Keyspace misses", kind: counter }
+  - { name: redis_evicted_keys_total, label: "Evicted keys", kind: counter }
+  - { name: redis_expired_keys_total, label: "Expired keys", kind: counter }
+  - { name: redis_replica_lag_seconds, label: "Replica lag", unit: "s", better: "lower" }
+  - { name: redis_replica_lag_bytes, label: "Replica lag", unit: "B" }
+  - { name: redis_master_link_down_seconds, label: "Master link down", unit: "s" }
+  - { name: redis_memory_used_percent, label: "Memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: redis_memory_max_bytes, label: "Memory max", unit: "B" }
+  - { name: redis_memory_fragmentation_ratio, label: "Memory fragmentation", unit: "ratio" }
+  - { name: redis_max_clients, label: "Max clients" }
+  - { name: redis_commands_processed_total, label: "Commands processed", kind: counter }
+  - { name: redis_connections_received_total, label: "Connections received", kind: counter }
+  - { name: redis_rejected_connections_total, label: "Rejected connections", kind: counter }
+  - { name: redis_error_replies_total, label: "Error replies", kind: counter }
+  - { name: redis_acl_denied_auth_total, label: "ACL denied auth", kind: counter }
+  - { name: redis_uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: redis_version_info, label: "Version", kind: info }
+  - { name: redis_role_info, label: "Role", kind: info }
+  - { name: redis_mode, label: "Mode" }
+  - { name: redis_maxmemory_policy_info, label: "Maxmemory policy", kind: info }
+  - { name: redis_cluster_enabled, label: "Cluster enabled", unit: "bool" }
+  - { name: redis_aof_enabled, label: "AOF enabled", unit: "bool" }
+  - { name: redis_aof_last_write_ok, label: "AOF last write ok", unit: "bool" }
+  - { name: redis_aof_last_rewrite_ok, label: "AOF last rewrite ok", unit: "bool" }
+  - { name: redis_rdb_last_save_ok, label: "RDB last save ok", unit: "bool" }
+  - { name: redis_rdb_last_save_timestamp_seconds, label: "RDB last save timestamp", unit: "timestamp" }
+  - { name: redis_rdb_changes_since_last_save, label: "RDB changes since last save" }
+  - { name: redis_loading, label: "Loading", unit: "bool" }
+  - { name: redis_connected_replicas, label: "Connected replicas" }
+  - { name: redis_replica_online, label: "Replica online", unit: "bool" }
+  - { name: redis_master_link_up, label: "Master link up", unit: "bool" }
+  - { name: redis_master_last_io_seconds, label: "Master last I/O", unit: "s" }
+  - { name: redis_master_sync_in_progress, label: "Master sync in progress", unit: "bool" }
+  - { name: redis_db_keys, label: "Db keys" }
+  - { name: redis_keys, label: "Keys" }
+  - { name: redis_keys_expiring, label: "Keys expiring" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - redis_ops_per_second
+      - redis_memory_used_percent
+      - redis_rejected_connections_total
+      - redis_memory_max_bytes
+      - redis_memory_fragmentation_ratio
+      - redis_max_clients
+      - redis_connections_received_total
+      - redis_error_replies_total
+      - redis_acl_denied_auth_total
+      - redis_uptime_seconds
+      - redis_version_info
+      - redis_cluster_enabled
+      - redis_aof_enabled
+      - redis_aof_last_write_ok
+      - redis_aof_last_rewrite_ok
+      - redis_rdb_last_save_ok
+      - redis_rdb_last_save_timestamp_seconds
+      - redis_rdb_changes_since_last_save
+      - redis_loading
+      - redis_connected_replicas
+      - redis_replica_online
+      - redis_master_link_up
+      - redis_master_last_io_seconds
+      - redis_master_sync_in_progress
+      - redis_db_keys
+      - redis_keys_expiring
+      - redis_replica_lag_bytes
+  - view: timeseries
+    title: "Memory"
+    metrics: [redis_memory_used_bytes, redis_memory_rss_bytes, redis_memory_peak_bytes]
+  - view: timeseries
+    title: "Clients"
+    metrics: [redis_connected_clients, redis_blocked_clients]
+  - view: timeseries
+    title: "Keyspace"
+    metrics: [redis_keyspace_hits_total, redis_keyspace_misses_total, redis_evicted_keys_total, redis_expired_keys_total]
+  - view: timeseries
+    title: "Replication lag"
+    metrics: [redis_replica_lag_seconds, redis_master_link_down_seconds]
