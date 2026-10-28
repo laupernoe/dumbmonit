@@ -316,24 +316,10 @@ async fn responses_carry_the_protection_headers_except_on_status_pages() {
             assert!(csp.contains(directive), "{uri} : {directive} absent de {csp}");
         }
         assert!(csp.contains("script-src 'self' 'nonce-"), "{uri} : {csp}");
-        // Le mode mur intègre un lecteur de musique : exactement ces trois
-        // origines d'intégration et l'iframe du Web Playback SDK, rien de plus large.
-        let frames: Vec<&str> = csp
-            .split(';')
-            .map(str::trim)
-            .filter_map(|d| d.strip_prefix("frame-src "))
-            .flat_map(str::split_whitespace)
-            .collect();
-        assert_eq!(
-            frames,
-            [
-                "https://open.spotify.com",
-                "https://widget.deezer.com",
-                "https://www.youtube-nocookie.com",
-                "https://sdk.scdn.co"
-            ],
-            "{uri} : {csp}"
-        );
+        // L'interface n'encadre rien et ne charge aucun script tiers (la
+        // musique du mur, qui le demandait, a disparu).
+        assert!(!csp.contains("frame-src"), "{uri} : {csp}");
+        assert!(!csp.contains("scdn") && !csp.contains("spotify"), "{uri} : {csp}");
         assert_eq!(header(&response, "referrer-policy").as_deref(), Some("same-origin"), "{uri}");
     }
 

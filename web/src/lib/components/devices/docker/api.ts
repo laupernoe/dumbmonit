@@ -56,6 +56,14 @@ export interface ContainerView {
 	image_age_seconds: number | null;
 	/** `null` when the registry could not be asked (private image, auth failure). */
 	update_available: boolean | null;
+	/** Percent of one core (100 = one full core); `null` without statistics, stopped, or first reading. */
+	cpu_percent?: number | null;
+	/** Memory in use, page cache excluded. */
+	memory_bytes?: number | null;
+	/** `null` when the container has no memory limit. */
+	memory_limit_bytes?: number | null;
+	/** Restarts over the last fifteen minutes. */
+	restarts_15m?: number | null;
 	policy: ContainerPolicy;
 	last_command: CommandView | null;
 }
@@ -92,6 +100,29 @@ export function setContainerPolicy(
 	return request<ContainerPolicy>(`/targets/${id}/containers/${encodeURIComponent(name)}/policy`, {
 		method: 'PUT',
 		body: policy
+	});
+}
+
+/** Fields a bulk change may set; an omitted one keeps each container's stored value. */
+export type ContainerPolicyChange = Partial<ContainerPolicy>;
+
+/** Outcome for one container of a bulk policy change. */
+export interface BulkPolicyResult {
+	name: string;
+	ok: boolean;
+	policy?: ContainerPolicy;
+	error?: string;
+}
+
+/** One transaction on the server; a refused name is reported without stopping the others. */
+export function setContainerPolicies(
+	id: TargetId,
+	containers: string[],
+	change: ContainerPolicyChange
+): Promise<{ results: BulkPolicyResult[] }> {
+	return request<{ results: BulkPolicyResult[] }>(`/targets/${id}/containers/policy`, {
+		method: 'PUT',
+		body: { containers, ...change }
 	});
 }
 

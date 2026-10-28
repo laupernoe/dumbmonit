@@ -19,7 +19,8 @@ use sqlx::Row;
 
 use crate::alerting::machine::{EffectivePhase, Phase};
 use crate::alerting::model::{
-    AnomalyParams, Operator, RULE_HOST_DOWN, Rule, RuleKind, Severity, TargetSelector,
+    AnomalyParams, DriftDirection, Operator, RULE_HOST_DOWN, Rule, RuleKind, Severity,
+    TargetSelector,
 };
 use crate::alerting::overrides::RuleOverride;
 use crate::alerting::silence::{
@@ -411,6 +412,17 @@ struct AnomalyParamsPayload {
     /// Règle « motif de journal » : une alerte par cible, ou une seule.
     #[serde(alias = "log_per_target")]
     per_target: Option<bool>,
+    forecast_window_days: Option<u32>,
+    forecast_warning_days: Option<f64>,
+    forecast_critical_days: Option<f64>,
+    forecast_min_confidence: Option<f64>,
+    forecast_limit: Option<f64>,
+    drift_window_secs: Option<u64>,
+    drift_weeks: Option<u32>,
+    drift_min_samples: Option<u32>,
+    drift_min_value: Option<f64>,
+    drift_min_delta: Option<f64>,
+    drift_direction: Option<DriftDirection>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -910,8 +922,11 @@ fn parse_kind(raw: Option<&str>) -> ApiResult<RuleKind> {
         Some("anomaly") => Ok(RuleKind::Anomaly),
         Some("predict") => Ok(RuleKind::Predict),
         Some("log_pattern") => Ok(RuleKind::LogPattern),
+        Some("forecast") => Ok(RuleKind::Forecast),
+        Some("drift") => Ok(RuleKind::Drift),
         Some(other) => Err(ApiError::BadRequest(format!(
-            "Unknown rule type \"{other}\" (expected: threshold, anomaly, predict, log_pattern)."
+            "Unknown rule type \"{other}\" (expected: threshold, anomaly, predict, log_pattern, \
+             forecast, drift)."
         ))),
     }
 }
@@ -967,6 +982,56 @@ fn parse_selector(raw: Option<Value>) -> ApiResult<TargetSelector> {
     })
 }
 
+/// Bornes des réglages de prévision et de dérive.
+fn check_derived_params(params: &AnomalyParams) -> ApiResult<()> {
+    use crate::alerting::model::{
+        MAX_DRIFT_WEEKS, MAX_FORECAST_WINDOW_DAYS, MIN_FORECAST_WINDOW_DAYS,
+    };
+
+    let days = params.forecast_window_days;
+    if !(MIN_FORECAST_WINDOW_DAYS..=MAX_FORECAST_WINDOW_DAYS).contains(&days) {
+        return Err(ApiError::BadRequest(format!(
+            "\"forecast_window_days\" must be between {MIN_FORECAST_WINDOW_DAYS} and \
+             {MAX_FORECAST_WINDOW_DAYS} days."
+        )));
+    }
+    let (warning, critical) = (params.forecast_warning_days, params.forecast_critical_days);
+    if !(warning.is_finite() && critical.is_finite() && critical > 0.0 && warning >= critical) {
+        return Err(ApiError::BadRequest(
+            "\"forecast_critical_days\" must be positive and \"forecast_warning_days\" at \
+             least as large: the alert turns warning first, then critical."
+                .into(),
+        ));
+    }
+    if !(params.forecast_min_confidence.is_finite()
+        && (0.0..=1.0).contains(&params.forecast_min_confidence))
+    {
+        return Err(ApiError::BadRequest(
+            "\"forecast_min_confidence\" must be between 0 and 1.".into(),
+        ));
+    }
+    if !params.forecast_limit.is_finite() {
+        return Err(ApiError::BadRequest("\"forecast_limit\" must be a finite number.".into()));
+    }
+    if !(60..=86_400).contains(&params.drift_window_secs) {
+        return Err(ApiError::BadRequest(
+            "\"drift_window_secs\" must be between 60 and 86400 seconds.".into(),
+        ));
+    }
+    if params.drift_weeks > MAX_DRIFT_WEEKS {
+        return Err(ApiError::BadRequest(format!(
+            "\"drift_weeks\" cannot exceed {MAX_DRIFT_WEEKS}."
+        )));
+    }
+    let floors = [params.drift_min_value, params.drift_min_delta];
+    if floors.iter().any(|v| !(v.is_finite() && *v >= 0.0)) {
+        return Err(ApiError::BadRequest(
+            "\"drift_min_value\" and \"drift_min_delta\" must be zero or positive.".into(),
+        ));
+    }
+    Ok(())
+}
+
 fn parse_params(raw: Option<Value>) -> ApiResult<AnomalyParams> {
     let Some(value) = raw.filter(|value| !value.is_null()) else {
         return Ok(AnomalyParams::default());
@@ -989,7 +1054,25 @@ fn parse_params(raw: Option<Value>) -> ApiResult<AnomalyParams> {
         min_samples: payload.min_samples.unwrap_or(defaults.min_samples),
         log_window_secs: payload.window_secs.unwrap_or(defaults.log_window_secs),
         log_per_target: payload.per_target.unwrap_or(defaults.log_per_target),
+        forecast_window_days: payload.forecast_window_days.unwrap_or(defaults.forecast_window_days),
+        forecast_warning_days: payload
+            .forecast_warning_days
+            .unwrap_or(defaults.forecast_warning_days),
+        forecast_critical_days: payload
+            .forecast_critical_days
+            .unwrap_or(defaults.forecast_critical_days),
+        forecast_min_confidence: payload
+            .forecast_min_confidence
+            .unwrap_or(defaults.forecast_min_confidence),
+        forecast_limit: payload.forecast_limit.unwrap_or(defaults.forecast_limit),
+        drift_window_secs: payload.drift_window_secs.unwrap_or(defaults.drift_window_secs),
+        drift_weeks: payload.drift_weeks.unwrap_or(defaults.drift_weeks),
+        drift_min_samples: payload.drift_min_samples.unwrap_or(defaults.drift_min_samples),
+        drift_min_value: payload.drift_min_value.unwrap_or(defaults.drift_min_value),
+        drift_min_delta: payload.drift_min_delta.unwrap_or(defaults.drift_min_delta),
+        drift_direction: payload.drift_direction.unwrap_or(defaults.drift_direction),
     };
+    check_derived_params(&params)?;
     if !(crate::alerting::model::MIN_LOG_WINDOW_SECS..=crate::alerting::model::MAX_LOG_WINDOW_SECS)
         .contains(&params.log_window_secs)
     {
@@ -1835,6 +1918,36 @@ mod tests {
         assert_eq!(accepte(parse_severity(None)), Severity::Warning);
         assert_eq!(accepte(parse_operator(None)), Operator::Gt);
         assert_eq!(accepte(parse_kind(None)), RuleKind::Threshold);
+    }
+
+    #[test]
+    fn les_regles_de_prevision_et_de_derive_sont_reconnues() {
+        assert_eq!(accepte(parse_kind(Some("forecast"))), RuleKind::Forecast);
+        assert_eq!(accepte(parse_kind(Some("drift"))), RuleKind::Drift);
+
+        let params = accepte(parse_params(Some(serde_json::json!({
+            "forecast_warning_days": 21,
+            "forecast_critical_days": 5,
+            "drift_direction": "down",
+            "drift_min_value": 0.05
+        }))));
+        assert_eq!(params.forecast_warning_days, 21.0);
+        assert_eq!(params.forecast_critical_days, 5.0);
+        assert_eq!(params.forecast_window_days, 7, "untouched fields keep their default");
+        assert_eq!(params.drift_direction, DriftDirection::Down);
+        assert_eq!(params.drift_min_value, 0.05);
+
+        // Le critique doit tomber avant l'avertissement.
+        let inverted = parse_params(Some(serde_json::json!({
+            "forecast_warning_days": 3, "forecast_critical_days": 7
+        })));
+        assert!(refus(inverted).contains("forecast_warning_days"));
+        let window = parse_params(Some(serde_json::json!({ "forecast_window_days": 400 })));
+        assert!(refus(window).contains("forecast_window_days"));
+        let confidence = parse_params(Some(serde_json::json!({ "forecast_min_confidence": 2 })));
+        assert!(refus(confidence).contains("forecast_min_confidence"));
+        let floor = parse_params(Some(serde_json::json!({ "drift_min_delta": -1 })));
+        assert!(refus(floor).contains("drift_min_delta"));
     }
 
     #[test]

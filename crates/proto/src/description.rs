@@ -11,13 +11,15 @@
 //! L'ordre des champs est celui du JSON attendu par l'interface : ne pas le changer.
 
 use std::borrow::Cow;
+use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
 /// Un texte des tables compilées, ou lu à l'exécution.
 pub type Text = Cow<'static, str>;
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+// Sans `Eq` : les bornes des mesures (`MetricDescription::min`) sont des flottants.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct KindDescription {
     /// Valeur du champ `kind` d'une cible. Le serveur la remplace par le type sous
     /// lequel le collecteur est enregistré.
@@ -39,11 +41,104 @@ pub struct KindDescription {
     pub setup: SetupDescription,
     /// Réglages lus dans `Target::tags`, dans l'ordre d'affichage.
     pub options: Vec<OptionDescription>,
+    /// Familles de mesures émises par ce type : unité, nature, sens d'un bon
+    /// chiffre. Absent du JSON quand le type n'en déclare aucune ; l'interface
+    /// devine alors d'après les suffixes des noms.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub metrics: Vec<MetricDescription>,
+    /// Vues recommandées pour la page de détail, dans l'ordre d'affichage. Absent
+    /// du JSON quand le type n'en déclare aucune : l'interface trace alors tout.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub views: Vec<ViewDescription>,
     /// Prérequis de l'installation (et non de l'équipement) : ce qu'il faut ajouter
     /// au déploiement du serveur pour que ce type fonctionne pleinement. Absent
     /// du JSON quand il n'y en a aucun.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub requirements: Vec<Requirement>,
+}
+
+/// Ce qu'un collecteur déclare de ses mesures : les familles et les vues qui les
+/// montrent. C'est la part de [`KindDescription`] qu'un type compilé ne tient pas
+/// des tables du serveur mais de son collecteur (`Collector::measures`).
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct Measures {
+    #[serde(default)]
+    pub metrics: Vec<MetricDescription>,
+    #[serde(default)]
+    pub views: Vec<ViewDescription>,
+}
+
+/// Une famille de mesures, telle que le collecteur l'émet.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MetricDescription {
+    /// Nom émis par le collecteur, sans le préfixe `dumbmonit_` que le serveur
+    /// ajoute à l'écriture (`if_octets_in` est servi en `dumbmonit_if_octets_in`).
+    pub name: Text,
+    /// Libellé court, en anglais comme le reste du catalogue.
+    #[serde(default, skip_serializing_if = "str::is_empty")]
+    pub label: Text,
+    /// `%`, `s`, `ms`, `B`, `B/s`, `°C`, `V`, `W`, `bool`, `days`, `timestamp`…
+    /// Vide : un nombre sans unité. Pour un compteur, l'unité de la valeur
+    /// cumulée (`B`) : l'interface trace son taux (`B/s`).
+    #[serde(default, skip_serializing_if = "str::is_empty")]
+    pub unit: Text,
+    /// `gauge` (valeur du moment), `counter` (cumul qui ne fait que croître,
+    /// tracé en taux), `info` (valeur 1, le sens est dans les étiquettes) ou
+    /// `state` (code dont `states` donne le sens).
+    #[serde(default = "gauge")]
+    pub kind: Text,
+    /// `higher` ou `lower` : le sens d'un bon chiffre ; vide quand il n'y en a pas.
+    #[serde(default, skip_serializing_if = "str::is_empty")]
+    pub better: Text,
+    /// Bornes connues (0 et 100 pour un pourcentage).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub min: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max: Option<f64>,
+    /// Famille qui donne le maximum de chaque série (`if_speed_bps` pour un débit).
+    #[serde(default, skip_serializing_if = "str::is_empty")]
+    pub max_from: Text,
+    /// Étiquette qui nomme l'objet mesuré : `ifname`, `disk`, `vm`, `pool`…
+    #[serde(default, skip_serializing_if = "str::is_empty")]
+    pub entity: Text,
+    /// Pour `kind == "state"` : le mot et le ton de chaque code.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub states: Vec<StateMap>,
+}
+
+/// Le sens d'un code d'état (`1` → « Serving », ton `ok`).
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StateMap {
+    pub value: f64,
+    pub label: Text,
+    /// `ok`, `warning`, `critical` ou `neutral`.
+    #[serde(default, skip_serializing_if = "str::is_empty")]
+    pub tone: Text,
+}
+
+/// Une vue recommandée : ce que la page de détail montre, et de quelles familles.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ViewDescription {
+    /// `stat` (rangée de chiffres), `timeseries`, `topn`, `heatmap`, `gauge`,
+    /// `table`… ; l'interface rend une vue inconnue en courbes.
+    pub view: Text,
+    #[serde(default, skip_serializing_if = "str::is_empty")]
+    pub title: Text,
+    /// Familles consommées, par leur `MetricDescription::name`.
+    pub metrics: Vec<Text>,
+    /// Étiquette qui sépare les entités (`topn`, `heatmap`) ; vide : chaque série.
+    #[serde(default, skip_serializing_if = "str::is_empty")]
+    pub group_by: Text,
+    /// Réglages propres à la vue (`limit = "10"`…).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub options: BTreeMap<String, String>,
+}
+
+fn gauge() -> Text {
+    Cow::Borrowed("gauge")
 }
 
 /// Un prérequis côté serveur : un composant ou un droit que le déploiement doit

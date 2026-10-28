@@ -21,6 +21,32 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '0.14.2',
+		date: '2026-10-28',
+		highlights: [
+			{
+				title: 'One interface',
+				text: 'Everyone gets the console. The overview opens on a night-sky banner that says how things stand, and status pages get four night cities: Paris, Tokyo, New York and Dubai.'
+			},
+			{
+				title: 'Device pages that get to the point',
+				text: 'Each integration shows a row of figures and at most four charts, with rankings and heatmaps; switches get a live faceplate of their ports, agent hosts a machine health card.'
+			},
+			{
+				title: 'Full in N days',
+				text: 'Every capacity DumbMonit collects is forecast, alerts come before it fills up, and disk and volume bars say when they will be full.'
+			},
+			{
+				title: 'Agents behind a relay',
+				text: 'Servers at a site that only the relay can leave run the full agent through the relay, end to end encrypted to this server.'
+			},
+			{
+				title: 'Maps and timelines',
+				text: 'Link load on the topology map, a world threat map on the Security page, and every expiry date on one timeline in Reports.'
+			}
+		]
+	},
+	{
 		version: '0.14.1',
 		date: '2026-10-28',
 		highlights: [

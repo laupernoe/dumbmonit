@@ -169,6 +169,10 @@ snmp_profiles:
       - name: acme_ups_battery_percent   # 必须以 pack 前缀开头
         oid: 1.3.6.1.4.1.99999.1.1.0
         kind: gauge
+        label: 电池电量                       # 可选，显示在设备页面上
+        unit: "%"                         # 可选：%、s、B、°C、bool…
+        view: timeseries                  # 可选：stat、timeseries、topn 或 heatmap
+        view_title: 电池                    # 视图和标题相同的指标共用一张图
 ```
 
 SNMP 目录在启动时读取：安装或更新带 SNMP profiles 的 pack 后重启 DumbMonit。

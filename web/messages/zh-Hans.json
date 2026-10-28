@@ -271,7 +271,6 @@
 	"alerts_needs_empty_quiet": "没有需要你处理的事项。",
 	"alerts_needs_no_device": "无监控项",
 	"alerts_needs_quiet_all_reporting": "所有监控项均在上报，没有规则被触发。",
-	"alerts_needs_quiet_checked": "{text} 检查于 {when}。",
 	"alerts_needs_quiet_no_devices": "添加监控项后，它的首次上报会显示在这里。",
 	"alerts_needs_quiet_waiting_many": [
 		{
@@ -347,6 +346,18 @@
 	"alerts_rules_all_kinds": "所有类型",
 	"alerts_rules_anomaly_summary": "灵敏度 k = {k} · 平滑 α = {alpha} · 至少 {samples} 个样本 · 下限 {abs} 绝对 / {rel} 相对",
 	"alerts_rules_baseline_anomaly": "基线异常",
+	"alerts_rules_forecast_summary": "{days} 天内将满(少于 {warning} 天为警告,少于 {critical} 天为严重)",
+	"alerts_rules_drift_summary": "为该时段通常值的 {ratio}×",
+	"alerts_rules_forecast_warning": "警告阈值(天)",
+	"alerts_rules_forecast_critical": "严重阈值(天)",
+	"alerts_rules_forecast_tiers_help": "距离写满的剩余天数。告警会自行提升严重级别,并在每个阶梯再次通知。",
+	"alerts_rules_forecast_error_tiers": "严重阈值必须大于 0 天,且不大于警告阈值。",
+	"alerts_rules_drift_k": "灵敏度(σ)",
+	"alerts_rules_drift_k_help": "触发告警所需的相对通常值的稳健偏差数:数值越高越安静。",
+	"alerts_rules_drift_min_value": "忽略低于此值",
+	"alerts_rules_drift_min_value_help": "以指标自身单位计:较小的值无论增长多少都不计入。",
+	"alerts_rules_drift_error_k": "灵敏度必须为正数。",
+	"alerts_rules_drift_error_min_value": "最小值必须大于或等于零。",
 	"alerts_rules_builtin": "内置",
 	"alerts_rules_channel_id": "渠道 #{id}",
 	"alerts_rules_clear_above": "高于此值恢复",
@@ -685,6 +696,54 @@
 	"auth_setup_title": "来创建你的账户吧。",
 	"auth_setup_username_required": "请选择一个用户名。",
 	"auth_setup_username_spaces": "用户名不能包含空格。",
+	"cloudregions_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个区域"
+			}
+		}
+	],
+	"cloudregions_description": "此账户的资源运行在哪里。",
+	"cloudregions_map_label": "{name} 的区域地图",
+	"cloudregions_pin_down": "{region}：{resources}，{down} 个未运行",
+	"cloudregions_pin_home": "{region}：账户所在区域",
+	"cloudregions_pin_ok": "{region}：{resources}，全部运行中",
+	"cloudregions_resources": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个资源"
+			}
+		}
+	],
+	"cloudregions_title": "区域",
+	"cloudregions_unknown": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个资源位于地图上没有的区域。"
+			}
+		}
+	],
 	"dash_add": "添加：{kind}",
 	"dash_add_group": "添加小组件",
 	"dash_alerts_more": "查看全部告警（+{count}）",
@@ -838,7 +897,7 @@
 	"demo_tour_s6_title": "代理",
 	"demo_tour_s7_body": "为你的用户发布公开页面，包含事件、可用率徽章和电子邮件订阅——同时不暴露实例的其余部分。",
 	"demo_tour_s7_title": "状态页",
-	"demo_tour_s8_body": "适合放在房间里的屏幕：全屏显示简报，隔着房间也能看清，还可选配音乐播放器。导览到此结束——随便看看，你点的任何操作都不会弄坏什么。",
+	"demo_tour_s8_body": "适合放在房间里的屏幕：全屏显示控制台的看板，隔着房间也能看清，还可以选一座夜景城市作背景。导览到此结束——随便看看，你点的任何操作都不会弄坏什么。",
 	"demo_tour_s8_link": "打开墙屏模式",
 	"demo_tour_s8_title": "墙屏模式",
 	"deviceform_checksums_summary": "二进制文件校验和 (SHA-256) — 安装程序会据此校验下载内容",
@@ -962,9 +1021,7 @@
 	"deviceform_edit_type_fixed": "无法更改类型：请删除该监控项，然后以其他类型重新添加。",
 	"deviceform_enroll_add_device": "添加监控项",
 	"deviceform_enroll_add_product": "添加 {product} 监控",
-	"deviceform_enroll_another": "再创建一个令牌",
 	"deviceform_enroll_cancel": "取消",
-	"deviceform_enroll_compose_note": "或者在该站点以容器方式运行代理，使用仓库中的 {file}——已包含中继模式：",
 	"deviceform_enroll_copy_docker": "复制 Docker 命令",
 	"deviceform_enroll_copy_linux": "复制 Linux 命令",
 	"deviceform_enroll_copy_now": "请立即复制命令：此令牌不会再次显示。",
@@ -977,7 +1034,6 @@
 	"deviceform_enroll_default_name": "服务器",
 	"deviceform_enroll_default_relay_name": "远程站点",
 	"deviceform_enroll_default_site": "远程站点",
-	"deviceform_enroll_done_note": "代理会在一分钟内自动注册为监控项。你可以关闭此页面。此令牌只用于接入这一台机器；如需批量部署，请在“设置 → 代理”中创建可重复使用的令牌。",
 	"deviceform_enroll_guide": "远程站点指南：HTTPS、防火墙、ping",
 	"deviceform_enroll_intro": "装有代理的服务器无需填写地址：安装在机器上的代理会主动向此服务器报到。创建令牌，运行给出的命令，即可完成。",
 	"deviceform_enroll_linux": "Linux / macOS",
@@ -991,13 +1047,9 @@
 	"deviceform_enroll_site_help": "为监控项选择中继时，显示在中继名称旁。",
 	"deviceform_enroll_site_name": "站点名称",
 	"deviceform_enroll_site_placeholder": "里昂办公室",
-	"deviceform_enroll_step1": "在远程站点的一台机器上安装代理",
-	"deviceform_enroll_step2": "切换为中继模式",
 	"deviceform_enroll_step3": "添加该站点的监控项",
-	"deviceform_enroll_step3_note": "中继会在一分钟内出现在监控项列表中。像往常一样添加那里的每台交换机、NAS 或虚拟化主机，地址填写站点内部可见的地址，并在“更多选项”中将“访问方式”设为该中继。站点端无需开放任何端口：中继只会主动向外连接。",
 	"deviceform_enroll_token": "令牌",
 	"deviceform_enroll_token_help": "一个令牌可以接入多台机器：可按分组或机器命名。",
-	"deviceform_enroll_token_help_relay": "仅用于在“设置 → 代理”中识别该令牌。",
 	"deviceform_enroll_token_name": "令牌名称",
 	"deviceform_enroll_windows": "Windows（PowerShell，以管理员身份运行）",
 	"deviceform_enroll_windows_intro": "{product} 运行在 Windows 服务器上，其队列和服务只能在那里读取。请创建令牌，在该服务器上运行给出的 PowerShell 命令，然后添加 {product} 监控。",
@@ -1552,6 +1604,17 @@
 	"devices_docker_manage": "管理容器",
 	"devices_docker_needs_agent": "重启和更新需要能够执行命令的代理。",
 	"devices_docker_no_metric": "此时间范围内该容器没有指标。",
+	"devices_docker_cpu_label": "CPU",
+	"devices_docker_cpu_hint": "占单个核心的比例：100% 即一个满载核心。",
+	"devices_docker_mem_label": "内存",
+	"devices_docker_mem_limit_label": "内存占限额比例",
+	"devices_docker_mem_no_limit": "已用内存：{used}（该容器未设置限额）。",
+	"devices_docker_crashloop": "反复重启（15 分钟内 {count} 次）",
+	"devices_docker_crashloop_n": "{count} 个容器反复重启",
+	"devices_docker_top_cpu_title": "CPU 排行",
+	"devices_docker_top_cpu_aria": "CPU 占用最高的容器",
+	"devices_docker_top_mem_title": "内存排行",
+	"devices_docker_top_mem_aria": "内存占用最高的容器",
 	"devices_docker_none": "此机器上没有 Docker，或代理无法访问其套接字（请将代理加入 docker 组或以 root 运行）。",
 	"devices_docker_policies": "策略：{restart} 个自动重启，{update} 个自动更新",
 	"devices_docker_policies_aria": "容器策略",
@@ -1584,7 +1647,7 @@
 	"devices_docker_strip_unavailable": "此代理无法执行命令（版本过旧，或 commands: false）：策略会保留，但在使用当前安装程序重新安装之前不会执行任何操作。",
 	"devices_docker_title": "容器",
 	"devices_docker_unavailable": "操作不可用",
-	"devices_docker_unavailable_body": "此代理无法执行命令——{why}。请使用当前安装程序重新安装（令牌取自“设置 → 代理”，commands: true）；在其重新上报之前，重启、更新和下方策略均不可用。",
+	"devices_docker_unavailable_body": "此代理无法执行命令——{why}。请使用当前安装程序重新安装（命令取自“添加 → 安装了代理的服务器”，commands: true）；在其重新上报之前，重启、更新和下方策略均不可用。",
 	"devices_docker_up_for": "已运行 {duration}",
 	"devices_docker_update_all": "在维护窗口内自动更新，所有容器",
 	"devices_docker_update_available": "有可用更新",
@@ -1911,6 +1974,49 @@
 	"devices_mikrotik_update_available": "有可用更新",
 	"devices_mikrotik_version_available": "版本 {latest} 已在 {channel} 通道发布。",
 	"devices_mikrotik_waiting": "等待首次探测：尚未读取路由器。",
+	"devices_switch_title": "交换机端口",
+	"devices_switch_desc": "前面板：每个端口的链路、速率、PoE 和错误。选择一个端口查看其流量。",
+	"devices_switch_summary": "在线端口：{up}/{total}",
+	"devices_switch_unit_label": "交换机",
+	"devices_switch_faceplate_label": "{device} 的端口",
+	"devices_switch_state_up": "在线",
+	"devices_switch_state_down": "无链路",
+	"devices_switch_state_off": "已禁用",
+	"devices_switch_legend_up": "链路在线，显示速率",
+	"devices_switch_legend_down": "无链路",
+	"devices_switch_legend_off": "已禁用",
+	"devices_switch_legend_attention": "有错误、半双工或 PoE 故障",
+	"devices_switch_poe_budget": "PoE 预算",
+	"devices_switch_poe_draw": "PoE 功耗：{watts} W",
+	"devices_switch_detail_title": "端口 {port}",
+	"devices_switch_close": "关闭",
+	"devices_switch_link": "链路",
+	"devices_switch_uplink": "上联",
+	"devices_switch_speed": "速率",
+	"devices_switch_half_duplex": "半双工",
+	"devices_switch_errors_day": "错误（24 小时）",
+	"devices_switch_detail_errors": "错误（24 小时）：{count}",
+	"devices_switch_poe": "PoE",
+	"devices_switch_poe_delivering": "供电中",
+	"devices_switch_poe_delivering_watts": "{watts} W",
+	"devices_switch_poe_searching": "检测中",
+	"devices_switch_poe_off": "关闭",
+	"devices_switch_poe_fault": "故障",
+	"devices_switch_poe_class": "等级 {level}",
+	"devices_switch_vlan": "VLAN",
+	"devices_switch_neighbor": "邻居",
+	"devices_switch_neighbor_value": "{name} · {port}",
+	"devices_switch_traffic": "流量，最近 24 小时",
+	"devices_switch_traffic_in": "入",
+	"devices_switch_traffic_out": "出",
+	"devices_switch_no_traffic": "此端口尚无已存储的流量。",
+	"devices_switch_select_hint": "选择一个端口查看其流量、错误和邻居。",
+	"devices_switch_heatmap_title": "各端口流量，最近 24 小时",
+	"devices_switch_heatmap_label": "最近 24 小时内每个端口的吞吐量",
+	"devices_switch_heatmap_low": "空闲",
+	"devices_switch_heatmap_high": "繁忙",
+	"devices_switch_no_data": "无数据",
+	"devices_switch_heatmap_data": "数值",
 	"devices_openvpn_clients_connected": "已连接客户端",
 	"devices_openvpn_clients_note": "客户端是临时的：此列表仅显示管理接口当前报告的内容。",
 	"devices_openvpn_connected_ago": "已连接 {age}",
@@ -2093,6 +2199,17 @@
 	"devices_target_essentials": "概览",
 	"devices_target_every": "每 {interval}",
 	"devices_target_everything_else": "其他",
+	"devices_target_all_measurements": "全部指标",
+	"devices_target_stat_yes": "是",
+	"devices_target_stat_no": "否",
+	"devices_target_stat_max_of": "{count} 项中的最大值",
+	"devices_target_stat_min_of": "{count} 项中的最小值",
+	"devices_target_stat_more": "全部显示（{count}）",
+	"devices_target_stat_less": "收起",
+	"devices_target_rank_empty": "此时段内无数据",
+	"devices_target_rank_quiet": "此时段内均为零",
+	"devices_target_rank_peak": "时段内峰值",
+	"devices_target_rank_latest": "最新值",
 	"devices_target_families_filtered": "{shown}/{total} 个指标族",
 	"devices_target_families_one": "{count} 个指标族",
 	"devices_target_families_other": "{count} 个指标族",
@@ -2505,37 +2622,17 @@
 	"devicesb_opnsense_traffic_states_of_limit": "/ {limit} 个状态",
 	"devicesb_opnsense_traffic_usage_aria": "状态表使用率",
 	"devicesb_opnsense_wan_addresses": "WAN 地址",
-	"devicesb_pbs_calendar_aria_group": "{group}:{summary}",
-	"devicesb_pbs_calendar_aria_summary": "{total} 天中 {ok} 天已备份，{failed} 天失败",
 	"devicesb_pbs_calendar_empty_none": "暂无备份组：此服务器上没有任何备份，最近 {days} 天也没有运行备份任务。",
 	"devicesb_pbs_calendar_empty_waiting": "等待首次探测：读取备份服务器后日历才会填充。",
 	"devicesb_pbs_calendar_failed_line": "失败于 {ago}:{error}",
 	"devicesb_pbs_calendar_keeps": "保留 {retention}",
 	"devicesb_pbs_calendar_last_size": "最近 {size}",
 	"devicesb_pbs_calendar_latest_unverified": "最新快照验证失败",
-	"devicesb_pbs_calendar_legend_failed": "失败",
-	"devicesb_pbs_calendar_legend_none": "无备份",
-	"devicesb_pbs_calendar_legend_ok": "已备份",
-	"devicesb_pbs_calendar_legend_running": "运行中",
-	"devicesb_pbs_calendar_legend_verify_failed": "验证失败",
-	"devicesb_pbs_calendar_outcome_failed": "失败",
-	"devicesb_pbs_calendar_outcome_ok": "成功",
-	"devicesb_pbs_calendar_outcome_running": "运行中",
-	"devicesb_pbs_calendar_plate_failed": "上次备份失败",
-	"devicesb_pbs_calendar_plate_late": "上次备份：{ago}",
-	"devicesb_pbs_calendar_plate_missing": "已 {span} 无备份",
-	"devicesb_pbs_calendar_plate_none": "尚无备份",
-	"devicesb_pbs_calendar_plate_ok": "已备份：{ago}",
-	"devicesb_pbs_calendar_plate_running": "备份进行中",
 	"devicesb_pbs_calendar_snapshots_one": "{count} 个快照",
 	"devicesb_pbs_calendar_snapshots_other": "{count} 个快照",
-	"devicesb_pbs_calendar_summary_today": "今天已备份 {ok}/{total}",
-	"devicesb_pbs_calendar_summary_today_failing": "今天已备份 {ok}/{total}，{failing} 个失败",
-	"devicesb_pbs_calendar_tip_run": "{time} · {outcome} · {duration}",
 	"devicesb_pbs_calendar_tip_snapshot": "快照 {time}",
 	"devicesb_pbs_calendar_tip_verification_failed": "验证失败",
 	"devicesb_pbs_calendar_tip_verified": "已验证",
-	"devicesb_pbs_calendar_today": "今天",
 	"devicesb_pbs_ds_backend": "后端 {backend}",
 	"devicesb_pbs_ds_bad_chunks_one": "上次垃圾回收发现 {count} 个不可读的数据块：此数据存储中的部分备份已无法恢复。",
 	"devicesb_pbs_ds_bad_chunks_other": "上次垃圾回收发现 {count} 个不可读的数据块：此数据存储中的部分备份已无法恢复。",
@@ -2609,11 +2706,6 @@
 	"devicesb_pbs_failures_show_fewer": "显示更少",
 	"devicesb_pbs_failures_show_log": "显示日志",
 	"devicesb_pbs_format_ago": "{span}前",
-	"devicesb_pbs_format_day_failed": "备份失败",
-	"devicesb_pbs_format_day_none": "无备份",
-	"devicesb_pbs_format_day_ok": "已备份",
-	"devicesb_pbs_format_day_running": "备份进行中",
-	"devicesb_pbs_format_day_verify_failed": "已备份，验证失败",
 	"devicesb_pbs_format_in_span": "{span}后",
 	"devicesb_pbs_format_just_now": "刚刚",
 	"devicesb_pbs_format_never": "从未",
@@ -3811,9 +3903,28 @@
 	"devicesb_webchange_timeline_same_title": "{count} 个页面上的相同更改",
 	"devicesb_webchange_timeline_watching_one": "正在监控 1 个页面。",
 	"devicesb_webchange_timeline_watching_other": "正在监控 {count} 个页面。",
+	"discovery_grid_absent_detail": "已知设备，上次扫描未发现。",
+	"discovery_grid_empty_filter": "没有处于此状态的地址。",
+	"discovery_grid_filter_all": "全部（{count}）",
+	"discovery_grid_filter_label": "按状态筛选地址",
+	"discovery_grid_filter_state": "{state}（{count}）",
+	"discovery_grid_free_detail": "此地址尚未发现任何设备。",
+	"discovery_grid_heading": "子网网格",
+	"discovery_grid_hint": "选择一个地址以查看其设备及可执行的操作。",
+	"discovery_grid_label": "{cidr} 的地址",
+	"discovery_grid_network_label": "网格中显示的网络",
+	"discovery_grid_not_scanned": "尚无扫描完成：所有地址均显示为空闲。",
+	"discovery_grid_state_absent": "缺席",
+	"discovery_grid_state_free": "空闲",
+	"discovery_grid_state_ignored": "已忽略",
+	"discovery_grid_state_known": "已知",
+	"discovery_grid_state_mac_changed": "MAC 已变更",
+	"discovery_grid_state_new": "新设备",
+	"discovery_grid_unavailable": "此网络没有网格：仅为最多 1024 个地址的 IPv4 网络绘制。",
 	"discovery_inventory_action_error": "操作失败",
 	"discovery_inventory_add_error": "无法创建定时扫描",
 	"discovery_inventory_add_heading": "创建定时扫描",
+	"discovery_inventory_add_monitor": "添加为监控项",
 	"discovery_inventory_add_submit": "创建定时扫描",
 	"discovery_inventory_alerts_hint": "新设备和新端口的告警默认关闭。如需接收，请在告警规则中启用“New device on the network”和“New open port on the network”。",
 	"discovery_inventory_baseline_pending": "首次扫描只建立清单，不发出告警。",
@@ -3822,6 +3933,8 @@
 	"discovery_inventory_delete_confirm": "连同清单一起删除？",
 	"discovery_inventory_enabled_label": "已启用",
 	"discovery_inventory_first_seen": "首次发现 {when}",
+	"discovery_inventory_ignore": "忽略",
+	"discovery_inventory_ignored": "已忽略",
 	"discovery_inventory_interval_every": "每 {span}",
 	"discovery_inventory_interval_label": "扫描间隔",
 	"discovery_inventory_intro": "按计划扫描网络，并保存发现的设备和开放端口清单。首次扫描只建立清单，不发出告警；之后任何新增项都会被标记，直到您将其标记为已知。",
@@ -3831,6 +3944,9 @@
 	"discovery_inventory_last_run": "上次扫描 {when}",
 	"discovery_inventory_last_seen": "最近发现 {when}",
 	"discovery_inventory_load_error": "无法加载定时扫描",
+	"discovery_inventory_mac_changed": "MAC 已变更",
+	"discovery_inventory_mac_changed_from": "MAC 已变更：此地址原为 {mac}。",
+	"discovery_inventory_mac_changes_count": "待审查的 MAC 变更：{count}",
 	"discovery_inventory_mark_all": "全部标记为已知",
 	"discovery_inventory_mark_device": "标记为已知",
 	"discovery_inventory_mark_port": "标为已知",
@@ -4180,8 +4296,6 @@
 	"metrics_title_website_text_chars": "文本字符数",
 	"metrics_title_website_title_changed": "标题已更改",
 	"metrics_title_website_up": "网站可用",
-	"misc2_browser_on": "{system} 上的 {browser}",
-	"misc2_browser_unknown": "某个浏览器",
 	"misc2_folds_container_stopped": [
 		{
 			"declarations": [
@@ -4464,34 +4578,11 @@
 	],
 	"misc2_mascot_aria": "DumbMonit，那只鸽子",
 	"misc_ago": "{span}前",
-	"misc_device_amplifier": "功放",
-	"misc_device_cast_speaker": "支持投射的音箱",
-	"misc_device_chromecast": "Chromecast",
-	"misc_device_computer": "电脑",
-	"misc_device_console": "游戏机",
-	"misc_device_other": "其他监控项",
-	"misc_device_phone": "手机",
-	"misc_device_speaker": "音箱",
-	"misc_device_tablet": "平板电脑",
-	"misc_device_this": "此显示器",
-	"misc_device_tv": "电视",
 	"misc_dur_d": "{n} 天",
 	"misc_dur_h": "{n} 小时",
 	"misc_dur_min": "{n} 分钟",
 	"misc_dur_s": "{n} 秒",
 	"misc_just_now": "刚刚",
-	"misc_music_deezer_cut": "此 Deezer 链接似乎不完整。",
-	"misc_music_deezer_kinds": "指向单曲、专辑或播放列表的 Deezer 链接可在墙屏上播放。",
-	"misc_music_deezer_short": "此处无法识别 Deezer 短链接：请先打开它，再复制完整的 deezer.com 链接。",
-	"misc_music_empty": "请先粘贴链接。",
-	"misc_music_not_link": "这不是链接。请粘贴 Spotify、Deezer 或 YouTube 链接：单曲、专辑、播放列表、单集或视频。",
-	"misc_music_spotify_cut": "此 Spotify 链接似乎不完整。",
-	"misc_music_spotify_kinds": "指向单曲、专辑、播放列表或单集的 Spotify 链接可在墙屏上播放。",
-	"misc_music_spotify_short": "此处无法识别 Spotify 短链接：请先打开它，再复制完整的 open.spotify.com 链接。",
-	"misc_music_unsupported": "请粘贴 Spotify、Deezer 或 YouTube 链接：单曲、专辑、播放列表、单集或视频。",
-	"misc_music_youtube_cut": "此 YouTube 链接似乎不完整。",
-	"misc_music_youtube_empty": "此 YouTube 链接中没有视频或播放列表。",
-	"misc_music_youtube_page": "请粘贴 YouTube 视频或播放列表的链接，而不是频道或其他页面的链接。",
 	"misc_nav_alerts": "告警",
 	"misc_nav_alerts_badge": "{count} 个活动告警",
 	"misc_nav_dashboards": "仪表盘",
@@ -4506,12 +4597,11 @@
 	"misc_nav_more": "更多",
 	"misc_nav_overview": "概览",
 	"misc_nav_palette_open": "打开命令面板",
-	"misc_nav_palette_title": "命令面板（{shortcut}）",
 	"misc_nav_security": "安全",
 	"misc_nav_settings": "设置",
 	"misc_nav_sign_out": "退出登录",
 	"misc_nav_wall": "墙屏模式",
-	"misc_nav_wall_title": "墙屏模式：全屏显示简报，适合放在房间里的显示器",
+	"misc_nav_wall_title": "墙屏模式：全屏显示控制台的看板，适合放在房间里的显示器",
 	"misc_never": "从未",
 	"misc_palette_add_device": "添加监控项",
 	"misc_palette_agent": "安装代理",
@@ -4551,8 +4641,7 @@
 	"misc_palette_status_detail": "公开页面和公告",
 	"misc_palette_status_page": "新建状态页",
 	"misc_palette_status_pages": "状态页",
-	"misc_palette_theme": "切换主题",
-	"misc_palette_wall_detail": "用于墙屏的全屏简报",
+	"misc_palette_wall_detail": "用于墙屏的全屏看板",
 	"misc_reason_auth": "凭据被拒绝",
 	"misc_reason_bad_secret": "响应签名无效：共享密钥可能有误",
 	"misc_reason_body": "响应无法读取",
@@ -4583,23 +4672,6 @@
 	"misc_shortcuts_go": "前往{page}",
 	"misc_shortcuts_intro": "当没有文本框获得焦点时，字母快捷键才有效。请依次按下各个键。",
 	"misc_shortcuts_title": "键盘快捷键",
-	"misc_speaker_download_failed": "无法下载 Spotify 播放器（sdk.scdn.co 无法访问）。",
-	"misc_speaker_fix_auth": "正在自动重试。若仍然失败，请在“设置 → 墙屏音乐”中重新连接 Spotify。",
-	"misc_speaker_fix_insecure": "Spotify 只能在安全页面中播放：请通过 HTTPS（反向代理）打开 DumbMonit，或在显示器本机上使用 http://localhost。",
-	"misc_speaker_fix_no_drm": "请在连接电视的电脑上使用 Chrome、Edge 或 Firefox（Firefox：允许“播放受 DRM 控制的内容”；树莓派上的 Chromium：安装 Widevine，即 libwidevinecdm0 软件包）。大多数智能电视和展示终端的浏览器无法做到。否则请从电视自带的 Spotify 应用或 Chromecast 播放：墙屏仍会显示正在播放的内容。",
-	"misc_speaker_fix_premium": "请在“设置 → 墙屏音乐”中连接 Premium 账户。“正在播放”仍会显示你其他设备上的播放内容。",
-	"misc_speaker_fix_reconnect": "管理员可以在“设置 → 墙屏音乐”中重新连接 Spotify。",
-	"misc_speaker_no_token": "没有 Spotify 令牌。",
-	"misc_speaker_not_accepted": "Spotify 未接受此显示器作为音箱。",
-	"misc_speaker_not_ready": "此显示器尚未准备好作为音箱。",
-	"misc_speaker_not_started": "Spotify 播放器未能启动。",
-	"misc_speaker_playback_error": "Spotify 无法播放此曲目（{message}）。",
-	"misc_speaker_problem_auth": "Spotify 拒绝了墙屏的连接{detail}。",
-	"misc_speaker_problem_init": "此浏览器无法播放 Spotify：其 DRM（Widevine）未能启动{detail}。",
-	"misc_speaker_problem_premium": "需要 Spotify Premium，墙屏才能作为音箱使用。",
-	"misc_speaker_reason_insecure": "此显示器通过普通 HTTP 打开了 DumbMonit。",
-	"misc_speaker_reason_no_drm": "此浏览器无法播放 Spotify：没有 DRM 模块（Widevine）。",
-	"misc_speaker_reason_no_eme": "此浏览器无法播放 Spotify：不支持加密媒体扩展（DRM）。",
 	"misc_state_disabled": "已禁用",
 	"misc_state_down": "离线",
 	"misc_state_misconfigured": "配置有误",
@@ -5060,245 +5132,6 @@
 	"oncall_window_overnight_hint": "结束时间早于开始时间表示跨过午夜到次日;00:00 到 00:00 表示整天。",
 	"oncall_window_remove": "移除",
 	"oncall_window_to": "到",
-	"overview_brief_a_rule": "某条规则",
-	"overview_brief_also": "{names} 上也出现过告警并已消失。",
-	"overview_brief_also_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{names} 等 {count} 个监控项上也出现过告警并已消失。"
-			}
-		}
-	],
-	"overview_brief_device_n": "监控项 {id}",
-	"overview_brief_dissolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 条告警在触发前已自行消散。"
-			}
-		}
-	],
-	"overview_brief_dissolved_mostly": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 条告警在触发前已自行消散（主要是 {device} 上的 {rule}）。"
-			}
-		}
-	],
-	"overview_brief_dropped": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{name} 掉线 {count} 次后恢复。"
-			}
-		}
-	],
-	"overview_brief_dropped_many": "{names} 掉线后已恢复。",
-	"overview_brief_head_first": "过去 24 小时内",
-	"overview_brief_head_since": "自 {when} 起",
-	"overview_brief_kept_reporting": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 个监控项持续上报数据。"
-			}
-		}
-	],
-	"overview_brief_lead": "{head}——{parts}。",
-	"overview_brief_learning_many": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{names} 仍在学习基线：本来会触发 {count} 次。"
-			}
-		}
-	],
-	"overview_brief_learning_one": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{names} 仍在学习基线：本来会触发 {count} 次。"
-			}
-		}
-	],
-	"overview_brief_n_alerts_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 条告警自行恢复"
-			}
-		}
-	],
-	"overview_brief_n_fired": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 条告警触发"
-			}
-		}
-	],
-	"overview_brief_n_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 条自行恢复"
-			}
-		}
-	],
-	"overview_brief_n_still": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 条仍在触发"
-			}
-		}
-	],
-	"overview_brief_n_unreachable": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 个监控项无法访问"
-			}
-		}
-	],
-	"overview_brief_nothing_no_channel": "没有发送任何通知：尚未设置通知渠道。",
-	"overview_brief_nothing_sent": "没有发送任何通知。",
-	"overview_brief_nothing_to_channel": "没有向 {channel} 发送任何通知。",
-	"overview_brief_nothing_to_channels": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "没有向你的 {count} 个渠道发送任何通知。"
-			}
-		}
-	],
-	"overview_brief_notified": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "已发送 {count} 条通知。"
-			}
-		}
-	],
-	"overview_brief_notified_to": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "已向 {channel} 发送 {count} 条通知。"
-			}
-		}
-	],
-	"overview_brief_on_device": "{device}:{phrases}。",
-	"overview_brief_phrase_fired_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{name} 触发了 {count} 次，均已自行恢复"
-			}
-		}
-	],
-	"overview_brief_phrase_resolved": "{name} 已自行恢复",
-	"overview_brief_quiet_away": "你不在期间没有发生任何事件。",
-	"overview_brief_quiet_first": "过去 24 小时内没有发生任何事件。",
-	"overview_brief_the_server": "服务器",
 	"overview_first_all_done": "三步全部完成，此向导不会再出现。",
 	"overview_first_channel_action": "添加通知渠道",
 	"overview_first_channel_text": "邮件、ntfy、Discord、Telegram、PagerDuty，用你平时看的就行。出问题之前不会发送任何内容。",
@@ -5322,38 +5155,15 @@
 	"overview_first_test_text": "在渠道里发送一条测试。消息真正发出后，此步骤会变绿。",
 	"overview_first_test_title": "确认能收到消息",
 	"overview_first_title": "最初的五分钟",
-	"overview_needs_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "还有 {count} 项"
-			}
-		}
-	],
-	"overview_page_checked": "检查于 {when}",
 	"overview_page_empty_text": "添加交换机、NAS、虚拟化主机或网站，一分钟内就会开始上报。",
 	"overview_page_empty_title": "还没有监控项",
 	"overview_page_error_load": "无法加载概览",
 	"overview_page_error_refresh": "无法刷新告警。",
 	"overview_page_history_note": "取自过去一周的告警历史。",
-	"overview_page_last_days": "最近 {days} 天",
-	"overview_page_mark_read": "标为已读",
-	"overview_page_needs_you": "需要你处理",
 	"overview_page_or": "或者{agent}，或者通过其中一台{relay}。",
 	"overview_page_or_agent": "在某台机器上安装代理",
 	"overview_page_or_relay": "监控远程站点",
-	"overview_page_since": "自你上次查看以来",
 	"overview_page_title": "概览",
-	"overview_scene_asleep": "{label}，鸽子睡着了",
-	"overview_scene_cloudy": "少云",
-	"overview_scene_overcast": "阴天",
-	"overview_scene_storm": "风暴",
 	"overview_sky_clear": "晴空万里",
 	"overview_sky_n_acked": [
 		{
@@ -5520,96 +5330,11 @@
 	"overview_sky_plate_unreachable": "无法访问",
 	"overview_sky_sentence": "{parts}。",
 	"overview_sky_waiting": "等待首批上报",
-	"overview_streaks_d_h": "{days} 天 {hours} 小时",
-	"overview_streaks_fewest": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "告警最少：{days} 天内 {count} 个告警事件"
-			}
-		}
-	],
-	"overview_streaks_h_min": "{hours} 小时 {minutes} 分钟",
-	"overview_streaks_many_unreachable": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{name} 等另外 {count} 台无法访问"
-			}
-		}
-	],
-	"overview_streaks_most": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{days} 天内 {count} 个告警事件（开始、触发或恢复）"
-			}
-		}
-	],
-	"overview_streaks_no_alert": "{days} 天内没有告警",
-	"overview_streaks_no_alert_like": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{days} 天内没有告警，另有 {count} 台也是如此"
-			}
-		}
-	],
-	"overview_streaks_noisiest": "告警最多",
-	"overview_streaks_none_down": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 天内没有监控项无法访问"
-			}
-		}
-	],
-	"overview_streaks_not_now": "不完整",
-	"overview_streaks_one_unreachable": "{name} 无法访问",
-	"overview_streaks_over": "超过 {days} 天",
-	"overview_streaks_quietest": "最安静的监控项",
-	"overview_streaks_reporting": "全部正常上报",
-	"overview_streaks_reporting_for": "全部正常上报已持续",
-	"overview_streaks_since_outage": "自上次故障以来没有监控项无法访问",
-	"overview_streaks_under_minute": "不到一分钟",
 	"overview_tips_another": "换一条",
 	"overview_tips_hide": "隐藏这些提示",
 	"overview_tips_hide_title": "隐藏这些提示（仅限此浏览器）",
 	"overview_tips_label": "你知道吗？",
 	"overview_tips_prefix": "你知道吗？{title}",
-	"overview_week_days_short": "{days} 天",
-	"overview_when_dated": "{date} {time}",
-	"overview_when_yesterday": "昨天 {time}",
 	"push_runs_description": "任务报告的每次开始、成功和失败，最新的在前。",
 	"push_runs_duration": "耗时 {duration}",
 	"push_runs_duration_unknown": "时长未知",
@@ -5929,7 +5654,6 @@
 	"settings.section.appearance": "外观",
 	"settings.section.assistant": "API 和助手",
 	"settings.section.backup": "备份",
-	"settings.section.music": "墙屏音乐",
 	"settings.section.packs": "集成包",
 	"settings.section.reports": "报告",
 	"settings.section.security": "账户和安全",
@@ -6083,37 +5807,15 @@
 	"settings_agents_ad_unlimited": "不限",
 	"settings_agents_ad_waiting": "正在等待第一台服务器",
 	"settings_agents_ad_watch_intro": "服务器注册后会出现在这里。你可以关闭此窗口，注册会继续进行。",
-	"settings_agents_copied": "我已复制",
 	"settings_agents_copy_command": "复制命令",
-	"settings_agents_copy_token": "复制令牌",
 	"settings_agents_create": "创建令牌",
 	"settings_agents_create_error": "无法创建令牌",
 	"settings_agents_created_at": "创建于 {when}",
-	"settings_agents_created_title": "令牌“{name}”已创建",
-	"settings_agents_days_invalid": "天数必须是不小于 1 的整数。",
-	"settings_agents_description": "代理是运行在 Linux、Windows、macOS 或 FreeBSD 机器上的小程序：它上报系统、磁盘、服务、Docker 容器和备份，并允许你在此重启或更新容器。在中继模式下，它还会代此服务器探测其所在网络中的监控项——第二个站点、客户现场、任何位于 NAT 之后的监控项——且只发起出站连接。",
-	"settings_agents_empty_description": "请先创建一个，然后在机器上运行安装命令。",
 	"settings_agents_empty_title": "暂无令牌。",
 	"settings_agents_enrols_no_more": "不再注册",
-	"settings_agents_expires": "此后停止注册",
-	"settings_agents_expires_help": "单位：天。已注册的机器会继续上报；留空表示无期限。",
 	"settings_agents_install": "安装代理",
-	"settings_agents_install_linux": "在 Linux 上安装",
-	"settings_agents_install_windows": "在 Windows 上安装（PowerShell）",
-	"settings_agents_last_report": "上次上报 {when}",
 	"settings_agents_last_used": "上次使用 {when}",
-	"settings_agents_list_aria": "向此服务器上报的代理",
 	"settings_agents_load_error": "无法加载令牌",
-	"settings_agents_machines": "可注册的机器数",
-	"settings_agents_machines_help": "留空表示不限制。",
-	"settings_agents_machines_invalid": "机器数必须是不小于 1 的整数。",
-	"settings_agents_name_placeholder": "文件服务器",
-	"settings_agents_name_required": "请为令牌命名，例如使用它将注册的机器名称。",
-	"settings_agents_new_token": "新令牌",
-	"settings_agents_new_token_help": "仅用于在此列表中识别该令牌。",
-	"settings_agents_no_deadline": "无期限",
-	"settings_agents_no_limit": "不限制",
-	"settings_agents_none": "尚无代理向此服务器上报。",
 	"settings_agents_probes": [
 		{
 			"declarations": [
@@ -6130,24 +5832,6 @@
 	],
 	"settings_agents_relay_label": "中继",
 	"settings_agents_relay_label_site": "中继 · {site}",
-	"settings_agents_relay_off": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "中继已关闭——{count} 个监控项等待中"
-			}
-		}
-	],
-	"settings_agents_relay_off_title": "在此代理上设置 relay: true，使其接手这些监控项的探测",
-	"settings_agents_relay_title": "中继模式：代此服务器探测其所在网络中的监控项",
-	"settings_agents_reusable": "可用于一批机器",
-	"settings_agents_reusable_help": "关闭时，令牌只能注册一台机器，之后不再注册任何机器——这是单次安装的合理默认值。开启后，可将其用于 Playbook 或镜像。",
 	"settings_agents_revoke": "吊销",
 	"settings_agents_revoke_confirm": "永久吊销？",
 	"settings_agents_revoke_error": "无法吊销令牌",
@@ -6157,19 +5841,15 @@
 	"settings_agents_scope_fleet_ratio": "机群 · 已注册 {uses}/{max}",
 	"settings_agents_scope_single": "一次性",
 	"settings_agents_scope_single_used": "一次性 · 已使用",
-	"settings_agents_shown_once": "仅显示一次——请立即复制",
 	"settings_agents_spent_note": "用它注册的机器会继续上报，只是它无法再接纳新机器。",
 	"settings_agents_stops_at": "停止注册 {when}",
 	"settings_agents_title": "代理",
-	"settings_agents_tls_badge": "已加密",
-	"settings_agents_tls_badge_title": "加密的代理通道：TLS 1.3 + 客户端证书，密钥交换 {group}",
 	"settings_agents_tls_copy_fingerprint": "复制指纹",
 	"settings_agents_tls_counts": "已加密：{encrypted}。明文通道：{plain}。",
 	"settings_agents_tls_disabled": "代理端口已关闭（DUMBMONIT_AGENT_LISTEN=off）：代理仅通过 Web 端口上报。",
 	"settings_agents_tls_fingerprint": "证书颁发机构指纹（SHA-256）",
 	"settings_agents_tls_fingerprint_help": "安装命令中包含该指纹：代理不会接受任何其他服务器，即使其持有有效的公共证书。",
 	"settings_agents_tls_legacy": "明文通道",
-	"settings_agents_tls_legacy_title": "该代理仍通过 Web 端口上报。更新后，一旦能连到代理端口，它会自动切换到加密的代理通道。",
 	"settings_agents_tls_legacy_until": "明文通道将于 {when} 自动关闭。",
 	"settings_agents_tls_load_error": "无法读取代理通道",
 	"settings_agents_tls_port_hint": "对于其他网络中的代理，只需在服务器上开放 TCP 端口 {port}。代理端无需开放任何端口。",
@@ -6188,10 +5868,7 @@
 	"settings_agents_tls_summary": "代理通过 TLS 1.3 连接端口 {port}，每台机器一张证书，并使用后量子密钥交换（{group}）。它们通过本服务器自有证书颁发机构的指纹识别服务器：网络上的任何人都无法读取或篡改它们发送的内容。",
 	"settings_agents_tls_title": "代理通道",
 	"settings_agents_token": "令牌",
-	"settings_agents_tokens_intro": "添加代理类型的监控项时会自动为你创建一个一次性令牌。如需用于一批机器、Playbook 或机器镜像，请在此创建。",
 	"settings_agents_tokens_title": "注册令牌",
-	"settings_agents_watch_remote": "监控远程站点",
-	"settings_agents_watches_own": "监控自身所在机器",
 	"settings_agentupdates_agents_empty": "尚无代理向此服务器上报。",
 	"settings_agentupdates_agents_title": "代理",
 	"settings_agentupdates_canary_flag": "金丝雀",
@@ -6266,14 +5943,7 @@
 	"settings_agentupdates_window_any": "随时",
 	"settings_agentupdates_window_maintenance": "仅在维护窗口期间（设备上的静默）",
 	"settings_agentupdates_window_manual": "仅手动",
-	"settings_appearance_day": "白天",
-	"settings_appearance_day_hint": "图表纸，藏青墨水。",
-	"settings_appearance_night": "夜间",
-	"settings_appearance_night_hint": "雷达合成图，青色信号。",
-	"settings_appearance_system": "跟随系统",
-	"settings_appearance_system_hint": "跟随你的设备。",
-	"settings_appearance_theme": "主题",
-	"settings_appearance_wall_description": "仅显示全屏简报，适合放在房间里的显示器上。按 Esc 退出；⌘K / Ctrl K 可随时打开。",
+	"settings_appearance_wall_description": "全屏显示控制台的看板，适合放在房间里的显示器。按 Esc 退出；⌘K / Ctrl K 可随时打开。",
 	"settings_appearance_wall_open": "打开墙屏模式",
 	"settings_appearance_wall_title": "墙屏模式",
 	"settings_assistant_any_network": "任意网络",
@@ -6430,6 +6100,7 @@
 	"settings_backup_section_incidents": "事件和维护公告。",
 	"settings_backup_section_netconfig_host_keys": "配置备份记住的 SSH 主机密钥，避免再次盲目信任任何设备。",
 	"settings_backup_section_netconfig_versions": "网络配置版本，仅在你选择包含时导出：其中含有设备机密。",
+	"settings_backup_section_netscan_schedules": "计划的网络扫描，以及您标记为已知或已忽略的设备。",
 	"settings_backup_section_packs": "集成包，使该包类型的监控项重新被探测。",
 	"settings_backup_section_push_monitors": "心跳令牌，使定时任务调用的 URL 保持不变。",
 	"settings_backup_section_rule_overrides": "每个监控项的阈值和排除项。",
@@ -6444,8 +6115,6 @@
 	"settings_backup_without_key": "不含密钥",
 	"settings_backup_write_error": "无法写入备份",
 	"settings_block_connection": "连接",
-	"settings_block_off": "关",
-	"settings_block_on": "开",
 	"settings_config_action_create": "创建",
 	"settings_config_action_delete": "删除",
 	"settings_config_action_update": "更新",
@@ -6499,7 +6168,6 @@
 	"settings_config_yaml_label": "或粘贴 YAML",
 	"settings_language_auto": "自动（浏览器语言）",
 	"settings_language_theme_description": "保存在此浏览器中。",
-	"settings_language_theme_title": "语言与主题",
 	"settings_ldap_access_denied": "拒绝：不在任何所列组中",
 	"settings_ldap_admin_groups": "管理员组",
 	"settings_ldap_base_dn": "基础 DN",
@@ -6666,97 +6334,7 @@
 	"settings_logs_storage_title": "本地存储",
 	"settings_logs_title": "服务器日志",
 	"settings_logs_total_size": "总大小",
-	"settings_music_account": "账户",
-	"settings_music_admin_only": "管理员可在此连接 Spotify 账户。",
-	"settings_music_app": "应用（Client ID）",
-	"settings_music_connect_button": "连接 Spotify",
-	"settings_music_connect_heading": "Spotify Connect",
-	"settings_music_connect_intro": "墙屏显示屏会变成名为 {name} 的音箱：在手机的 Spotify 应用中打开“设备”并选择它，声音就会从显示屏发出。墙屏还会显示该账户在任何地方播放的内容——电视应用、投屏音箱、你的笔记本电脑。",
-	"settings_music_connected_at": "连接时间",
-	"settings_music_connected_default": "已连接",
-	"settings_music_copy_redirect": "复制重定向 URI",
-	"settings_music_description": "用手机开始播放音乐，并在墙屏显示屏上收听，或向其发送 Spotify、Deezer 或 YouTube 链接。",
-	"settings_music_disconnect": "断开连接",
-	"settings_music_disconnect_confirm": "断开 Spotify？",
-	"settings_music_disconnect_error": "无法断开连接",
-	"settings_music_err_client_id": "请粘贴 Spotify Developer Dashboard 中你的应用页面上的 Client ID（32 个字母和数字）。",
-	"settings_music_expired": "Spotify 已终止连接。请在下方重新连接：Client ID 会保留。",
-	"settings_music_expired_reason": "Spotify 已终止连接（{reason}）。请在下方重新连接：Client ID 会保留。",
-	"settings_music_finish": "完成连接",
-	"settings_music_finish_error": "无法完成连接",
-	"settings_music_link_heading": "在墙屏上播放链接",
-	"settings_music_link_intro": "没有 Premium 时，或对于在网页上没有 Connect 式遥控的 Deezer 和 YouTube — 可在任何屏幕（包括手机）上发送链接：每个墙屏都会在该服务自己的播放器中播放。墙屏浏览器未登录 Spotify 或 Deezer 时只会播放 30 秒试听。",
-	"settings_music_link_label": "要在墙屏上播放的链接",
-	"settings_music_load_error": "无法加载音乐设置",
-	"settings_music_missing": "此服务器暂不支持墙屏音乐：请更新 DumbMonit。",
-	"settings_music_missing_scopes": "Spotify 未授予 {scopes}：请重新连接并接受所有权限。",
-	"settings_music_needs_1": "拥有该应用的账户需要 Spotify Premium。个人应用（开发模式）最多允许五个账户：其他账户请在 User Management 中添加。",
-	"settings_music_needs_2": "手机必须登录与此处连接相同的 Spotify 账户：浏览器音箱只会对其所属账户显示——家庭套餐的其他成员看不到，也不会像智能音箱那样在网络中被发现。",
-	"settings_music_needs_3": "要让墙屏成为音箱，其浏览器必须通过 HTTPS（或在显示屏本机上以 localhost）打开 DumbMonit，并具备可用的 DRM（Widevine）：电脑上的 Chrome、Edge 或 Firefox，Raspberry Pi 上带 Widevine 的 Chromium。大多数智能电视和展台浏览器无法做到——墙屏会在屏幕上说明，下方的墙屏列表也会在此显示。",
-	"settings_music_needs_4": "浏览器在页面被触碰之前会保持静音：墙屏加载后请点击一次或按任意键（或使用 --autoplay-policy=no-user-gesture-required 启动展台浏览器）。",
-	"settings_music_needs_5": "“正在播放”不需要以上任何条件：服务器每隔几秒向 Spotify 查询播放内容，即使是普通 HTTP 也可以。",
-	"settings_music_needs_6": "Spotify 会在授权六个月后终止连接：请在所示日期之前重新连接。",
-	"settings_music_needs_heading": "所需条件",
-	"settings_music_not_connected": "Spotify 未连接",
-	"settings_music_nothing_playing": "此账户当前没有播放内容。",
-	"settings_music_nothing_sent": "没有向墙屏发送任何内容。管理员可以发送链接。",
-	"settings_music_now_artists": " — {artists}",
-	"settings_music_now_device": "，设备：{device}",
-	"settings_music_now_line": "{status}：{title}{artists}{device}",
-	"settings_music_on_walls": "墙屏上",
-	"settings_music_open_spotify": "打开 Spotify",
-	"settings_music_outcome_connected": "Spotify 已连接。",
-	"settings_music_outcome_denied": "Spotify 未授予访问权限。请重新开始并选择“同意”。",
-	"settings_music_outcome_exchange": "Spotify 拒绝完成连接。请检查下方的重定向 URI 是否已在你的应用中原样注册。",
-	"settings_music_outcome_hint": "请在下方重新开始；未做任何更改。",
-	"settings_music_outcome_internal": "无法保存连接。请查看服务器日志。",
-	"settings_music_outcome_session": "你当前的 DumbMonit 会话与发起连接的会话不同。请登录后重新开始。",
-	"settings_music_outcome_state": "此授权未知、已过期或已被使用。请从“连接 Spotify”重新开始。",
-	"settings_music_outcome_unknown": "连接未完成。",
-	"settings_music_plate_connected": "Spotify 已连接",
-	"settings_music_plate_off": "Spotify 未启用",
-	"settings_music_plate_reconnect": "请重新连接 Spotify",
-	"settings_music_play_on_wall": "在墙屏上播放",
-	"settings_music_reconnect_by": "重新连接截止",
-	"settings_music_reconnect_note": "Spotify 会在六个月后终止连接。",
-	"settings_music_redirect_insecure": "DumbMonit 通过普通 HTTP 提供服务，而 Spotify 只接受 https:// 或此 127.0.0.1 地址。那里没有服务响应：授权后浏览器会显示错误页面——请复制其地址，其中包含授权码。若通过 HTTPS 提供服务，重定向将直接完成。",
-	"settings_music_redirect_secure": "Spotify 会直接返回此页面。",
-	"settings_music_right_now": "当前",
-	"settings_music_send_error": "无法发送链接",
-	"settings_music_sent_by": "由 {name} 发送",
-	"settings_music_start_error": "无法开始连接",
-	"settings_music_status_paused": "已暂停",
-	"settings_music_status_playing": "正在播放",
-	"settings_music_step1_after": "中创建应用（名称任意）。勾选 Web API 和 Web Playback SDK，并添加此重定向 URI：",
-	"settings_music_step1_before": "1. 在",
-	"settings_music_step1_link": "Spotify Developer Dashboard",
-	"settings_music_step2_help": "在应用页面的 Basic Information 下。无需复制密钥：DumbMonit 使用 PKCE。",
-	"settings_music_step2_label": "2. 粘贴其 Client ID",
-	"settings_music_step3": "3. 在 Spotify 上授权，然后回到这里。",
-	"settings_music_step4_help": "以 {uri}?code= 开头——有效期十分钟，仅可使用一次。",
-	"settings_music_step4_label": "4. 粘贴你最终到达页面的地址",
-	"settings_music_stop": "停止",
-	"settings_music_title": "墙屏音乐",
 	"settings_nav_push": "推送通知",
-	"settings_news_country": "国家/地区",
-	"settings_news_country_ai": "人工智能（英文）",
-	"settings_news_country_international": "国际",
-	"settings_news_country_tech": "科技（英文）",
-	"settings_news_custom_add": "添加订阅源",
-	"settings_news_custom_name": "名称（可选）",
-	"settings_news_custom_title": "添加自定义订阅源",
-	"settings_news_custom_url": "RSS 或 Atom 地址",
-	"settings_news_limit": "最多 {count} 个订阅源。",
-	"settings_news_none": "还没有订阅源。请勾选上方的来源，或添加自己的订阅源。",
-	"settings_news_remove": "移除 {name}",
-	"settings_news_selected": "墙屏上的订阅源",
-	"settings_news_sources": "来源",
-	"settings_news_test": "测试",
-	"settings_news_test_fail": "无法读取此订阅源：{error}",
-	"settings_news_test_ok": "可用。最新标题：“{title}”",
-	"settings_news_testing": "正在读取订阅源…",
-	"settings_news_ticker": "头条",
-	"settings_news_ticker_hint": "这些订阅源的最新标题，每五分钟刷新一次。请在下方的布局中放置它们。",
 	"settings_packs_add_device": "添加 {label}",
 	"settings_packs_admin_only_description": "集成包决定此服务器向你的监控项询问什么。",
 	"settings_packs_admin_only_title": "只有管理员才能管理集成包。",
@@ -7126,8 +6704,6 @@
 	"settings_search_kw_assistant": "api 令牌 mcp ai 助手 claude chatgpt",
 	"settings_search_kw_backup": "备份 导出 恢复 配置",
 	"settings_search_kw_locations": "世界地图 站点 地点 坐标 openstreetmap 瓦片",
-	"settings_search_kw_music": "音乐 spotify 音箱 墙屏",
-	"settings_search_kw_news": "新闻 标题 rss 订阅 墙屏",
 	"settings_search_kw_notifications": "渠道 discord 邮件 ntfy telegram 免打扰 状态页",
 	"settings_search_kw_packs": "集成 包 yaml 社区",
 	"settings_search_kw_policy": "策略 合并 摘要 限速 升级 抖动 提醒 公开地址 操作链接",
@@ -7137,7 +6713,6 @@
 	"settings_search_kw_sso": "openid oidc 登录 提供商 authentik keycloak",
 	"settings_search_kw_users": "账户 用户 人员 角色 管理员 查看者 操作员",
 	"settings_search_kw_wall": "墙屏 信息亭 电视 房间 显示器 全屏",
-	"settings_search_kw_widgets": "小组件 组件 天气 加密货币 比特币 crypto bitcoin 股票 汇率 货币 cve 漏洞 墙屏",
 	"settings_search_label": "搜索设置",
 	"settings_search_none": "没有匹配的设置。",
 	"settings_search_placeholder": "搜索设置…",
@@ -7233,45 +6808,6 @@
 	"settings_sla_this_month": "本月至今",
 	"settings_sla_title": "可用性报告（SLA）",
 	"settings_sla_to": "截止",
-	"settings_speaker_account": "账户",
-	"settings_speaker_account_note": "— 手机必须登录此 Spotify 账户才能看到墙屏。",
-	"settings_speaker_browser_default": "某个浏览器",
-	"settings_speaker_connected": "已连接",
-	"settings_speaker_device_playing": "{name}（正在播放）",
-	"settings_speaker_err_name": "音箱名称最多 64 个字符。",
-	"settings_speaker_heading": "音箱",
-	"settings_speaker_in_devices": "在 Spotify 设备中",
-	"settings_speaker_listed_as": "在 Spotify 中显示为 {name}。",
-	"settings_speaker_listed_no": "目前没有",
-	"settings_speaker_listed_yes": "是——使用此账户的手机可以选择它",
-	"settings_speaker_lists": "Spotify 列出：{devices}",
-	"settings_speaker_lists_none": "Spotify 目前没有列出此账户上的任何设备。",
-	"settings_speaker_missing": "此服务器尚未报告音箱状态：请更新 DumbMonit。",
-	"settings_speaker_name_help": "手机在“设备”下显示的名称。所有墙屏共用；在某个墙屏地址后加上 ?speaker=Kitchen 可只为该墙屏命名。留空则为“DumbMonit Wall”。",
-	"settings_speaker_name_label": "在 Spotify 中的名称",
-	"settings_speaker_phase_connecting": "正在连接",
-	"settings_speaker_phase_error": "已停止",
-	"settings_speaker_phase_locked": "就绪，声音被锁定",
-	"settings_speaker_phase_not_listed": "Spotify 未列出",
-	"settings_speaker_phase_off": "此显示屏上已关闭",
-	"settings_speaker_phase_ready": "就绪",
-	"settings_speaker_phase_unsupported": "无法在此播放",
-	"settings_speaker_premium": "Premium",
-	"settings_speaker_premium_no": "否——墙屏无法成为音箱",
-	"settings_speaker_premium_unknown": "尚未知晓（墙屏连接时会告知）",
-	"settings_speaker_premium_yes": "是",
-	"settings_speaker_read_error": "无法读取音箱",
-	"settings_speaker_refresh": "刷新",
-	"settings_speaker_refresh_aria": "刷新音箱状态",
-	"settings_speaker_rename": "重命名",
-	"settings_speaker_rename_error": "无法重命名音箱。",
-	"settings_speaker_test_fail": "Spotify 未开始播放。",
-	"settings_speaker_test_hint": "在“{name}”上播放该账户，并继续上次播放的内容。",
-	"settings_speaker_test_ok": "Spotify 现在正在“{name}”上播放：请听墙屏。没有声音？点击墙屏一次以解锁声音。",
-	"settings_speaker_test_sound": "测试声音",
-	"settings_speaker_wall_meta": "· 名称“{name}” · {when}",
-	"settings_speaker_walls": "墙屏",
-	"settings_speaker_walls_none": "过去十五分钟内没有墙屏上报。请在显示屏上打开 /wall（需已登录，查看者账户也可以），一分钟内就会出现在这里。",
 	"settings_sso_admin_groups": "管理员群组",
 	"settings_sso_admin_groups_help": "以逗号分隔。成员成为管理员，其他人成为查看者（或下方的操作员）— 每次登录时重新评估。两个列表都为空时，角色在此处管理。",
 	"settings_sso_alg_warning": "该提供商未列出 RS256 或 ES256：DumbMonit 仅接受这些签名。",
@@ -7516,103 +7052,6 @@
 	"settings_users_update_error": "无法更新用户",
 	"settings_users_username": "用户名",
 	"settings_users_you": "你",
-	"settings_widgets_add": "添加",
-	"settings_widgets_ai": "AI 用量",
-	"settings_widgets_ai_by_person": "显示用量最大的用户",
-	"settings_widgets_ai_by_person_help": "添加令牌用量最多的人员列表。两家服务商都不按人员拆分费用，因此只列出令牌。",
-	"settings_widgets_ai_claude": "Claude（Anthropic）",
-	"settings_widgets_ai_claude_hint": "组织使用 Claude API 的费用和令牌用量。",
-	"settings_widgets_ai_claude_key": "Anthropic Admin API 密钥",
-	"settings_widgets_ai_claude_key_help": "以 sk-ant-admin 开头。管理员密钥仅限组织使用，由组织管理员在 Claude Console 中创建。加密存储，不会再次显示。",
-	"settings_widgets_ai_hint": "您组织的 Claude 与 OpenAI API 账户的费用和令牌用量，每 15 分钟通过其管理 API 读取。个人订阅（Claude Pro 和 Max、ChatGPT Plus）及其每周额度没有官方 API，无法显示。",
-	"settings_widgets_ai_key_howto": "如何获取管理员密钥",
-	"settings_widgets_ai_openai": "ChatGPT（OpenAI API）",
-	"settings_widgets_ai_openai_hint": "组织使用 OpenAI API 的费用和令牌用量。",
-	"settings_widgets_ai_openai_key": "OpenAI 管理员密钥",
-	"settings_widgets_ai_openai_key_help": "组织管理员密钥，由组织所有者创建。加密存储，不会再次显示。读取的是 API 用量，而不是 ChatGPT Plus 账户。",
-	"settings_widgets_ai_people": "名称",
-	"settings_widgets_ai_people_help": "API 返回的是标识符而非名称。请添加标识符（账户或 API 密钥 ID，与服务商显示的一致）及要显示的名称。",
-	"settings_widgets_ai_period": "时间范围",
-	"settings_widgets_ai_person_add": "添加名称",
-	"settings_widgets_ai_person_id": "标识符",
-	"settings_widgets_ai_person_name": "名称",
-	"settings_widgets_crypto": "加密货币价格",
-	"settings_widgets_crypto_coins": "币种",
-	"settings_widgets_crypto_currency": "显示货币",
-	"settings_widgets_crypto_custom": "其他币种",
-	"settings_widgets_crypto_custom_help": "其在 CoinGecko 上的 id，即其 coingecko.com 页面地址中的那一段。",
-	"settings_widgets_crypto_hint": "实时价格和 24 小时涨跌，来自 CoinGecko 公开 API（无需密钥；服务器约每分钟查询一次）。",
-	"settings_widgets_crypto_key": "CoinGecko Demo 密钥（可选）",
-	"settings_widgets_crypto_key_help": "在 coingecko.com 免费获取；可为服务器提供独立的请求额度。加密存储，不再显示。",
-	"settings_widgets_cve": "严重漏洞",
-	"settings_widgets_cve_count": "显示数量",
-	"settings_widgets_cve_hint": "本周 NVD 评为严重的最新 CVE，以及 CISA 列为正被积极利用的 CVE（无需密钥；每小时读取一次）。",
-	"settings_widgets_cve_source": "列表",
-	"settings_widgets_cve_source_both": "两者：严重且被利用",
-	"settings_widgets_cve_source_kev": "正被积极利用（CISA KEV）",
-	"settings_widgets_cve_source_nvd": "严重（NVD，CVSS 9 及以上）",
-	"settings_widgets_description": "天气、新闻、自由留言、加密货币价格、股票、汇率、严重漏洞和 AI 用量，以小巧静止的方式显示在监控周围。在屏幕示意图上把每个小组件放到想要的位置。服务器读取并缓存每个来源：任何显示屏都不会直接访问它们。",
-	"settings_widgets_fx": "汇率",
-	"settings_widgets_fx_base": "基准货币",
-	"settings_widgets_fx_currencies": "货币",
-	"settings_widgets_fx_hint": "各国央行的每日参考汇率，来自 Frankfurter（无需密钥；每小时读取一次）。",
-	"settings_widgets_key_keep": "留空以保留已保存的密钥",
-	"settings_widgets_key_missing": "没有此密钥，该小组件不会显示在墙面上。",
-	"settings_widgets_key_remove": "移除密钥",
-	"settings_widgets_key_removing": "保存时将移除该密钥。",
-	"settings_widgets_key_saved": "已保存密钥。输入新密钥即可替换。",
-	"settings_widgets_layout": "布局",
-	"settings_widgets_layout_down": "下移 {name}",
-	"settings_widgets_layout_earlier": "将 {name} 前移",
-	"settings_widgets_layout_help": "把小组件拖到屏幕上想要的位置。也可以按 Enter 选中它，再用方向键或按钮移动。",
-	"settings_widgets_layout_help_list": "为每个小组件选择区域，并用箭头调整顺序。",
-	"settings_widgets_layout_hint": "放在这里的内容就是大屏显示的内容，小巧且静止：不轮播。某个区域放不下时，其中的小组件会少显示一些条目。",
-	"settings_widgets_layout_key": "需要密钥",
-	"settings_widgets_layout_later": "将 {name} 后移",
-	"settings_widgets_layout_monitors": "监控",
-	"settings_widgets_layout_move_to": "移至",
-	"settings_widgets_layout_moved": "{name} 已移至{zone}，第 {position} 个，共 {count} 个。",
-	"settings_widgets_layout_moved_hidden": "{name} 已隐藏。",
-	"settings_widgets_layout_none_selected": "选中一个小组件，即可用键盘移动。",
-	"settings_widgets_layout_off": "已关闭",
-	"settings_widgets_layout_place": "{name} 的位置",
-	"settings_widgets_layout_reset": "恢复默认",
-	"settings_widgets_layout_reset_done": "布局已恢复默认。保存后生效。",
-	"settings_widgets_layout_screen": "大屏的比例示意图",
-	"settings_widgets_layout_selected": "已选中 {name}",
-	"settings_widgets_layout_up": "上移 {name}",
-	"settings_widgets_remove": "移除 {name}",
-	"settings_widgets_save": "保存小组件",
-	"settings_widgets_saved": "已保存。墙屏将在一分钟内更新。",
-	"settings_widgets_stocks": "股票行情",
-	"settings_widgets_stocks_hint": "最新价格和当日涨跌，来自 Finnhub。需要免费的 Finnhub 密钥：没有任何免密钥的行情源既可靠又被允许使用。免费套餐涵盖在美国上市的股票。",
-	"settings_widgets_stocks_key": "Finnhub API 密钥",
-	"settings_widgets_stocks_key_help": "在 finnhub.io 免费获取。加密存储，不再显示。",
-	"settings_widgets_stocks_symbols": "股票代码",
-	"settings_widgets_stocks_symbols_help": "股票代码以逗号分隔，最多十个。",
-	"settings_widgets_text": "自由留言",
-	"settings_widgets_text_content": "文字",
-	"settings_widgets_text_help": "{count} / {max} 个字符。纯文本，单行。",
-	"settings_widgets_text_hint": "给团队的简短留言，原样显示在大屏上。",
-	"settings_widgets_text_placeholder": "上午 10:00 在蓝色会议室开例会",
-	"settings_widgets_title": "墙屏小组件",
-	"settings_widgets_weather": "天气",
-	"settings_widgets_weather_add": "选择 {place}",
-	"settings_widgets_weather_find": "搜索",
-	"settings_widgets_weather_hint": "时钟下方显示图标和当前气温，数据来自 Open-Meteo（无需密钥；每 15 分钟读取一次）。",
-	"settings_widgets_weather_imperial": "英制（°F、mph）",
-	"settings_widgets_weather_metric": "公制（°C、km/h）",
-	"settings_widgets_weather_no_place": "尚未选择地点：请在上方搜索城市。",
-	"settings_widgets_weather_none_found": "没有该名称的地点。",
-	"settings_widgets_weather_places": "地点",
-	"settings_widgets_weather_search": "查找城市",
-	"settings_widgets_weather_searching": "正在搜索…",
-	"settings_widgets_weather_units": "单位",
-	"settings_widgets_zone_bottom": "底部栏",
-	"settings_widgets_zone_empty": "这里没有内容。",
-	"settings_widgets_zone_hidden": "隐藏",
-	"settings_widgets_zone_right": "右侧栏",
-	"settings_widgets_zone_top": "顶部栏",
 	"status_access_help": "私有页面不会被索引，也不会出现在站点地图中；其徽章、订阅源和 JSON 遵循同样规则。登录访问适用于本地、LDAP 和 SSO 账户，仅限主地址。",
 	"status_access_label": "谁可以查看此页面",
 	"status_access_password": "任何知道密码的人",
@@ -8018,7 +7457,7 @@
 	"status_public_title": "状态",
 	"status_public_title_with_page": "{title} · 状态",
 	"status_public_uptime_last": "最近 {days} 天可用率",
-	"status_scene_matterhorn": "马特洪峰",
+	"status_scene_dubai": "迪拜",
 	"status_scene_newyork": "纽约",
 	"status_scene_paris": "巴黎",
 	"status_scene_rotation_10m": "每 10 分钟",
@@ -8543,6 +7982,35 @@
 	"topology_state_stopped": "已停止",
 	"topology_state_suppressed": "已抑制",
 	"topology_subnet_toggle": "按子网分组",
+	"topology_traffic_toggle": "流量",
+	"topology_traffic_edge_label": "{from} 到 {to}：{load}",
+	"topology_traffic_errors_short": "错误",
+	"topology_traffic_panel_label": "链路流量",
+	"topology_traffic_close": "关闭",
+	"topology_traffic_ports": "测量于 {ports}（{name}）",
+	"topology_traffic_stale": "此链路的一端已宕机或无法访问：这些数据不是最新的。",
+	"topology_traffic_in": "{name} 接收",
+	"topology_traffic_out": "{name} 发送",
+	"topology_traffic_speed_label": "端口速率",
+	"topology_traffic_speed_unknown": "未知",
+	"topology_traffic_errors_label": "错误与丢包",
+	"topology_traffic_errors_rate": "每分钟 {count}",
+	"topology_traffic_errors_none": "无",
+	"topology_traffic_hour": "最近一小时",
+	"topology_traffic_hour_peak": "峰值 {rate}",
+	"topology_traffic_hour_error": "无法加载曲线。",
+	"topology_traffic_hour_loading": "正在加载曲线",
+	"topology_traffic_chart_label": "最近一小时的流量，接收与发送",
+	"topology_traffic_legend_in": "接收",
+	"topology_traffic_legend_out": "发送",
+	"topology_traffic_legend_title": "链路负载",
+	"topology_traffic_legend_range": "{from}–{to} %",
+	"topology_traffic_legend_errors": "虚线：错误或丢包",
+	"topology_traffic_legend_flow": "圆点：主要流量方向",
+	"topology_traffic_legend_stale": "灰色：一端已宕机",
+	"topology_traffic_top_title": "负载最高的链路",
+	"topology_traffic_top_empty": "暂无链路报告流量。",
+	"topology_traffic_load_col": "负载",
 	"topology_summary_devices": "监控项：{count}",
 	"topology_summary_down": "故障：{count}",
 	"topology_summary_sites": "远程站点：{count}",
@@ -8564,157 +8032,34 @@
 	"ui_error_notice_help_network": "请检查服务器是否正在运行以及网络是否正常。",
 	"ui_error_notice_help_server": "请查看服务器日志后重试。",
 	"ui_error_notice_signin": "重新登录",
-	"wall_back": "返回概览",
-	"wall_city_newyork": "纽约",
-	"wall_city_paris": "巴黎",
-	"wall_city_title": "城市",
-	"wall_city_tokyo": "东京",
-	"wall_city_zermatt": "采尔马特",
-	"wall_devices_aria": "监控项",
-	"wall_devices_more": "另有 {count} 个监控项，均正常上报",
-	"wall_devices_more_trouble": "另有 {count} 个监控（需关注：{trouble}）",
-	"wall_devices_reporting": "正常上报",
-	"wall_dock_enable": "点按以启用声音",
-	"wall_dock_enable_hint": "然后在 Spotify 的“设备”中选择“{name}”",
-	"wall_dock_hide": "隐藏",
-	"wall_dock_retrying": "正在自动重试…",
-	"wall_dock_trouble_pill": "此处不是音箱",
-	"wall_dock_trouble_title": "Spotify 无法在此显示器上播放",
-	"wall_dock_why": "原因",
 	"wall_ent_oncall_none": "当前无人值班。请在“告警”中设置值班计划。",
 	"wall_exit": "退出",
 	"wall_exit_aria": "退出墙屏模式",
-	"wall_load_error": "无法加载墙屏",
-	"wall_market_vs": "对 {base}",
-	"wall_music_admin_only": "只有管理员可以更改。",
-	"wall_music_button": "音乐",
-	"wall_music_cancel": "取消",
-	"wall_music_dialog": "墙屏音乐",
-	"wall_music_link_help": "Spotify、Deezer 或 YouTube（Music）的歌曲、专辑、播放列表或视频链接。每个墙屏都会在该服务自带的播放器中播放。Deezer 和 YouTube 没有类似 Spotify Connect 的遥控功能，只能使用链接。",
-	"wall_music_link_label": "在墙屏上播放链接",
-	"wall_music_play_error": "Spotify 未在此处开始播放。",
-	"wall_music_play_here": "在此播放",
-	"wall_music_play_wall": "在墙屏上播放",
-	"wall_music_retry": "重试",
-	"wall_music_send_error": "无法发送链接。",
-	"wall_music_settings": "设置 → 墙屏音乐",
-	"wall_music_speaker": "Spotify 音箱",
-	"wall_music_speaker_label": "将此显示器用作 Spotify 音箱",
-	"wall_music_state_disabled": "此显示器已关闭",
-	"wall_music_state_disabled_detail": "仍会显示正在播放的内容。",
-	"wall_music_state_error": "已停止",
-	"wall_music_state_expired": "需要重新连接",
-	"wall_music_state_locked": "声音已锁定",
-	"wall_music_state_locked_detail": "在墙屏任意位置点按一次，然后在 Spotify 中选择它。",
-	"wall_music_state_off": "未连接",
-	"wall_music_state_off_admin": "在“设置 → 墙屏音乐”中连接 Spotify 账户，即可用手机播放。",
-	"wall_music_state_off_user": "管理员可在“设置 → 墙屏音乐”中连接 Spotify 账户。",
-	"wall_music_state_ready": "就绪",
-	"wall_music_state_ready_detail": "在已登录同一账户的手机上打开 Spotify：设备 → {name}。也可在此面板中直接在此播放。",
-	"wall_music_state_starting": "正在启动…",
-	"wall_music_state_unlisted": "尚未列出",
-	"wall_music_state_unlisted_detail": "Spotify 尚未列出此显示器；它会在一两分钟内自动重新连接。",
-	"wall_music_state_unsupported": "此处不可用",
-	"wall_music_stop": "停止",
-	"wall_music_stop_error": "无法停止音乐。",
-	"wall_now_aria": "正在播放",
-	"wall_now_cover": "{name} 的封面",
-	"wall_now_fold": "收起音乐卡片",
-	"wall_now_on": "在 {where} 上{verb}",
-	"wall_now_paused": "已暂停",
-	"wall_now_pill_aria": "{verb}：{track}。显示音乐卡片",
-	"wall_now_playing": "播放中",
-	"wall_now_progress": "播放进度",
-	"wall_now_progress_text": "{position} / {total}",
 	"wall_page_title": "墙屏 · DumbMonit",
-	"wall_player_fold": "收起",
-	"wall_player_fold_aria": "收起播放器",
-	"wall_player_show": "显示",
-	"wall_player_stop_aria": "停止所有墙屏的音乐",
-	"wall_player_title": "{label} 播放器",
-	"wall_problems_agent_silent": "代理已 {duration} 未上报",
-	"wall_problems_aria": "问题",
-	"wall_problems_more": "另有 {count} 个问题：见告警页",
-	"wall_problems_no_data": "{duration} 无数据",
-	"wall_problems_parent_down": "{rule} · {parent} 已宕机",
-	"wall_problems_times": "×{count}",
-	"wall_refresh_failed": "上次刷新失败，正在显示之前的状态。",
-	"wall_scene_sign_problems": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 个问题"
-			}
-		}
-	],
+	"wall_scene_auto": "自动",
+	"wall_scene_button": "背景",
+	"wall_scene_forced": "此设置由链接临时指定，不会保存在这里。",
+	"wall_scene_hint": "最接近此屏幕时区的城市，或自选一座城市。",
+	"wall_scene_none": "无",
+	"wall_scene_title": "面板后方的夜景城市",
 	"wall_status_empty": "暂无可监控内容",
 	"wall_status_ok": "一切正常",
 	"wall_status_problem_one": "1 个问题",
 	"wall_status_problems": "{count} 个问题",
 	"wall_status_waiting": "等待上报",
-	"wall_theme_auto": "自动",
-	"wall_theme_auto_hint": "跟随 DumbMonit 其余部分。",
-	"wall_theme_button": "主题",
-	"wall_theme_day": "白天",
-	"wall_theme_day_hint": "海图纸，藏青墨水。",
-	"wall_theme_dialog": "此墙屏的主题",
-	"wall_theme_forced": "当前由链接指定，不会保存在此处。",
-	"wall_theme_night": "夜间",
-	"wall_theme_night_hint": "雷达合成图，青色信号。",
-	"wall_theme_title": "此显示器的主题",
 	"wall_updated_relative": "更新于 {when}",
 	"wall_updated_seconds": "{seconds} 秒前更新",
 	"wall_updated_waiting": "等待首次检查…",
-	"wall_weather_now": "{place}：{sky}，{temperature}",
 	"wall_widgets_ai_cost": "费用",
-	"wall_widgets_ai_month": "本月",
 	"wall_widgets_ai_needs_key": "需要管理员 API 密钥（设置 → 墙面显示）。",
 	"wall_widgets_ai_note": "组织 API 用量，以美元计。不含订阅（Pro、Max、Plus）。",
 	"wall_widgets_ai_people": "令牌用量最多",
 	"wall_widgets_ai_people_note": "仅显示令牌：费用不按人员拆分。",
-	"wall_widgets_ai_today": "今天",
-	"wall_widgets_ai_tokens": "{count} 个令牌",
-	"wall_widgets_ai_unattributed": "未归属",
-	"wall_widgets_ai_week": "最近 7 天",
-	"wall_widgets_aria": "小组件",
-	"wall_widgets_claude": "Claude",
-	"wall_widgets_crypto": "加密货币",
 	"wall_widgets_crypto_note": "24 小时涨跌",
-	"wall_widgets_cve": "严重漏洞",
-	"wall_widgets_cve_exploited": "被利用",
-	"wall_widgets_cve_none": "本周没有严重漏洞。",
-	"wall_widgets_cve_ransomware": "勒索软件",
-	"wall_widgets_cve_unscored": "未评分",
-	"wall_widgets_fx": "汇率",
 	"wall_widgets_fx_note": "以 {base} 计，{date} 的汇率；较前一日的变化",
-	"wall_widgets_more": "+{count}",
 	"wall_widgets_needs_key": "需要免费的 API 密钥（设置 → 墙屏显示）。",
-	"wall_widgets_news": "新闻标题",
-	"wall_widgets_openai": "OpenAI",
-	"wall_widgets_sky_clear": "晴",
-	"wall_widgets_sky_cloudy": "多云",
-	"wall_widgets_sky_drizzle": "毛毛雨",
-	"wall_widgets_sky_fog": "雾",
-	"wall_widgets_sky_partly": "局部多云",
-	"wall_widgets_sky_rain": "雨",
-	"wall_widgets_sky_snow": "雪",
-	"wall_widgets_sky_storm": "雷暴",
-	"wall_widgets_source": "来源：{source}",
-	"wall_widgets_stale": "已过期：读取于 {when}",
-	"wall_widgets_stocks": "股票",
 	"wall_widgets_stocks_unknown": "未知代码：{symbols}",
-	"wall_widgets_text": "留言",
-	"wall_widgets_trend_down": "下跌 {change}",
-	"wall_widgets_trend_flat": "持平",
-	"wall_widgets_trend_up": "上涨 {change}",
 	"wall_widgets_unavailable": "暂时不可用。",
-	"wall_widgets_weather": "天气",
 	"website_after": "之后：",
 	"website_before": "之前：",
 	"website_category": "类别",
@@ -8930,34 +8275,14 @@
 	"console_table_hint": "最差的排在前面。选择一行进行查看。",
 	"console_table_keys": "j / k 移动，Enter 查看，o 打开",
 	"console_table_title": "监控项",
-	"mode_enterprise_point_nav": "图标栏、上下文面板，随处可用的命令面板",
-	"mode_enterprise_point_table": "紧凑表格，更多列、筛选和键盘快捷键",
-	"mode_enterprise_point_team": "团队、单点登录、值班和日志一目了然",
-	"mode_enterprise_text": "面向团队的紧凑深色控制台，所有选项尽收眼底。",
-	"mode_enterprise_title": "企业",
-	"mode_homelab_point_forms": "简短表单，默认值合理，高级设置已折叠",
-	"mode_homelab_point_nav": "四个主入口，其余都在“更多”中",
-	"mode_homelab_point_theme": "天气简报和机架视图，浅色或深色",
-	"mode_homelab_text": "简洁的界面，只显示要点。所有功能一键可达。",
-	"mode_homelab_title": "家庭实验室",
-	"mode_picker_label": "产品模式",
-	"mode_picker_selected": "已选择",
-	"mode_switch_keeps": "切换只会改变界面，不会删除任何内容。",
-	"settings_advanced_summary": "部分：{count}",
-	"settings_advanced_title": "高级",
-	"settings_appearance_enterprise_dark": "企业模式始终使用深色控制台。如需浅色和深色主题，请在 设置 → 常规 中切换到家庭实验室。",
 	"settings_general_instance_text": "名称显示在页眉中。语言和时区是新浏览器和报告的默认值。",
 	"settings_general_instance_title": "实例",
-	"settings_general_mode_saving": "正在切换…",
-	"settings_general_mode_text": "家庭实验室保持简洁；企业模式在紧凑的深色控制台中显示所有选项。",
-	"settings_general_mode_title": "界面模式",
 	"settings_general_readonly": "只有管理员可以更改这些设置。",
 	"settings_general_save": "保存",
 	"settings_general_saved": "已保存",
 	"settings_general_wizard_run": "运行设置向导",
 	"settings_general_wizard_text": "重新完成首次启动步骤：模式、名称、通知、监控项、代理。",
 	"settings_general_wizard_title": "设置向导",
-	"settings_search_kw_general": "模式 家庭实验室 企业 界面 名称 语言 时区 向导 设置",
 	"settings_tab_general": "常规",
 	"wizard_agent_text": "代理会上报机器的 CPU、内存、磁盘、容器和服务。在要监控的机器上运行该命令。",
 	"wizard_agent_title": "安装代理",
@@ -8979,8 +8304,6 @@
 	"wizard_instance_timezone": "时区",
 	"wizard_instance_title": "为实例命名",
 	"wizard_intro": "每一步都可以跳过，之后可在设置中更改。",
-	"wizard_mode_text": "选择适合使用者的界面。你可以随时在 设置 → 常规 中切换。",
-	"wizard_mode_title": "选择 DumbMonit 的外观",
 	"wizard_monitors_count": "当前监控项：{count}",
 	"wizard_monitors_import": "导入",
 	"wizard_monitors_import_text": "从 Uptime Kuma、UptimeRobot、Gatus、Healthchecks 或站点列表导入。",
@@ -9281,5 +8604,446 @@
 	"deviceform_site_more": "再显示 {count} 个",
 	"deviceform_site_added": "已添加 {name}。",
 	"deviceform_site_open": "打开",
-	"deviceform_site_kinds": "此处常用"
+	"deviceform_site_kinds": "此处常用",
+	"devices_luns_cancel": "取消",
+	"devices_luns_change_link": "更改关联",
+	"devices_luns_consumer": "使用者：{target} · {entity}",
+	"devices_luns_consumer_auto": "按名称和大小匹配",
+	"devices_luns_consumer_manual": "手动关联",
+	"devices_luns_consumer_no_data": "{target} 暂无最新读数。",
+	"devices_luns_data": "数据",
+	"devices_luns_desc": "厚置备 LUN 会在卷上预留其全部大小：卷看起来已满，这是正常的。重要的是 LUN 本身的使用程度，只有使用它的设备才知道。",
+	"devices_luns_full_normal": "卷已满属正常：{luns}（厚置备）预留了 {size}。",
+	"devices_luns_fully_reserved": "厚置备 LUN 占用了整个卷：其他内容无法再填满它。",
+	"devices_luns_host": "位于 {volume}",
+	"devices_luns_initiators": "已连接：{list}",
+	"devices_luns_kind_thick": "厚置备",
+	"devices_luns_kind_thin": "精简置备",
+	"devices_luns_kind_unknown": "类型未知",
+	"devices_luns_link": "关联到设备",
+	"devices_luns_link_error": "无法保存关联。",
+	"devices_luns_load_error": "无法加载 LUN。",
+	"devices_luns_no_entity": "该设备尚无已知大小的磁盘、数据存储或文件系统。",
+	"devices_luns_not_mapped": "未被任何目标映射",
+	"devices_luns_overcommit": "精简超配：承诺 {promised}，剩余可用 {free}",
+	"devices_luns_pick_entity": "磁盘、数据存储或文件系统",
+	"devices_luns_pick_monitor": "使用此 LUN 的设备",
+	"devices_luns_pick_placeholder": "请选择…",
+	"devices_luns_reserved": "LUN 预留",
+	"devices_luns_save": "保存",
+	"devices_luns_sessions_one": "1 个 iSCSI 会话",
+	"devices_luns_sessions_other": "{count} 个 iSCSI 会话",
+	"devices_luns_size": "大小 {size}",
+	"devices_luns_thick_hint": "将其关联到使用它的设备以查看使用程度。",
+	"devices_luns_thick_unknown": "已预留（厚置备），内部使用情况未知",
+	"devices_luns_thin_promised": "精简 LUN：承诺 {promised}，剩余可用 {free}",
+	"devices_luns_title": "iSCSI LUN",
+	"devices_luns_title_zvols": "Zvol",
+	"devices_luns_unlink": "移除关联",
+	"devices_luns_volume_note": "其中 {size} 由厚置备 iSCSI LUN 预留；不计这些，已用 {percent}。",
+	"devices_luns_written": "已写入",
+	"backup_matrix_aria_group": "{group}:{summary}",
+	"backup_matrix_aria_summary": "{total} 天中 {ok} 天已备份，{failed} 天失败",
+	"backup_matrix_state_ok": "已备份",
+	"backup_matrix_state_failed": "失败",
+	"backup_matrix_state_running": "运行中",
+	"backup_matrix_state_none": "无备份",
+	"backup_matrix_outcome_ok": "成功",
+	"backup_matrix_outcome_failed": "失败",
+	"backup_matrix_outcome_running": "运行中",
+	"backup_matrix_plate_failed": "上次备份失败",
+	"backup_matrix_plate_late": "上次备份：{ago}",
+	"backup_matrix_plate_missing": "已 {span} 无备份",
+	"backup_matrix_plate_none": "尚无备份",
+	"backup_matrix_plate_ok": "已备份：{ago}",
+	"backup_matrix_plate_running": "备份进行中",
+	"backup_matrix_summary_today": "今天已备份 {ok}/{total}",
+	"backup_matrix_summary_today_failing": "今天已备份 {ok}/{total}，{failing} 个失败",
+	"backup_matrix_today": "今天",
+	"backup_matrix_state_warning": "警告",
+	"backup_matrix_state_nodata": "无数据",
+	"backup_matrix_outcome_warning": "警告",
+	"backup_matrix_plate_warning": "{ago}已备份，有警告",
+	"backup_matrix_legend": "图例",
+	"backup_matrix_meta_duration": "上次运行 {duration}",
+	"backup_matrix_meta_size": "{size}",
+	"backup_history_title": "备份历史",
+	"backup_history_description": "每个任务一行，最近 {days} 天每天一格，根据已保存的测量数据重建。",
+	"backup_history_err": "无法加载备份历史",
+	"devices_metrics_veeam_repositories": "存储库使用量",
+	"devices_metrics_kopia_snapshot_size": "最新快照大小",
+	"devices_metrics_duplicati_target_size": "目标大小",
+	"devices_metrics_duplicati_source_size": "源大小",
+	"devices_docker_bulk_select_row": "选择 {name}",
+	"devices_docker_bulk_selected": "已选择 {count} 个",
+	"devices_docker_bulk_select_all": "全选（{count}）",
+	"devices_docker_bulk_clear": "清除选择",
+	"devices_docker_bulk_aria": "容器批量操作",
+	"devices_docker_bulk_filter_aria": "快速筛选",
+	"devices_docker_bulk_filter_all": "全部",
+	"devices_docker_bulk_filter_no_update": "未启用自动更新",
+	"devices_docker_bulk_filter_no_restart": "未启用自动重启",
+	"devices_docker_bulk_filter_empty": "没有容器符合此筛选。",
+	"devices_docker_bulk_update_on": "启用自动更新",
+	"devices_docker_bulk_update_off": "停用自动更新",
+	"devices_docker_bulk_restart_on": "启用自动重启",
+	"devices_docker_bulk_restart_off": "停用自动重启",
+	"devices_docker_bulk_update_now": "立即更新（{count}）",
+	"devices_docker_bulk_update_now_confirm": "拉取并替换 {count} 个？",
+	"devices_docker_bulk_applied": "已对 {count} 个应用策略。",
+	"devices_docker_bulk_queued": "已为 {count} 个排队更新。",
+	"devices_docker_bulk_partial_title": "{total} 个中有 {failed} 个失败",
+	"devices_docker_bulk_failed_line": "{name}：{reason}",
+	"devices_docker_bulk_dismiss": "关闭",
+	"devices_docker_bulk_tag_auto_update": "自动更新",
+	"devices_docker_bulk_tag_auto_restart": "自动重启",
+	"devices_machine_title": "机器健康",
+	"devices_machine_description": "过去一小时内拖慢这台机器的因素。",
+	"devices_machine_cpu": "CPU",
+	"devices_machine_ram": "内存",
+	"devices_machine_disk": "磁盘",
+	"devices_machine_disk_worst": "磁盘 {mount}",
+	"devices_machine_disks_title": "磁盘",
+	"devices_machine_disks_hint": "每块磁盘的占用情况，以及按当前速度何时会写满。",
+	"devices_machine_tone_signal": "正常",
+	"devices_machine_tone_advisory": "偏高",
+	"devices_machine_tone_warning": "过高",
+	"devices_machine_no_data": "无数据",
+	"devices_machine_last_hour": "最近一小时",
+	"devices_machine_cores_title": "每核 CPU",
+	"devices_machine_cores_hint": "单个满载的核心会被平均值掩盖。",
+	"devices_machine_core": "核心 {n}",
+	"devices_machine_heat_low": "空闲",
+	"devices_machine_heat_high": "饱和",
+	"devices_machine_heat_label": "最近一小时每核 CPU 使用率",
+	"devices_machine_top_cpu": "CPU 占用最高的进程",
+	"devices_machine_top_cpu_hint": "占单个核心的比例；多线程进程可超过 100 %。只显示名称，不显示命令行。",
+	"devices_machine_top_mem": "内存占用最高的进程",
+	"devices_machine_top_mem_hint": "常驻内存，同名进程合并计算。",
+	"devices_machine_pressure_title": "等待资源",
+	"devices_machine_pressure_hint": "最近 10 秒内任务因等待该资源而停滞的时间比例（内核 PSI）。即使使用率看起来正常，几个百分点也会让人感觉卡顿。",
+	"devices_machine_psi_cpu": "CPU",
+	"devices_machine_psi_memory": "内存",
+	"devices_machine_psi_io": "磁盘 I/O",
+	"devices_machine_psi_some": "{value} 等待",
+	"devices_machine_psi_full": "{value} 完全停滞",
+	"devices_machine_oom_title": "OOM 终止（24 小时）",
+	"devices_machine_oom_none": "无",
+	"devices_machine_oom_hint": "内核因内存耗尽而终止的进程。",
+	"devices_machine_inodes_title": "Inode",
+	"devices_machine_inodes_value": "{mount}：已用 {value}",
+	"devices_machine_inodes_hint": "inode 表写满后即使还有空闲空间也无法写入。",
+	"devices_machine_clock_title": "时钟",
+	"devices_machine_clock_offset": "与参考时间相差 {offset}",
+	"devices_machine_clock_synced": "已同步",
+	"devices_machine_clock_unsynced": "未同步",
+	"devices_machine_clock_hint": "时钟漂移会破坏 TLS 证书和 Kerberos。",
+	"deviceform_agentflow_another": "添加另一台机器",
+	"deviceform_agentflow_connected": "{host} 已连接（{os}）。",
+	"deviceform_agentflow_docker_note": "在该机器上以容器运行代理，使用与安装命令相同的服务器、通道和指纹。",
+	"deviceform_agentflow_fleet": "一次部署整个 Windows 域？",
+	"deviceform_agentflow_folder": "文件夹",
+	"deviceform_agentflow_folder_help": "可选。同一文件夹中的机器在监控列表中归为一组。",
+	"deviceform_agentflow_gateway_pending": "{relay} 将在下次上报时（一分钟内）打开网关。待其开始监听后再运行命令。",
+	"deviceform_agentflow_install_behind": "在此中继后安装代理",
+	"deviceform_agentflow_name": "名称",
+	"deviceform_agentflow_open": "打开机器",
+	"deviceform_agentflow_platform_aria": "操作系统",
+	"deviceform_agentflow_platform_docker": "Docker",
+	"deviceform_agentflow_platform_windows": "Windows",
+	"deviceform_agentflow_relay_host": "站点看到的中继地址",
+	"deviceform_agentflow_relay_host_help": "站点内机器访问中继所用的 IP 或本地名称，不含端口；其网关监听端口 {port}。留空：使用已设置的地址，否则使用其主机名。",
+	"deviceform_agentflow_relay_next": "然后照常添加该站点的监控，并在「访问方式」中选择此中继；或通过它在站点服务器上安装代理：它们的加密连接经由中继到达本服务器。",
+	"deviceform_agentflow_reusable": "用此命令安装多台机器",
+	"deviceform_agentflow_reusable_help": "可重复使用的令牌，适用于 playbook 或机器镜像。完成后请在设置中吊销。",
+	"deviceform_agentflow_reusable_plate": "可重复使用",
+	"deviceform_agentflow_route": "这台机器如何访问本服务器？",
+	"deviceform_agentflow_route_direct": "直连",
+	"deviceform_agentflow_route_help": "通过中继：适用于防火墙后的站点，只有中继能向外连接。代理的加密会话仍终止于本服务器，中继只负责转运。",
+	"deviceform_agentflow_route_relay": "通过 {relay}",
+	"deviceform_agentflow_route_relay_site": "通过 {relay}（{site}）",
+	"deviceform_agentflow_save": "保存",
+	"deviceform_agentflow_saved": "{name} 已保存。",
+	"deviceform_agentflow_save_error": "无法保存该机器",
+	"deviceform_agentflow_site": "站点",
+	"deviceform_agentflow_site_none": "无站点",
+	"deviceform_agentflow_site_preset": "它将被放在 {site}。",
+	"deviceform_agentflow_step_connect": "等待代理连接，然后命名",
+	"deviceform_agentflow_step_install": "在机器上运行命令",
+	"deviceform_agentflow_through_note": "这些命令从 {relay} 下载代理并通过它连接（{address}）。代理仍会校验本服务器的指纹：中继既无法读取也无法篡改其流量。",
+	"deviceform_agentflow_through_plate": "通过 {relay}",
+	"deviceform_agentflow_token_help_relay": "仅用于在已签发令牌列表中识别该令牌。",
+	"deviceform_agentflow_wait_again": "继续等待",
+	"deviceform_agentflow_waiting": "正在等待代理的首次上报…",
+	"deviceform_agentflow_wait_stopped": "一小时后仍无响应。",
+	"deviceform_relaypick_help": "中继能探测的类型的监控会经由它；其他监控仍由本服务器执行。",
+	"deviceform_relaypick_label": "探测来源",
+	"deviceform_relaypick_server": "本服务器",
+	"deviceform_site_agent": "安装了代理的服务器",
+	"deviceform_site_agent_via": "通过 {relay} 安装",
+	"devicesb_relay_panel_gateway": "本站点代理的网关",
+	"devicesb_relay_panel_gateway_closed": "已关闭",
+	"devicesb_relay_panel_gateway_help": "无法访问本服务器的机器将代理连接到中继，中继转运其加密会话而不读取内容。请在中继的防火墙上开放该端口，仅限站点网络。",
+	"devicesb_relay_panel_gateway_host": "站点看到的地址",
+	"devicesb_relay_panel_gateway_host_help": "IP 或本地名称，会写入安装命令。",
+	"devicesb_relay_panel_gateway_listening": "正在监听端口 {port}",
+	"devicesb_relay_panel_gateway_opening": "将在下次上报时打开",
+	"devicesb_relay_panel_gateway_port": "端口",
+	"devicesb_relay_panel_gateway_port_invalid": "1 到 65535。",
+	"devicesb_relay_panel_gateway_state": "网关",
+	"devicesb_relay_panel_install_agent": "通过它安装代理",
+	"devicesb_relay_panel_through": "通过中继 {relay} 访问本服务器。",
+	"devicesb_relay_panel_through_open": "打开中继",
+	"settings_agents_add_elsewhere": "机器从监控列表中添加，安装命令会在那里为你生成。",
+	"settings_agents_ad_route": "路径",
+	"settings_agents_ad_route_help": "通过中继：服务器从中继下载代理并经由它上报，端到端加密直至本服务器。",
+	"settings_agents_settings_description": "所有代理共用的设置：加密通道、自动更新以及已签发的注册令牌。",
+	"settings_agents_tokens_issued_intro": "每条安装命令都带有其中一个令牌。请吊销已泄露或不再需要的令牌。",
+	"settings_agents_tokens_none": "添加带代理的机器后，令牌会显示在这里。",
+	"devicesb_relay_panel_gateway_tunnels": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "已连接 {count} 个代理"
+			}
+		}
+	],
+	"deadlines_title": "到期事项",
+	"deadlines_description": "未来 {days} 天内到期的内容：域名、证书、应用密钥、产品、密钥和许可证。",
+	"deadlines_timeline_label": "未来 {days} 天时间线",
+	"deadlines_today": "今天",
+	"deadlines_in": "{span}后",
+	"deadlines_expired_ago": "已过期 {span}",
+	"deadlines_expires_today": "今天到期",
+	"deadlines_kind_domain": "域名",
+	"deadlines_kind_certificate": "证书",
+	"deadlines_kind_credential": "应用密钥",
+	"deadlines_kind_product": "产品",
+	"deadlines_kind_key": "密钥",
+	"deadlines_kind_license": "许可证",
+	"deadlines_tier_urgent": "7 天或更少",
+	"deadlines_tier_soon": "8 至 30 天",
+	"deadlines_tier_notice": "31 至 60 天",
+	"deadlines_tier_calm": "60 天以上",
+	"deadlines_show_all": "显示全部 {count} 项",
+	"deadlines_show_fewer": "显示更少",
+	"deadlines_open": "打开 {name}",
+	"deadlines_load_error": "无法加载到期事项。",
+	"deadlines_target_title": "到期日期",
+	"deadlines_list_label": "到期事项，最近的在前",
+	"deadlines_marker_label": "{what}，{target}：{when}",
+	"geomap_country_none": "{country}：无",
+	"geomap_country_value": "{country}：{value}",
+	"geomap_legend": "图例",
+	"geomap_legend_fewer": "较少",
+	"geomap_legend_link_down": "中继离线",
+	"geomap_legend_link_idle": "中继未探测",
+	"geomap_legend_link_ok": "中继正常",
+	"geomap_legend_link_warn": "中继需要查看",
+	"geomap_legend_more": "较多（最多 {max}）",
+	"geomap_legend_step": "自 {value} 起",
+	"geomap_list_countries": "国家/地区",
+	"geomap_list_links": "连接",
+	"geomap_list_places": "地点",
+	"geomap_list_toggle": "以列表查看（{count}）",
+	"geomap_relay_link": "中继 {relay} 将 {site} 连接到 {main}：{state}",
+	"threatmap_crowdsec_hint": "将此监控的凭据设为“机器账户”（cscli machines add），即可按国家/地区查看其告警来源。",
+	"threatmap_description": "按国家/地区显示被您的防御拦截的攻击来自何处。",
+	"threatmap_empty_body": "为 CrowdSec 监控设置机器账户、打开 OPNsense 防火墙的实时地图，或添加启用流量分析的 Cloudflare：它们拦截的攻击会按国家/地区显示在这里。",
+	"threatmap_empty_title": "尚无数据源为威胁地图提供数据",
+	"threatmap_err_load": "无法加载威胁地图",
+	"threatmap_map_label": "按国家/地区划分的已拦截攻击世界地图",
+	"threatmap_partial": "指标存储没有响应：仅统计防火墙的实时地图。",
+	"threatmap_privacy": "仅显示国家/地区：不保存也不显示任何地址。",
+	"threatmap_quiet": "所覆盖的时间段内没有拦截任何内容。",
+	"threatmap_source_cloudflare": "Cloudflare 威胁",
+	"threatmap_source_crowdsec": "CrowdSec 告警",
+	"threatmap_source_firewall": "防火墙拦截（实时地图）",
+	"threatmap_sources": "数据源",
+	"threatmap_split_cloudflare": "Cloudflare {count}",
+	"threatmap_split_crowdsec": "CrowdSec {count}",
+	"threatmap_split_firewall": "防火墙 {count}",
+	"threatmap_title": "威胁地图",
+	"threatmap_top": "最活跃的国家/地区",
+	"threatmap_value": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "已拦截 {shown} 次攻击"
+			}
+		}
+	],
+	"threatmap_window_hours": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "最近 {count} 小时"
+			}
+		}
+	],
+	"threatmap_window_minutes": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "最近 {count} 分钟"
+			}
+		}
+	],
+	"devices_chart_label": "图表",
+	"devices_chart_last_week_series": "上周：{label}",
+	"devices_chart_compare_week": "与上周对比",
+	"devices_chart_compare_failed": "无法加载上周数据",
+	"devices_chart_compare_empty": "上周没有数据",
+	"devices_chart_summary_series": "{label}：最新 {last}，最小 {min}，最大 {max}。",
+	"devices_chart_summary_mirror": "第二个序列以镜像方式绘制在零线以下。",
+	"devices_chart_summary_threshold": "阈值 {label}：{value}。",
+	"devices_chart_summary_event": "{when}：{label}。",
+	"devices_chart_event_label": "{when}，{label}",
+	"console_banner_label": "状态",
+	"console_banner_poke": "戳一下鸽子",
+	"console_banner_egg": "鸽子转了个圈。可用性不受影响。",
+	"console_banner_empty": "暂无监控对象。",
+	"console_banner_down_one": "{name} 已宕机。",
+	"console_banner_down_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个监控项已宕机。"
+			}
+		}
+	],
+	"console_banner_held": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个子项已暂缓告警。"
+			}
+		}
+	],
+	"console_banner_held_sent": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个子项已暂缓告警，告警已发送。"
+			}
+		}
+	],
+	"console_banner_sent": "告警已发送。",
+	"console_banner_attention_one": "{name} 需要查看。",
+	"console_banner_attention_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个监控项需要查看。"
+			}
+		}
+	],
+	"console_banner_alerts": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 条未处理告警。"
+			}
+		}
+	],
+	"console_banner_up_of": "{total} 个监控项中 {up} 个正常。",
+	"console_banner_waiting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个正在等待首次上报。"
+			}
+		}
+	],
+	"console_banner_all_up": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "全部 {count} 个监控项正常。"
+			}
+		}
+	],
+	"console_banner_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个已暂停。"
+			}
+		}
+	],
+	"console_banner_all_paused": "所有监控项均已暂停。",
+	"settings_appearance_language_title": "语言",
+	"settings_search_kw_instance": "实例 名称 语言 时区 向导 设置"
 }

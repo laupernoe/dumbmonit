@@ -274,7 +274,6 @@
 	"alerts_needs_empty_quiet": "Ничего не требует вашего внимания.",
 	"alerts_needs_no_device": "Нет монитора",
 	"alerts_needs_quiet_all_reporting": "Все мониторы передают данные, ни одно правило не срабатывает.",
-	"alerts_needs_quiet_checked": "{text} Проверено: {when}.",
 	"alerts_needs_quiet_no_devices": "Добавьте монитор, и его первый отчёт появится здесь.",
 	"alerts_needs_quiet_waiting_many": [
 		{
@@ -353,6 +352,18 @@
 	"alerts_rules_all_kinds": "Все типы",
 	"alerts_rules_anomaly_summary": "чувствительность k = {k} · сглаживание α = {alpha} · минимум {samples} отсчётов · нижняя граница {abs} абс. / {rel} отн.",
 	"alerts_rules_baseline_anomaly": "отклонение от базовой линии",
+	"alerts_rules_forecast_summary": "заполнится менее чем за {days} дн. (предупреждение менее {warning} дн., критично менее {critical} дн.)",
+	"alerts_rules_drift_summary": "{ratio}× от обычного для этого времени суток",
+	"alerts_rules_forecast_warning": "Предупреждение менее (дней)",
+	"alerts_rules_forecast_critical": "Критично менее (дней)",
+	"alerts_rules_forecast_tiers_help": "Дней до заполнения. Оповещение само повышает важность и напоминает о себе на каждом пороге.",
+	"alerts_rules_forecast_error_tiers": "Критический порог должен быть больше 0 дней и не больше порога предупреждения.",
+	"alerts_rules_drift_k": "Чувствительность (σ)",
+	"alerts_rules_drift_k_help": "Сколько устойчивых отклонений от обычного значения нужно для оповещения: чем больше, тем тише.",
+	"alerts_rules_drift_min_value": "Игнорировать значения ниже",
+	"alerts_rules_drift_min_value_help": "В единицах измерения метрики: малые значения не учитываются, как бы они ни росли.",
+	"alerts_rules_drift_error_k": "Чувствительность должна быть положительным числом.",
+	"alerts_rules_drift_error_min_value": "Минимальное значение должно быть нулём или больше.",
 	"alerts_rules_builtin": "Встроенное",
 	"alerts_rules_channel_id": "канал №{id}",
 	"alerts_rules_clear_above": "Возврат выше",
@@ -709,6 +720,63 @@
 	"auth_setup_title": "Создадим вашу учётную запись.",
 	"auth_setup_username_required": "Выберите имя пользователя.",
 	"auth_setup_username_spaces": "Имя пользователя не может содержать пробелы.",
+	"cloudregions_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} регион",
+				"countPlural=few": "{count} региона",
+				"countPlural=many": "{count} регионов",
+				"countPlural=other": "{count} региона"
+			}
+		}
+	],
+	"cloudregions_description": "Где работают ресурсы этой учётной записи.",
+	"cloudregions_map_label": "Карта регионов {name}",
+	"cloudregions_pin_down": "{region}: {resources}, не работают: {down}",
+	"cloudregions_pin_home": "{region}: регион учётной записи",
+	"cloudregions_pin_ok": "{region}: {resources}, все работают",
+	"cloudregions_resources": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} ресурс",
+				"countPlural=few": "{count} ресурса",
+				"countPlural=many": "{count} ресурсов",
+				"countPlural=other": "{count} ресурса"
+			}
+		}
+	],
+	"cloudregions_title": "Регионы",
+	"cloudregions_unknown": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} ресурс находится в регионе, которого нет на карте.",
+				"countPlural=few": "{count} ресурса находятся в регионах, которых нет на карте.",
+				"countPlural=many": "{count} ресурсов находятся в регионах, которых нет на карте.",
+				"countPlural=other": "{count} ресурса находятся в регионах, которых нет на карте."
+			}
+		}
+	],
 	"dash_add": "Добавить: {kind}",
 	"dash_add_group": "Добавить виджет",
 	"dash_alerts_more": "Все оповещения (+{count})",
@@ -862,7 +930,7 @@
 	"demo_tour_s6_title": "Агент",
 	"demo_tour_s7_body": "Опубликуйте публичную страницу для ваших пользователей с инцидентами, значками аптайма и подпиской по email — не раскрывая остальную часть инстанса.",
 	"demo_tour_s7_title": "Страницы статуса",
-	"demo_tour_s8_body": "Для экрана в комнате: сводка на весь экран, читаемая с другого конца помещения, с необязательным музыкальным плеером. На этом тур всё — осматривайтесь, ничего из того, что вы нажмёте, не сломается.",
+	"demo_tour_s8_body": "Для экрана в комнате: панель консоли на весь экран, читаемая с другого конца помещения, по желанию — с ночным городом на фоне. На этом тур всё — осматривайтесь, ничего из того, что вы нажмёте, не сломается.",
 	"demo_tour_s8_link": "Открыть режим стены",
 	"demo_tour_s8_title": "Режим стены",
 	"deviceform_checksums_summary": "Контрольные суммы бинарных файлов (SHA-256) — установщик сверяет с ними загрузку",
@@ -1001,9 +1069,7 @@
 	"deviceform_edit_type_fixed": "Тип изменить нельзя: удалите монитор и добавьте его снова с другим типом.",
 	"deviceform_enroll_add_device": "Добавить монитор",
 	"deviceform_enroll_add_product": "Добавить мониторинг {product}",
-	"deviceform_enroll_another": "Создать ещё один токен",
 	"deviceform_enroll_cancel": "Отмена",
-	"deviceform_enroll_compose_note": "Или запустите агент контейнером на площадке с {file} из репозитория — режим ретранслятора уже включён:",
 	"deviceform_enroll_copy_docker": "Скопировать команду Docker",
 	"deviceform_enroll_copy_linux": "Скопировать команду для Linux",
 	"deviceform_enroll_copy_now": "Скопируйте команду сейчас: этот токен больше не будет показан.",
@@ -1016,7 +1082,6 @@
 	"deviceform_enroll_default_name": "серверы",
 	"deviceform_enroll_default_relay_name": "удалённая площадка",
 	"deviceform_enroll_default_site": "Удалённая площадка",
-	"deviceform_enroll_done_note": "Агент зарегистрируется как монитор в течение минуты. Эту страницу можно закрыть. Этот токен подключает только одну машину; для парка машин создайте многоразовый токен в Settings → Agents.",
 	"deviceform_enroll_guide": "Руководство по удалённым площадкам: HTTPS, межсетевые экраны, ping",
 	"deviceform_enroll_intro": "Серверу с агентом адрес вводить не нужно: агент, установленный на машине, сам представляется этому серверу. Создайте токен, выполните выданную команду — и готово.",
 	"deviceform_enroll_linux": "Linux / macOS",
@@ -1030,13 +1095,9 @@
 	"deviceform_enroll_site_help": "Показывается рядом с ретранслятором, когда вы выбираете его для монитора.",
 	"deviceform_enroll_site_name": "Название площадки",
 	"deviceform_enroll_site_placeholder": "Офис в Лионе",
-	"deviceform_enroll_step1": "Установите агент на машину на удалённой площадке",
-	"deviceform_enroll_step2": "Переключите его в режим ретранслятора",
 	"deviceform_enroll_step3": "Добавьте мониторы этой площадки",
-	"deviceform_enroll_step3_note": "Ретранслятор появится среди мониторов в течение минуты. Добавляйте каждый коммутатор, NAS или гипервизор как обычно, с адресом, видимым из этой площадки, а в «Дополнительно» выберите ретранслятор в поле «Опрашивается через». На площадке ничего открывать не нужно: ретранслятор только подключается наружу.",
 	"deviceform_enroll_token": "Токен",
 	"deviceform_enroll_token_help": "Одним токеном можно подключить несколько машин: назовите его по группе или по машине.",
-	"deviceform_enroll_token_help_relay": "Нужно только чтобы узнавать токен в Settings → Agents.",
 	"deviceform_enroll_token_name": "Название токена",
 	"deviceform_enroll_windows": "Windows (PowerShell, от имени администратора)",
 	"deviceform_enroll_windows_intro": "{product} работает на сервере Windows, и его очереди и службы можно прочитать только там. Создайте токен, выполните на этом сервере выданную команду PowerShell, затем добавьте мониторинг {product}.",
@@ -1594,6 +1655,17 @@
 	"devices_docker_manage": "Управление контейнерами",
 	"devices_docker_needs_agent": "Для перезапуска и обновления нужен агент, выполняющий команды.",
 	"devices_docker_no_metric": "Нет метрик этого контейнера за выбранный период.",
+	"devices_docker_cpu_label": "CPU",
+	"devices_docker_cpu_hint": "Доля одного ядра: 100 % — одно ядро целиком.",
+	"devices_docker_mem_label": "Память",
+	"devices_docker_mem_limit_label": "Память относительно лимита",
+	"devices_docker_mem_no_limit": "Используется памяти: {used} (для этого контейнера лимит не задан).",
+	"devices_docker_crashloop": "Перезапуски по кругу ({count} за 15 мин)",
+	"devices_docker_crashloop_n": "В цикле перезапусков: {count}",
+	"devices_docker_top_cpu_title": "Топ по CPU",
+	"devices_docker_top_cpu_aria": "Контейнеры с наибольшей нагрузкой на CPU",
+	"devices_docker_top_mem_title": "Топ по памяти",
+	"devices_docker_top_mem_aria": "Контейнеры с наибольшим потреблением памяти",
 	"devices_docker_none": "На этой машине нет Docker, либо агент не достаёт до сокета (добавьте агента в группу docker или запустите от root).",
 	"devices_docker_policies": "политики: автоперезапуск — {restart}, автообновление — {update}",
 	"devices_docker_policies_aria": "Политики контейнеров",
@@ -1626,7 +1698,7 @@
 	"devices_docker_strip_unavailable": "Этот агент не может выполнять команды (слишком старый или commands: false): политики сохраняются, но ничего не выполняется, пока он не будет переустановлен текущим установщиком.",
 	"devices_docker_title": "Контейнеры",
 	"devices_docker_unavailable": "Действия недоступны",
-	"devices_docker_unavailable_body": "Этот агент не может выполнять команды — {why}. Переустановите его текущим установщиком (токен из Настройки → Агенты, commands: true); перезапуск, обновление и политики ниже отключены, пока он не ответит.",
+	"devices_docker_unavailable_body": "Этот агент не может выполнять команды — {why}. Переустановите его текущим установщиком (команда из Добавить, Сервер с агентом, commands: true); перезапуск, обновление и политики ниже отключены, пока он не ответит.",
 	"devices_docker_up_for": "работает {duration}",
 	"devices_docker_update_all": "Автообновление в окнах обслуживания, все контейнеры",
 	"devices_docker_update_available": "Доступно обновление",
@@ -1953,6 +2025,49 @@
 	"devices_mikrotik_update_available": "Доступно обновление",
 	"devices_mikrotik_version_available": "Версия {latest} доступна в канале «{channel}».",
 	"devices_mikrotik_waiting": "Ожидание первого опроса: маршрутизатор ещё не читался.",
+	"devices_switch_title": "Порты коммутатора",
+	"devices_switch_desc": "Передняя панель: линк, скорость, PoE и ошибки каждого порта. Выберите порт, чтобы увидеть его трафик.",
+	"devices_switch_summary": "Активные порты: {up}/{total}",
+	"devices_switch_unit_label": "Коммутатор",
+	"devices_switch_faceplate_label": "Порты {device}",
+	"devices_switch_state_up": "Активен",
+	"devices_switch_state_down": "Нет линка",
+	"devices_switch_state_off": "Отключён",
+	"devices_switch_legend_up": "Линк активен, указана скорость",
+	"devices_switch_legend_down": "Нет линка",
+	"devices_switch_legend_off": "Отключён",
+	"devices_switch_legend_attention": "Ошибки, полудуплекс или сбой PoE",
+	"devices_switch_poe_budget": "Бюджет PoE",
+	"devices_switch_poe_draw": "Потребление PoE: {watts} Вт",
+	"devices_switch_detail_title": "Порт {port}",
+	"devices_switch_close": "Закрыть",
+	"devices_switch_link": "Линк",
+	"devices_switch_uplink": "Аплинк",
+	"devices_switch_speed": "Скорость",
+	"devices_switch_half_duplex": "Полудуплекс",
+	"devices_switch_errors_day": "Ошибки (24 ч)",
+	"devices_switch_detail_errors": "Ошибки (24 ч): {count}",
+	"devices_switch_poe": "PoE",
+	"devices_switch_poe_delivering": "Питание подаётся",
+	"devices_switch_poe_delivering_watts": "{watts} Вт",
+	"devices_switch_poe_searching": "Поиск",
+	"devices_switch_poe_off": "Выключено",
+	"devices_switch_poe_fault": "Сбой",
+	"devices_switch_poe_class": "класс {level}",
+	"devices_switch_vlan": "VLAN",
+	"devices_switch_neighbor": "Сосед",
+	"devices_switch_neighbor_value": "{name} · {port}",
+	"devices_switch_traffic": "Трафик за 24 ч",
+	"devices_switch_traffic_in": "Вход",
+	"devices_switch_traffic_out": "Выход",
+	"devices_switch_no_traffic": "Для этого порта трафик ещё не сохранён.",
+	"devices_switch_select_hint": "Выберите порт, чтобы увидеть его трафик, ошибки и соседа.",
+	"devices_switch_heatmap_title": "Трафик по портам за 24 ч",
+	"devices_switch_heatmap_label": "Пропускная способность каждого порта за последние 24 часа",
+	"devices_switch_heatmap_low": "Тихо",
+	"devices_switch_heatmap_high": "Нагружен",
+	"devices_switch_no_data": "Нет данных",
+	"devices_switch_heatmap_data": "Значения",
 	"devices_openvpn_clients_connected": "Подключённые клиенты",
 	"devices_openvpn_clients_note": "Клиенты приходят и уходят: список показывает лишь то, что интерфейс управления сообщает сейчас.",
 	"devices_openvpn_connected_ago": "подключён {age} назад",
@@ -2135,6 +2250,17 @@
 	"devices_target_essentials": "Главное",
 	"devices_target_every": "каждые {interval}",
 	"devices_target_everything_else": "Всё остальное",
+	"devices_target_all_measurements": "Все измерения",
+	"devices_target_stat_yes": "Да",
+	"devices_target_stat_no": "Нет",
+	"devices_target_stat_max_of": "макс. из {count}",
+	"devices_target_stat_min_of": "мин. из {count}",
+	"devices_target_stat_more": "Показать все ({count})",
+	"devices_target_stat_less": "Показать меньше",
+	"devices_target_rank_empty": "Нет данных за этот период",
+	"devices_target_rank_quiet": "Ничего выше нуля за этот период",
+	"devices_target_rank_peak": "Пик за период",
+	"devices_target_rank_latest": "Последнее значение",
 	"devices_target_families_filtered": "Семейств: {shown} из {total}",
 	"devices_target_families_one": "{count} семейство",
 	"devices_target_families_other": "Семейств: {count}",
@@ -2547,37 +2673,17 @@
 	"devicesb_opnsense_traffic_states_of_limit": "из {limit} состояний",
 	"devicesb_opnsense_traffic_usage_aria": "Заполнение таблицы состояний",
 	"devicesb_opnsense_wan_addresses": "Адреса WAN",
-	"devicesb_pbs_calendar_aria_group": "{group}: {summary}",
-	"devicesb_pbs_calendar_aria_summary": "Копии созданы в {ok} из {total} дней, сбоев: {failed}",
 	"devicesb_pbs_calendar_empty_none": "Групп резервного копирования пока нет: на этот сервер ничего не копировалось, и за последние {days} дн. не выполнялось ни одной задачи.",
 	"devicesb_pbs_calendar_empty_waiting": "Ожидание первого опроса: календарь заполнится после чтения данных сервера резервного копирования.",
 	"devicesb_pbs_calendar_failed_line": "Сбой {ago}: {error}",
 	"devicesb_pbs_calendar_keeps": "хранит: {retention}",
 	"devicesb_pbs_calendar_last_size": "последний: {size}",
 	"devicesb_pbs_calendar_latest_unverified": "Последний снимок не прошёл проверку",
-	"devicesb_pbs_calendar_legend_failed": "Сбой",
-	"devicesb_pbs_calendar_legend_none": "Нет копии",
-	"devicesb_pbs_calendar_legend_ok": "Копия создана",
-	"devicesb_pbs_calendar_legend_running": "Выполняется",
-	"devicesb_pbs_calendar_legend_verify_failed": "Проверка не пройдена",
-	"devicesb_pbs_calendar_outcome_failed": "сбой",
-	"devicesb_pbs_calendar_outcome_ok": "OK",
-	"devicesb_pbs_calendar_outcome_running": "выполняется",
-	"devicesb_pbs_calendar_plate_failed": "Последнее копирование не удалось",
-	"devicesb_pbs_calendar_plate_late": "Последняя копия: {ago}",
-	"devicesb_pbs_calendar_plate_missing": "Нет копий уже {span}",
-	"devicesb_pbs_calendar_plate_none": "Копий пока нет",
-	"devicesb_pbs_calendar_plate_ok": "Копия создана: {ago}",
-	"devicesb_pbs_calendar_plate_running": "Копирование выполняется",
 	"devicesb_pbs_calendar_snapshots_one": "{count} снимок",
 	"devicesb_pbs_calendar_snapshots_other": "Снимков: {count}",
-	"devicesb_pbs_calendar_summary_today": "Сегодня скопировано: {ok} из {total}",
-	"devicesb_pbs_calendar_summary_today_failing": "Сегодня скопировано: {ok} из {total}, сбоев: {failing}",
-	"devicesb_pbs_calendar_tip_run": "{time} · {outcome} · {duration}",
 	"devicesb_pbs_calendar_tip_snapshot": "снимок {time}",
 	"devicesb_pbs_calendar_tip_verification_failed": "проверка не пройдена",
 	"devicesb_pbs_calendar_tip_verified": "проверен",
-	"devicesb_pbs_calendar_today": "сегодня",
 	"devicesb_pbs_ds_backend": "бэкенд {backend}",
 	"devicesb_pbs_ds_bad_chunks_one": "Последняя сборка мусора обнаружила нечитаемых чанков: {count}. Часть копий в этом хранилище больше нельзя восстановить.",
 	"devicesb_pbs_ds_bad_chunks_other": "Последняя сборка мусора обнаружила нечитаемых чанков: {count}. Часть копий в этом хранилище больше нельзя восстановить.",
@@ -2651,11 +2757,6 @@
 	"devicesb_pbs_failures_show_fewer": "Показать меньше",
 	"devicesb_pbs_failures_show_log": "Показать журнал",
 	"devicesb_pbs_format_ago": "{span} назад",
-	"devicesb_pbs_format_day_failed": "Сбой резервного копирования",
-	"devicesb_pbs_format_day_none": "Нет копии",
-	"devicesb_pbs_format_day_ok": "Копия создана",
-	"devicesb_pbs_format_day_running": "Резервное копирование выполняется",
-	"devicesb_pbs_format_day_verify_failed": "Копия создана, проверка не пройдена",
 	"devicesb_pbs_format_in_span": "через {span}",
 	"devicesb_pbs_format_just_now": "только что",
 	"devicesb_pbs_format_never": "никогда",
@@ -3853,9 +3954,28 @@
 	"devicesb_webchange_timeline_same_title": "Одно и то же изменение на {count} стр.",
 	"devicesb_webchange_timeline_watching_one": "Отслеживается 1 страница.",
 	"devicesb_webchange_timeline_watching_other": "Отслеживается страниц: {count}.",
+	"discovery_grid_absent_detail": "Известное устройство, не замечено при последнем сканировании.",
+	"discovery_grid_empty_filter": "Нет адресов в этом состоянии.",
+	"discovery_grid_filter_all": "Все ({count})",
+	"discovery_grid_filter_label": "Фильтр адресов по состоянию",
+	"discovery_grid_filter_state": "{state} ({count})",
+	"discovery_grid_free_detail": "По этому адресу устройств не обнаружено.",
+	"discovery_grid_heading": "Сетка подсети",
+	"discovery_grid_hint": "Выберите адрес, чтобы увидеть его устройство и доступные действия.",
+	"discovery_grid_label": "Адреса {cidr}",
+	"discovery_grid_network_label": "Сеть, показанная в сетке",
+	"discovery_grid_not_scanned": "Ни одно сканирование ещё не завершилось: все адреса показаны как свободные.",
+	"discovery_grid_state_absent": "Отсутствует",
+	"discovery_grid_state_free": "Свободен",
+	"discovery_grid_state_ignored": "Игнорируется",
+	"discovery_grid_state_known": "Известное",
+	"discovery_grid_state_mac_changed": "MAC изменился",
+	"discovery_grid_state_new": "Новое",
+	"discovery_grid_unavailable": "Для этой сети сетка не строится: она рисуется для IPv4-сетей до 1024 адресов.",
 	"discovery_inventory_action_error": "Не удалось выполнить действие",
 	"discovery_inventory_add_error": "Не удалось запланировать сканирование",
 	"discovery_inventory_add_heading": "Запланировать сканирование",
+	"discovery_inventory_add_monitor": "Добавить как монитор",
 	"discovery_inventory_add_submit": "Запланировать",
 	"discovery_inventory_alerts_hint": "Оповещения о новых устройствах и портах по умолчанию выключены. Чтобы получать их, включите правила «New device on the network» и «New open port on the network» в правилах оповещений.",
 	"discovery_inventory_baseline_pending": "Первое сканирование создаёт список без оповещений.",
@@ -3864,6 +3984,8 @@
 	"discovery_inventory_delete_confirm": "Удалить вместе с инвентарём?",
 	"discovery_inventory_enabled_label": "Включено",
 	"discovery_inventory_first_seen": "Впервые замечено: {when}",
+	"discovery_inventory_ignore": "Игнорировать",
+	"discovery_inventory_ignored": "Игнорируется",
 	"discovery_inventory_interval_every": "Каждые {span}",
 	"discovery_inventory_interval_label": "Интервал сканирования",
 	"discovery_inventory_intro": "Сканируйте сеть по расписанию и храните список найденных устройств и открытых портов. Первое сканирование создаёт список без оповещений; затем всё новое остаётся отмеченным, пока вы не пометите его как известное.",
@@ -3873,6 +3995,9 @@
 	"discovery_inventory_last_run": "Последнее сканирование: {when}",
 	"discovery_inventory_last_seen": "в последний раз: {when}",
 	"discovery_inventory_load_error": "Не удалось загрузить плановые сканирования",
+	"discovery_inventory_mac_changed": "MAC изменился",
+	"discovery_inventory_mac_changed_from": "MAC изменился: раньше этот адрес принадлежал {mac}.",
+	"discovery_inventory_mac_changes_count": "Изменения MAC для проверки: {count}",
 	"discovery_inventory_mark_all": "Пометить всё как известное",
 	"discovery_inventory_mark_device": "Пометить как известное",
 	"discovery_inventory_mark_port": "Известное",
@@ -4225,8 +4350,6 @@
 	"metrics_title_website_text_chars": "Символов текста",
 	"metrics_title_website_title_changed": "Заголовок изменён",
 	"metrics_title_website_up": "Сайт доступен",
-	"misc2_browser_on": "{browser} в {system}",
-	"misc2_browser_unknown": "Браузер",
 	"misc2_folds_container_stopped": [
 		{
 			"declarations": [
@@ -4569,34 +4692,11 @@
 	],
 	"misc2_mascot_aria": "DumbMonit, голубь",
 	"misc_ago": "{span} назад",
-	"misc_device_amplifier": "усилителе",
-	"misc_device_cast_speaker": "колонке с Cast",
-	"misc_device_chromecast": "Chromecast",
-	"misc_device_computer": "компьютере",
-	"misc_device_console": "игровой консоли",
-	"misc_device_other": "другом мониторе",
-	"misc_device_phone": "телефоне",
-	"misc_device_speaker": "колонке",
-	"misc_device_tablet": "планшете",
-	"misc_device_this": "этом экране",
-	"misc_device_tv": "телевизоре",
 	"misc_dur_d": "{n} дн.",
 	"misc_dur_h": "{n} ч",
 	"misc_dur_min": "{n} мин",
 	"misc_dur_s": "{n} с",
 	"misc_just_now": "только что",
-	"misc_music_deezer_cut": "Эта ссылка Deezer, похоже, обрезана.",
-	"misc_music_deezer_kinds": "На стене можно воспроизводить ссылки Deezer на трек, альбом или плейлист.",
-	"misc_music_deezer_short": "Короткие ссылки Deezer здесь не читаются: откройте её и скопируйте полную ссылку deezer.com.",
-	"misc_music_empty": "Сначала вставьте ссылку.",
-	"misc_music_not_link": "Это не ссылка. Вставьте ссылку на Spotify, Deezer или YouTube: трек, альбом, плейлист, выпуск или видео.",
-	"misc_music_spotify_cut": "Эта ссылка Spotify, похоже, обрезана.",
-	"misc_music_spotify_kinds": "На стене можно воспроизводить ссылки Spotify на трек, альбом, плейлист или выпуск.",
-	"misc_music_spotify_short": "Короткие ссылки Spotify здесь не читаются: откройте её и скопируйте полную ссылку open.spotify.com.",
-	"misc_music_unsupported": "Вставьте ссылку на Spotify, Deezer или YouTube: трек, альбом, плейлист, выпуск или видео.",
-	"misc_music_youtube_cut": "Эта ссылка YouTube, похоже, обрезана.",
-	"misc_music_youtube_empty": "В этой ссылке YouTube нет ни видео, ни плейлиста.",
-	"misc_music_youtube_page": "Вставьте ссылку на видео или плейлист YouTube, а не на канал или страницу.",
 	"misc_nav_alerts": "Оповещения",
 	"misc_nav_alerts_badge": "Активных оповещений: {count}",
 	"misc_nav_dashboards": "Дашборды",
@@ -4611,12 +4711,11 @@
 	"misc_nav_more": "Ещё",
 	"misc_nav_overview": "Обзор",
 	"misc_nav_palette_open": "Открыть палитру команд",
-	"misc_nav_palette_title": "Палитра команд ({shortcut})",
 	"misc_nav_security": "Безопасность",
 	"misc_nav_settings": "Настройки",
 	"misc_nav_sign_out": "Выйти",
 	"misc_nav_wall": "Режим стены",
-	"misc_nav_wall_title": "Режим стены: сводка на весь экран для монитора в комнате",
+	"misc_nav_wall_title": "Режим стены: панель консоли на весь экран для монитора в комнате",
 	"misc_never": "никогда",
 	"misc_palette_add_device": "Добавить монитор",
 	"misc_palette_agent": "Установить агент",
@@ -4656,8 +4755,7 @@
 	"misc_palette_status_detail": "Публичные страницы и объявления",
 	"misc_palette_status_page": "Новая страница статуса",
 	"misc_palette_status_pages": "Страницы статуса",
-	"misc_palette_theme": "Переключить тему",
-	"misc_palette_wall_detail": "Сводка на весь экран для настенного дисплея",
+	"misc_palette_wall_detail": "Панель на весь экран для настенного дисплея",
 	"misc_reason_auth": "Учётные данные отклонены",
 	"misc_reason_bad_secret": "Неверная подпись ответа: вероятно, неверный общий секрет",
 	"misc_reason_body": "Нечитаемый ответ",
@@ -4688,23 +4786,6 @@
 	"misc_shortcuts_go": "Перейти: {page}",
 	"misc_shortcuts_intro": "Буквенные сочетания работают, когда фокус не в текстовом поле. Нажимайте клавиши одну за другой.",
 	"misc_shortcuts_title": "Горячие клавиши",
-	"misc_speaker_download_failed": "Не удалось загрузить плеер Spotify (sdk.scdn.co недоступен).",
-	"misc_speaker_fix_auth": "Повторная попытка выполняется автоматически. Если не помогает, заново подключите Spotify в Настройки → Музыка на стене.",
-	"misc_speaker_fix_insecure": "Spotify воспроизводит звук только на защищённой странице: откройте DumbMonit по HTTPS (через обратный прокси) или как http://localhost на самом экране.",
-	"misc_speaker_fix_no_drm": "Используйте Chrome, Edge или Firefox на компьютере, подключённом к телевизору (Firefox: разрешите «Воспроизводить DRM-контент»; Chromium на Raspberry Pi: установите Widevine, пакет libwidevinecdm0). Браузеры большинства смарт-ТВ и киосков так не умеют. Иначе запускайте воспроизведение из приложения Spotify на телевизоре или через Chromecast: стена всё равно покажет, что играет.",
-	"misc_speaker_fix_premium": "Подключите учётную запись Premium в Настройки → Музыка на стене. Блок «Сейчас играет» по-прежнему показывает, что играет на ваших других устройствах.",
-	"misc_speaker_fix_reconnect": "Администратор может заново подключить Spotify в Настройки → Музыка на стене.",
-	"misc_speaker_no_token": "Нет токена Spotify.",
-	"misc_speaker_not_accepted": "Spotify не принял этот экран как колонку.",
-	"misc_speaker_not_ready": "Этот экран ещё не готов работать как колонка.",
-	"misc_speaker_not_started": "Плеер Spotify не запустился.",
-	"misc_speaker_playback_error": "Spotify не смог воспроизвести этот трек ({message}).",
-	"misc_speaker_problem_auth": "Spotify отклонил подключение стены{detail}.",
-	"misc_speaker_problem_init": "Этот браузер не может воспроизводить Spotify: его DRM (Widevine) не запустился{detail}.",
-	"misc_speaker_problem_premium": "Чтобы стена работала как колонка, нужен Spotify Premium.",
-	"misc_speaker_reason_insecure": "Этот экран открыл DumbMonit по обычному HTTP.",
-	"misc_speaker_reason_no_drm": "Этот браузер не может воспроизводить Spotify: в нём нет модуля DRM (Widevine).",
-	"misc_speaker_reason_no_eme": "Этот браузер не может воспроизводить Spotify: в нём нет Encrypted Media Extensions (DRM).",
 	"misc_state_disabled": "Отключён",
 	"misc_state_down": "Недоступно",
 	"misc_state_misconfigured": "Неверно настроен",
@@ -5168,293 +5249,6 @@
 	"oncall_window_overnight_hint": "Если конец раньше начала, интервал переходит через полночь на следующий день. С 00:00 до 00:00 — весь день.",
 	"oncall_window_remove": "Убрать",
 	"oncall_window_to": "До",
-	"overview_brief_a_rule": "Правило",
-	"overview_brief_also": "Оповещения также возникали и исчезали на: {names}.",
-	"overview_brief_also_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Оповещения также возникали и исчезали на: {names} и ещё {count}.",
-				"countPlural=few": "Оповещения также возникали и исчезали на: {names} и ещё {count}.",
-				"countPlural=many": "Оповещения также возникали и исчезали на: {names} и ещё {count}.",
-				"countPlural=other": "Оповещения также возникали и исчезали на: {names} и ещё {count}."
-			}
-		}
-	],
-	"overview_brief_device_n": "Монитор {id}",
-	"overview_brief_dissolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} оповещение возникло и исчезло, не успев сработать.",
-				"countPlural=few": "{count} оповещения возникли и исчезли, не успев сработать.",
-				"countPlural=many": "{count} оповещений возникли и исчезли, не успев сработать.",
-				"countPlural=other": "{count} оповещения возникли и исчезли, не успев сработать."
-			}
-		}
-	],
-	"overview_brief_dissolved_mostly": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} оповещение возникло и исчезло, не успев сработать (в основном {rule} на {device}).",
-				"countPlural=few": "{count} оповещения возникли и исчезли, не успев сработать (в основном {rule} на {device}).",
-				"countPlural=many": "{count} оповещений возникли и исчезли, не успев сработать (в основном {rule} на {device}).",
-				"countPlural=other": "{count} оповещения возникли и исчезли, не успев сработать (в основном {rule} на {device})."
-			}
-		}
-	],
-	"overview_brief_dropped": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} пропало и вернулось.",
-				"countPlural=few": "{name} пропадало {count} раза и вернулось.",
-				"countPlural=many": "{name} пропадало {count} раз и вернулось.",
-				"countPlural=other": "{name} пропадало {count} раз и вернулось."
-			}
-		}
-	],
-	"overview_brief_dropped_many": "{names} пропадали и вернулись.",
-	"overview_brief_head_first": "За последние 24 ч",
-	"overview_brief_head_since": "С {when}",
-	"overview_brief_kept_reporting": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} монитор продолжал отправлять данные.",
-				"countPlural=few": "{count} монитора продолжали отправлять данные.",
-				"countPlural=many": "{count} мониторов продолжали отправлять данные.",
-				"countPlural=other": "{count} мониторов продолжали отправлять данные."
-			}
-		}
-	],
-	"overview_brief_lead": "{head} — {parts}.",
-	"overview_brief_learning_many": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} ещё изучают базовый уровень: сработали бы один раз.",
-				"countPlural=few": "{names} ещё изучают базовый уровень: сработали бы {count} раза.",
-				"countPlural=many": "{names} ещё изучают базовый уровень: сработали бы {count} раз.",
-				"countPlural=other": "{names} ещё изучают базовый уровень: сработали бы {count} раз."
-			}
-		}
-	],
-	"overview_brief_learning_one": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} ещё изучает базовый уровень: сработало бы один раз.",
-				"countPlural=few": "{names} ещё изучает базовый уровень: сработало бы {count} раза.",
-				"countPlural=many": "{names} ещё изучает базовый уровень: сработало бы {count} раз.",
-				"countPlural=other": "{names} ещё изучает базовый уровень: сработало бы {count} раз."
-			}
-		}
-	],
-	"overview_brief_n_alerts_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} оповещение устранено само",
-				"countPlural=few": "{count} оповещения устранены сами",
-				"countPlural=many": "{count} оповещений устранены сами",
-				"countPlural=other": "{count} оповещения устранены сами"
-			}
-		}
-	],
-	"overview_brief_n_fired": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "сработало {count} оповещение",
-				"countPlural=few": "сработало {count} оповещения",
-				"countPlural=many": "сработало {count} оповещений",
-				"countPlural=other": "сработало {count} оповещения"
-			}
-		}
-	],
-	"overview_brief_n_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} устранено само",
-				"countPlural=few": "{count} устранены сами",
-				"countPlural=many": "{count} устранены сами",
-				"countPlural=other": "{count} устранены сами"
-			}
-		}
-	],
-	"overview_brief_n_still": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} всё ещё активно",
-				"countPlural=few": "{count} всё ещё активны",
-				"countPlural=many": "{count} всё ещё активны",
-				"countPlural=other": "{count} всё ещё активны"
-			}
-		}
-	],
-	"overview_brief_n_unreachable": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} монитор недоступен",
-				"countPlural=few": "{count} монитора недоступны",
-				"countPlural=many": "{count} мониторов недоступны",
-				"countPlural=other": "{count} мониторов недоступны"
-			}
-		}
-	],
-	"overview_brief_nothing_no_channel": "Ничего не отправлено: канал уведомлений ещё не настроен.",
-	"overview_brief_nothing_sent": "Ничего не отправлено.",
-	"overview_brief_nothing_to_channel": "В {channel} ничего не отправлено.",
-	"overview_brief_nothing_to_channels": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Ничего не отправлено в ваш канал.",
-				"countPlural=few": "Ничего не отправлено в ваши {count} канала.",
-				"countPlural=many": "Ничего не отправлено в ваши {count} каналов.",
-				"countPlural=other": "Ничего не отправлено в ваши {count} каналов."
-			}
-		}
-	],
-	"overview_brief_notified": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Отправлено {count} уведомление.",
-				"countPlural=few": "Отправлено {count} уведомления.",
-				"countPlural=many": "Отправлено {count} уведомлений.",
-				"countPlural=other": "Отправлено {count} уведомлений."
-			}
-		}
-	],
-	"overview_brief_notified_to": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Отправлено {count} уведомление в {channel}.",
-				"countPlural=few": "Отправлено {count} уведомления в {channel}.",
-				"countPlural=many": "Отправлено {count} уведомлений в {channel}.",
-				"countPlural=other": "Отправлено {count} уведомлений в {channel}."
-			}
-		}
-	],
-	"overview_brief_on_device": "{device}: {phrases}.",
-	"overview_brief_phrase_fired_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} сработало и устранилось само",
-				"countPlural=few": "{name} сработало {count} раза и устранилось само",
-				"countPlural=many": "{name} сработало {count} раз и устранилось само",
-				"countPlural=other": "{name} сработало {count} раз и устранилось само"
-			}
-		}
-	],
-	"overview_brief_phrase_resolved": "{name} устранилось само",
-	"overview_brief_quiet_away": "Пока вас не было, ничего не произошло.",
-	"overview_brief_quiet_first": "За последние 24 ч ничего не произошло.",
-	"overview_brief_the_server": "сервер",
 	"overview_first_all_done": "Все три шага выполнены. Это руководство больше не появится.",
 	"overview_first_channel_action": "Добавить канал",
 	"overview_first_channel_text": "Почта, ntfy, Discord, Telegram, PagerDuty — то, что вы и так читаете. Пока всё в порядке, ничего не отправляется.",
@@ -5478,41 +5272,15 @@
 	"overview_first_test_text": "Отправьте тест из канала. Шаг станет зелёным, когда сообщение действительно уйдёт.",
 	"overview_first_test_title": "Проверьте, что сообщение доходит",
 	"overview_first_title": "Ваши первые пять минут",
-	"overview_needs_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Ещё {count}",
-				"countPlural=few": "Ещё {count}",
-				"countPlural=many": "Ещё {count}",
-				"countPlural=other": "Ещё {count}"
-			}
-		}
-	],
-	"overview_page_checked": "Проверено {when}",
 	"overview_page_empty_text": "Добавьте коммутатор, NAS, гипервизор или сайт, и уже через минуту он начнёт присылать данные.",
 	"overview_page_empty_title": "Мониторов пока нет",
 	"overview_page_error_load": "Не удалось загрузить обзор",
 	"overview_page_error_refresh": "Не удалось обновить оповещения.",
 	"overview_page_history_note": "Данные из истории оповещений за прошедшую неделю.",
-	"overview_page_last_days": "Последние {days} дн.",
-	"overview_page_mark_read": "Отметить как прочитанное",
-	"overview_page_needs_you": "Требует вашего внимания",
 	"overview_page_or": "Или {agent}, или {relay} через один из них.",
 	"overview_page_or_agent": "установить агент на машине",
 	"overview_page_or_relay": "следить за удалённой площадкой",
-	"overview_page_since": "С вашего последнего визита",
 	"overview_page_title": "Обзор",
-	"overview_scene_asleep": "{label}, голубь спит",
-	"overview_scene_cloudy": "Небольшая облачность",
-	"overview_scene_overcast": "Пасмурно",
-	"overview_scene_storm": "Гроза",
 	"overview_sky_clear": "Ясное небо",
 	"overview_sky_n_acked": [
 		{
@@ -5712,111 +5480,11 @@
 	"overview_sky_plate_unreachable": "Недоступен",
 	"overview_sky_sentence": "{parts}.",
 	"overview_sky_waiting": "Ожидание первых данных",
-	"overview_streaks_d_h": "{days} дн. {hours} ч",
-	"overview_streaks_fewest": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "меньше всего оповещений: {count} событие за {days} дн.",
-				"countPlural=few": "меньше всего оповещений: {count} события за {days} дн.",
-				"countPlural=many": "меньше всего оповещений: {count} событий за {days} дн.",
-				"countPlural=other": "меньше всего оповещений: {count} события за {days} дн."
-			}
-		}
-	],
-	"overview_streaks_h_min": "{hours} ч {minutes} мин",
-	"overview_streaks_many_unreachable": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} и ещё {count} недоступны",
-				"countPlural=few": "{name} и ещё {count} недоступны",
-				"countPlural=many": "{name} и ещё {count} недоступны",
-				"countPlural=other": "{name} и ещё {count} недоступны"
-			}
-		}
-	],
-	"overview_streaks_most": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} событие оповещения (начало, срабатывание или устранение) за {days} дн.",
-				"countPlural=few": "{count} события оповещения (начало, срабатывание или устранение) за {days} дн.",
-				"countPlural=many": "{count} событий оповещения (начало, срабатывание или устранение) за {days} дн.",
-				"countPlural=other": "{count} события оповещения (начало, срабатывание или устранение) за {days} дн."
-			}
-		}
-	],
-	"overview_streaks_no_alert": "ни одного оповещения за {days} дн.",
-	"overview_streaks_no_alert_like": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "ни одного оповещения за {days} дн., как и ещё у {count}",
-				"countPlural=few": "ни одного оповещения за {days} дн., как и ещё у {count}",
-				"countPlural=many": "ни одного оповещения за {days} дн., как и ещё у {count}",
-				"countPlural=other": "ни одного оповещения за {days} дн., как и ещё у {count}"
-			}
-		}
-	],
-	"overview_streaks_noisiest": "Больше всего оповещений",
-	"overview_streaks_none_down": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "ни один монитор не был недоступен за {count} день",
-				"countPlural=few": "ни один монитор не был недоступен за {count} дня",
-				"countPlural=many": "ни один монитор не был недоступен за {count} дней",
-				"countPlural=other": "ни один монитор не был недоступен за {count} дней"
-			}
-		}
-	],
-	"overview_streaks_not_now": "Неполно",
-	"overview_streaks_one_unreachable": "{name} недоступен",
-	"overview_streaks_over": "более {days} дн.",
-	"overview_streaks_quietest": "Самый спокойный монитор",
-	"overview_streaks_reporting": "Всё на связи",
-	"overview_streaks_reporting_for": "Всё на связи уже",
-	"overview_streaks_since_outage": "ни один монитор не был недоступен с последнего сбоя",
-	"overview_streaks_under_minute": "меньше минуты",
 	"overview_tips_another": "Другой совет",
 	"overview_tips_hide": "Скрыть эти советы",
 	"overview_tips_hide_title": "Скрыть эти советы (в этом браузере)",
 	"overview_tips_label": "Знаете ли вы?",
 	"overview_tips_prefix": "Знаете ли вы? {title}",
-	"overview_week_days_short": "{days} дн.",
-	"overview_when_dated": "{date} {time}",
-	"overview_when_yesterday": "вчера {time}",
 	"push_runs_description": "Каждый старт, успех и сбой, о которых сообщила задача, от новых к старым.",
 	"push_runs_duration": "заняло {duration}",
 	"push_runs_duration_unknown": "длительность неизвестна",
@@ -6148,7 +5816,6 @@
 	"settings.section.appearance": "Внешний вид",
 	"settings.section.assistant": "API и ассистенты",
 	"settings.section.backup": "Резервное копирование",
-	"settings.section.music": "Музыка на стене",
 	"settings.section.packs": "Пакеты интеграций",
 	"settings.section.reports": "Отчёты",
 	"settings.section.security": "Учётная запись и безопасность",
@@ -6305,37 +5972,15 @@
 	"settings_agents_ad_unlimited": "Без ограничений",
 	"settings_agents_ad_waiting": "Ожидание первого сервера",
 	"settings_agents_ad_watch_intro": "Серверы появляются здесь по мере регистрации. Окно можно закрыть: регистрация продолжится.",
-	"settings_agents_copied": "Уже скопировано",
 	"settings_agents_copy_command": "Скопировать команду",
-	"settings_agents_copy_token": "Скопировать токен",
 	"settings_agents_create": "Создать токен",
 	"settings_agents_create_error": "Не удалось создать токен",
 	"settings_agents_created_at": "Создан {when}",
-	"settings_agents_created_title": "Токен «{name}» создан",
-	"settings_agents_days_invalid": "Число дней должно быть целым числом не меньше одного.",
-	"settings_agents_description": "Агент — небольшая программа на машине с Linux, Windows, macOS или FreeBSD: она сообщает о системе, дисках, службах, контейнерах Docker и резервных копиях и позволяет перезапустить или обновить контейнер отсюда. В режиме ретранслятора она также опрашивает для этого сервера мониторы своей сети — второй площадки, клиента, любой сети за NAT — и только устанавливает исходящие соединения.",
-	"settings_agents_empty_description": "Создайте токен, затем выполните команду установки на машине.",
 	"settings_agents_empty_title": "Токенов пока нет.",
 	"settings_agents_enrols_no_more": "Больше не регистрирует",
-	"settings_agents_expires": "Перестаёт регистрировать через",
-	"settings_agents_expires_help": "В днях. Уже зарегистрированные машины продолжают отчитываться; оставьте пустым, чтобы не ограничивать срок.",
 	"settings_agents_install": "Установить агент",
-	"settings_agents_install_linux": "Установка на Linux",
-	"settings_agents_install_windows": "Установка на Windows (PowerShell)",
-	"settings_agents_last_report": "Последний отчёт {when}",
 	"settings_agents_last_used": "Последнее использование {when}",
-	"settings_agents_list_aria": "Агенты, отчитывающиеся перед этим сервером",
 	"settings_agents_load_error": "Не удалось загрузить токены",
-	"settings_agents_machines": "Сколько машин можно зарегистрировать",
-	"settings_agents_machines_help": "Оставьте пустым, чтобы не ограничивать.",
-	"settings_agents_machines_invalid": "Число машин должно быть целым числом не меньше одного.",
-	"settings_agents_name_placeholder": "Файловый сервер",
-	"settings_agents_name_required": "Назовите токен, например по имени машины, которую он зарегистрирует.",
-	"settings_agents_new_token": "Новый токен",
-	"settings_agents_new_token_help": "Нужно только чтобы узнавать токен в этом списке.",
-	"settings_agents_no_deadline": "Без срока",
-	"settings_agents_no_limit": "Без ограничения",
-	"settings_agents_none": "Ни один агент пока не отчитывался перед этим сервером.",
 	"settings_agents_probes": [
 		{
 			"declarations": [
@@ -6355,27 +6000,6 @@
 	],
 	"settings_agents_relay_label": "Ретранслятор",
 	"settings_agents_relay_label_site": "Ретранслятор · {site}",
-	"settings_agents_relay_off": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Ретранслятор выключен — ожидает {count} монитор",
-				"countPlural=few": "Ретранслятор выключен — ожидают {count} монитора",
-				"countPlural=many": "Ретранслятор выключен — ожидают {count} мониторов",
-				"countPlural=other": "Ретранслятор выключен — ожидают {count} монитора"
-			}
-		}
-	],
-	"settings_agents_relay_off_title": "Задайте relay: true для этого агента, чтобы он взял на себя их опрос",
-	"settings_agents_relay_title": "Режим ретранслятора: опрашивает для этого сервера мониторы своей сети",
-	"settings_agents_reusable": "Многоразовый для парка машин",
-	"settings_agents_reusable_help": "Выключено: токен регистрирует одну машину и больше ничего — правильное значение по умолчанию для единичной установки. Включено: его можно использовать в плейбуке или образе.",
 	"settings_agents_revoke": "Отозвать",
 	"settings_agents_revoke_confirm": "Отозвать навсегда?",
 	"settings_agents_revoke_error": "Не удалось отозвать токен",
@@ -6385,19 +6009,15 @@
 	"settings_agents_scope_fleet_ratio": "Парк · зарегистрировано: {uses}/{max}",
 	"settings_agents_scope_single": "Одноразовый",
 	"settings_agents_scope_single_used": "Одноразовый · использован",
-	"settings_agents_shown_once": "Показывается один раз — скопируйте сейчас",
 	"settings_agents_spent_note": "Машины, зарегистрированные с его помощью, продолжают отчитываться; он просто не может принять новую.",
 	"settings_agents_stops_at": "Перестанет регистрировать {when}",
 	"settings_agents_title": "Агенты",
-	"settings_agents_tls_badge": "Зашифрован",
-	"settings_agents_tls_badge_title": "Зашифрованный канал агента: TLS 1.3 с клиентским сертификатом, обмен ключами {group}",
 	"settings_agents_tls_copy_fingerprint": "Скопировать отпечаток",
 	"settings_agents_tls_counts": "Зашифровано: {encrypted}. Открытый канал: {plain}.",
 	"settings_agents_tls_disabled": "Порт агентов закрыт (DUMBMONIT_AGENT_LISTEN=off): агенты отправляют данные только через веб-порт.",
 	"settings_agents_tls_fingerprint": "Отпечаток центра сертификации (SHA-256)",
 	"settings_agents_tls_fingerprint_help": "Он входит в команды установки: агент не примет никакой другой сервер, даже с действительным публичным сертификатом.",
 	"settings_agents_tls_legacy": "Открытый канал",
-	"settings_agents_tls_legacy_title": "Этот агент пока отправляет данные через веб-порт. После обновления он сам перейдёт на зашифрованный канал, как только сможет достучаться до порта агентов.",
 	"settings_agents_tls_legacy_until": "Открытый канал закроется сам {when}.",
 	"settings_agents_tls_load_error": "Не удалось прочитать канал агентов",
 	"settings_agents_tls_port_hint": "Для агентов в других сетях откройте на сервере только TCP-порт {port}. На агентах ничего открывать не нужно.",
@@ -6416,10 +6036,7 @@
 	"settings_agents_tls_summary": "Агенты подключаются к порту {port} по TLS 1.3, с сертификатом для каждой машины и постквантовым обменом ключами ({group}). Сервер они узнают по отпечатку его собственного центра сертификации: никто в сети не может прочитать или изменить то, что они отправляют.",
 	"settings_agents_tls_title": "Канал агентов",
 	"settings_agents_token": "Токен",
-	"settings_agents_tokens_intro": "Добавление монитора типа «агент» автоматически создаёт одноразовый токен. Создайте токен здесь для парка машин, плейбука или образа машины.",
 	"settings_agents_tokens_title": "Токены регистрации",
-	"settings_agents_watch_remote": "Следить за удалённой площадкой",
-	"settings_agents_watches_own": "Следит за собственной машиной",
 	"settings_agentupdates_agents_empty": "Пока ни один агент не сообщает этому серверу.",
 	"settings_agentupdates_agents_title": "Агенты",
 	"settings_agentupdates_canary_flag": "Канарейка",
@@ -6494,14 +6111,7 @@
 	"settings_agentupdates_window_any": "В любое время",
 	"settings_agentupdates_window_maintenance": "Только в окно обслуживания (заглушение на устройстве)",
 	"settings_agentupdates_window_manual": "Только вручную",
-	"settings_appearance_day": "День",
-	"settings_appearance_day_hint": "Миллиметровка, тёмно-синие чернила.",
-	"settings_appearance_night": "Ночь",
-	"settings_appearance_night_hint": "Радарная картинка, бирюзовый сигнал.",
-	"settings_appearance_system": "Система",
-	"settings_appearance_system_hint": "Следует за устройством.",
-	"settings_appearance_theme": "Тема",
-	"settings_appearance_wall_description": "Только сводка на весь экран, для монитора в комнате. Esc — выйти; ⌘K / Ctrl K открывает режим откуда угодно.",
+	"settings_appearance_wall_description": "Панель консоли на весь экран, для монитора в комнате. Esc — выйти; ⌘K / Ctrl K открывает режим откуда угодно.",
 	"settings_appearance_wall_open": "Открыть режим стены",
 	"settings_appearance_wall_title": "Режим стены",
 	"settings_assistant_any_network": "Любая сеть",
@@ -6661,6 +6271,7 @@
 	"settings_backup_section_incidents": "Инциденты и объявления об обслуживании.",
 	"settings_backup_section_netconfig_host_keys": "Запомненные SSH-ключи хостов для резервных копий конфигураций, чтобы ни одному устройству снова не доверять вслепую.",
 	"settings_backup_section_netconfig_versions": "Версии сетевых конфигураций, только если вы их включите: они содержат секреты устройств.",
+	"settings_backup_section_netscan_schedules": "Запланированные сканирования сети с устройствами, которые вы пометили как известные или игнорируемые.",
 	"settings_backup_section_packs": "Пакеты интеграций, чтобы мониторы этого типа снова опрашивались.",
 	"settings_backup_section_push_monitors": "Токены heartbeat, чтобы URL, к которым обращаются ваши задачи cron, не менялись.",
 	"settings_backup_section_rule_overrides": "Пороги и исключения для отдельных мониторов.",
@@ -6675,8 +6286,6 @@
 	"settings_backup_without_key": "Без ключа",
 	"settings_backup_write_error": "Не удалось записать резервную копию",
 	"settings_block_connection": "Подключение",
-	"settings_block_off": "Выкл.",
-	"settings_block_on": "Вкл.",
 	"settings_config_action_create": "Создать",
 	"settings_config_action_delete": "Удалить",
 	"settings_config_action_update": "Изменить",
@@ -6730,7 +6339,6 @@
 	"settings_config_yaml_label": "или вставьте YAML",
 	"settings_language_auto": "Автоматически (язык браузера)",
 	"settings_language_theme_description": "Сохраняются в этом браузере.",
-	"settings_language_theme_title": "Язык и тема",
 	"settings_ldap_access_denied": "Отказ: нет ни в одной из групп",
 	"settings_ldap_admin_groups": "Группы администраторов",
 	"settings_ldap_base_dn": "Базовый DN",
@@ -6897,97 +6505,7 @@
 	"settings_logs_storage_title": "Локальное хранилище",
 	"settings_logs_title": "Журналы сервера",
 	"settings_logs_total_size": "Общий размер",
-	"settings_music_account": "Учётная запись",
-	"settings_music_admin_only": "Подключить учётную запись Spotify здесь может администратор.",
-	"settings_music_app": "Приложение (Client ID)",
-	"settings_music_connect_button": "Подключить Spotify",
-	"settings_music_connect_heading": "Spotify Connect",
-	"settings_music_connect_intro": "Стена становится колонкой с именем {name}: в приложении Spotify на телефоне откройте «Устройства» и выберите её, звук пойдёт с экрана. Стена также показывает, что играет в этой учётной записи на любом устройстве — в приложении телевизора, на cast-колонке, на ноутбуке.",
-	"settings_music_connected_at": "Подключено",
-	"settings_music_connected_default": "Подключён",
-	"settings_music_copy_redirect": "Скопировать URI перенаправления",
-	"settings_music_description": "Запускайте музыку с телефона и слушайте её на экране стены или отправьте ей ссылку Spotify, Deezer или YouTube.",
-	"settings_music_disconnect": "Отключить",
-	"settings_music_disconnect_confirm": "Отключить Spotify?",
-	"settings_music_disconnect_error": "Не удалось отключить",
-	"settings_music_err_client_id": "Вставьте Client ID со страницы вашего приложения в Spotify Developer Dashboard (32 буквы и цифры).",
-	"settings_music_expired": "Spotify завершил подключение. Подключитесь заново ниже: Client ID сохранён.",
-	"settings_music_expired_reason": "Spotify завершил подключение ({reason}). Подключитесь заново ниже: Client ID сохранён.",
-	"settings_music_finish": "Завершить подключение",
-	"settings_music_finish_error": "Не удалось завершить подключение",
-	"settings_music_link_heading": "Воспроизвести ссылку на стенах",
-	"settings_music_link_intro": "Без Premium, а также для Deezer и YouTube — у которых в вебе нет пульта вроде Connect — отправьте ссылку с любого экрана, в том числе с телефона: каждая стена воспроизведёт её в собственном плеере сервиса. Браузер стены без входа в Spotify или Deezer играет 30-секундные фрагменты.",
-	"settings_music_link_label": "Ссылка для воспроизведения на стенах",
-	"settings_music_load_error": "Не удалось загрузить настройки музыки",
-	"settings_music_missing": "Этот сервер пока не поддерживает музыку на стене: обновите DumbMonit.",
-	"settings_music_missing_scopes": "Spotify не предоставил: {scopes}. Подключитесь заново и примите все разрешения.",
-	"settings_music_needs_1": "Spotify Premium в учётной записи владельца приложения. Личное приложение (режим разработки) допускает до пяти учётных записей: другие добавляются в User Management.",
-	"settings_music_needs_2": "Телефон должен быть авторизован в той же учётной записи Spotify, что подключена здесь: колонка в браузере показывается только для своей учётной записи — не для других участников семейного плана — и не находится в сети, как умная колонка.",
-	"settings_music_needs_3": "Чтобы стена была колонкой, её браузер должен открывать DumbMonit по HTTPS (или как localhost на самом экране) и поддерживать DRM (Widevine): Chrome, Edge или Firefox на компьютере, Chromium с Widevine на Raspberry Pi. Большинство браузеров смарт-ТВ и киосков не могут — стена сообщает об этом на экране, а стены ниже показывают это здесь.",
-	"settings_music_needs_4": "Браузеры не воспроизводят звук, пока страницы не коснутся: один раз коснитесь стены или нажмите клавишу после загрузки (или запустите браузер киоска с --autoplay-policy=no-user-gesture-required).",
-	"settings_music_needs_5": "«Сейчас играет» работает и без всего этого: сервер каждые несколько секунд спрашивает у Spotify, что играет, даже по обычному HTTP.",
-	"settings_music_needs_6": "Spotify завершает подключение через шесть месяцев после подтверждения: подключитесь заново до указанной даты.",
-	"settings_music_needs_heading": "Что для этого нужно",
-	"settings_music_not_connected": "Spotify не подключён",
-	"settings_music_nothing_playing": "В этой учётной записи ничего не играет.",
-	"settings_music_nothing_sent": "На стены ничего не отправлено. Ссылку может отправить администратор.",
-	"settings_music_now_artists": " — {artists}",
-	"settings_music_now_device": ", на устройстве {device}",
-	"settings_music_now_line": "{status}: {title}{artists}{device}",
-	"settings_music_on_walls": "На стенах",
-	"settings_music_open_spotify": "Открыть Spotify",
-	"settings_music_outcome_connected": "Spotify подключён.",
-	"settings_music_outcome_denied": "Spotify не предоставил доступ. Начните заново и выберите «Принимаю».",
-	"settings_music_outcome_exchange": "Spotify отказался завершить подключение. Проверьте, что URI перенаправления ниже зарегистрирован в вашем приложении в точности так же.",
-	"settings_music_outcome_hint": "Начните заново ниже; ничего не изменено.",
-	"settings_music_outcome_internal": "Не удалось сохранить подключение. Проверьте журналы сервера.",
-	"settings_music_outcome_session": "Ваш сеанс DumbMonit — не тот, что начал подключение. Войдите и начните заново.",
-	"settings_music_outcome_state": "Это подтверждение неизвестно, просрочено или уже использовано. Начните заново с «Подключить Spotify».",
-	"settings_music_outcome_unknown": "Подключение не завершено.",
-	"settings_music_plate_connected": "Spotify подключён",
-	"settings_music_plate_off": "Spotify выключен",
-	"settings_music_plate_reconnect": "Переподключите Spotify",
-	"settings_music_play_on_wall": "Воспроизвести на стене",
-	"settings_music_reconnect_by": "Переподключить до",
-	"settings_music_reconnect_note": "Spotify завершает подключения через шесть месяцев.",
-	"settings_music_redirect_insecure": "DumbMonit отдаётся по обычному HTTP, а Spotify принимает только https:// или этот адрес 127.0.0.1. Там ничего не отвечает: после подтверждения браузер покажет страницу ошибки — скопируйте её адрес, в нём находится код. По HTTPS перенаправление было бы прямым.",
-	"settings_music_redirect_secure": "Spotify возвращается прямо на эту страницу.",
-	"settings_music_right_now": "Сейчас",
-	"settings_music_send_error": "Не удалось отправить ссылку",
-	"settings_music_sent_by": "отправлено: {name}",
-	"settings_music_start_error": "Не удалось начать подключение",
-	"settings_music_status_paused": "Пауза",
-	"settings_music_status_playing": "Играет",
-	"settings_music_step1_after": "(любое имя). Отметьте Web API и Web Playback SDK и добавьте этот URI перенаправления:",
-	"settings_music_step1_before": "1. Создайте приложение в",
-	"settings_music_step1_link": "Spotify Developer Dashboard",
-	"settings_music_step2_help": "На странице приложения в разделе Basic Information. Копировать секрет не нужно: DumbMonit использует PKCE.",
-	"settings_music_step2_label": "2. Вставьте его Client ID",
-	"settings_music_step3": "3. Подтвердите в Spotify и вернитесь сюда.",
-	"settings_music_step4_help": "Начинается с {uri}?code= — действует десять минут, один раз.",
-	"settings_music_step4_label": "4. Вставьте адрес страницы, на которую вы попали",
-	"settings_music_stop": "Остановить",
-	"settings_music_title": "Музыка на стене",
 	"settings_nav_push": "Push-уведомления",
-	"settings_news_country": "Страна",
-	"settings_news_country_ai": "ИИ (на английском)",
-	"settings_news_country_international": "Международные",
-	"settings_news_country_tech": "Технологии (на английском)",
-	"settings_news_custom_add": "Добавить ленту",
-	"settings_news_custom_name": "Название (необязательно)",
-	"settings_news_custom_title": "Добавить свою ленту",
-	"settings_news_custom_url": "Адрес RSS или Atom",
-	"settings_news_limit": "Не более {count} лент.",
-	"settings_news_none": "Лент пока нет. Отметьте источник выше или добавьте свой.",
-	"settings_news_remove": "Убрать {name}",
-	"settings_news_selected": "Ленты на стене",
-	"settings_news_sources": "Источники",
-	"settings_news_test": "Проверить",
-	"settings_news_test_fail": "Не удалось прочитать эту ленту: {error}",
-	"settings_news_test_ok": "Работает. Последний заголовок: «{title}»",
-	"settings_news_testing": "Чтение ленты…",
-	"settings_news_ticker": "Заголовки",
-	"settings_news_ticker_hint": "Свежие заголовки этих лент на стене, обновляются каждые пять минут. Разместите их в расположении ниже.",
 	"settings_packs_add_device": "Добавить: {label}",
 	"settings_packs_admin_only_description": "Пакет определяет, что этот сервер запрашивает у ваших мониторов.",
 	"settings_packs_admin_only_title": "Управлять пакетами интеграций может только администратор.",
@@ -7381,8 +6899,6 @@
 	"settings_search_kw_assistant": "api токен mcp ии ассистент claude chatgpt",
 	"settings_search_kw_backup": "резервная копия экспорт восстановление конфигурация",
 	"settings_search_kw_locations": "карта мира площадки места координаты openstreetmap тайлы",
-	"settings_search_kw_music": "музыка spotify колонка стена",
-	"settings_search_kw_news": "новости заголовки rss ленты стена",
 	"settings_search_kw_notifications": "каналы discord почта ntfy telegram тихие часы страница статуса",
 	"settings_search_kw_packs": "интеграция пакет yaml сообщество",
 	"settings_search_kw_policy": "политика группировка сводка лимит эскалация флаппинг напоминание публичный адрес ссылки действий",
@@ -7392,7 +6908,6 @@
 	"settings_search_kw_sso": "openid oidc вход провайдер authentik keycloak",
 	"settings_search_kw_users": "учётные записи пользователи роли администратор наблюдатель оператор",
 	"settings_search_kw_wall": "стена киоск тв комната монитор полный экран",
-	"settings_search_kw_widgets": "виджеты виджет погода крипто биткоин акции биржа курсы валют валюты cve уязвимости стена",
 	"settings_search_label": "Поиск по настройкам",
 	"settings_search_none": "Ничего не найдено.",
 	"settings_search_placeholder": "Найти настройку…",
@@ -7488,45 +7003,6 @@
 	"settings_sla_this_month": "Этот месяц до сих пор",
 	"settings_sla_title": "Отчёт о доступности (SLA)",
 	"settings_sla_to": "По",
-	"settings_speaker_account": "Учётная запись",
-	"settings_speaker_account_note": "— чтобы увидеть стену, телефон должен быть авторизован в этой учётной записи Spotify.",
-	"settings_speaker_browser_default": "Браузер",
-	"settings_speaker_connected": "Подключён",
-	"settings_speaker_device_playing": "{name} (играет)",
-	"settings_speaker_err_name": "Имя колонки — не более 64 символов.",
-	"settings_speaker_heading": "Колонка",
-	"settings_speaker_in_devices": "В устройствах Spotify",
-	"settings_speaker_listed_as": "В Spotify отображается как {name}.",
-	"settings_speaker_listed_no": "Сейчас нет",
-	"settings_speaker_listed_yes": "Да — телефоны с этой учётной записью могут её выбрать",
-	"settings_speaker_lists": "Spotify показывает: {devices}",
-	"settings_speaker_lists_none": "Сейчас Spotify не показывает ни одного устройства в этой учётной записи.",
-	"settings_speaker_missing": "Этот сервер пока не сообщает о колонке: обновите DumbMonit.",
-	"settings_speaker_name_help": "То, что телефоны показывают в «Устройствах». Его используют все стены; добавьте ?speaker=Кухня к адресу одной стены, чтобы назвать только её. Пусто: «DumbMonit Wall».",
-	"settings_speaker_name_label": "Название в Spotify",
-	"settings_speaker_phase_connecting": "Подключается",
-	"settings_speaker_phase_error": "Остановлен",
-	"settings_speaker_phase_locked": "Готов, звук заблокирован",
-	"settings_speaker_phase_not_listed": "Spotify не показывает",
-	"settings_speaker_phase_off": "Выключено на этом экране",
-	"settings_speaker_phase_ready": "Готов",
-	"settings_speaker_phase_unsupported": "Здесь воспроизведение невозможно",
-	"settings_speaker_premium": "Premium",
-	"settings_speaker_premium_no": "Нет — стена не может быть колонкой",
-	"settings_speaker_premium_unknown": "Пока неизвестно (стена сообщит при подключении)",
-	"settings_speaker_premium_yes": "Да",
-	"settings_speaker_read_error": "Не удалось прочитать данные колонки",
-	"settings_speaker_refresh": "Обновить",
-	"settings_speaker_refresh_aria": "Обновить состояние колонки",
-	"settings_speaker_rename": "Переименовать",
-	"settings_speaker_rename_error": "Не удалось переименовать колонку.",
-	"settings_speaker_test_fail": "Spotify не начал воспроизведение.",
-	"settings_speaker_test_hint": "Запускает воспроизведение в этой учётной записи на «{name}», продолжая последнее, что играло.",
-	"settings_speaker_test_ok": "Spotify теперь играет на «{name}»: слушайте стену. Ничего не слышно? Коснитесь стены один раз, чтобы разблокировать звук.",
-	"settings_speaker_test_sound": "Проверить звук",
-	"settings_speaker_wall_meta": "· как «{name}» · {when}",
-	"settings_speaker_walls": "Стены",
-	"settings_speaker_walls_none": "За последние пятнадцать минут ни одна стена не сообщала о себе. Откройте /wall на экране (после входа, подойдут и учётные записи наблюдателей), и она появится здесь в течение минуты.",
 	"settings_sso_admin_groups": "Группы администраторов",
 	"settings_sso_admin_groups_help": "Через запятую. Участники становятся администраторами, остальные — наблюдателями (или операторами, см. ниже); проверяется при каждом входе. Если оба списка пусты, роли управляются здесь.",
 	"settings_sso_alg_warning": "Этот провайдер не заявляет RS256 или ES256: DumbMonit принимает только такие подписи.",
@@ -7777,103 +7253,6 @@
 	"settings_users_update_error": "Не удалось обновить пользователя",
 	"settings_users_username": "Имя пользователя",
 	"settings_users_you": "вы",
-	"settings_widgets_add": "Добавить",
-	"settings_widgets_ai": "Использование ИИ",
-	"settings_widgets_ai_by_person": "Показывать самых активных",
-	"settings_widgets_ai_by_person_help": "Добавляет список тех, кто израсходовал больше всего токенов. Ни один из провайдеров не разбивает стоимость по людям, поэтому перечисляются только токены.",
-	"settings_widgets_ai_claude": "Claude (Anthropic)",
-	"settings_widgets_ai_claude_hint": "Стоимость и токены использования API Claude организацией.",
-	"settings_widgets_ai_claude_key": "Ключ Admin API Anthropic",
-	"settings_widgets_ai_claude_key_help": "Начинается с sk-ant-admin. Административные ключи есть только у организаций; их создаёт администратор организации в Claude Console. Хранится в зашифрованном виде и больше не показывается.",
-	"settings_widgets_ai_hint": "Стоимость и токены API-аккаунтов Claude и OpenAI вашей организации, считываются каждые 15 минут через их административные API. У потребительских подписок (Claude Pro и Max, ChatGPT Plus) и их недельных лимитов нет официального API, поэтому показать их нельзя.",
-	"settings_widgets_ai_key_howto": "Как получить админ-ключ",
-	"settings_widgets_ai_openai": "ChatGPT (API OpenAI)",
-	"settings_widgets_ai_openai_hint": "Стоимость и токены использования API OpenAI организацией.",
-	"settings_widgets_ai_openai_key": "Административный ключ OpenAI",
-	"settings_widgets_ai_openai_key_help": "Административный ключ организации, созданный её владельцем. Хранится в зашифрованном виде и больше не показывается. Считывается использование API, а не аккаунты ChatGPT Plus.",
-	"settings_widgets_ai_people": "Имена",
-	"settings_widgets_ai_people_help": "API возвращают идентификаторы, а не имена. Добавьте идентификатор (аккаунта или ключа API в том виде, как его показывает провайдер) и отображаемое имя.",
-	"settings_widgets_ai_period": "Период",
-	"settings_widgets_ai_person_add": "Добавить имя",
-	"settings_widgets_ai_person_id": "Идентификатор",
-	"settings_widgets_ai_person_name": "Имя",
-	"settings_widgets_crypto": "Курсы криптовалют",
-	"settings_widgets_crypto_coins": "Монеты",
-	"settings_widgets_crypto_currency": "Валюта отображения",
-	"settings_widgets_crypto_custom": "Другая монета",
-	"settings_widgets_crypto_custom_help": "Её идентификатор CoinGecko, как в адресе её страницы на coingecko.com.",
-	"settings_widgets_crypto_hint": "Текущая цена и изменение за 24 часа через публичный API CoinGecko (без ключа; сервер обращается примерно раз в минуту).",
-	"settings_widgets_crypto_key": "Ключ CoinGecko Demo (необязательно)",
-	"settings_widgets_crypto_key_help": "Бесплатно на coingecko.com; даёт серверу собственный лимит запросов. Хранится в зашифрованном виде, повторно не показывается.",
-	"settings_widgets_cve": "Критические уязвимости",
-	"settings_widgets_cve_count": "Показывать",
-	"settings_widgets_cve_hint": "Последние CVE, признанные NVD критическими на этой неделе, и те, что CISA указывает как активно эксплуатируемые (без ключа; чтение раз в час).",
-	"settings_widgets_cve_source": "Список",
-	"settings_widgets_cve_source_both": "Оба: критические и эксплуатируемые",
-	"settings_widgets_cve_source_kev": "Активно эксплуатируемые (CISA KEV)",
-	"settings_widgets_cve_source_nvd": "Критические (NVD, CVSS 9 и выше)",
-	"settings_widgets_description": "Погода, новости, свободное сообщение, курсы криптовалют, акции, курсы валют, критические уязвимости и расход ИИ — небольшие и неподвижные, рядом с мониторингом. Опустите каждый виджет туда, где он нужен, на макете экрана. Сервер сам читает каждый источник и кэширует его: ни один экран к ним не обращается.",
-	"settings_widgets_fx": "Курсы валют",
-	"settings_widgets_fx_base": "Базовая валюта",
-	"settings_widgets_fx_currencies": "Валюты",
-	"settings_widgets_fx_hint": "Ежедневные официальные курсы центральных банков через Frankfurter (без ключа; чтение раз в час).",
-	"settings_widgets_key_keep": "Оставьте пустым, чтобы сохранить текущий ключ",
-	"settings_widgets_key_missing": "Без этого ключа виджет не появится на стене.",
-	"settings_widgets_key_remove": "Удалить ключ",
-	"settings_widgets_key_removing": "Ключ будет удалён при сохранении.",
-	"settings_widgets_key_saved": "Ключ сохранён. Введите новый, чтобы заменить его.",
-	"settings_widgets_layout": "Расположение",
-	"settings_widgets_layout_down": "Опустить {name}",
-	"settings_widgets_layout_earlier": "Сдвинуть {name} раньше",
-	"settings_widgets_layout_help": "Перетащите виджет на экран туда, где он должен быть. Или выберите его клавишей Enter и используйте стрелки или кнопки.",
-	"settings_widgets_layout_help_list": "Выберите зону для каждого виджета и упорядочите их стрелками.",
-	"settings_widgets_layout_hint": "То, что вы опустите здесь, и показывает стена — небольшое и неподвижное: ничего не сменяется. Если зоне не хватает места, её виджеты показывают меньше пунктов.",
-	"settings_widgets_layout_key": "Нужен ключ",
-	"settings_widgets_layout_later": "Сдвинуть {name} позже",
-	"settings_widgets_layout_monitors": "Мониторинг",
-	"settings_widgets_layout_move_to": "Переместить в",
-	"settings_widgets_layout_moved": "{name} перемещён в зону «{zone}», место {position} из {count}.",
-	"settings_widgets_layout_moved_hidden": "{name} теперь скрыт.",
-	"settings_widgets_layout_none_selected": "Выберите виджет, чтобы переместить его с клавиатуры.",
-	"settings_widgets_layout_off": "Выкл.",
-	"settings_widgets_layout_place": "Место: {name}",
-	"settings_widgets_layout_reset": "Сбросить по умолчанию",
-	"settings_widgets_layout_reset_done": "Расположение сброшено. Сохраните, чтобы оставить его.",
-	"settings_widgets_layout_screen": "Макет экрана стены в масштабе",
-	"settings_widgets_layout_selected": "Выбрано: {name}",
-	"settings_widgets_layout_up": "Поднять {name}",
-	"settings_widgets_remove": "Удалить: {name}",
-	"settings_widgets_save": "Сохранить виджеты",
-	"settings_widgets_saved": "Сохранено. Стены подхватят изменения в течение минуты.",
-	"settings_widgets_stocks": "Котировки акций",
-	"settings_widgets_stocks_hint": "Последняя цена и изменение за день через Finnhub. Нужен бесплатный ключ Finnhub: ни один источник котировок без ключа не является одновременно надёжным и разрешённым. Бесплатный тариф охватывает акции, торгуемые в США.",
-	"settings_widgets_stocks_key": "Ключ API Finnhub",
-	"settings_widgets_stocks_key_help": "Бесплатно на finnhub.io. Хранится в зашифрованном виде, повторно не показывается.",
-	"settings_widgets_stocks_symbols": "Тикеры",
-	"settings_widgets_stocks_symbols_help": "Тикеры через запятую, не более десяти.",
-	"settings_widgets_text": "Свободное сообщение",
-	"settings_widgets_text_content": "Текст",
-	"settings_widgets_text_help": "{count} / {max} символов. Обычный текст в одну строку.",
-	"settings_widgets_text_hint": "Короткая заметка для команды, показывается на стене как есть.",
-	"settings_widgets_text_placeholder": "Планёрка в 10:00 в синей комнате",
-	"settings_widgets_title": "Виджеты стены",
-	"settings_widgets_weather": "Погода",
-	"settings_widgets_weather_add": "Выбрать {place}",
-	"settings_widgets_weather_find": "Найти",
-	"settings_widgets_weather_hint": "Значок и текущая температура под часами, от Open-Meteo (без ключа; обновление каждые 15 минут).",
-	"settings_widgets_weather_imperial": "Имперские (°F, mph)",
-	"settings_widgets_weather_metric": "Метрические (°C, km/h)",
-	"settings_widgets_weather_no_place": "Место ещё не выбрано: найдите город выше.",
-	"settings_widgets_weather_none_found": "Мест с таким названием не найдено.",
-	"settings_widgets_weather_places": "Место",
-	"settings_widgets_weather_search": "Найти город",
-	"settings_widgets_weather_searching": "Поиск…",
-	"settings_widgets_weather_units": "Единицы",
-	"settings_widgets_zone_bottom": "Нижняя панель",
-	"settings_widgets_zone_empty": "Здесь ничего нет.",
-	"settings_widgets_zone_hidden": "Скрыто",
-	"settings_widgets_zone_right": "Правая колонка",
-	"settings_widgets_zone_top": "Верхняя панель",
 	"status_access_help": "Закрытая страница никогда не индексируется и не попадает в sitemap; её значки, ленты и JSON подчиняются тому же правилу. Доступ по входу охватывает локальные, LDAP и SSO-аккаунты и работает только на основном адресе.",
 	"status_access_label": "Кто может видеть эту страницу",
 	"status_access_password": "Любой, у кого есть пароль",
@@ -8291,7 +7670,7 @@
 	"status_public_title": "Статус",
 	"status_public_title_with_page": "{title} · Статус",
 	"status_public_uptime_last": "Доступность за последние {days} дн.",
-	"status_scene_matterhorn": "Маттерхорн",
+	"status_scene_dubai": "Дубай",
 	"status_scene_newyork": "Нью-Йорк",
 	"status_scene_paris": "Париж",
 	"status_scene_rotation_10m": "Каждые 10 минут",
@@ -8825,6 +8204,35 @@
 	"topology_state_stopped": "Остановлена",
 	"topology_state_suppressed": "Подавлено",
 	"topology_subnet_toggle": "Группировать по подсетям",
+	"topology_traffic_toggle": "Трафик",
+	"topology_traffic_edge_label": "{from} → {to}: {load}",
+	"topology_traffic_errors_short": "ошибки",
+	"topology_traffic_panel_label": "Трафик канала",
+	"topology_traffic_close": "Закрыть",
+	"topology_traffic_ports": "Измерено на {ports} ({name})",
+	"topology_traffic_stale": "Один из концов этого канала недоступен: эти данные не актуальны.",
+	"topology_traffic_in": "Принято {name}",
+	"topology_traffic_out": "Отправлено {name}",
+	"topology_traffic_speed_label": "Скорость порта",
+	"topology_traffic_speed_unknown": "неизвестна",
+	"topology_traffic_errors_label": "Ошибки и отброшенные пакеты",
+	"topology_traffic_errors_rate": "{count} в минуту",
+	"topology_traffic_errors_none": "Нет",
+	"topology_traffic_hour": "Последний час",
+	"topology_traffic_hour_peak": "Пик {rate}",
+	"topology_traffic_hour_error": "Не удалось загрузить график.",
+	"topology_traffic_hour_loading": "Загрузка графика",
+	"topology_traffic_chart_label": "Трафик за последний час, принятый и отправленный",
+	"topology_traffic_legend_in": "Принято",
+	"topology_traffic_legend_out": "Отправлено",
+	"topology_traffic_legend_title": "Загрузка каналов",
+	"topology_traffic_legend_range": "{from}–{to} %",
+	"topology_traffic_legend_errors": "Пунктир: ошибки или отброшенные пакеты",
+	"topology_traffic_legend_flow": "Точки: направление основного потока",
+	"topology_traffic_legend_stale": "Серый: один из концов недоступен",
+	"topology_traffic_top_title": "Самые загруженные каналы",
+	"topology_traffic_top_empty": "Пока ни один канал не сообщает о трафике.",
+	"topology_traffic_load_col": "Загрузка",
 	"topology_summary_devices": "Мониторов: {count}",
 	"topology_summary_down": "Недоступно: {count}",
 	"topology_summary_sites": "Удалённые площадки: {count}",
@@ -8846,160 +8254,34 @@
 	"ui_error_notice_help_network": "Убедитесь, что сервер запущен и сеть доступна.",
 	"ui_error_notice_help_server": "Проверьте журналы сервера и повторите попытку.",
 	"ui_error_notice_signin": "Войти снова",
-	"wall_back": "Назад к обзору",
-	"wall_city_newyork": "Нью-Йорк",
-	"wall_city_paris": "Париж",
-	"wall_city_title": "Город",
-	"wall_city_tokyo": "Токио",
-	"wall_city_zermatt": "Церматт",
-	"wall_devices_aria": "Мониторы",
-	"wall_devices_more": "Ещё мониторов: {count}, все на связи",
-	"wall_devices_more_trouble": "Ещё мониторов: {count} (требуют внимания: {trouble})",
-	"wall_devices_reporting": "Передаёт данные",
-	"wall_dock_enable": "Коснитесь, чтобы включить звук",
-	"wall_dock_enable_hint": "Затем выберите «{name}» в разделе «Устройства» в Spotify",
-	"wall_dock_hide": "Скрыть",
-	"wall_dock_retrying": "Повторная попытка выполняется автоматически…",
-	"wall_dock_trouble_pill": "Здесь не колонка",
-	"wall_dock_trouble_title": "Spotify не может играть на этом экране",
-	"wall_dock_why": "Почему",
 	"wall_ent_oncall_none": "Никто не дежурит. Настройте график дежурств в разделе «Оповещения».",
 	"wall_exit": "Выход",
 	"wall_exit_aria": "Выйти из режима стены",
-	"wall_load_error": "Не удалось загрузить стену",
-	"wall_market_vs": "к {base}",
-	"wall_music_admin_only": "Изменить это может только администратор.",
-	"wall_music_button": "Музыка",
-	"wall_music_cancel": "Отмена",
-	"wall_music_dialog": "Музыка на стенах",
-	"wall_music_link_help": "Ссылка Spotify, Deezer или YouTube (Music) на трек, альбом, плейлист или видео. Каждая стена воспроизводит её в плеере сервиса. У Deezer и YouTube нет пульта вроде Spotify Connect, поэтому нужна ссылка.",
-	"wall_music_link_label": "Воспроизвести ссылку на стенах",
-	"wall_music_play_error": "Spotify не начал воспроизведение здесь.",
-	"wall_music_play_here": "Играть здесь",
-	"wall_music_play_wall": "Воспроизвести на стене",
-	"wall_music_retry": "Повторить",
-	"wall_music_send_error": "Не удалось отправить ссылку.",
-	"wall_music_settings": "Настройки → Музыка на стене",
-	"wall_music_speaker": "Колонка Spotify",
-	"wall_music_speaker_label": "Использовать этот экран как колонку Spotify",
-	"wall_music_state_disabled": "Выключено на этом экране",
-	"wall_music_state_disabled_detail": "Текущее воспроизведение по-прежнему отображается.",
-	"wall_music_state_error": "Остановлено",
-	"wall_music_state_expired": "Требуется переподключение",
-	"wall_music_state_locked": "Звук заблокирован",
-	"wall_music_state_locked_detail": "Один раз коснитесь любого места на стене, затем выберите её в Spotify.",
-	"wall_music_state_off": "Не подключено",
-	"wall_music_state_off_admin": "Подключите учётную запись Spotify в разделе «Настройки → Музыка на стене», чтобы играть с телефона.",
-	"wall_music_state_off_user": "Администратор может подключить учётную запись Spotify в разделе «Настройки → Музыка на стене».",
-	"wall_music_state_ready": "Готово",
-	"wall_music_state_ready_detail": "В Spotify на телефоне с той же учётной записью: Устройства → {name}. Или запустите воспроизведение здесь, из этой панели.",
-	"wall_music_state_starting": "Запуск…",
-	"wall_music_state_unlisted": "Пока не в списке",
-	"wall_music_state_unlisted_detail": "Spotify пока не показывает этот экран; он переподключится сам через минуту-две.",
-	"wall_music_state_unsupported": "Здесь недоступно",
-	"wall_music_stop": "Стоп",
-	"wall_music_stop_error": "Не удалось остановить музыку.",
-	"wall_now_aria": "Сейчас играет",
-	"wall_now_cover": "Обложка: {name}",
-	"wall_now_fold": "Свернуть карточку музыки",
-	"wall_now_on": "{verb}: {where}",
-	"wall_now_paused": "Пауза",
-	"wall_now_pill_aria": "{verb}: {track}. Показать карточку музыки",
-	"wall_now_playing": "Играет",
-	"wall_now_progress": "Ход воспроизведения",
-	"wall_now_progress_text": "{position} из {total}",
 	"wall_page_title": "Стена · DumbMonit",
-	"wall_player_fold": "Свернуть",
-	"wall_player_fold_aria": "Свернуть плеер",
-	"wall_player_show": "Показать",
-	"wall_player_stop_aria": "Остановить музыку на всех стенах",
-	"wall_player_title": "Плеер {label}",
-	"wall_problems_agent_silent": "Агент молчит {duration}",
-	"wall_problems_aria": "Проблемы",
-	"wall_problems_more": "Ещё проблем: {count}, см. «Оповещения»",
-	"wall_problems_no_data": "Нет данных {duration}",
-	"wall_problems_parent_down": "{rule} · {parent} недоступен",
-	"wall_problems_times": "×{count}",
-	"wall_refresh_failed": "Не удалось обновить данные, показано предыдущее состояние.",
-	"wall_scene_sign_problems": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} ПРОБЛЕМА",
-				"countPlural=few": "{count} ПРОБЛЕМЫ",
-				"countPlural=many": "{count} ПРОБЛЕМ",
-				"countPlural=other": "{count} ПРОБЛЕМЫ"
-			}
-		}
-	],
+	"wall_scene_auto": "Авто",
+	"wall_scene_button": "Фон",
+	"wall_scene_forced": "Сейчас это задано ссылкой; здесь не сохраняется.",
+	"wall_scene_hint": "Ближайший к часовому поясу этого экрана или выбранный город.",
+	"wall_scene_none": "Нет",
+	"wall_scene_title": "Ночной город за панелью",
 	"wall_status_empty": "Пока нечего отслеживать",
 	"wall_status_ok": "Всё в порядке",
 	"wall_status_problem_one": "1 проблема",
 	"wall_status_problems": "Проблем: {count}",
 	"wall_status_waiting": "Ожидание данных",
-	"wall_theme_auto": "Авто",
-	"wall_theme_auto_hint": "Как в остальном DumbMonit.",
-	"wall_theme_button": "Тема",
-	"wall_theme_day": "День",
-	"wall_theme_day_hint": "Миллиметровка, тёмно-синие чернила.",
-	"wall_theme_dialog": "Тема этой стены",
-	"wall_theme_forced": "Сейчас тема задана ссылкой и здесь не сохраняется.",
-	"wall_theme_night": "Ночь",
-	"wall_theme_night_hint": "Радарная картинка, бирюзовый сигнал.",
-	"wall_theme_title": "Тема на этом экране",
 	"wall_updated_relative": "Обновлено: {when}",
 	"wall_updated_seconds": "Обновлено {seconds} с назад",
 	"wall_updated_waiting": "Ожидание первой проверки…",
-	"wall_weather_now": "{place}: {sky}, {temperature}",
 	"wall_widgets_ai_cost": "Стоимость",
-	"wall_widgets_ai_month": "Этот месяц",
 	"wall_widgets_ai_needs_key": "Нужен административный ключ API (Настройки → Режим стены).",
 	"wall_widgets_ai_note": "Использование API организации, в долларах США. Подписки (Pro, Max, Plus) не учитываются.",
 	"wall_widgets_ai_people": "Больше всего токенов",
 	"wall_widgets_ai_people_note": "Только токены: стоимость по людям не разбивается.",
-	"wall_widgets_ai_today": "Сегодня",
-	"wall_widgets_ai_tokens": "{count} токенов",
-	"wall_widgets_ai_unattributed": "Не определено",
-	"wall_widgets_ai_week": "Последние 7 дней",
-	"wall_widgets_aria": "Виджеты",
-	"wall_widgets_claude": "Claude",
-	"wall_widgets_crypto": "Крипто",
 	"wall_widgets_crypto_note": "Изменение за 24 часа",
-	"wall_widgets_cve": "Критические уязвимости",
-	"wall_widgets_cve_exploited": "Эксплуатируется",
-	"wall_widgets_cve_none": "На этой неделе критических уязвимостей нет.",
-	"wall_widgets_cve_ransomware": "Шифровальщик",
-	"wall_widgets_cve_unscored": "н/о",
-	"wall_widgets_fx": "Курсы валют",
 	"wall_widgets_fx_note": "В {base}, курсы на {date}; изменение с предыдущего дня",
-	"wall_widgets_more": "+{count}",
 	"wall_widgets_needs_key": "Нужен бесплатный ключ API (Настройки → Экран стены).",
-	"wall_widgets_news": "Заголовки",
-	"wall_widgets_openai": "OpenAI",
-	"wall_widgets_sky_clear": "Ясно",
-	"wall_widgets_sky_cloudy": "Облачно",
-	"wall_widgets_sky_drizzle": "Морось",
-	"wall_widgets_sky_fog": "Туман",
-	"wall_widgets_sky_partly": "Переменная облачность",
-	"wall_widgets_sky_rain": "Дождь",
-	"wall_widgets_sky_snow": "Снег",
-	"wall_widgets_sky_storm": "Гроза",
-	"wall_widgets_source": "Источник: {source}",
-	"wall_widgets_stale": "Устарело: прочитано {when}",
-	"wall_widgets_stocks": "Акции",
 	"wall_widgets_stocks_unknown": "Неизвестные тикеры: {symbols}",
-	"wall_widgets_text": "Сообщение",
-	"wall_widgets_trend_down": "снижение на {change}",
-	"wall_widgets_trend_flat": "без изменений",
-	"wall_widgets_trend_up": "рост на {change}",
 	"wall_widgets_unavailable": "Сейчас недоступно.",
-	"wall_widgets_weather": "Погода",
 	"website_after": "Стало:",
 	"website_before": "Было:",
 	"website_category": "Категория",
@@ -9227,34 +8509,14 @@
 	"console_table_hint": "Сначала худшие. Выберите строку для просмотра.",
 	"console_table_keys": "j / k — перемещение, Enter — просмотр, o — открыть",
 	"console_table_title": "Мониторы",
-	"mode_enterprise_point_nav": "Панель значков, панель контекста и палитра команд везде",
-	"mode_enterprise_point_table": "Плотные таблицы с доп. столбцами, фильтрами и горячими клавишами",
-	"mode_enterprise_point_team": "Команды, единый вход, дежурства и журналы на виду",
-	"mode_enterprise_text": "Плотная, очень тёмная консоль для команд, все настройки на виду.",
-	"mode_enterprise_title": "Предприятие",
-	"mode_homelab_point_forms": "Короткие формы с разумными значениями, расширенные настройки свёрнуты",
-	"mode_homelab_point_nav": "Четыре раздела на виду, остальное в «Ещё»",
-	"mode_homelab_point_theme": "Сводка-погода и стойка, в светлой или тёмной теме",
-	"mode_homelab_text": "Спокойный интерфейс, всё главное на виду. Любая функция — в один клик.",
-	"mode_homelab_title": "Домашняя лаборатория",
-	"mode_picker_label": "Режим продукта",
-	"mode_picker_selected": "Выбрано",
-	"mode_switch_keeps": "Переключение меняет только интерфейс. Ничего не удаляется.",
-	"settings_advanced_summary": "Разделов: {count}",
-	"settings_advanced_title": "Дополнительно",
-	"settings_appearance_enterprise_dark": "Режим «Предприятие» всегда использует тёмную консоль. Для светлой и тёмной темы выберите «Домашняя лаборатория» в Настройки → Общие.",
 	"settings_general_instance_text": "Имя отображается в заголовке. Язык и часовой пояс — значения по умолчанию для новых браузеров и отчётов.",
 	"settings_general_instance_title": "Экземпляр",
-	"settings_general_mode_saving": "Переключение…",
-	"settings_general_mode_text": "«Домашняя лаборатория» — просто. «Предприятие» показывает все настройки в плотной тёмной консоли.",
-	"settings_general_mode_title": "Режим интерфейса",
 	"settings_general_readonly": "Изменять эти настройки могут только администраторы.",
 	"settings_general_save": "Сохранить",
 	"settings_general_saved": "Сохранено",
 	"settings_general_wizard_run": "Запустить мастер настройки",
 	"settings_general_wizard_text": "Пройдите шаги первого запуска заново: режим, имя, уведомления, мониторы, агент.",
 	"settings_general_wizard_title": "Мастер настройки",
-	"settings_search_kw_general": "режим домашняя лаборатория предприятие интерфейс имя язык часовой пояс мастер настройка",
 	"settings_tab_general": "Общие",
 	"wizard_agent_text": "Агент передаёт данные о процессоре, памяти, дисках, контейнерах и службах. Выполните команду на машине, за которой нужно следить.",
 	"wizard_agent_title": "Установить агент",
@@ -9276,8 +8538,6 @@
 	"wizard_instance_timezone": "Часовой пояс",
 	"wizard_instance_title": "Назовите экземпляр",
 	"wizard_intro": "Любой шаг можно пропустить и изменить позже в настройках.",
-	"wizard_mode_text": "Выберите интерфейс под тех, кто им пользуется. Его можно сменить в любой момент в Настройки → Общие.",
-	"wizard_mode_title": "Выберите вид DumbMonit",
 	"wizard_monitors_count": "Мониторов сейчас: {count}",
 	"wizard_monitors_import": "Импорт",
 	"wizard_monitors_import_text": "Из Uptime Kuma, UptimeRobot, Gatus, Healthchecks или списка сайтов.",
@@ -9600,5 +8860,482 @@
 	"deviceform_site_more": "Показать ещё: {count}",
 	"deviceform_site_added": "{name} добавлено.",
 	"deviceform_site_open": "Открыть",
-	"deviceform_site_kinds": "Обычные для площадки"
+	"deviceform_site_kinds": "Обычные для площадки",
+	"devices_luns_cancel": "Отмена",
+	"devices_luns_change_link": "Изменить связь",
+	"devices_luns_consumer": "Используется: {target} · {entity}",
+	"devices_luns_consumer_auto": "Сопоставлено по имени и размеру",
+	"devices_luns_consumer_manual": "Связано вручную",
+	"devices_luns_consumer_no_data": "Нет свежих данных от {target}.",
+	"devices_luns_data": "Данные",
+	"devices_luns_desc": "Толстый LUN резервирует весь свой размер на томе: том выглядит заполненным, и это нормально. Важно, насколько заполнен сам LUN, а это знает только устройство, которое его использует.",
+	"devices_luns_full_normal": "Заполненный том — это нормально: {size} зарезервировано для {luns} (толстые).",
+	"devices_luns_fully_reserved": "Толстые LUN занимают весь том: больше его ничто не заполнит.",
+	"devices_luns_host": "На {volume}",
+	"devices_luns_initiators": "Подключены: {list}",
+	"devices_luns_kind_thick": "Толстый",
+	"devices_luns_kind_thin": "Тонкий",
+	"devices_luns_kind_unknown": "Тип неизвестен",
+	"devices_luns_link": "Связать с устройством",
+	"devices_luns_link_error": "Не удалось сохранить связь.",
+	"devices_luns_load_error": "Не удалось загрузить LUN.",
+	"devices_luns_no_entity": "У этого устройства пока нет диска, хранилища или файловой системы известного размера.",
+	"devices_luns_not_mapped": "Не опубликован ни одной целью",
+	"devices_luns_overcommit": "Тонкое перераспределение: обещано {promised} при {free} свободных",
+	"devices_luns_pick_entity": "Диск, хранилище или файловая система",
+	"devices_luns_pick_monitor": "Устройство, использующее этот LUN",
+	"devices_luns_pick_placeholder": "Выберите…",
+	"devices_luns_reserved": "Зарезервировано LUN",
+	"devices_luns_save": "Сохранить",
+	"devices_luns_sessions_one": "1 сеанс iSCSI",
+	"devices_luns_sessions_other": "Сеансов iSCSI: {count}",
+	"devices_luns_size": "Размер {size}",
+	"devices_luns_thick_hint": "Свяжите его с устройством, которое его использует, чтобы увидеть заполнение.",
+	"devices_luns_thick_unknown": "Зарезервирован (толстый), внутреннее заполнение неизвестно",
+	"devices_luns_thin_promised": "Тонкие LUN: обещано {promised}, свободно {free}",
+	"devices_luns_title": "LUN iSCSI",
+	"devices_luns_title_zvols": "Zvol",
+	"devices_luns_unlink": "Удалить связь",
+	"devices_luns_volume_note": "Из них {size} зарезервировано толстыми LUN iSCSI; без них занято {percent}.",
+	"devices_luns_written": "Записано",
+	"backup_matrix_aria_group": "{group}: {summary}",
+	"backup_matrix_aria_summary": "Копии созданы в {ok} из {total} дней, сбоев: {failed}",
+	"backup_matrix_state_ok": "Копия создана",
+	"backup_matrix_state_failed": "Сбой",
+	"backup_matrix_state_running": "Выполняется",
+	"backup_matrix_state_none": "Нет копии",
+	"backup_matrix_outcome_ok": "OK",
+	"backup_matrix_outcome_failed": "сбой",
+	"backup_matrix_outcome_running": "выполняется",
+	"backup_matrix_plate_failed": "Последнее копирование не удалось",
+	"backup_matrix_plate_late": "Последняя копия: {ago}",
+	"backup_matrix_plate_missing": "Нет копий уже {span}",
+	"backup_matrix_plate_none": "Копий пока нет",
+	"backup_matrix_plate_ok": "Копия создана: {ago}",
+	"backup_matrix_plate_running": "Копирование выполняется",
+	"backup_matrix_summary_today": "Сегодня скопировано: {ok} из {total}",
+	"backup_matrix_summary_today_failing": "Сегодня скопировано: {ok} из {total}, сбоев: {failing}",
+	"backup_matrix_today": "сегодня",
+	"backup_matrix_state_warning": "Предупреждение",
+	"backup_matrix_state_nodata": "Нет данных",
+	"backup_matrix_outcome_warning": "предупреждение",
+	"backup_matrix_plate_warning": "Копия создана {ago}, с предупреждениями",
+	"backup_matrix_legend": "Обозначения",
+	"backup_matrix_meta_duration": "Последний запуск: {duration}",
+	"backup_matrix_meta_size": "{size}",
+	"backup_history_title": "История резервных копий",
+	"backup_history_description": "Одна строка на задачу, одна ячейка на день за последние {days} дн., восстановлена по сохранённым измерениям.",
+	"backup_history_err": "Не удалось загрузить историю резервных копий",
+	"devices_metrics_veeam_repositories": "Заполнение репозиториев",
+	"devices_metrics_kopia_snapshot_size": "Размер последнего снимка",
+	"devices_metrics_duplicati_target_size": "Размер хранилища",
+	"devices_metrics_duplicati_source_size": "Размер источника",
+	"devices_docker_bulk_select_row": "Выбрать {name}",
+	"devices_docker_bulk_selected": "Выбрано: {count}",
+	"devices_docker_bulk_select_all": "Выбрать все ({count})",
+	"devices_docker_bulk_clear": "Снять выбор",
+	"devices_docker_bulk_aria": "Групповые действия с контейнерами",
+	"devices_docker_bulk_filter_aria": "Быстрый фильтр",
+	"devices_docker_bulk_filter_all": "Все",
+	"devices_docker_bulk_filter_no_update": "Без автообновления",
+	"devices_docker_bulk_filter_no_restart": "Без автоперезапуска",
+	"devices_docker_bulk_filter_empty": "Нет контейнеров, подходящих под фильтр.",
+	"devices_docker_bulk_update_on": "Включить автообновление",
+	"devices_docker_bulk_update_off": "Отключить автообновление",
+	"devices_docker_bulk_restart_on": "Включить автоперезапуск",
+	"devices_docker_bulk_restart_off": "Отключить автоперезапуск",
+	"devices_docker_bulk_update_now": "Обновить сейчас ({count})",
+	"devices_docker_bulk_update_now_confirm": "Загрузить и заменить: {count}?",
+	"devices_docker_bulk_applied": "Политика применена: {count}.",
+	"devices_docker_bulk_queued": "Обновление поставлено в очередь: {count}.",
+	"devices_docker_bulk_partial_title": "Не удалось: {failed} из {total}",
+	"devices_docker_bulk_failed_line": "{name}: {reason}",
+	"devices_docker_bulk_dismiss": "Закрыть",
+	"devices_docker_bulk_tag_auto_update": "автообновление",
+	"devices_docker_bulk_tag_auto_restart": "автоперезапуск",
+	"devices_machine_title": "Состояние машины",
+	"devices_machine_description": "Что тормозит эту машину за последний час.",
+	"devices_machine_cpu": "Процессор",
+	"devices_machine_ram": "Память",
+	"devices_machine_disk": "Диск",
+	"devices_machine_disk_worst": "Диск {mount}",
+	"devices_machine_disks_title": "Диски",
+	"devices_machine_disks_hint": "Заполненность каждого диска и, при текущем темпе, когда он заполнится.",
+	"devices_machine_tone_signal": "Норма",
+	"devices_machine_tone_advisory": "Повышено",
+	"devices_machine_tone_warning": "Высоко",
+	"devices_machine_no_data": "Нет данных",
+	"devices_machine_last_hour": "Последний час",
+	"devices_machine_cores_title": "Процессор по ядрам",
+	"devices_machine_cores_hint": "Одно перегруженное ядро теряется в среднем значении.",
+	"devices_machine_core": "Ядро {n}",
+	"devices_machine_heat_low": "Простой",
+	"devices_machine_heat_high": "Перегрузка",
+	"devices_machine_heat_label": "Загрузка процессора по ядрам за последний час",
+	"devices_machine_top_cpu": "Процессы, больше всего нагружающие процессор",
+	"devices_machine_top_cpu_hint": "Доля одного ядра; многопоточный процесс может превышать 100 %. Только имена, никогда командные строки.",
+	"devices_machine_top_mem": "Процессы, больше всего занимающие память",
+	"devices_machine_top_mem_hint": "Резидентная память, процессы с одним именем суммируются.",
+	"devices_machine_pressure_title": "Ожидание ресурсов",
+	"devices_machine_pressure_hint": "Доля последних 10 секунд, в течение которых задачи ждали ресурс (PSI ядра). Даже несколько процентов ощущаются как тормоза, хотя загрузка выглядит нормальной.",
+	"devices_machine_psi_cpu": "Процессор",
+	"devices_machine_psi_memory": "Память",
+	"devices_machine_psi_io": "Ввод-вывод диска",
+	"devices_machine_psi_some": "{value} ожидания",
+	"devices_machine_psi_full": "{value} полной остановки",
+	"devices_machine_oom_title": "Убито из-за нехватки памяти (24 ч)",
+	"devices_machine_oom_none": "Нет",
+	"devices_machine_oom_hint": "Процессы, которые ядро завершило из-за нехватки памяти.",
+	"devices_machine_inodes_title": "Иноды",
+	"devices_machine_inodes_value": "{mount}: занято {value}",
+	"devices_machine_inodes_hint": "Заполненная таблица инодов блокирует запись, даже если место ещё есть.",
+	"devices_machine_clock_title": "Часы",
+	"devices_machine_clock_offset": "{offset} относительно эталона",
+	"devices_machine_clock_synced": "Синхронизированы",
+	"devices_machine_clock_unsynced": "Не синхронизированы",
+	"devices_machine_clock_hint": "Уходящие часы ломают сертификаты TLS и Kerberos.",
+	"deviceform_agentflow_another": "Добавить ещё одну машину",
+	"deviceform_agentflow_connected": "{host} подключена ({os}).",
+	"deviceform_agentflow_docker_note": "Запускает агент в контейнере на этой машине с тем же сервером, каналом и отпечатком, что и команда установки.",
+	"deviceform_agentflow_fleet": "Сразу весь домен Windows?",
+	"deviceform_agentflow_folder": "Папка",
+	"deviceform_agentflow_folder_help": "Необязательно. Машины из одной папки группируются в списке мониторов.",
+	"deviceform_agentflow_gateway_pending": "{relay} откроет шлюз при следующей отправке, в течение минуты. Выполните команду, когда он начнёт слушать.",
+	"deviceform_agentflow_install_behind": "Установить агент за этим ретранслятором",
+	"deviceform_agentflow_name": "Имя",
+	"deviceform_agentflow_open": "Открыть машину",
+	"deviceform_agentflow_platform_aria": "Операционная система",
+	"deviceform_agentflow_platform_docker": "Docker",
+	"deviceform_agentflow_platform_windows": "Windows",
+	"deviceform_agentflow_relay_host": "Адрес ретранслятора со стороны площадки",
+	"deviceform_agentflow_relay_host_help": "IP или локальное имя, по которому машины площадки достигают ретранслятора, без порта; его шлюз слушает порт {port}. Пусто: уже заданный адрес, иначе его имя хоста.",
+	"deviceform_agentflow_relay_next": "Затем добавьте мониторы этой площадки как обычно, выбрав этот ретранслятор в поле «Опрашивается через», или установите агент на её серверы через него: их зашифрованное соединение идёт через ретранслятор до этого сервера.",
+	"deviceform_agentflow_reusable": "Несколько машин с этой командой",
+	"deviceform_agentflow_reusable_help": "Многоразовый токен для playbook или образа машины. Отзовите его в Настройках, когда закончите.",
+	"deviceform_agentflow_reusable_plate": "Многоразовый",
+	"deviceform_agentflow_route": "Как машина достигает этого сервера?",
+	"deviceform_agentflow_route_direct": "Напрямую",
+	"deviceform_agentflow_route_help": "Через ретранслятор: для площадки за межсетевым экраном, откуда наружу выходит только ретранслятор. Зашифрованный сеанс агента всё равно заканчивается на этом сервере; ретранслятор лишь передаёт его.",
+	"deviceform_agentflow_route_relay": "Через {relay}",
+	"deviceform_agentflow_route_relay_site": "Через {relay} ({site})",
+	"deviceform_agentflow_save": "Сохранить",
+	"deviceform_agentflow_saved": "{name} сохранена.",
+	"deviceform_agentflow_save_error": "Не удалось сохранить машину",
+	"deviceform_agentflow_site": "Площадка",
+	"deviceform_agentflow_site_none": "Без площадки",
+	"deviceform_agentflow_site_preset": "Она будет размещена на площадке {site}.",
+	"deviceform_agentflow_step_connect": "Дождаться агента и дать ему имя",
+	"deviceform_agentflow_step_install": "Выполнить команду на машине",
+	"deviceform_agentflow_through_note": "Эти команды загружают агент с {relay} и подключаются через него ({address}). Агент по-прежнему проверяет отпечаток этого сервера: ретранслятор не может ни прочитать, ни изменить его трафик.",
+	"deviceform_agentflow_through_plate": "Через {relay}",
+	"deviceform_agentflow_token_help_relay": "Нужно только чтобы узнать токен в списке выданных токенов.",
+	"deviceform_agentflow_wait_again": "Ждать дальше",
+	"deviceform_agentflow_waiting": "Ожидание первой отправки агента…",
+	"deviceform_agentflow_wait_stopped": "За час ничего не пришло.",
+	"deviceform_relaypick_help": "Мониторы тех типов, которые умеет опрашивать ретранслятор, идут через него; остальные остаются на этом сервере.",
+	"deviceform_relaypick_label": "Опрашивать с",
+	"deviceform_relaypick_server": "Этого сервера",
+	"deviceform_site_agent": "Сервер с агентом",
+	"deviceform_site_agent_via": "установлен через {relay}",
+	"devicesb_relay_panel_gateway": "Шлюз для агентов этой площадки",
+	"devicesb_relay_panel_gateway_closed": "Закрыт",
+	"devicesb_relay_panel_gateway_help": "Машины, которые не достигают этого сервера, подключают свой агент к ретранслятору, а он передаёт их зашифрованные сеансы, не читая их. Откройте порт в межсетевом экране ретранслятора только для сети площадки.",
+	"devicesb_relay_panel_gateway_host": "Адрес со стороны площадки",
+	"devicesb_relay_panel_gateway_host_help": "IP или локальное имя, записывается в команды установки.",
+	"devicesb_relay_panel_gateway_listening": "Слушает порт {port}",
+	"devicesb_relay_panel_gateway_opening": "Откроется при следующей отправке",
+	"devicesb_relay_panel_gateway_port": "Порт",
+	"devicesb_relay_panel_gateway_port_invalid": "От 1 до 65535.",
+	"devicesb_relay_panel_gateway_state": "Шлюз",
+	"devicesb_relay_panel_install_agent": "Установить агент через него",
+	"devicesb_relay_panel_through": "Достигает этого сервера через ретранслятор {relay}.",
+	"devicesb_relay_panel_through_open": "Открыть ретранслятор",
+	"settings_agents_add_elsewhere": "Машины добавляются из списка мониторов, где команда установки готовится для вас.",
+	"settings_agents_ad_route": "Маршрут",
+	"settings_agents_ad_route_help": "Через ретранслятор: серверы загружают агент с него и отправляют данные через него со сквозным шифрованием до этого сервера.",
+	"settings_agents_settings_description": "Общие настройки всех агентов: зашифрованный канал, автоматические обновления и уже выданные токены регистрации.",
+	"settings_agents_tokens_issued_intro": "Каждая команда установки содержит один из этих токенов. Отзовите токен, который утёк или больше не нужен.",
+	"settings_agents_tokens_none": "Токены появятся здесь, как только вы добавите машину с агентом.",
+	"devicesb_relay_panel_gateway_tunnels": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} агент подключён",
+				"countPlural=few": "{count} агента подключено",
+				"countPlural=many": "{count} агентов подключено",
+				"countPlural=other": "{count} агента подключено"
+			}
+		}
+	],
+	"deadlines_title": "Сроки",
+	"deadlines_description": "Что истекает в ближайшие {days} дн.: домены, сертификаты, секреты приложений, продукты, ключи и лицензии.",
+	"deadlines_timeline_label": "Шкала на ближайшие {days} дн.",
+	"deadlines_today": "Сегодня",
+	"deadlines_in": "через {span}",
+	"deadlines_expired_ago": "Истёк {span} назад",
+	"deadlines_expires_today": "Истекает сегодня",
+	"deadlines_kind_domain": "Домен",
+	"deadlines_kind_certificate": "Сертификат",
+	"deadlines_kind_credential": "Секрет",
+	"deadlines_kind_product": "Продукт",
+	"deadlines_kind_key": "Ключ",
+	"deadlines_kind_license": "Лицензия",
+	"deadlines_tier_urgent": "7 дней или меньше",
+	"deadlines_tier_soon": "От 8 до 30 дней",
+	"deadlines_tier_notice": "От 31 до 60 дней",
+	"deadlines_tier_calm": "Больше 60 дней",
+	"deadlines_show_all": "Показать все ({count})",
+	"deadlines_show_fewer": "Показать меньше",
+	"deadlines_open": "Открыть {name}",
+	"deadlines_load_error": "Не удалось загрузить сроки.",
+	"deadlines_target_title": "Сроки действия",
+	"deadlines_list_label": "Сроки, ближайшие первыми",
+	"deadlines_marker_label": "{what}, {target}: {when}",
+	"geomap_country_none": "{country}: ничего",
+	"geomap_country_value": "{country}: {value}",
+	"geomap_legend": "Легенда",
+	"geomap_legend_fewer": "Меньше",
+	"geomap_legend_link_down": "Ретранслятор недоступен",
+	"geomap_legend_link_idle": "Ретранслятор не проверен",
+	"geomap_legend_link_ok": "Ретранслятор работает",
+	"geomap_legend_link_warn": "Ретранслятор требует внимания",
+	"geomap_legend_more": "Больше (до {max})",
+	"geomap_legend_step": "От {value}",
+	"geomap_list_countries": "Страны",
+	"geomap_list_links": "Связи",
+	"geomap_list_places": "Места",
+	"geomap_list_toggle": "Показать списком ({count})",
+	"geomap_relay_link": "Ретранслятор {relay} связывает {site} с {main}: {state}",
+	"threatmap_crowdsec_hint": "Выберите «Учётная запись машины» в качестве учётных данных этого монитора (cscli machines add), чтобы увидеть, откуда приходят его оповещения, по странам.",
+	"threatmap_description": "Откуда приходят атаки, остановленные вашей защитой, по странам.",
+	"threatmap_empty_body": "Дайте монитору CrowdSec учётную запись машины, откройте живую карту межсетевого экрана OPNsense или добавьте Cloudflare с аналитикой трафика: остановленные ими атаки появятся здесь, по странам.",
+	"threatmap_empty_title": "Пока ни один источник не питает карту угроз",
+	"threatmap_err_load": "Не удалось загрузить карту угроз",
+	"threatmap_map_label": "Карта мира остановленных атак по странам",
+	"threatmap_partial": "Хранилище метрик не ответило: учитываются только живые карты межсетевых экранов.",
+	"threatmap_privacy": "Только страны: ни один адрес не хранится и не показывается.",
+	"threatmap_quiet": "За охваченный период ничего не остановлено.",
+	"threatmap_source_cloudflare": "Угрозы Cloudflare",
+	"threatmap_source_crowdsec": "Оповещения CrowdSec",
+	"threatmap_source_firewall": "Блокировки межсетевых экранов (живая карта)",
+	"threatmap_sources": "Источники",
+	"threatmap_split_cloudflare": "Cloudflare {count}",
+	"threatmap_split_crowdsec": "CrowdSec {count}",
+	"threatmap_split_firewall": "Межсетевой экран {count}",
+	"threatmap_title": "Карта угроз",
+	"threatmap_top": "Самые активные страны",
+	"threatmap_value": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{shown} атака остановлена",
+				"countPlural=few": "{shown} атаки остановлены",
+				"countPlural=many": "{shown} атак остановлено",
+				"countPlural=other": "{shown} атаки остановлено"
+			}
+		}
+	],
+	"threatmap_window_hours": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "За последний {count} час",
+				"countPlural=few": "За последние {count} часа",
+				"countPlural=many": "За последние {count} часов",
+				"countPlural=other": "За последние {count} часа"
+			}
+		}
+	],
+	"threatmap_window_minutes": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "За последнюю {count} минуту",
+				"countPlural=few": "За последние {count} минуты",
+				"countPlural=many": "За последние {count} минут",
+				"countPlural=other": "За последние {count} минуты"
+			}
+		}
+	],
+	"devices_chart_label": "График",
+	"devices_chart_last_week_series": "Прошлая неделя: {label}",
+	"devices_chart_compare_week": "Сравнить с прошлой неделей",
+	"devices_chart_compare_failed": "Не удалось загрузить прошлую неделю",
+	"devices_chart_compare_empty": "Нет данных за прошлую неделю",
+	"devices_chart_summary_series": "{label}: последнее {last}, мин. {min}, макс. {max}.",
+	"devices_chart_summary_mirror": "Вторая серия рисуется зеркально ниже нуля.",
+	"devices_chart_summary_threshold": "Порог {label}: {value}.",
+	"devices_chart_summary_event": "{when}: {label}.",
+	"devices_chart_event_label": "{when}, {label}",
+	"console_banner_label": "Состояние",
+	"console_banner_poke": "Ткнуть голубя",
+	"console_banner_egg": "Голубь сделал бочку. Аптайм не пострадал.",
+	"console_banner_empty": "Пока нечего отслеживать.",
+	"console_banner_down_one": "{name} не работает.",
+	"console_banner_down_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Не работает {count} монитор.",
+				"countPlural=few": "Не работают {count} монитора.",
+				"countPlural=many": "Не работают {count} мониторов.",
+				"countPlural=other": "Не работают {count} монитора."
+			}
+		}
+	],
+	"console_banner_held": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} гость придержан.",
+				"countPlural=few": "{count} гостя придержаны.",
+				"countPlural=many": "{count} гостей придержано.",
+				"countPlural=other": "{count} гостя придержаны."
+			}
+		}
+	],
+	"console_banner_held_sent": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} гость придержан, оповещение отправлено.",
+				"countPlural=few": "{count} гостя придержаны, оповещение отправлено.",
+				"countPlural=many": "{count} гостей придержано, оповещение отправлено.",
+				"countPlural=other": "{count} гостя придержаны, оповещение отправлено."
+			}
+		}
+	],
+	"console_banner_sent": "Оповещение отправлено.",
+	"console_banner_attention_one": "{name} требует внимания.",
+	"console_banner_attention_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} монитор требует внимания.",
+				"countPlural=few": "{count} монитора требуют внимания.",
+				"countPlural=many": "{count} мониторов требуют внимания.",
+				"countPlural=other": "{count} монитора требуют внимания."
+			}
+		}
+	],
+	"console_banner_alerts": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} открытое оповещение.",
+				"countPlural=few": "{count} открытых оповещения.",
+				"countPlural=many": "{count} открытых оповещений.",
+				"countPlural=other": "{count} открытых оповещения."
+			}
+		}
+	],
+	"console_banner_up_of": "Работают {up} из {total} мониторов.",
+	"console_banner_waiting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} ждёт первого отчёта.",
+				"countPlural=few": "{count} ждут первого отчёта.",
+				"countPlural=many": "{count} ждут первого отчёта.",
+				"countPlural=other": "{count} ждут первого отчёта."
+			}
+		}
+	],
+	"console_banner_all_up": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Все мониторы работают: {count}.",
+				"countPlural=few": "Все мониторы работают: {count}.",
+				"countPlural=many": "Все мониторы работают: {count}.",
+				"countPlural=other": "Все мониторы работают: {count}."
+			}
+		}
+	],
+	"console_banner_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} на паузе.",
+				"countPlural=few": "{count} на паузе.",
+				"countPlural=many": "{count} на паузе.",
+				"countPlural=other": "{count} на паузе."
+			}
+		}
+	],
+	"console_banner_all_paused": "Все мониторы на паузе.",
+	"settings_appearance_language_title": "Язык",
+	"settings_search_kw_instance": "экземпляр имя язык часовой пояс мастер настройка"
 }

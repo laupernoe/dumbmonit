@@ -1,9 +1,9 @@
 # Cibles de fuzzing (cargo-fuzz, libFuzzer) des lecteurs qui reçoivent des
-# données venues de l'extérieur : pages et sitemaps surveillés, flux du mur,
-# profils SNMP importés. Hors du workspace principal : cargo-fuzz exige une
+# données venues de l'extérieur : pages et sitemaps surveillés, profils SNMP
+# importés. Hors du workspace principal : cargo-fuzz exige une
 # toolchain nightly que le reste du projet n'utilise pas.
 #
-#   cargo +nightly fuzz run wall_news -- -max_total_time=60
+#   cargo +nightly fuzz run webchange_html -- -max_total_time=60
 #
 # En CI, ClusterFuzzLite (`.clusterfuzzlite/`) les lance sur chaque PR.
 
@@ -50,12 +50,6 @@ test = false
 doc = false
 bench = false
 
-[[bin]]
-name = "wall_news"
-path = "fuzz_targets/wall_news.rs"
-test = false
-doc = false
-bench = false
 
 [[bin]]
 name = "snmp_profile"

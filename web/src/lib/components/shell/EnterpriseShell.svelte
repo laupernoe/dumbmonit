@@ -1,10 +1,9 @@
 <script lang="ts">
 	/**
-	 * The Enterprise shell: an icon rail on the left, a header with the
-	 * breadcrumb, LIVE, the time range, the command palette and the main
-	 * action, the page in the middle, and the context panel on the right like
-	 * an inspector. The pages are the same as in Homelab; only the frame and
-	 * the colour tokens change.
+	 * The app shell: an icon rail on the left, a header with the breadcrumb,
+	 * LIVE, the time range, the command palette, the main action, wall mode
+	 * and the panel toggle, the page in the middle, and the context panel on
+	 * the right like an inspector.
 	 *
 	 * Phones get a bottom tab bar instead of the rail, and the panel opens as a
 	 * drawer on anything narrower than a wide desktop. `i` toggles the panel.
@@ -13,18 +12,19 @@
 	import { tick } from 'svelte';
 	import { page } from '$app/state';
 	import { scale } from 'svelte/transition';
-	import { BookOpen, Ellipsis, PanelRight, Plus, Search, X } from 'lucide-svelte';
+	import { BookOpen, Ellipsis, Monitor, PanelRight, Plus, Search, X } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { palette } from '#lib/stores/palette.svelte.js';
-	import { mode } from '#lib/stores/mode.svelte.js';
+	import { instanceStore } from '#lib/stores/instance.svelte.js';
 	import { CONSOLE_RANGES, consoleState } from '#lib/stores/console.svelte.js';
 	import { isTypingTarget } from '#lib/palette/logic.js';
 	import { Menu, calmMotion } from '#lib/ui/index.js';
 	import ContextPanel from '#lib/components/enterprise/ContextPanel.svelte';
 	import UserMenu from '#lib/components/UserMenu.svelte';
 	import GithubMark from '#lib/components/GithubMark.svelte';
+	import Logo from '#lib/components/Logo.svelte';
 	import ClientSwitcher from '#lib/components/ClientSwitcher.svelte';
 	import { NAV, isActive, visible, type NavEntry } from './nav.js';
 
@@ -35,7 +35,7 @@
 	const GITHUB_URL = 'https://github.com/laupernoe/dumbmonit';
 
 	$effect(() => {
-		void mode.loadSettings();
+		void instanceStore.loadSettings();
 	});
 
 	const entries = $derived(NAV.filter(visible));
@@ -103,8 +103,8 @@
 
 <div class="flex min-h-dvh bg-canvas text-ink">
 	<nav aria-label={m.misc_nav_main()} class="sticky top-0 hidden h-dvh w-14 shrink-0 flex-col items-center gap-1 border-r border-line py-3 sm:flex">
-		<a href="/" class="mb-3 flex size-8 shrink-0 items-center justify-center rounded-[9px] border border-info/30 bg-surface-2" aria-label={m.misc_nav_home()}>
-			<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 9h3l2-5 3 9 2-6 1 2h3" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="stroke-info" /></svg>
+		<a href="/" class="mb-3 flex size-10 shrink-0 items-center justify-center rounded-[10px]" aria-label={m.misc_nav_home()}>
+			<Logo class="size-8" />
 		</a>
 		<!-- Short screens scroll the destinations; the foot (docs, account, Settings) stays put. -->
 		<div class="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -130,7 +130,7 @@
 	<div class="flex min-w-0 flex-1 flex-col">
 		<header class="sticky top-0 z-30 flex h-[52px] shrink-0 items-center gap-3 border-b border-line bg-canvas/95 px-4 backdrop-blur sm:px-5">
 			<nav aria-label={m.console_breadcrumb()} class="flex min-w-0 items-center gap-2 text-ink-2">
-				<span class="truncate max-sm:hidden">{mode.displayName}</span>
+				<span class="truncate max-sm:hidden">{instanceStore.displayName}</span>
 				{#if current}
 					<span aria-hidden="true" class="max-sm:hidden">/</span>
 					{#if leaf}
@@ -185,6 +185,14 @@
 						<span class="max-sm:hidden">{m.console_new_monitor()}</span>
 					</a>
 				{/if}
+				<a
+					href="/wall"
+					class="flex size-10 items-center justify-center rounded-lg text-ink-2 hover:bg-surface-2 hover:text-ink sm:size-8"
+					aria-label={m.misc_nav_wall()}
+					title={m.misc_nav_wall()}
+				>
+					<Monitor class="size-4" aria-hidden="true" />
+				</a>
 				<button
 					type="button"
 					onclick={togglePanel}

@@ -1,0 +1,18 @@
+# Mesures et vues du type « mysql » (format : crates/collectors/src/catalog.rs).
+source: uptime
+prefixes: [probe_]
+metrics:
+  - { name: probe_success, label: "Up", unit: "bool" }
+  - { name: probe_duration_seconds, label: "Probe duration", unit: "s", better: "lower" }
+  - { name: probe_failure_info, label: "Failure reason", kind: info }
+  - { name: probe_connect_seconds, label: "Connect time", unit: "s", better: "lower" }
+  - { name: probe_sql_query_seconds, label: "Query time", unit: "s", better: "lower" }
+  - { name: probe_sql_rows, label: "Rows returned" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - probe_sql_rows
+  - view: timeseries
+    title: "Response time"
+    metrics: [probe_duration_seconds, probe_connect_seconds, probe_sql_query_seconds]

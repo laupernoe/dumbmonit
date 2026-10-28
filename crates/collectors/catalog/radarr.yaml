@@ -1,0 +1,35 @@
+# Mesures et vues du type « radarr » (format : crates/collectors/src/catalog.rs).
+source: selfhosted
+prefixes: [radarr_]
+metrics:
+  - { name: radarr_queue_total, label: "Queue" }
+  - { name: radarr_queue_has_errors, label: "Queue has errors", better: "lower" }
+  - { name: radarr_queue_has_warnings, label: "Queue has warnings" }
+  - { name: radarr_queue_unknown, label: "Queue unknown" }
+  - { name: radarr_health_errors, label: "Health errors", better: "lower" }
+  - { name: radarr_health_warnings, label: "Health warnings" }
+  - { name: radarr_health_issue, label: "Health issue" }
+  - { name: radarr_disk_used_percent, label: "Disk used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: radarr_disk_free_bytes, label: "Disk free", unit: "B", better: "higher" }
+  - { name: radarr_indexers_disabled, label: "Indexers disabled" }
+  - { name: radarr_update_available, label: "Update available", unit: "bool", better: "higher" }
+  - { name: radarr_version_info, label: "Version", kind: info }
+  - { name: radarr_scrape_errors, label: "Scrape errors", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - radarr_queue_has_errors
+      - radarr_queue_has_warnings
+      - radarr_queue_unknown
+      - radarr_health_errors
+      - radarr_health_warnings
+      - radarr_health_issue
+      - radarr_disk_used_percent
+      - radarr_disk_free_bytes
+      - radarr_indexers_disabled
+      - radarr_update_available
+      - radarr_version_info
+  - view: timeseries
+    title: "Queue"
+    metrics: [radarr_queue_total]

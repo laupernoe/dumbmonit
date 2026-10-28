@@ -114,15 +114,16 @@ and kept at the top of the list.
 
 ### Alerts
 
-New devices and new ports raise alerts through two built-in
+New devices, new ports and MAC address changes raise alerts through three built-in
 [alert rules](../alerting/rules.md#network-inventory):
 
 | Rule | Raised when | Default |
 |---|---|---|
 | New device on the network | a scan finds a device that is not in the inventory | **disabled**, severity `info` |
 | New open port on the network | a scan finds a new open port on a known device | **disabled**, severity `info` |
+| MAC address changed for an IP | a new device appears on the address of a known device, under another MAC address | **disabled**, severity `warning` |
 
-Both rules are **off by default**: on a network where guests come and go, they would
+All three rules are **off by default**: on a network where guests come and go, they would
 be noise until you want them. Enable them in the alert rules, and choose which
 notification channels receive them like any other rule.
 
@@ -136,6 +137,26 @@ Use *Mark as known* on a device (its ports are marked with it), *Mark known* on 
 single port, or *Mark all as known* to accept everything at once. Marked items
 stop being flagged, and their alert resolves within a few minutes. This is also
 the way to accept a new port or device you expected.
+
+*Ignore* goes further for a device you never want to hear about (a guest's phone, a
+visiting printer): it counts as known, and neither it nor its ports raise alerts.
+*Mark as known* on an ignored device puts it back in the inventory.
+
+### MAC address changes
+
+When a new device shows up on the IP address of a known device but with another MAC
+address, the inventory flags it *MAC changed* and shows the previous MAC. It can be
+ARP spoofing, or simply replaced hardware (or a DHCP address reused while the old
+device was off): check, then mark it as known or ignore it. The same alert rule
+family covers it (`netscan_mac_change`).
+
+### The subnet grid
+
+Each scheduled network has a grid with one tile per address (IPv4, up to 1024):
+**new**, **known**, **ignored**, **absent** (known, but not seen by the last scan) or
+**free**. Every tile carries a symbol and a word, not only a colour. Filter by state,
+select a tile for the device behind it, and use *Add as a monitor* to open the new
+device form with its address.
 
 ## A word of caution
 

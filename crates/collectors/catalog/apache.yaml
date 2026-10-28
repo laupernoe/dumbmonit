@@ -1,0 +1,39 @@
+# Mesures et vues du type « apache » (format : crates/collectors/src/catalog.rs).
+source: apache
+prefixes: [apache_]
+metrics:
+  - { name: apache_workers_busy, label: "Workers busy" }
+  - { name: apache_workers_idle, label: "Workers idle" }
+  - { name: apache_requests_per_second, label: "Requests per second", unit: "/s" }
+  - { name: apache_bytes_per_second, label: "Bytes per second", unit: "B/s" }
+  - { name: apache_connections_total, label: "Connections" }
+  - { name: apache_connections_async_writing, label: "Connections async writing" }
+  - { name: apache_connections_async_keepalive, label: "Connections async keepalive" }
+  - { name: apache_connections_async_closing, label: "Connections async closing" }
+  - { name: apache_cpu_load_ratio, label: "CPU load", unit: "ratio" }
+  - { name: apache_requests_total, label: "Requests", kind: counter }
+  - { name: apache_sent_bytes_total, label: "Sent bytes", unit: "B", kind: counter }
+  - { name: apache_uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: apache_bytes_per_request, label: "Bytes per request" }
+  - { name: apache_scoreboard, label: "Scoreboard" }
+  - { name: apache_version_info, label: "Version", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - apache_cpu_load_ratio
+      - apache_uptime_seconds
+      - apache_bytes_per_request
+      - apache_version_info
+  - view: timeseries
+    title: "Workers"
+    metrics: [apache_workers_busy, apache_workers_idle]
+  - view: timeseries
+    title: "Requests"
+    metrics: [apache_requests_total]
+  - view: timeseries
+    title: "Traffic"
+    metrics: [apache_sent_bytes_total]
+  - view: timeseries
+    title: "Connections"
+    metrics: [apache_connections_total, apache_connections_async_writing, apache_connections_async_keepalive, apache_connections_async_closing]

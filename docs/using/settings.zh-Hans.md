@@ -2,25 +2,27 @@
 
 ![Settings：七个标签页，此处为“我的账户”，含外观、账户和安全与推送通知](../assets/screenshots/settings-light.png){ loading=lazy }
 
-设置页面存放与管理相关的内容：你的账户、谁可以登录以及如何登录、让代理和助手接入的令牌、实例备份、主题，以及服务器的健康状况。它分为七个标签页，每个都有自己的地址。宽屏上有侧边导航栏，手机上是一排标签条，还有一个可搜索分区名称的搜索框，帮助你找到所需分区。
+设置里放的是管理类内容：实例本身、你的账户、谁能登录以及如何登录、代理、通知渠道、实例备份和服务器健康状况。它分为七个标签页，每个都有自己的地址。宽屏上的侧栏、手机上的一排标签以及按节名搜索的搜索框，可以帮你找到某一节。
 
 | 标签页 | 地址 | 内容 |
 |---|---|---|
-| 我的账户 | `/settings/account` | 外观、账户和安全（密码、双因素、安全日志）、推送通知 |
-| 团队与访问 | `/settings/team` | 用户、单点登录 |
-| 监控 | `/settings/monitoring` | 代理、集成包、[安全评分](security-score.md) |
-| 通知与报告 | `/settings/notifications` | 渠道、通知策略、静音时段（[通知渠道](../notifications.md)）、报告 |
-| 状态页 | `/settings/status` | 状态页面与公告（[状态页面](status-pages.md)） |
-| 墙屏显示 | `/settings/wall` | 墙屏模式、墙屏音乐、墙屏新闻（[墙屏模式](overview.md#wall-mode)） |
-| 系统 | `/settings/system` | 备份、DumbMonit 自身、API 和助手、关于 |
+| 常规 | `/settings/general` | 实例名称、语言和时区、设置向导（[界面与设置向导](product-modes.md)） |
+| 我的账户 | `/settings/account` | 语言、账户和安全（密码、双因素、安全日志）、推送通知、值班联系方式和免打扰时段（[值班](../alerting/oncall.md)） |
+| 团队与访问 | `/settings/team` | 用户、团队、客户、单点登录、SAML、SCIM、LDAP |
+| 监控 | `/settings/monitoring` | 代理、集成包、[安全评分](security-score.md)、站点 |
+| 通知 | `/settings/notifications` | 渠道、通知策略（[通知渠道](../notifications.md)） |
+| 墙屏显示 | `/settings/wall` | 墙屏模式：显示什么以及如何打开（[墙屏模式](wall.md)） |
+| 系统 | `/settings/system` | 备份、配置文件、DumbMonit 自身、数据与保留、日志、API 和助手、关于 |
 
-每个分区都保留自己的锚点：`/settings#agents` 会跳转到 `/settings/monitoring#agents`。旧链接（`/alerts#notifications`、`/status`）也会跳转到新位置。
+每一节都保留自己的锚点：`/settings#agents` 会跳转到 `/settings/monitoring#agents`。旧链接（`/alerts#notifications`）也会跳转到新位置。状态页和报告已不在设置中：它们有自己的页面，**状态页**（`/status`）和**报告**（`/reports`）；`/settings/status` 和 `/settings/reports` 会跳转过去。墙屏的音乐、新闻和小组件已经移除：它们的旧链接（`#music`、`#news`、`#widgets`）会打开“墙屏显示”标签页。
 
 ## 外观 {#appearance}
 
-三个图块，各自预览自己的主题：**系统**（跟随你的设备并随之切换）、**日间**（“图表纸”主题）和**夜间**（“雷达”主题）。选择保存在浏览器中。页眉的切换按钮和命令面板的*切换主题*在日间和夜间之间切换。
+界面语言，保存在此浏览器中。控制台只有一种深色外观，因此无需选择主题；公开状态页保留各自的浅色和深色主题。
 
-**打开墙面模式**位于该分区底部：仅显示公告栏，全屏，适合放在房间里的显示器上。++esc++ 退出，命令面板可在任何地方打开它——参见[墙面模式](overview.md#wall-mode)。
+## 墙屏显示 {#wall}
+
+**打开墙屏模式**：全屏显示控制台的看板，适合房间里的显示器。++esc++ 退出，命令面板可随时打开它。墙屏不再有音乐、新闻或小组件；可以选择在结论后方显示一座夜景城市。参见[墙屏模式](wall.md)。
 
 ## 账户与安全 {#account--security}
 
@@ -74,9 +76,9 @@
 
 ## 代理 {#agents}
 
-用于 [Linux、macOS、FreeBSD 和 Windows 代理](../devices/agent.md)的注册令牌。用一个名称（“File server”、“Home fleet”）创建一个：令牌只显示一次，并附带可直接复制的 Linux 和 Windows 安装命令。每条命令都带有此服务器所提供代理二进制文件的 SHA-256 校验和，安装程序会拒绝不匹配的下载；校验和也列在命令下方，便于手动比对。列表显示每个令牌的前缀、创建日期、上次使用和是否已被吊销。**吊销**会使所有使用该令牌的代理在下次推送时停止。
+这里只放所有[代理](../devices/agent.md)共用的内容，仅管理员可见：代理的加密通道（证书及其颁发机构，参见[代理安全](../install/agent-security.md)）、代理自动更新，以及已签发的注册令牌。每个令牌显示其范围、创建日期和最后使用时间；**吊销**会在使用它的代理下次推送时将其停止，但不会删除监控项。
 
-一个令牌可以注册多台机器。吊销它不会删除监控项。令牌列表、创建和吊销仅限管理员；查看者和操作员看到的分区不含列表。
+添加机器（令牌、安装命令、首次连接、经由中继的路由、Active Directory 套件）在添加流程中完成：**新建监控 → 代理**（`/targets/new?kind=agent`），而不是在这里。代理本身有各自的页面。
 
 ## 安全评分 {#security-score}
 

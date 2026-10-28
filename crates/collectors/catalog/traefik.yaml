@@ -1,0 +1,51 @@
+# Mesures et vues du type « traefik » (format : crates/collectors/src/catalog.rs).
+source: traefik
+prefixes: [traefik_]
+metrics:
+  - { name: traefik_requests_total, label: "Requests", kind: counter }
+  - { name: traefik_requests_5xx_total, label: "Requests 5xx", kind: counter }
+  - { name: traefik_router_requests_total, label: "Router requests", kind: counter }
+  - { name: traefik_router_requests_5xx_total, label: "Router requests 5xx", kind: counter }
+  - { name: traefik_config_reloads_total, label: "Config reloads", kind: counter }
+  - { name: traefik_routers, label: "Routers" }
+  - { name: traefik_routers_errors, label: "Routers errors", better: "lower" }
+  - { name: traefik_routers_warnings, label: "Routers warnings" }
+  - { name: traefik_router_status, label: "Router status", unit: "bool" }
+  - { name: traefik_router_error_info, label: "Router error", kind: info }
+  - { name: traefik_services, label: "Services" }
+  - { name: traefik_services_errors, label: "Services errors", better: "lower" }
+  - { name: traefik_service_status, label: "Service status", unit: "bool" }
+  - { name: traefik_service_error_info, label: "Service error", kind: info }
+  - { name: traefik_service_servers, label: "Service servers" }
+  - { name: traefik_service_servers_up, label: "Service servers up" }
+  - { name: traefik_server_up, label: "Server up", unit: "bool" }
+  - { name: traefik_middlewares_errors, label: "Middlewares errors", better: "lower" }
+  - { name: traefik_resolver_routers, label: "Resolver routers" }
+  - { name: traefik_resolver_routers_uncovered, label: "Resolver routers uncovered" }
+  - { name: traefik_certificates, label: "Certificates" }
+  - { name: traefik_cert_expiry_days, label: "Cert expiry days", unit: "days" }
+  - { name: traefik_version_info, label: "Version", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - traefik_routers_errors
+      - traefik_services_errors
+      - traefik_cert_expiry_days
+      - traefik_routers
+      - traefik_config_reloads_total
+      - traefik_routers_warnings
+      - traefik_router_status
+      - traefik_services
+      - traefik_service_status
+      - traefik_service_servers
+      - traefik_service_servers_up
+      - traefik_server_up
+      - traefik_middlewares_errors
+      - traefik_resolver_routers
+      - traefik_resolver_routers_uncovered
+      - traefik_certificates
+      - traefik_version_info
+  - view: timeseries
+    title: "Requests and 5xx"
+    metrics: [traefik_requests_total, traefik_requests_5xx_total]

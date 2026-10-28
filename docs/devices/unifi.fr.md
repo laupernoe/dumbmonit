@@ -75,6 +75,10 @@ pas), `mac`, `model` et `type` (`gateway`, `switch`, `access_point`,
 | `clients_by_type` | `wireless`, `wired`, `guest`, `vpn` (compte View Only) | `type` |
 | `alarms` | entrées du journal système critique des dernières 24 heures, ou alarmes non archivées | |
 | `scrape_errors` | appels qui ont échoué à la dernière sonde | |
+| `port_enabled`, `port_up`, `port_speed_bps`, `port_full_duplex`, `port_uplink` | ports de chaque commutateur ou passerelle en ligne (compte View Only, `port_table`) ; `port_up` est absent pour un port désactivé | `device`, `mac`, `port` (numéro en façade), `port_name` |
+| `port_poe_enabled`, `port_poe_watts` | PoE de chaque port | idem |
+| `port_rx_bytes_total`, `port_tx_bytes_total`, `port_rx_errors_total`, `port_tx_errors_total` | compteurs par port, tracés par le panneau de commutateur | idem |
+| `port_neighbor_info` | valeur 1, voisin LLDP du port (`lldp_table`) | idem, `remote_chassis`, `remote_port` |
 
 Les [règles intégrées](../alerting/rules.md#unifi-network) qui
 s'appliquent : appareil UniFi hors ligne, Internet UniFi en panne, lien WAN

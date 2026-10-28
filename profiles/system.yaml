@@ -16,6 +16,9 @@ metrics:
   - name: system_uptime_seconds
     oid: 1.3.6.1.2.1.1.3.0
     kind: gauge
+    label: "Uptime"
+    unit: "s"
+    view: "stat"
     scale: 0.01
 
   # sysServices est un champ de bits décrivant les couches OSI servies. Sa valeur
@@ -24,6 +27,8 @@ metrics:
   - name: system_info
     oid: 1.3.6.1.2.1.1.7.0
     kind: gauge
+    label: "System"
+    view: "stat"
     labels:
       sysname: 1.3.6.1.2.1.1.5.0
       syscontact: 1.3.6.1.2.1.1.4.0

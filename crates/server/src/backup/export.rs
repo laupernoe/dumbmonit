@@ -94,7 +94,72 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         msp_settings: crate::auth::settings::get::<Value>(pool, crate::auth::clients::SETTINGS_KEY)
             .await?,
         client_assignments: client_assignments(pool, &refs).await?,
+        netscan_schedules: netscan_schedules(pool, &refs).await?,
+        lun_links: lun_links(pool, &refs).await?,
     })
+}
+
+/// Scans planifiés et leurs appareils connus ou ignorés.
+async fn netscan_schedules(
+    pool: &SqlitePool,
+    refs: &HashMap<i64, String>,
+) -> Result<Vec<BundleNetscanSchedule>> {
+    use crate::netinventory::store;
+    let schedules = store::list_schedules(pool).await?;
+    let devices = store::inventory(pool, None).await?;
+    let mut out = Vec::new();
+    for schedule in schedules {
+        // Un agent absent du lot : le scan ne peut pas lui être rattaché, et le
+        // restaurer au serveur changerait son périmètre. Il n'est pas exporté.
+        let agent = match schedule.agent_id {
+            Some(id) => match refs.get(&id) {
+                Some(reference) => Some(reference.clone()),
+                None => continue,
+            },
+            None => None,
+        };
+        out.push(BundleNetscanSchedule {
+            name: schedule.name,
+            cidr: schedule.cidr,
+            agent,
+            interval_secs: schedule.interval_secs,
+            depth: store::depth_name(schedule.depth).to_string(),
+            enabled: schedule.enabled,
+            devices: devices
+                .iter()
+                .filter(|d| d.schedule_id == schedule.id && d.known)
+                .map(|d| BundleNetscanDevice {
+                    ident: d.ident.clone(),
+                    mac: d.mac.clone(),
+                    ip: d.ip.clone(),
+                    hostname: d.hostname.clone(),
+                    vendor: d.vendor.clone(),
+                    ignored: d.ignored,
+                    first_seen: d.first_seen.clone(),
+                    last_seen: d.last_seen.clone(),
+                })
+                .collect(),
+        });
+    }
+    Ok(out)
+}
+
+/// Liens de LUN dont les deux équipements existent encore.
+async fn lun_links(pool: &SqlitePool, refs: &HashMap<i64, String>) -> Result<Vec<BundleLunLink>> {
+    let links = crate::db::lun_links::list_all(pool).await?;
+    Ok(links
+        .into_iter()
+        .filter_map(|link| {
+            Some(BundleLunLink {
+                target: refs.get(&link.target_id)?.clone(),
+                lun: link.lun,
+                consumer: refs.get(&link.consumer_target_id)?.clone(),
+                family: link.family,
+                entity: link.entity,
+                author: link.author,
+            })
+        })
+        .collect())
 }
 
 async fn clients(pool: &SqlitePool) -> Result<Vec<BundleClient>> {
@@ -458,6 +523,24 @@ async fn targets(
     .await
     .context("lecture des équipements")?;
     let mut multisite = crate::db::multisite::all(pool).await?;
+    let mut policies: HashMap<i64, Vec<BundleContainerPolicy>> = HashMap::new();
+    for row in sqlx::query(
+        "SELECT target_id, container, auto_restart, auto_update, prune_old_image,
+                only_in_maintenance
+         FROM container_policies ORDER BY target_id, container",
+    )
+    .fetch_all(pool)
+    .await
+    .context("lecture des politiques de conteneurs")?
+    {
+        policies.entry(row.try_get("target_id")?).or_default().push(BundleContainerPolicy {
+            container: row.try_get("container")?,
+            auto_restart: row.try_get::<i64, _>("auto_restart")? != 0,
+            auto_update: row.try_get::<i64, _>("auto_update")? != 0,
+            prune_old_image: row.try_get::<i64, _>("prune_old_image")? != 0,
+            only_in_maintenance: row.try_get::<i64, _>("only_in_maintenance")? != 0,
+        });
+    }
 
     let mut out = Vec::with_capacity(rows.len());
     for row in &rows {
@@ -498,6 +581,7 @@ async fn targets(
                 agents: config.agents.iter().filter_map(|a| refs.get(a).cloned()).collect(),
                 quorum: config.quorum,
             }),
+            container_policies: policies.remove(&id).unwrap_or_default(),
         });
     }
     Ok(out)
@@ -989,8 +1073,12 @@ pub fn sections() -> BTreeMap<&'static str, &'static str> {
             "netconfig_versions",
             "Network configuration versions, only when you include them: they hold device secrets.",
         ),
-        ("instance", "Instance name, language, time zone and product mode."),
+        ("instance", "Instance name, language, time zone and setup state."),
         ("clients", "MSP clients, their members, branding, and what belongs to each."),
+        (
+            "netscan_schedules",
+            "Scheduled network scans, with the devices you marked as known or ignored.",
+        ),
     ])
 }
 

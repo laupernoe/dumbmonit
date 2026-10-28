@@ -19,7 +19,6 @@
 	import { tick } from 'svelte';
 	import Logo from '#lib/components/Logo.svelte';
 	import LanguageSelect from '#lib/components/LanguageSelect.svelte';
-	import ThemeToggle from '#lib/components/ThemeToggle.svelte';
 	import PasswordInput from '#lib/components/settings/PasswordInput.svelte';
 	import Mascot from '#lib/components/Mascot.svelte';
 
@@ -211,7 +210,6 @@
 	<div class="absolute top-3 right-3 z-20 flex items-center gap-1 sm:top-4 sm:right-4">
 		<label for="login-language" class="sr-only">{m["settings.appearance.language_label"]()}</label>
 		<LanguageSelect id="login-language" class="max-w-36 border-transparent bg-transparent" />
-		<ThemeToggle />
 	</div>
 
 	<main class="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-12">

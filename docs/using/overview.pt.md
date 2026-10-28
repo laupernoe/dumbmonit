@@ -1,24 +1,18 @@
-# A página de visão geral {#the-overview-page}
+# A página de resumo
 
-A página inicial responde «está tudo bem?» em cerca de um segundo, depois
-deixa-o explorar em detalhe quando quiser.
+A página inicial responde a «está tudo bem?» em cerca de um segundo e depois
+deixa-o aprofundar conforme precisar.
 
-![A visão geral](../assets/screenshots/overview-light.png){ loading=lazy }
+## O banner de estado {#the-bulletin}
 
-## O boletim {#the-bulletin}
-
-A faixa no topo é um boletim meteorológico para a sua rede. Uma frase diz o
-estado do céu: «Clear skies.» quando nada precisa de si, caso contrário uma
-contagem do que precisa («9 advisories, 1 unreachable.»). Abaixo, placas
-contam monitores a reportar e inacessíveis, com a hora da última
-verificação, e três leituras: **Reporting**, **Needs you**, **Forecasts**.
-
-A janela meteorológica à direita acompanha a rede: céu limpo, nublado,
-encoberto ou tempestade, dependendo de quantos alertas estão ativos e quão
-severos são, com o pombo a voar. Sob `prefers-reduced-motion`, tudo fica
-imóvel.
-
-A única ação principal da página é **Add a device**.
+Uma faixa no topo mostra um céu noturno fixo: estrelas que cintilam, uma lua
+crescente e um pombo que o atravessa sem nunca pousar. O céu não muda com o
+tempo; a frase ao seu pé diz como estão as coisas, por palavras. «Os 146
+monitores estão ativos.» quando nada precisa de si; caso contrário, «pve-02 está
+em baixo.» ou «pve-02 merece uma olhadela.», seguido, em voz mais baixa, do que o
+sistema fez («3 convidados retidos, alerta enviado.»). Toque no pombo e ele faz
+uma pirueta. Com `prefers-reduced-motion`, o pombo sai do céu e as estrelas ficam
+paradas.
 
 ## O guia de primeira utilização {#the-first-run-guide}
 
@@ -29,49 +23,36 @@ dispensado por si só, e **Skip the guide** arreda os três. A escolha é
 guardada na instância, por isso um segundo navegador não recomeça o guia.
 Ver [Adicionar o primeiro monitor](../install/first-device.md#the-three-first-steps).
 
-## Needs you {#needs-you}
+## Os cinco números e o rio de saúde {#the-figures}
 
-A lista do que precisa de si agora, o mais severo primeiro: monitores
-inacessíveis, depois alertas ativos por severidade. Cada linha nomeia a
-regra, o monitor, o valor atual, há quanto tempo dura, e se agrupa
-várias séries («×4» para quatro sistemas de ficheiros no mesmo monitor).
-Quatro ações: **Ack** (confirmar este alerta por 1 h, 4 h, 24 h ou até
-resolver — os lembretes pausam, a resolução continua a ser notificada),
-**Snooze** (ocultar só este alerta por 1 h, 8 h, 1 dia ou até resolver),
-**Ignore** (parar esta regra de alguma vez alertar neste monitor de
-novo, reversivelmente), e **Open device**.
+Sob o banner, cinco números: **Monitors up** (sobre o total, com os em baixo e os
+em pausa), **Availability 30 d**, **p95 response time**, **Open alerts** (críticos
+e avisos) e **MTTR 30 d** (tempo médio de resolução). O intervalo de tempo do
+cabeçalho controla o p95 e o rio.
 
-Os alertas confirmados e adiados movem-se para o seu próprio grupo mais
-silencioso sob a lista e saem da contagem *Needs you*. Um alerta ignorado
-desaparece completamente — não é «conhecido», está desligado para esse
-monitor. Ver [Livrar-se de um alerta](alerts.md#getting-rid-of-an-alert).
+O **rio de saúde** é uma faixa por monitor, uma célula por fatia do intervalo,
+com os piores monitores no topo. Um estado é sempre escrito junto de uma forma
+(círculo ativo, losango degradado, quadrado em baixo), nunca só por cor.
 
-## Resumo de monitores {#devices-summary}
+## A tabela de monitores {#the-monitor-table}
 
-Uma linha: quantos monitores, quantos a reportar, quantos inacessíveis,
-e uma ligação para a página completa Devices. A visão geral nunca lista
-monitores: o bastidor vive em [Devices](devices.md).
+A tabela lista cada monitor, o pior primeiro. Filtra por estado, tipo e texto,
+permite acrescentar colunas (endereço, pasta) ou remover outras e controla-se
+pelo teclado: ++j++ / ++k++ movem, ++enter++ seleciona, ++o++ abre.
 
-## Previsões e últimas 24 horas {#forecasts-and-last-24-hours}
-
-**Forecasts** mostra o que é previsto em vez de observado: a anomalia da
-linha de base sazonal, as extrapolações «cheio dentro de quatro dias», a
-estimativa de enchimento do PBS, e regras cujo nome anuncia uma previsão.
-Enquanto uma linha de base está a aprender, as suas entradas dizem-o.
-
-**Last 24 hours** lista as transições ativas do dia, com uma ligação para o
-histórico completo na página Alerts.
+O monitor selecionado alimenta o **painel de contexto** à direita, como um
+inspetor: o que precisa de atenção (com as ações sobre alertas, ver
+[Página de alertas](alerts.md)), **Check now** e **Silence 1 h**, as previsões
+mais próximas e quem está de prevenção. ++i++ mostra-o ou oculta-o; num ecrã mais
+estreito abre-se como gaveta. A lista completa está na
+[página de monitores](devices.md).
 
 ## Modo parede {#wall-mode}
 
-`/wall` mostra só o boletim, em tela cheia, para um monitor de sala: a
-frase, as contagens e a lista *Needs you*, atualizadas a cada 20 segundos,
-com o ecrã mantido aceso. ++esc++ ou **Exit** volta à visão geral. Abra-o a
-partir da paleta de comandos («Wall mode») ou escrevendo o URL. Também pode
-reproduzir música iniciada a partir do seu telefone: ver
-[Modo parede e música](wall.md).
-
-![Modo parede](../assets/screenshots/wall-light.png){ loading=lazy }
+`/wall` mostra um quadro para um monitor de sala: o veredicto, o relógio, os cinco
+números, o rio de saúde, os alertas abertos e quem está de prevenção. Abra-o com
+o ícone **Wall mode** da barra superior ou com a paleta de comandos; ++esc++ ou
+**Exit** volta à consola. Ver [Modo parede](wall.md).
 
 ## Instalar num telefone {#install-it-on-a-phone}
 
@@ -93,23 +74,28 @@ campo, resultados em três grupos.
 
 | Grupo | Entradas |
 |---|---|
-| Pages | Overview, Devices, Alerts, Notifications, Status pages, Settings, Wall mode, Documentation |
-| Actions | Add a device, Scan my network, Schedule maintenance, Add notification channel, New status page, Announce an incident, Toggle theme |
-| Devices | Todos os monitores, com o seu LED de estado; ++enter++ abre-o |
+| Pages | Overview, Monitors, Alerts, Notifications, Status pages, Settings, Wall mode, Documentation |
+| Actions | Add a monitor, Scan my network, Schedule maintenance, Add notification channel, New status page, Announce an incident |
+| Monitors | Cada monitor, com o seu LED de estado; ++enter++ abre-o |
 
 ## Navegação {#navigation}
 
-A barra superior tem Overview, Monitors, Alerts (com a contagem do que
-precisa de si) e Settings, o atalho da paleta e o alternador de tema. Num
-telefone, torna-se uma barra de separadores inferior com esses quatro
-separadores e **More**, que contém o modo parede e a documentação.
+Uma **barra de ícones** estreita à esquerda lista cada destino: Overview,
+Monitors, Alerts (com a contagem do que precisa de si), Dashboards, Explore, o
+mapa de topologia, Security, Logs, Status pages, Reports e Settings. No fundo
+ficam a documentação, o GitHub e a sua conta. O cabeçalho diz onde está, com o
+interruptor **LIVE** que pausa as atualizações da própria consola, o intervalo de
+tempo, a paleta, **Wall mode** e **New monitor**. Num telefone, a barra torna-se
+uma barra de separadores inferior com o essencial e **More**.
 
-- **Overview** — o boletim: está tudo bem, e o que precisa de si.
-- **Monitors** — o bastidor; cada fonte que monitoriza. Ver [Página de monitores](devices.md).
-- **Alerts** — o que está ativo, as janelas de manutenção, o histórico e as
-  regras. Ver [Página de alertas](alerts.md).
-- **Settings** — a sua conta, utilizadores e sign-on único, tokens de
-  agente e assistente, canais de notificação e relatórios, páginas de estado
-  públicas, aparência, sobre. Ver [Settings](settings.md). Nada na interface transmite estado só pela
-cor: uma placa ou um LED vêm sempre com uma palavra (Reporting, Unreachable,
-Advisory, Warning, Suppressed by parent, Building up).
+- **Overview**: está tudo bem, e o que precisa de si.
+- **Monitors**: cada fonte que monitoriza. Ver a
+  [página de monitores](devices.md).
+- **Alerts**: o que está ativo, janelas de manutenção, histórico e regras. Ver a
+  [página de alertas](alerts.md).
+- **Settings**: a sua conta, utilizadores e sign-on único, tokens, canais de
+  notificação, aparência, sobre. Ver [Settings](settings.md).
+
+A interface é escura e nada nela transmite estado só pela cor: um indicador vem
+sempre com uma palavra (Reporting, Unreachable, Advisory, Warning, Suppressed by
+parent, Building up).

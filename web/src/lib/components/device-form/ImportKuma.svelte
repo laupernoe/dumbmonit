@@ -13,6 +13,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { importKuma, importKumaDb, KUMA_DB_MAX_BYTES, KUMA_MAX_BYTES } from '#lib/api/targetsImport.js';
 	import { importableRows, isSqliteHead, selectionState, tickedRows, toggleRow } from './kuma-import.js';
+	import RelayPick from './RelayPick.svelte';
 	import type { KumaImportReport, TargetImportStatus } from '#lib/api/types.js';
 	import { Button, ErrorNotice, Plate } from '#lib/ui/index.js';
 	import type { Tone } from '#lib/ui/index.js';
@@ -28,6 +29,8 @@
 	let { ondone, variant = 'secondary', trigger = true, class: className = '' }: Props = $props();
 
 	let open = $state(false);
+	/** Relay agent that probes the imported monitors; `null`: this server. */
+	let viaAgent = $state<number | null>(null);
 	let busy = $state(false);
 	let error = $state<unknown>(null);
 	let notice = $state('');
@@ -85,7 +88,7 @@
 		error = null;
 		try {
 			const rows = dryRun ? undefined : tickedRows(selected, preview?.rows ?? []);
-			const answer = 'db' in source ? await importKumaDb(source.db, dryRun, rows) : await importKuma(source.json, dryRun, rows);
+			const answer = 'db' in source ? await importKumaDb(source.db, dryRun, rows, viaAgent) : await importKuma(source.json, dryRun, rows, viaAgent);
 			if (dryRun) {
 				preview = answer;
 				selected = new Set(importableRows(answer.rows));
@@ -192,6 +195,7 @@
 		{/if}
 
 		{#if !report}
+			<div class="mt-4"><RelayPick id="kuma-via-agent" bind:value={viaAgent} disabled={busy} /></div>
 			<input bind:this={fileInput} type="file" accept=".db,.sqlite,.sqlite3,.json,application/json,application/vnd.sqlite3,application/octet-stream" class="sr-only" tabindex="-1" onchange={onfile} />
 			<div class="mt-4 flex flex-wrap items-center gap-2">
 				<Button variant="primary" loading={busy} onclick={() => fileInput?.click()}>

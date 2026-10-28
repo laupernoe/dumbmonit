@@ -9,12 +9,23 @@
 	import { Box, Monitor, Server } from 'lucide-svelte';
 	import type { ListRow, NodeState, SiteInfo } from './layout';
 	import { guestLabel, sourceShort, zoneLabel } from './legend';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { linkLoad, loadText } from './traffic';
 
 	interface Props {
 		sections: { site: SiteInfo; rows: ListRow[] }[];
+		/** Weathermap: a "Load" figure on each row whose link has traffic. */
+		traffic?: boolean;
 	}
 
-	let { sections }: Props = $props();
+	let { sections, traffic = false }: Props = $props();
+
+	function loadOf(row: ListRow): string | null {
+		if (!traffic || !row.traffic || row.linkFrom === null) return null;
+		const load = linkLoad(row.traffic, row.linkFrom);
+		const text = loadText(load, getLocale());
+		return load.errors ? `${text} · ${m.topology_traffic_errors_short()}` : text;
+	}
 
 	function stateText(state: NodeState): string {
 		if (state === 'running') return m.topology_state_running();
@@ -61,6 +72,9 @@
 							</span>
 							{#if row.node.subnet}
 								<span class="hidden shrink-0 rounded-full border border-line px-2 py-0.5 text-xs text-ink-2 sm:inline">{zoneLabel(row.node.subnet, row.node.vlan, row.node.vlanName)}</span>
+							{/if}
+							{#if loadOf(row)}
+								<span class="shrink-0 rounded-full border border-line px-2 py-0.5 text-xs font-semibold tabular-nums text-ink" title={m.topology_traffic_load_col()}>{loadOf(row)}</span>
 							{/if}
 							{#if row.down}
 								<span class="shrink-0 rounded-full bg-warning-soft px-2 py-0.5 text-xs font-bold text-warning-ink">{m.topology_legend_down()}</span>

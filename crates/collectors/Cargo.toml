@@ -9,6 +9,14 @@ repository.workspace = true
 # Distribué par image Docker, jamais sur crates.io.
 publish = false
 
+[features]
+default = ["catalog"]
+# Catalogue des mesures et vues par type (`catalog/*.yaml`, ~0,5 Mo de texte),
+# servi par l'API du serveur. L'agent relais n'en a pas l'usage : il dépend de
+# ce paquet sans les fonctionnalités par défaut, et le catalogue reste hors de
+# son binaire.
+catalog = []
+
 [dependencies]
 dumbmonit-proto = { path = "../proto" }
 

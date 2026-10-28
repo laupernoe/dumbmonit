@@ -1,0 +1,49 @@
+# Mesures et vues du type « immich » (format : crates/collectors/src/catalog.rs).
+source: selfhosted
+prefixes: [immich_]
+metrics:
+  - { name: immich_storage_used_percent, label: "Storage used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: immich_jobs_waiting, label: "Jobs waiting" }
+  - { name: immich_queue_waiting, label: "Queue waiting" }
+  - { name: immich_storage_available_bytes, label: "Storage available", unit: "B", better: "higher" }
+  - { name: immich_storage_size_bytes, label: "Storage size", unit: "B" }
+  - { name: immich_usage_bytes, label: "Usage", unit: "B" }
+  - { name: immich_photos, label: "Photos" }
+  - { name: immich_videos, label: "Videos" }
+  - { name: immich_users, label: "Users" }
+  - { name: immich_jobs_active, label: "Jobs active" }
+  - { name: immich_jobs_failed, label: "Jobs failed", better: "lower" }
+  - { name: immich_queue_active, label: "Queue active" }
+  - { name: immich_queue_failed, label: "Queue failed", better: "lower" }
+  - { name: immich_queue_paused, label: "Queue paused", unit: "bool" }
+  - { name: immich_queues_paused, label: "Queues paused" }
+  - { name: immich_update_available, label: "Update available", unit: "bool", better: "higher" }
+  - { name: immich_maintenance_mode, label: "Maintenance mode", unit: "bool" }
+  - { name: immich_statistics_readable, label: "Statistics readable", unit: "bool" }
+  - { name: immich_version_info, label: "Version", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - immich_storage_available_bytes
+      - immich_storage_size_bytes
+      - immich_usage_bytes
+      - immich_photos
+      - immich_videos
+      - immich_users
+      - immich_jobs_active
+      - immich_jobs_failed
+      - immich_queue_active
+      - immich_queue_failed
+      - immich_queue_paused
+      - immich_queues_paused
+      - immich_update_available
+      - immich_maintenance_mode
+      - immich_statistics_readable
+      - immich_version_info
+  - view: timeseries
+    title: "Storage used"
+    metrics: [immich_storage_used_percent]
+  - view: timeseries
+    title: "Job queue"
+    metrics: [immich_jobs_waiting, immich_queue_waiting]

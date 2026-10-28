@@ -15,7 +15,7 @@ use anyhow::{Result, bail};
 use async_trait::async_trait;
 
 use crate::alerting::model::{MAX_LOG_WINDOW_SECS, MIN_LOG_WINDOW_SECS};
-use crate::alerting::source::{MetricSource, SeriesPoint};
+use crate::alerting::source::{MetricSource, SeriesPoint, SeriesRange};
 use crate::tsdb::Victoria;
 
 /// Nom de la série produite.
@@ -40,6 +40,17 @@ impl<'a> EngineSource<'a> {
 impl MetricSource for EngineSource<'_> {
     async fn instant(&self, query: &str) -> Result<Vec<SeriesPoint>> {
         self.metrics.instant(query).await
+    }
+
+    async fn range(
+        &self,
+        query: &str,
+        start_s: i64,
+        end_s: i64,
+        step_secs: u64,
+        filter: Option<&str>,
+    ) -> Result<Vec<SeriesRange>> {
+        self.metrics.range(query, start_s, end_s, step_secs, filter).await
     }
 
     async fn log_matches(

@@ -83,7 +83,8 @@
 		push_monitors: m.settings_backup_section_push_monitors,
 		packs: m.settings_backup_section_packs,
 		netconfig_host_keys: m.settings_backup_section_netconfig_host_keys,
-		netconfig_versions: m.settings_backup_section_netconfig_versions
+		netconfig_versions: m.settings_backup_section_netconfig_versions,
+		netscan_schedules: m.settings_backup_section_netscan_schedules
 	};
 	function sectionText(key: string, fallback: string): string {
 		return SECTION_TEXT[key]?.() ?? fallback;

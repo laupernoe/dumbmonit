@@ -1,12 +1,13 @@
-//! Réglages d'instance : mode produit et assistant de démarrage
+//! Réglages d'instance : nom, langue, fuseau et assistant de démarrage
 //! ([`crate::instance`]).
 //!
-//! * `GET /instance` — public : ce dont l'interface a besoin avant même la
-//!   connexion pour choisir son habillage (`product_mode`, `setup_completed`).
-//!   Rien d'autre : le nom de l'instance n'a pas à être lu par un inconnu.
+//! * `GET /instance` — public : seulement `setup_completed`, dont l'interface
+//!   a besoin avant même la connexion. Rien d'autre : le nom de l'instance n'a
+//!   pas à être lu par un inconnu.
 //! * `GET /instance/settings` — tout le réglage, pour une session ouverte.
 //! * `PUT /instance/settings` — administrateur ; chaque champ absent garde sa
-//!   valeur.
+//!   valeur. Un ancien client qui envoie encore `product_mode` n'est pas
+//!   refusé : le champ est ignoré, il n'y a plus qu'une interface.
 
 use axum::extract::State;
 use axum::routing::get;
@@ -16,7 +17,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::api::{ApiError, ApiResult};
 use crate::auth::middleware::AdminIdentity;
-use crate::instance::{self, InstanceSettings, LANGUAGES, MAX_NAME_LEN, ProductMode};
+use crate::instance::{self, InstanceSettings, LANGUAGES, MAX_NAME_LEN};
 use crate::state::AppState;
 
 /// Routes ouvertes sans session.
@@ -32,15 +33,12 @@ pub fn routes() -> Router<AppState> {
 /// Réponse publique, volontairement minimale.
 #[derive(Debug, Serialize)]
 pub struct PublicInstance {
-    pub product_mode: ProductMode,
     pub setup_completed: bool,
 }
 
 /// Modification envoyée par l'interface. Chaque champ absent conserve sa valeur.
 #[derive(Debug, Default, Deserialize)]
 pub struct InstancePatch {
-    #[serde(default)]
-    pub product_mode: Option<String>,
     #[serde(default)]
     pub setup_completed: Option<bool>,
     #[serde(default)]
@@ -61,10 +59,7 @@ fn effective(state: &AppState, mut value: InstanceSettings) -> InstanceSettings 
 
 async fn public(State(state): State<AppState>) -> Json<PublicInstance> {
     let value = effective(&state, instance::load(&state.pool).await);
-    Json(PublicInstance {
-        product_mode: value.product_mode,
-        setup_completed: value.setup_completed,
-    })
+    Json(PublicInstance { setup_completed: value.setup_completed })
 }
 
 async fn read(State(state): State<AppState>) -> Json<InstanceSettings> {
@@ -84,13 +79,6 @@ async fn update(
 
 /// Valide et applique une modification. Rien n'est écrit si un champ est refusé.
 fn apply(value: &mut InstanceSettings, patch: InstancePatch) -> ApiResult<()> {
-    if let Some(mode) = patch.product_mode {
-        value.product_mode = ProductMode::parse(&mode).ok_or_else(|| {
-            ApiError::BadRequest(format!(
-                "Unknown product mode \"{mode}\" (available: homelab, enterprise)"
-            ))
-        })?;
-    }
     if let Some(name) = patch.name {
         let name = name.trim();
         if name.chars().count() > MAX_NAME_LEN {
@@ -143,9 +131,9 @@ mod tests {
     #[test]
     fn a_patch_keeps_what_it_does_not_name() {
         let mut value = InstanceSettings { name: "Lab".into(), ..InstanceSettings::default() };
-        let patch = InstancePatch { product_mode: Some("enterprise".into()), ..Default::default() };
+        let patch = InstancePatch { language: Some("fr".into()), ..Default::default() };
         assert!(apply(&mut value, patch).is_ok());
-        assert_eq!(value.product_mode, ProductMode::Enterprise);
+        assert_eq!(value.language, "fr");
         assert_eq!(value.name, "Lab");
     }
 
@@ -153,7 +141,6 @@ mod tests {
     fn bad_values_are_refused() {
         let mut value = InstanceSettings::default();
         for patch in [
-            InstancePatch { product_mode: Some("pro".into()), ..Default::default() },
             InstancePatch { language: Some("klingon".into()), ..Default::default() },
             InstancePatch { timezone: Some("Mars/Olympus".into()), ..Default::default() },
             InstancePatch { name: Some("x".repeat(MAX_NAME_LEN + 1)), ..Default::default() },
@@ -161,6 +148,15 @@ mod tests {
             assert!(apply(&mut value, patch).is_err());
         }
         assert_eq!(value, InstanceSettings::default());
+    }
+
+    #[test]
+    fn an_old_client_sending_the_product_mode_is_not_refused() {
+        let patch: InstancePatch =
+            serde_json::from_str(r#"{"product_mode":"homelab","name":"Lab"}"#).unwrap();
+        let mut value = InstanceSettings::default();
+        assert!(apply(&mut value, patch).is_ok());
+        assert_eq!(value.name, "Lab");
     }
 
     #[test]

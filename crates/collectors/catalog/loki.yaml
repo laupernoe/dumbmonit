@@ -1,0 +1,33 @@
+# Mesures et vues du type « loki » (format : crates/collectors/src/catalog.rs).
+source: observability
+prefixes: [loki_]
+metrics:
+  - { name: loki_ready, label: "Ready", unit: "bool" }
+  - { name: loki_version_info, label: "Version", kind: info }
+  - { name: loki_received_bytes_total, label: "Received bytes", unit: "B", kind: counter }
+  - { name: loki_received_lines_total, label: "Received lines", kind: counter }
+  - { name: loki_requests_total, label: "Requests", kind: counter }
+  - { name: loki_request_errors_total, label: "Request errors", kind: counter, better: "lower" }
+  - { name: loki_panics_total, label: "Panics", kind: counter }
+  - { name: loki_memory_streams, label: "Memory streams" }
+  - { name: loki_memory_resident_bytes, label: "Memory resident", unit: "B" }
+  - { name: loki_flush_queue_length, label: "Flush queue length" }
+  - { name: loki_discarded_lines_total, label: "Discarded lines", kind: counter }
+  - { name: loki_discarded_lines_reason_total, label: "Discarded lines reason", kind: counter }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - loki_ready
+      - loki_panics_total
+      - loki_memory_streams
+      - loki_memory_resident_bytes
+      - loki_discarded_lines_total
+      - loki_discarded_lines_reason_total
+      - loki_flush_queue_length
+  - view: timeseries
+    title: "Ingestion"
+    metrics: [loki_received_bytes_total]
+  - view: timeseries
+    title: "Requests and errors"
+    metrics: [loki_requests_total, loki_request_errors_total]

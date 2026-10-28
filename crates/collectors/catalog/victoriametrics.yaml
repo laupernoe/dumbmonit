@@ -1,0 +1,45 @@
+# Mesures et vues du type « victoriametrics » (format : crates/collectors/src/catalog.rs).
+source: observability
+prefixes: [victoriametrics_]
+metrics:
+  - { name: victoriametrics_healthy, label: "Healthy", unit: "bool" }
+  - { name: victoriametrics_version_info, label: "Version", kind: info }
+  - { name: victoriametrics_uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: victoriametrics_active_series, label: "Active series" }
+  - { name: victoriametrics_rows_ingested_total, label: "Rows ingested", kind: counter }
+  - { name: victoriametrics_rows_added_total, label: "Rows added", kind: counter }
+  - { name: victoriametrics_data_size_bytes, label: "Data size", unit: "B" }
+  - { name: victoriametrics_disk_free_bytes, label: "Disk free", unit: "B", better: "higher" }
+  - { name: victoriametrics_disk_total_bytes, label: "Disk total", unit: "B" }
+  - { name: victoriametrics_disk_free_limit_bytes, label: "Disk free limit", unit: "B" }
+  - { name: victoriametrics_disk_headroom_percent, label: "Disk headroom", unit: "%", better: "higher", min: 0, max: 100 }
+  - { name: victoriametrics_http_errors_total, label: "HTTP errors", kind: counter, better: "lower" }
+  - { name: victoriametrics_log_errors_total, label: "Log errors", kind: counter, better: "lower" }
+  - { name: victoriametrics_memory_resident_bytes, label: "Memory resident", unit: "B" }
+  - { name: victoriametrics_read_only, label: "Read only", unit: "bool" }
+  - { name: victoriametrics_rows_rejected_total, label: "Rows rejected", kind: counter, better: "lower" }
+  - { name: victoriametrics_rows_rejected_reason_total, label: "Rows rejected reason", kind: counter }
+  - { name: victoriametrics_slow_inserts_total, label: "Slow inserts", kind: counter }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - victoriametrics_read_only
+      - victoriametrics_data_size_bytes
+      - victoriametrics_healthy
+      - victoriametrics_uptime_seconds
+      - victoriametrics_http_errors_total
+      - victoriametrics_log_errors_total
+      - victoriametrics_memory_resident_bytes
+      - victoriametrics_rows_rejected_total
+      - victoriametrics_rows_rejected_reason_total
+      - victoriametrics_slow_inserts_total
+  - view: timeseries
+    title: "Active series"
+    metrics: [victoriametrics_active_series]
+  - view: timeseries
+    title: "Ingestion"
+    metrics: [victoriametrics_rows_ingested_total]
+  - view: timeseries
+    title: "Disk headroom"
+    metrics: [victoriametrics_disk_headroom_percent]

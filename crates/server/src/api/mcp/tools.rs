@@ -2561,7 +2561,8 @@ async fn list_agents(state: &AppState) -> ToolResult {
     let counts = db::targets::relayed_counts(&state.pool).await?;
     if hosts.is_empty() {
         return Ok(ToolOutput::new(
-            "No agent has reported yet. Install one from Settings → Agents.".into(),
+            "No agent has reported yet. Install one from Add monitor, Server with the agent."
+                .into(),
             json!({ "agents": [] }),
         ));
     }

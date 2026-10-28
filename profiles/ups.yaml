@@ -30,30 +30,48 @@ metrics:
   - name: ups_battery_status
     oid: 1.3.6.1.2.1.33.1.2.1.0
     kind: gauge
+    label: "Battery status"
+    view: "stat"
 
   # Non nul dès que l'onduleur est passé sur batterie : la coupure est en cours.
   - name: ups_battery_seconds_on
     oid: 1.3.6.1.2.1.33.1.2.2.0
     kind: gauge
+    label: "Time on battery"
+    unit: "s"
+    view: "stat"
 
   - name: ups_battery_minutes_remaining
     oid: 1.3.6.1.2.1.33.1.2.3.0
     kind: gauge
+    label: "Runtime left"
+    unit: "min"
+    view: "stat"
 
   - name: ups_battery_charge_percent
     oid: 1.3.6.1.2.1.33.1.2.4.0
     kind: gauge
+    label: "Battery charge"
+    unit: "%"
+    view: "timeseries"
+    view_title: "Battery charge"
 
   # upsBatteryVoltage est exprimée en dixièmes de volt continu.
   - name: ups_battery_volts
     oid: 1.3.6.1.2.1.33.1.2.5.0
     kind: gauge
+    label: "Battery voltage"
+    unit: "V"
+    view: "stat"
     scale: 0.1
 
   # upsBatteryCurrent est en dixièmes d'ampère continu, signée : négative en décharge.
   - name: ups_battery_amperes
     oid: 1.3.6.1.2.1.33.1.2.6.0
     kind: gauge
+    label: "Battery current"
+    unit: "A"
+    view: "stat"
     scale: 0.1
 
   # La température de batterie est en degrés Celsius entiers, sans facteur.
@@ -61,18 +79,27 @@ metrics:
   - name: ups_battery_temperature_celsius
     oid: 1.3.6.1.2.1.33.1.2.7.0
     kind: gauge
+    label: "Battery temperature"
+    unit: "°C"
+    view: "stat"
 
   # Nombre de fois où l'alimentation d'entrée est sortie des tolérances : un
   # compteur qui grimpe doucement révèle un secteur instable.
   - name: ups_input_line_bads
     oid: 1.3.6.1.2.1.33.1.3.1.0
     kind: counter
+    label: "Input line faults"
+    view: "stat"
 
   # Tables d'entrée et de sortie : une ligne par phase. Un onduleur monophasé n'en
   # a qu'une, un triphasé en a trois — d'où le parcours plutôt qu'une lecture simple.
   - name: ups_input_volts
     oid: 1.3.6.1.2.1.33.1.3.3.1.3
     kind: gauge
+    label: "Input voltage"
+    unit: "V"
+    view: "timeseries"
+    view_title: "Voltages"
     walk: true
     filters:
       max_rows: 8
@@ -81,6 +108,9 @@ metrics:
   - name: ups_input_hertz
     oid: 1.3.6.1.2.1.33.1.3.3.1.2
     kind: gauge
+    label: "Input frequency"
+    unit: "Hz"
+    view: "stat"
     walk: true
     scale: 0.1
     filters:
@@ -91,15 +121,24 @@ metrics:
   - name: ups_output_source
     oid: 1.3.6.1.2.1.33.1.4.1.0
     kind: gauge
+    label: "Output source"
+    view: "stat"
 
   - name: ups_output_hertz
     oid: 1.3.6.1.2.1.33.1.4.2.0
     kind: gauge
+    label: "Output frequency"
+    unit: "Hz"
+    view: "stat"
     scale: 0.1
 
   - name: ups_output_volts
     oid: 1.3.6.1.2.1.33.1.4.4.1.2
     kind: gauge
+    label: "Output voltage"
+    unit: "V"
+    view: "timeseries"
+    view_title: "Voltages"
     walk: true
     filters:
       max_rows: 8
@@ -108,6 +147,10 @@ metrics:
   - name: ups_output_watts
     oid: 1.3.6.1.2.1.33.1.4.4.1.4
     kind: gauge
+    label: "Output power"
+    unit: "W"
+    view: "timeseries"
+    view_title: "Output power"
     walk: true
     filters:
       max_rows: 8
@@ -115,6 +158,10 @@ metrics:
   - name: ups_output_load_percent
     oid: 1.3.6.1.2.1.33.1.4.4.1.5
     kind: gauge
+    label: "Load"
+    unit: "%"
+    view: "timeseries"
+    view_title: "UPS load"
     walk: true
     filters:
       max_rows: 8
@@ -124,3 +171,5 @@ metrics:
   - name: ups_alarms_present
     oid: 1.3.6.1.2.1.33.1.6.1.0
     kind: gauge
+    label: "Alarms"
+    view: "stat"

@@ -354,7 +354,6 @@ async fn routes_outside_the_team_list_are_refused() {
         "/api/teams",
         "/api/incidents",
         "/api/security/summary",
-        "/api/wall/widgets",
         "/api/notify/channels",
         "/api/alerts/overrides",
     ] {

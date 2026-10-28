@@ -91,7 +91,9 @@ const kindPanelLoaders: Record<string, PanelLoader> = {
 	apache: () => import('./appliance/AppliancePanel.svelte'),
 	openvpn: () => import('./appliance/AppliancePanel.svelte'),
 	webchange: () => import('./webchange/WebchangePanel.svelte'),
-	netconfig: () => import('./netconfig/NetconfigPanel.svelte')
+	netconfig: () => import('./netconfig/NetconfigPanel.svelte'),
+	// Renders nothing for an SNMP device that has no switch ports (printer, UPS…).
+	snmp: () => import('./switch/SwitchPanel.svelte')
 };
 
 /** Whether a kind has a dedicated panel, without loading it. */

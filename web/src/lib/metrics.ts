@@ -9,6 +9,7 @@ import { queryInstant, queryRange, type MetricSeries, type TargetId } from '#lib
 import type { Serie } from '#lib/components/Chart.svelte';
 import type { ProbeStatus } from '#lib/format.js';
 import { m } from '#lib/paraglide/messages.js';
+import { unitFor } from '#lib/viz/infer.js';
 
 /** Ranges offered in the selector of a device's detail page. */
 export const RANGES = [
@@ -44,18 +45,6 @@ export interface MetricGroup {
  */
 function stepFor(seconds: number): number {
 	return Math.max(10, Math.round(seconds / 300));
-}
-
-/** Deduces the display unit from the metric name suffix, by Prometheus convention. */
-function unitFor(name: string): string {
-	if (name.endsWith('_percent')) return '%';
-	if (name.endsWith('_bytes')) return 'B';
-	if (name.endsWith('_bytes_per_second')) return 'B/s';
-	if (name.endsWith('_seconds')) return 's';
-	if (name.endsWith('_celsius')) return '°C';
-	if (name.endsWith('_volts')) return 'V';
-	if (name.endsWith('_watts')) return 'W';
-	return '';
 }
 
 /** Readable title: `dumbmonit_cpu_usage_percent` becomes "Cpu usage percent". */
@@ -113,7 +102,7 @@ function group(series: MetricSeries[]): MetricGroup[] {
 
 		let entry = groups.get(name);
 		if (!entry) {
-			entry = { name, title: titleFor(name), unit: unitFor(name), series: [] };
+			entry = { name, title: titleFor(name), unit: unitFor(name, { rated: false }), series: [] };
 			groups.set(name, entry);
 		}
 		entry.series.push({ label: labelFor(item.metric), points });
@@ -147,6 +136,35 @@ export async function loadTargetMetrics(
 		signal
 	);
 	return group(series);
+}
+
+/** Same window one week back, for the chart's "last week" overlay (seconds in, seconds out). */
+async function queryWindow(
+	query: string,
+	window: { start: number; end: number },
+	signal?: AbortSignal
+): Promise<MetricSeries[]> {
+	const span = Math.max(window.end - window.start, 1);
+	return queryRange(
+		{ query, start: window.start * 1000, end: window.end * 1000, step: stepFor(span) },
+		signal
+	);
+}
+
+/** Response time of a service over a past window, in milliseconds. */
+export async function loadResponseTimesWindow(
+	targetId: TargetId,
+	window: { start: number; end: number },
+	signal?: AbortSignal
+): Promise<Serie[]> {
+	const series = await queryWindow(`dumbmonit_probe_duration_seconds{target="${targetId}"}`, window, signal);
+	return series
+		.map((item) => ({
+			label: m.devices_chart_response_time(),
+			points: toPoints(item).map(([ts, value]) => [ts, Math.round(value * 1000)] as [number, number])
+		}))
+		.filter((serie) => serie.points.length > 0)
+		.slice(0, 1);
 }
 
 /**

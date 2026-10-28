@@ -1,0 +1,118 @@
+# Mesures et vues du type « synology » (format : crates/collectors/src/catalog.rs).
+source: synology
+prefixes: [synology_]
+metrics:
+  - { name: synology_cpu_usage_percent, label: "CPU usage", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: synology_cpu_user_percent, label: "CPU user", unit: "%", min: 0, max: 100 }
+  - { name: synology_cpu_system_percent, label: "CPU system", unit: "%", min: 0, max: 100 }
+  - { name: synology_cpu_other_percent, label: "CPU other", unit: "%", min: 0, max: 100 }
+  - { name: synology_memory_usage_percent, label: "Memory usage", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: synology_swap_usage_percent, label: "Swap usage", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: synology_volume_used_percent, label: "Volume used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: synology_temperature_celsius, label: "Temperature", unit: "°C" }
+  - { name: synology_disk_temperature_celsius, label: "Disk temperature", unit: "°C" }
+  - { name: synology_uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: synology_system_info, label: "System", kind: info }
+  - { name: synology_temperature_warning, label: "Temperature warning", unit: "bool" }
+  - { name: synology_cpu_cores, label: "CPU cores" }
+  - { name: synology_cpu_clock_mhz, label: "CPU clock mhz", unit: "MHz" }
+  - { name: synology_memory_installed_bytes, label: "Memory installed", unit: "B" }
+  - { name: synology_memory_total_bytes, label: "Memory total", unit: "B" }
+  - { name: synology_memory_used_bytes, label: "Memory used", unit: "B" }
+  - { name: synology_memory_available_bytes, label: "Memory available", unit: "B", better: "higher" }
+  - { name: synology_swap_used_bytes, label: "Swap used", unit: "B" }
+  - { name: synology_system_load, label: "System load" }
+  - { name: synology_volume_status, label: "Volume status" }
+  - { name: synology_volume_total_bytes, label: "Volume total", unit: "B" }
+  - { name: synology_volume_used_bytes, label: "Volume used", unit: "B" }
+  - { name: synology_volume_available_bytes, label: "Volume available", unit: "B", better: "higher" }
+  - { name: synology_volume_full_warning, label: "Volume full warning", unit: "bool" }
+  - { name: synology_volume_full_critical, label: "Volume full critical", unit: "bool" }
+  - { name: synology_volume_used_warning_percent, label: "Volume used warning", unit: "%", min: 0, max: 100 }
+  - { name: synology_volume_used_critical_percent, label: "Volume used critical", unit: "%", min: 0, max: 100 }
+  - { name: synology_disk_info, label: "Disk", kind: info }
+  - { name: synology_disk_status, label: "Disk status" }
+  - { name: synology_disk_smart_status, label: "Disk SMART status" }
+  - { name: synology_disk_size_bytes, label: "Disk size", unit: "B" }
+  - { name: synology_disk_remaining_life_percent, label: "Disk remaining life", unit: "%", min: 0, max: 100 }
+  - { name: synology_disk_unc_count, label: "Disk UNC count", kind: counter }
+  - { name: synology_disk_bad_sector_exceeded, label: "Disk bad sector exceeded", unit: "bool" }
+  - { name: synology_disk_life_below_threshold, label: "Disk life below threshold", unit: "bool" }
+  - { name: synology_pool_status, label: "Pool status" }
+  - { name: synology_pool_failed_disks, label: "Pool failed disks" }
+  - { name: synology_ssd_cache_status, label: "SSD cache status" }
+  - { name: synology_storage_health, label: "Storage health" }
+  - { name: synology_system_crashed, label: "System crashed", unit: "bool" }
+  - { name: synology_system_need_repair, label: "System need repair", unit: "bool" }
+  - { name: synology_backup_last_result, label: "Backup last result" }
+  - { name: synology_backup_running, label: "Backup running", unit: "bool" }
+  - { name: synology_backup_tasks, label: "Backup tasks" }
+  - { name: synology_backup_last_run_age_seconds, label: "Backup last run age", unit: "s" }
+  - { name: synology_backup_last_success_age_seconds, label: "Backup last success age", unit: "s" }
+  - { name: synology_backup_next_run_in_seconds, label: "Backup next run in", unit: "s" }
+  - { name: synology_drive_connections, label: "Drive connections" }
+  - { name: synology_drive_team_folders, label: "Drive team folders" }
+  - { name: synology_drive_team_folder_info, label: "Drive team folder", kind: info }
+  - { name: synology_photos_installed, label: "Photos installed", unit: "bool" }
+  - { name: synology_autoblock_enabled, label: "Autoblock enabled", unit: "bool" }
+  - { name: synology_firewall_enabled, label: "Firewall enabled", unit: "bool" }
+  - { name: synology_admin_account_enabled, label: "Admin account enabled", unit: "bool" }
+  - { name: synology_update_available, label: "Update available", unit: "bool", better: "higher" }
+  - { name: synology_scrape_errors, label: "Scrape errors", better: "lower" }
+  - { name: synology_scrape_duration_seconds, label: "Scrape duration", unit: "s", better: "lower" }
+  - { name: synology_up, label: "Up" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - synology_storage_health
+      - synology_volume_status
+      - synology_pool_failed_disks
+      - synology_update_available
+      - synology_backup_last_result
+      - synology_uptime_seconds
+      - synology_system_info
+      - synology_temperature_warning
+      - synology_cpu_cores
+      - synology_cpu_clock_mhz
+      - synology_memory_installed_bytes
+      - synology_memory_total_bytes
+      - synology_volume_total_bytes
+      - synology_volume_available_bytes
+      - synology_volume_full_warning
+      - synology_volume_full_critical
+      - synology_disk_info
+      - synology_disk_status
+      - synology_disk_smart_status
+      - synology_disk_size_bytes
+      - synology_disk_remaining_life_percent
+      - synology_disk_unc_count
+      - synology_disk_bad_sector_exceeded
+      - synology_disk_life_below_threshold
+      - synology_pool_status
+      - synology_ssd_cache_status
+      - synology_system_crashed
+      - synology_system_need_repair
+      - synology_backup_running
+      - synology_backup_tasks
+      - synology_backup_last_run_age_seconds
+      - synology_backup_last_success_age_seconds
+      - synology_backup_next_run_in_seconds
+      - synology_drive_connections
+      - synology_drive_team_folders
+      - synology_photos_installed
+      - synology_autoblock_enabled
+      - synology_firewall_enabled
+      - synology_admin_account_enabled
+  - view: timeseries
+    title: "CPU load"
+    metrics: [synology_cpu_usage_percent, synology_cpu_user_percent, synology_cpu_system_percent, synology_cpu_other_percent]
+  - view: timeseries
+    title: "Memory"
+    metrics: [synology_memory_usage_percent, synology_swap_usage_percent]
+  - view: timeseries
+    title: "Volumes used"
+    metrics: [synology_volume_used_percent]
+  - view: timeseries
+    title: "Temperatures"
+    metrics: [synology_temperature_celsius, synology_disk_temperature_celsius]

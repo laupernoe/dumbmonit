@@ -24,7 +24,7 @@
 | Диски (счётчики) | `disk_read_bytes`, `disk_written_bytes`, один ряд на каждое блочное устройство | `device` |
 | Хост | `uptime_seconds`, `process_count` | |
 | Службы | `service_up` (1 = запущена) | `service` |
-| Контейнеры | `container_up`, `container_count`, `container_running_count`, `container_series_skipped` (контейнеры сверх `docker_max_containers`) | `container`, `image` |
+| Контейнеры | `container_up`, `container_stop_expected` (только остановленные контейнеры: 1, если Docker не перезапустил бы его), `container_count`, `container_running_count`, `container_series_skipped` (контейнеры сверх `docker_max_containers`), `container_cpu_percent` (процент одного ядра, со второго цикла), `container_memory_bytes` (без кэша), `container_memory_limit_bytes` и `container_memory_percent` (только при наличии лимита), `container_net_rx_bytes` / `container_net_tx_bytes` и `container_block_read_bytes` / `container_block_write_bytes` (накопительные счётчики), `container_pids` и для всего хоста `container_df_images_bytes`, `container_df_containers_bytes`, `container_df_volumes_bytes`, `container_df_build_cache_bytes`, `container_df_reclaimable_bytes` (читаются раз в десять минут) | `container`, `image` |
 | Датчики | `agent_sensor_temperature_celsius`, `agent_sensor_temperature_critical_celsius` (порог, который объявляет само оборудование), `agent_sensor_fan_rpm` | `sensor`, `fan` |
 | Состояние дисков (SMART) | `agent_disk_smart_ok` (1 = диск проходит собственную самооценку), `agent_disk_temperature_celsius`, `agent_disk_power_on_hours`, `agent_disk_wearout_percent`, `agent_disk_reallocated_sectors`, `agent_disk_pending_sectors`, `agent_disk_media_errors` | `device`, `model` |
 | KVM / libvirt | `agent_libvirt_domains`, `agent_libvirt_domains_running`, `agent_libvirt_pools`; для каждого домена `agent_libvirt_domain_state_info`, `agent_libvirt_domain_running`, `agent_libvirt_domain_crashed`, `agent_libvirt_domain_vcpus`, `agent_libvirt_domain_memory_max_bytes`, `agent_libvirt_domain_memory_used_bytes`; для каждого пула хранилища `agent_libvirt_pool_state_info`, `agent_libvirt_pool_active`, `agent_libvirt_pool_capacity_bytes`, `agent_libvirt_pool_allocation_bytes`, `agent_libvirt_pool_used_percent` — см. [Виртуальные машины KVM через libvirt](#kvm-virtual-machines-through-libvirt) | `domain`, `pool`, `state` |
@@ -120,21 +120,10 @@ critical**, **Hyper-V host CPU high** и **Hyper-V virtual disk errors** (см.
 Ниже приведены шаги, которые показывает уведомление рядом с формой. Создавать
 учётную запись на машине не нужно: токен регистрации — единственный секрет.
 
-1. Сохраните монитор в DumbMonit: токен регистрации (dmon_…) показывается один раз
-   вместе с готовой к копированию командой установки для Linux и для Windows. (Токен
-   также можно создать в **Settings → Agents**.)
-2. Этот токен — ключ агента для отправки своих измерений в DumbMonit. Это
-   не учётная запись на машине: создавать там ничего не нужно. Токен, созданный в форме
-   монитора, одноразовый: он регистрирует только эту машину и больше ничего.
-   Для парка машин создайте многоразовый токен в Settings → Agents.
-3. Выполните команду установки на отслеживаемой машине с повышенными правами
-   (sudo в Linux и macOS, PowerShell с правами администратора в Windows). Она скачивает
-   агент, записывает токен в agent.yaml и запускает службу.
-4. Машина появляется сама в течение нескольких секунд под именем своего
-   хоста. При этом первом пакете сервер выдаёт агенту собственный секрет и
-   сохраняет его в `/etc/dumbmonit/agent-secret`, доступном для чтения только владельцу: с этого
-   момента только эта машина может отправлять данные от имени этого монитора.
-   Потеряли токен? В Settings → Agents его можно отозвать и создать другой.
+1. В DumbMonit добавьте монитор и выберите **Сервер с агентом**. Выберите, как машина достигает сервера: **Напрямую** или через **ретранслятор** удалённой площадки за межсетевым экраном (см. [Мониторинг удалённой площадки](../install/remote-site.md#5-install-agents-behind-the-relay)). Токен регистрации (dmon_…) показывается один раз вместе с готовой к копированию командой установки для Linux/macOS, Windows и Docker.
+2. Этот токен — ключ агента для отправки измерений; создавать учётную запись на машине не нужно. По умолчанию он одноразовый: регистрирует эту машину и ничего больше. Для парка машин (плейбук, образ машины) отметьте *Несколько машин с этой командой* до создания команды; целый домен Windows проходит через [набор для Active Directory](agent-active-directory.md), предлагаемый на той же странице. Потерянный токен отзывается в Settings → Agents.
+3. Выполните команду установки на отслеживаемой машине с повышенными правами (sudo в Linux и macOS, PowerShell от имени администратора в Windows).
+4. Страница ждёт первой отправки (несколько секунд), затем позволяет сразу назвать машину, положить её в папку и привязать к площадке. С этим первым пакетом сервер выдаёт агенту собственный секрет (`/etc/dumbmonit/agent-secret`, доступный только ему): с этого момента только эта машина может отправлять данные под этим монитором.
 5. Docker: чтобы видеть контейнеры и позволить DumbMonit перезапускать или обновлять их,
    агент должен иметь доступ к сокету Docker. Служба, которую регистрирует установщик,
    уже его имеет; если же вы запускаете агента под отдельным пользователем, добавьте этого
@@ -328,7 +317,7 @@ docker buildx build --target agent-dist --output type=local,dest=dist/agent .
     или если недоступна ни одна утилита SHA-256 (`sha256sum`, `shasum`, `sha256`).
 
     Контрольные суммы меняются с каждым релизом сервера: после обновления DumbMonit
-    скопируйте свежую команду установки из **Settings → Agents** (или из нового
+    скопируйте свежую команду установки (**Новый монитор → Сервер с агентом**) (или из нового
     токена), а не запускайте старую, которая остановится с ошибкой
     «checksum mismatch». Те же контрольные суммы показаны под командой
     установки и опубликованы по адресу `/download/<file>.sha256`.
@@ -360,7 +349,7 @@ docker buildx build --target agent-dist --output type=local,dest=dist/agent .
 Оба скрипта идемпотентны: повторный запуск команды установки с тем же
 токеном и URL заменяет бинарный файл, перезаписывает конфигурацию и перезапускает
 службу. Это и есть процедура обновления. Берите команду с текущего
-сервера (Settings → Agents): её `--sha256` должен соответствовать бинарным файлам той
+сервера (Новый монитор, **Сервер с агентом**): её `--sha256` должен соответствовать бинарным файлам той
 версии сервера, до которой вы обновились.
 
 Та же команда переносит на новую версию машину, на которой всё ещё работает агент EzyMonit, в Linux
@@ -591,6 +580,9 @@ libvirt знает только его настроенный максимум. 
 | `DUMBMONIT_AGENT_LOG` | `trace`, `debug`, `info`, `warn`, `error` |
 | `DUMBMONIT_AGENT_RELAY` | `true` — выполнять для сервера проверки мониторов, назначенных этому агенту (см. [Запуск агента в Docker / в другой сети](#run-the-agent-in-docker--on-another-network)) |
 | `DUMBMONIT_AGENT_SITE` | Метка площадки, показываемая рядом с агентом, когда он предлагается как ретранслятор |
+| `DUMBMONIT_AGENT_GATEWAY_LISTEN` | Шлюз ретранслятора для агентов его площадки, например `0.0.0.0:8443` (`gateway_listen:`); важнее порта, заданного в интерфейсе (см. [Установка агентов за ретранслятором](../install/remote-site.md#5-install-agents-behind-the-relay)) |
+| `DUMBMONIT_AGENT_GATEWAY_MAX_CONNECTIONS` | Соединений, одновременно удерживаемых шлюзом, по умолчанию 64 (`gateway_max_connections:`) |
+| `DUMBMONIT_AGENT_GATEWAY_RATE_KIB` | Скорость каждого туннеля через шлюз, в каждом направлении, в КиБ/с, по умолчанию 4096 (`gateway_rate_kib:`) |
 
 ## Счётчики производительности Windows {#windows-performance-counters}
 
@@ -822,8 +814,8 @@ DumbMonit, записывается в журнал, и попытка повт�
 
 ## Токены регистрации
 
-- Токены создаются в **Settings → Agents** или при добавлении монитора типа
-  agent. Сервер хранит только отпечаток: токен в открытом виде показывается один раз, в
+- Токены создаются при добавлении монитора типа agent (одноразовые или для
+  нескольких машин) и набором для Active Directory. Сервер хранит только отпечаток: токен в открытом виде показывается один раз, в
   ответе на создание, вместе с двумя командами установки.
 - Агент отправляет его как `Authorization: Bearer dmon_…` в `POST /api/ingest`.
   Он никогда не появляется в журналах агента, даже в усечённом виде.
@@ -872,14 +864,14 @@ tail -f /var/log/dumbmonit-agent.log   # service log (OpenRC)
 |---|---|
 | Установщик сообщает «could not reach the server» | Неверный URL или токен. Конфигурация записана: исправьте `agent.yaml`, затем перезапустите службу. |
 | Загрузка завершается ошибкой 404 | У сервера нет бинарных файлов агента (`DUMBMONIT_AGENT_DIR` пуст). Используйте `--bin=PATH` с собранным вами бинарным файлом. |
-| Установщик останавливается с «checksum mismatch» | Команда была скопирована до обновления сервера (скопируйте свежую из Settings → Agents), либо полученный бинарный файл не тот, который отдаёт сервер: на пути прокси или кэш, либо загрузка подменена. |
+| Установщик останавливается с «checksum mismatch» | Команда была скопирована до обновления сервера (скопируйте свежую при добавлении сервера с агентом), либо полученный бинарный файл не тот, который отдаёт сервер: на пути прокси или кэш, либо загрузка подменена. |
 | Установщик останавливается с «no expected checksum» | В команде нет `--sha256` для этой платформы: старая команда или бинарный файл macOS (не поставляется сервером). Скопируйте свежую команду или передайте `--sha256=<platform>-<arch>:<hex>` из `.sha256` релиза. |
 | Машина так и не появляется | Отправка идёт на `/api/ingest` по URL из команды установки; за обратным прокси убедитесь, что он пересылается и что тела запросов до 16 МБ разрешены. |
 | *Unreachable*, хотя агент работает | Токен был отозван или отправки отклоняются. Проверьте `journalctl -u dumbmonit-agent`: ошибка записана там. |
 | В журнале «this agent is not recognised for this machine» | Машина привязана к установке агента, секрета которой у этого агента нет — переустановка или контейнер, пересозданный без тома состояния. Откройте страницу монитора и нажмите **Allow re-enrolment**; см. [Повторная регистрация после переустановки](#re-enrolment-after-a-reinstall). |
 | В журнале «this machine was enrolled before agent binding» | Хост, который никогда не привязывался к своему агенту. Нажмите **Allow re-enrolment** на странице его монитора, затем перезапустите агент; см. [Хосты, появившиеся до привязки](#hosts-that-predate-binding). |
 | В журнале «this agent is too old to be bound to its machine» | Бинарный файл агента не умеет хранить секрет привязки. Заново выполните на хосте команду установки; если монитор уже существует, сначала нажмите **Allow re-enrolment**. |
-| В журнале «this enrollment token has already enrolled all the machines it was allowed to» | Повторно используется одноразовый токен. Создайте новый или многоразовый токен в Settings → Agents. |
+| В журнале «this enrollment token has already enrolled all the machines it was allowed to» | Повторно используется одноразовый токен. Создайте новый или отметьте *Несколько машин с этой командой* при добавлении сервера. |
 | Windows | На момент написания части, относящиеся к службе Windows, не были проверены в сборочном образе проекта; сообщайте о проблемах на GitHub. |
 
 ## Контейнеры Docker {#docker-containers}

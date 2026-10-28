@@ -1,7 +1,3 @@
-import type { WallLayout } from '../wall/layout';
-
-export type { WallLayout };
-
 /**
  * Types of the DumbMonit server API contract.
  *
@@ -427,8 +423,15 @@ export type AlertPhase = 'ok' | 'pending' | 'firing' | 'resolved';
 /** What the user must read: `phase`, but with suppression made visible. */
 export type AlertEffectivePhase = AlertPhase | 'suppressed';
 
-/** How a rule watches its metric. */
-export type RuleKind = 'threshold' | 'anomaly' | 'predict' | 'log_pattern';
+/**
+ * How a rule watches its metric. `forecast`: days before full (capacity
+ * families or a custom expression) against `threshold`; `drift`: how many
+ * times the usual value the measurement is, against `threshold`.
+ */
+export type RuleKind = 'threshold' | 'anomaly' | 'predict' | 'log_pattern' | 'forecast' | 'drift';
+
+/** Direction a `drift` rule watches. */
+export type DriftDirection = 'up' | 'down' | 'both';
 
 /** Comparison operator of a threshold rule. */
 export type RuleOperator = '>' | '>=' | '<' | '<=';
@@ -450,6 +453,27 @@ export interface AnomalyParams {
 	log_window_secs: number;
 	/** `log_pattern`: one alert per device (true) or a single one. */
 	log_per_target: boolean;
+	/** `forecast`: days of history fitted (2…90, default 7). */
+	forecast_window_days?: number;
+	/** `forecast`: at least warning below this many days (default 14). */
+	forecast_warning_days?: number;
+	/** `forecast`: critical below this many days (default 7). */
+	forecast_critical_days?: number;
+	/** `forecast`: forecasts less sure than this (0…1) never fire. */
+	forecast_min_confidence?: number;
+	/** `forecast` on a custom expression: the value at which it is full. */
+	forecast_limit?: number;
+	/** `drift`: window of the current measurement, in seconds. */
+	drift_window_secs?: number;
+	/** `drift`: previous weeks compared at the same hour (0 = 7-day median only). */
+	drift_weeks?: number;
+	/** `drift`: minimum points in the window. */
+	drift_min_samples?: number;
+	/** `drift`: smaller values never count. */
+	drift_min_value?: number;
+	/** `drift`: minimum absolute gap to the usual value. */
+	drift_min_delta?: number;
+	drift_direction?: DriftDirection;
 }
 
 /**
@@ -602,6 +626,42 @@ export interface AlertRulePayload {
 	repeat_secs?: number | null;
 	escalate_after_secs?: number | null;
 	enabled?: boolean | null;
+}
+
+/** Where a capacity forecast stands. */
+export type ForecastStatus = 'growing' | 'stable' | 'full' | 'insufficient_data';
+
+/**
+ * Fill-up forecast of one capacity entity of a device (mountpoint, datastore,
+ * pool, volume, licence…), from `GET /api/targets/{id}/forecasts`. Mirrors
+ * `ForecastView` in `crates/server/src/api/forecasts.rs`.
+ */
+export interface CapacityForecast {
+	/** Capacity family: `filesystem`, `pbs_datastore`, `truenas_pool`… */
+	family: string;
+	family_label: string;
+	metric: string;
+	/** Readable entity (`/srv`, `tank`…); empty for the whole device. */
+	entity: string;
+	labels: Record<string, string>;
+	used_percent: number | null;
+	/** Raw used amount in `unit`, when the integration publishes it. */
+	used: number | null;
+	size: number | null;
+	/** `bytes`, `seats`… empty without raw amounts. */
+	unit: string;
+	/** Percentage points per day. */
+	growth_per_day: number | null;
+	/** `null` without growth or without enough history; 0 when full. */
+	days_to_full: number | null;
+	/** Estimated fill date, UTC without suffix (use `parseServerDate`). */
+	full_at: string | null;
+	/** 0…1. */
+	confidence: number;
+	status: ForecastStatus;
+	/** What the forecast rule would raise today; `null` when it would not fire. */
+	severity: AlertSeverity | null;
+	window_days: number;
 }
 
 /** "First Sunday", "last Friday": `nth` is 1…5, or -1 for the last one. */
@@ -809,6 +869,48 @@ export interface CollectorOption {
 	columns: CollectorOptionColumn[];
 }
 
+/** Nature of a metric family: a counter only grows and is charted as a rate. */
+export type MetricKindName = 'gauge' | 'counter' | 'info' | 'state';
+
+/** What one code of a `state` metric means. */
+export interface MetricState {
+	value: number;
+	label: string;
+	/** `ok`, `warning`, `critical` or `neutral`. */
+	tone: string;
+}
+
+/** A metric family a device type emits, as the catalogue describes it. */
+export interface MetricDescription {
+	/** Name as the collector emits it, without the `dumbmonit_` prefix the server adds. */
+	name: string;
+	label: string;
+	/** `%`, `s`, `B`, `B/s`, `°C`, `bool`…; for a counter, the unit of the running total. */
+	unit: string;
+	kind: MetricKindName;
+	/** Which way a good figure goes; empty when neither. */
+	better: '' | 'higher' | 'lower';
+	min: number | null;
+	max: number | null;
+	/** Family giving the maximum of each series. */
+	max_from: string;
+	/** Label that names the measured object (`ifname`, `disk`…). */
+	entity: string;
+	states: MetricState[];
+}
+
+/** A view the catalogue recommends for the device page. */
+export interface ViewDescription {
+	/** `stat`, `timeseries`, `topn`, `heatmap`, or one a later server adds (drawn as curves). */
+	view: string;
+	title: string;
+	/** Families shown, by `MetricDescription.name`. */
+	metrics: string[];
+	/** Label that tells entities apart; empty: every series. */
+	group_by: string;
+	options: Record<string, string>;
+}
+
 /**
  * A device type offered by this server.
  *
@@ -832,6 +934,10 @@ export interface CollectorInfo {
 	options: CollectorOption[];
 	/** Server-side prerequisites of this type; the server omits the field when there are none. */
 	requirements: CollectorRequirement[];
+	/** Metric families this type declares; empty for a type (or a server) that declares none. */
+	metrics: MetricDescription[];
+	/** Recommended device-page views; empty: the page charts every family, as before. */
+	views: ViewDescription[];
 }
 
 /**
@@ -892,6 +998,43 @@ export function normalizeCollector(raw: Partial<CollectorInfo> & { kind: string 
 						doc_url: r.doc_url?.trim() ?? '',
 						compose_snippet: r.compose_snippet?.trim() ?? ''
 					}))
+			: [],
+		metrics: Array.isArray(raw.metrics)
+			? raw.metrics.filter((d) => d && typeof d.name === 'string' && d.name.trim()).map(normalizeMetric)
+			: [],
+		views: Array.isArray(raw.views)
+			? raw.views
+					.filter((v) => v && typeof v.view === 'string' && Array.isArray(v.metrics))
+					.map((v) => ({
+						view: v.view,
+						title: typeof v.title === 'string' ? v.title : '',
+						metrics: v.metrics.filter((n) => typeof n === 'string'),
+						group_by: typeof v.group_by === 'string' ? v.group_by : '',
+						options: v.options && typeof v.options === 'object' ? v.options : {}
+					}))
+			: []
+	};
+}
+
+const METRIC_KINDS: readonly MetricKindName[] = ['gauge', 'counter', 'info', 'state'];
+
+/** Fills the optional fields of a catalogue metric (the server omits empty ones). */
+function normalizeMetric(raw: Partial<MetricDescription> & { name: string }): MetricDescription {
+	const kind = METRIC_KINDS.find((k) => k === raw.kind) ?? 'gauge';
+	return {
+		name: raw.name.trim(),
+		label: raw.label?.trim() ?? '',
+		unit: raw.unit?.trim() ?? '',
+		kind,
+		better: raw.better === 'higher' || raw.better === 'lower' ? raw.better : '',
+		min: typeof raw.min === 'number' ? raw.min : null,
+		max: typeof raw.max === 'number' ? raw.max : null,
+		max_from: raw.max_from?.trim() ?? '',
+		entity: raw.entity?.trim() ?? '',
+		states: Array.isArray(raw.states)
+			? raw.states
+					.filter((s) => s && typeof s.value === 'number' && typeof s.label === 'string')
+					.map((s) => ({ value: s.value, label: s.label, tone: typeof s.tone === 'string' ? s.tone : 'neutral' }))
 			: []
 	};
 }
@@ -1456,6 +1599,25 @@ export interface AgentTokenPayload {
 	site?: string | null;
 	/** MSP mode: the client the token enrols into. Absent: the default client. */
 	client_id?: number;
+	/**
+	 * Install through this relay agent (a site behind a firewall): the commands
+	 * point at its gateway, which the server asks the relay to open.
+	 */
+	relay_id?: TargetId | null;
+	/** Address the site reaches the relay at. Left out: the one set, else its host name. */
+	relay_host?: string | null;
+}
+
+/** A machine enrolled with a token. `GET /api/agent/tokens/{id}/machines`. */
+export interface TokenMachine {
+	/** Id of the agent's target. */
+	id: TargetId;
+	name: string;
+	hostname: string;
+	os: string;
+	last_seen_at: string | null;
+	/** Relay the machine connects through, if any. */
+	via_agent: TargetId | null;
 }
 
 /** Response of `POST /api/agent/tokens`: the only chance to see the token in clear. */
@@ -1514,6 +1676,10 @@ export interface AdKitPayload {
 	server_host?: string | null;
 	/** IP address of a DNS server that resolves `server_host` on machines that cannot. */
 	dns_server?: string | null;
+	/** Servers of a site behind a firewall go through this relay agent. Replaces `base_url` and `server_host`. */
+	relay_id?: TargetId | null;
+	/** Address the servers reach the relay at. */
+	relay_host?: string | null;
 }
 
 /** Response of `POST /api/agent/ad-kit`: the only chance to see the token and script. */
@@ -1583,6 +1749,15 @@ export interface AgentHost {
 	binding_supported: boolean;
 	/** End of a re-enrolment window someone opened, while it still runs. */
 	rebind_until: string | null;
+	/**
+	 * Gateway for the agents of its site (a relay only): port asked from the UI
+	 * (`null`: closed), port it reports listening on, address the site reaches
+	 * it at, agents connected through it right now. Absent on an older server.
+	 */
+	gateway_wanted?: number | null;
+	gateway_port?: number | null;
+	gateway_host?: string | null;
+	gateway_tunnels?: number;
 }
 
 /** Response of `POST /api/targets/{id}/agent/rebind`. */
@@ -2509,6 +2684,14 @@ export interface RelayAgent {
 	last_seen_at: string | null;
 	/** Devices reached through this agent. */
 	relayed: number;
+	/** Gateway port asked from the UI; `null` when closed. Absent on an older server. */
+	gateway_wanted?: number | null;
+	/** Port the relay reports its gateway listening on. */
+	gateway_port?: number | null;
+	/** Address the site reaches the relay at. */
+	gateway_host?: string | null;
+	/** Client of the agent: a relay only carries machines of its own client. */
+	client_id?: number | null;
 }
 
 // --- Topology map -------------------------------------------------------------
@@ -2565,6 +2748,32 @@ export interface TopologyEdge {
 	/** Switch port on the `from` / `to` side (`lldp` and `l2` links), read from the switch tables. */
 	from_port?: string | null;
 	to_port?: string | null;
+	/** Weathermap: traffic of the link's port, when its interface counters are known. */
+	traffic?: TopologyEdgeTraffic | null;
+}
+
+/** Traffic of a link, read from `if_octets_*` and `if_speed_bps`. Mirrors `EdgeTraffic` in `api/topology_traffic.rs`. */
+export interface TopologyEdgeTraffic {
+	/** Node (`t<id>`) whose counters were read: `from` or `to`. */
+	measured_on: string;
+	/** Interface names measured. */
+	ports: string[];
+	/** Bits per second received / sent by `measured_on`. */
+	bps_in: number;
+	bps_out: number;
+	/** Negotiated speed, bits per second; `null` when a port does not report it. */
+	speed_bps: number | null;
+	/** Rate over speed, 0 to 1; `null` without a speed. */
+	utilization_in: number | null;
+	utilization_out: number | null;
+	/** Errors and discards per second, both directions. */
+	errors_per_sec: number;
+}
+
+/** `GET /api/targets/{id}/port-traffic`: the last hour of a port's traffic. */
+export interface PortTraffic {
+	step_secs: number;
+	points: { t: number; bps_in: number; bps_out: number }[];
 }
 
 export type TopologyCorrectionKind = 'forbid' | 'link' | 'parent' | 'site' | 'group';
@@ -2972,6 +3181,10 @@ export interface SynologyVolume {
 	total_bytes: number | null;
 	used_bytes: number | null;
 	used_percent: number | null;
+	/** Usage without the space reserved by thick iSCSI LUNs: what the fill alert reads. */
+	effective_used_percent?: number | null;
+	/** Sum of the thick LUN sizes on the volume; `null` without LUNs. */
+	lun_reserved_bytes?: number | null;
 }
 
 export interface SynologyDisk {
@@ -3023,6 +3236,91 @@ export interface SynologyOverview {
 	disks: SynologyDisk[];
 	/** Unix seconds of the newest reading, `null` before the first probe. */
 	sampled_at: number | null;
+}
+
+// --- iSCSI LUNs and zvols -------------------------------------------------------
+// Mirrors `crates/server/src/api/luns.rs`: `GET /targets/{id}/luns`.
+
+export type LunProvisioning = 'thick' | 'thin' | 'unknown';
+
+export interface LunTarget {
+	iqn: string;
+	name: string;
+	sessions: number;
+	/** IQNs of the connected initiators. */
+	initiators: string[];
+}
+
+/** The monitor that uses a LUN, and its own fill level. */
+export interface LunConsumer {
+	/** `manual` = saved link, `auto` = unambiguous match on name and size. */
+	source: 'manual' | 'auto';
+	target_id: TargetId;
+	target_name: string;
+	family: string;
+	family_label: string;
+	entity: string;
+	used_percent: number | null;
+	used_bytes: number | null;
+	size_bytes: number | null;
+}
+
+export interface Lun {
+	/** DSM UUID or zvol name: the `lun` label. */
+	id: string;
+	name: string;
+	/** Host volume (Synology) or pool (TrueNAS). */
+	host_volume: string;
+	provisioning: LunProvisioning;
+	/** DSM's own word: `BLUN_THICK`, `BLUN`, `FILE`…; empty for a zvol. */
+	lun_type: string;
+	status: string;
+	size_bytes: number | null;
+	/** Space taken on the volume: the size if thick, the written space if thin. */
+	reserved_bytes: number | null;
+	allocated_bytes: number | null;
+	/** Written share of a thin LUN; `null` for a thick one (opaque from the NAS). */
+	used_percent: number | null;
+	mapped: boolean | null;
+	sessions: number | null;
+	targets: LunTarget[];
+	consumer: LunConsumer | null;
+}
+
+export interface LunVolume {
+	volume: string;
+	name: string;
+	total_bytes: number | null;
+	used_bytes: number | null;
+	used_percent: number | null;
+	lun_count: number | null;
+	/** Sum of the thick LUN sizes. */
+	reserved_bytes: number | null;
+	thin_allocated_bytes: number | null;
+	thin_provisioned_bytes: number | null;
+	/** Promised to thin LUNs and not written yet. */
+	thin_promised_bytes: number | null;
+	/** Data outside LUNs. */
+	data_bytes: number | null;
+	effective_total_bytes: number | null;
+	effective_used_bytes: number | null;
+	effective_used_percent: number | null;
+	/** Promised thin space as a percentage of the free space. */
+	overcommit_percent: number | null;
+	fully_reserved: boolean | null;
+}
+
+export interface TargetLuns {
+	luns: Lun[];
+	/** Synology volumes hosting at least one LUN; empty elsewhere. */
+	volumes: LunVolume[];
+	sampled_at: number | null;
+}
+
+export interface LunLinkPayload {
+	target_id: TargetId;
+	family: string;
+	entity: string;
 }
 
 export type AbbDeviceState = 'ok' | 'idle' | 'learning' | 'running' | 'overdue' | 'failing' | 'never';
@@ -3561,23 +3859,15 @@ export interface ConfigStatus {
 	keys: Record<string, string[]>;
 }
 
-// --- Product mode and setup wizard -----------------------------------------
+// --- Instance settings and setup wizard -------------------------------------
 
-/**
- * How the interface presents itself. Presentation only: switching never
- * deletes anything. Mirrors `ProductMode` in `crates/server/src/instance.rs`.
- */
-export type ProductMode = 'homelab' | 'enterprise';
-
-/** `GET /api/instance`: public, read before sign-in to pick the layout. */
+/** `GET /api/instance`: public, read before sign-in to know whether to offer the wizard. */
 export interface PublicInstance {
-	product_mode: ProductMode;
 	setup_completed: boolean;
 }
 
 /** `GET /api/instance/settings`. Mirrors `InstanceSettings` in `crates/server/src/instance.rs`. */
 export interface InstanceSettings {
-	product_mode: ProductMode;
 	setup_completed: boolean;
 	/** UTC without suffix; `null` until the wizard is finished. */
 	setup_completed_at?: string | null;
@@ -3591,7 +3881,6 @@ export interface InstanceSettings {
 
 /** `PUT /api/instance/settings`: an omitted field keeps its value. */
 export interface InstancePatch {
-	product_mode?: ProductMode;
 	setup_completed?: boolean;
 	name?: string;
 	language?: string;
@@ -4613,6 +4902,42 @@ export interface SecuritySettings {
 	enabled: boolean;
 }
 
+/** Where the threat map's counts come from. Mirrors `threats::Source`. */
+export type ThreatSourceKind = 'crowdsec' | 'firewall' | 'cloudflare';
+
+/** One country of `GET /api/security/threats`. Mirrors `ThreatCountry`. */
+export interface ThreatCountry {
+	/** ISO 3166-1 alpha-2. */
+	code: string;
+	total: number;
+	crowdsec: number;
+	firewall: number;
+	cloudflare: number;
+}
+
+/** A source plugged into the threat map, even with nothing seen. Mirrors `ThreatSource`. */
+export interface ThreatSource {
+	source: ThreatSourceKind;
+	/** Devices feeding it. */
+	targets: TargetId[];
+	total: number;
+	/** Time span its counts cover. */
+	window_secs: number;
+}
+
+/**
+ * `GET /api/security/threats`: attacks stopped, by country of origin, every
+ * source together. Countries only, never an address. Mirrors `ThreatMap`.
+ */
+export interface ThreatMap {
+	/** Busiest first. */
+	countries: ThreatCountry[];
+	sources: ThreatSource[];
+	/** VictoriaMetrics did not answer: only the firewall live windows are counted. */
+	partial: boolean;
+	evaluated_at: string;
+}
+
 /** One of the three conditions of a heartbeat. Mirrors `selfmon::Component`. */
 export interface SelfMonitoringComponent {
 	name: 'scheduler' | 'database' | 'victoria';
@@ -4948,9 +5273,9 @@ export interface BlacklistOverview {
 }
 
 // ---------------------------------------------------------------------------
-// Wall widgets (`crates/server/src/api/wall_widgets/`)
+// Geocoding (`crates/server/src/api/geocode.rs`)
 
-/** A place for the weather, as the geocoding returned it. */
+/** A place, as the geocoding returned it (`GET /api/locations/geocode`). */
 export interface WallPlace {
 	name: string;
 	/** Region and country, to tell two places of the same name apart. */
@@ -4958,217 +5283,6 @@ export interface WallPlace {
 	country_code: string;
 	latitude: number;
 	longitude: number;
-}
-
-export interface WallCryptoSettings {
-	enabled: boolean;
-	/** CoinGecko ids, in display order. */
-	coins: string[];
-	/** CoinGecko code, lower case (`usd`, `eur`…). */
-	currency: string;
-}
-
-export interface WallWeatherSettings {
-	enabled: boolean;
-	places: WallPlace[];
-	units: 'metric' | 'imperial';
-}
-
-export interface WallStocksSettings {
-	enabled: boolean;
-	symbols: string[];
-}
-
-export interface WallFxSettings {
-	enabled: boolean;
-	base: string;
-	currencies: string[];
-}
-
-export type WallCveSource = 'both' | 'nvd' | 'kev';
-
-export interface WallCveSettings {
-	enabled: boolean;
-	source: WallCveSource;
-	count: number;
-}
-
-/** A display name for an identifier the provider's API returns (account, API key). */
-export interface WallAiPerson {
-	id: string;
-	name: string;
-}
-
-export interface WallAiProviderSettings {
-	enabled: boolean;
-	people: WallAiPerson[];
-}
-
-export type WallAiPeriod = 'today' | 'week' | 'month';
-
-export interface WallAiSettings {
-	period: WallAiPeriod;
-	by_person: boolean;
-	claude: WallAiProviderSettings;
-	openai: WallAiProviderSettings;
-}
-
-/** `GET|PUT /api/wall/widgets/settings` (administrators). */
-export interface WallWidgetSettings {
-	crypto: WallCryptoSettings;
-	weather: WallWeatherSettings;
-	stocks: WallStocksSettings;
-	fx: WallFxSettings;
-	cve: WallCveSettings;
-	ai: WallAiSettings;
-	/** The free message widget: one short line of plain text. */
-	text: { enabled: boolean; content: string };
-	/** Where each widget goes on the wall (`wall/layout.ts`); always complete when read. */
-	layout: WallLayout;
-}
-
-/** What `GET` returns: the settings, and only whether each API key is set. */
-export interface WallWidgetSettingsView extends WallWidgetSettings {
-	has_finnhub_key: boolean;
-	has_coingecko_key: boolean;
-	has_anthropic_key: boolean;
-	has_openai_key: boolean;
-}
-
-/** `PUT` body. A key left out is kept; an empty string clears it. Never read back. */
-export interface WallWidgetSettingsPayload extends WallWidgetSettings {
-	secrets?: { finnhub?: string; coingecko?: string; anthropic?: string; openai?: string };
-}
-
-export interface WallCoinPreset {
-	id: string;
-	symbol: string;
-	name: string;
-}
-
-/** `GET /api/wall/widgets/catalog`. */
-export interface WallWidgetCatalog {
-	coins: WallCoinPreset[];
-	coin_currencies: string[];
-	fx_currencies: string[];
-}
-
-/** One widget on the wall: its data (fresh or a little old), when it was read, why the last read failed. */
-export interface WallSection<T> {
-	data: T | null;
-	/** UTC without suffix. */
-	updated: string | null;
-	error: string | null;
-	/** Waiting for an API key (stocks without a Finnhub key). */
-	needs_key: boolean;
-	/** The source to credit on the widget. */
-	source: string;
-	source_url: string;
-}
-
-export interface WallCoin {
-	id: string;
-	symbol: string;
-	name: string;
-	price: number;
-	/** Percent over 24 h. */
-	change_24h: number | null;
-}
-
-export interface WallCrypto {
-	/** Upper case: `EUR`. */
-	currency: string;
-	coins: WallCoin[];
-}
-
-/** The weather now in the chosen place, shown under the wall's clock. */
-export interface WallWeather {
-	name: string;
-	/** `°C` or `°F`. */
-	temperature_unit: string;
-	temperature: number;
-	/** WMO weather code. */
-	code: number;
-	is_day: boolean;
-}
-
-export interface WallQuote {
-	symbol: string;
-	price: number;
-	change: number | null;
-	change_pct: number | null;
-	/** UTC without suffix. */
-	at: string | null;
-}
-
-export interface WallStocks {
-	quotes: WallQuote[];
-	/** Symbols the source does not know. */
-	unknown: string[];
-}
-
-export interface WallRate {
-	code: string;
-	/** One unit of the base is worth `rate` units of `code`. */
-	rate: number;
-	/** The previous business day's rate. */
-	previous: number | null;
-}
-
-export interface WallFx {
-	base: string;
-	date: string;
-	rates: WallRate[];
-}
-
-export interface WallCve {
-	id: string;
-	title: string;
-	/** CVSS base score; null for a KEV entry the NVD list does not hold. */
-	score: number | null;
-	/** UTC without suffix. */
-	date: string;
-	/** In CISA's catalogue of exploited vulnerabilities. */
-	exploited: boolean;
-	ransomware: boolean;
-	link: string;
-}
-
-/** One of the biggest consumers of a provider, by tokens (costs are not broken down by person). */
-export interface WallAiPersonUsage {
-	/** A configured name, else the shortened identifier; null when the API attributes it to no key or account. */
-	name: string | null;
-	mapped: boolean;
-	input_tokens: number;
-	output_tokens: number;
-}
-
-/** Claude or OpenAI usage over a period. */
-export interface WallAiUsage {
-	period: WallAiPeriod;
-	/** First day, UTC `YYYY-MM-DD`. */
-	from: string;
-	/** Total cost in US dollars. */
-	cost_usd: number;
-	/** Input tokens, cache included. */
-	input_tokens: number;
-	output_tokens: number;
-	/** Null unless "by person" is on. */
-	people: WallAiPersonUsage[] | null;
-}
-
-/** `GET /api/wall/widgets`: one section per widget turned on, `null` otherwise. */
-export interface WallWidgets {
-	layout: WallLayout;
-	crypto: WallSection<WallCrypto> | null;
-	weather: WallSection<WallWeather> | null;
-	stocks: WallSection<WallStocks> | null;
-	fx: WallSection<WallFx> | null;
-	cve: WallSection<WallCve[]> | null;
-	claude: WallSection<WallAiUsage> | null;
-	openai: WallSection<WallAiUsage> | null;
-	/** The free message; null when off or empty. */
-	text: string | null;
 }
 
 // --- Multi-product network discovery -----------------------------------------
@@ -5257,6 +5371,10 @@ export interface NetscanSchedule extends NetscanScheduleInput {
 	last_error: string | null;
 	devices: number;
 	unknown_devices: number;
+	/** Devices the administrator chose to ignore. */
+	ignored_devices: number;
+	/** New devices on the address of a known device under another MAC, still to review. */
+	mac_changes: number;
 	/** Unknown ports of known devices. */
 	unknown_ports: number;
 }
@@ -5277,8 +5395,13 @@ export interface NetscanDevice {
 	ip: string;
 	mac: string | null;
 	hostname: string | null;
+	/** Manufacturer from the MAC prefix (OUI), when known. */
 	vendor: string | null;
+	/** Also true for an ignored device. */
 	known: boolean;
+	ignored: boolean;
+	/** MAC the address had before this new device took it (spoofing or replaced hardware). */
+	mac_change_from: string | null;
 	first_seen: string;
 	last_seen: string;
 	ports: NetscanPort[];
@@ -6580,4 +6703,24 @@ export interface TargetRemediation {
 		remediation: { enabled: boolean; services: string[]; scripts: DeclaredScript[] } | null;
 	} | null;
 	runs: RemediationRun[];
+}
+
+// --- Deadlines (crates/server/src/api/deadlines.rs) ----------------------------
+// Expiry dates collected across the instance: domains, certificates,
+// application secrets, products, device keys, licences.
+
+export type DeadlineKind = 'domain' | 'certificate' | 'credential' | 'product' | 'key' | 'license';
+
+export interface Deadline {
+	target: TargetId;
+	target_name: string;
+	target_kind: string;
+	/** Unknown kinds are rendered as is. */
+	kind: DeadlineKind | (string & {});
+	/** The object that expires: host, application, device… */
+	what: string;
+	/** UTC, no suffix (`parseServerDate` adds the `Z`). */
+	expires_at: string;
+	/** Negative once expired. */
+	days_left: number;
 }
