@@ -16,6 +16,16 @@ All notable changes to this project are documented here. The format follows
   always offers its three optional steps; Settings no longer has a mode picker,
   a theme picker or an "Advanced" fold. Public status pages keep their light and
   dark themes.
+- **Night scenes.** The status page banners are redrawn as four cities at night:
+  Paris (the Eiffel Tower in its golden lights, the beam turning), Tokyo (Tokyo
+  Tower, the Skytree, Mount Fuji), New York (the Empire State, whose crown takes
+  the page's colour, and the Chrysler Building) and **Dubai** (the Burj Khalifa),
+  which replaces the Matterhorn: stored pages move over (migration 0205), and
+  backups or API calls naming `matterhorn` land on `dubai`. A starry sky, the
+  moon lighting the buildings, lit windows and the weather following the page.
+  The text over them always uses the dark colours, so it stays legible in the
+  light theme. The wall can show the same cities behind its verdict and clock
+  (**Backdrop**, off by default, or `?city=`).
 
 ### Removed
 
