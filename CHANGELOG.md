@@ -199,6 +199,19 @@ All notable changes to this project are documented here. The format follows
   with filters and an *Add as a monitor* action. Scheduled scans and the devices you
   marked known or ignored are part of the backup.
 
+### Added
+
+- **Backup matrix** (jobs x 30 days) on Veeam, Duplicati, Kopia, Synology Active
+  Backup and Plakar, and on Proxmox Backup Server, which now shares the same
+  component: one row per job, one cell per day (succeeded, warning, failed, not
+  run), the age of the last success, and duration and size on hover. The days are
+  rebuilt from the stored measurements.
+- Veeam: last duration of each job, age of its last successful run and time to its
+  next run; the new alert **Veeam backup too old** fires after two days without a
+  success on a job scheduled at least daily.
+- Veeam repository usage and the size of what Kopia and Duplicati keep are pinned
+  among the charts of their device page.
+
 ## 0.14.1 — 2026-10-28
 
 ### Added
