@@ -58,7 +58,7 @@ XenAPI has no "crashed" power state. A protected VM found halted is the
 closest signal the API gives of a VM that stopped against your will; if you
 shut down a protected VM on purpose, clear its restart priority first.
 
-The [built-in rules](../alerting/rules.md#xcp-ng-xenserver) that apply:
+The [built-in rules](../alerting/rules.md) that apply:
 
 - **XCP-ng host offline**: a host's heartbeat has not reached the coordinator
   for five minutes (Warning).
