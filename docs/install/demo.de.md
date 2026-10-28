@@ -33,10 +33,16 @@ Site zu veröffentlichen.
   innerhalb des Servers beantwortet, an `127.0.0.1` gebunden und
   aufgezeichnete API-Antworten wiedergebend, sodass die echten Collectors
   und Monitorpanels laufen. Ein Neustart ergibt denselben Bestand.
-- **Sieben Tage Historie.** Beim Start werden synthetische Metriken in
-  VictoriaMetrics geschrieben, sodass Diagramme, *Last 7 days*,
-  Vorhersagen und die Alarmhistorie befüllt sind, und ein paar Alarme
-  feuern, damit *Needs you* etwas enthält.
+- **Dreißig Tage Historie.** Beim Start werden synthetische Metriken in
+  VictoriaMetrics geschrieben (die letzte Woche in Fünf-Minuten-Auflösung),
+  sodass Diagramme, *Last 7 days*, die 30-Tage-Verfügbarkeit, Vorhersagen
+  („voll in etwa N Tagen“) und die Alarmhistorie befüllt sind, und ein paar
+  Alarme feuern, damit *Needs you* etwas enthält. Ein Core-Switch mit seinen
+  Ports und seinem Verkehr, eine Bedrohungskarte mit erfundenen CrowdSec- und
+  Cloudflare-Zahlen, Domain- und Lizenzfristen, eine Backup-Matrix mit ein paar
+  fehlgeschlagenen Nächten, ein vom Netzwerkscan gefundenes Gerät und zwei
+  Statusseiten mit Nachtszenen runden das Bild ab. Alles wird aus einem festen
+  Seed im Speicher berechnet: Nichts wird aus dem Netz geladen.
 - **Nichts verlässt den Server.** Es wird nie eine Benachrichtigung
   gesendet, und keine Abfrage geht an eine von einer Besucherin oder
   einem Besucher eingegebene Adresse.
