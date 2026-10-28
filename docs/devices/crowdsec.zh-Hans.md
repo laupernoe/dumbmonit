@@ -38,6 +38,8 @@ CrowdSec 什么都读不到,看不到任何攻击,却仍显示为绿色正常。
 | `lines_read_total`, `lines_parsed_total`, `lines_unparsed_total` | 代理读取的日志行数,以及已解析和未解析的行数 | |
 | `source_lines_total`, `source_lines_unparsed_total` | 按日志来源统计的同样内容 | `source` |
 | `buckets` | 当前打开的场景桶数 | |
+| `alerts_recent` | 使用机器登录时：从 Local API 读取的最近 24 小时本地告警 | |
+| `alerts_by_country` | 使用机器登录时：这些告警按来源国家统计（`source.cn`） | `country` |
 
 本地 API 相关的指标族出现在本地 API 运行的地方,日志相关的指标族
 出现在代理读取日志的地方;官方镜像和标准安装会同时运行两者。
@@ -54,6 +56,8 @@ CrowdSec。它会用一句话说明哪里出了问题(本地 API、bouncer、日
 保留的告警数、过去 24 小时内触发的场景数和每秒读取的行数,再然后
 是每个 bouncer 上次拉取至今的时间、按来源划分的决策,以及每个
 日志来源未解析的比例。
+
+使用机器登录时，下方会出现一张威胁地图：最近 24 小时的告警，按国家着色。同样的计数也会进入安全页面的威胁地图，与防火墙的拦截和 Cloudflare 的威胁并列。
 
 ## 让 DumbMonit 读取 CrowdSec 的指标 {#let-dumbmonit-read-crowdsecs-metrics}
 
@@ -78,7 +82,13 @@ CrowdSec。它会用一句话说明哪里出了问题(本地 API、bouncer、日
     sudo cscli bouncers add dumbmonit
     ```
 
-5. 在 DumbMonit 中,输入 CrowdSec 主机地址,例如 "crowdsec.lan"。如果本地 API 和代理运行在不同的主机上,请添加每个主机:决策、告警和 bouncer 会在本地 API 运行的地方被统计,日志行会在每个代理读取它们的地方被统计。
+5. 或者，为了安全页面的威胁地图：创建一个机器登录，并在下面选择“机器登录”。每条告警只保留国家。
+
+    ```
+    sudo cscli machines add dumbmonit --password 'a-long-password'
+    ```
+
+6. 在 DumbMonit 中,输入 CrowdSec 主机地址,例如 "crowdsec.lan"。如果本地 API 和代理运行在不同的主机上,请添加每个主机:决策、告警和 bouncer 会在本地 API 运行的地方被统计,日志行会在每个代理读取它们的地方被统计。
 
 !!! warning "警告"
     停止拉取的 bouncer 会继续执行一份已经冻结的列表:新的攻击者
@@ -98,6 +108,7 @@ CrowdSec 重启为止,期间会一直被报告为已停止。只有在处理请�
 |---|---|
 | 仅指标 | 不需要:读取 `/metrics`,以及本地 API 的 `/health`。 |
 | Bouncer API 密钥 | 由 `cscli bouncers add dumbmonit` 打印出的密钥,以 `X-Api-Key` 发送给本地 API。 |
+| 机器登录 | 传给 `cscli machines add` 的名称和密码。DumbMonit 登录（`/v1/watchers/login`）并读取最近 24 小时的本地告警（`/v1/alerts`，不含社区告警），每条只保留国家：不保存任何地址。 |
 
 地址:主机名或 IP(`crowdsec.lan`)、用于指标的 `host:port`,或
 完整 URL。选项:协议(默认 HTTP)、指标端口(6060)、检查本地 API
