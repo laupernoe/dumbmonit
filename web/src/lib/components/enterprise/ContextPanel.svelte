@@ -132,10 +132,19 @@
 
 	// --- Forecast --------------------------------------------------------------
 	const rulesByUid = $derived(new Map(rules.map((rule) => [rule.uid, rule])));
-	const forecast = $derived(
-		alertsStore.alerts.find(
+	const forecastCandidates = $derived(
+		alertsStore.alerts.filter(
 			(alert) => (alert.effective_phase === 'firing' || alert.phase === 'pending') && isForecast(alert, rulesByUid.get(alert.rule_uid))
-		) ?? null
+		)
+	);
+	// A storage forecast comes first: its value is the days left, the most useful figure here.
+	const forecast = $derived(
+		forecastCandidates.find((alert) => rulesByUid.get(alert.rule_uid)?.kind === 'forecast') ?? forecastCandidates[0] ?? null
+	);
+	const forecastDays = $derived(
+		forecast && rulesByUid.get(forecast.rule_uid)?.kind === 'forecast' && forecast.value !== null && Number.isFinite(forecast.value)
+			? Math.max(0, Math.round(forecast.value))
+			: null
 	);
 	const forecastTarget = $derived(forecast?.target_id ? alertsStore.targets.find((t) => t.id === forecast.target_id) : undefined);
 
@@ -240,7 +249,7 @@
 		<h2 id="panel-forecast" class={heading}>{m.console_panel_forecast()}</h2>
 		{#if forecast}
 			<div class="mt-2.5 flex items-baseline gap-2.5">
-				<span class="font-mono text-xl font-medium text-ink">{formatRelative(forecast.firing_since ?? forecast.condition_since)}</span>
+				<span class="font-mono text-xl font-medium text-ink">{forecastDays !== null ? m.storage_full_in({ count: forecastDays }) : formatRelative(forecast.firing_since ?? forecast.condition_since)}</span>
 			</div>
 			<p class="mt-1 text-xs text-ink-2">
 				{forecastTarget ? `${forecastTarget.name}: ${forecast.rule_name}` : forecast.rule_name}
