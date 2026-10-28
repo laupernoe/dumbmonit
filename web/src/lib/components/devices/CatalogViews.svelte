@@ -1,11 +1,12 @@
 <script lang="ts">
 	/**
 	 * The views a device kind declares in the catalogue: a row of figures, then
-	 * the few charts worth reading (`catalog.ts` fills them). Rankings (`topn`,
-	 * `heatmap`) use a plain bar list for now.
+	 * the few charts worth reading (`catalog.ts` fills them). A `topn` view is a
+	 * ranked list, a `heatmap` its entities over time (both from `lib/viz`).
 	 */
 	import { m } from '#lib/paraglide/messages.js';
 	import Chart from '#lib/components/Chart.svelte';
+	import { Heatmap, TopN } from '#lib/viz/index.js';
 	import { formatDuration, formatLatency, formatRelative } from '#lib/format.js';
 	import { ChevronDown } from 'lucide-svelte';
 	import { formatRate } from './metrics.js';
@@ -98,11 +99,6 @@
 	function tape(chart: CatalogChart): string {
 		return chart.unit === 'bool' ? '' : chart.unit;
 	}
-
-	function share(chart: CatalogChart, value: number): number {
-		const top = chart.rows[0]?.value ?? 0;
-		return top > 0 ? Math.max(2, (value / top) * 100) : 0;
-	}
 </script>
 
 {#if layout.stats.length > 0}
@@ -140,22 +136,30 @@
 					{#if tape(chart)}<span class="label-tape label-tape-unit">{tape(chart)}</span>{/if}
 				</div>
 				{#if chart.view === 'topn' || chart.view === 'heatmap'}
-					<!-- TODO: swap for lib/viz TopN.svelte / Heatmap.svelte once feat/viz-kit lands. -->
 					{#if chart.rows.length === 0}
 						<p class="py-6 text-sm text-ink-2">{chart.view === 'heatmap' ? m.devices_target_rank_quiet() : m.devices_target_rank_empty()}</p>
+					{:else if chart.view === 'heatmap' && chart.grid.cols.length > 1}
+						<p class="text-[0.8125rem] text-ink-2">{m.devices_target_rank_peak()}</p>
+						<Heatmap
+							class="mt-1"
+							rows={chart.rows.map((row) => ({ key: row.key, label: row.key }))}
+							cols={chart.grid.cols}
+							cells={chart.grid.cells}
+							min={0}
+							format={(value) => formatValue(value, chart.unit)}
+							noDataLabel="—"
+							label={chart.title}
+							tickEvery={6}
+						/>
 					{:else}
 						<p class="text-[0.8125rem] text-ink-2">{chart.view === 'heatmap' ? m.devices_target_rank_peak() : m.devices_target_rank_latest()}</p>
-						<ol class="mt-1 flex flex-col gap-1.5">
-							{#each chart.rows as row (row.key)}
-								<li class="grid grid-cols-[minmax(0,8rem)_1fr_auto] items-center gap-3 text-[0.8125rem]">
-									<span class="truncate text-ink-2" title={row.key}>{row.key}</span>
-									<span class="h-2 overflow-hidden rounded-full bg-surface-2" aria-hidden="true">
-										<span class="block h-full rounded-full bg-signal" style="width: {share(chart, row.value)}%"></span>
-									</span>
-									<span class="tnum text-right font-medium text-ink">{formatValue(row.value, chart.unit)}</span>
-								</li>
-							{/each}
-						</ol>
+						<TopN
+							class="mt-1"
+							items={chart.rows.map((row) => ({ key: row.key, label: row.key, value: row.value }))}
+							limit={chart.rows.length}
+							format={(value) => formatValue(value, chart.unit)}
+							label={chart.title}
+						/>
 					{/if}
 				{:else}
 					<Chart series={chart.series} unit={tape(chart)} height={200} />
