@@ -53,10 +53,11 @@ async fn handle(uri: Uri) -> Response {
             1,
         )),
         "/site-geneva/devices" => ok(page(devices(), 4)),
-        "/site-geneva/clients" => {
-            ok(page(vec![json!({"mac": "8C-85-90-11-22-33", "name": "laptop-claire",
-                "wireless": true, "ssid": "Muller", "active": true})], 23))
-        }
+        "/site-geneva/clients" => ok(page(
+            vec![json!({"mac": "8C-85-90-11-22-33", "name": "laptop-claire",
+                "wireless": true, "ssid": "Muller", "active": true})],
+            23,
+        )),
         p if p == format!("/site-geneva/switches/{SWITCH_MAC}") => ok(switch()),
         _ => json(StatusCode::FORBIDDEN, "{}".into()),
     }

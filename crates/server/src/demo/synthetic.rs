@@ -657,7 +657,9 @@ pub fn windows_samples(ts_ms: i64) -> Vec<Sample> {
         ("DFSR", true),
         ("Spooler", false),
     ] {
-        out.push(gauge("service_up", f64::from(u8::from(up)), ts_ms).with_label("service", service));
+        out.push(
+            gauge("service_up", f64::from(u8::from(up)), ts_ms).with_label("service", service),
+        );
     }
     out.push(gauge("agent_windows_processor_queue_length", 0.5 + 2.5 * load, ts_ms));
     out.push(gauge("agent_windows_memory_pages_per_second", 40.0 + 380.0 * load, ts_ms));

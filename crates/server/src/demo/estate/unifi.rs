@@ -17,17 +17,58 @@ const PREFIX: &str = "/proxy/network";
 const SITE: &str = "88f7af54-98f8-306a-a1c7-c9349722b1f6";
 
 /// (identifiant, MAC, IP, nom, modèle, fonction, micrologiciel, à mettre à jour).
-type Device = (&'static str, &'static str, &'static str, &'static str, &'static str, &'static str, &'static str, bool);
+type Device = (
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+    bool,
+);
 
 const DEVICES: &[Device] = &[
-    ("1f0e0000-0000-4000-8000-0000000000a1", "f0:9f:c2:91:50:77", "192.168.1.50",
-        "ap-livingroom", "U7 Pro", "accessPoint", "8.1.7", false),
-    ("1f0e0000-0000-4000-8000-0000000000a2", "f0:9f:c2:91:50:78", "192.168.1.51",
-        "ap-office", "U6 Lite", "accessPoint", "6.7.31", true),
-    ("1f0e0000-0000-4000-8000-0000000000a3", "f0:9f:c2:91:50:79", "192.168.1.52",
-        "ap-garden", "U6 Mesh", "accessPoint", "6.7.31", true),
-    ("1f0e0000-0000-4000-8000-0000000000a4", "f0:9f:c2:91:50:7a", "192.168.1.4",
-        "switch-office", "USW Lite 8 PoE", "switching", "7.1.26", false),
+    (
+        "1f0e0000-0000-4000-8000-0000000000a1",
+        "f0:9f:c2:91:50:77",
+        "192.168.1.50",
+        "ap-livingroom",
+        "U7 Pro",
+        "accessPoint",
+        "8.1.7",
+        false,
+    ),
+    (
+        "1f0e0000-0000-4000-8000-0000000000a2",
+        "f0:9f:c2:91:50:78",
+        "192.168.1.51",
+        "ap-office",
+        "U6 Lite",
+        "accessPoint",
+        "6.7.31",
+        true,
+    ),
+    (
+        "1f0e0000-0000-4000-8000-0000000000a3",
+        "f0:9f:c2:91:50:79",
+        "192.168.1.52",
+        "ap-garden",
+        "U6 Mesh",
+        "accessPoint",
+        "6.7.31",
+        true,
+    ),
+    (
+        "1f0e0000-0000-4000-8000-0000000000a4",
+        "f0:9f:c2:91:50:7a",
+        "192.168.1.4",
+        "switch-office",
+        "USW Lite 8 PoE",
+        "switching",
+        "7.1.26",
+        false,
+    ),
 ];
 
 pub(super) fn router() -> Router {
