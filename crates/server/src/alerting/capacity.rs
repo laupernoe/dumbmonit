@@ -70,6 +70,9 @@ pub const FAMILIES: &[Family] = &[
         "dumbmonit_filesystem_used_bytes",
         "dumbmonit_filesystem_total_bytes",
     ),
+    // Inodes de l'agent Linux : une table pleine bloque les écritures alors
+    // qu'il reste de la place.
+    pct("filesystem_inodes", "Filesystem inodes", "dumbmonit_filesystem_inodes_used_percent"),
     bytes(
         "snmp_storage",
         "Storage (SNMP)",

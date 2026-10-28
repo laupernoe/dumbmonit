@@ -8656,6 +8656,7 @@ pub(crate) const PRODUITES: &[&str] = &[
     // Familles de capacité de la prévision de remplissage (`capacity.rs`).
     "dumbmonit_filesystem_used_bytes",
     "dumbmonit_filesystem_total_bytes",
+    "dumbmonit_filesystem_inodes_used_percent",
     "dumbmonit_agent_zfs_pool_used_percent",
     "dumbmonit_agent_zfs_pool_used_bytes",
     "dumbmonit_agent_zfs_pool_size_bytes",
