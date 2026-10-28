@@ -82,30 +82,6 @@ export const DAY_TONE: Record<PbsDayState, Tone> = {
 	none: 'ghost'
 };
 
-export function dayWord(state: PbsDayState): string {
-	switch (state) {
-		case 'ok':
-			return m.devicesb_pbs_format_day_ok();
-		case 'verify_failed':
-			return m.devicesb_pbs_format_day_verify_failed();
-		case 'failed':
-			return m.devicesb_pbs_format_day_failed();
-		case 'running':
-			return m.devicesb_pbs_format_day_running();
-		default:
-			return m.devicesb_pbs_format_day_none();
-	}
-}
-
-/** Tailwind background class of a day dot: token colours only, never raw palette. */
-export const DAY_BG: Record<PbsDayState, string> = {
-	ok: 'bg-signal',
-	verify_failed: 'bg-advisory',
-	failed: 'bg-warning',
-	running: 'bg-info',
-	none: 'ghost-cell bg-ghost opacity-70'
-};
-
 /** "vm/100" or "nextcloud (vm/100)". */
 export function groupTitle(group: { name: string | null; backup_type: string; backup_id: string }): string {
 	const id = `${group.backup_type}/${group.backup_id}`;
