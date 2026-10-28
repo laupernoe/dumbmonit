@@ -6211,7 +6211,6 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "Veeam license expiring",
                 RuleKind::Threshold,
                 "dumbmonit_veeam_license_expiry_seconds",
-    "dumbmonit_veeam_support_expiry_seconds",
             )
         },
         Rule {
