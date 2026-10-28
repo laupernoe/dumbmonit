@@ -1,12 +1,16 @@
-//! Sept jours d'historique rétroactif pour la démonstration.
+//! Trente jours d'historique rétroactif pour la démonstration.
 //!
 //! Sans lui, une instance qui vient de démarrer n'a que des courbes de quelques
-//! minutes : ni « Last 7 days », ni prévision, ni disponibilité à montrer.
+//! minutes : ni « Last 7 days », ni prévision, ni disponibilité à montrer. La
+//! dernière semaine est écrite au pas fin, les trois semaines d'avant à un pas
+//! plus lâche : de quoi tracer 30 jours de disponibilité et de tendance sans
+//! multiplier les points.
 //!
 //! Deux sources :
 //!
-//! - les sondes synthétiques et l'agent simulé sont recalculés à chaque point de
-//!   la grille par les mêmes fonctions qu'en direct ([`super::synthetic`]) ;
+//! - les sondes synthétiques, l'agent simulé et les équipements de
+//!   [`super::extras`] (commutateur, menaces, échéances) sont recalculés à chaque
+//!   point de la grille par les mêmes fonctions qu'en direct ;
 //! - les équipements simulés ([`super::estate`]) n'ont qu'une valeur, celle de
 //!   leurs réponses enregistrées. Une fois leur première collecte écrite, chaque
 //!   série est relue et prolongée dans le passé : plate pour un état, ondulée
@@ -23,15 +27,27 @@ use std::time::Duration;
 use dumbmonit_proto::{MetricKind, Sample, TargetId};
 use tracing::{info, warn};
 
+use super::extras;
 use super::synthetic::{self, AGENT_HOST};
 use crate::state::AppState;
 use crate::tsdb::METRIC_PREFIX;
 
-const HISTORY_MS: i64 = 7 * 86_400_000;
+const DAY_MS: i64 = 86_400_000;
+/// Profondeur de l'historique.
+const HISTORY_MS: i64 = 30 * DAY_MS;
+/// Durée écrite au pas fin ; avant, le pas est plus lâche.
+const RECENT_MS: i64 = 7 * DAY_MS;
 /// Pas des séries synthétiques : cinq minutes, comme une vraie collecte espacée.
 const SYNTHETIC_STEP_MS: i64 = 300_000;
+/// … et un quart d'heure au-delà de la dernière semaine.
+const SYNTHETIC_OLD_STEP_MS: i64 = 900_000;
 /// Pas des séries d'équipements, plus nombreuses : un quart d'heure.
 const DEVICE_STEP_MS: i64 = 900_000;
+/// … et deux heures au-delà de la dernière semaine.
+const DEVICE_OLD_STEP_MS: i64 = 7_200_000;
+/// Une machine en panne cesse d'écrire des échecs peu avant le présent : une
+/// alerte « sonde en échec » ne doit pas voir un dernier zéro tout frais.
+const QUIET_MS: i64 = 30 * 60_000;
 /// Les points récents sont laissés à la collecte en direct.
 const LIVE_MARGIN_MS: i64 = 300_000;
 /// Taille des envois vers VictoriaMetrics.
@@ -55,11 +71,20 @@ pub fn spawn(state: AppState, targets: Vec<(TargetId, String, String)>) {
     });
 }
 
-fn grid(step_ms: i64) -> impl Iterator<Item = i64> {
+/// Les instants de `from_ms` (exclu) à `to_ms` (inclus), alignés sur `step_ms`.
+fn grid(from_ms: i64, to_ms: i64, step_ms: i64) -> impl Iterator<Item = i64> {
+    let first = from_ms.div_euclid(step_ms) * step_ms + step_ms;
+    (0..).map(move |i| first + i * step_ms).take_while(move |ts| *ts <= to_ms)
+}
+
+/// Les instants de l'historique, du plus ancien au plus récent : pas lâche
+/// (`old_step_ms`) jusqu'à il y a une semaine, pas fin (`step_ms`) ensuite.
+/// `old_step_ms` doit être un multiple de `step_ms`.
+fn timeline(step_ms: i64, old_step_ms: i64) -> Vec<i64> {
     let now = chrono::Utc::now().timestamp_millis();
-    let first = (now - HISTORY_MS).div_euclid(step_ms) * step_ms + step_ms;
-    let last = now - LIVE_MARGIN_MS;
-    (0..).map(move |i| first + i * step_ms).take_while(move |ts| *ts <= last)
+    let recent_from = now - RECENT_MS;
+    let old = grid(now - HISTORY_MS, recent_from, old_step_ms);
+    old.chain(grid(recent_from, now - LIVE_MARGIN_MS, step_ms)).collect()
 }
 
 fn base_labels(id: TargetId, name: &str) -> BTreeMap<String, String> {
@@ -98,29 +123,46 @@ async fn synthetic_history(
     let mut buffer = Vec::with_capacity(CHUNK);
     let mut written = 0usize;
     // Les machines de `DOWN_HOSTS` se sont tues il y a un peu plus d'un jour.
-    let down_since = chrono::Utc::now().timestamp_millis() - DOWN_FOR_MS;
+    let now = chrono::Utc::now().timestamp_millis();
+    let down_since = now - DOWN_FOR_MS;
+    let quiet_after = now - QUIET_MS;
+    let timeline = timeline(SYNTHETIC_STEP_MS, SYNTHETIC_OLD_STEP_MS);
     for (id, name, kind) in targets {
         let labels = base_labels(*id, name);
         // Les services de l'agent (Docker…) ont leur propre appareil, créé par
         // le premier lot : leur historique va sous lui, comme les mesures vives.
         let services = service_labels(state, *id).await?;
-        for ts in grid(SYNTHETIC_STEP_MS) {
-            let samples = match kind.as_str() {
-                "agent" if name == AGENT_HOST => synthetic::agent_samples(ts),
+        for ts in timeline.iter().copied() {
+            let (samples, healthy) = match kind.as_str() {
+                "agent" if name == AGENT_HOST => (synthetic::agent_samples(ts), true),
                 "http" | "tls" | "ping" => match synthetic::probe_samples(kind, name, ts) {
-                    Ok(samples) => samples,
+                    Ok(samples) => (samples, true),
                     // Une machine en panne a répondu jusqu'à la veille : sans série
                     // `up` interrompue, l'alerte « injoignable » n'aurait rien à
                     // mesurer. Ses mesures d'avant sont celles d'une voisine saine.
-                    Err(_) if ts < down_since => {
-                        synthetic::probe_samples(kind, "printer.home.arpa", ts).unwrap_or_default()
-                    }
+                    Err(_) if ts < down_since => (
+                        synthetic::probe_samples(kind, "printer.home.arpa", ts).unwrap_or_default(),
+                        true,
+                    ),
+                    // Depuis, chaque passage a échoué : des zéros, pour que la
+                    // disponibilité sur 30 jours ne reste pas à 100 %. Pas de `up` :
+                    // la série reste interrompue.
+                    Err(_) if ts <= quiet_after => (
+                        vec![
+                            Sample::new("probe_success", 0.0, MetricKind::Gauge, ts)
+                                .with_label("probe", kind.as_str()),
+                        ],
+                        false,
+                    ),
                     Err(_) => continue,
                 },
+                other if extras::handles(other) => {
+                    (extras::samples(other, name, ts).unwrap_or_default(), true)
+                }
                 _ => break,
             };
-            let up = Sample::new("up", 1.0, MetricKind::Gauge, ts);
-            for mut sample in samples.into_iter().chain(std::iter::once(up)) {
+            let up = healthy.then(|| Sample::new("up", 1.0, MetricKind::Gauge, ts));
+            for mut sample in samples.into_iter().chain(up) {
                 let own = crate::collectors::agent::modules::module_of(&sample.metric)
                     .and_then(|module| services.get(module.id));
                 sample.labels.extend(own.unwrap_or(&labels).clone());
@@ -140,9 +182,11 @@ async fn device_history(
     targets: &[(TargetId, String, String)],
 ) -> anyhow::Result<()> {
     let now = chrono::Utc::now().timestamp_millis();
+    let timeline = timeline(DEVICE_STEP_MS, DEVICE_OLD_STEP_MS);
     let mut buffer = Vec::with_capacity(CHUNK);
     for (id, _, kind) in targets {
-        if matches!(kind.as_str(), "agent" | "http" | "tls" | "ping") {
+        // Les types simulés par [`extras`] ont déjà leur historique complet.
+        if matches!(kind.as_str(), "agent" | "http" | "tls" | "ping") || extras::handles(kind) {
             continue;
         }
         let series = state.victoria.query(&format!("{{target=\"{id}\"}}")).await?;
@@ -159,7 +203,7 @@ async fn device_history(
             let Ok(current) = series.value.1.parse::<f64>() else { continue };
             let shape = Shape::of(&metric);
             let seed = synthetic::seed(&format!("{metric}{labels:?}"));
-            for ts in grid(DEVICE_STEP_MS) {
+            for ts in timeline.iter().copied() {
                 let value = shape.value(current, seed, ts, now);
                 let mut sample = Sample::new(metric.clone(), value, MetricKind::Gauge, ts);
                 sample.labels = labels.clone();
@@ -180,7 +224,7 @@ enum Shape {
     Flat,
     /// Une charge : ondule au rythme des journées.
     Load,
-    /// Un remplissage : un peu plus bas une semaine plus tôt.
+    /// Un remplissage : 4 % plus bas une semaine plus tôt, et ainsi de suite.
     Filling,
     /// Un temps de fonctionnement : décroît d'autant qu'on remonte le temps.
     Uptime,
@@ -228,8 +272,8 @@ impl Shape {
                 let value = current * factor(ts) / factor(now);
                 if current <= 100.0 { value.clamp(0.0, 100.0) } else { value.max(0.0) }
             }
-            // 4 % de moins une semaine plus tôt : assez pour une pente lisible.
-            Self::Filling => current * (1.0 - 0.04 * age_ms / HISTORY_MS as f64),
+            // 4 % de moins par semaine remontée : assez pour une pente lisible.
+            Self::Filling => current * (1.0 - 0.04 * age_ms / RECENT_MS as f64),
             Self::Uptime => {
                 let back = age_ms / 1000.0;
                 if current > back { current - back } else { current }
@@ -261,9 +305,38 @@ mod tests {
     #[test]
     fn la_grille_ne_touche_pas_au_direct() {
         let now = chrono::Utc::now().timestamp_millis();
-        let points: Vec<i64> = grid(DEVICE_STEP_MS).collect();
-        assert!(points.iter().all(|ts| ts % DEVICE_STEP_MS == 0));
-        assert!(points.last().is_some_and(|ts| *ts <= now - LIVE_MARGIN_MS));
-        assert!(points.len() >= 7 * 96 - 2);
+        for (step, old_step) in
+            [(DEVICE_STEP_MS, DEVICE_OLD_STEP_MS), (SYNTHETIC_STEP_MS, SYNTHETIC_OLD_STEP_MS)]
+        {
+            assert_eq!(old_step % step, 0, "le pas lâche est un multiple du pas fin");
+            let points = timeline(step, old_step);
+            assert!(points.iter().all(|ts| ts % step == 0));
+            assert!(points.windows(2).all(|w| w[0] < w[1]), "croissante, sans doublon");
+            assert!(points.last().is_some_and(|ts| *ts <= now - LIVE_MARGIN_MS));
+            assert!(points.first().is_some_and(|ts| *ts > now - HISTORY_MS));
+            let recent = (RECENT_MS / step) as usize;
+            let old = ((HISTORY_MS - RECENT_MS) / old_step) as usize;
+            assert!(points.len() >= recent + old - 4, "{} points", points.len());
+        }
+    }
+
+    #[test]
+    fn l_historique_couvre_trente_jours() {
+        let now = chrono::Utc::now().timestamp_millis();
+        let points = timeline(SYNTHETIC_STEP_MS, SYNTHETIC_OLD_STEP_MS);
+        let span = points.last().unwrap() - points.first().unwrap();
+        assert!(span > 29 * DAY_MS, "{span} ms");
+        // Le pas fin ne couvre que la dernière semaine.
+        let fine = points.iter().filter(|ts| **ts > now - RECENT_MS).count();
+        assert!(fine > 2000 && fine < 2020, "{fine}");
+    }
+
+    #[test]
+    fn un_remplissage_remonte_de_quatre_pour_cent_par_semaine() {
+        let now = 1_790_000_000_000;
+        let week = Shape::Filling.value(100.0, 1, now - RECENT_MS, now);
+        assert!((week - 96.0).abs() < 1e-6, "{week}");
+        let month = Shape::Filling.value(100.0, 1, now - HISTORY_MS, now);
+        assert!(month > 80.0 && month < week, "{month}");
     }
 }

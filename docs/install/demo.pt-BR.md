@@ -30,10 +30,17 @@ verdade, ou para colocar uma vitrine no seu próprio site.
   `127.0.0.1` e reproduzindo respostas de API gravadas, então os coletores e
   painéis de monitor reais são executados. Reiniciar entrega o mesmo
   acervo.
-- **Sete dias de histórico.** Métricas sintéticas são gravadas no
-  VictoriaMetrics na inicialização, então gráficos, *Últimos 7 dias*,
-  previsões e histórico de alertas ficam populados, e alguns alertas estão
-  disparando para que *Precisa de você* tenha algo.
+- **Trinta dias de histórico.** Métricas sintéticas são gravadas no
+  VictoriaMetrics na inicialização (a última semana com resolução de cinco
+  minutos), então gráficos, *Últimos 7 dias*, disponibilidade em 30 dias,
+  previsões ("cheio em cerca de N dias") e histórico de alertas ficam
+  populados, e alguns alertas estão disparando para que *Precisa de você*
+  tenha algo. Um switch central com suas portas e seu tráfego, um mapa de
+  ameaças alimentado por contagens inventadas do CrowdSec e da Cloudflare,
+  vencimentos de domínios e licenças, uma matriz de backups com algumas noites
+  com falha, um dispositivo encontrado pela varredura de rede e duas páginas de
+  status com cenas noturnas completam o quadro. Tudo é calculado em memória a
+  partir de uma semente fixa: nada é buscado na rede.
 - **Nada sai do servidor.** Nenhuma notificação é enviada, e nenhuma sondagem
   vai a um endereço que um visitante tenha digitado.
 - **Um tour guiado** abre após o primeiro login; o banner o reabre.

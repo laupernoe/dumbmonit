@@ -6213,6 +6213,21 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_veeam_license_expiry_seconds",
             )
         },
+        Rule {
+            description: "The Veeam support contract expires in less than 30 days: updates and Veeam assistance stop at expiry, jobs keep running.".to_string(),
+            operator: Operator::Lt,
+            threshold: 30.0 * 24.0 * 3600.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "veeam_support_expiring",
+                "Veeam support expiring",
+                RuleKind::Threshold,
+                "dumbmonit_veeam_support_expiry_seconds",
+            )
+        },
         // --- Windows sans agent (`collectors/winrm`) ---
         Rule {
             description: "One or more Windows services set to start automatically are stopped (reads WMI over WinRM, no agent).".to_string(),
@@ -8498,6 +8513,7 @@ pub(crate) const PRODUITES: &[&str] = &[
     "dumbmonit_veeam_job_next_run_seconds",
     "dumbmonit_veeam_repository_used_percent",
     "dumbmonit_veeam_license_expiry_seconds",
+    "dumbmonit_veeam_support_expiry_seconds",
     "dumbmonit_windows_services_auto_stopped",
     "dumbmonit_tailscale_device_offline_seconds",
     "dumbmonit_tailscale_device_watched",
@@ -9103,6 +9119,7 @@ mod tests {
             "veeam_job_old",
             "veeam_repository_full",
             "veeam_license_expiring",
+            "veeam_support_expiring",
             "winrm_services_auto_stopped",
             "tailscale_device_offline",
             "tailscale_key_expiring",
@@ -9208,6 +9225,16 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn la_regle_d_expiration_du_support_veeam() {
+        let regles = builtin_rules();
+        let regle = regles.iter().find(|r| r.uid == "veeam_support_expiring").unwrap();
+        assert!(regle.query.contains("dumbmonit_veeam_support_expiry_seconds"), "{}", regle.query);
+        assert_eq!(regle.operator, Operator::Lt);
+        assert_eq!(regle.threshold, 30.0 * 24.0 * 3600.0);
+        assert!(PRODUITES.contains(&"dumbmonit_veeam_support_expiry_seconds"));
     }
 
     #[test]

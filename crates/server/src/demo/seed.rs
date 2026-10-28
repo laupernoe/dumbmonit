@@ -13,6 +13,7 @@ use dumbmonit_proto::{AgentIdentity, Credential, PUSH_PROTOCOL_VERSION, PushBatc
 use sqlx::SqlitePool;
 
 use super::estate::DemoDevice;
+use super::extras;
 use super::synthetic::{self, AGENT_HOST, FLAKY_HOST};
 use super::{DEMO_PASSWORD, DEMO_USERNAME};
 use crate::auth::password;
@@ -25,6 +26,9 @@ use crate::db::targets::TargetInput;
 use crate::tsdb::SampleSink;
 
 /// Sonde synthétique : (nom, type, adresse, parent désigné par son nom).
+///
+/// Les types de [`extras`] (commutateur, CrowdSec, Cloudflare, licence) sont
+/// simulés en mémoire ; leurs domaines sont ajoutés à part, plus bas.
 const CHECKS: &[(&str, &str, &str, Option<&str>)] = &[
     ("nextcloud.home.arpa", "http", "https://nextcloud.home.arpa/status.php", None),
     ("home-assistant.home.arpa", "http", "https://home-assistant.home.arpa/", None),
@@ -34,6 +38,10 @@ const CHECKS: &[(&str, &str, &str, Option<&str>)] = &[
     ("printer.home.arpa", "ping", "printer.home.arpa", None),
     ("switch-attic.home.arpa", "ping", "switch-attic.home.arpa", None),
     ("ap-attic.home.arpa", "ping", "ap-attic.home.arpa", Some("switch-attic.home.arpa")),
+    (extras::SWITCH_HOST, "snmp", "switch-core.home.arpa", None),
+    (extras::CROWDSEC_HOST, "crowdsec", "http://crowdsec.home.arpa:8080", None),
+    (extras::CLOUDFLARE_HOST, "cloudflare", "api.cloudflare.com", None),
+    (extras::VEEAM_HOST, "veeam", "https://veeam.home.arpa:9419", None),
 ];
 
 /// Ce que la suite du démarrage doit connaître du parc.
@@ -53,6 +61,9 @@ pub async fn run(
     sink: &SampleSink,
     devices: &[DemoDevice],
 ) -> Result<Seeded> {
+    // L'origine des tendances relatives (remplissage, échéances) est posée avant
+    // toute mesure, en direct comme dans l'historique.
+    synthetic::anchor_ms();
     let hash = password::hash(DEMO_PASSWORD.to_string()).await?;
     users::insert(
         pool,
@@ -95,21 +106,13 @@ pub async fn run(
         let parent_id = parent
             .and_then(|parent| targets.iter().find(|(_, name, _)| name == parent))
             .map(|(id, _, _)| *id);
-        let input = TargetInput {
-            name: name.to_string(),
-            address: address.to_string(),
-            kind: kind.to_string(),
-            profile_id: None,
-            parent_id,
-            via_agent: None,
-            interval: Duration::from_secs(60),
-            enabled: true,
-            tags: BTreeMap::new(),
-            credential: Some(Credential::None),
-            group_name: String::new(),
-        };
-        let id = db::targets::create(pool, cipher, &input).await?;
+        let id = add_check(pool, cipher, name, kind, address, parent_id, 60).await?;
         targets.push((id, name.to_string(), kind.to_string()));
+    }
+    // Les noms de domaine surveillés : une consultation RDAP par heure.
+    for (domain, _, _) in extras::DOMAINS {
+        let id = add_check(pool, cipher, domain, "domain", domain, None, 3600).await?;
+        targets.push((id, domain.to_string(), "domain".to_string()));
     }
 
     // L'agent s'enregistre lui-même au premier lot, comme sur une vraie machine.
@@ -123,8 +126,9 @@ pub async fn run(
     targets.push((agent_id, AGENT_HOST.to_string(), "agent".to_string()));
 
     seed_notifications(pool).await?;
-    seed_status_page(pool, &targets).await?;
+    seed_status_pages(pool, &targets).await?;
     seed_alert_history(pool, &targets).await?;
+    seed_network_inventory(pool, agent_id).await?;
     // Un emplacement, le site principal : la carte du monde et la carte en
     // direct du pare-feu ont de quoi se dessiner.
     sqlx::query(
@@ -135,6 +139,32 @@ pub async fn run(
     .await?;
 
     Ok(Seeded { agent_token, agent_secret, targets })
+}
+
+/// Crée une sonde synthétique : aucun identifiant, aucune connexion sortante.
+async fn add_check(
+    pool: &SqlitePool,
+    cipher: &Cipher,
+    name: &str,
+    kind: &str,
+    address: &str,
+    parent_id: Option<TargetId>,
+    interval_secs: u64,
+) -> Result<TargetId> {
+    let input = TargetInput {
+        name: name.to_string(),
+        address: address.to_string(),
+        kind: kind.to_string(),
+        profile_id: None,
+        parent_id,
+        via_agent: None,
+        interval: Duration::from_secs(interval_secs),
+        enabled: true,
+        tags: BTreeMap::new(),
+        credential: Some(Credential::None),
+        group_name: String::new(),
+    };
+    db::targets::create(pool, cipher, &input).await
 }
 
 /// Un lot de l'agent simulé, par le vrai chemin d'ingestion. Rend la cible et
@@ -210,65 +240,115 @@ async fn seed_notifications(pool: &SqlitePool) -> Result<()> {
     Ok(())
 }
 
-async fn seed_status_page(pool: &SqlitePool, targets: &[(TargetId, String, String)]) -> Result<()> {
-    let page = db::status_pages::create_page(
-        pool,
-        &StatusPageInput {
-            slug: "home".to_string(),
-            title: "Home services".to_string(),
-            description: "What the family can check before asking whether the internet is down."
-                .to_string(),
-            published: true,
-            theme: "auto".to_string(),
-            show_uptime_days: 30,
-            accent: "default".to_string(),
-            scenes: String::new(),
-            scene_rotation: "visit".to_string(),
-            simple: false,
-            show_calendar: false,
-            show_latency: false,
-            footer_text: "Fictional data — DumbMonit live demo.".to_string(),
-            homepage_url: String::new(),
-            subscribe_channel_id: None,
-            link_origin: String::new(),
-            // La démonstration n'a pas de domaine à elle : la page reste sous `/s/home`.
-            domain: None,
-            seo: Default::default(),
-            groups: None,
-            group_labels: None,
-        },
-    )
-    .await?;
+/// Réglages d'une page de statut de la démonstration.
+struct PageSpec {
+    slug: &'static str,
+    title: &'static str,
+    description: &'static str,
+    /// Scène de nuit de la bannière (`paris`, `tokyo`…).
+    scene: &'static str,
+    /// Éléments : (cible par nom, libellé, groupe).
+    items: &'static [(&'static str, &'static str, &'static str)],
+    /// Types d'équipements simulés ajoutés : (type, libellé, groupe).
+    kinds: &'static [(&'static str, &'static str, &'static str)],
+}
 
+const PAGES: &[PageSpec] = &[
+    PageSpec {
+        slug: "home",
+        title: "Home services",
+        description: "What the family can check before asking whether the internet is down.",
+        scene: "paris",
+        items: &[
+            ("nextcloud.home.arpa", "Nextcloud", "Apps"),
+            ("home-assistant.home.arpa", "Home Assistant", "Apps"),
+            (FLAKY_HOST, "Jellyfin", "Apps"),
+            ("printer.home.arpa", "Printer", "Network"),
+        ],
+        kinds: &[
+            ("synology", "File storage", "Infrastructure"),
+            ("proxmox", "Virtual machines", "Infrastructure"),
+        ],
+    },
+    PageSpec {
+        slug: "lab",
+        title: "Lab and media",
+        description: "The servers behind the media library and the nightly backups.",
+        scene: "tokyo",
+        items: &[
+            (FLAKY_HOST, "Media server", "Media"),
+            (AGENT_HOST, "Docker host", "Hosts"),
+            (extras::SWITCH_HOST, "Core switch", "Network"),
+        ],
+        kinds: &[("truenas", "Media storage", "Media"), ("pbs", "Backups", "Hosts")],
+    },
+];
+
+async fn seed_status_pages(
+    pool: &SqlitePool,
+    targets: &[(TargetId, String, String)],
+) -> Result<()> {
     let find = |name: &str| targets.iter().find(|(_, n, _)| n == name).map(|(id, _, _)| *id);
-    let mut items = Vec::new();
-    for (name, label, group) in [
-        ("nextcloud.home.arpa", "Nextcloud", "Apps"),
-        ("home-assistant.home.arpa", "Home Assistant", "Apps"),
-        (FLAKY_HOST, "Jellyfin", "Apps"),
-        ("printer.home.arpa", "Printer", "Network"),
-    ] {
-        if let Some(target_id) = find(name) {
-            items.push(PageItemInput {
-                target_id,
-                label: label.to_string(),
-                group_name: group.to_string(),
-            });
+    let mut first = None;
+    for spec in PAGES {
+        let page = db::status_pages::create_page(
+            pool,
+            &StatusPageInput {
+                slug: spec.slug.to_string(),
+                title: spec.title.to_string(),
+                description: spec.description.to_string(),
+                published: true,
+                theme: "auto".to_string(),
+                show_uptime_days: 30,
+                accent: "default".to_string(),
+                // Une scène de nuit par page : Paris, puis Tokyo.
+                scenes: spec.scene.to_string(),
+                scene_rotation: "visit".to_string(),
+                simple: false,
+                show_calendar: true,
+                show_latency: true,
+                footer_text: "Fictional data — DumbMonit live demo.".to_string(),
+                homepage_url: String::new(),
+                subscribe_channel_id: None,
+                link_origin: String::new(),
+                // La démonstration n'a pas de domaine à elle : les pages restent sous
+                // `/s/<slug>`.
+                domain: None,
+                seo: Default::default(),
+                groups: None,
+                group_labels: None,
+            },
+        )
+        .await?;
+        if first.is_none() {
+            first = Some(page);
         }
-    }
-    // Les équipements simulés ([`super::estate`]) : le NAS et l'hyperviseur.
-    for (kind, label) in [("synology", "File storage"), ("proxmox", "Virtual machines")] {
-        if let Some((target_id, _, _)) = targets.iter().find(|(_, _, k)| k == kind) {
-            items.push(PageItemInput {
-                target_id: *target_id,
-                label: label.to_string(),
-                group_name: "Infrastructure".to_string(),
-            });
-        }
-    }
-    db::status_pages::set_items(pool, page, &items).await?;
 
-    // Une maintenance passée, close : l'historique de la page n'est pas vide.
+        let mut items = Vec::new();
+        for (name, label, group) in spec.items {
+            if let Some(target_id) = find(name) {
+                items.push(PageItemInput {
+                    target_id,
+                    label: label.to_string(),
+                    group_name: group.to_string(),
+                });
+            }
+        }
+        // Les équipements simulés ([`super::estate`]) : le NAS, l'hyperviseur…
+        for (kind, label, group) in spec.kinds {
+            if let Some((target_id, _, _)) = targets.iter().find(|(_, _, k)| k == kind) {
+                items.push(PageItemInput {
+                    target_id: *target_id,
+                    label: label.to_string(),
+                    group_name: group.to_string(),
+                });
+            }
+        }
+        db::status_pages::set_items(pool, page, &items).await?;
+    }
+
+    // Une maintenance passée, close : l'historique de la première page n'est pas vide.
+    let Some(page) = first else { return Ok(()) };
     let day = hour_floor(Utc::now()) - chrono::Duration::days(4);
     let start = day.with_hour(6).unwrap_or(day);
     let incident = db::status_pages::create_incident(
@@ -292,6 +372,95 @@ async fn seed_status_page(pool: &SqlitePool, targets: &[(TargetId, String, Strin
         true,
     )
     .await?;
+    Ok(())
+}
+
+/// L'inventaire du réseau de la maison : un balayage planifié qui a déjà tourné,
+/// des appareils connus, un port inattendu sur l'imprimante et un appareil
+/// nouveau, apparu depuis quelques heures. Les listes sont écrites telles quelles :
+/// le balayage ne repartira pas avant une semaine, et il ne sortirait de toute
+/// façon pas du processus.
+async fn seed_network_inventory(pool: &SqlitePool, agent: TargetId) -> Result<()> {
+    /// (adresse MAC, IP, nom, fabricant, connu, ports : (numéro, produit, connu)).
+    type Host = (&'static str, &'static str, &'static str, &'static str, bool, &'static [Port]);
+    type Port = (u16, &'static str, bool);
+    #[rustfmt::skip]
+    const HOSTS: &[Host] = &[
+        ("00:0d:b9:5e:11:a4", "192.168.1.1", "fw.home.arpa", "PC Engines GmbH", true,
+            &[(22, "OpenSSH 9.9", true), (443, "nginx", true)]),
+        ("a4:bf:01:2c:77:10", "192.168.1.10", "pve.home.arpa", "Intel Corporate", true,
+            &[(22, "OpenSSH 9.2", true), (8006, "Proxmox VE", true)]),
+        ("00:11:32:aa:20:01", "192.168.1.20", "nas.home.arpa", "Synology Incorporated", true,
+            &[(445, "Samba smbd", true), (5000, "Synology DSM", true)]),
+        ("ac:1f:6b:03:21:ee", "192.168.1.21", "truenas.home.arpa", "Super Micro Computer", true,
+            &[(443, "nginx", true)]),
+        ("d8:bb:c1:44:30:0f", "192.168.1.30", "docker01.home.arpa", "Micro-Star INTL", true,
+            &[(22, "OpenSSH 9.2", true), (443, "Traefik", true)]),
+        ("00:1b:a9:6c:40:12", "192.168.1.40", "printer.home.arpa", "Brother Industries", true,
+            &[(80, "Brother HTTP", true), (631, "CUPS", true), (9100, "JetDirect", false)]),
+        ("f0:9f:c2:91:50:77", "192.168.1.50", "ap-livingroom", "Ubiquiti Networks", true, &[]),
+        ("9c:8e:cd:15:61:2a", "192.168.1.61", "cam-hall", "Amcrest Industries", true,
+            &[(554, "RTSP", true)]),
+        ("f4:12:fa:3e:9d:b1", "192.168.1.87", "", "Espressif Inc.", false,
+            &[(80, "lwIP httpd", false)]),
+    ];
+    let at = |ago: chrono::Duration| (Utc::now() - ago).format("%Y-%m-%dT%H:%M:%S").to_string();
+
+    let schedule: i64 = sqlx::query_scalar(
+        "INSERT INTO netscan_schedules
+             (name, cidr, agent_id, interval_secs, depth, enabled, initialized, last_run_at,
+              last_status)
+         VALUES ('Home LAN', '192.168.1.0/24', ?, 604800, 'standard', 1, 1, ?, 'done')
+         RETURNING id",
+    )
+    .bind(agent)
+    .bind(at(chrono::Duration::minutes(8)))
+    .fetch_one(pool)
+    .await
+    .context("demo netscan schedule")?;
+
+    for (mac, ip, hostname, vendor, known, ports) in HOSTS {
+        // Les appareils connus sont là depuis le premier balayage, il y a deux
+        // semaines ; l'intrus, depuis trois heures.
+        let first_seen =
+            at(if *known { chrono::Duration::days(14) } else { chrono::Duration::hours(3) });
+        let device: i64 = sqlx::query_scalar(
+            "INSERT INTO netscan_devices
+                 (schedule_id, ident, mac, ip, hostname, vendor, known, first_seen, last_seen)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
+        )
+        .bind(schedule)
+        .bind(format!("mac:{mac}"))
+        .bind(*mac)
+        .bind(*ip)
+        .bind(Some(*hostname).filter(|name| !name.is_empty()))
+        .bind(*vendor)
+        .bind(i64::from(*known))
+        .bind(&first_seen)
+        .bind(at(chrono::Duration::minutes(8)))
+        .fetch_one(pool)
+        .await
+        .context("demo netscan device")?;
+        for (port, product, port_known) in *ports {
+            // Un port inattendu sur un appareil connu est apparu hier soir.
+            let port_seen =
+                if *port_known { first_seen.clone() } else { at(chrono::Duration::hours(14)) };
+            sqlx::query(
+                "INSERT INTO netscan_ports
+                     (device_id, port, protocol, product, known, first_seen, last_seen)
+                 VALUES (?, ?, 'tcp', ?, ?, ?, ?)",
+            )
+            .bind(device)
+            .bind(i64::from(*port))
+            .bind(*product)
+            .bind(i64::from(*port_known))
+            .bind(port_seen)
+            .bind(at(chrono::Duration::minutes(8)))
+            .execute(pool)
+            .await
+            .context("demo netscan port")?;
+        }
+    }
     Ok(())
 }
 

@@ -1,5 +1,8 @@
 //! HPE Aruba Networking Central (« new Central »), par son API REST publique.
 //!
+//! Ports des commutateurs (via `crate::switch_ports`), au schéma d'UniFi :
+//! `arubacentral_port_enabled`, `arubacentral_port_up`, `arubacentral_port_speed_bps`, `arubacentral_port_full_duplex`, `arubacentral_port_uplink`, `arubacentral_port_poe_enabled`, `arubacentral_port_poe_watts`, `arubacentral_port_rx_bytes_total`, `arubacentral_port_tx_bytes_total`, `arubacentral_port_rx_errors_total`, `arubacentral_port_tx_errors_total`, `arubacentral_port_neighbor_info`.
+//!
 //! L'adresse de la cible est celle de la passerelle d'API de la région du
 //! compte (`us1.api.central.arubanetworks.com`, `de1.api…`, `gb1.api…`) : c'est
 //! un service sur Internet, pas un équipement du réseau local, et le
@@ -43,6 +46,9 @@ use serde_json::Value;
 
 use crate::rest::{MAX_NAMED, RestClient, TokenCache, flag, gauge, now_ms, number, text};
 use crate::selfhosted::options::tag;
+use crate::switch_ports::{
+    self, DevicePorts, MAX_PORTED_DEVICES, Port, pick, pick_bool, pick_number, pick_text,
+};
 
 pub const DEFAULT_PORT: u16 = 443;
 pub const DEFAULT_ADDRESS: &str = "us1.api.central.arubanetworks.com";
@@ -56,6 +62,17 @@ const DEVICES: &str = "/network-monitoring/v1/devices?limit=1000";
 const ALERTS: &str = "/network-notifications/v1/alerts?filter=status%20eq%20%27Active%27&limit=100";
 const CLIENT_HEALTH: &str = "/network-monitoring/v1/tenant-client-health";
 const DEVICE_HEALTH: &str = "/network-monitoring/v1/tenant-device-health";
+
+/// Interfaces d'un commutateur. Route encore en `v1alpha1` dans la référence
+/// de new Central : à vérifier, et facultative (un refus ou une route absente
+/// ne fait rien échouer).
+fn interfaces_path(serial: &str, site_id: Option<&str>) -> String {
+    let base = format!("/network-monitoring/v1alpha1/switch/{serial}/interfaces");
+    match site_id {
+        Some(site) if safe_cursor(site) => format!("{base}?site-id={site}"),
+        _ => base,
+    }
+}
 
 #[derive(Default)]
 pub struct ArubaCentralCollector {
@@ -184,6 +201,38 @@ impl ArubaCentralCollector {
         Ok(out)
     }
 
+    /// Les interfaces des commutateurs en ligne, un appel chacun.
+    async fn switch_ports(
+        &self,
+        client: &RestClient,
+        target: &Target,
+        devices: &[Value],
+    ) -> Result<Vec<DevicePorts>, ProbeError> {
+        let mut out = Vec::new();
+        let switches = devices
+            .iter()
+            .filter(|d| {
+                text(d, "deviceType") == Some("SWITCH") && text(d, "status") == Some("ONLINE")
+            })
+            .take(MAX_PORTED_DEVICES);
+        for device in switches {
+            let Some(serial) = text(device, "serialNumber").filter(|s| safe_cursor(s)) else {
+                continue;
+            };
+            let path = interfaces_path(serial, text(device, "siteId"));
+            match self.optional(client, target, &path).await? {
+                Some(reply) => out.push(DevicePorts {
+                    device: text(device, "deviceName").unwrap_or(serial).to_string(),
+                    unit: serial.to_string(),
+                    ports: parse_ports(&reply),
+                }),
+                // Route refusée ou absente : inutile d'insister sur les suivants.
+                None => break,
+            }
+        }
+        Ok(out)
+    }
+
     async fn replies(&self, target: &Target) -> Result<Replies, ProbeError> {
         let mut client = RestClient::for_target(target, "https", DEFAULT_PORT, "Aruba Central")?;
         self.authorize(&mut client, target).await?;
@@ -193,8 +242,11 @@ impl ArubaCentralCollector {
             self.optional(&client, target, CLIENT_HEALTH),
             self.optional(&client, target, DEVICE_HEALTH),
         );
+        let devices = devices?;
+        let ports = self.switch_ports(&client, target, &devices).await?;
         Ok(Replies {
-            devices: devices?,
+            devices,
+            ports,
             alerts: alerts?,
             client_health: clients?,
             device_health: health?,
@@ -269,9 +321,70 @@ impl Collector for ArubaCentralCollector {
 
 pub struct Replies {
     pub devices: Vec<Value>,
+    /// Interfaces des commutateurs en ligne (facultatif).
+    pub ports: Vec<DevicePorts>,
     pub alerts: Option<Value>,
     pub client_health: Option<Value>,
     pub device_health: Option<Value>,
+}
+
+/// Vitesse lue dans un texte (`"1 Gbps"`, `"1000"`, `"10G"`) ou un nombre de
+/// Mbit/s.
+fn speed_bps(port: &Value) -> Option<f64> {
+    let raw = pick(port, &["speed", "operSpeed", "linkSpeed"])?;
+    if let Value::String(word) = raw {
+        let lower = word.to_ascii_lowercase();
+        let digits: String = lower.chars().filter(|c| c.is_ascii_digit() || *c == '.').collect();
+        let n: f64 = digits.parse().ok()?;
+        return Some(if lower.contains('g') { n * 1e9 } else { n * 1e6 });
+    }
+    number(Some(raw)).filter(|n| *n > 0.0).map(|mbps| mbps * 1e6)
+}
+
+/// Les interfaces d'un commutateur (`items`). Champs d'après l'exemple publié
+/// par HPE (`status`, `description`, `uplink`, `portError`, `neighbour`,
+/// `neighbourPort`) ; vitesse, duplex, PoE et compteurs : noms probables, à
+/// vérifier sur un compte réel.
+pub fn parse_ports(reply: &Value) -> Vec<Port> {
+    reply
+        .get("items")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|item| {
+            let name = pick_text(item, &["name", "id", "portNumber"])?;
+            let status = text(item, "status").map(str::to_ascii_lowercase);
+            let admin = status.as_deref().is_some_and(|s| s.contains("disabled"));
+            let up = status.as_deref().map(|s| s == "up");
+            let poe_watts = pick_number(item, &["poePower", "poePowerWatts", "powerDrawn"]);
+            Some(Port {
+                index: name.to_string(),
+                name: pick_text(item, &["description"])
+                    .filter(|d| !d.is_empty())
+                    .map(str::to_string),
+                enabled: Some(!admin && pick_bool(item, &["adminStatus"]).unwrap_or(true)),
+                up,
+                speed_bps: speed_bps(item),
+                full_duplex: pick_text(item, &["duplex", "duplexMode"])
+                    .map(|d| d.to_ascii_lowercase().contains("full")),
+                uplink: pick_bool(item, &["uplink"]).unwrap_or(false),
+                poe_enabled: pick_bool(item, &["poeEnabled"]).or_else(|| poe_watts.map(|_| true)),
+                poe_watts,
+                rx_bytes: pick_number(item, &["rxBytes", "rxOctets"]),
+                tx_bytes: pick_number(item, &["txBytes", "txOctets"]),
+                rx_errors: pick_number(item, &["rxErrors"]),
+                tx_errors: pick_number(item, &["txErrors"]),
+                neighbor: pick_text(item, &["neighbour", "neighbor"])
+                    .filter(|n| !n.is_empty())
+                    .map(|n| {
+                        (
+                            n.to_string(),
+                            pick_text(item, &["neighbourPort", "neighborPort"]).map(str::to_string),
+                        )
+                    }),
+            })
+        })
+        .collect()
 }
 
 /// `ACCESS_POINT` → `access_point`.
@@ -347,6 +460,7 @@ pub fn samples(r: &Replies, ts_ms: i64) -> Vec<Sample> {
                 .with_label("site", site),
         );
     }
+    out.extend(switch_ports::samples("arubacentral", &r.ports, ts_ms));
     out.push(g("arubacentral_devices", r.devices.len() as f64));
     out.push(g("arubacentral_devices_offline", offline_total));
     for (kind, (count, offline)) in &by_type {
@@ -438,6 +552,9 @@ mod tests {
     const ALERTS_JSON: &str = include_str!("testdata/alerts.json");
     const CLIENTS_JSON: &str = include_str!("testdata/tenant_client_health.json");
     const HEALTH_JSON: &str = include_str!("testdata/tenant_device_health.json");
+    // Interfaces d'un commutateur : champs de l'exemple publié par HPE pour
+    // `v1alpha1/switch/{serial}/interfaces`, le reste à confirmer.
+    const INTERFACES_JSON: &str = include_str!("testdata/switch_interfaces.json");
 
     const NOW: i64 = 1_790_000_000_000;
 
@@ -452,6 +569,11 @@ mod tests {
     fn replies() -> Replies {
         Replies {
             devices: items(),
+            ports: vec![DevicePorts {
+                device: "core-sw1".into(),
+                unit: "SG00000001".into(),
+                ports: parse_ports(&json(INTERFACES_JSON)),
+            }],
             alerts: Some(json(ALERTS_JSON)),
             client_health: Some(json(CLIENTS_JSON)),
             device_health: Some(json(HEALTH_JSON)),
@@ -513,11 +635,36 @@ mod tests {
     }
 
     #[test]
+    fn interfaces_du_commutateur() {
+        let s = samples(&replies(), NOW);
+        let key = [("device", "core-sw1"), ("port", "1/1/1")];
+        assert_eq!(value(&s, "arubacentral_port_up", &key), 1.0);
+        assert_eq!(value(&s, "arubacentral_port_speed_bps", &key), 1e9);
+        assert_eq!(value(&s, "arubacentral_port_full_duplex", &key), 1.0);
+        assert_eq!(value(&s, "arubacentral_port_poe_watts", &key), 7.5);
+        assert_eq!(value(&s, "arubacentral_port_uplink", &[("port", "1/1/3")]), 1.0);
+        let n = find(&s, "arubacentral_port_neighbor_info", &key).unwrap();
+        assert_eq!(n.labels["remote_chassis"], "ap-lobby");
+        assert_eq!(n.labels["remote_port"], "eth0");
+        assert_eq!(n.labels["mac"], "SG00000001");
+        assert_eq!(value(&s, "arubacentral_port_up", &[("port", "1/1/2")]), 0.0);
+        assert!(find(&s, "arubacentral_port_up", &[("port", "1/1/4")]).is_none());
+        assert_eq!(value(&s, "arubacentral_port_enabled", &[("port", "1/1/4")]), 0.0);
+    }
+
+    #[test]
     fn sans_les_lectures_facultatives() {
-        let r = Replies { alerts: None, client_health: None, device_health: None, ..replies() };
+        let r = Replies {
+            ports: vec![],
+            alerts: None,
+            client_health: None,
+            device_health: None,
+            ..replies()
+        };
         let s = samples(&r, NOW);
         assert_eq!(value(&s, "arubacentral_devices", &[]), 4.0);
         assert!(find(&s, "arubacentral_alerts_active", &[]).is_none());
+        assert!(find(&s, "arubacentral_port_up", &[]).is_none());
         assert!(find(&s, "arubacentral_clients", &[]).is_none());
         assert!(find(&s, "arubacentral_devices_poor_health", &[]).is_none());
     }

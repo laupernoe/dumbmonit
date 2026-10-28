@@ -12,8 +12,15 @@
 //! additionnés (cinquante `php-fpm` ne forment qu'une ligne), et la liste est
 //! plafonnée à [`TOP_N`].
 //!
-//! Hors Linux, la sonde se tait : mieux vaut aucune série qu'un zéro trompeur.
-//! Seuls les analyseurs purs sont compilés et testés partout.
+//! Sous Windows, la même carte est nourrie autrement : `sysinfo` pour les
+//! processus (mêmes séries `agent_process_*`), trois compteurs de performance
+//! pour la pression (`agent_windows_*` : leur sens n'est pas celui du PSI, ils
+//! portent donc d'autres noms) et `w32tm /query /status /verbose` pour
+//! l'horloge (mêmes séries `agent_clock_*`). NTFS n'a pas de table d'inodes :
+//! aucune série `filesystem_inodes_*`, l'interface masque la section.
+//!
+//! Ailleurs (macOS…), la sonde se tait : mieux vaut aucune série qu'un zéro
+//! trompeur. Seuls les analyseurs purs sont compilés et testés partout.
 
 #![cfg_attr(not(target_os = "linux"), allow(dead_code))]
 
@@ -79,6 +86,27 @@ pub struct ClockStat {
     pub synchronized: bool,
 }
 
+/// Charge approchée d'une machine Windows, lue dans les compteurs de performance.
+/// Pas d'équivalent exact du PSI : ce sont des files d'attente, pas des parts de
+/// temps. Chaque champ absent (compteur refusé) ne produit aucune série.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct WindowsLoad {
+    /// `\System\Processor Queue Length` : threads prêts qui attendent un cœur.
+    pub processor_queue: Option<f64>,
+    /// `\Memory\Pages/sec` : pages lues ou écrites sur disque faute de mémoire.
+    pub pages_per_second: Option<f64>,
+    /// `\PhysicalDisk(_Total)\Current Disk Queue Length`.
+    pub disk_queue: Option<f64>,
+}
+
+impl WindowsLoad {
+    pub fn is_empty(&self) -> bool {
+        self.processor_queue.is_none()
+            && self.pages_per_second.is_none()
+            && self.disk_queue.is_none()
+    }
+}
+
 /// Ce que la sonde a pu lire. Chaque champ absent ne produit aucune série.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct MachineStat {
@@ -88,6 +116,8 @@ pub struct MachineStat {
     pub clock: Option<ClockStat>,
     /// Compteur cumulé de processus tués par l'OOM killer depuis le démarrage.
     pub oom_kills: Option<u64>,
+    /// Windows seulement.
+    pub windows_load: Option<WindowsLoad>,
 }
 
 impl MachineStat {
@@ -97,6 +127,7 @@ impl MachineStat {
             && self.inodes.is_empty()
             && self.clock.is_none()
             && self.oom_kills.is_none()
+            && self.windows_load.as_ref().is_none_or(WindowsLoad::is_empty)
     }
 }
 
@@ -154,6 +185,18 @@ pub fn samples(stat: &MachineStat, now_ms: i64) -> Vec<Sample> {
             samples.push(gauge("agent_clock_offset_seconds", offset));
         }
         samples.push(gauge("agent_clock_synchronized", f64::from(u8::from(clock.synchronized))));
+    }
+
+    if let Some(load) = &stat.windows_load {
+        for (metric, value) in [
+            ("agent_windows_processor_queue_length", load.processor_queue),
+            ("agent_windows_memory_pages_per_second", load.pages_per_second),
+            ("agent_windows_disk_queue_length", load.disk_queue),
+        ] {
+            if let Some(value) = value.filter(|v| v.is_finite() && *v >= 0.0) {
+                samples.push(gauge(metric, value));
+            }
+        }
     }
 
     if let Some(kills) = stat.oom_kills {
@@ -277,6 +320,98 @@ pub fn parse_timedatectl_sync(text: &str) -> Option<ClockStat> {
     }
 }
 
+/// Regroupe par nom des lignes `(nom, % d'un cœur, octets résidents)`, déjà lues
+/// par la plateforme. Les noms vides sont ignorés ; on additionne les doublons.
+#[cfg(any(windows, test))]
+pub fn group_by_name(
+    rows: impl IntoIterator<Item = (String, f64, u64)>,
+) -> BTreeMap<String, (f64, u64)> {
+    let mut groups: BTreeMap<String, (f64, u64)> = BTreeMap::new();
+    for (name, cpu, rss) in rows {
+        let name = name.trim();
+        if name.is_empty() {
+            continue;
+        }
+        let cpu = if cpu.is_finite() && cpu > 0.0 { cpu } else { 0.0 };
+        let group = groups.entry(name.to_string()).or_insert((0.0, 0));
+        group.0 += cpu;
+        group.1 = group.1.saturating_add(rss);
+    }
+    groups
+}
+
+/// Chemins PDH de la pression approchée, dans l'ordre de [`windows_load_from`].
+#[cfg(windows)]
+pub const WINDOWS_LOAD_COUNTERS: [&str; 3] = [
+    r"\System\Processor Queue Length",
+    r"\Memory\Pages/sec",
+    r"\PhysicalDisk(_Total)\Current Disk Queue Length",
+];
+
+/// Assemble les trois lectures PDH (même ordre que `WINDOWS_LOAD_COUNTERS`).
+/// Une valeur négative ou non finie est écartée plutôt que remontée.
+#[cfg(any(windows, test))]
+pub fn windows_load_from(
+    readings: &[crate::collect::perf_counters::Reading],
+) -> Option<WindowsLoad> {
+    use crate::collect::perf_counters::Reading;
+    let value = |index: usize| match readings.get(index) {
+        Some(Reading::One(v)) if v.is_finite() && *v >= 0.0 => Some(*v),
+        _ => None,
+    };
+    let load =
+        WindowsLoad { processor_queue: value(0), pages_per_second: value(1), disk_queue: value(2) };
+    (!load.is_empty()).then_some(load)
+}
+
+/// `w32tm /query /status /verbose`. Les libellés sont traduits selon la langue de
+/// Windows : on s'appuie donc sur la structure (ordre des lignes, nombres) et
+/// seulement en complément sur « Phase Offset ».
+///
+/// - ligne 1, `Leap Indicator: 3(not synchronized)` : 3 = non synchronisée ;
+/// - ligne 2, `Stratum: 0 (unspecified)` : strate 0 ou 16 = pas de source ;
+/// - `Phase Offset: -0.0012345s` : premier relevé du deuxième bloc (après la
+///   ligne vide), en secondes. Convention NTP (source moins local), inversée ici
+///   pour suivre celle de [`ClockStat`] : positif = horloge locale en avance.
+#[cfg(any(windows, test))]
+pub fn parse_w32tm_status(text: &str) -> Option<ClockStat> {
+    let value_of = |line: &str| line.split_once(':').map(|(_, v)| v.trim().to_string());
+    let leading_number = |value: &str| -> Option<i64> {
+        let digits: String = value
+            .trim_start()
+            .chars()
+            .enumerate()
+            .take_while(|(i, c)| c.is_ascii_digit() || (*i == 0 && *c == '-'))
+            .map(|(_, c)| c)
+            .collect();
+        digits.parse().ok()
+    };
+
+    let cleaned = text.replace('\r', "");
+    let mut blocks = cleaned
+        .split("\n\n")
+        .map(|block| block.lines().filter(|l| !l.trim().is_empty()).collect::<Vec<_>>());
+    let first = blocks.next()?;
+    let leap = leading_number(&value_of(first.first()?)?)?;
+    let stratum = first.get(1).and_then(|l| value_of(l)).and_then(|v| leading_number(&v));
+    let synchronized = leap != 3 && !matches!(stratum, Some(0 | 16));
+
+    let parse_seconds = |value: &str| -> Option<f64> {
+        let number = value.trim().strip_suffix('s')?.trim().replace(',', ".");
+        number.parse::<f64>().ok().filter(|v| v.is_finite())
+    };
+    let named = cleaned.lines().find_map(|line| {
+        let (key, value) = line.split_once(':')?;
+        key.trim().eq_ignore_ascii_case("Phase Offset").then(|| value.to_string())
+    });
+    let offset = named.as_deref().and_then(parse_seconds).or_else(|| {
+        let line = blocks.next()?.first().copied()?;
+        parse_seconds(&value_of(line)?)
+    });
+
+    Some(ClockStat { offset_seconds: offset.map(|v| -v), synchronized })
+}
+
 // ---------------------------------------------------------------------------
 // Sonde (Linux)
 // ---------------------------------------------------------------------------
@@ -288,6 +423,8 @@ pub struct MachineProbe {
     last_read: Option<std::time::Instant>,
     #[cfg(target_os = "linux")]
     clock: Option<(std::time::Instant, Option<ClockStat>)>,
+    #[cfg(windows)]
+    windows: windows_probe::State,
 }
 
 impl MachineProbe {
@@ -299,10 +436,19 @@ impl MachineProbe {
             last_read: None,
             #[cfg(target_os = "linux")]
             clock: None,
+            #[cfg(windows)]
+            windows: windows_probe::State::new(),
         }
     }
 
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(windows)]
+    pub async fn read(&mut self, _filesystems: &[FilesystemStat]) -> Option<MachineStat> {
+        // Pas d'inodes sous NTFS : `inodes` reste vide.
+        let stat = self.windows.read().await;
+        (!stat.is_empty()).then_some(stat)
+    }
+
+    #[cfg(not(any(target_os = "linux", windows)))]
     pub async fn read(&mut self, _filesystems: &[FilesystemStat]) -> Option<MachineStat> {
         None
     }
@@ -318,6 +464,7 @@ impl MachineProbe {
             oom_kills: std::fs::read_to_string("/proc/vmstat")
                 .ok()
                 .and_then(|text| parse_oom_kill(&text)),
+            windows_load: None,
         };
         (!stat.is_empty()).then_some(stat)
     }
@@ -450,6 +597,119 @@ async fn run(program: &str, args: &[&str]) -> Option<String> {
     output.status.success().then(|| String::from_utf8_lossy(&output.stdout).into_owned())
 }
 
+/// Sonde Windows : `sysinfo` (processus), PDH (files d'attente), `w32tm`
+/// (horloge). Non compilée ailleurs ; ses analyseurs, eux, sont testés partout.
+#[cfg(windows)]
+mod windows_probe {
+    use std::time::{Duration, Instant};
+
+    use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System};
+
+    use super::{
+        ClockStat, MachineStat, ProcessTop, WINDOWS_LOAD_COUNTERS, WindowsLoad, group_by_name,
+        parse_w32tm_status, rank, windows_load_from,
+    };
+    use crate::collect::perf_counters::{CounterSource, PlatformSource};
+
+    /// Pas de fenêtre de console pour le processus fils.
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    const CLOCK_EVERY: Duration = Duration::from_secs(60);
+    const W32TM_TIMEOUT: Duration = Duration::from_secs(5);
+
+    pub struct State {
+        system: System,
+        /// Vrai dès qu'un premier relevé a posé la base du calcul de CPU.
+        primed: bool,
+        pdh: PlatformSource,
+        /// Les compteurs de pression ont-ils été ajoutés à la requête PDH ?
+        pdh_open: bool,
+        clock: Option<(Instant, Option<ClockStat>)>,
+    }
+
+    impl State {
+        pub fn new() -> Self {
+            Self {
+                system: System::new(),
+                primed: false,
+                pdh: PlatformSource::new(),
+                pdh_open: false,
+                clock: None,
+            }
+        }
+
+        pub async fn read(&mut self) -> MachineStat {
+            let clock = self.read_clock().await;
+            MachineStat {
+                processes: Some(self.read_processes()),
+                windows_load: self.read_load(),
+                clock,
+                ..MachineStat::default()
+            }
+        }
+
+        /// `sysinfo` donne le pourcentage d'un cœur depuis le relevé précédent :
+        /// le tout premier cycle n'a donc pas de classement CPU.
+        fn read_processes(&mut self) -> ProcessTop {
+            self.system.refresh_processes_specifics(
+                ProcessesToUpdate::All,
+                true,
+                ProcessRefreshKind::nothing().with_cpu().with_memory(),
+            );
+            let rows = self
+                .system
+                .processes()
+                .iter()
+                // Le processus 0 (« System Idle Process ») compte le temps
+                // inoccupé : il dominerait tout classement.
+                .filter(|(pid, _)| pid.as_u32() != 0)
+                .map(|(_, process)| {
+                    (
+                        process.name().to_string_lossy().into_owned(),
+                        f64::from(process.cpu_usage()),
+                        process.memory(),
+                    )
+                })
+                .collect::<Vec<_>>();
+            let with_cpu = self.primed;
+            self.primed = true;
+            rank(group_by_name(rows), with_cpu)
+        }
+
+        fn read_load(&mut self) -> Option<WindowsLoad> {
+            if !self.pdh_open {
+                let paths: Vec<String> =
+                    WINDOWS_LOAD_COUNTERS.iter().map(|p| (*p).to_string()).collect();
+                self.pdh.open(&paths);
+                self.pdh_open = true;
+            }
+            windows_load_from(&self.pdh.read())
+        }
+
+        async fn read_clock(&mut self) -> Option<ClockStat> {
+            if let Some((at, stat)) = &self.clock
+                && at.elapsed() < CLOCK_EVERY
+            {
+                return stat.clone();
+            }
+            let mut command = tokio::process::Command::new("w32tm.exe");
+            command
+                .args(["/query", "/status", "/verbose"])
+                .stdin(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .creation_flags(CREATE_NO_WINDOW)
+                .kill_on_drop(true);
+            let stat = match tokio::time::timeout(W32TM_TIMEOUT, command.output()).await {
+                Ok(Ok(output)) if output.status.success() => {
+                    parse_w32tm_status(&String::from_utf8_lossy(&output.stdout))
+                }
+                _ => None,
+            };
+            self.clock = Some((Instant::now(), stat.clone()));
+            stat
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -564,6 +824,7 @@ mod tests {
             }],
             clock: Some(ClockStat { offset_seconds: Some(0.5), synchronized: false }),
             oom_kills: Some(3),
+            windows_load: None,
         };
         let out = samples(&stat, 0);
         let by = |metric, key, val| value_of(&out, metric, Some((key, val)));
@@ -578,5 +839,67 @@ mod tests {
         assert_eq!((oom.value, oom.kind), (3.0, MetricKind::Counter));
         assert!(out.iter().all(|s| s.value.is_finite()));
         assert!(MachineStat::default().is_empty());
+    }
+
+    const W32TM_EN: &str = "Leap Indicator: 0(no warning)\r\nStratum: 3 (secondary reference - syncd by (S)NTP)\r\nPrecision: -23 (119.209ns per tick)\r\nRoot Delay: 0.0312500s\r\nRoot Dispersion: 7.7918701s\r\nReferenceId: 0x0A000001 (source IP:  10.0.0.1)\r\nLast Successful Sync Time: 28/10/2026 10:00:00\r\nSource: ntp.example.org,0x8\r\nPoll Interval: 10 (1024s)\r\n\r\nPhase Offset: 0.0012345s\r\nClockRate: 0.0156250s\r\nState Machine: 2 (Sync)\r\n";
+    /// Windows en français : libellés traduits, virgule décimale.
+    const W32TM_FR: &str = "Indicateur de saut: 0(aucun avertissement)\r\nStrate: 3 (référence secondaire - synchronisée par (S)NTP)\r\nPrécision: -23 (119.209ns par tick)\r\nDélai racine: 0,0312500s\r\nSource: ntp.example.org,0x8\r\nIntervalle d'interrogation: 10 (1024s)\r\n\r\nDécalage de phase: -0,0500000s\r\nFréquence d'horloge: 0,0156250s\r\n";
+    const W32TM_UNSYNC: &str = "Leap Indicator: 3(not synchronized)\nStratum: 0 (unspecified)\nSource: Free-running System Clock\n\nPhase Offset: 0.0000000s\n";
+
+    #[test]
+    fn w32tm_english_gives_offset_with_the_local_ahead_convention() {
+        let clock = parse_w32tm_status(W32TM_EN).expect("clock");
+        assert!(clock.synchronized);
+        // Phase Offset > 0 = source en avance : l'horloge locale est en retard.
+        assert_eq!(clock.offset_seconds, Some(-0.0012345));
+    }
+
+    #[test]
+    fn w32tm_french_is_read_by_structure() {
+        let clock = parse_w32tm_status(W32TM_FR).expect("clock");
+        assert!(clock.synchronized);
+        assert_eq!(clock.offset_seconds, Some(0.05));
+    }
+
+    #[test]
+    fn w32tm_unsynchronised_and_garbage() {
+        let clock = parse_w32tm_status(W32TM_UNSYNC).expect("clock");
+        assert!(!clock.synchronized);
+        assert_eq!(parse_w32tm_status("The service has not been started. (0x80070426)"), None);
+        assert_eq!(parse_w32tm_status(""), None);
+    }
+
+    #[test]
+    fn processes_of_the_same_name_are_added_and_idle_names_dropped() {
+        let groups = group_by_name([
+            ("chrome.exe".to_string(), 10.0, 100),
+            ("chrome.exe".to_string(), f64::NAN, 50),
+            ("  ".to_string(), 99.0, 1),
+            ("sqlservr.exe".to_string(), 40.0, 900),
+        ]);
+        assert_eq!(groups.len(), 2);
+        let top = rank(groups, true);
+        assert_eq!(top.by_cpu[0].name, "sqlservr.exe");
+        assert_eq!(top.by_memory[0].rss_bytes, 900);
+        assert_eq!(top.by_memory[1], usage("chrome.exe", 10.0, 150));
+    }
+
+    #[test]
+    fn windows_load_keeps_valid_counters_only() {
+        use crate::collect::perf_counters::Reading;
+        let load = windows_load_from(&[Reading::One(3.0), Reading::Missing, Reading::One(-1.0)])
+            .expect("load");
+        assert_eq!(load.processor_queue, Some(3.0));
+        assert_eq!((load.pages_per_second, load.disk_queue), (None, None));
+        assert_eq!(
+            windows_load_from(&[Reading::Missing, Reading::Missing, Reading::Missing]),
+            None
+        );
+        let out = samples(&MachineStat { windows_load: Some(load), ..MachineStat::default() }, 0);
+        assert_eq!(value_of(&out, "agent_windows_processor_queue_length", None), Some(3.0));
+        assert_eq!(out.len(), 1);
+        let empty =
+            MachineStat { windows_load: Some(WindowsLoad::default()), ..Default::default() };
+        assert!(empty.is_empty());
     }
 }
