@@ -17,7 +17,7 @@
 | 磁盘（计数器） | `disk_read_bytes`、`disk_written_bytes`、每个块设备一个系列 | `device` |
 | 主机 | `uptime_seconds`、`process_count` | |
 | 服务 | `service_up`（1 = 运行） | `service` |
-| 容器 | `container_up`、`container_count`、`container_running_count`、`container_series_skipped`（超过 `docker_max_containers` 的容器） | `container`、`image` |
+| 容器 | `container_up`、`container_stop_expected`（仅已停止的容器：Docker 不会重启它时为 1）、`container_count`、`container_running_count`、`container_series_skipped`（超过 `docker_max_containers` 的容器）、`container_cpu_percent`（单核百分比，从第二个周期起）、`container_memory_bytes`（不含缓存）、`container_memory_limit_bytes` 和 `container_memory_percent`（仅在设有限制时）、`container_net_rx_bytes` / `container_net_tx_bytes` 和 `container_block_read_bytes` / `container_block_write_bytes`（累计计数器）、`container_pids`，以及整台主机的 `container_df_images_bytes`、`container_df_containers_bytes`、`container_df_volumes_bytes`、`container_df_build_cache_bytes`、`container_df_reclaimable_bytes`（每十分钟读取一次） | `container`、`image` |
 | 传感器 | `agent_sensor_temperature_celsius`、`agent_sensor_temperature_critical_celsius`（硬件本身声明的阈值）、`agent_sensor_fan_rpm` | `sensor`、`fan` |
 | 磁盘健康（SMART） | `agent_disk_smart_ok`（1 = 磁盘通过其自身自我评估）、`agent_disk_temperature_celsius`、`agent_disk_power_on_hours`、`agent_disk_wearout_percent`、`agent_disk_reallocated_sectors`、`agent_disk_pending_sectors`、`agent_disk_media_errors` | `device`、`model` |
 | KVM / libvirt | `agent_libvirt_domains`, `agent_libvirt_domains_running`, `agent_libvirt_pools`；每个域 `agent_libvirt_domain_state_info`, `agent_libvirt_domain_running`, `agent_libvirt_domain_crashed`, `agent_libvirt_domain_vcpus`, `agent_libvirt_domain_memory_max_bytes`, `agent_libvirt_domain_memory_used_bytes`；每个存储池 `agent_libvirt_pool_state_info`, `agent_libvirt_pool_active`, `agent_libvirt_pool_capacity_bytes`, `agent_libvirt_pool_allocation_bytes`, `agent_libvirt_pool_used_percent` — 参见 [通过 libvirt 监视 KVM 虚拟机](#kvm-virtual-machines-through-libvirt) | `domain`、`pool`、`state` |
@@ -84,10 +84,10 @@ Windows 故意没有温度行：读取那里的传感器意味着通过 WMI 进�
 
 下面的步骤是通知旁显示的步骤。没有在机器上创建账户：注册令牌是唯一的密钥。
 
-1. 在 DumbMonit 中保存监控项：显示注册令牌（dmon_…），其中一次带有为 Linux 和 Windows 准备好复制的安装命令。（令牌也可以在 **设置 → 代理** 中创建。）
-2. 该令牌是代理向 DumbMonit 推送其测量的密钥。它不是机器上的账户：那里什么也不需要创建。从监控项表单创建的令牌是单次使用的：它注册这一台机器，别的什么也没有。对于一个队列，在"设置 → 代理"中创建一个可重复使用的令牌。
-3. 在机器上运行安装命令，以提升的权限（Linux 和 macOS 上的 sudo，Windows 上的提升 PowerShell）。它下载代理，将令牌写入 agent.yaml 并启动服务。
-4. 机器在几秒钟内自己显示，以其主机名命名。在那个第一批中，服务器给代理一个自己的密钥，并将其存储在 `/etc/dumbmonit/agent-secret` 中，任何人都无法读取：从那以后，那台机器是唯一一台可以在这个监控项下报告的。丢失令牌？"设置 → 代理"让您撤销它并创建另一个。
+1. 在 DumbMonit 中添加一个监控项并选择**安装了代理的服务器**。选择机器如何到达服务器：**直连**，或经由防火墙后远程站点的**中继**（参见[监控远程站点](../install/remote-site.md#5-install-agents-behind-the-relay)）。注册令牌（dmon_…）只显示一次，附带可直接复制的 Linux/macOS、Windows 和 Docker 安装命令。
+2. 该令牌是代理推送测量值的密钥；机器上无需创建任何账户。默认它是单次使用的：只注册这一台机器。对于一批机器（playbook、机器镜像），在创建命令前勾选*用此命令安装多台机器*；整个 Windows 域通过同一页面提供的 [Active Directory 套件](agent-active-directory.md)完成。丢失的令牌在“设置 → 代理”中吊销。
+3. 在要监控的机器上以提升的权限运行安装命令（Linux 和 macOS 上用 sudo，Windows 上用管理员 PowerShell）。
+4. 页面会等待第一次上报（几秒钟），然后让你当场为机器命名、放入文件夹并归到某个站点。在第一批数据中，服务器会给代理一个专属密钥（`/etc/dumbmonit/agent-secret`，只有它能读取）：从此只有这台机器能在该监控项下上报。
 5. Docker：要查看容器并让 DumbMonit 重启或更新它们，代理必须到达 Docker 套接字。安装程序注册的服务已经可以；如果您在专用用户下运行代理，将该用户添加到"docker"组并重启它。重启和自动更新策略随后在监控项页面按容器设置。
 
 两件事值得在您推出到多台机器之前阅读：[绑定](#binding-one-machine-one-agent)，这使监控项真正属于一个代理安装，以及 [单次使用或队列](#single-use-or-fleet)，这是您创建令牌时做出的选择。
@@ -205,7 +205,7 @@ docker buildx build --target agent-dist --output type=local,dest=dist/agent .
 !!! note "下载始终被验证 — 始终"
     DumbMonit 显示的安装命令进行服务器附带的每个代理二进制的预期 SHA-256（`--sha256=linux-x86_64:…,linux-aarch64:…,freebsd-x86_64:…`，Windows 上的 `-Sha256 windows-x86_64:…`）。两个安装程序对它们下载的文件检查反对它在安装任何东西之前，并 **拒绝** 当它不匹配，当没有校验和为平台给出，或当没有 SHA-256 工具（`sha256sum`、`shasum`、`sha256`）可用。
 
-    校验和随每个服务器发行版而改变：在升级 DumbMonit 后，从 **设置 → 代理** 复制一个新鲜安装命令（或从新令牌）而不是重新运行一个旧的，这会以"校验和不匹配"停止。相同校验和显示在安装命令下，并在 `/download/<file>.sha256` 发布。
+    校验和随每个服务器发行版而改变：在升级 DumbMonit 后，从添加流程（**新建监控 → 安装了代理的服务器**）复制一个新的安装命令（或从新令牌）而不是重新运行一个旧的，这会以"校验和不匹配"停止。相同校验和显示在安装命令下，并在 `/download/<file>.sha256` 发布。
 
     对于气隙或手动设置，`--insecure-skip-checksum`（`-InsecureSkipChecksum`）未验证安装一个下载的二进制文件并大声说所以；`--bin=PATH` 按原样安装一个本地文件，文件是您的验证。
 
@@ -229,7 +229,7 @@ docker buildx build --target agent-dist --output type=local,dest=dist/agent .
 
 ### 升级 {#upgrade}
 
-两个脚本都是幂等的：用相同令牌和 URL 再次运行安装命令，用新的二进制文件、重写配置并重启服务。那是升级程序。从当前服务器取命令（"设置 → 代理"）：其 `--sha256` 必须匹配您升级到的服务器版本的二进制文件。
+两个脚本都是幂等的：用相同令牌和 URL 再次运行安装命令，用新的二进制文件、重写配置并重启服务。那是升级程序。从当前服务器取命令（新建监控，**安装了代理的服务器**）：其 `--sha256` 必须匹配您升级到的服务器版本的二进制文件。
 
 相同命令迁移仍在运行 EzyMonit 代理的机器，在 Linux 和 Windows 上。安装程序停止并移除旧服务（`ezymonit-agent`，或 Windows 上的 `EzyMonitAgent`），将配置移动到新路径（`/etc/dumbmonit/agent.yaml`、`C:\ProgramData\DumbMonit\agent.yaml`）并在其位置安装 `dumbmonit-agent`。旧的 `ezym_…` 令牌保持有效，所以令牌创建时显示的命令仍然有效；什么都不需要首先被撤销。
 
@@ -401,6 +401,9 @@ log_level: info
 | `DUMBMONIT_AGENT_LOG` | `trace`、`debug`、`info`、`warn`、`error` |
 | `DUMBMONIT_AGENT_RELAY` | `true` 运行，对于服务器，分配给这个代理的监控项的探测（参见 [在 Docker / 另一网络中运行代理](#run-the-agent-in-docker--on-another-network)） |
 | `DUMBMONIT_AGENT_SITE` | 当它被提供为中继时显示在代理旁的网站标签 |
+| `DUMBMONIT_AGENT_GATEWAY_LISTEN` | 中继为其站点的代理提供的网关，例如 `0.0.0.0:8443`（`gateway_listen:`）；优先于界面中设置的端口（参见[在中继后安装代理](../install/remote-site.md#5-install-agents-behind-the-relay)） |
+| `DUMBMONIT_AGENT_GATEWAY_MAX_CONNECTIONS` | 网关同时保持的连接数，默认 64（`gateway_max_connections:`） |
+| `DUMBMONIT_AGENT_GATEWAY_RATE_KIB` | 经网关的每条隧道每个方向的速率，单位 KiB/s，默认 4096（`gateway_rate_kib:`） |
 
 ## Windows 性能计数器 {#windows-performance-counters}
 
@@ -547,7 +550,7 @@ WARN 这个代理对这台机器不被识别
 
 ## 注册令牌 {#enrolment-tokens}
 
-- 令牌在 **设置 → 代理** 中或在添加类型代理的监控项时创建。服务器仅保持一个指纹：清晰令牌在创建响应中显示一次，用两个安装命令。
+- 令牌在添加代理类型的监控项时创建（单次使用或用于多台机器），Active Directory 套件也会创建令牌。服务器仅保持一个指纹：清晰令牌在创建响应中显示一次，用两个安装命令。
 - 代理在 `POST /api/ingest` 上以 `Authorization: Bearer dmon_…` 发送它。它永不在代理的日志中出现，即使被截断。
 - **设置 → 代理** 列出令牌其前缀、作用域、创建日期和最后使用。**撤销** 在其下一次推送时停止每个使用那个令牌的代理；机器随后在三个错过的期间后变得 *不可达*。重新运行安装程序用新令牌来重新注册它们。
 - 机器是分离的监控项：撤销令牌不删除它们。
@@ -582,14 +585,14 @@ tail -f /var/log/dumbmonit-agent.log   # 服务日志（OpenRC）
 |---|---|
 | 安装程序说"无法到达服务器" | 错误的 URL 或令牌。配置被写：修复 `agent.yaml`，随后重启服务。 |
 | 下载失败 404 | 服务器有没有代理二进制文件（`DUMBMONIT_AGENT_DIR` 空）。用 `--bin=PATH` 用您构建的二进制文件。 |
-| 安装程序停止"校验和不匹配" | 命令在服务器升级前被复制（从"设置 → 代理"复制一个新鲜的），或接收的二进制文件不是服务器提供的一个：一个代理或缓存在途中，或被篡改的下载。 |
+| 安装程序停止"校验和不匹配" | 命令在服务器升级前被复制（添加安装了代理的服务器时复制一个新的），或接收的二进制文件不是服务器提供的一个：一个代理或缓存在途中，或被篡改的下载。 |
 | 安装程序停止"没有预期的校验和" | 命令对这个平台没有 `--sha256`：一个旧命令，或 macOS 二进制文件（不由服务器附带）。复制一个新鲜命令，或传递 `--sha256=<platform>-<arch>:<hex>` 从发行版的 `.sha256`。 |
 | 机器永不出现 | 推送到 `/api/ingest` 在安装命令中的 URL；在反向代理后面，确保它被转发以及身体达 16 MB 被允许。 |
 | *不可达* 尽管代理运行 | 令牌被撤销，或推送被拒绝。检查 `journalctl -u dumbmonit-agent`：错误在那里被记录。 |
 | 日志说"这个代理对这台机器不被识别" | 机器被绑定到代理安装，这个无法有其密钥 — 一个重新安装，或容器被重新创建没有其状态卷。打开监控项页面并点击 **允许重新注册**；参见 [重新安装后重新注册](#re-enrolment-after-a-reinstall)。 |
 | 日志说"这台机器在代理绑定前被注册" | 一个主机永不绑定到其代理。在其监控项页面点击 **允许重新注册**，随后重启代理；参见 [早于绑定的主机](#hosts-that-predate-binding)。 |
 | 日志说"这个代理太旧无法被绑定到其机器" | 代理二进制文件无法存储绑定密钥。在主机上重新运行安装命令；如果监控项已存在，首先点击 **允许重新注册**。 |
-| 日志说"这个注册令牌已注册所有被允许的机器" | 一个单次使用令牌被重复使用。创建一个新的，或一个队列令牌在"设置 → 代理"中。 |
+| 日志说"这个注册令牌已注册所有被允许的机器" | 一个单次使用令牌被重复使用。创建一个新的，或在添加服务器时勾选*用此命令安装多台机器*。 |
 | Windows | Windows 服务部分在撰写本文时尚未在项目的构建映像中进行过练习；在 GitHub 上报告问题。 |
 
 ## Docker 容器 {#docker-containers}

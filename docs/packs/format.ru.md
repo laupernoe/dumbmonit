@@ -213,6 +213,10 @@ snmp_profiles:
       - name: acme_ups_battery_percent   # must start with the pack prefix
         oid: 1.3.6.1.4.1.99999.1.1.0
         kind: gauge
+        label: Заряд батареи              # необязательно, показывается на странице устройства
+        unit: "%"                         # необязательно: %, s, B, °C, bool…
+        view: timeseries                  # необязательно: stat, timeseries, topn или heatmap
+        view_title: Батарея               # метрики с одним видом и заголовком делят один график
 ```
 
 Каталог SNMP читается при запуске: перезапустите DumbMonit после установки или

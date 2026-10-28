@@ -607,7 +607,7 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 | `GET` | `/api/status-pages/{id}` | 会话 | 一个页面及其条目。 |
 | `PUT` | `/api/status-pages/{id}` | 管理员 | 相同的字段，但是完整替换而不是补丁：`title` 必填，每个省略的字段都回到默认值（slug 重新由标题派生、描述为空、`published: false`、`theme: auto`、90 天可用率）。 |
 | `DELETE` | `/api/status-pages/{id}` | 管理员 | `204`。公开 URL 不再响应。 |
-| `POST`、`PUT` | `/api/status-pages`、`/api/status-pages/{id}` — 外观与订阅 | 管理员 | 还接受 `accent`（`default`、`blue`、`teal`、`violet`、`rose`、`amber`）、`scenes`（来自编辑器列表的场景 id——城市、新奇迹和古代奇迹，例如 `venice`、`paris`、`giza`、`tajmahal`，不得重复；`[]` 表示没有；创建时省略则为 `["paris"]`）、`simple`（布尔值，默认 `false`：公开页面不显示场景、吉祥物或动画，并跟随访客的明暗偏好）、`scene_rotation`（`visit`、`1m`、`10m` 或 `1h`）、`footer_text`（纯文本，280 个字符）、`homepage_url`（`http(s)://` 或空）、`subscribe_channel_id`（一个 `smtp` 渠道，或 `null` 以关闭邮件订阅）以及 `domain`（页面的公开主机名，如 `status.example.com`，或 `null`/`""` 表示没有——参见[自定义域名](../using/status-pages.md#custom-domain)）。`domain` 会转为小写并去掉 `https://` 前缀或尾部斜杠；带端口、路径或 IP 地址会返回 `400`，DumbMonit 自身的地址（其公开 URL，或请求进入时使用的主机）返回 `400`，另一个页面已使用的名称返回 `409`。与其他字段不同，这八个键在 `PUT` 中被省略时会保留其存储值。页面视图会连同 `logo_type`（`image/png`、`image/jpeg`、`image/webp` 或 `null`）一并返回它们。 |
+| `POST`、`PUT` | `/api/status-pages`、`/api/status-pages/{id}` — 外观与订阅 | 管理员 | 还接受 `accent`（`default`、`blue`、`teal`、`violet`、`rose`、`amber`）、`scenes`（场景 id：`paris`、`tokyo`、`newyork`、`dubai`，不得重复；已移除的 id 如 `venice` 或 `matterhorn` 会归入四者中最接近的一个；`[]` 表示没有；创建时省略则为 `["paris"]`）、`simple`（布尔值，默认 `false`：公开页面不显示场景、吉祥物或动画，并跟随访客的明暗偏好）、`scene_rotation`（`visit`、`1m`、`10m` 或 `1h`）、`footer_text`（纯文本，280 个字符）、`homepage_url`（`http(s)://` 或空）、`subscribe_channel_id`（一个 `smtp` 渠道，或 `null` 以关闭邮件订阅）以及 `domain`（页面的公开主机名，如 `status.example.com`，或 `null`/`""` 表示没有——参见[自定义域名](../using/status-pages.md#custom-domain)）。`domain` 会转为小写并去掉 `https://` 前缀或尾部斜杠；带端口、路径或 IP 地址会返回 `400`，DumbMonit 自身的地址（其公开 URL，或请求进入时使用的主机）返回 `400`，另一个页面已使用的名称返回 `409`。与其他字段不同，这八个键在 `PUT` 中被省略时会保留其存储值。页面视图会连同 `logo_type`（`image/png`、`image/jpeg`、`image/webp` 或 `null`）一并返回它们。 |
 | `GET`、`PUT`、`DELETE` | `/api/status-pages/{id}/logo` | 会话 / 管理员 | 页面的徽标。`PUT` 接受 `{"data": "<base64 或 data: URL>"}`：按内容识别 PNG、JPEG 或 WebP，最大 256 KiB，其他一切返回 `400`。`204`。`GET` 是编辑器的预览（包括草稿）。 |
 | `GET` | `/api/status-pages/{id}/subscribers` | 会话 | 邮件订阅者：`id`、`page_id`、`email`、`confirmed_at`（待确认时为 `null`）、`created_at`。其令牌绝不离开服务器。 |
 | `DELETE` | `/api/status-pages/{id}/subscribers/{subscriber}` | 管理员 | 移除一个地址。`204`。 |
@@ -638,7 +638,8 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 | `POST` | `/api/agent/relay/{id}` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | 被委派探测的结果：`{"duration_ms", "error", "samples", "profile_id"}`（正文最大 16 MB）。`204`；探测已过期或属于另一个代理时返回 `404`。 |
 | `GET` | `/api/agent/commands?wait=N` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | 为代理排队的命令（容器重启或更新），没有待处理项时最多保持 `wait` 秒。不应手动调用。`key` 本身说明不了什么——它是公开的——所以已绑定的机器还必须出示其绑定密钥；否则返回 `403`，这正是阻止一台机器拿走另一台机器命令的机制。 |
 | `POST` | `/api/agent/commands/{id}` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | 由代理报告的命令进度和结果。`result` 被截断为最后 4 KB，发生截断时开头会加上 `[truncated by the server, beginning dropped]`。 |
-| `GET` | `/api/relays` | 会话 | 每个可能作为中继的代理监控项：`id`、`name`、`site`、`relay`（声明了 `relay: true`）、`last_seen_at`、`relayed`（经由它到达的监控项）。中继在前，然后按名称排序。 |
+| `GET` | `/api/relays` | 会话 | 每个可能作为中继的代理监控项：`id`、`name`、`site`、`relay`（声明了 `relay: true`）、`last_seen_at`、`relayed`（经由它到达的监控项）、`gateway_wanted`、`gateway_port`、`gateway_host`（它为本站点代理提供的网关）、`client_id`。中继在前，然后按名称排序。 |
+| `GET` | `/api/relays/kinds` | 会话 | 中继代理可以探测的类型；表单只对这些类型提供*经由*选项。 |
 
 ```json
 {

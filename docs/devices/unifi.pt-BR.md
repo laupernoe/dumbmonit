@@ -63,6 +63,10 @@ carregam `device` (seu nome, ou seu endereço MAC quando não tem nenhum),
 | `clients_by_type` | `wireless`, `wired`, `guest`, `vpn` (conta View Only) | `type` |
 | `alarms` | entradas do log de sistema crítico das últimas 24 horas, ou alarmes não arquivados | |
 | `scrape_errors` | chamadas que falharam na última sondagem | |
+| `port_enabled`, `port_up`, `port_speed_bps`, `port_full_duplex`, `port_uplink` | portas de cada switch ou gateway on-line (conta somente leitura, `port_table`); `port_up` não aparece em uma porta desativada | `device`, `mac`, `port` (número no painel frontal), `port_name` |
+| `port_poe_enabled`, `port_poe_watts` | PoE de cada porta | os mesmos |
+| `port_rx_bytes_total`, `port_tx_bytes_total`, `port_rx_errors_total`, `port_tx_errors_total` | contadores por porta, desenhados pelo painel do switch | os mesmos |
+| `port_neighbor_info` | valor 1, vizinho LLDP da porta (`lldp_table`) | os mesmos, `remote_chassis`, `remote_port` |
 
 As [regras integradas](../alerting/rules.md#unifi-network) que se aplicam:
 UniFi device offline, UniFi Internet down, UniFi WAN link down, UniFi
