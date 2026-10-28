@@ -36,6 +36,7 @@
 	import TopologyList from '#lib/components/topology/TopologyList.svelte';
 	import MapSheet from '#lib/components/topology/MapSheet.svelte';
 	import Legend from '#lib/components/topology/Legend.svelte';
+	import TrafficLinks from '#lib/components/topology/TrafficLinks.svelte';
 	import NodeEditor from '#lib/components/topology/NodeEditor.svelte';
 	import EdgeEditor from '#lib/components/topology/EdgeEditor.svelte';
 	import CorrectionsPanel from '#lib/components/topology/CorrectionsPanel.svelte';
@@ -49,6 +50,7 @@
 
 	const GROUP_KEY = 'dumbmonit.map.byGroup';
 	const SUBNET_KEY = 'dumbmonit.map.bySubnet';
+	const TRAFFIC_KEY = 'dumbmonit.map.traffic';
 
 	let topology = $state<Topology | null>(null);
 	let loadError = $state<unknown>(null);
@@ -122,6 +124,22 @@
 			}
 		})()
 	);
+
+	/** Weathermap: on by default, the choice is remembered. */
+	let showTraffic = $state(
+		(() => {
+			try {
+				return localStorage.getItem(TRAFFIC_KEY) !== '0';
+			} catch {
+				return true;
+			}
+		})()
+	);
+
+	function setShowTraffic(value: boolean) {
+		showTraffic = value;
+		remember(TRAFFIC_KEY, value);
+	}
 
 	function remember(key: string, value: boolean) {
 		try {
@@ -221,9 +239,12 @@
 
 	const edges = $derived(
 		(topology?.edges ?? []).map(
-			(e): MapEdge => ({ from: e.from, to: e.to, source: e.source, origin: e.origin ?? 'deduced', correctionId: e.correction_id ?? null, ruleId: e.rule_id ?? null, fromPort: e.from_port ?? null, toPort: e.to_port ?? null })
+			(e): MapEdge => ({ from: e.from, to: e.to, source: e.source, origin: e.origin ?? 'deduced', correctionId: e.correction_id ?? null, ruleId: e.rule_id ?? null, fromPort: e.from_port ?? null, toPort: e.to_port ?? null, traffic: e.traffic ?? null })
 		)
 	);
+	/** Some link carries port counters: the Traffic toggle and the load scale make sense. */
+	const hasTraffic = $derived(edges.some((e) => !!e.traffic));
+	const weather = $derived(showTraffic && hasTraffic);
 	const graph = $derived(buildGraph(nodes, edges));
 	const layout = $derived(layoutMap(graph, { byGroup, bySubnet }));
 	const sections = $derived(listRows(graph));
@@ -467,6 +488,12 @@
 					<Toggle checked={bySubnet} onchange={setBySubnet} label={m.topology_subnet_toggle()} />
 					<span aria-hidden="true">{m.topology_subnet_toggle()}</span>
 				</label>
+				{#if hasTraffic}
+					<label class="inline-flex min-h-10 items-center gap-2.5 text-sm text-ink-2">
+						<Toggle checked={showTraffic} onchange={setShowTraffic} label={m.topology_traffic_toggle()} />
+						<span aria-hidden="true">{m.topology_traffic_toggle()}</span>
+					</label>
+				{/if}
 				{#if hasGuests}
 					<label class="inline-flex min-h-10 items-center gap-2.5 text-sm text-ink-2">
 						<Toggle bind:checked={showGuests} label={m.topology_guests_toggle()} />
@@ -534,12 +561,17 @@
 					selected = child;
 					pending = { child, parent };
 				}}
-				class="h-[72vh] min-h-[440px]"
+				traffic={weather}
+				class={`h-[72vh] min-h-[440px] ${weather && !editing ? 'max-sm:hidden' : ''}`}
 			/>
+			{#if weather && !editing}
+				<!-- A phone: the busiest links as a list rather than a canvas. -->
+				<TrafficLinks edges={layout.edges} {name} class="sm:hidden" />
+			{/if}
 		{:else}
-			<TopologyList {sections} />
+			<TopologyList {sections} traffic={weather} />
 		{/if}
-		<Legend wan={siteCount > 0} {corrected} class="mt-3" />
+		<Legend wan={siteCount > 0} {corrected} traffic={weather} class={`mt-3 ${weather && !editing && view === 'map' ? 'max-sm:hidden' : ''}`} />
 		{#if view === 'map' && editing}
 			<CorrectionsPanel
 				{corrections}
