@@ -8513,6 +8513,7 @@ pub(crate) const PRODUITES: &[&str] = &[
     "dumbmonit_veeam_job_next_run_seconds",
     "dumbmonit_veeam_repository_used_percent",
     "dumbmonit_veeam_license_expiry_seconds",
+    "dumbmonit_veeam_support_expiry_seconds",
     "dumbmonit_windows_services_auto_stopped",
     "dumbmonit_tailscale_device_offline_seconds",
     "dumbmonit_tailscale_device_watched",
