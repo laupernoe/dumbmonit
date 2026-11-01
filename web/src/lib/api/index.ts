@@ -292,8 +292,10 @@ export async function queryRange(
 		const series = await request<MetricSeries[]>('/metrics/query_range', {
 			query: {
 				query: params.query,
-				start: Math.round(params.start),
-				end: Math.round(params.end),
+				// Whole seconds: two views asking for "the last hour" in the same
+				// second send the same URL, and share one request (see `flight.ts`).
+				start: Math.floor(params.start / 1000) * 1000,
+				end: Math.floor(params.end / 1000) * 1000,
 				step: Math.max(1, Math.round(params.step))
 			},
 			signal,

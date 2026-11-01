@@ -20,12 +20,15 @@ class FleetStore {
 	#subscribers = 0;
 	#controller: AbortController | null = null;
 	#loadedRange = '';
+	/** Range of the refresh in flight, so a second view starting at once does not repeat it. */
+	#loadingRange = '';
 	#timer: ReturnType<typeof setInterval> | undefined;
 
 	async refresh(): Promise<void> {
 		this.#controller?.abort();
 		const controller = new AbortController();
 		this.#controller = controller;
+		this.#loadingRange = consoleState.range;
 		const seconds = consoleState.rangeSeconds;
 		const since = new Date(Date.now() - Math.max(seconds, 30 * 86400) * 1000).toISOString();
 		try {
@@ -45,8 +48,16 @@ class FleetStore {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
 			this.error = cause;
 		} finally {
-			if (this.#controller === controller) this.loading = false;
+			if (this.#controller === controller) {
+				this.loading = false;
+				this.#loadingRange = '';
+			}
 		}
+	}
+
+	/** Whether the figures of the current range are neither loaded nor being loaded. */
+	#stale(): boolean {
+		return this.#loadedRange !== consoleState.range && this.#loadingRange !== consoleState.range;
 	}
 
 	/** Starts refreshing while at least one view needs the figures; returns the stop function. */
@@ -59,7 +70,7 @@ class FleetStore {
 				void this.refresh();
 			}, INTERVAL_MS);
 			void this.refresh();
-		} else if (this.#loadedRange !== consoleState.range) {
+		} else if (this.#stale()) {
 			void this.refresh();
 		}
 		return () => {
@@ -72,7 +83,7 @@ class FleetStore {
 
 	/** Called when the range changes. */
 	rangeChanged() {
-		if (this.#subscribers > 0 && this.#loadedRange !== consoleState.range) {
+		if (this.#subscribers > 0 && this.#stale()) {
 			this.loading = true;
 			void this.refresh();
 		}
