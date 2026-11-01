@@ -15,7 +15,7 @@
 	"alerts_quick_silence_name": "Quick snooze · {name}",
 	"alerts_row_dismiss": "Hide",
 	"alerts_tab_automation": "Automation",
-	"deviceform_discovery_range_help": "An address range, e.g. 192.168.1.0/24. Up to 1024 addresses per scan.",
+	"deviceform_discovery_range_help": "An address range, e.g. 192.168.1.0/24. Up to 4096 addresses per scan.",
 	"deviceform_options_group_numbers": "Limits and timings",
 	"deviceform_options_group_switches": "Switches",
 	"deviceform_options_group_values": "Values and filters",
