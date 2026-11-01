@@ -77,8 +77,9 @@
 		return () => window.removeEventListener('keydown', onKeydown);
 	});
 
-	// The system theme can flip during a session (public status pages only:
-	// the console is always dark). Applied again on every navigation.
+	// The system theme can flip during a session (a status page in automatic
+	// mode, or the console set to "System"). Applied again on every navigation:
+	// the wall and the status pages have looks of their own.
 	$effect(() => theme.watchSystem());
 	$effect(() => {
 		theme.apply();
@@ -155,18 +156,25 @@
 	});
 
 	// Page changes cross-fade through the View Transitions API: the bars stay,
-	// the page underneath leaves in 120 ms and the next one rises in. Only
-	// between pages — a step inside a page (`?kind=`, `#section`) swaps at once —
-	// and never under reduced motion or where the API is missing.
+	// the page underneath leaves in 120 ms and the next one rises in. A new tab
+	// of the same page (`?tab=`) only cross-fades, shorter; any other step
+	// inside a page (`?kind=`, `#section`) swaps at once. Never under reduced
+	// motion or where the API is missing.
 	onNavigate((navigation) => {
 		if (typeof document === 'undefined' || !('startViewTransition' in document)) return;
 		if (!navigation.from || !navigation.to) return;
-		if (navigation.from.url.pathname === navigation.to.url.pathname) return;
+		const samePage = navigation.from.url.pathname === navigation.to.url.pathname;
+		const tabChange =
+			samePage && navigation.from.url.searchParams.get('tab') !== navigation.to.url.searchParams.get('tab');
+		if (samePage && !tabChange) return;
 		// Wall mode covers the bars with its own overlay: a captured bar would
 		// float above it for the length of the fade.
 		if ([navigation.from, navigation.to].some((end) => end.url.pathname.startsWith('/wall'))) return;
 		// Phones swap pages at once: a full-screen snapshot cross-fade costs more than it shows.
 		if (calmMotion()) return;
+		const root = document.documentElement;
+		if (tabChange) root.dataset.vt = 'tab';
+		else delete root.dataset.vt;
 		return new Promise<void>((resolve) => {
 			const transition = document.startViewTransition(async () => {
 				resolve();
@@ -175,7 +183,9 @@
 			});
 			// A transition skipped by the next click rejects these: nothing to report.
 			transition.ready.catch(() => {});
-			transition.finished.catch(() => {});
+			transition.finished.catch(() => {}).finally(() => {
+				if (tabChange) delete root.dataset.vt;
+			});
 		});
 	});
 
