@@ -13,6 +13,7 @@
 	import VersionTag from '#lib/components/VersionTag.svelte';
 	import Logo from '#lib/components/Logo.svelte';
 	import DemoBanner from '#lib/components/demo/DemoBanner.svelte';
+	import CleartextBanner from '#lib/components/security/CleartextBanner.svelte';
 	import DemoNotice from '#lib/components/demo/DemoNotice.svelte';
 	import Tour from '#lib/components/demo/Tour.svelte';
 	import WhatsNew from '#lib/components/WhatsNew.svelte';
@@ -200,6 +201,10 @@
 			{@render children()}
 		{/if}
 	{:else if publicPath}
+		{#if !page.url.pathname.startsWith('/s/')}
+			<!-- Sign-in and first setup: a password is about to be typed. -->
+			<CleartextBanner />
+		{/if}
 		{@render children()}
 	{:else if !auth.canUseApi}
 		<main class="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-16">
@@ -211,6 +216,9 @@
 	{:else}
 		{#if auth.demo}
 			<DemoBanner />
+		{/if}
+		{#if !onWall}
+			<CleartextBanner />
 		{/if}
 		{#if onWelcome}
 			{@render children()}
