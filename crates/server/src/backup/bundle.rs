@@ -207,6 +207,11 @@ pub struct Bundle {
     /// Liens manuels entre un LUN d'un NAS et l'équipement qui l'utilise.
     #[serde(default)]
     pub lun_links: Vec<BundleLunLink>,
+    /// Changements de configuration que l'administrateur a fermés après une
+    /// mise à jour (migration 0220) : une note fermée ne doit pas revenir sur
+    /// l'instance restaurée.
+    #[serde(default)]
+    pub upgrade_notes_closed: Vec<BundleUpgradeNote>,
 }
 
 impl Bundle {
@@ -240,6 +245,7 @@ impl Bundle {
             ("clients".to_string(), self.clients.len()),
             ("netscan_schedules".to_string(), self.netscan_schedules.len()),
             ("lun_links".to_string(), self.lun_links.len()),
+            ("upgrade_notes_closed".to_string(), self.upgrade_notes_closed.len()),
         ])
     }
 }
@@ -342,6 +348,19 @@ pub struct BundleLunLink {
     pub entity: String,
     #[serde(default)]
     pub author: String,
+}
+
+/// Un changement de configuration fermé (table `upgrade_notes_closed`).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleUpgradeNote {
+    /// Version du catalogue qui l'introduit.
+    pub version: String,
+    pub note_id: String,
+    /// UTC sans suffixe.
+    #[serde(default)]
+    pub closed_at: String,
+    #[serde(default)]
+    pub closed_by: String,
 }
 
 /// Une correction de la carte de topologie.

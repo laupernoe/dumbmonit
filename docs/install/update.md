@@ -57,3 +57,36 @@ Compose file (for example `ghcr.io/laupernoe/dumbmonit:0.1.0-alpha.7`) and run
 the same command.
 
 To go back, restore the backup taken in step 1 on the previous image.
+
+## Configuration changes after an update
+
+`docker compose pull && docker compose up -d` replaces the image, but your
+`docker-compose.yml` is yours: DumbMonit never edits it. Some versions need a
+change there, such as a port to publish or an environment variable to add.
+
+When an update asks for one, the first time an administrator opens DumbMonit
+afterwards, a window lists what to change, each with the block to copy:
+
+- **Done** closes the change. When DumbMonit can check it (for example that the
+  agent port answers from the server), it checks first and asks for a second
+  click if the check still fails, because a NAT loop-back or a reverse proxy can
+  hide a port that does work.
+- **I'll do it later** hides the window. A reminder stays in the corner of every
+  page until you dismiss it, and dismissing is final: a closed change never
+  comes back for its version.
+- A change that a check finds missing stays listed even if you updated long ago,
+  so an instance that skipped a step in an earlier release is caught up.
+
+**Settings → About → Configuration changes → View the list** shows every change
+a release has asked for (to apply, closed, or not needed on this instance) with
+its block, whenever you want to read it again. Only administrators see it, and
+it is switched off in the public demo.
+
+| Since | Change | What to do |
+|---|---|---|
+| 0.14.0 | Encrypted agent channel | Publish port 8443: add `"8443:8443"` to the `ports` of the `dumbmonit` service (see [Agent channel security](agent-security.md)). |
+
+A new installation has nothing to change. The instance records the version it
+runs and the one it came from when it starts, and the closed changes are part of
+the [backup](backup.md). Scripts can read the list at `GET /api/upgrade-notes`
+(signed-in administrator, not available to API tokens).

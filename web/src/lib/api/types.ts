@@ -5051,6 +5051,54 @@ export interface UpdateInfo {
 	error: string | null;
 }
 
+// --- Configuration changes after an update ----------------------------------
+
+/** Where a change stands for this instance (`Status` in `crates/server/src/upgrade_notes.rs`). */
+export type UpgradeNoteStatus = 'pending' | 'closed' | 'clear';
+
+/** Verdict of an automatic check: the change is in place, missing, or cannot be told from here. */
+export type UpgradeDetectionState = 'ok' | 'missing' | 'unknown';
+
+export interface UpgradeDetection {
+	state: UpgradeDetectionState;
+	/** Why, in a sentence (server text). */
+	detail: string;
+}
+
+/** One change a version asks for. Mirrors `NoteView` in `crates/server/src/upgrade_notes.rs`. */
+export interface UpgradeNote {
+	id: string;
+	/** Version that introduced it. */
+	version: string;
+	title: string;
+	/** What changed and why (server text). */
+	summary: string;
+	/** `docker-compose.yml` block to copy. */
+	compose: string;
+	/** Command to run afterwards. */
+	apply: string | null;
+	docs_url: string | null;
+	status: UpgradeNoteStatus;
+	/** Automatic check, for a change that has one and is not closed. */
+	detection: UpgradeDetection | null;
+	/** Server timestamp (UTC without suffix). */
+	closed_at: string | null;
+}
+
+/** `GET /api/upgrade-notes`: mirrors `Overview` in `crates/server/src/upgrade_notes.rs`. */
+export interface UpgradeNotes {
+	/** Running version. */
+	current: string;
+	/** Version the instance came from. */
+	upgraded_from: string | null;
+	/** The window should open by itself (changes pending, not yet shown for this version). */
+	announce: boolean;
+	/** Changes to apply. */
+	pending: number;
+	/** Every known change: pending first, then closed, then the rest. */
+	notes: UpgradeNote[];
+}
+
 // --- Bulk import of websites (crates/server/src/api/targets_import.rs) -------
 
 export type TargetImportStatus = 'ok' | 'created' | 'skipped' | 'error';

@@ -126,6 +126,7 @@ pub async fn restore(
     report.push(restore_topology_corrections(&mut tx, bundle, &refs).await?);
     report.push(restore_topology_rules(&mut tx, bundle, &refs).await?);
     report.push(restore_lun_links(&mut tx, bundle, &refs).await?);
+    report.push(restore_upgrade_notes(&mut tx, bundle).await?);
     report.push(restore_dashboards(&mut tx, bundle).await?);
 
     report.push(restore_channels(&mut tx, cipher, bundle).await?);
@@ -2543,6 +2544,45 @@ async fn restore_lun_links(
         match result {
             Ok(_) => report.count(outcome),
             Err(error) => report.refused(&format!("LUN link \"{}\"", entry.lun), &error.into()),
+        }
+    }
+    Ok(report)
+}
+
+/// Changements de configuration fermés, par (version, identifiant) : déjà
+/// fermé, laissé tel quel — la date d'origine est conservée.
+async fn restore_upgrade_notes(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+) -> Result<SectionReport> {
+    let mut report = SectionReport::new("upgrade_notes_closed");
+    for entry in &bundle.upgrade_notes_closed {
+        let valid = |text: &str| !text.is_empty() && text.len() <= 64;
+        if !valid(&entry.version) || !valid(&entry.note_id) {
+            report.skipped += 1;
+            report.notes.push("A closed configuration change has no usable identifier".into());
+            continue;
+        }
+        // Une date absente devient « maintenant ».
+        let closed_at = (!entry.closed_at.trim().is_empty()).then_some(entry.closed_at.as_str());
+        let result = sqlx::query(
+            "INSERT INTO upgrade_notes_closed (version, note_id, closed_at, closed_by)
+             VALUES (?, ?, COALESCE(?, strftime('%Y-%m-%d %H:%M:%S', 'now')), ?)
+             ON CONFLICT (version, note_id) DO NOTHING",
+        )
+        .bind(&entry.version)
+        .bind(&entry.note_id)
+        .bind(closed_at)
+        .bind(&entry.closed_by)
+        .execute(&mut **tx)
+        .await;
+        match result {
+            Ok(done) if done.rows_affected() > 0 => report.count(RestoreOutcome::Created),
+            Ok(_) => report.count(RestoreOutcome::Skipped),
+            Err(error) => {
+                let what = format!("configuration change \"{}\"", entry.note_id);
+                report.refused(&what, &error.into());
+            }
         }
     }
     Ok(report)

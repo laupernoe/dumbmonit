@@ -16,6 +16,7 @@
 	import DemoNotice from '#lib/components/demo/DemoNotice.svelte';
 	import Tour from '#lib/components/demo/Tour.svelte';
 	import WhatsNew from '#lib/components/WhatsNew.svelte';
+	import UpgradeNotes from '#lib/components/UpgradeNotes.svelte';
 	import DismissToast from '#lib/components/alerts/DismissToast.svelte';
 	import { demo } from '#lib/stores/demo.svelte.js';
 	import { calmMotion } from '#lib/ui/index.js';
@@ -229,6 +230,7 @@
 		{#if !onWall}
 			{#if !auth.demo}
 				<WhatsNew />
+				<UpgradeNotes />
 			{/if}
 		{/if}
 		{#if auth.demo}
