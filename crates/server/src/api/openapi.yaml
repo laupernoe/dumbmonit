@@ -313,6 +313,84 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/upgrade-notes:
+    get:
+      operationId: getUpgradeNotes
+      tags: [Health]
+      summary: Configuration changes an update asks for (admin only)
+      description: >-
+        Some versions need a change outside the image, in the `docker-compose.yml` the
+        user owns (a published port, an environment variable). Every known change is listed
+        with its explanation, the block to copy and its `status`: `pending` when the instance
+        went through the version that introduced it, or when the automatic `detection` finds
+        it still missing; `closed` once an administrator closed it; `clear` otherwise.
+        `announce` is true when the window should open by itself: changes are pending and it
+        has not been shown for this version. Detections that probe the network are kept for a
+        minute; `fresh=true` runs them again. Session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      parameters:
+        - name: fresh
+          in: query
+          required: false
+          schema: { type: boolean, default: false }
+          description: Run the automatic detections again instead of using the one-minute memory.
+      responses:
+        "200":
+          description: The changes and where the instance stands.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UpgradeNotes" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/upgrade-notes/close:
+    post:
+      operationId: closeUpgradeNotes
+      tags: [Health]
+      summary: Close configuration changes (admin only)
+      description: >-
+        A closed change never comes back for its version, and the reminder in the interface
+        goes away once none is left. With no `ids`, every change that is pending is closed.
+        Recorded in the audit log. Session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items: { type: string }
+                  description: Identifiers of the changes to close; empty or absent closes all pending ones.
+      responses:
+        "200":
+          description: The changes after closing.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UpgradeNotes" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/upgrade-notes/announce:
+    post:
+      operationId: announceUpgradeNotes
+      tags: [Health]
+      summary: Record that the changes window was shown (admin only)
+      description: >-
+        Stops `announce` from being true again for the running version; the changes stay
+        pending until they are closed. Session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Recorded. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/openapi.json:
     get:
       operationId: getOpenApi
@@ -10121,6 +10199,42 @@ components:
         enabled: { type: boolean, description: The check is active. }
         locked_by_env: { type: boolean, description: Turned off by DUMBMONIT_UPDATE_CHECK=off; the setting cannot override it. }
         error: { type: [string, "null"], description: Why the last check failed. }
+    UpgradeNotes:
+      type: object
+      required: [current, announce, pending, notes]
+      properties:
+        current: { type: string, description: Running version. }
+        upgraded_from: { type: [string, "null"], description: "Version the instance came from: the changes introduced after it apply." }
+        announce: { type: boolean, description: The window should open by itself. }
+        pending: { type: integer, description: Number of changes to apply. }
+        notes:
+          type: array
+          description: Every known change, pending first, then closed, then the rest.
+          items: { $ref: "#/components/schemas/UpgradeNote" }
+    UpgradeNote:
+      type: object
+      required: [id, version, title, summary, compose, status]
+      properties:
+        id: { type: string, description: Stable identifier. }
+        version: { type: string, description: Version that introduced the change. }
+        title: { type: string }
+        summary: { type: string, description: What changed and why. }
+        compose: { type: string, description: "`docker-compose.yml` block to copy." }
+        apply: { type: [string, "null"], description: Command to run afterwards. }
+        docs_url: { type: [string, "null"] }
+        status: { type: string, enum: [pending, closed, clear] }
+        detection:
+          description: Automatic check, for changes that have one and are not closed.
+          oneOf:
+            - type: "null"
+            - $ref: "#/components/schemas/UpgradeDetection"
+        closed_at: { type: [string, "null"], description: "UTC without suffix." }
+    UpgradeDetection:
+      type: object
+      required: [state, detail]
+      properties:
+        state: { type: string, enum: [ok, missing, unknown] }
+        detail: { type: string }
     ComponentHealth:
       type: object
       required: [ok]

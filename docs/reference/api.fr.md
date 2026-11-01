@@ -367,6 +367,7 @@ une page blanche.
 |---|---|---|---|
 | `GET` | `/api/health` | public | Version du serveur et l'état de ses dépendances. Toujours `200` : un composant en échec est dans le corps. |
 | `GET` | `/api/update` | session ou jeton | Version en cours, dernière release, `update_available` ; le serveur demande à GitHub une fois par jour au plus. `POST /api/update/check` regarde maintenant, `PUT /api/update/settings` active ou désactive la vérification. Voir [Mise à jour](../install/update.md). |
+| `GET` | `/api/upgrade-notes` | session admin | Changements de configuration qu'une version demande dans votre `docker-compose.yml`, avec le bloc à copier et l'état de cette instance. `POST /api/upgrade-notes/close` en ferme pour de bon, `POST /api/upgrade-notes/announce` note que la fenêtre a été montrée. Voir [Mise à jour](../install/update.md#changements-de-configuration-après-une-mise-à-jour). |
 
 ```json
 {"status":"ok","version":"0.1.0","database":{"ok":true},"victoria":{"ok":true,"embedded":true}}

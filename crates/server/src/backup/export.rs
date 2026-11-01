@@ -95,7 +95,22 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         client_assignments: client_assignments(pool, &refs).await?,
         netscan_schedules: netscan_schedules(pool, &refs).await?,
         lun_links: lun_links(pool, &refs).await?,
+        upgrade_notes_closed: upgrade_notes_closed(pool).await?,
     })
+}
+
+/// Changements de configuration fermés.
+async fn upgrade_notes_closed(pool: &SqlitePool) -> Result<Vec<BundleUpgradeNote>> {
+    Ok(crate::upgrade_notes::closed_rows(pool)
+        .await?
+        .into_iter()
+        .map(|row| BundleUpgradeNote {
+            version: row.version,
+            note_id: row.note_id,
+            closed_at: row.closed_at,
+            closed_by: row.closed_by,
+        })
+        .collect())
 }
 
 /// Scans planifiés et leurs appareils connus ou ignorés.
