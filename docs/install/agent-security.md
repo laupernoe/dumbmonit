@@ -35,6 +35,18 @@ With Docker, publish the agent port next to the web port:
 If a router or a TCP proxy publishes it under another number, set
 `DUMBMONIT_AGENT_PUBLIC_PORT` so the install commands use that number.
 
+Before showing an install command, the add-an-agent screen asks the server to
+dial its own agent channel at the address the command carries, complete the
+TLS handshake and check that the answering certificate chain is its own. When
+the port is not published (connection refused), silently filtered (timeout),
+does not resolve, or leads to another service, the screen says so with the
+exact `ports:` line and firewall commands (firewalld, ufw, Windows) instead of
+the command; *Show the command anyway* covers a network where the server cannot
+reach itself (NAT without hairpin). Through a relay, the screen waits until the
+relay reports that its gateway listens, and reminds which port to open on the
+relay. The install scripts run the same diagnosis when their test send fails,
+rather than a bare "server unreachable".
+
 ## What protects the channel
 
 - **TLS 1.3 only**, with AEAD cipher suites (AES-GCM, ChaCha20-Poly1305). No
