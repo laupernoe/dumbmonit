@@ -35,6 +35,9 @@ TOKEN=""
 URL=""
 TLS_URL=""
 CA_PIN=""
+# Clé publique épinglée du certificat HTTPS du serveur (`sha256//…`), quand il
+# est autosigné : les téléchargements passent alors en HTTPS vérifié par elle.
+PINNED_KEY=""
 INTERVAL=""
 SERVICES=""
 TAGS=""
@@ -96,6 +99,10 @@ OPTIONS:
                         network for the server (writes relay: true)
     --site=NAME         Site of this relay, for example "Lyon office"
     --bin=PATH          Local binary to install instead of downloading it
+    --pinned-key=PIN    Public key of the server's HTTPS certificate
+                        (sha256//base64, as curl --pinnedpubkey takes it), for
+                        a self-signed certificate: downloads use HTTPS checked
+                        against this key. Requires curl.
     --sha256=LIST       Expected SHA-256 of the downloaded binary, as
                         platform-arch:hex pairs separated by commas (for example
                         linux-x86_64:0a1b…). The install command shown by the
@@ -136,6 +143,7 @@ for argument in "$@"; do
         --url=*)      URL="${argument#*=}" ;;
         --tls-url=*)  TLS_URL="${argument#*=}" ;;
         --ca-pin=*)   CA_PIN="${argument#*=}" ;;
+        --pinned-key=*) PINNED_KEY="${argument#*=}" ;;
         --interval=*) INTERVAL="${argument#*=}" ;;
         --services=*) SERVICES="${argument#*=}" ;;
         --tags=*)     TAGS="${argument#*=}" ;;
@@ -355,8 +363,24 @@ URL="${URL%/}"
 
 # ---------------------------------------------------------------- binaire
 
+# Une clé épinglée impose curl : ni fetch ni wget ne savent vérifier un
+# certificat autosigné par sa clé, et retomber sur « sans vérification »
+# reviendrait à télécharger en clair.
+if [ -n "$PINNED_KEY" ]; then
+    case "$PINNED_KEY" in
+        sha256//*) ;;
+        *) echec "invalid --pinned-key value (expected sha256//<base64>): $PINNED_KEY" ;;
+    esac
+    command -v curl >/dev/null 2>&1 \
+        || echec "--pinned-key needs curl (the server's HTTPS certificate is checked by its key)"
+fi
+
 telecharger() {
-    if command -v curl >/dev/null 2>&1; then
+    if [ -n "$PINNED_KEY" ]; then
+        # `-k` lève la vérification par une autorité (le certificat est
+        # autosigné) ; `--pinnedpubkey` la remplace par la clé attendue.
+        curl -fsSL -k --pinnedpubkey "$PINNED_KEY" "$1" -o "$2"
+    elif command -v curl >/dev/null 2>&1; then
         curl -fsSL "$1" -o "$2"
     elif command -v fetch >/dev/null 2>&1; then
         fetch -qo "$2" "$1"
@@ -372,7 +396,9 @@ telecharger() {
 # Sans outil ou sans réponse, ne dit rien plutôt que d'inventer une raison.
 expliquer_echec() {
     corps=""
-    if command -v curl >/dev/null 2>&1; then
+    if [ -n "$PINNED_KEY" ]; then
+        corps="$(curl -sSL -k --pinnedpubkey "$PINNED_KEY" "$1" 2>/dev/null || true)"
+    elif command -v curl >/dev/null 2>&1; then
         corps="$(curl -sSL "$1" 2>/dev/null || true)"
     elif command -v fetch >/dev/null 2>&1; then
         corps="$(fetch -qo - "$1" 2>/dev/null || true)"
@@ -754,6 +780,46 @@ case "$INIT" in
         ;;
 esac
 
+# Canal chiffré injoignable : la cause la plus fréquente d'un premier envoi
+# raté, et la seule que « vérifiez l'URL » n'explique pas. Une connexion TCP
+# suivie d'une poignée de main suffit à la reconnaître (curl : code 7 =
+# connexion refusée, 28 = délai dépassé, 35 = TLS impossible).
+diagnostiquer_canal() {
+    canal="$TLS_URL"
+    if [ -z "$canal" ]; then
+        hote="${URL#*://}"
+        hote="${hote%%/*}"
+        hote="${hote%:*}"
+        canal="https://$hote:8443"
+    fi
+    hote_port="${canal#*://}"
+    hote_port="${hote_port%%/*}"
+    port="${hote_port##*:}"
+    command -v curl >/dev/null 2>&1 || return 0
+    code=0
+    curl -sk -o /dev/null --connect-timeout 5 --max-time 10 "$canal/" 2>/dev/null || code=$?
+    case "$code" in
+        7)
+            echo "Error: the encrypted agent channel $hote_port refuses the connection." >&2
+            echo "       Port $port is not published or not open on the server:" >&2
+            echo "       - Docker: add \"$port:8443\" under ports: in docker-compose.yml," >&2
+            echo "         then run: docker compose up -d" >&2
+            echo "       - firewall on the server host: firewall-cmd --add-port=$port/tcp --permanent" >&2
+            echo "         && firewall-cmd --reload, or ufw allow $port/tcp" >&2
+            ;;
+        28)
+            echo "Error: no answer from the encrypted agent channel $hote_port (timeout)." >&2
+            echo "       A firewall drops the traffic, or the address is wrong: open TCP port" >&2
+            echo "       $port towards the server (firewall-cmd --add-port=$port/tcp, ufw allow $port/tcp)," >&2
+            echo "       and publish it in Docker (\"$port:8443\")." >&2
+            ;;
+        35)
+            echo "Error: something answers on $hote_port, but not the DumbMonit agent channel" >&2
+            echo "       (TLS 1.3). Check that port $port reaches the DumbMonit container." >&2
+            ;;
+    esac
+}
+
 # --------------------------------------------------------- vérification
 
 if [ "$NO_START" -eq 1 ]; then
@@ -769,6 +835,7 @@ fi
 # tard.
 info "checking the connection to $URL"
 if ! "$BIN_PATH" --config="$CONFIG_FILE" --once; then
+    diagnostiquer_canal
     echec "the agent could not reach the server — check the URL and the token.
        The configuration is in place: fix $CONFIG_FILE, then restart
        the service (see above)."
