@@ -1,20 +1,21 @@
 <script lang="ts">
 	/**
-	 * Alerts — what is firing now, what is scheduled to stay quiet, what
-	 * happened, and the rules behind it.
+	 * Alerts — what is firing now, what happened, the rules behind it, and what
+	 * runs on its own.
 	 *
-	 * Four sections behind a segmented control kept in the URL hash so a view
-	 * is linkable, the daily ones first: Now (the live list, by severity or by
-	 * monitor), Maintenance (windows), History, then Rules. Notification
-	 * channels and their policy are set up once and live in Settings →
-	 * Notifications (October 2026); the old `#notifications…` links forward
-	 * there. Active alerts, devices and probe states come from the shared store
-	 * (polled app-wide, see `alertsStore`); the rest is loaded here and
-	 * refreshed after each action.
+	 * Five tabs (the shared `Tabs`, `?tab=` in the URL), the daily ones first:
+	 * Now (the live list, by severity or by monitor, with the maintenance
+	 * windows folded under it), History, Rules, Automation (remediation log,
+	 * runbooks, actions, policies) and On-call. Notification channels and their
+	 * policy live in Settings → Notifications; the old `#notifications…` links
+	 * forward there, and so do the old `#scheduled`, `#oncall`, `#history` and
+	 * `#rules` anchors, to their tab. Active alerts, monitors and probe states
+	 * come from the shared store (polled app-wide, see `alertsStore`); the rest
+	 * is loaded here and refreshed after each action.
 	 */
-	import { browser } from '$app/env';
 	import { goto } from '$app/navigation';
-	import { tick, untrack } from 'svelte';
+	import { page } from '$app/state';
+	import { untrack } from 'svelte';
 	import {
 		listAlertRules,
 		listSilences,
@@ -35,7 +36,7 @@
 		type CollectorInfo
 	} from '#lib/api/index.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
-	import { PageHeader, Button, ErrorNotice, Plate, Skeleton, confetti } from '#lib/ui/index.js';
+	import { PageHeader, Button, Disclosure, ErrorNotice, Plate, Skeleton, Tabs, confetti, type TabItem } from '#lib/ui/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { dismissals } from '#lib/stores/dismissals.svelte.js';
 	import { readSky } from '#lib/components/overview/sky.js';
@@ -46,27 +47,28 @@
 	import RulesSection from '#lib/components/alerts/RulesSection.svelte';
 	import HistorySection from '#lib/components/alerts/HistorySection.svelte';
 	import OnCallSection from '#lib/components/oncall/OnCallSection.svelte';
+	import AutomationTab from '#lib/components/remediation/AutomationTab.svelte';
 	import { rulesByUid, targetsById } from '#lib/components/alerts/helpers.js';
-	import { rovingIndex } from '#lib/ui/roving.js';
+	import { tabUrl } from '#lib/tab-url.js';
 	import { m } from '#lib/paraglide/messages.js';
 
-	type Tab = 'now' | 'scheduled' | 'oncall' | 'history' | 'rules';
-	const TAB_IDS: readonly Tab[] = ['now', 'scheduled', 'oncall', 'history', 'rules'];
-	const TABS: { id: Tab; label: string }[] = $derived([
-		{ id: 'now', label: m.alerts_page_tab_now() },
-		{ id: 'scheduled', label: m.alerts_page_tab_maintenance() },
-		{ id: 'oncall', label: m.oncall_tab() },
-		{ id: 'history', label: m.alerts_page_tab_history() },
-		{ id: 'rules', label: m.alerts_page_tab_rules() }
-	]);
 	// The Notifications tab moved to Settings: its old anchors forward there.
 	const MOVED: Record<string, string> = {
 		notifications: '/settings/notifications#notifications-channels',
 		'notifications-channels': '/settings/notifications#notifications-channels',
 		'notifications-policy': '/settings/notifications#notifications-policy'
 	};
+	// The old hash sections and where they live now.
+	const LEGACY: Record<string, { tab: string; extra?: Record<string, string> }> = {
+		now: { tab: 'now' },
+		scheduled: { tab: 'now', extra: { maintenance: '1' } },
+		oncall: { tab: 'oncall' },
+		history: { tab: 'history' },
+		rules: { tab: 'rules' }
+	};
 
-	let tab = $state<Tab>('now');
+	/** The active tab, read from the address the same way `Tabs` does. */
+	const tab = $derived(page.url.searchParams.get('tab') ?? 'now');
 	// Devices and probe states: the shared store, polled app-wide (see H3 of
 	// the September 2026 pass) rather than a second copy on this page's own clock.
 	const targets = $derived(alertsStore.targets);
@@ -239,40 +241,43 @@
 		await refreshRules();
 	}
 
-	// The active tab lives in the URL hash, so a section is linkable.
-	function readHash() {
-		if (!browser) return;
-		const raw = window.location.hash.replace('#', '');
-		if ((TAB_IDS as readonly string[]).includes(raw)) {
-			tab = raw as Tab;
-		} else if (MOVED[raw]) {
-			void goto(MOVED[raw], { replace: true });
+	// An old `/alerts#<section>` link: forward to its tab (or to Settings).
+	$effect(() => {
+		const raw = page.url.hash.replace('#', '');
+		if (!raw) return;
+		const moved = MOVED[raw];
+		const legacy = LEGACY[raw];
+		if (moved) void goto(moved, { replace: true });
+		else if (legacy) {
+			void goto(tabUrl('/alerts', legacy.tab, { searchParams: untrack(() => page.url.searchParams) }, legacy.extra, 'now'), {
+				replace: true,
+				reset: false
+			});
 		}
-	}
-	// Roving tabindex: Left/Right/Home/End move and activate the tab.
-	function onTabKey(event: KeyboardEvent) {
-		const next = rovingIndex(event.key, TABS.findIndex((t) => t.id === tab), TABS.length);
-		if (next === null) return;
-		event.preventDefault();
-		selectTab(TABS[next].id);
-		void tick().then(() => document.getElementById(`alerts-tab-${TABS[next].id}`)?.focus());
-	}
+	});
 
-	function selectTab(next: Tab) {
-		tab = next;
-		if (browser) window.location.hash = next;
-	}
+	// The maintenance windows start folded; `?maintenance=1` (or scheduling one) opens them.
+	let maintenanceOpen = $state(false);
+	$effect(() => {
+		if (page.url.searchParams.get('maintenance') === '1') maintenanceOpen = true;
+	});
+	const activeWindows = $derived(silences.filter((silence) => silence.active_now).length);
+
+	const tabs: TabItem[] = $derived([
+		{ id: 'now', label: m.alerts_page_tab_now(), badge: sky.attention, attention: true },
+		{ id: 'history', label: m.alerts_page_tab_history() },
+		{ id: 'rules', label: m.alerts_page_tab_rules() },
+		{ id: 'automation', label: m.alerts_tab_automation() },
+		{ id: 'oncall', label: m.oncall_tab() }
+	]);
 
 	$effect(() => {
-		readHash();
-		window.addEventListener('hashchange', readHash);
 		const controller = new AbortController();
 		void loadAll(controller.signal);
-		// Rules, silences and history are this page's own; devices, probes and
+		// Rules, silences and history are this page's own; monitors, probes and
 		// alerts are the shared store's (polled app-wide). Same cadence either way.
 		const timer = setInterval(() => void loadAll(controller.signal), 30_000);
 		return () => {
-			window.removeEventListener('hashchange', readHash);
 			controller.abort();
 			clearInterval(timer);
 		};
@@ -283,14 +288,12 @@
 
 <PageHeader title={m.alerts_page_title()}>
 	{#snippet actions()}
-		<!-- Remediation log, runbooks and actions: the nav carries it on desktop only. -->
-		<Button variant="ghost" href="/actions" class="sm:hidden">{m.remediation_page_title()}</Button>
 		{#if auth.canOperate}
 			<Button
 				variant="secondary"
 				onclick={() => {
 					scheduling = !scheduling;
-					if (scheduling) selectTab('scheduled');
+					if (scheduling) maintenanceOpen = true;
 				}}
 			>
 				{m.alerts_silences_schedule()}
@@ -300,38 +303,6 @@
 		{/if}
 	{/snippet}
 </PageHeader>
-
-<!-- Segmented control; on phones it spans the width and stays put while the list scrolls. -->
-<div class="mb-5 max-sm:sticky max-sm:top-[var(--safe-top)] max-sm:z-20 max-sm:-mx-4 max-sm:mb-3 max-sm:border-b max-sm:border-line max-sm:bg-canvas max-sm:px-4 max-sm:py-2">
-	<div
-		class="inline-flex max-w-full flex-wrap gap-1 rounded-lg border border-line bg-surface-2 p-1 max-sm:flex max-sm:w-full max-sm:flex-nowrap"
-		role="tablist"
-		aria-label={m.alerts_page_sections()}
-	>
-		{#each TABS as item (item.id)}
-			<button
-				type="button"
-				role="tab"
-				id={`alerts-tab-${item.id}`}
-				aria-selected={tab === item.id}
-				aria-controls="alerts-panel"
-				tabindex={tab === item.id ? 0 : -1}
-				onkeydown={onTabKey}
-				class={`relative inline-flex items-center gap-1.5 min-h-10 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink px-3 py-1.5 text-sm font-medium whitespace-nowrap transition max-sm:min-w-0 max-sm:flex-auto max-sm:justify-center max-sm:gap-1 max-sm:px-1 max-sm:text-[0.8125rem] max-sm:whitespace-normal max-sm:text-center max-sm:leading-tight ${tab === item.id ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
-				onclick={() => selectTab(item.id)}
-			>
-				{item.label}
-				{#if item.id === 'now' && sky.attention > 0}
-					<span
-						class="tnum inline-flex min-w-5 items-center justify-center rounded-full bg-warning px-1.5 text-[0.6875rem] font-semibold text-white max-sm:absolute max-sm:-top-1.5 max-sm:-right-1 max-sm:min-w-4 max-sm:px-1 max-sm:text-[0.625rem]"
-					>
-						{sky.attention}
-					</span>
-				{/if}
-			</button>
-		{/each}
-	</div>
-</div>
 
 {#if scheduling}
 	<div class="mb-5">
@@ -345,80 +316,87 @@
 	</p>
 {/if}
 
-<div
-	id="alerts-panel"
-	role="tabpanel"
-	aria-labelledby={`alerts-tab-${tab}`}
-	tabindex="0"
-	class="rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
->
-{#if pageError}
-	<ErrorNotice
-		error={pageError}
-		title={m.alerts_page_error_load()}
-		onretry={() => {
-			loading = true;
-			void loadAll();
-			void alertsStore.refresh();
-		}}
-	/>
-{:else if firstLoad}
-	<div class="space-y-2.5">
-		{#each { length: 4 } as _, i (i)}
-			<Skeleton class="h-14 w-full" />
-		{/each}
-	</div>
-{:else if tab === 'now'}
-	{#if dismissed.length > 0}
-		<div class="mb-3 flex justify-end">
-			<div class="inline-flex rounded-lg border border-line bg-surface-2 p-0.5" role="group" aria-label={m.alerts_dismiss_view_label()}>
-				<button
-					type="button"
-					aria-pressed={nowView === 'active'}
-					class={`inline-flex h-10 items-center rounded-md px-3 text-[0.8125rem] font-semibold transition sm:h-8 ${nowView === 'active' ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
-					onclick={() => (nowView = 'active')}
-				>
-					{m.alerts_dismiss_view_active()}
-				</button>
-				<button
-					type="button"
-					aria-pressed={nowView === 'dismissed'}
-					class={`inline-flex h-10 items-center gap-1.5 rounded-md px-3 text-[0.8125rem] font-semibold transition sm:h-8 ${nowView === 'dismissed' ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
-					onclick={() => (nowView = 'dismissed')}
-				>
-					{m.alerts_dismiss_view_dismissed()}
-					<span class="tnum text-ink-3">{dismissed.length}</span>
-				</button>
+<Tabs {tabs} label={m.alerts_page_sections()}>
+	{#snippet panel(id)}
+		{#if id === 'automation'}
+			<AutomationTab />
+		{:else if id === 'oncall'}
+			<OnCallSection />
+		{:else if pageError}
+			<ErrorNotice
+				error={pageError}
+				title={m.alerts_page_error_load()}
+				onretry={() => {
+					loading = true;
+					void loadAll();
+					void alertsStore.refresh();
+				}}
+			/>
+		{:else if firstLoad}
+			<div class="space-y-2.5">
+				{#each { length: 4 } as _, i (i)}
+					<Skeleton class="h-14 w-full" />
+				{/each}
 			</div>
-		</div>
-	{/if}
-	{#if nowView === 'dismissed'}
-		<DismissedList alerts={dismissed} targets={targetsMap} rules={rulesMap} />
-	{:else}
-		<AlertList {sky} {silences} onchanged={() => void onNeedsYouChanged()} />
-	{/if}
-{:else if tab === 'scheduled'}
-	<SilencesSection
-		{silences}
-		targets={targetsMap}
-		removingId={removingSilenceId}
-		onremove={removeSilence}
-		onschedule={() => (scheduling = true)}
-	/>
-{:else if tab === 'oncall'}
-	<OnCallSection />
-{:else if tab === 'rules'}
-	<RulesSection
-		{rules}
-		{targets}
-		{collectors}
-		{history}
-		busyId={ruleBusyId}
-		ontoggle={toggleRule}
-		ondelete={removeRule}
-		oncreate={createRule}
-	/>
-{:else if tab === 'history'}
-	<HistorySection entries={history} targets={targetsMap} rules={rulesMap} />
-{/if}
-</div>
+		{:else if id === 'rules'}
+			<RulesSection
+				{rules}
+				{targets}
+				{collectors}
+				{history}
+				busyId={ruleBusyId}
+				ontoggle={toggleRule}
+				ondelete={removeRule}
+				oncreate={createRule}
+			/>
+		{:else if id === 'history'}
+			<HistorySection entries={history} targets={targetsMap} rules={rulesMap} />
+		{:else}
+			{#if silences.length > 0}
+				<!-- Maintenance windows: folded, but never hidden while one is silencing alerts. -->
+				<Disclosure
+					class="mb-4"
+					title={m.alerts_page_tab_maintenance()}
+					summary={m.alerts_now_maintenance_summary({ active: activeWindows, scheduled: silences.length - activeWindows })}
+					bind:open={maintenanceOpen}
+				>
+					<SilencesSection
+						{silences}
+						targets={targetsMap}
+						removingId={removingSilenceId}
+						onremove={removeSilence}
+						onschedule={() => (scheduling = true)}
+					/>
+				</Disclosure>
+			{/if}
+			{#if dismissed.length > 0}
+				<div class="mb-3 flex justify-end">
+					<div class="inline-flex rounded-lg border border-line bg-surface-2 p-0.5" role="group" aria-label={m.alerts_dismiss_view_label()}>
+						<button
+							type="button"
+							aria-pressed={nowView === 'active'}
+							class={`inline-flex h-10 items-center rounded-md px-3 text-[0.8125rem] font-semibold transition sm:h-8 ${nowView === 'active' ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
+							onclick={() => (nowView = 'active')}
+						>
+							{m.alerts_dismiss_view_active()}
+						</button>
+						<button
+							type="button"
+							aria-pressed={nowView === 'dismissed'}
+							class={`inline-flex h-10 items-center gap-1.5 rounded-md px-3 text-[0.8125rem] font-semibold transition sm:h-8 ${nowView === 'dismissed' ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
+							onclick={() => (nowView = 'dismissed')}
+						>
+							{m.alerts_dismiss_view_dismissed()}
+							<span class="tnum text-ink-3">{dismissed.length}</span>
+						</button>
+					</div>
+				</div>
+			{/if}
+			{#if nowView === 'dismissed'}
+				<DismissedList alerts={dismissed} targets={targetsMap} rules={rulesMap} />
+			{:else}
+				<AlertList {sky} {silences} onchanged={() => void onNeedsYouChanged()} />
+			{/if}
+		{/if}
+	{/snippet}
+</Tabs>
