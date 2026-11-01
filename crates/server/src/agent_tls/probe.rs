@@ -95,13 +95,12 @@ impl ServerCertVerifier for Capture {
 /// Compose `host:port` comme le ferait un agent et dit ce qui répond.
 pub async fn check(host: &str, port: u16, pins: &[String]) -> Outcome {
     let host = host.trim().trim_matches(['[', ']']);
-    let addresses = match tokio::time::timeout(STEP_TIMEOUT, tokio::net::lookup_host((host, port)))
-        .await
-    {
-        Ok(Ok(found)) => found.collect::<Vec<_>>(),
-        Ok(Err(_)) => return Outcome::Dns,
-        Err(_) => return Outcome::Timeout,
-    };
+    let addresses =
+        match tokio::time::timeout(STEP_TIMEOUT, tokio::net::lookup_host((host, port))).await {
+            Ok(Ok(found)) => found.collect::<Vec<_>>(),
+            Ok(Err(_)) => return Outcome::Dns,
+            Err(_) => return Outcome::Timeout,
+        };
     let Some(address) = addresses.first().copied() else { return Outcome::Dns };
     let tcp = match tokio::time::timeout(STEP_TIMEOUT, TcpStream::connect(address)).await {
         Ok(Ok(tcp)) => tcp,

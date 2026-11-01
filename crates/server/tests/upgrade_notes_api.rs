@@ -109,9 +109,8 @@ async fn a_closed_change_never_comes_back() {
         .await;
     assert_eq!(unknown.status, StatusCode::BAD_REQUEST, "{}", unknown.body);
 
-    let closed = app
-        .post("/api/upgrade-notes/close", json!({ "ids": [PORT_NOTE] }), Some(&admin))
-        .await;
+    let closed =
+        app.post("/api/upgrade-notes/close", json!({ "ids": [PORT_NOTE] }), Some(&admin)).await;
     assert_eq!(closed.status, StatusCode::OK, "{}", closed.body);
     let port = note(&closed.body, PORT_NOTE);
     assert_eq!(port["status"], "closed");
@@ -119,9 +118,8 @@ async fn a_closed_change_never_comes_back() {
     assert!(port["detection"].is_null(), "rien à sonder une fois fermée");
 
     // Fermer deux fois ne journalise qu'une fois.
-    let twice = app
-        .post("/api/upgrade-notes/close", json!({ "ids": [PORT_NOTE] }), Some(&admin))
-        .await;
+    let twice =
+        app.post("/api/upgrade-notes/close", json!({ "ids": [PORT_NOTE] }), Some(&admin)).await;
     assert_eq!(twice.status, StatusCode::OK);
     let audited: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM audit_log WHERE action = 'upgrade_notes.closed' AND subject = ?",

@@ -30,8 +30,7 @@ async fn tls_app() -> (TestApp, AppState) {
     let sink = tsdb::spawn_writer(victoria.clone(), std::time::Duration::from_secs(60));
     let mut registry = collectors::Registry::new();
     registry.register(Arc::new(collectors::DummyCollector));
-    let state =
-        AppState::new(Inner { config, pool, cipher, victoria, sink, collectors: registry });
+    let state = AppState::new(Inner { config, pool, cipher, victoria, sink, collectors: registry });
     web_tls::load(&state).await.expect("certificat autosigné");
     let app = TestApp { router: api::router(state.clone()), _dir: dir };
     app.create_admin().await;
@@ -189,8 +188,7 @@ async fn the_settings_show_the_certificate_and_switch_the_redirect() {
     assert_eq!(status, StatusCode::TEMPORARY_REDIRECT);
     assert_eq!(text(&headers, "location"), "https://nas.lan:8080/alerts?state=open");
     // Ni les API, ni les scripts d'installation, ni une connexion déjà chiffrée.
-    let (status, _, _) =
-        send(&app, request("GET", "/api/auth/status", peer(false), &html)).await;
+    let (status, _, _) = send(&app, request("GET", "/api/auth/status", peer(false), &html)).await;
     assert_eq!(status, StatusCode::OK);
     let (status, _, _) = send(&app, request("GET", "/install.sh", peer(false), &[])).await;
     assert_ne!(status, StatusCode::TEMPORARY_REDIRECT);
