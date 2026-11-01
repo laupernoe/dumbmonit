@@ -96,6 +96,8 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         client_assignments: client_assignments(pool, &refs).await?,
         netscan_schedules: netscan_schedules(pool, &refs).await?,
         lun_links: lun_links(pool, &refs).await?,
+        https_redirect: crate::auth::settings::get::<bool>(pool, crate::web_tls::SETTING_REDIRECT)
+            .await?,
     })
 }
 

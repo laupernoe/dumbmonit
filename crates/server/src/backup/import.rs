@@ -919,6 +919,20 @@ async fn restore_instance(
     bundle: &Bundle,
 ) -> Result<SectionReport> {
     let mut report = SectionReport::new("instance");
+    // Redirection vers HTTPS : un réglage de sécurité de l'instance, repris tel
+    // quel (le serveur l'applique aussitôt après la restauration).
+    if let Some(redirect) = bundle.https_redirect {
+        sqlx::query(
+            "INSERT INTO settings (key, value) VALUES (?, ?)
+             ON CONFLICT(key) DO UPDATE SET value = excluded.value,
+                 updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')",
+        )
+        .bind(crate::web_tls::SETTING_REDIRECT)
+        .bind(serde_json::to_vec(&redirect)?)
+        .execute(&mut **tx)
+        .await
+        .context("réglage de redirection HTTPS")?;
+    }
     let Some(incoming) = &bundle.instance else { return Ok(report) };
 
     let existing = sqlx::query("SELECT value FROM settings WHERE key = ?")
@@ -1217,6 +1231,21 @@ async fn restore_status_pages(
                 domain = None;
             }
         }
+        // Le lien du site passe par la même règle que l'API (http/https, sans
+        // identifiants) : un lot fabriqué ne pose pas un `javascript:` sur une
+        // page publique.
+        let homepage_url =
+            match crate::api::status_pages::validate_homepage(page.homepage_url.trim()) {
+                Ok(url) => url,
+                Err(_) => {
+                    report.notes.push(format!(
+                        "Status page \"{}\": the website link is not an http(s) address and \
+                         was left out.",
+                        page.slug
+                    ));
+                    String::new()
+                }
+            };
         let existing = sqlx::query(
             "SELECT id, title, description, published, theme, show_uptime_days,
                  accent, scenes, scene_rotation, footer_text, homepage_url, domain
@@ -1239,7 +1268,7 @@ async fn restore_status_pages(
                     && row.try_get::<String, _>("scenes")? == scenes
                     && row.try_get::<String, _>("scene_rotation")? == scene_rotation
                     && row.try_get::<String, _>("footer_text")? == page.footer_text
-                    && row.try_get::<String, _>("homepage_url")? == page.homepage_url
+                    && row.try_get::<String, _>("homepage_url")? == homepage_url
                     && row.try_get::<Option<String>, _>("domain")? == domain;
                 if !same {
                     sqlx::query(
@@ -1258,7 +1287,7 @@ async fn restore_status_pages(
                     .bind(&scenes)
                     .bind(scene_rotation)
                     .bind(&page.footer_text)
-                    .bind(&page.homepage_url)
+                    .bind(&homepage_url)
                     .bind(&domain)
                     .bind(id)
                     .execute(&mut **tx)
@@ -1284,7 +1313,7 @@ async fn restore_status_pages(
                 .bind(&scenes)
                 .bind(scene_rotation)
                 .bind(&page.footer_text)
-                .bind(&page.homepage_url)
+                .bind(&homepage_url)
                 .bind(&domain)
                 .fetch_one(&mut **tx)
                 .await

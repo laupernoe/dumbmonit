@@ -42,5 +42,6 @@ pub mod storage;
 pub mod tsdb;
 pub mod update;
 pub mod vulns;
+pub mod web_tls;
 pub mod webchange;
 pub mod website;
