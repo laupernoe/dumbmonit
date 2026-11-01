@@ -272,8 +272,10 @@ pub fn probe_host(host: &str) -> Option<String> {
 const PROBE_TTL: Duration = Duration::from_secs(60);
 const PROBE_TIMEOUT: Duration = Duration::from_millis(1500);
 
-static PROBES: LazyLock<Mutex<HashMap<(String, u16), (Instant, bool)>>> =
-    LazyLock::new(|| Mutex::new(HashMap::new()));
+/// Résultats récents des sondes : (hôte, port) → (instant du test, joignable).
+type ProbeCache = HashMap<(String, u16), (Instant, bool)>;
+
+static PROBES: LazyLock<Mutex<ProbeCache>> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
 /// Une connexion TCP vers `host:port`, gardée une minute en mémoire pour que
 /// le rechargement de la page n'attende pas un délai à chaque fois.
