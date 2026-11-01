@@ -83,7 +83,7 @@
 	);
 	const asked = $derived(page.params.tab);
 	// Status pages and reports have their own pages now.
-	const MOVED_TABS: Record<string, string> = { status: '/status', reports: '/reports' };
+	const MOVED_TABS: Record<string, string> = { status: '/status', reports: '/status?tab=reports' };
 	const tab = $derived<SettingsTab>(isTab(asked) && tabs.includes(asked) ? asked : DEFAULT_TAB);
 
 	/** The sections of each tab, top to bottom. */

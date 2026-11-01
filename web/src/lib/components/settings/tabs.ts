@@ -59,8 +59,8 @@ export const MOVED: Record<string, string> = {
 	status: '/status',
 	'status-pages': '/status',
 	incidents: '/status#incidents',
-	reports: '/reports',
-	'reports-sla': '/reports#reports-sla'
+	reports: '/status?tab=reports',
+	'reports-sla': '/status?tab=reports#reports-sla'
 };
 
 export function isTab(value: string | undefined): value is SettingsTab {
