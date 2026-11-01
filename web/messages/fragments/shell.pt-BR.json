@@ -1,0 +1,10 @@
+{
+	"shell_nav_status": "Status",
+	"shell_nav_expand": "Expandir o menu",
+	"shell_nav_collapse": "Recolher o menu",
+	"shell_skip": "Pular para o conteúdo",
+	"shell_new_tab": "(abre em uma nova aba)",
+	"shell_pigeon_sleep": "Tudo certo: o pombo está dormindo.",
+	"shell_pigeon_watch": "Algo precisa de atenção: o pombo está de olho.",
+	"shell_pigeon_alert": "Um monitor está fora do ar: o pombo está em alerta."
+}
