@@ -1,7 +1,7 @@
 /**
  * The sky: the one truth model behind "is everything fine?".
  *
- * The Alerts "Now" tab, the context panel and the wall all read from here, so
+ * The Alerts "Now" tab, the Overview and the wall all read from here, so
  * the screens can never disagree. Alerts alone do not tell the whole story:
  * a rule only fires once it evaluates, and a device that sends no data never
  * evaluates anything. So the sky is composed from devices *and* alerts —

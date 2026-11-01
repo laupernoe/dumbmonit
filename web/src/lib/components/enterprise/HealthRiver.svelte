@@ -3,7 +3,7 @@
 	 * The health river: one strip per monitor, one cell per slot of the range,
 	 * oldest on the left. Worst monitors on top, so a bad night reads as a red
 	 * edge on the right. A cell's state is also in its title, and the legend
-	 * names the three colours; the table below says the same in words.
+	 * names the three colours; the monitors' list says the same in words.
 	 */
 	import type { TargetId } from '#lib/api/index.js';
 	import { formatDuration } from '#lib/format.js';
@@ -16,8 +16,12 @@
 		rows: { id: TargetId; name: string; cells: RiverCell[] }[];
 		/** How many strips fit; the rest are counted. */
 		limit?: number;
+		/** Where the uncounted rest can be seen (the Monitors list); plain text without it. */
+		moreHref?: string;
+		/** The scan line sweeping the strips (the wall); off where nothing should move at rest. */
+		scan?: boolean;
 	}
-	let { rows, limit = 10 }: Props = $props();
+	let { rows, limit = 10, moreHref, scan = true }: Props = $props();
 
 	const CELL: Record<RiverCell, string> = {
 		up: 'bg-river-up',
@@ -44,9 +48,9 @@
 	const animate = !calmMotion();
 </script>
 
-<section class="rounded-xl border border-line bg-surface px-4 pt-3 pb-3.5" aria-labelledby="river-title">
-	<div class="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-		<h2 id="river-title" class="m-0 text-[0.8125rem] font-semibold text-ink">{m.console_river_title()}</h2>
+<section class="min-w-0 rounded-xl border border-line bg-surface px-4 pt-3.5 pb-4" aria-labelledby="river-title">
+	<div class="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+		<h2 id="river-title" class="m-0 text-base font-semibold text-ink">{m.console_river_title()}</h2>
 		<span class="text-xs text-ink-2">{m.console_river_hint({ slot, range: rangeLabel })}</span>
 		<ul class="ml-auto flex gap-3 text-[0.6875rem] text-ink-2" aria-label={m.console_river_legend()}>
 			<li class="flex items-center gap-1.5"><span aria-hidden="true" class="size-2 rounded-[2px] bg-river-up"></span>{m.console_status_up()}</li>
@@ -75,7 +79,7 @@
 					</li>
 				{/each}
 			</ul>
-			{#if animate}
+			{#if animate && scan}
 				<span aria-hidden="true" class="ob-scan pointer-events-none absolute top-0 bottom-0 w-px bg-info/35 max-sm:hidden" style="margin-left: 8.125rem"></span>
 			{/if}
 		</div>
@@ -87,7 +91,11 @@
 			</div>
 		</div>
 		{#if rows.length > shown.length}
-			<p class="mt-2 text-[0.6875rem] text-ink-3">{m.console_river_more({ count: rows.length - shown.length })}</p>
+			{#if moreHref}
+				<a href={moreHref} class="mt-1 inline-flex min-h-10 items-center text-xs font-medium text-ink-2 hover:text-ink hover:underline">{m.overview_river_more({ count: rows.length - shown.length })}</a>
+			{:else}
+				<p class="mt-2 text-xs text-ink-3">{m.overview_river_more({ count: rows.length - shown.length })}</p>
+			{/if}
 		{/if}
 	{/if}
 </section>

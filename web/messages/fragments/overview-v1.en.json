@@ -1,0 +1,81 @@
+{
+	"overview_needs_see_all": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "See {count} monitor",
+				"countPlural=other": "See all {count} monitors"
+			}
+		}
+	],
+	"overview_needs_more": "See all {count} in Alerts",
+	"overview_needs_held": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "+{count} held back",
+				"countPlural=other": "+{count} held back"
+			}
+		}
+	],
+	"overview_all_good_title": "All good",
+	"overview_all_good_text": "Nothing is down and no alert is waiting for you. The pigeon is taking a nap.",
+	"overview_week_title": "Week ahead",
+	"overview_week_none": "Nothing expires in the next 7 days.",
+	"overview_week_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} more",
+				"countPlural=other": "{count} more"
+			}
+		}
+	],
+	"overview_river_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} more monitor",
+				"countPlural=other": "{count} more monitors"
+			}
+		}
+	],
+	"overview_river_show": "Show",
+	"overview_river_hide": "Hide",
+	"overview_latency_title": "Response time",
+	"overview_latency_hint": "p95 and median of every probe, last {range}",
+	"overview_latency_p95": "p95",
+	"overview_latency_median": "Median",
+	"overview_latency_slowest": "Slowest monitors (p95)",
+	"overview_latency_empty": "No response time measured in this range yet.",
+	"overview_chart_error": "Could not load this chart. It tries again in a minute.",
+	"overview_alerts_title": "Alerts, last {days} days",
+	"overview_alerts_hint": "Fired: {fired}, resolved: {resolved}",
+	"overview_alerts_fired": "Fired",
+	"overview_alerts_resolved": "Resolved",
+	"overview_alerts_none": "No alert fired in the last {days} days."
+}
