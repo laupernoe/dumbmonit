@@ -1,0 +1,89 @@
+{
+	"overview_needs_see_all": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Все мониторы: {count}",
+				"countPlural=few": "Все мониторы: {count}",
+				"countPlural=many": "Все мониторы: {count}",
+				"countPlural=other": "Все мониторы: {count}"
+			}
+		}
+	],
+	"overview_needs_more": "Все {count} в оповещениях",
+	"overview_needs_held": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "+{count} скрыто",
+				"countPlural=few": "+{count} скрыто",
+				"countPlural=many": "+{count} скрыто",
+				"countPlural=other": "+{count} скрыто"
+			}
+		}
+	],
+	"overview_all_good_title": "Всё в порядке",
+	"overview_all_good_text": "Ничего не упало, и ни одно оповещение вас не ждёт. Голубь дремлет.",
+	"overview_week_title": "Ближайшая неделя",
+	"overview_week_none": "В ближайшие 7 дней ничего не истекает.",
+	"overview_week_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "ещё {count}",
+				"countPlural=few": "ещё {count}",
+				"countPlural=many": "ещё {count}",
+				"countPlural=other": "ещё {count}"
+			}
+		}
+	],
+	"overview_river_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Ещё {count} монитор",
+				"countPlural=few": "Ещё {count} монитора",
+				"countPlural=many": "Ещё {count} мониторов",
+				"countPlural=other": "Ещё {count} монитора"
+			}
+		}
+	],
+	"overview_river_show": "Показать",
+	"overview_river_hide": "Скрыть",
+	"overview_latency_title": "Время ответа",
+	"overview_latency_hint": "p95 и медиана всех проверок за {range}",
+	"overview_latency_p95": "p95",
+	"overview_latency_median": "Медиана",
+	"overview_latency_slowest": "Самые медленные мониторы (p95)",
+	"overview_latency_empty": "За этот период время ответа ещё не измерялось.",
+	"overview_chart_error": "Не удалось загрузить график. Повторная попытка через минуту.",
+	"overview_alerts_title": "Оповещения за {days} дн.",
+	"overview_alerts_hint": "Сработало: {fired}, решено: {resolved}",
+	"overview_alerts_fired": "Сработало",
+	"overview_alerts_resolved": "Решено",
+	"overview_alerts_none": "За последние {days} дн. оповещений не было."
+}

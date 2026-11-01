@@ -1,0 +1,81 @@
+{
+	"overview_needs_see_all": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Voir {count} surveillance",
+				"countPlural=other": "Voir les {count} surveillances"
+			}
+		}
+	],
+	"overview_needs_more": "Voir les {count} dans Alertes",
+	"overview_needs_held": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "+{count} masquée",
+				"countPlural=other": "+{count} masquées"
+			}
+		}
+	],
+	"overview_all_good_title": "Tout va bien",
+	"overview_all_good_text": "Rien n'est hors service et aucune alerte ne vous attend. Le pigeon fait la sieste.",
+	"overview_week_title": "Semaine à venir",
+	"overview_week_none": "Rien n'expire dans les 7 prochains jours.",
+	"overview_week_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} autre",
+				"countPlural=other": "{count} autres"
+			}
+		}
+	],
+	"overview_river_more": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} autre surveillance",
+				"countPlural=other": "{count} autres surveillances"
+			}
+		}
+	],
+	"overview_river_show": "Afficher",
+	"overview_river_hide": "Masquer",
+	"overview_latency_title": "Temps de réponse",
+	"overview_latency_hint": "p95 et médiane de toutes les sondes, dernières {range}",
+	"overview_latency_p95": "p95",
+	"overview_latency_median": "Médiane",
+	"overview_latency_slowest": "Surveillances les plus lentes (p95)",
+	"overview_latency_empty": "Aucun temps de réponse mesuré sur cette période.",
+	"overview_chart_error": "Impossible de charger ce graphique. Nouvel essai dans une minute.",
+	"overview_alerts_title": "Alertes, {days} derniers jours",
+	"overview_alerts_hint": "Déclenchées : {fired}, résolues : {resolved}",
+	"overview_alerts_fired": "Déclenchées",
+	"overview_alerts_resolved": "Résolues",
+	"overview_alerts_none": "Aucune alerte déclenchée ces {days} derniers jours."
+}

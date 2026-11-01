@@ -5,8 +5,12 @@
 	 * real status at the foot. The sky never changes with the weather: the line
 	 * says how things are, in words.
 	 *
-	 * A tap on the pigeon makes it roll, with a quiet note. Under reduced motion
-	 * the pigeon stays out of the sky and the stars hold still.
+	 * The mood sets a mark before the line (a circle when all is well, a
+	 * diamond when something needs a look, a square when a monitor is down:
+	 * the same shapes as the monitors' states) and, on alert, the pigeon beats
+	 * its wings faster. A tap on the pigeon makes it roll, with a quiet note.
+	 * Under reduced motion the pigeon stays out of the sky and the stars hold
+	 * still.
 	 */
 	import { m } from '#lib/paraglide/messages.js';
 
@@ -15,8 +19,16 @@
 		headline: string;
 		/** What follows it, quieter: "3 guests held back, alert sent." */
 		sub?: string;
+		/** How the network is: all good, needs a look, something down. */
+		mood?: 'sleep' | 'watch' | 'alert';
 	}
-	let { headline, sub = '' }: Props = $props();
+	let { headline, sub = '', mood = 'watch' }: Props = $props();
+
+	const MARK = {
+		sleep: 'rounded-full bg-signal',
+		watch: 'rotate-45 rounded-[1px] bg-advisory',
+		alert: 'rounded-[2px] bg-warning'
+	} as const;
 
 	// Fixed positions, spread across the band (left in %, top in px).
 	const STARS = Array.from({ length: 24 }, (_, i) => ({
@@ -40,7 +52,7 @@
 	$effect(() => () => clearTimeout(eggTimer));
 </script>
 
-<section aria-label={m.console_banner_label()} class="banner relative h-24 shrink-0 overflow-hidden rounded-xl">
+<section aria-label={m.console_banner_label()} data-tour="weather" class={`banner relative h-24 shrink-0 overflow-hidden rounded-xl sm:h-28 ${mood === 'alert' ? 'alarm' : ''}`}>
 	<div aria-hidden="true" class="pointer-events-none absolute inset-0">
 		{#each STARS as star, i (i)}
 			<span class={`star absolute rounded-full ${star.big ? 'size-[3px]' : 'size-[2px]'}`} style={`left: ${star.x}%; top: ${star.y}px; animation-delay: ${star.delay}s`}></span>
@@ -80,9 +92,14 @@
 
 	<p role="status" class="egg pointer-events-none absolute top-2 left-4 m-0 font-mono text-[0.6875rem] sm:left-[22px]">{egg ? m.console_banner_egg() : ''}</p>
 
-	<div class="relative flex h-full items-end px-4 pb-4 sm:px-[22px]">
-		<p class="headline m-0 max-w-[640px] min-w-0 truncate text-base font-semibold tracking-[-0.02em] sm:text-xl">
-			{headline}{#if sub}{' '}<span class="sub font-medium">{sub}</span>{/if}
+	<div class="relative flex h-full items-end gap-2.5 px-4 pb-4 sm:px-6 sm:pb-5">
+		{#if headline}
+			{#key mood}
+				<span aria-hidden="true" class={`state-in mb-[0.45em] inline-block size-2 shrink-0 sm:mb-[0.6em] sm:size-2.5 ${MARK[mood]}`}></span>
+			{/key}
+		{/if}
+		<p class="headline m-0 max-w-[720px] min-w-0 truncate text-base leading-tight font-semibold tracking-[-0.02em] sm:text-2xl">
+			{headline}{#if sub}{' '}<span class="sub text-sm font-medium tracking-normal sm:text-base">{sub}</span>{/if}
 		</p>
 	</div>
 </section>
@@ -124,6 +141,11 @@
 	}
 	.roll {
 		animation: roll 0.7s cubic-bezier(0.3, 0.7, 0.3, 1) 1;
+	}
+	/* Something is down: the same flight, wings beating twice as fast. */
+	.alarm .wing-a,
+	.alarm .wing-b {
+		animation-duration: 0.4s;
 	}
 
 	@keyframes glide {
