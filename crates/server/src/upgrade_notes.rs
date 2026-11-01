@@ -89,21 +89,24 @@ pub const CATALOG: &[Note] = &[
         docs_url: Some("https://dumbmonit.readthedocs.io/en/latest/install/agent-security/"),
         check: Some(Check::AgentChannelPort),
     },
-    // À compléter par le lead avant la release : le HTTPS natif de l'interface
-    // (refonte en cours). Reprendre ce gabarit — version de la release, bloc
-    // `compose` (variables d'environnement, port, volume des certificats) et
-    // `check: None` tant qu'aucune détection n'existe.
-    //
-    // Note {
-    //     id: "native-https",
-    //     version: "0.15.0",
-    //     title: "…",
-    //     summary: "…",
-    //     compose: "services:\n  dumbmonit:\n    …",
-    //     apply: Some("docker compose up -d"),
-    //     docs_url: None,
-    //     check: None,
-    // },
+    Note {
+        id: "native-https",
+        version: "0.15.0",
+        title: "Encrypt the web interface (HTTPS)",
+        summary: "DumbMonit now speaks HTTPS itself, on the same port 8080: nothing new to \
+                  publish. It uses a self-signed certificate until you give it yours (mount it and \
+                  set the two variables below). Behind a reverse proxy, list the proxy's address \
+                  so DumbMonit trusts its X-Forwarded-* headers. Then turn on the HTTP to HTTPS \
+                  redirect in Settings, System, HTTPS and encryption (new installations have it on).",
+        compose: "services:\n  dumbmonit:\n    environment:\n      # optional: your own \
+                  certificate\n      DUMBMONIT_TLS_CERT: /certs/fullchain.pem\n      \
+                  DUMBMONIT_TLS_KEY: /certs/privkey.pem\n      # behind a reverse proxy only\n      \
+                  DUMBMONIT_TRUSTED_PROXIES: 172.16.0.0/12\n    volumes:\n      - \
+                  ./certs:/certs:ro",
+        apply: Some("docker compose up -d"),
+        docs_url: Some("https://dumbmonit.readthedocs.io/en/latest/install/https/"),
+        check: None,
+    },
 ];
 
 // ------------------------------------------------------------------ versions
