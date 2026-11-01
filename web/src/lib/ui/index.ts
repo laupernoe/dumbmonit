@@ -13,7 +13,6 @@ export { default as CountUp } from './effects/CountUp.svelte';
 export { default as DecryptText } from './effects/DecryptText.svelte';
 export { default as ClickSpark } from './effects/ClickSpark.svelte';
 export { default as Spotlight } from './effects/Spotlight.svelte';
-export { default as RollingNumber } from './effects/RollingNumber.svelte';
 export { default as Tilt } from './effects/Tilt.svelte';
 export { default as BlurText } from './effects/BlurText.svelte';
 export { confetti } from './effects/confetti';

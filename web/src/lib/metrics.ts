@@ -9,7 +9,6 @@ import { queryInstant, queryRange, type MetricSeries, type TargetId } from '#lib
 import type { Serie } from '#lib/components/Chart.svelte';
 import type { ProbeStatus } from '#lib/format.js';
 import { m } from '#lib/paraglide/messages.js';
-import { unitFor } from '#lib/viz/infer.js';
 
 /** Ranges offered in the selector of a device's detail page. */
 export const RANGES = [
@@ -29,16 +28,6 @@ export const RANGES = [
 
 export type RangeId = (typeof RANGES)[number]['id'];
 
-/** A group of series sharing the same metric name: one chart on screen. */
-export interface MetricGroup {
-	/** Raw name, for example `dumbmonit_cpu_usage_percent`. */
-	name: string;
-	/** Displayed title, without the prefix or the underscores. */
-	title: string;
-	unit: string;
-	series: Serie[];
-}
-
 /**
  * Aims for about 300 points per chart: beyond that we pay network and compute
  * for pixels that do not exist, below it the curve gets jagged.
@@ -51,20 +40,6 @@ function stepFor(seconds: number): number {
 function titleFor(name: string): string {
 	const words = name.replace(/^dumbmonit_/, '').replace(/_/g, ' ');
 	return words.charAt(0).toUpperCase() + words.slice(1);
-}
-
-/**
- * Label of a series within its chart.
- *
- * Labels common to the whole target (`target`, `host`), which would be
- * repeated identically on every curve, are dropped; what actually tells the
- * series apart (an interface name, a disk identifier) is kept.
- */
-function labelFor(metric: Record<string, string>): string {
-	const distinctive = Object.entries(metric)
-		.filter(([key]) => isDistinctiveLabel(key))
-		.map(([, value]) => value);
-	return distinctive.length > 0 ? distinctive.join(' · ') : (metric.host ?? 'value');
 }
 
 /**
@@ -88,54 +63,6 @@ function toPoints(serie: MetricSeries): [number, number][] {
 		if (Number.isFinite(value)) points.push([ts, value]);
 	}
 	return points.sort((a, b) => a[0] - b[0]);
-}
-
-/** Groups the flat series returned by the API into one chart per metric name. */
-function group(series: MetricSeries[]): MetricGroup[] {
-	const groups = new Map<string, MetricGroup>();
-
-	for (const item of series) {
-		const name = item.metric?.__name__;
-		if (!name) continue;
-		const points = toPoints(item);
-		if (points.length === 0) continue;
-
-		let entry = groups.get(name);
-		if (!entry) {
-			entry = { name, title: titleFor(name), unit: unitFor(name, { rated: false }), series: [] };
-			groups.set(name, entry);
-		}
-		entry.series.push({ label: labelFor(item.metric), points });
-	}
-
-	// Alphabetical order: stable from one refresh to the next, so charts do not
-	// jump under the user's cursor.
-	return [...groups.values()].sort((a, b) => a.title.localeCompare(b.title, 'en'));
-}
-
-/**
- * Loads all the metrics of a device over the requested range.
- *
- * Returns an empty array if the metrics route is not deployed yet, which the
- * caller presents as "no data yet" rather than as an error.
- */
-export async function loadTargetMetrics(
-	targetId: TargetId,
-	rangeSeconds: number,
-	signal?: AbortSignal
-): Promise<MetricGroup[]> {
-	const end = Date.now();
-	const start = end - rangeSeconds * 1000;
-	const series = await queryRange(
-		{
-			query: `{__name__=~"dumbmonit_.+", target="${targetId}"}`,
-			start,
-			end,
-			step: stepFor(rangeSeconds)
-		},
-		signal
-	);
-	return group(series);
 }
 
 /** Same window one week back, for the chart's "last week" overlay (seconds in, seconds out). */
@@ -165,24 +92,6 @@ export async function loadResponseTimesWindow(
 		}))
 		.filter((serie) => serie.points.length > 0)
 		.slice(0, 1);
-}
-
-/**
- * Loads a single representative curve, for a card's sparkline.
- *
- * The first available series is taken: on the overview, the goal is to show
- * that the device produces data and what it looks like, not to analyse a
- * specific metric.
- */
-export async function loadTargetSparkline(
-	targetId: TargetId,
-	rangeSeconds = 3600,
-	signal?: AbortSignal
-): Promise<Serie[]> {
-	const groups = await loadTargetMetrics(targetId, rangeSeconds, signal);
-	const first = groups[0];
-	if (!first || first.series.length === 0) return [];
-	return [first.series[0]];
 }
 
 /**

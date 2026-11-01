@@ -278,32 +278,7 @@ export const STATE_TONE: Record<TargetState, 'signal' | 'warning' | 'advisory' |
 	unknown: 'ghost'
 };
 
-/**
- * Makes a VictoriaMetrics series name readable.
- *
- * `dumbmonit_cpu_usage_percent{host="sw1"}` becomes "Cpu usage percent".
- */
-export function prettyMetricName(series: string): string {
-	const name = series
-		.split('{')[0]
-		.replace(/^dumbmonit_/, '')
-		.replace(/_/g, ' ');
-	return name.charAt(0).toUpperCase() + name.slice(1);
-}
-
 /** Isolates the raw metric name, without its labels. */
 export function metricName(series: string): string {
 	return series.split('{')[0];
-}
-
-/** Labels of a series, extracted from its textual representation. */
-export function metricLabels(series: string): Record<string, string> {
-	const start = series.indexOf('{');
-	if (start === -1) return {};
-	const body = series.slice(start + 1, series.lastIndexOf('}'));
-	const labels: Record<string, string> = {};
-	for (const match of body.matchAll(/(\w+)="([^"]*)"/g)) {
-		labels[match[1]] = match[2];
-	}
-	return labels;
 }
