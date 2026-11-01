@@ -76,6 +76,7 @@ nav:
   - Home: index.md
   - Install:
       - Docker: install/docker.md
+      - HTTPS and encryption: install/https.md
       - Add your first monitor: install/first-device.md
       - Monitor a remote site: install/remote-site.md
       - Agent channel security: install/agent-security.md

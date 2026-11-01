@@ -5,6 +5,59 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Security
+
+- **HTTPS on the web port itself.** Port 8080 now speaks HTTP and HTTPS at once
+  (told apart by the first byte), so nothing new needs publishing. TLS 1.3 and
+  TLS 1.2 with ECDHE + AEAD suites only, hybrid post-quantum key exchange
+  (X25519MLKEM768) first. Bring your own certificate with
+  `DUMBMONIT_TLS_CERT` / `DUMBMONIT_TLS_KEY` (re-read when the files change or on
+  `SIGHUP`), or use the self-signed one created at first start (its key stored
+  encrypted, its fingerprint in the log and in Settings › System › HTTPS and
+  encryption). `DUMBMONIT_TLS=off` restores plain HTTP only.
+- **Redirect to HTTPS on new installations.** A browser opening the interface
+  over plain HTTP, straight to the server, is sent to HTTPS on the same address
+  and port. Upgraded instances keep plain HTTP until an administrator turns the
+  redirect on (or `DUMBMONIT_HTTPS_REDIRECT`); a banner says when a session
+  travels in clear. The API, install scripts, agent downloads, metrics, status
+  pages, the loopback and anything behind a reverse proxy (`X-Forwarded-*`) are
+  never redirected.
+- **Stricter headers and cookies.** HSTS on HTTPS responses;
+  `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy`,
+  `Permissions-Policy`, `X-Permitted-Cross-Domain-Policies`,
+  `Origin-Agent-Cluster`, and `Cache-Control: no-store` on API answers. The
+  session cookie is `SameSite=Strict`, and over HTTPS `__Host-dumbmonit_session`
+  with `Secure`.
+- **What still travels in clear, listed.** Settings › System › HTTPS and
+  encryption lists every connection in clear or without certificate checks:
+  external VictoriaMetrics, OIDC, LDAP, SAML, monitors (`insecure_tls`, SNMP
+  v1/v2c or v3 without privacy, credentials to `http://`), notification
+  channels (plain SMTP, `http://` URLs), log destinations, agents still allowed
+  on the plain channel, unsigned agent updates.
+- The SAML sign-in URL must now be `https://` (loopback excepted).
+- Password hashes use explicit OWASP Argon2id parameters (19 MiB, 2 passes).
+- A restored backup no longer brings back a status page website link that the
+  API would refuse.
+
+### Agents
+
+- **The add-an-agent screen checks the encrypted channel first.** The server
+  dials its own agent port at the address the install command carries; when it
+  is not published, filtered or leads elsewhere, the screen shows the exact
+  `ports:` line (`"<public port>:<listen port>"`) and the firewall commands
+  instead of a command that would fail. Through a relay, it waits until the
+  relay's gateway listens and reminds which port to open on the relay. The
+  install scripts print the same diagnosis instead of a bare "server
+  unreachable".
+- Over self-signed HTTPS, the Linux/macOS install command pins the server's
+  public key (`curl --pinnedpubkey`), and the script downloads over HTTPS
+  checked by it (`--pinned-key=`).
+- **Updates blocked by unsigned builds are said up front.** Settings › Agents ›
+  Agent updates shows *Updates blocked: unsigned builds* and how to unblock;
+  agents show *Blocked: unsigned build* instead of a refusal after the fact.
+  `scripts/agent-signing-key.sh` creates the Ed25519 signing key (see
+  docs/development/agent-signing.md).
+
 ### Changed
 
 - **A complete public demo.** The demo (`DUMBMONIT_DEMO=1`) now fills every
