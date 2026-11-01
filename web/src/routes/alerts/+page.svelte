@@ -47,6 +47,7 @@
 	import RulesSection from '#lib/components/alerts/RulesSection.svelte';
 	import HistorySection from '#lib/components/alerts/HistorySection.svelte';
 	import OnCallSection from '#lib/components/oncall/OnCallSection.svelte';
+	import Segmented from '#lib/components/devices/Segmented.svelte';
 	import AutomationTab from '#lib/components/remediation/AutomationTab.svelte';
 	import { rulesByUid, targetsById } from '#lib/components/alerts/helpers.js';
 	import { tabUrl } from '#lib/tab-url.js';
@@ -261,6 +262,10 @@
 	$effect(() => {
 		if (page.url.searchParams.get('maintenance') === '1') maintenanceOpen = true;
 	});
+	const nowViews = $derived([
+		{ id: 'active' as const, label: m.alerts_dismiss_view_active() },
+		{ id: 'dismissed' as const, label: m.alerts_dismiss_view_dismissed(), count: dismissed.length }
+	]);
 	const activeWindows = $derived(silences.filter((silence) => silence.active_now).length);
 
 	const tabs: TabItem[] = $derived([
@@ -371,25 +376,13 @@
 			{/if}
 			{#if dismissed.length > 0}
 				<div class="mb-3 flex justify-end">
-					<div class="inline-flex rounded-lg border border-line bg-surface-2 p-0.5" role="group" aria-label={m.alerts_dismiss_view_label()}>
-						<button
-							type="button"
-							aria-pressed={nowView === 'active'}
-							class={`inline-flex h-10 items-center rounded-md px-3 text-[0.8125rem] font-semibold transition sm:h-8 ${nowView === 'active' ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
-							onclick={() => (nowView = 'active')}
-						>
-							{m.alerts_dismiss_view_active()}
-						</button>
-						<button
-							type="button"
-							aria-pressed={nowView === 'dismissed'}
-							class={`inline-flex h-10 items-center gap-1.5 rounded-md px-3 text-[0.8125rem] font-semibold transition sm:h-8 ${nowView === 'dismissed' ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
-							onclick={() => (nowView = 'dismissed')}
-						>
-							{m.alerts_dismiss_view_dismissed()}
-							<span class="tnum text-ink-3">{dismissed.length}</span>
-						</button>
-					</div>
+					<Segmented
+						options={nowViews}
+						value={nowView}
+						onchange={(next) => (nowView = next)}
+						label={m.alerts_dismiss_view_label()}
+						size="sm"
+					/>
 				</div>
 			{/if}
 			{#if nowView === 'dismissed'}

@@ -7,6 +7,22 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Section tabs.** One tab strip (in the address as `?tab=`, keyboard, sticky on
+  phones) now groups the secondary pages. Monitors: List, Map, Logs and Security;
+  Alerts: Now, History, Rules, Automation (log, runbooks, actions, policies) and
+  On-call, with the maintenance windows folded under Now; Status: Pages and
+  Reports. The old `/map`, `/logs`, `/security`, `/actions` and `/reports` pages
+  forward to their tab, and `/alerts#scheduled`, `#oncall`, `#history`, `#rules`
+  still land on the right one.
+- **Calmer screens.** A monitor's page shows five alert lines and a link to the
+  full history (Alerts › History is paged, fifty lines at a time, and opens
+  filtered to that monitor). A disabled monitor shows one notice instead of
+  empty panels. The twenty-odd switches of a monitor type sit in one compact
+  panel, and long option lists get three sub-headings.
+- **Words.** "Monitor" everywhere for the watched thing, "Snooze" for a quick
+  pause, "Maintenance" for a planned window, "Hide resolved" instead of "Clear all
+  resolved". The scan range help now says 1024 addresses.
+
 - **A complete public demo.** The demo (`DUMBMONIT_DEMO=1`) now fills every
   page but log search. Two clients in MSP mode: the homelab, now with UniFi, Kopia,
   DNS checks and an iSCSI LUN on the Synology NAS, and a small architecture
@@ -23,6 +39,11 @@ All notable changes to this project are documented here. The format follows
   backup matrix reads one run per day. The wall shows the night city closest to
   the viewer by default in the demo. Log search stays off: the demo has no log
   store.
+
+### Fixed
+
+- A monitor page no longer fails with "Could not load the metrics — rated is not
+  defined" for the kinds that chart counters as rates.
 
 ## 0.14.3 — 2026-10-28
 

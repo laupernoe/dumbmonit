@@ -133,7 +133,7 @@
 									{#if !rule.enabled}
 										<p class="text-[0.75rem] text-ink-3">
 											{m.deviceform_rules_disabled_everywhere()}
-											<a href="/alerts#rules" class="font-semibold text-ink-2 underline decoration-line-strong underline-offset-2 hover:text-ink">{m.deviceform_rules_disabled_link()}</a>
+											<a href="/alerts?tab=rules" class="font-semibold text-ink-2 underline decoration-line-strong underline-offset-2 hover:text-ink">{m.deviceform_rules_disabled_link()}</a>
 										</p>
 									{:else if rule.custom_threshold}
 										<p class="text-[0.75rem] text-ink-3">{m.deviceform_rules_custom_threshold()}</p>
