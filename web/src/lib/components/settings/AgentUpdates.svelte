@@ -8,7 +8,10 @@
 	import { getAgentUpdates, setAgentUpdatePolicy, setAgentUpdateSettings, updateAgentNow, updateAllAgentsNow } from '#lib/api/agent_updates.js';
 	import type { AgentUpdateAgent, AgentUpdates, AgentUpdateSettings, AgentUpdateStatus } from '#lib/api/types.js';
 	import { formatDateTime } from '#lib/format.js';
+	import { ShieldAlert } from 'lucide-svelte';
 	import { Button, Confirm, Disclosure, ErrorNotice, Plate, Skeleton, Toggle, type Tone } from '#lib/ui/index.js';
+
+	const SIGNING_DOC = 'https://dumbmonit.readthedocs.io/en/latest/development/agent-signing/';
 
 	let data = $state<AgentUpdates | null>(null);
 	let loadError = $state<unknown>(null);
@@ -76,7 +79,8 @@
 		read_only: 'ghost',
 		disabled_locally: 'ghost',
 		unsupported: 'ghost',
-		no_binary: 'ghost'
+		no_binary: 'ghost',
+		unsigned: 'warning'
 	};
 	const LABEL: Record<AgentUpdateStatus, () => string> = {
 		up_to_date: m.settings_agentupdates_status_up_to_date,
@@ -94,7 +98,8 @@
 		read_only: m.settings_agentupdates_status_read_only,
 		disabled_locally: m.settings_agentupdates_status_disabled_locally,
 		unsupported: m.settings_agentupdates_status_unsupported,
-		no_binary: m.settings_agentupdates_status_no_binary
+		no_binary: m.settings_agentupdates_status_no_binary,
+		unsigned: m.settings_agentupdates_status_unsigned
 	};
 	const HINT: Record<AgentUpdateStatus, () => string> = {
 		up_to_date: m.settings_agentupdates_hint_up_to_date,
@@ -112,7 +117,8 @@
 		read_only: m.settings_agentupdates_hint_read_only,
 		disabled_locally: m.settings_agentupdates_hint_disabled_locally,
 		unsupported: m.settings_agentupdates_hint_unsupported,
-		no_binary: m.settings_agentupdates_hint_no_binary
+		no_binary: m.settings_agentupdates_hint_no_binary,
+		unsigned: m.settings_agentupdates_hint_unsigned
 	};
 	const OUTCOME = {
 		succeeded: m.settings_agentupdates_outcome_succeeded,
@@ -120,7 +126,7 @@
 		rolled_back: m.settings_agentupdates_outcome_rolled_back,
 		refused: m.settings_agentupdates_outcome_refused
 	};
-	const NO_MANUAL: AgentUpdateStatus[] = ['legacy', 'container', 'read_only', 'disabled_locally', 'unsupported', 'no_binary', 'up_to_date'];
+	const NO_MANUAL: AgentUpdateStatus[] = ['legacy', 'container', 'read_only', 'disabled_locally', 'unsupported', 'no_binary', 'up_to_date', 'unsigned'];
 
 	function enabledValue(agent: AgentUpdateAgent): string {
 		return agent.enabled === null ? 'follow' : agent.enabled ? 'on' : 'off';
@@ -132,7 +138,7 @@
 </script>
 
 <div class="border-b border-line px-5 py-4">
-	<Disclosure title={m.settings_agentupdates_title()} bind:open summary={data ? (data.settings.enabled ? m.settings_agentupdates_summary_on() : m.settings_agentupdates_summary_off()) : undefined}>
+	<Disclosure title={m.settings_agentupdates_title()} bind:open summary={data ? (data.blocked_unsigned ? m.settings_agentupdates_summary_blocked() : data.settings.enabled ? m.settings_agentupdates_summary_on() : m.settings_agentupdates_summary_off()) : undefined}>
 		<p class="max-w-prose text-sm text-ink-2">{m.settings_agentupdates_intro()}</p>
 
 		{#if loadError}
@@ -141,6 +147,24 @@
 			<Skeleton class="mt-3 h-24" />
 		{:else}
 			<div class="mt-4 grid gap-4">
+				{#if data.blocked_unsigned}
+					<!-- Said up front: otherwise every agent just shows "refused" after the fact. -->
+					<div role="alert" class="grid gap-2 rounded-[var(--radius-card)] border border-warning/50 bg-warning-soft px-3 py-3">
+						<p class="flex items-start gap-2 text-sm font-semibold text-warning-ink">
+							<ShieldAlert class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+							{m.settings_agentupdates_blocked_title()}
+						</p>
+						<p class="max-w-prose text-sm text-ink">{m.settings_agentupdates_blocked_body()}</p>
+						<ul class="ml-5 grid max-w-prose list-disc gap-1 text-sm text-ink">
+							<li>{m.settings_agentupdates_blocked_fix_signed()}</li>
+							<li>{m.settings_agentupdates_blocked_fix_manual()}</li>
+							<li>{m.settings_agentupdates_blocked_fix_dev()}</li>
+						</ul>
+						<a href={SIGNING_DOC} target="_blank" rel="noopener" class="inline-flex min-h-10 items-center justify-self-start text-sm font-semibold text-signal-ink hover:underline">
+							{m.settings_agentupdates_blocked_doc()}
+						</a>
+					</div>
+				{/if}
 				<div class="flex items-start gap-3">
 					<Toggle id="agent-upd-enabled" checked={data.settings.enabled} disabled={busy} label={m.settings_agentupdates_enabled()} onchange={(value) => save({ enabled: value })} />
 					<div class="min-w-0">
