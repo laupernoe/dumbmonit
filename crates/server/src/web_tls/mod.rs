@@ -403,11 +403,7 @@ pub fn spawn_refresh(state: AppState) {
 }
 
 /// Mandataire de confiance qui dit `https`.
-fn trusted_https(
-    headers: &HeaderMap,
-    peer: Option<SocketAddr>,
-    trusted: &[ipnet::IpNet],
-) -> bool {
+fn trusted_https(headers: &HeaderMap, peer: Option<SocketAddr>, trusted: &[ipnet::IpNet]) -> bool {
     peer.is_some_and(|peer| trusted.iter().any(|net| net.contains(&peer.ip())))
         && headers
             .get("x-forwarded-proto")

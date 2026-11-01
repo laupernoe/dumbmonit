@@ -106,9 +106,9 @@ pub fn default_names(
 fn san(name: &str) -> Result<SanType> {
     Ok(match name.parse::<IpAddr>() {
         Ok(ip) => SanType::IpAddress(ip),
-        Err(_) => SanType::DnsName(
-            name.try_into().with_context(|| format!("certificate name {name}"))?,
-        ),
+        Err(_) => {
+            SanType::DnsName(name.try_into().with_context(|| format!("certificate name {name}"))?)
+        }
     })
 }
 
@@ -120,7 +120,9 @@ pub fn self_signed(key_der: Option<&[u8]>, names: &[String]) -> Result<SelfSigne
             &PKCS_ECDSA_P256_SHA256,
         )
         .context("reading the HTTPS key")?,
-        None => KeyPair::generate_for(&PKCS_ECDSA_P256_SHA256).context("generating the HTTPS key")?,
+        None => {
+            KeyPair::generate_for(&PKCS_ECDSA_P256_SHA256).context("generating the HTTPS key")?
+        }
     };
     let mut params = CertificateParams::default();
     params.distinguished_name = pki::distinguished_name("DumbMonit (self-signed)");
