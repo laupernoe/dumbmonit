@@ -15,7 +15,7 @@
 	"alerts_quick_silence_name": "Posticipo rapido · {name}",
 	"alerts_row_dismiss": "Nascondi",
 	"alerts_tab_automation": "Automazione",
-	"deviceform_discovery_range_help": "Un intervallo di indirizzi, ad es. 192.168.1.0/24. Fino a 1024 indirizzi per scansione.",
+	"deviceform_discovery_range_help": "Un intervallo di indirizzi, ad es. 192.168.1.0/24. Fino a 4096 indirizzi per scansione.",
 	"deviceform_options_group_numbers": "Limiti e tempi",
 	"deviceform_options_group_switches": "Interruttori",
 	"deviceform_options_group_values": "Valori e filtri",

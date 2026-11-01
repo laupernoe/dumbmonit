@@ -15,7 +15,7 @@
 	"alerts_quick_silence_name": "Aplazamiento rápido · {name}",
 	"alerts_row_dismiss": "Ocultar",
 	"alerts_tab_automation": "Automatización",
-	"deviceform_discovery_range_help": "Un rango de direcciones, p. ej. 192.168.1.0/24. Hasta 1024 direcciones por escaneo.",
+	"deviceform_discovery_range_help": "Un rango de direcciones, p. ej. 192.168.1.0/24. Hasta 4096 direcciones por escaneo.",
 	"deviceform_options_group_numbers": "Límites y tiempos",
 	"deviceform_options_group_switches": "Interruptores",
 	"deviceform_options_group_values": "Valores y filtros",

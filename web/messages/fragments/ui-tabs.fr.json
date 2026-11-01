@@ -15,7 +15,7 @@
 	"alerts_quick_silence_name": "Pause rapide · {name}",
 	"alerts_row_dismiss": "Masquer",
 	"alerts_tab_automation": "Automatisation",
-	"deviceform_discovery_range_help": "Une plage d’adresses, par ex. 192.168.1.0/24. Jusqu’à 1024 adresses par scan.",
+	"deviceform_discovery_range_help": "Une plage d’adresses, par ex. 192.168.1.0/24. Jusqu’à 4096 adresses par scan.",
 	"deviceform_options_group_numbers": "Limites et délais",
 	"deviceform_options_group_switches": "Interrupteurs",
 	"deviceform_options_group_values": "Valeurs et filtres",

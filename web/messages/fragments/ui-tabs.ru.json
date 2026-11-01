@@ -15,7 +15,7 @@
 	"alerts_quick_silence_name": "Быстрая отсрочка · {name}",
 	"alerts_row_dismiss": "Скрыть",
 	"alerts_tab_automation": "Автоматизация",
-	"deviceform_discovery_range_help": "Диапазон адресов, например 192.168.1.0/24. До 1024 адресов за одно сканирование.",
+	"deviceform_discovery_range_help": "Диапазон адресов, например 192.168.1.0/24. До 4096 адресов за одно сканирование.",
 	"deviceform_options_group_numbers": "Лимиты и интервалы",
 	"deviceform_options_group_switches": "Переключатели",
 	"deviceform_options_group_values": "Значения и фильтры",

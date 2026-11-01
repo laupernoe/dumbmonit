@@ -14,7 +14,7 @@
 	"alerts_now_maintenance_summary": "{active} ativas · {scheduled} agendadas",
 	"alerts_row_dismiss": "Ocultar",
 	"alerts_tab_automation": "Automação",
-	"deviceform_discovery_range_help": "Um intervalo de endereços, por ex. 192.168.1.0/24. Até 1024 endereços por varredura.",
+	"deviceform_discovery_range_help": "Um intervalo de endereços, por ex. 192.168.1.0/24. Até 4096 endereços por varredura.",
 	"deviceform_options_group_numbers": "Limites e tempos",
 	"deviceform_options_group_switches": "Chaves",
 	"deviceform_options_group_values": "Valores e filtros",

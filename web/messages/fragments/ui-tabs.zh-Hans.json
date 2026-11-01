@@ -15,7 +15,7 @@
 	"alerts_quick_silence_name": "快速暂停提醒 · {name}",
 	"alerts_row_dismiss": "隐藏",
 	"alerts_tab_automation": "自动化",
-	"deviceform_discovery_range_help": "地址范围，例如 192.168.1.0/24。每次扫描最多 1024 个地址。",
+	"deviceform_discovery_range_help": "地址范围，例如 192.168.1.0/24。每次扫描最多 4096 个地址。",
 	"deviceform_options_group_numbers": "限制与时间",
 	"deviceform_options_group_switches": "开关",
 	"deviceform_options_group_values": "取值与筛选",

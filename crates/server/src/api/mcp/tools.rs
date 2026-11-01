@@ -880,7 +880,7 @@ fn specs() -> Vec<ToolSpec> {
         ToolSpec::write(
             "discover_network",
             "Discover SNMP devices",
-            "Scans a network (CIDR, 1024 addresses at most) for devices that answer SNMP, and \
+            "Scans a network (CIDR, 4096 addresses at most) for devices that answer SNMP, and \
              lists them with the profile auto-detection would apply. Nothing is added: use \
              add_device (kind snmp) for the ones to monitor. The server sends the probes.",
             json!({

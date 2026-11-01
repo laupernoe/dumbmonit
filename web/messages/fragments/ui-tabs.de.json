@@ -14,7 +14,7 @@
 	"alerts_now_maintenance_summary": "{active} aktiv · {scheduled} geplant",
 	"alerts_row_dismiss": "Ausblenden",
 	"alerts_tab_automation": "Automatisierung",
-	"deviceform_discovery_range_help": "Ein Adressbereich, z. B. 192.168.1.0/24. Bis zu 1024 Adressen pro Scan.",
+	"deviceform_discovery_range_help": "Ein Adressbereich, z. B. 192.168.1.0/24. Bis zu 4096 Adressen pro Scan.",
 	"deviceform_options_group_numbers": "Grenzwerte und Zeiten",
 	"deviceform_options_group_switches": "Schalter",
 	"deviceform_options_group_values": "Werte und Filter",
