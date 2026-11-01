@@ -71,6 +71,6 @@
 				{/each}
 			</ul>
 		{/if}
-		<a href={`/security?tab=cves&target=${targetId}`} class="mt-1 inline-flex min-h-10 items-center text-sm font-semibold text-ink hover:underline">{m.security_cves_card_all()}</a>
+		<a href={`/targets?tab=security&target=${targetId}`} class="mt-1 inline-flex min-h-10 items-center text-sm font-semibold text-ink hover:underline">{m.security_cves_card_all()}</a>
 	</section>
 {/if}

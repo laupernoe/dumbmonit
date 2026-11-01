@@ -66,3 +66,21 @@ test('when the generic fallback cannot form any real bucket, it gives up and sta
 test('an empty option list produces no groups', () => {
 	assert.deepEqual(groupOptions([]), []);
 });
+
+test('a long list the prefixes would shatter is split by kind of control instead', () => {
+	// 14 options, every prefix different: no bucket forms, so the control kind decides.
+	const options = [
+		...['a1', 'b2', 'c3', 'd4', 'e5', 'f6', 'g7', 'h8'].map((key) => option(key)),
+		...['n1', 'o2', 'p3'].map((key) => option(key, { input: 'number' })),
+		...['t1', 'u2', 'v3'].map((key) => option(key, { input: 'text' }))
+	];
+	const groups = groupOptions(options);
+	assert.equal(groups.length, 3);
+	assert.deepEqual(groups.map((g) => g.options.length), [3, 3, 8]);
+	assert.ok(groups.every((g) => g.label !== ''));
+});
+
+test('a long list of switches only stays as it is when nothing splits it', () => {
+	const options = Array.from({ length: 14 }, (_, i) => option(`x${i}`));
+	assert.deepEqual(groupOptions(options), [{ label: '', options }]);
+});
