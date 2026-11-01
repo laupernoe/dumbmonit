@@ -18,6 +18,7 @@
 		type Schedule
 	} from '#lib/api/index.js';
 	import { ErrorNotice, Skeleton } from '#lib/ui/index.js';
+	import Segmented from '#lib/components/devices/Segmented.svelte';
 	import NowPanel from './NowPanel.svelte';
 	import SchedulesPanel from './SchedulesPanel.svelte';
 	import OverridesPanel from './OverridesPanel.svelte';
@@ -96,18 +97,7 @@
 	<div class="grid gap-5">
 		<NowPanel entries={now} {people} />
 
-		<div class="inline-flex max-w-full flex-wrap gap-1 self-start rounded-lg border border-line bg-surface-2 p-1" role="group" aria-label={m.oncall_views_label()}>
-			{#each VIEWS as item (item.id)}
-				<button
-					type="button"
-					aria-pressed={view === item.id}
-					class={`inline-flex min-h-10 items-center rounded-md px-3 py-1.5 text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${view === item.id ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
-					onclick={() => (view = item.id)}
-				>
-					{item.label}
-				</button>
-			{/each}
-		</div>
+		<Segmented options={VIEWS} value={view} onchange={(next) => (view = next)} label={m.oncall_views_label()} class="self-start" />
 
 		{#if view === 'schedules'}
 			<SchedulesPanel {schedules} {people} {policies} {version} onchanged={changed} />
