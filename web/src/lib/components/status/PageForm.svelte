@@ -41,6 +41,7 @@
 	import { PERIOD_CHOICES } from './period';
 	import SceneDefs from './scenes/SceneDefs.svelte';
 	import { SCENE_CHOICES, SCENE_COMPONENTS, SCENE_ROTATIONS } from './scenes/registry';
+	import { DEFAULT_SCENE } from './scenes/nightScene';
 
 	interface Props {
 		/** `null` creates a page. */
@@ -60,7 +61,6 @@
 
 	const SLUG_RULE = /^[a-z0-9-]{2,40}$/;
 	const HISTORY_CHOICES = PERIOD_CHOICES;
-	const DEFAULT_SCENE = 'paris';
 
 	let title = $state(initial?.title ?? '');
 	let slug = $state(initial?.slug ?? '');
@@ -646,14 +646,14 @@
 			<div class="grid min-w-0 gap-6 lg:border-l lg:border-line lg:pl-8">
 				<fieldset class="grid min-w-0 gap-3" disabled={saving || simple}>
 					<legend class={`${SUBHEAD} mb-1.5`}>{m.status_form_scene()}</legend>
-					<p class="text-[0.8125rem] text-ink-2">{m.status_form_scene_help()}</p>
+					<p class="text-[0.8125rem] text-ink-2">{m.status_form_scene_help_default()}</p>
 					{#if simple}
 						<p class="text-[0.8125rem] text-advisory-ink">{m.status_edit_scene_simple()}</p>
 					{/if}
 					<SceneDefs />
 					<div class="flex flex-wrap items-center gap-3">
 						{#if chosenScenes.length === 0}
-							<p class="text-sm text-ink-2">{m.status_form_scene_none()}</p>
+							<p class="text-sm text-ink-2">{m.status_form_scene_none_default()}</p>
 						{/if}
 						{#each chosenScenes as choice, index (choice.value)}
 							{@const Preview = SCENE_COMPONENTS[choice.value]}

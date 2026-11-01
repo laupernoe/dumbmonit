@@ -1,0 +1,42 @@
+{
+	"settings_wall_remembered": "保存在此浏览器中。墙面上的“背景”和“主题”按钮修改的是同样的选项。",
+	"settings_wall_scene_help": "显示在面板背后的城市。“自动”会选择离此浏览器时区最近的城市；“无”则只显示纯色面板。链接仍可通过 ?city= 指定其他城市。",
+	"settings_wall_scene_label": "墙面场景",
+	"settings_wall_theme_help": "默认是夜间。日间会点亮巴黎；其他城市只有夜间版本。链接可通过 ?theme= 指定主题。",
+	"settings_wall_theme_label": "主题",
+	"status_form_scene_help_default": "公开页面标题背后的插画城市。未选择时页面显示巴黎；勾选“简洁模式”可得到纯净页面。勾选多个可轮换显示。",
+	"status_form_scene_none_default": "未勾选：页面显示巴黎",
+	"wall_band_river_more": "另有 {count} 项",
+	"wall_devices_aria": "监控项",
+	"wall_devices_more": "另有 {count} 个监控项，均正常上报",
+	"wall_devices_more_trouble": "另有 {count} 个监控（需关注：{trouble}）",
+	"wall_devices_reporting": "正常上报",
+	"wall_problems_agent_silent": "代理已 {duration} 未上报",
+	"wall_problems_aria": "问题",
+	"wall_problems_more": "另有 {count} 个问题：见告警页",
+	"wall_problems_no_data": "{duration} 无数据",
+	"wall_problems_parent_down": "{rule} · {parent} 已宕机",
+	"wall_problems_times": "×{count}",
+	"wall_scene_sign_problems": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个问题"
+			}
+		}
+	],
+	"wall_scene_world_hint": "“自动”会选择离此屏幕时区最近的城市；“无”则只显示纯色面板。",
+	"wall_scene_world_title": "面板背后的城市",
+	"wall_theme_button": "主题",
+	"wall_theme_day": "白天",
+	"wall_theme_forced": "当前由链接指定，不会保存在此处。",
+	"wall_theme_night": "夜间",
+	"wall_theme_night_only": "这座城市只有夜间版本。",
+	"wall_theme_title": "此显示器的主题"
+}

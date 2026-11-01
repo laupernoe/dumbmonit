@@ -1,0 +1,45 @@
+{
+	"settings_wall_remembered": "Запоминается в этом браузере. Кнопки «Фон» и «Тема» на стене меняют те же настройки.",
+	"settings_wall_scene_help": "Город, нарисованный за панелью. «Авто» выбирает ближайший к часовому поясу этого браузера; «Нет» оставляет простую панель. Ссылка по-прежнему может запросить другой город через ?city=.",
+	"settings_wall_scene_label": "Сцена на стене",
+	"settings_wall_theme_help": "По умолчанию используется ночь. День освещает Париж; остальные города рисуются только ночью. Ссылка может запросить тему через ?theme=.",
+	"settings_wall_theme_label": "Тема",
+	"status_form_scene_help_default": "Иллюстрированный город за заголовком публичной страницы. Без выбора страница показывает Париж; включите простой режим для обычной страницы. Отметьте несколько, чтобы они чередовались.",
+	"status_form_scene_none_default": "Ничего не отмечено: страница показывает Париж",
+	"wall_band_river_more": "ещё {count}",
+	"wall_devices_aria": "Мониторы",
+	"wall_devices_more": "Ещё мониторов: {count}, все на связи",
+	"wall_devices_more_trouble": "Ещё мониторов: {count} (требуют внимания: {trouble})",
+	"wall_devices_reporting": "Передаёт данные",
+	"wall_problems_agent_silent": "Агент молчит {duration}",
+	"wall_problems_aria": "Проблемы",
+	"wall_problems_more": "Ещё проблем: {count}, см. «Оповещения»",
+	"wall_problems_no_data": "Нет данных {duration}",
+	"wall_problems_parent_down": "{rule} · {parent} недоступен",
+	"wall_problems_times": "×{count}",
+	"wall_scene_sign_problems": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} ПРОБЛЕМА",
+				"countPlural=few": "{count} ПРОБЛЕМЫ",
+				"countPlural=many": "{count} ПРОБЛЕМ",
+				"countPlural=other": "{count} ПРОБЛЕМЫ"
+			}
+		}
+	],
+	"wall_scene_world_hint": "Авто выбирает город, ближайший к часовому поясу этого экрана. «Нет» оставляет простую панель.",
+	"wall_scene_world_title": "Город за панелью",
+	"wall_theme_button": "Тема",
+	"wall_theme_day": "День",
+	"wall_theme_forced": "Сейчас тема задана ссылкой и здесь не сохраняется.",
+	"wall_theme_night": "Ночь",
+	"wall_theme_night_only": "Этот город нарисован только в ночном варианте.",
+	"wall_theme_title": "Тема на этом экране"
+}

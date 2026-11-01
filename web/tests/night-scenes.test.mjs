@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
 	BANNER_FRAME,
+	DEFAULT_SCENE,
 	STAGE_FRAME,
 	WORLD_X0,
 	WORLD_X1,
@@ -11,7 +12,8 @@ import {
 	makeStars,
 	moodLevel,
 	pointsInTower,
-	row
+	row,
+	withDefaultScene
 } from '../src/lib/components/status/scenes/nightScene.ts';
 
 const box = (vb) => vb.split(' ').map(Number);
@@ -64,4 +66,10 @@ test('moods map onto clear, clouds and storm', () => {
 	assert.equal(moodLevel('warn'), 1);
 	assert.equal(moodLevel('critical'), 2);
 	assert.equal(moodLevel(undefined), 0);
+});
+
+test('a status page naming no scene shows Paris; its own choice is kept', () => {
+	assert.equal(DEFAULT_SCENE, 'paris');
+	assert.deepEqual(withDefaultScene([]), ['paris']);
+	assert.deepEqual(withDefaultScene(['tokyo', 'dubai']), ['tokyo', 'dubai']);
 });
