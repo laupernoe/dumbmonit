@@ -62,3 +62,41 @@ dans le fichier Compose (par exemple
 
 Pour revenir en arrière, restaurez la sauvegarde prise à l'étape 1 sur
 l'image précédente.
+
+## Changements de configuration après une mise à jour
+
+`docker compose pull && docker compose up -d` remplace l'image, mais votre
+`docker-compose.yml` vous appartient : DumbMonit ne le modifie jamais. Certaines
+versions demandent un changement à cet endroit, comme un port à publier ou une
+variable d'environnement à ajouter.
+
+Quand une mise à jour en demande un, la première fois qu'un administrateur ouvre
+DumbMonit ensuite, une fenêtre liste ce qu'il faut changer, avec pour chacun le
+bloc à copier :
+
+- **Terminé** ferme le changement. Quand DumbMonit sait le vérifier (par exemple
+  que le port des agents répond depuis le serveur), il vérifie d'abord et
+  demande un second clic si la vérification échoue encore, car une
+  redirection en boucle (NAT) ou un reverse proxy peut masquer un port qui
+  fonctionne.
+- **Je le ferai plus tard** masque la fenêtre. Un rappel reste dans le coin de
+  chaque page tant que vous ne l'avez pas fermé, et le fermer est définitif : un
+  changement fermé ne revient jamais pour sa version.
+- Un changement qu'une vérification trouve manquant reste listé même si vous avez
+  mis à jour il y a longtemps : une instance qui a sauté une étape dans une
+  version antérieure est rattrapée.
+
+**Réglages → À propos → Changements de configuration → Voir la liste** montre
+tous les changements demandés par une version (à faire, fermés, ou inutiles sur
+cette instance) avec leur bloc, quand vous voulez les relire. Seuls les
+administrateurs la voient, et elle est coupée dans la démo publique.
+
+| Depuis | Changement | Que faire |
+|---|---|---|
+| 0.14.0 | Canal chiffré des agents | Publier le port 8443 : ajoutez `"8443:8443"` aux `ports` du service `dumbmonit` (voir [Sécurité du canal des agents](agent-security.md)). |
+
+Une installation neuve n'a rien à changer. L'instance enregistre au démarrage la
+version qu'elle exécute et celle dont elle vient, et les changements fermés font
+partie de la [sauvegarde](backup.md). Les scripts peuvent lire la liste sur
+`GET /api/upgrade-notes` (administrateur connecté, indisponible pour les jetons
+d'API).

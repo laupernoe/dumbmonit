@@ -86,6 +86,7 @@ mod topology_traffic;
 mod totp;
 mod truenas;
 mod update;
+mod upgrade_notes;
 mod users;
 mod webchange;
 mod webpush;
@@ -337,6 +338,8 @@ pub fn router(state: AppState) -> Router {
         .merge(integrations::routes())
         // Mise à jour guidée : dernière version publiée (`update.rs`).
         .merge(update::routes())
+        // Changements de configuration à faire après une mise à jour (`upgrade_notes.rs`).
+        .merge(upgrade_notes::routes())
         // Équipes et droits par dossier (`teams.rs`).
         .merge(teams::routes())
         // Procédures, actions de remédiation, politiques et journal (`remediation.rs`).
