@@ -328,6 +328,9 @@ pub async fn create_kit(
         State(state.clone()),
         Authenticated(me.clone()),
         ClientIp(ip),
+        // Le kit de stratégie de groupe ne sert que la commande PowerShell :
+        // pas de clé HTTPS à épingler.
+        None,
         Json(token_payload),
     )
     .await?;

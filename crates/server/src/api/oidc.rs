@@ -206,7 +206,14 @@ impl<S: Send + Sync> FromRequestParts<S> for Origin {
             .unwrap_or_default();
         let peer = parts.extensions.get::<ConnectInfo<SocketAddr>>().map(|info| info.0.ip());
         let behind_proxy = peer.is_some_and(|peer| trusted.iter().any(|net| net.contains(&peer)));
-        Ok(Self(request_origin(&parts.headers, behind_proxy)))
+        let origin = request_origin(&parts.headers, behind_proxy);
+        // HTTPS direct sur le port de l'interface : le schéma est celui de la
+        // connexion, pas celui d'un mandataire.
+        let tls = parts.extensions.get::<crate::web_tls::Transport>().is_some_and(|t| t.tls);
+        Ok(Self(match origin.strip_prefix("http://") {
+            Some(rest) if tls => format!("https://{rest}"),
+            _ => origin,
+        }))
     }
 }
 

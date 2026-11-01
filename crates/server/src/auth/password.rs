@@ -1,8 +1,9 @@
 //! Hachage et vérification du mot de passe de l'instance.
 //!
-//! Argon2id avec les paramètres recommandés par la bibliothèque, et un sel
-//! aléatoire tiré à chaque enregistrement : deux instances configurées avec le
-//! même mot de passe ne partagent aucune empreinte.
+//! Argon2id avec les paramètres de l'OWASP (fixés ici plutôt que laissés au
+//! défaut de la bibliothèque, qui pourrait changer), et un sel aléatoire tiré
+//! à chaque enregistrement : deux instances configurées avec le même mot de
+//! passe ne partagent aucune empreinte.
 
 use anyhow::{Context, Result};
 use argon2::password_hash::phc::PasswordHash;
@@ -16,6 +17,19 @@ use crate::auth::{AuthError, AuthResult};
 /// Douze caractères, parce que ce mot de passe protège tout : il n'y a ni second
 /// facteur, ni verrouillage de compte à opposer à une recherche exhaustive.
 pub const MIN_LENGTH: usize = 12;
+
+/// Mémoire (Kio), passes et parallélisme d'Argon2id : 19 Mio, 2, 1 — la
+/// configuration de référence de l'OWASP Password Storage Cheat Sheet
+/// (révision 2025), environ 30 ms par vérification sur un petit serveur.
+const M_COST_KIB: u32 = 19 * 1024;
+const T_COST: u32 = 2;
+const P_COST: u32 = 1;
+
+fn argon2() -> Argon2<'static> {
+    let params =
+        argon2::Params::new(M_COST_KIB, T_COST, P_COST, None).expect("paramètres Argon2id valides");
+    Argon2::new(argon2::Algorithm::Argon2id, argon2::Version::V0x13, params)
+}
 
 /// Refuse un mot de passe trop court, avec un message qui dit quoi faire.
 pub fn validate(password: &str) -> AuthResult<()> {
@@ -35,7 +49,7 @@ pub fn validate(password: &str) -> AuthResult<()> {
 /// autres requêtes pendant plusieurs dizaines de millisecondes.
 pub async fn hash(password: String) -> Result<String> {
     tokio::task::spawn_blocking(move || {
-        let hash: PasswordHash = Argon2::default()
+        let hash: PasswordHash = argon2()
             .hash_password(password.as_bytes())
             .map_err(|error| anyhow::anyhow!("hachage Argon2id impossible : {error}"))?;
         Ok(hash.to_string())
@@ -55,7 +69,7 @@ pub async fn verify(password: String, stored: String) -> Result<bool> {
         let parsed = PasswordHash::new(&stored).map_err(|error| {
             anyhow::anyhow!("empreinte de mot de passe illisible en base : {error}")
         })?;
-        match Argon2::default().verify_password(password.as_bytes(), &parsed) {
+        match argon2().verify_password(password.as_bytes(), &parsed) {
             Ok(()) => Ok(true),
             Err(argon2::password_hash::Error::PasswordInvalid) => Ok(false),
             Err(error) => Err(anyhow::anyhow!("vérification Argon2id impossible : {error}")),
@@ -81,6 +95,12 @@ mod tests {
         let stored = hash("motdepasse-très-secret".to_string()).await.unwrap();
         assert!(!stored.contains("motdepasse"), "{stored}");
         assert!(stored.starts_with("$argon2id$"), "{stored}");
+    }
+
+    #[tokio::test]
+    async fn the_hash_uses_the_owasp_argon2id_parameters() {
+        let stored = hash("mot-de-passe-du-homelab".to_string()).await.unwrap();
+        assert!(stored.starts_with("$argon2id$v=19$m=19456,t=2,p=1$"), "{stored}");
     }
 
     #[tokio::test]

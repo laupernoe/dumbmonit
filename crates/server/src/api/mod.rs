@@ -23,6 +23,7 @@ mod forecasts;
 mod geocode;
 mod gitops;
 mod health;
+mod https;
 mod ical;
 mod ingest;
 mod instance;
@@ -241,6 +242,8 @@ pub fn router(state: AppState) -> Router {
         .route("/agent/install", get(ingest::install_params))
         // Canal chiffré des agents : état, exigence de mTLS, rotation de l'autorité.
         .merge(agent_tls::routes())
+        // HTTPS de l'interface, redirection et relevé de ce qui passe en clair.
+        .merge(https::routes())
         // Mise à jour automatique des agents : réglages, état, « Update now ».
         .merge(agent_updates::routes())
         .route("/tokens", get(tokens::list).post(tokens::create))
@@ -468,6 +471,9 @@ pub fn router(state: AppState) -> Router {
         ))
         // `X-DumbMonit-Api-Version` sur toute réponse de `/api`.
         .layer(middleware::from_fn(openapi::version_header))
+        // Navigations en clair renvoyées vers HTTPS (`web_tls`). Sous la garde
+        // des domaines de page de statut, qui ne sont jamais redirigés.
+        .layer(middleware::from_fn_with_state(state.clone(), crate::web_tls::redirect))
         // Domaine public d'une page de statut : sur ce nom d'hôte, la page et
         // rien d'autre (`status_host.rs`). Sous les en-têtes de sécurité, pour
         // que ses refus les portent aussi.
@@ -485,6 +491,10 @@ pub fn router(state: AppState) -> Router {
                 path = %loggable_path(request.uri().path()),
             )
         }))
+        // La plus externe : l'adresse du client et le chiffrement de la
+        // connexion, que tout le reste lit (`ConnectInfo`, `Transport`), et HSTS
+        // sur toute réponse servie en HTTPS.
+        .layer(middleware::from_fn_with_state(state.clone(), crate::web_tls::transport))
         .with_state(state)
 }
 
@@ -569,6 +579,15 @@ const CSP_BASE: &str = "default-src 'none'; \
 /// Images : celles du build (`data:` compris), partout.
 const CSP_IMG_SRC: &str = "img-src 'self' data:";
 
+/// Fonctions du navigateur : celles dont l'interface se sert (plein écran et
+/// écran allumé du mode mur, clés d'accès), pour elle seule ; toutes les
+/// autres refusées, y compris à une page qui l'encadrerait.
+const PERMISSIONS_POLICY: &str = "accelerometer=(), autoplay=(), browsing-topics=(), camera=(), \
+     display-capture=(), geolocation=(), gyroscope=(), hid=(), magnetometer=(), microphone=(), \
+     midi=(), payment=(), serial=(), usb=(), xr-spatial-tracking=(), fullscreen=(self), \
+     screen-wake-lock=(self), publickey-credentials-get=(self), \
+     publickey-credentials-create=(self)";
+
 /// Chemins qu'une page tierce peut encadrer : une page de statut
 /// (`/s/<slug>`) et sa vue compacte (`/s/<slug>/embed`), rien d'autre — ni les
 /// pages de confirmation ou de désabonnement, ni un chemin qui ne ferait que
@@ -593,6 +612,8 @@ fn is_embeddable(path: &str) -> bool {
 async fn security_headers(mut request: Request, next: Next) -> Response {
     let path_embeddable = is_embeddable(request.uri().path());
     let root = request.uri().path() == "/";
+    let api_path = request.uri().path().starts_with("/api/");
+    let public_path = request.uri().path().starts_with("/api/public/");
     // Un nonce par réponse : 128 bits d'aléa, inutilisables une seconde fois.
     let nonce = hex::encode(rand::random::<[u8; 16]>());
     request.extensions_mut().insert(spa::Nonce(nonce.clone()));
@@ -608,6 +629,24 @@ async fn security_headers(mut request: Request, next: Next) -> Response {
     let headers = response.headers_mut();
     headers.insert("x-content-type-options", HeaderValue::from_static("nosniff"));
     headers.insert("referrer-policy", HeaderValue::from_static("same-origin"));
+    // Isolation : aucune fenêtre ouverte depuis une autre origine ne garde de
+    // référence vers l'interface, et ses réponses ne se lisent pas depuis une
+    // page tierce — sauf ce qui est fait pour l'être (pages de statut, leurs
+    // badges et leur vue compacte).
+    headers.insert("cross-origin-opener-policy", HeaderValue::from_static("same-origin"));
+    let shared = embeddable || public_path || status_host;
+    headers.insert(
+        "cross-origin-resource-policy",
+        HeaderValue::from_static(if shared { "cross-origin" } else { "same-origin" }),
+    );
+    headers.insert("permissions-policy", HeaderValue::from_static(PERMISSIONS_POLICY));
+    headers.insert("x-permitted-cross-domain-policies", HeaderValue::from_static("none"));
+    headers.insert("origin-agent-cluster", HeaderValue::from_static("?1"));
+    // Les réponses de l'API ne vont dans aucun cache (jetons créés, secrets
+    // montrés une fois), sauf celles qui disent elles-mêmes le contraire.
+    if api_path && !headers.contains_key(header::CACHE_CONTROL) {
+        headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    }
     let policy = match embeddable {
         // Une page de statut est faite pour être intégrée dans l'intranet de
         // quelqu'un : lui interdire d'être encadrée la rendrait inutile.
@@ -679,6 +718,16 @@ mod tests {
         assert!(!is_embeddable("/status/3"));
         assert!(!is_embeddable("/api/public/status/home-lab"));
         assert!(!is_embeddable("/s/"));
+    }
+
+    #[test]
+    fn the_browser_features_the_interface_does_not_use_are_denied() {
+        for denied in ["camera=()", "microphone=()", "geolocation=()", "payment=()", "usb=()"] {
+            assert!(PERMISSIONS_POLICY.contains(denied), "{denied}");
+        }
+        assert!(PERMISSIONS_POLICY.contains("publickey-credentials-get=(self)"));
+        assert!(!PERMISSIONS_POLICY.contains('*'));
+        assert!(HeaderValue::from_str(PERMISSIONS_POLICY).is_ok());
     }
 
     #[test]

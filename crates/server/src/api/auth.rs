@@ -96,6 +96,23 @@ pub struct StatusView {
     /// Mode démonstration publique : l'écran de connexion propose le compte
     /// `demo`, et toute écriture sera refusée (voir `crate::demo`).
     demo: bool,
+    /// HTTPS du port de l'interface, pour la bannière « session en clair ».
+    https: HttpsStatus,
+}
+
+/// Ce que l'interface doit savoir du HTTPS avant même la connexion : rien de
+/// secret, l'empreinte du certificat est celle que tout client reçoit.
+#[derive(Debug, Serialize)]
+pub struct HttpsStatus {
+    /// Le port de l'interface sert aussi HTTPS.
+    available: bool,
+    /// Cette requête arrive en HTTPS (direct, ou mandataire de confiance).
+    secure: bool,
+    /// Empreinte SHA-256 du certificat servi, à comparer avec celle que le
+    /// navigateur affiche.
+    fingerprint_sha256: Option<String>,
+    /// Le certificat servi est autosigné : le navigateur avertira.
+    self_signed: bool,
 }
 
 /// Corps de `setup`. `username` est facultatif : « admin » par défaut.
@@ -174,6 +191,7 @@ impl std::fmt::Debug for ChangePayload {
 pub async fn status(
     State(state): State<AppState>,
     Extension(auth): Extension<AuthState>,
+    transport: Option<Extension<crate::web_tls::Transport>>,
     headers: HeaderMap,
 ) -> AuthResult<Json<StatusView>> {
     let configured = auth.is_configured(&state.pool).await?;
@@ -199,6 +217,17 @@ pub async fn status(
         saml: SamlStatus { enabled: saml_config.usable(), label: saml_config.label().to_string() },
         passkeys: configured && crate::auth::passkeys::count(&state.pool, None).await? > 0,
         demo: state.config.demo,
+        https: {
+            let summary = state.web_tls().summary();
+            HttpsStatus {
+                available: state.web_tls().server_config().is_some(),
+                secure: transport.is_some_and(|t| t.https),
+                self_signed: summary
+                    .as_ref()
+                    .is_some_and(|s| s.source == crate::web_tls::Source::SelfSigned),
+                fingerprint_sha256: summary.map(|s| s.fingerprint_sha256),
+            }
+        },
     }))
 }
 
