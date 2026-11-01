@@ -2,15 +2,20 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { shareFlight } from '../src/lib/api/flight.ts';
 
-/** A request that answers when `release()` is called, and counts its starts. */
+/** Requests that answer when `release()` is called (all pending ones), and counts their starts. */
 function gate() {
-	const state = { starts: 0, aborted: 0, release: () => {}, fail: () => {} };
+	const pending = [];
+	const state = {
+		starts: 0,
+		aborted: 0,
+		release: () => pending.splice(0).forEach((p) => p.resolve('answer')),
+		fail: () => pending.splice(0).forEach((p) => p.reject(new Error('down')))
+	};
 	const start = (signal) => {
 		state.starts += 1;
 		signal.addEventListener('abort', () => (state.aborted += 1));
 		return new Promise((resolve, reject) => {
-			state.release = () => resolve('answer');
-			state.fail = () => reject(new Error('down'));
+			pending.push({ resolve, reject });
 			signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
 		});
 	};
