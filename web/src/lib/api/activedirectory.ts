@@ -5,14 +5,9 @@
  * domain controller.
  */
 import { request } from './client';
-import type { AdFindings, AdOverview, TargetId } from './types';
+import type { AdOverview, TargetId } from './types';
 
 /** The whole domain view, findings included. */
 export function getAdOverview(id: TargetId, signal?: AbortSignal): Promise<AdOverview> {
 	return request<AdOverview>(`/targets/${id}/ad`, { signal });
-}
-
-/** The raw security findings, most severe first. */
-export function getAdFindings(id: TargetId, signal?: AbortSignal): Promise<AdFindings> {
-	return request<AdFindings>(`/targets/${id}/ad/findings`, { signal });
 }

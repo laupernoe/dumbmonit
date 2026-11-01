@@ -37,7 +37,7 @@ to put a showcase on your own site.
   forecasts, the backup matrix and alert history are populated, and a few
   alerts are firing. The seed also fills what is normally set by hand: teams
   and folders, accounts and on-call rotas with escalation policies, silences,
-  runbooks, two dashboards, scheduled reports, notification channels (never
+  runbooks, scheduled reports, notification channels (never
   used), sites on the world map, known vulnerabilities, four status pages (one
   per night scene) with an ongoing incident, and a network scan with a new
   device. Everything is computed from a fixed seed: nothing is fetched from the

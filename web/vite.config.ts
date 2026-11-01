@@ -42,9 +42,19 @@ export default defineConfig({
 			project: './project.inlang',
 			outdir: './src/lib/paraglide',
 			strategy: ['localStorage', 'preferredLanguage', 'baseLocale'],
-			emitTsDeclarations: true
+			emitTsDeclarations: true,
+			// Un module par langue (`messages/fr.js`…) : l'application n'en charge
+			// qu'une (voir l'alias ci-dessous), au lieu des neuf dans un seul bloc.
+			outputStructure: 'locale-modules'
 		})
 	],
+	resolve: {
+		alias: [
+			// `m` vient de `src/lib/i18n/messages.ts` : mêmes appels, mais seule la langue
+			// active est téléchargée. Les types viennent toujours du code généré.
+			{ find: /^#lib\/paraglide\/messages\.js$/, replacement: '/src/lib/i18n/messages.ts' }
+		]
+	},
 	// En développement, le front tourne sur Vite et le backend Rust sur 8080.
 	// Ce proxy évite toute configuration CORS côté serveur.
 	// `preview` en bénéficie aussi, pour éprouver le build face au vrai backend.

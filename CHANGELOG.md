@@ -5,6 +5,14 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Removed
+
+- **Custom dashboards.** The Dashboards page, its API (`/api/dashboards`,
+  templates and previews), the dashboard section of backups and the demo's two
+  sample dashboards are gone; the metrics explorer stays, without its "Add to a
+  dashboard" action. Existing dashboards stay in the database but are no longer
+  read, shown or exported. Backups made before still restore everything else.
+
 ### Changed
 
 - **Section tabs.** One tab strip (in the address as `?tab=`, keyboard, sticky on
@@ -21,8 +29,11 @@ All notable changes to this project are documented here. The format follows
   panel, and long option lists get three sub-headings.
 - **Words.** "Monitor" everywhere for the watched thing, "Snooze" for a quick
   pause, "Maintenance" for a planned window, "Hide resolved" instead of "Clear all
-  resolved". The scan range help now says 1024 addresses.
-
+  resolved".
+- **Faster first load.** The interface loads the messages of the language in use
+  instead of the nine (about 4 MB of JavaScript less), identical reads started at
+  the same moment share one request, and the overview's figures are no longer
+  fetched three times on arrival.
 - **A complete public demo.** The demo (`DUMBMONIT_DEMO=1`) now fills every
   page but log search. Two clients in MSP mode: the homelab, now with UniFi, Kopia,
   DNS checks and an iSCSI LUN on the Synology NAS, and a small architecture
@@ -31,7 +42,7 @@ All notable changes to this project are documented here. The format follows
   polled through a relay agent placed in the office. The Linux agent reports
   the full machine health card (top processes, pressure, inodes, clock). The
   seed also fills teams and folders, accounts, on-call rotas and escalation
-  policies, silences, runbooks, two dashboards, scheduled reports, more
+  policies, silences, runbooks, scheduled reports, more
   notification channels (never used), sites on the world map with the relay
   link, known vulnerabilities (never downloaded in the demo), four status
   pages, one per night scene, with an ongoing incident and a planned

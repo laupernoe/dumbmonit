@@ -11,6 +11,7 @@
 	import type { StatusPageSeo } from '#lib/api/index.js';
 	import { Button, Field, Panel, Toggle } from '#lib/ui/index.js';
 	import { copyText } from '#lib/clipboard.js';
+	import { hasMessages, loadMessages } from '#lib/i18n/messages.js';
 	import { getLocale, locales } from '#lib/paraglide/runtime.js';
 	import {
 		DESCRIPTION_TARGET,
@@ -86,8 +87,16 @@
 		};
 	}
 
+	// The prompt wording of another language is its own download: fetch it as soon as
+	// the page language is known, so that copying (a click) does not have to wait.
+	$effect(() => {
+		void loadMessages(promptLocale(shown.lang, locales, getLocale()));
+	});
+
 	async function copyPrompt() {
 		copyFailed = false;
+		const wanted = promptLocale(shown.lang, locales, getLocale());
+		if (!hasMessages(wanted)) await loadMessages(wanted);
 		const ok = await copyText(
 			buildPrompt({ name, organisation: shown.site_name, services, lang: shown.lang, url: shown.canonical, description }, promptTexts())
 		);
