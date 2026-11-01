@@ -8636,8 +8636,7 @@ pub(crate) const PRODUITES: &[&str] = &[
     "dumbmonit_mailcow_queue_oldest_seconds",
     "dumbmonit_mailcow_vmail_used_percent",
     "dumbmonit_mailcow_mailboxes_near_quota",
-    // Lus aussi par les modèles de tableaux de bord (`api/dashboard_templates`),
-    // vérifiés dans le code qui les produit.
+    // Métriques lues ailleurs que par les règles, vérifiées dans le code qui les produit.
     "dumbmonit_ad_bind_seconds",
     "dumbmonit_ad_clock_skew_seconds",
     "dumbmonit_ad_connect_seconds",

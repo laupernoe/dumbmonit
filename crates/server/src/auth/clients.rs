@@ -200,8 +200,6 @@ pub enum Kind {
     Rule,
     Silence,
     Report,
-    /// Tableau de bord partagé (un tableau personnel reste à son propriétaire).
-    Dashboard,
     /// Planning d'astreinte.
     Schedule,
     /// Politique d'escalade d'astreinte.
@@ -213,7 +211,7 @@ pub enum Kind {
 }
 
 impl Kind {
-    pub const ALL: [Kind; 12] = [
+    pub const ALL: [Kind; 11] = [
         Kind::Target,
         Kind::StatusPage,
         Kind::AgentToken,
@@ -221,7 +219,6 @@ impl Kind {
         Kind::Rule,
         Kind::Silence,
         Kind::Report,
-        Kind::Dashboard,
         Kind::Schedule,
         Kind::EscalationPolicy,
         Kind::Runbook,
@@ -238,7 +235,6 @@ impl Kind {
             Self::Rule => "alert_rules",
             Self::Silence => "silences",
             Self::Report => "report_schedules",
-            Self::Dashboard => "dashboards",
             Self::Schedule => "oncall_schedules",
             Self::EscalationPolicy => "oncall_policies",
             Self::Runbook => "runbooks",
@@ -256,7 +252,6 @@ impl Kind {
             Self::Rule => "rules",
             Self::Silence => "silences",
             Self::Report => "reports",
-            Self::Dashboard => "dashboards",
             Self::Schedule => "oncall_schedules",
             Self::EscalationPolicy => "oncall_policies",
             Self::Runbook => "runbooks",
@@ -457,20 +452,6 @@ pub async fn assign(
                     return Err(ClientError::Conflict(
                         "A maintenance window on a target belongs to the client of that target."
                             .into(),
-                    ));
-                }
-            }
-        }
-        Kind::Dashboard => {
-            for id in ids {
-                let shared: bool =
-                    sqlx::query_scalar("SELECT shared = 1 FROM dashboards WHERE id = ?")
-                        .bind(id)
-                        .fetch_one(pool)
-                        .await?;
-                if !shared {
-                    return Err(ClientError::Conflict(
-                        "A personal dashboard stays with its owner: share it first.".into(),
                     ));
                 }
             }
