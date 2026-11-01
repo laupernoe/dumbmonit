@@ -472,12 +472,12 @@ pub fn router(state: AppState) -> Router {
         ))
         // `X-DumbMonit-Api-Version` sur toute réponse de `/api`.
         .layer(middleware::from_fn(openapi::version_header))
-        // Domaine public d'une page de statut : sur ce nom d'hôte, la page et
-        // rien d'autre (`status_host.rs`). Sous les en-têtes de sécurité, pour
-        // que ses refus les portent aussi.
         // Navigations en clair renvoyées vers HTTPS (`web_tls`). Sous la garde
         // des domaines de page de statut, qui ne sont jamais redirigés.
         .layer(middleware::from_fn_with_state(state.clone(), crate::web_tls::redirect))
+        // Domaine public d'une page de statut : sur ce nom d'hôte, la page et
+        // rien d'autre (`status_host.rs`). Sous les en-têtes de sécurité, pour
+        // que ses refus les portent aussi.
         .layer(middleware::from_fn_with_state(state.clone(), crate::status_host::guard))
         .layer(middleware::from_fn(security_headers))
         // Compression gzip/brotli selon `Accept-Encoding` (et `Vary` en retour).
