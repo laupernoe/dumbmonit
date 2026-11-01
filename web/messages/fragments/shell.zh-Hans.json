@@ -1,0 +1,10 @@
+{
+	"shell_nav_status": "状态",
+	"shell_nav_expand": "展开菜单",
+	"shell_nav_collapse": "收起菜单",
+	"shell_skip": "跳到内容",
+	"shell_new_tab": "（在新标签页中打开）",
+	"shell_pigeon_sleep": "一切正常：鸽子在睡觉。",
+	"shell_pigeon_watch": "有情况需要查看：鸽子正在盯着。",
+	"shell_pigeon_alert": "有监控项宕机：鸽子处于警戒状态。"
+}

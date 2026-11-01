@@ -25,11 +25,7 @@
 			label: LABEL[s.id](),
 			keys: shortcutKeys(s.keys),
 			sequence: s.keys.includes(' ')
-		})),
-		{ label: m.console_shortcut_panel(), keys: ['i'], sequence: false },
-		{ label: m.console_shortcut_next(), keys: ['j'], sequence: false },
-		{ label: m.console_shortcut_prev(), keys: ['k'], sequence: false },
-		{ label: m.console_shortcut_open(), keys: ['o'], sequence: false }
+		}))
 	]);
 
 	let closeButton = $state<HTMLButtonElement | null>(null);

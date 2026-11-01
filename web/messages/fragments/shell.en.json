@@ -1,0 +1,10 @@
+{
+	"shell_nav_status": "Status",
+	"shell_nav_expand": "Expand the menu",
+	"shell_nav_collapse": "Collapse the menu",
+	"shell_skip": "Skip to content",
+	"shell_new_tab": "(opens in a new tab)",
+	"shell_pigeon_sleep": "All good: the pigeon is asleep.",
+	"shell_pigeon_watch": "Something needs a look: the pigeon is watching.",
+	"shell_pigeon_alert": "A monitor is down: the pigeon is on alert."
+}

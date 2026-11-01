@@ -1,0 +1,10 @@
+{
+	"shell_nav_status": "Estado",
+	"shell_nav_expand": "Desplegar el menú",
+	"shell_nav_collapse": "Plegar el menú",
+	"shell_skip": "Ir al contenido",
+	"shell_new_tab": "(se abre en una pestaña nueva)",
+	"shell_pigeon_sleep": "Todo bien: la paloma duerme.",
+	"shell_pigeon_watch": "Algo requiere un vistazo: la paloma vigila.",
+	"shell_pigeon_alert": "Un monitor está caído: la paloma está en alerta."
+}
