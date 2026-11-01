@@ -7,7 +7,7 @@
 	 */
 	import { m } from '#lib/paraglide/messages.js';
 	import type { CatalogMetric } from '#lib/api/types.js';
-	import { apply, suggest, type Suggestions } from '#lib/dashboards/suggest.js';
+	import { apply, suggest, type Suggestions } from '#lib/explore/suggest.js';
 
 	interface Props {
 		value: string;

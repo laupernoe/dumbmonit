@@ -4,7 +4,7 @@
  * one line here.
  */
 import type { Icon as LucideIcon } from 'lucide-svelte';
-import { BellRing, Building2, Compass, FileText, Gauge, Globe, LayoutGrid, Network, ScrollText, Server, Settings2, ShieldAlert, Tv, Wrench } from 'lucide-svelte';
+import { BellRing, Building2, Compass, FileText, Gauge, Globe, Network, ScrollText, Server, Settings2, ShieldAlert, Tv, Wrench } from 'lucide-svelte';
 import { m } from '#lib/paraglide/messages.js';
 import { auth } from '#lib/stores/auth.svelte.js';
 
@@ -32,7 +32,6 @@ export const NAV: NavEntry[] = [
 	{ href: '/', label: () => m.misc_nav_overview(), icon: Gauge, exact: true, phone: true, unscoped: true },
 	{ href: '/targets', label: () => m.misc_nav_devices(), icon: Server, phone: true },
 	{ href: '/alerts', label: () => m.misc_nav_alerts(), icon: BellRing, phone: true, badge: true },
-	{ href: '/dashboards', label: () => m.misc_nav_dashboards(), icon: LayoutGrid },
 	{ href: '/explore', label: () => m.explore_title(), icon: Compass },
 	{ href: '/map', label: () => m.topology_title(), icon: Network },
 	{ href: '/security', label: () => m.misc_nav_security(), icon: ShieldAlert },

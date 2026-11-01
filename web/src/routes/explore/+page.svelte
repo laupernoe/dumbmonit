@@ -1,22 +1,20 @@
 <script lang="ts">
 	/**
 	 * Metrics explorer: the `dumbmonit_*` metrics and their labels, a MetricsQL
-	 * box with name completion, a chart, and a way to put the result on a
-	 * dashboard. Queries go through the server's own query proxy.
+	 * box with name completion, and a chart. Queries go through the server's
+	 * own query proxy.
 	 */
 	import { page } from '$app/state';
-	import { Play, Plus } from 'lucide-svelte';
+	import { Play } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { queryRange, type MetricSeries } from '#lib/api/index.js';
-	import { createDashboard, getMetricsCatalog, listDashboards, updateDashboard } from '#lib/api/dashboards.js';
-	import type { CatalogMetric, Dashboard, DashboardWidget } from '#lib/api/types.js';
-	import { compact, slotFor } from '#lib/dashboards/grid.js';
-	import { rangeOptions } from '#lib/dashboards/options.js';
-	import { DEFAULT_SIZE, newWidgetId, stepFor } from '#lib/dashboards/widgets.js';
+	import { getMetricsCatalog } from '#lib/api/metrics-catalog.js';
+	import type { CatalogMetric } from '#lib/api/types.js';
+	import { RANGE_SECONDS, stepFor } from '#lib/explore/range.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
-	import { Button, EmptyState, ErrorNotice, Field, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { Button, EmptyState, ErrorNotice, Field, PageHeader, Panel, Skeleton } from '#lib/ui/index.js';
 	import Chart, { type Serie } from '#lib/components/Chart.svelte';
-	import QueryInput from '#lib/components/dashboards/QueryInput.svelte';
+	import QueryInput from '#lib/components/explore/QueryInput.svelte';
 
 	let catalog = $state<CatalogMetric[] | null>(null);
 	let truncated = $state(false);
@@ -31,14 +29,15 @@
 	let running = $state(false);
 	let runError = $state<unknown>(null);
 
-	let adding = $state(false);
-	let dashboards = $state<Dashboard[]>([]);
-	let target = $state<string>('new');
-	let kind = $state<'chart' | 'stat'>('chart');
-	let title = $state('');
-	let added = $state<Dashboard | null>(null);
-	let addError = $state<unknown>(null);
-	let saving = $state(false);
+	const RANGE_LABEL: Record<number, () => string> = {
+		900: () => m.dash_range_15m(),
+		3600: () => m.dash_range_1h(),
+		21600: () => m.dash_range_6h(),
+		86400: () => m.dash_range_24h(),
+		604800: () => m.dash_range_7d(),
+		2592000: () => m.dash_range_30d()
+	};
+	const rangeOptions = RANGE_SECONDS.map((value) => ({ value, label: RANGE_LABEL[value]?.() ?? '' }));
 
 	$effect(() => {
 		const controller = new AbortController();
@@ -99,54 +98,11 @@
 			running = false;
 		}
 	}
-
-	async function openAdd() {
-		adding = true;
-		added = null;
-		addError = null;
-		try {
-			dashboards = (await listDashboards()).filter((d) => d.can_edit);
-			target = dashboards[0] ? String(dashboards[0].id) : 'new';
-		} catch (cause) {
-			addError = cause;
-		}
-	}
-
-	async function add(event: SubmitEvent) {
-		event.preventDefault();
-		saving = true;
-		addError = null;
-		try {
-			const existing = dashboards.find((d) => String(d.id) === target);
-			const widgets = existing?.widgets ?? [];
-			const widget: DashboardWidget = {
-				id: newWidgetId(widgets.map((w) => w.id)),
-				type: kind,
-				title: title.trim(),
-				...slotFor(widgets),
-				...DEFAULT_SIZE[kind],
-				config: kind === 'chart' ? { query: query.trim(), unit: '' } : { query: query.trim(), unit: '', direction: 'above' }
-			};
-			const next = compact([...widgets, widget]);
-			added = existing
-				? await updateDashboard(existing.id, { name: existing.name, shared: existing.shared, range_secs: existing.range_secs, refresh_secs: existing.refresh_secs, widgets: next })
-				: await createDashboard({ name: title.trim() || m.dash_explorer_new_name(), shared: false, range_secs: range, refresh_secs: 30, widgets: next });
-			adding = false;
-		} catch (cause) {
-			addError = cause;
-		} finally {
-			saving = false;
-		}
-	}
 </script>
 
 <svelte:head><title>{m.explore_title()} · DumbMonit</title></svelte:head>
 
-<PageHeader title={m.explore_title()} description={m.explore_description()}>
-	{#snippet actions()}
-		<a href="/dashboards" class="inline-flex min-h-10 items-center text-sm text-ink-2 hover:text-ink hover:underline">{m.explore_dashboards_link()}</a>
-	{/snippet}
-</PageHeader>
+<PageHeader title={m.explore_title()} description={m.explore_description()} />
 
 <div class="grid gap-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
 	<Panel title={m.explore_metrics()} description={catalog ? m.explore_metrics_count({ count: catalog.length }) : undefined}>
@@ -220,46 +176,13 @@
 				<div class="flex flex-wrap items-end gap-3">
 					<Field label={m.dash_range()} for="explore-range">
 						<select id="explore-range" class="input" bind:value={range}>
-							{#each rangeOptions(range) as option (option.value)}<option value={option.value}>{option.label}</option>{/each}
+							{#each rangeOptions as option (option.value)}<option value={option.value}>{option.label}</option>{/each}
 						</select>
 					</Field>
 					<Button type="submit" variant="primary" loading={running} disabled={!query.trim()}><Play class="size-4" aria-hidden="true" />{m.explore_run()}</Button>
-					<Button onclick={openAdd} disabled={!query.trim()} aria-expanded={adding}><Plus class="size-4" aria-hidden="true" />{m.explore_add()}</Button>
 				</div>
 			</form>
 		</Panel>
-
-		{#if added}
-			<Plate tone="signal" label={m.explore_added({ name: added.name })} draw />
-			<a href={`/dashboards?d=${added.id}`} class="inline-flex min-h-10 items-center text-sm text-signal-ink underline">{m.explore_open_dashboard()}</a>
-		{/if}
-
-		{#if adding}
-			<Panel title={m.explore_add_title()}>
-				<form class="flex max-w-xl flex-col gap-4" onsubmit={add}>
-					<Field label={m.explore_add_dashboard()} for="explore-target">
-						<select id="explore-target" class="input" bind:value={target}>
-							{#each dashboards as d (d.id)}<option value={String(d.id)}>{d.name}</option>{/each}
-							<option value="new">{m.explore_add_new()}</option>
-						</select>
-					</Field>
-					<Field label={m.explore_add_as()} for="explore-kind">
-						<select id="explore-kind" class="input" bind:value={kind}>
-							<option value="chart">{m.dash_kind_chart()}</option>
-							<option value="stat">{m.dash_kind_stat()}</option>
-						</select>
-					</Field>
-					<Field label={m.dash_editor_name()} for="explore-title" help={target === 'new' ? m.explore_add_title_new_help() : undefined}>
-						<input id="explore-title" class="input" maxlength="80" bind:value={title} autocomplete="off" />
-					</Field>
-					{#if addError}<ErrorNotice error={addError} />{/if}
-					<div class="flex flex-wrap gap-2">
-						<Button type="submit" variant="primary" loading={saving}>{m.explore_add_confirm()}</Button>
-						<Button onclick={() => (adding = false)}>{m.dash_cancel()}</Button>
-					</div>
-				</form>
-			</Panel>
-		{/if}
 
 		{#if runError}
 			<ErrorNotice error={runError} onretry={run} />
