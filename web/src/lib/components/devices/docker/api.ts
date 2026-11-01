@@ -26,13 +26,6 @@ export interface ContainerPolicy {
 	only_in_maintenance: boolean;
 }
 
-export const DEFAULT_POLICY: ContainerPolicy = {
-	auto_restart: false,
-	auto_update: false,
-	prune_old_image: true,
-	only_in_maintenance: true
-};
-
 export interface CommandView {
 	id: number;
 	target_id: TargetId;

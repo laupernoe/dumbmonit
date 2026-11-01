@@ -166,7 +166,6 @@ async fn chaque_page_cle_a_des_donnees() {
         ("/api/oncall/policies", None, 2),
         ("/api/oncall/people", None, 4),
         ("/api/runbooks", None, 4),
-        ("/api/dashboards", None, 2),
         ("/api/reports/schedules", None, 2),
         ("/api/teams", Some("teams"), 1),
         ("/api/clients", Some("clients"), 2),
@@ -206,12 +205,6 @@ async fn chaque_page_cle_a_des_donnees() {
     let cves = app.get("/api/security/cves", Some(&cookie)).await;
     assert_eq!(cves.body["enabled"], true, "{}", cves.body);
     assert!(cves.body.to_string().contains("CVE-2025-32463"), "{}", cves.body);
-
-    // Les tableaux de bord semés passent la validation de l'API.
-    let dashboards = app.get("/api/dashboards", Some(&cookie)).await;
-    for dashboard in dashboards.body.as_array().unwrap() {
-        assert!(count(&dashboard["widgets"], None) >= 5, "{dashboard}");
-    }
 
     // La page publique du bureau a son incident en cours.
     let office = app.get("/api/public/status/muller", None).await;

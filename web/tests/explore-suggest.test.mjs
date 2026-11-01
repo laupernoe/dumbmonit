@@ -1,7 +1,7 @@
 // Query box completion. Run: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { suggest, apply } from '../src/lib/dashboards/suggest.ts';
+import { suggest, apply } from '../src/lib/explore/suggest.ts';
 
 const catalog = [
 	{ name: 'dumbmonit_cpu_usage_percent', series: 2, labels: [{ name: 'target', values: ['1', '2'], more: false }, { name: 'core', values: ['0'], more: false }] },

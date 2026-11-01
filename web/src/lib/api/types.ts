@@ -5725,7 +5725,6 @@ export type ClientKind =
 	| 'rule'
 	| 'silence'
 	| 'report'
-	| 'dashboard'
 	| 'schedule'
 	| 'escalation_policy'
 	| 'runbook'
@@ -5744,7 +5743,6 @@ export type ClientAssignments = Partial<
 		| 'rules'
 		| 'silences'
 		| 'reports'
-		| 'dashboards'
 		| 'oncall_schedules'
 		| 'oncall_policies'
 		| 'runbooks'
@@ -6404,138 +6402,8 @@ export interface LogInputs {
 	dropped: number;
 }
 
-// --- Dashboards and metrics explorer ----------------------------------------
-// Mirrors `crates/server/src/api/dashboards.rs` and `metrics.rs` (catalog).
-
-export type DashboardId = number;
-
-export type WidgetKind = 'chart' | 'stat' | 'group' | 'alerts' | 'text';
-
-export interface ChartConfig {
-	query: string;
-	unit: string;
-}
-
-export interface StatConfig {
-	query: string;
-	unit: string;
-	warn?: number;
-	crit?: number;
-	/** `above`: bad when the value is high; `below`: bad when it is low. */
-	direction: 'above' | 'below';
-}
-
-export interface GroupConfig {
-	/** Folder (`group_name`) of the monitors; empty: monitors without a folder. */
-	folder: string;
-}
-
-export interface AlertsConfig {
-	limit: number;
-}
-
-export interface TextConfig {
-	markdown: string;
-}
-
-export interface DashboardWidget {
-	/** Letters, digits, `-` and `_`; unique inside the dashboard. */
-	id: string;
-	type: WidgetKind;
-	title: string;
-	/** Column (0-11), row, width (1-12 columns) and height (rows) on the grid. */
-	x: number;
-	y: number;
-	w: number;
-	h: number;
-	/** Shape depends on `type`; see the `*Config` interfaces. */
-	config: Record<string, unknown>;
-}
-
-export interface Dashboard {
-	id: DashboardId;
-	name: string;
-	shared: boolean;
-	/** Owning account; `null` when a token made it. */
-	owner: string | null;
-	can_edit: boolean;
-	range_secs: number;
-	/** 0: no automatic refresh. */
-	refresh_secs: number;
-	widgets: DashboardWidget[];
-	created_at: string;
-	updated_at: string;
-}
-
-export interface DashboardPayload {
-	name: string;
-	shared: boolean;
-	range_secs: number;
-	refresh_secs: number;
-	widgets: DashboardWidget[];
-}
-
-export interface DashboardTemplateName {
-	id: number;
-	name: string;
-}
-
-export interface DashboardTemplateKind {
-	kind: string;
-	count: number;
-}
-
-export interface DashboardTemplate {
-	id: string;
-	/** English, as served (like the collector catalogue). */
-	title: string;
-	description: string;
-	/** A lucide icon name; unknown names fall back to a default icon. */
-	icon: string;
-	/** Device types it reads; empty: every type. */
-	requires: string[];
-	/** A series a device must publish to count (Docker containers). */
-	needs_metric: string | null;
-	/** Types it reads that the account has, most numerous first. */
-	present_kinds: DashboardTemplateKind[];
-	/** Active devices that could feed it. */
-	target_count: number;
-	widget_count: number;
-	available: boolean;
-	/** Why it cannot be used (English); null when it can. */
-	reason: string | null;
-}
-
-export interface DashboardTemplateList {
-	filters: {
-		folders: string[];
-		sites: DashboardTemplateName[];
-		/** Empty unless multi-client mode is on. */
-		clients: DashboardTemplateName[];
-	};
-	templates: DashboardTemplate[];
-}
-
-/** What the template filter can narrow by; every field is optional. */
-export interface DashboardTemplateFilter {
-	kind?: string;
-	folder?: string;
-	site?: number;
-	client?: number;
-}
-
-export interface DashboardTemplatePreview {
-	id: string;
-	/** Suggested dashboard name. */
-	name: string;
-	range_secs: number;
-	refresh_secs: number;
-	matched_count: number;
-	matched: { id: number; name: string; kind: string }[];
-	/** More than 300 devices matched: the queries carry the first 300. */
-	truncated: boolean;
-	widgets: DashboardWidget[];
-}
+// --- Metrics explorer -----------------------------------------------------
+// Mirrors `crates/server/src/api/metrics.rs` (catalog).
 
 export interface CatalogLabel {
 	name: string;

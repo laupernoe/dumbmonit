@@ -16,8 +16,6 @@ mod channels;
 pub(crate) mod clients;
 mod collectors;
 mod cves;
-mod dashboard_templates;
-pub mod dashboards;
 mod deadlines;
 pub(crate) mod discovery;
 mod error;
@@ -266,8 +264,6 @@ pub fn router(state: AppState) -> Router {
         .merge(topology_edits::routes())
         // Emplacements et carte du monde (`locations.rs`).
         .merge(locations::routes())
-        // Tableaux de bord personnalisés (`dashboards.rs`).
-        .merge(dashboards::routes())
         // Tableau des invités d'un hyperviseur Proxmox VE (`proxmox.rs`).
         .merge(proxmox::routes())
         // Fonctionnalités facultatives sautées faute de droit (`skipped_features.rs`).
