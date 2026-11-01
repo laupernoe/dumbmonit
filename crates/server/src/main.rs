@@ -232,6 +232,16 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
     state.storage().set_metrics(embedded_vm).await;
     dumbmonit_server::storage::start(&state).await;
 
+    // Version exécutée et version dont l'instance vient : de quoi dire à
+    // l'administrateur quels changements de configuration la mise à jour demande.
+    if !state.config.demo {
+        let version = env!("CARGO_PKG_VERSION");
+        let recorded = dumbmonit_server::upgrade_notes::record_version(&state.pool, version);
+        if let Err(error) = recorded.await {
+            tracing::warn!(%error, "cannot record the running version");
+        }
+    }
+
     // Journaux centralisés : écrivain vers VictoriaLogs, table des émetteurs,
     // serveur syslog et récepteur de traps (chacun désactivé par défaut).
     if !state.config.demo {

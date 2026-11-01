@@ -5,6 +5,23 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **Configuration changes after an update.** Some versions need a change in the
+  `docker-compose.yml` that an update never makes for you (the first one: publish
+  port `8443`, the encrypted agent channel, introduced in 0.14.0). The server now
+  keeps a catalogue of these changes per version, with the explanation, the
+  block to copy and, when it can, an automatic check (does the agent port answer
+  from the server?). The first time an administrator opens DumbMonit after an
+  update that leaves changes pending, a window lists them. **Done** closes a
+  change (checking again first), **I'll do it later** leaves a reminder in the
+  corner of every page until it is dismissed, and a closed change never comes
+  back for its version. A change a check finds missing is listed even for an
+  instance updated long ago. The full list is in **Settings → About**; closed
+  changes are part of the backup. New routes `GET /api/upgrade-notes`,
+  `POST /api/upgrade-notes/close` and `POST /api/upgrade-notes/announce`
+  (administrator session).
+
 ### Changed
 
 - **A complete public demo.** The demo (`DUMBMONIT_DEMO=1`) now fills every

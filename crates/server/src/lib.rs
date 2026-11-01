@@ -41,6 +41,7 @@ pub mod status_seo;
 pub mod storage;
 pub mod tsdb;
 pub mod update;
+pub mod upgrade_notes;
 pub mod vulns;
 pub mod webchange;
 pub mod website;
