@@ -445,13 +445,6 @@ pub const SCOPED_ROUTES: &[(&str, &str, RouteRule)] = &[
     ("GET", "/metrics/query", RouteRule::Open),
     ("GET", "/metrics/query_range", RouteRule::Open),
     ("GET", "/metrics/catalog", RouteRule::Open),
-    // Tableaux de bord : leur définition ne porte aucune donnée d'équipement, et
-    // leurs widgets passent par les requêtes et la liste d'alertes filtrées
-    // ci-dessus. Le gestionnaire réserve les tableaux partagés aux administrateurs.
-    ("*", "/dashboards", RouteRule::Open),
-    ("*", "/dashboards/*", RouteRule::Open),
-    // Aperçu d'un modèle : le gestionnaire ne lit que les équipements visibles.
-    ("GET", "/dashboards/templates/*/preview", RouteRule::Open),
     ("GET", "/alerts", RouteRule::Open),
     ("GET", "/alerts/history", RouteRule::Open),
     ("GET", "/alerts/rules", RouteRule::Open),
