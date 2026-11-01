@@ -1,0 +1,25 @@
+<script lang="ts">
+	/**
+	 * Status › Reports: the availability (SLA) export of a period, the
+	 * scheduled reports and the history of their sends in one place.
+	 * Administrators only (the API refuses everyone else, reading included).
+	 * The deadlines timeline below is readable by everyone.
+	 */
+	import { m } from '#lib/paraglide/messages.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { Plate } from '#lib/ui/index.js';
+	import ReportsContent from '#lib/components/reports/ReportsContent.svelte';
+	import DeadlinesSection from '#lib/components/deadlines/DeadlinesSection.svelte';
+</script>
+
+<p class="mb-4 max-w-2xl text-sm text-ink-2 max-sm:hidden">{m.reports_page_description()}</p>
+
+{#if !auth.isAdmin}
+	<Plate tone="ghost" label={auth.readOnlyLabel} size="md" />
+	<p class="mt-3 text-sm text-ink-2">{m.reports_admin_only()}</p>
+{:else}
+	<ReportsContent />
+{/if}
+
+<!-- Expiry dates across the instance; every signed-in user may read them. -->
+<DeadlinesSection class="mt-8" />
