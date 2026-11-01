@@ -148,7 +148,7 @@ async fn a_valid_password_opens_a_session_and_a_wrong_one_does_not() {
 
     let cookie = accepted.set_cookie.expect("cookie de session");
     assert!(cookie.contains("HttpOnly"), "{cookie}");
-    assert!(cookie.contains("SameSite=Lax"), "{cookie}");
+    assert!(cookie.contains("SameSite=Strict"), "{cookie}");
     assert!(cookie.contains("Path=/"), "{cookie}");
     assert!(cookie.contains("Max-Age=2592000"), "{cookie}");
     // `Secure` n'est posé que si on le demande : le produit vit en HTTP sur un LAN.

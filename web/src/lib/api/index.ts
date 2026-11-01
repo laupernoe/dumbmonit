@@ -562,12 +562,13 @@ export async function getAuthStatus(signal?: AbortSignal): Promise<AuthState> {
 			ldap: { enabled: Boolean(status?.ldap?.enabled) },
 			saml: { enabled: Boolean(status?.saml?.enabled), label: status?.saml?.label || 'SAML' },
 			passkeys: Boolean(status?.passkeys),
-			demo: Boolean(status?.demo)
+			demo: Boolean(status?.demo),
+			https: status?.https ?? null
 		};
 	} catch (cause) {
 		if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
 		if (cause instanceof ApiError && cause.missing) {
-			return { available: false, configured: false, authenticated: true, user: null, oidc: NO_OIDC, ldap: { enabled: false }, saml: { enabled: false, label: 'SAML' }, passkeys: false, demo: false };
+			return { available: false, configured: false, authenticated: true, user: null, oidc: NO_OIDC, ldap: { enabled: false }, saml: { enabled: false, label: 'SAML' }, passkeys: false, demo: false, https: null };
 		}
 		throw cause;
 	}

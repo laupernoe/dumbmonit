@@ -37,6 +37,19 @@ Avec Docker, publiez le port agents à côté du port web :
 Si un routeur ou un mandataire TCP le publie sous un autre numéro, réglez
 `DUMBMONIT_AGENT_PUBLIC_PORT` pour que les commandes d'installation l'utilisent.
 
+Avant d'afficher une commande d'installation, l'écran d'ajout d'un agent demande
+au serveur de composer son propre canal des agents à l'adresse que porte la
+commande, de mener la poignée de main TLS et de vérifier que la chaîne de
+certificats qui répond est bien la sienne. Port non publié (connexion refusée),
+filtré (délai dépassé), nom qui ne se résout pas ou autre service au bout :
+l'écran le dit, avec la ligne `ports:` exacte et les commandes de pare-feu
+(firewalld, ufw, Windows), au lieu de la commande ; *Afficher la commande quand
+même* couvre un réseau où le serveur ne peut pas se joindre lui-même (NAT sans
+« hairpin »). À travers un relais, l'écran attend que le relais annonce que sa
+passerelle écoute, et rappelle le port à ouvrir sur le relais. Les scripts
+d'installation font le même diagnostic quand leur envoi de test échoue, plutôt
+qu'un simple « serveur injoignable ».
+
 ## Ce qui protège le canal
 
 - **TLS 1.3 seulement**, suites AEAD (AES-GCM, ChaCha20-Poly1305). Aucune

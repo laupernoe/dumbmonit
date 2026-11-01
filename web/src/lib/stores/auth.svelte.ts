@@ -24,6 +24,7 @@ import {
 	type SamlStatus,
 	type AccessInfo,
 	type MspAccess,
+	type HttpsStatus,
 	type User
 } from '#lib/api/index.js';
 import { signInWithPasskey } from '#lib/api/passkeys.js';
@@ -136,6 +137,8 @@ class AuthStore {
 	passkeys = $state(false);
 	/** Public demo mode: read-only instance, sign in with demo / demo. */
 	demo = $state(false);
+	/** HTTPS on the web port, for the "session in clear" banner. */
+	https = $state<HttpsStatus | null>(null);
 	/** Error preventing us from knowing the session state (server unreachable). */
 	error = $state<unknown>(null);
 
@@ -236,6 +239,7 @@ class AuthStore {
 			this.saml = state.saml;
 			this.passkeys = state.passkeys;
 			this.demo = state.demo;
+			this.https = state.https;
 			this.error = null;
 			const rights = state.user ? await getMyRights(signal) : { access: null, msp: null };
 			this.access = rights.access;

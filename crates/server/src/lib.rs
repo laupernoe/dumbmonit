@@ -43,5 +43,6 @@ pub mod tsdb;
 pub mod update;
 pub mod upgrade_notes;
 pub mod vulns;
+pub mod web_tls;
 pub mod webchange;
 pub mod website;

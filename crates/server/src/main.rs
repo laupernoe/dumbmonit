@@ -307,17 +307,31 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
         });
     }
 
-    let listener = tokio::net::TcpListener::bind(bind)
+    // HTTPS sur le port de l'interface : certificat fourni ou autosigné, et
+    // redirection des navigations en clair (voir `web_tls`).
+    dumbmonit_server::web_tls::init(&state).await.context("preparing HTTPS on the web port")?;
+    dumbmonit_server::web_tls::spawn_refresh(state.clone());
+
+    let tcp = tokio::net::TcpListener::bind(bind)
         .await
         .with_context(|| format!("cannot listen on {bind}"))?;
-    info!(%bind, "interface available");
+    let listener = dumbmonit_server::web_tls::listen(state.web_tls().clone(), tcp)
+        .context("web port listener")?;
+    info!(
+        %bind,
+        https = state.web_tls().server_config().is_some(),
+        redirect = state.web_tls().redirect_enabled(),
+        "interface available (HTTP and HTTPS on the same port)"
+    );
 
-    // `ConnectInfo` : l'adresse du client, pour les compteurs de tentatives et
-    // le journal d'audit (voir `auth::client_ip`).
+    // `ConnectInfo` : l'adresse du client et le chiffrement de la connexion,
+    // pour les compteurs de tentatives, le journal d'audit (voir
+    // `auth::client_ip`) et les cookies `Secure`.
     let state_for_shutdown = state.clone();
     axum::serve(
         listener,
-        api::router(state).into_make_service_with_connect_info::<std::net::SocketAddr>(),
+        api::router(state)
+            .into_make_service_with_connect_info::<dumbmonit_server::web_tls::WebPeer>(),
     )
     .with_graceful_shutdown(shutdown_signal())
     .await

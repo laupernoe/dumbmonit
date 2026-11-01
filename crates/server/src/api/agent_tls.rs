@@ -22,6 +22,92 @@ pub fn routes() -> Router<AppState> {
         .route("/agent/tls", get(overview).put(update))
         .route("/agent/tls/rotation", post(start_rotation).delete(cancel_rotation))
         .route("/agent/tls/rotation/complete", post(complete_rotation))
+        .route("/agent/tls/check", post(check))
+}
+
+#[derive(Debug, Default, Deserialize)]
+pub struct CheckPayload {
+    /// Adresse par laquelle les machines joignent l'interface (celle du
+    /// navigateur, comme pour la commande d'installation).
+    #[serde(default)]
+    pub base_url: Option<String>,
+    /// Installation à travers ce relais.
+    #[serde(default)]
+    pub relay_id: Option<dumbmonit_proto::TargetId>,
+    #[serde(default)]
+    pub relay_host: Option<String>,
+}
+
+/// Passerelle d'un relais, telle que le relais la déclare.
+#[derive(Debug, Serialize)]
+pub struct RelayCheck {
+    pub relay_id: dumbmonit_proto::TargetId,
+    pub relay_name: String,
+    pub host: String,
+    pub port: u16,
+    /// Le relais dit écouter sur ce port (`AgentIdentity.relay_gateway`).
+    pub listening: bool,
+}
+
+/// Ce que l'écran d'ajout montre avant la commande d'installation.
+#[derive(Debug, Serialize)]
+pub struct ChannelCheck {
+    /// Le port des agents est ouvert (`DUMBMONIT_AGENT_LISTEN`).
+    pub enabled: bool,
+    /// URL du canal que la commande portera.
+    pub url: Option<String>,
+    pub host: Option<String>,
+    /// Port composé par les agents (`DUMBMONIT_AGENT_PUBLIC_PORT`, sinon
+    /// celui de l'écoute).
+    pub port: Option<u16>,
+    /// Port d'écoute dans le conteneur (`DUMBMONIT_AGENT_LISTEN`).
+    pub listen_port: Option<u16>,
+    /// Résultat de la tentative ; absent à travers un relais (le serveur ne
+    /// voit pas le réseau du site) ou quand le canal est fermé.
+    pub outcome: Option<agent_tls::probe::Outcome>,
+    pub relay: Option<RelayCheck>,
+}
+
+/// `POST /api/agent/tls/check` : le canal chiffré répond-il à l'adresse que
+/// la commande d'installation donnera aux machines ?
+async fn check(
+    _: AdminIdentity,
+    State(state): State<AppState>,
+    Json(payload): Json<CheckPayload>,
+) -> ApiResult<Json<ChannelCheck>> {
+    let route = match payload.relay_id {
+        Some(relay) => Some(
+            super::ingest::relay_route(&state, relay, payload.relay_host.as_deref(), None).await?,
+        ),
+        None => None,
+    };
+    let params =
+        super::ingest::install_parameters_via(&state, payload.base_url.as_deref(), route.clone())
+            .await;
+    let parsed = params.agent_url.as_deref().and_then(|url| reqwest::Url::parse(url).ok());
+    let host = parsed.as_ref().and_then(|url| url.host_str().map(str::to_string));
+    let port = parsed.as_ref().and_then(reqwest::Url::port_or_known_default);
+    let outcome = match (&route, &host, port) {
+        (None, Some(host), Some(port)) => {
+            Some(agent_tls::probe::check(host, port, &state.agent_tls().pins()).await)
+        }
+        _ => None,
+    };
+    Ok(Json(ChannelCheck {
+        enabled: state.config.agent_listen.is_some(),
+        url: params.agent_url.clone(),
+        host,
+        port,
+        listen_port: state.config.agent_listen.map(|listen| listen.port()),
+        outcome,
+        relay: route.map(|route| RelayCheck {
+            relay_id: route.relay_id,
+            relay_name: route.relay_name,
+            host: route.host,
+            port: route.port,
+            listening: route.listening,
+        }),
+    }))
 }
 
 /// Canal par lequel une machine a parlé en dernier.

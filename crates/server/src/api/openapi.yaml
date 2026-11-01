@@ -468,7 +468,7 @@ paths:
           description: Signed in; the session cookie is set.
           headers:
             Set-Cookie:
-              description: "`dumbmonit_session`, HttpOnly, SameSite=Lax."
+              description: "`dumbmonit_session` (`__Host-dumbmonit_session` over HTTPS, then also `Secure`), HttpOnly, SameSite=Strict."
               schema: { type: string }
         "200":
           description: Two-factor authentication required.
@@ -495,7 +495,7 @@ paths:
           description: Signed in; the session cookie is set.
           headers:
             Set-Cookie:
-              description: "`dumbmonit_session`, HttpOnly, SameSite=Lax."
+              description: "`dumbmonit_session` (`__Host-dumbmonit_session` over HTTPS, then also `Secure`), HttpOnly, SameSite=Strict."
               schema: { type: string }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
@@ -606,7 +606,7 @@ paths:
           description: Signed in; the session cookie is set.
           headers:
             Set-Cookie:
-              description: "`dumbmonit_session`, HttpOnly, SameSite=Lax."
+              description: "`dumbmonit_session` (`__Host-dumbmonit_session` over HTTPS, then also `Secure`), HttpOnly, SameSite=Strict."
               schema: { type: string }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
@@ -5120,6 +5120,57 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/agent/tls/check:
+    post:
+      operationId: checkAgentChannel
+      tags: [Agents]
+      summary: Can machines reach the encrypted agent channel?
+      description: >-
+        The server dials its own agent channel at the address the install
+        command will carry (from `base_url`), completes the TLS 1.3 handshake
+        and checks that the certificate chain is its own. Through a relay
+        (`relay_id`), nothing is dialled: the answer says whether the relay
+        reports that its gateway listens. Nothing secret is sent.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                base_url: { type: string, description: "Address machines reach the web interface at." }
+                relay_id: { type: integer }
+                relay_host: { type: [string, "null"] }
+      responses:
+        "200":
+          description: What answered.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enabled: { type: boolean }
+                  url: { type: [string, "null"] }
+                  host: { type: [string, "null"] }
+                  port: { type: [integer, "null"], description: "Port agents dial (DUMBMONIT_AGENT_PUBLIC_PORT, else the listen port)." }
+                  listen_port: { type: [integer, "null"], description: "Listen port inside the container." }
+                  outcome:
+                    type: [string, "null"]
+                    enum: [ok, dns, refused, timeout, tls, foreign, null]
+                  relay:
+                    type: [object, "null"]
+                    properties:
+                      relay_id: { type: integer }
+                      relay_name: { type: string }
+                      host: { type: string }
+                      port: { type: integer }
+                      listening: { type: boolean }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/agent/updates:
     get:
       operationId: getAgentUpdates
@@ -8261,6 +8312,73 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/security/https:
+    get:
+      operationId: getHttps
+      tags: [Security]
+      summary: HTTPS of the web port and what still travels in clear (admin only)
+      description: >-
+        The certificate served on the web port (provided or self-signed, its
+        SHA-256 fingerprint), the redirect of plain-HTTP page visits, whether
+        this request came over HTTPS, and every connection the server makes or
+        accepts in clear or without certificate checks. Session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: HTTPS state and the cleartext report.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HttpsView" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: setHttpsRedirect
+      tags: [Security]
+      summary: Send plain-HTTP page visits to HTTPS (admin only)
+      description: >-
+        Recorded in the security log. 409 when `DUMBMONIT_HTTPS_REDIRECT` forces
+        the value, 400 when HTTPS is not available. Session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [redirect]
+              properties:
+                redirect: { type: boolean }
+      responses:
+        "200":
+          description: The new state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HttpsView" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/security/https/certificate.pem:
+    get:
+      operationId: getHttpsCertificate
+      tags: [Security]
+      summary: The certificate served on the web port, in PEM (admin only)
+      description: To trust it on a workstation, or compare it. Session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: PEM certificate.
+          content:
+            application/x-pem-file:
+              schema: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/security/summary:
     get:
       operationId: getSecuritySummary
@@ -10451,6 +10569,46 @@ components:
             label: { type: string, description: Button label. }
         passkeys: { type: boolean, description: "At least one passkey is registered: the sign-in screen offers to use one." }
         demo: { type: boolean }
+        https:
+          type: object
+          description: HTTPS of the web port, for the "session in clear" banner. Nothing secret.
+          properties:
+            available: { type: boolean, description: The web port also serves HTTPS. }
+            secure: { type: boolean, description: This request came over HTTPS (direct, or through a trusted proxy). }
+            fingerprint_sha256: { type: [string, "null"], description: SHA-256 of the served certificate, as browsers show it. }
+            self_signed: { type: boolean }
+    HttpsView:
+      type: object
+      properties:
+        enabled: { type: boolean, description: "`DUMBMONIT_TLS`: the web port also serves HTTPS." }
+        available: { type: boolean, description: A certificate is loaded and served. }
+        certificate:
+          type: [object, "null"]
+          properties:
+            source: { type: string, enum: [provided, self_signed] }
+            fingerprint_sha256: { type: string }
+            public_key_pin: { type: [string, "null"], description: "`sha256//…`, the pin of `curl --pinnedpubkey` (self-signed only)." }
+            subject: { type: string }
+            issuer: { type: string }
+            not_after: { type: [string, "null"] }
+            names: { type: array, items: { type: string } }
+        error: { type: [string, "null"], description: Last reload error of a provided certificate. }
+        redirect: { type: boolean }
+        redirect_forced: { type: [boolean, "null"], description: "Set by `DUMBMONIT_HTTPS_REDIRECT`." }
+        request_https: { type: boolean }
+        request_tls: { type: boolean }
+        trusted_proxies: { type: integer }
+        hsts: { type: string }
+        findings:
+          type: array
+          items:
+            type: object
+            properties:
+              area: { type: string, examples: [notifications] }
+              code: { type: string, examples: [smtp_plain] }
+              severity: { type: string, enum: [warning, info] }
+              subject: { type: string, description: Name or address of the item; never a secret. }
+              link: { type: [string, "null"] }
     SetupRequest:
       type: object
       required: [setup_code, password]
@@ -10809,6 +10967,12 @@ components:
               sha256: { type: string }
         linux_template: { type: string, description: "Unix install command; replace `{TOKEN}`." }
         windows_template: { type: string, description: "PowerShell install command; replace `{TOKEN}`." }
+        https_pin:
+          type: [string, "null"]
+          description: >-
+            Public-key pin (`sha256//…`) of the self-signed HTTPS certificate, when the
+            interface is reached over direct HTTPS: the Unix command then downloads over
+            HTTPS checked by it (`curl --pinnedpubkey`, `--pinned-key=`).
         via_relay:
           oneOf:
             - type: "null"
@@ -10876,6 +11040,7 @@ components:
         settings: { $ref: "#/components/schemas/AgentUpdateSettings" }
         version: { type: string, description: Version of this server and of the agent binaries it ships. }
         build: { type: [string, "null"], description: Commit of this build. }
+        blocked_unsigned: { type: boolean, description: "Updates are held: a shipped build is unsigned and unsigned builds are not accepted." }
         binaries:
           type: array
           items:
@@ -10910,7 +11075,7 @@ components:
               requested: { type: boolean, description: Update now was asked and has not been answered yet. }
               status:
                 type: string
-                enum: [up_to_date, pending, updating, failed, refused, disabled, manual, waiting_window, waiting_canary, newer, legacy, container, read_only, disabled_locally, unsupported, no_binary]
+                enum: [up_to_date, pending, updating, failed, refused, disabled, manual, waiting_window, waiting_canary, newer, legacy, container, read_only, disabled_locally, unsupported, no_binary, unsigned]
               reason: { type: [string, "null"] }
               last:
                 type: [object, "null"]

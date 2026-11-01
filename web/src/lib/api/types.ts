@@ -1283,6 +1283,74 @@ export interface AuthStatus {
 	passkeys?: boolean;
 	/** Public demo mode: sign in with demo / demo; every change answers 403 `{ demo: true }`. */
 	demo: boolean;
+	/** HTTPS on the web port, for the "session in clear" banner. */
+	https?: HttpsStatus;
+}
+
+/** `AuthStatus.https`: nothing secret, the fingerprint is what every client receives. */
+export interface HttpsStatus {
+	/** The web port also serves HTTPS. */
+	available: boolean;
+	/** This request came over HTTPS (direct, or through a trusted proxy). */
+	secure: boolean;
+	fingerprint_sha256: string | null;
+	/** The certificate is self-signed: browsers warn once. */
+	self_signed: boolean;
+}
+
+// --- HTTPS and cleartext report (Settings → Security) -----------------------
+// Mirrors `GET/PUT /api/security/https` (crates/server/src/api/https.rs).
+
+export interface HttpsCertificate {
+	source: 'provided' | 'self_signed';
+	/** SHA-256 of the certificate, as browsers show it (AB:CD:…). */
+	fingerprint_sha256: string;
+	/** `sha256//…`, the public-key pin of `curl --pinnedpubkey` (self-signed only). */
+	public_key_pin: string | null;
+	subject: string;
+	issuer: string;
+	not_after: string | null;
+	names: string[];
+}
+
+/** One place where data still travels in clear, or without certificate checks. */
+export interface HttpsFinding {
+	area: 'web' | 'storage' | 'notifications' | 'monitors' | 'logs' | 'sign_in' | 'agents' | 'backups' | string;
+	code: string;
+	severity: 'warning' | 'info';
+	/** Name or address of the item; never a secret. */
+	subject: string;
+	link: string | null;
+}
+
+export interface HttpsView {
+	enabled: boolean;
+	available: boolean;
+	certificate: HttpsCertificate | null;
+	error: string | null;
+	redirect: boolean;
+	/** Forced by DUMBMONIT_HTTPS_REDIRECT: the setting cannot be changed here. */
+	redirect_forced: boolean | null;
+	request_https: boolean;
+	request_tls: boolean;
+	trusted_proxies: number;
+	hsts: string;
+	findings: HttpsFinding[];
+}
+
+/** `POST /api/agent/tls/check`: is the encrypted agent channel reachable where agents will dial? */
+export type AgentChannelOutcome = 'ok' | 'dns' | 'refused' | 'timeout' | 'tls' | 'foreign';
+export interface AgentChannelCheck {
+	enabled: boolean;
+	url: string | null;
+	host: string | null;
+	/** Port agents dial (DUMBMONIT_AGENT_PUBLIC_PORT, else the listen port). */
+	port: number | null;
+	/** Port inside the container (DUMBMONIT_AGENT_LISTEN). */
+	listen_port: number | null;
+	/** Absent through a relay (the server cannot see the site's network) or when the channel is off. */
+	outcome: AgentChannelOutcome | null;
+	relay: { relay_id: number; relay_name: string; host: string; port: number; listening: boolean } | null;
 }
 
 export interface CreateUserPayload {
@@ -1460,6 +1528,8 @@ export interface AuthState {
 	passkeys: boolean;
 	/** Public demo mode (read-only, fictional data). */
 	demo: boolean;
+	/** HTTPS on the web port; `null` for a server that does not say. */
+	https: HttpsStatus | null;
 }
 
 /** A passkey (WebAuthn credential) of the current account. Mirrors `auth::passkeys::PasskeyView`. */
@@ -6276,7 +6346,9 @@ export type AgentUpdateStatus =
 	| 'read_only'
 	| 'disabled_locally'
 	| 'unsupported'
-	| 'no_binary';
+	| 'no_binary'
+	/** The shipped build has no signature and unsigned builds are not accepted. */
+	| 'unsigned';
 export interface AgentUpdateOutcome {
 	outcome: 'succeeded' | 'failed' | 'rolled_back' | 'refused';
 	version: string | null;
@@ -6304,6 +6376,8 @@ export interface AgentUpdates {
 	settings: AgentUpdateSettings;
 	version: string;
 	build: string | null;
+	/** Updates are blocked: a shipped build is unsigned and unsigned builds are not accepted. */
+	blocked_unsigned: boolean;
 	binaries: { platform: string; sha256: string; signed: boolean }[];
 	rollout: { canaries: number; canaries_updated: number; open: boolean; reason: string | null };
 	agents: AgentUpdateAgent[];

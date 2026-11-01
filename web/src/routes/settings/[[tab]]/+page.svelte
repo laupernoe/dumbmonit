@@ -32,6 +32,7 @@
 		type SettingsTab
 	} from '#lib/components/settings/tabs.js';
 	import SecuritySection from '#lib/components/settings/SecuritySection.svelte';
+	import HttpsSection from '#lib/components/settings/HttpsSection.svelte';
 	import SecurityScoreSection from '#lib/components/settings/SecurityScoreSection.svelte';
 	import LocationsSection from '#lib/components/settings/LocationsSection.svelte';
 	import UsersSection from '#lib/components/settings/UsersSection.svelte';
@@ -94,7 +95,7 @@
 		monitoring: [AgentsSection, PacksSection, SecurityScoreSection, ...(auth.isAdmin ? [LocationsSection] : [])],
 		notifications: [ChannelsSection, NotificationPolicySection],
 		wall: [WallModeSection],
-		system: [BackupSection, ...(auth.isAdmin ? [ConfigFilesSection] : []), SelfMonitoringSection, ...(auth.isAdmin ? [StorageSection, LogsSection] : []), AssistantSection, AboutSection]
+		system: [BackupSection, ...(auth.isAdmin ? [ConfigFilesSection] : []), SelfMonitoringSection, ...(auth.isAdmin ? [HttpsSection, StorageSection, LogsSection] : []), AssistantSection, AboutSection]
 	});
 
 	const sections = $derived(SECTIONS[tab]);

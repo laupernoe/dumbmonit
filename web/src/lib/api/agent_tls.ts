@@ -3,7 +3,7 @@
  * post-quantum key exchange. Administrator session only.
  */
 import { request } from './client';
-import type { AgentChannelOverview } from './types';
+import type { AgentChannelCheck, AgentChannelOverview } from './types';
 
 export function getAgentChannel(signal?: AbortSignal): Promise<AgentChannelOverview> {
 	return request<AgentChannelOverview>('/agent/tls', { signal });
@@ -24,4 +24,16 @@ export function completeAgentCaRotation(): Promise<AgentChannelOverview> {
 
 export function cancelAgentCaRotation(): Promise<void> {
 	return request<void>('/agent/tls/rotation', { method: 'DELETE' });
+}
+
+/**
+ * Asks the server to dial its own agent channel at the address the install
+ * command will carry (`base_url`, or through a relay), before showing the
+ * command.
+ */
+export function checkAgentChannel(
+	body: { base_url: string; relay_id?: number; relay_host?: string | null },
+	signal?: AbortSignal
+): Promise<AgentChannelCheck> {
+	return request<AgentChannelCheck>('/agent/tls/check', { method: 'POST', body, signal });
 }
