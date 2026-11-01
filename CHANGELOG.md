@@ -50,6 +50,21 @@ All notable changes to this project are documented here. The format follows
   instead of the nine (about 4 MB of JavaScript less), identical reads started at
   the same moment share one request, and the overview's figures are no longer
   fetched three times on arrival.
+- **The wall is a picture again.** `/wall` opens on Paris by default (the
+  rooftop, the Eiffel Tower, the pigeons: Gaston holding a sign with the number
+  of problems, Mimi and her croissant, Jules on the lamp post) instead of a
+  black board. The sky follows the real hour; the weather follows the network
+  (clear, clouds, rain, then a thunderstorm in a real outage). The verdict,
+  the clock and the date are huge, the problems come as tiles, then every
+  monitor as a small tile; the five fleet figures and the health river move to
+  a quiet strip along the foot of the screen. Night (default) and Day themes;
+  New York, Tokyo and Dubai stay night scenes. The default city and theme are
+  set in Settings › Wall display (remembered per browser), overridden by `?city=`
+  and `?theme=` and by the Backdrop and Theme buttons on the wall; `none` is
+  still a choice. The scenes are loaded on demand, still on a phone or in a
+  hidden tab, and a still picture under reduced motion.
+- **Status pages show their scene by default.** A page whose scene list is empty
+  now draws Paris unless Simple mode is on.
 - **A complete public demo.** The demo (`DUMBMONIT_DEMO=1`) now fills every
   page but log search. Two clients in MSP mode: the homelab, now with UniFi, Kopia,
   DNS checks and an iSCSI LUN on the Synology NAS, and a small architecture

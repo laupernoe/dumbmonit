@@ -1,0 +1,43 @@
+{
+	"settings_wall_remembered": "Remembered in this browser. The Backdrop and Theme buttons on the wall change the same choices.",
+	"settings_wall_scene_help": "The city drawn behind the board. Auto picks the closest one to this browser's time zone; None keeps a plain board. A link can still ask for another city with ?city=.",
+	"settings_wall_scene_label": "Scene on the wall",
+	"settings_wall_theme_help": "Night is the default. Day lights Paris; the other cities are only drawn at night. A link can ask for one with ?theme=.",
+	"settings_wall_theme_label": "Theme",
+	"status_form_scene_help_default": "An illustrated city behind the title of the public page. Without a choice the page shows Paris; tick Simple mode for a plain page. Tick several to alternate between them.",
+	"status_form_scene_none_default": "Nothing ticked: the page shows Paris",
+	"wall_band_river_more": "+{count} more",
+	"wall_devices_aria": "Monitors",
+	"wall_devices_more": "{count} more monitors, all reporting",
+	"wall_devices_more_trouble": "{count} more monitors (needing attention: {trouble})",
+	"wall_devices_reporting": "Reporting",
+	"wall_problems_agent_silent": "Agent silent for {duration}",
+	"wall_problems_aria": "Problems",
+	"wall_problems_more": "{count} more problems: see Alerts",
+	"wall_problems_no_data": "No data for {duration}",
+	"wall_problems_parent_down": "{rule} · {parent} is down",
+	"wall_problems_times": "×{count}",
+	"wall_scene_sign_problems": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} PROBLEM",
+				"countPlural=other": "{count} PROBLEMS"
+			}
+		}
+	],
+	"wall_scene_world_hint": "Auto picks the closest city to this display's time zone. None keeps a plain board.",
+	"wall_scene_world_title": "City behind the board",
+	"wall_theme_button": "Theme",
+	"wall_theme_day": "Day",
+	"wall_theme_forced": "A link set this one for right now; it is not saved here.",
+	"wall_theme_night": "Night",
+	"wall_theme_night_only": "This city is drawn at night only.",
+	"wall_theme_title": "Theme on this display"
+}

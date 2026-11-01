@@ -34,6 +34,7 @@
 	import { toneFrom, type MoodSnapshot, type SceneTone } from '#lib/scene/mood.js';
 	import SceneBackdrop from '#lib/components/status/scenes/SceneBackdrop.svelte';
 	import { NIGHT_SCENES, knownScenes } from '#lib/components/status/scenes/registry.js';
+	import { withDefaultScene } from '#lib/components/status/scenes/nightScene.js';
 	import { tallyItems } from '#lib/components/status/tally.js';
 	import { accentClass, homepageHost, isClosed, overallBanner } from '#lib/components/status/words.js';
 
@@ -157,13 +158,13 @@
 	const subscribeServices = $derived(status ? status.groups.flatMap((g) => g.items.map((item) => ({ key: item.key, label: item.label }))) : []);
 	const serviceCount = $derived(status ? status.groups.reduce((n, g) => n + g.items.length, 0) : 0);
 
-	// Banner scene: an empty (or unknown) list keeps the plain page.
-	const sceneIds = $derived(knownScenes(status?.page.scenes));
+	// Banner scene: an empty (or unknown) list shows the default scene (Paris).
+	const sceneIds = $derived(withDefaultScene(knownScenes(status?.page.scenes)));
 	// Simple mode: no scene, no pigeon, no animation, only a light/dark toggle.
 	const simple = $derived(status?.page.simple ?? false);
 	let activeScene = $state<string | null>(null);
 	const nightScene = $derived(activeScene !== null && NIGHT_SCENES.has(activeScene));
-	const withScene = $derived(!simple && sceneIds.length > 0);
+	const withScene = $derived(!simple);
 
 	// Scene mood and gestures from the published state: a service down or a major
 	// incident is critical, anything degraded or any open incident is a warning.

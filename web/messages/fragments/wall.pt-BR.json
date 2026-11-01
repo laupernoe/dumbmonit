@@ -1,0 +1,43 @@
+{
+	"settings_wall_remembered": "Lembrado neste navegador. Os botões Fundo e Tema do mural alteram as mesmas escolhas.",
+	"settings_wall_scene_help": "A cidade desenhada atrás do painel. Auto escolhe a mais próxima do fuso horário deste navegador; Nenhum deixa um painel simples. Um link ainda pode pedir outra cidade com ?city=.",
+	"settings_wall_scene_label": "Cena do mural",
+	"settings_wall_theme_help": "Noite é o tema padrão. Dia ilumina Paris; as outras cidades só são desenhadas à noite. Um link pode pedir um com ?theme=.",
+	"settings_wall_theme_label": "Tema",
+	"status_form_scene_help_default": "Uma cidade ilustrada atrás do título da página pública. Sem escolha, a página mostra Paris; marque o modo simples para uma página simples. Marque várias para alternar entre elas.",
+	"status_form_scene_none_default": "Nada marcado: a página mostra Paris",
+	"wall_band_river_more": "+{count} mais",
+	"wall_devices_aria": "Monitores",
+	"wall_devices_more": "Mais {count} monitores, todos reportando",
+	"wall_devices_more_trouble": "Mais {count} monitores (a verificar: {trouble})",
+	"wall_devices_reporting": "Reportando",
+	"wall_problems_agent_silent": "Agente em silêncio há {duration}",
+	"wall_problems_aria": "Problemas",
+	"wall_problems_more": "Mais {count} problemas: ver Alertas",
+	"wall_problems_no_data": "Sem dados há {duration}",
+	"wall_problems_parent_down": "{rule} · {parent} está fora do ar",
+	"wall_problems_times": "×{count}",
+	"wall_scene_sign_problems": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} PROBLEMA",
+				"countPlural=other": "{count} PROBLEMAS"
+			}
+		}
+	],
+	"wall_scene_world_hint": "Auto escolhe a cidade mais próxima do fuso horário desta tela. Nenhum deixa um painel simples.",
+	"wall_scene_world_title": "Cidade atrás do painel",
+	"wall_theme_button": "Tema",
+	"wall_theme_day": "Dia",
+	"wall_theme_forced": "Um link definiu este por enquanto; ele não é salvo aqui.",
+	"wall_theme_night": "Noite",
+	"wall_theme_night_only": "Esta cidade só é desenhada à noite.",
+	"wall_theme_title": "Tema nesta tela"
+}
