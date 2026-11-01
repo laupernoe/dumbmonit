@@ -42,7 +42,7 @@ l'installer pour de vrai, ou pour mettre une vitrine sur votre propre site.
   historique des alertes sont remplis, et quelques alertes sont actives. Le
   semis remplit aussi ce qui se règle d'habitude à la main : équipes et
   dossiers, comptes et plannings d'astreinte avec politiques d'escalade,
-  silences, consignes, deux tableaux de bord, rapports planifiés, canaux de
+  silences, consignes, rapports planifiés, canaux de
   notification (jamais utilisés), sites sur la carte du monde, failles
   connues, quatre pages de statut (une par scène de nuit) avec un incident en
   cours, et un balayage réseau avec un appareil nouveau. Tout est calculé à

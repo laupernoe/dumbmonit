@@ -340,17 +340,6 @@ export async function listAlerts(signal?: AbortSignal): Promise<Alert[]> {
 	}
 }
 
-/** True if the alerts route is already served by the backend. */
-export async function alertsAvailable(signal?: AbortSignal): Promise<boolean> {
-	try {
-		await request<Alert[]>('/alerts', { signal, anticipated: true });
-		return true;
-	} catch (cause) {
-		if (cause instanceof ApiError && cause.missing) return false;
-		return true;
-	}
-}
-
 /**
  * Recent phase transitions, newest first. `limit` caps the count; `since` is an
  * RFC 3339 lower bound (the server defaults to the last seven days).
@@ -989,12 +978,6 @@ export function unsubscribeFromStatus(slug: string, token: string): Promise<{ st
 	return request(`/public/status/${encodeURIComponent(slug)}/unsubscribe`, { method: 'POST', query: { token } });
 }
 
-/** Public: base URL of a page's badges (append `badge.svg`, `uptime.svg?days=30`, `response.svg`). */
-export function statusBadgeBase(slug: string, componentKey?: string): string {
-	const base = `/api/public/status/${encodeURIComponent(slug)}`;
-	return componentKey ? `${base}/components/${encodeURIComponent(componentKey)}` : base;
-}
-
 /**
  * Public document of a status page: no session, no cookie needed for a public
  * page. A private page answers 401 (`ApiError.access` says what it wants),
@@ -1042,14 +1025,6 @@ export function getOnboarding(signal?: AbortSignal): Promise<OnboardingState> {
 /** Dismisses a step, or the whole guide. Returns the state the server kept. */
 export function updateOnboarding(patch: OnboardingPatch): Promise<OnboardingState> {
 	return request<OnboardingState>('/onboarding', { method: 'PUT', body: patch });
-}
-
-/**
- * Team rights of the current account. Older servers do not send `access`:
- * the account is then treated as unrestricted. Never throws (but an abort).
- */
-export async function getMyAccess(signal?: AbortSignal): Promise<AccessInfo | null> {
-	return (await getMyRights(signal)).access;
 }
 
 /**
