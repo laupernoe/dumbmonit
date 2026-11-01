@@ -84,7 +84,9 @@ hyper-util = { version = "0.1.21", features = ["tokio"] }
 # hybride post-quantique X25519MLKEM768, certificats clients. Le moteur
 # aws-lc-rs est celui que rustls compile déjà (via reqwest) ; `rcgen` fabrique
 # l'autorité interne et les certificats avec ce même moteur.
-rustls = { version = "0.23", default-features = false, features = ["std", "aws_lc_rs"] }
+# `tls12` : l'interface web (`web_tls`) accepte aussi TLS 1.2, suites AEAD
+# seulement ; le canal des agents reste en TLS 1.3 seul.
+rustls = { version = "0.23", default-features = false, features = ["std", "aws_lc_rs", "tls12"] }
 rcgen = { version = "0.14", default-features = false, features = ["aws_lc_rs"] }
 
 aes-gcm = "0.11"

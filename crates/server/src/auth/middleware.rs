@@ -153,6 +153,8 @@ pub const TOKEN_DENIED: &[&str] = &[
     "/agent/tls",
     "/agent/updates",
     "/account",
+    // HTTPS de l'interface : couper la redirection se fait en session.
+    "/security/https",
     // Agir sur une machine (remédiation) reste un geste fait dans l'interface.
     "/remediation",
 ];
@@ -167,7 +169,7 @@ const TOKEN_DENIED_MESSAGE: &str = "API tokens cannot manage accounts, sessions,
 /// l'accord CORS de ce serveur — qui ne l'accorde à personne. Sa présence prouve
 /// donc que la requête vient de notre propre origine, ou d'un script qui a le
 /// jeton de session sous la main : c'est la protection contre le CSRF, en
-/// complément de `SameSite=Lax` sur le cookie.
+/// complément de `SameSite=Strict` sur le cookie.
 pub const CSRF_HEADER: &str = "x-requested-with";
 pub const CSRF_VALUE: &str = "DumbMonit";
 
