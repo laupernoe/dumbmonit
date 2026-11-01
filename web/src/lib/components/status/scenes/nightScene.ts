@@ -19,6 +19,14 @@ export const HORIZON = 860;
 export const LANDMARK_X = 1360;
 export const MOON = { x: 1600, y: 300, r: 30 } as const;
 
+/** The scene a status page shows when it names none (or none this build knows). */
+export const DEFAULT_SCENE = 'paris';
+
+/** The scenes to draw: the page's own, or the default one when the list is empty. Simple mode is the only way to a plain page. */
+export function withDefaultScene(ids: readonly string[]): string[] {
+	return ids.length > 0 ? [...ids] : [DEFAULT_SCENE];
+}
+
 export type SceneMood = 'ok' | 'warn' | 'critical' | 'calm' | 'clouded' | 'storm';
 export type ScenePulse = { kind: 'down' | 'up' | 'resolved'; at: number } | null;
 

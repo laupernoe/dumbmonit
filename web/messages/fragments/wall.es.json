@@ -1,0 +1,43 @@
+{
+	"settings_wall_remembered": "Se recuerda en este navegador. Los botones Fondo y Tema del muro cambian las mismas opciones.",
+	"settings_wall_scene_help": "La ciudad dibujada detrás del panel. Auto elige la más cercana a la zona horaria de este navegador; Ninguno deja un panel liso. Un enlace aún puede pedir otra ciudad con ?city=.",
+	"settings_wall_scene_label": "Escena del muro",
+	"settings_wall_theme_help": "Noche es el tema por defecto. Día ilumina París; las demás ciudades solo se dibujan de noche. Un enlace puede pedir uno con ?theme=.",
+	"settings_wall_theme_label": "Tema",
+	"status_form_scene_help_default": "Una ciudad ilustrada detrás del título de la página pública. Sin elección, la página muestra París; marca el modo simple para una página lisa. Marca varias para alternarlas.",
+	"status_form_scene_none_default": "Nada marcado: la página muestra París",
+	"wall_band_river_more": "+{count} más",
+	"wall_devices_aria": "Monitores",
+	"wall_devices_more": "{count} monitores más, todos informando",
+	"wall_devices_more_trouble": "{count} monitores más (a revisar: {trouble})",
+	"wall_devices_reporting": "Informando",
+	"wall_problems_agent_silent": "Agente en silencio desde hace {duration}",
+	"wall_problems_aria": "Problemas",
+	"wall_problems_more": "{count} problemas más: ver Alertas",
+	"wall_problems_no_data": "Sin datos desde hace {duration}",
+	"wall_problems_parent_down": "{rule} · {parent} está caído",
+	"wall_problems_times": "×{count}",
+	"wall_scene_sign_problems": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} PROBLEMA",
+				"countPlural=other": "{count} PROBLEMAS"
+			}
+		}
+	],
+	"wall_scene_world_hint": "Auto elige la ciudad más cercana a la zona horaria de esta pantalla. Ninguno deja un panel liso.",
+	"wall_scene_world_title": "Ciudad detrás del panel",
+	"wall_theme_button": "Tema",
+	"wall_theme_day": "Día",
+	"wall_theme_forced": "Un enlace fijó este por ahora; no se guarda aquí.",
+	"wall_theme_night": "Noche",
+	"wall_theme_night_only": "Esta ciudad solo se dibuja de noche.",
+	"wall_theme_title": "Tema en esta pantalla"
+}
