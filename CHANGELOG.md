@@ -11,6 +11,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Security
 
+- **Enrolment approval for new agents.** Settings > Agents > Enrolment approval:
+  accept new machines automatically, require approval, or accept automatically
+  when the host is in the AD domain of the token. New installations require
+  approval for fleet tokens and accept single-use tokens; existing instances keep
+  accepting automatically. Waiting machines get no certificate, no measurement
+  and no device until accepted (one by one or in bulk); rejected ones stay hidden
+  24 hours; at most 200 wait at once (HTTP 429 beyond). The agent logs "waiting
+  for approval" and retries.
+- **Enrolment alerts and rate limit.** One grouped notification per minute for
+  new enrolments (count and first five names), and at most 60 enrolments per
+  token per hour by default (HTTP 429 and an "enrolment burst" alert beyond).
+- **Idle fleet tokens go to sleep.** A fleet token that enrolled no machine for
+  30 days (setting) stops enrolling, a notification is sent, and "Reactivate" in
+  the token list puts it back. Enrolled machines keep reporting. See
+  docs/install/agent-security.md.
 - **The web port is HTTPS only.** Plain HTTP requests are redirected. Agent install
   commands are `https` with the certificate pinned. Reverse proxies must connect
   over HTTPS.

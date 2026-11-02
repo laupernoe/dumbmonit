@@ -135,6 +135,7 @@ pub async fn restore(
     report.push(restore_rules(&mut tx, bundle, &refs, &channels).await?);
     report.push(restore_overrides(&mut tx, bundle, &refs).await?);
     report.push(restore_notify_policy(&mut tx, bundle).await?);
+    report.push(restore_agent_enrolment(&mut tx, bundle).await?);
     report.push(restore_instance(&mut tx, bundle).await?);
     report.push(restore_silences(&mut tx, bundle, &refs).await?);
     report.push(restore_status_pages(&mut tx, bundle, &refs).await?);
@@ -905,6 +906,65 @@ async fn restore_notify_policy(
     .execute(&mut **tx)
     .await
     .context("écriture de la politique de notification")?;
+    report.count(if existing.is_some() {
+        RestoreOutcome::Updated
+    } else {
+        RestoreOutcome::Created
+    });
+    Ok(report)
+}
+
+/// Garde de l'enrôlement des agents (validation, débit, mise en veille) :
+/// remplacée par celle du lot, après contrôle. Un réglage illisible est
+/// signalé et laissé de côté, l'instance garde le sien.
+///
+/// Un lot d'avant la garde n'en a pas : s'il ramène des jetons d'agent et que
+/// l'instance n'a encore rien réglé, elle prend l'acceptation automatique,
+/// comme l'a fait la migration 0233 sur l'instance d'origine. Sans cela, tout
+/// le parc restauré attendrait une validation.
+async fn restore_agent_enrolment(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+) -> Result<SectionReport> {
+    use crate::collectors::agent::enrolment::{EnrolmentSettings, SETTINGS_KEY};
+    let mut report = SectionReport::new("agent_enrolment");
+    let existing = sqlx::query("SELECT value FROM settings WHERE key = ?")
+        .bind(SETTINGS_KEY)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("lecture de la garde de l'enrôlement")?;
+    let settings = match &bundle.agent_enrolment {
+        Some(raw) => match serde_json::from_value::<EnrolmentSettings>(raw.clone()) {
+            Ok(settings) if settings.validate().is_ok() => settings,
+            _ => {
+                report.skipped += 1;
+                let note = "The agent enrolment settings of the backup are unreadable";
+                report.notes.push(note.into());
+                return Ok(report);
+            }
+        },
+        None if !bundle.agent_tokens.is_empty() && existing.is_none() => {
+            EnrolmentSettings::legacy()
+        }
+        None => return Ok(report),
+    };
+    let value = serde_json::to_vec(&settings)?;
+    if let Some(row) = &existing
+        && row.try_get::<Vec<u8>, _>("value")? == value
+    {
+        report.skipped += 1;
+        return Ok(report);
+    }
+    sqlx::query(
+        "INSERT INTO settings (key, value) VALUES (?, ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value,
+             updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')",
+    )
+    .bind(SETTINGS_KEY)
+    .bind(&value)
+    .execute(&mut **tx)
+    .await
+    .context("écriture de la garde de l'enrôlement")?;
     report.count(if existing.is_some() {
         RestoreOutcome::Updated
     } else {

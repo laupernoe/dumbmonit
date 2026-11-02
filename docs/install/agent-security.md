@@ -150,6 +150,71 @@ Not protected against:
   verified the usual way). The agent channel itself is pinned from the first
   request.
 
+## Protecting enrolment
+
+An enrolment token is used once per machine: after that, the agent speaks with
+its own client certificate. The risk is enrolment itself. A fleet token that
+leaks (it is in a deployment script, an Ansible playbook, an Active Directory
+kit for "every server, including future ones", and often never expires) lets
+anyone enrol fake agents. Three protections apply to machines the server does
+not know yet. Machines already enrolled are never affected: their certificate
+stays valid.
+
+### Enrolment approval
+
+In **Settings > Agents > Enrolment approval**, choose what happens to a new
+machine, separately for fleet tokens and single-use tokens:
+
+| Mode | Effect |
+|------|--------|
+| Accept automatically | The machine enrols at once (the behaviour before this setting). |
+| Require approval | The machine waits until an administrator accepts it. |
+| Accept automatically if the host belongs to the AD domain of the token, otherwise ask | The full host name must end with the token's Active Directory domain; any other machine waits. |
+
+Defaults on a new installation: **Require approval** for fleet tokens,
+**Accept automatically** for single-use tokens (the administrator created that
+token for that machine). An instance that already had enrolment tokens before
+this version keeps accepting automatically; change it when you are ready.
+
+A waiting machine appears under **Waiting for approval** with its host name, the
+source IP address of its request, the identifier of the token it used (never the
+secret) and the time it asked. Accept or reject it, or tick several (or
+**Select all**) and use the action bar. Until it is accepted:
+
+- no client certificate is issued, no measurement is stored and no device is
+  created;
+- the agent retries on its own (every minute on the encrypted channel, with its
+  usual backoff otherwise) and writes `waiting for approval` in its log once.
+
+A rejected machine is refused and is not shown again for 24 hours, unless it
+comes back with another enrolment token. At most 200 machines can wait at once:
+beyond that, new requests get HTTP 429, so a leaked token cannot flood the list.
+A request that its machine stopped renewing is forgotten after 7 days.
+
+### Enrolment alerts and rate limit
+
+Every enrolment, accepted or waiting, is announced on the notification channels
+of the instance (not those of MSP clients, nor on-call or ticket channels). The
+server sends at most one message per minute, with the number of machines and the
+first five names, never one message per machine.
+
+Each token may enrol at most **60 machines per hour** by default (Settings >
+Agents > Enrolment approval, 0 for no limit). Beyond that, enrolments with that
+token get HTTP 429 and an **enrolment burst** alert is sent, once per hour per
+token. If you did not start a deployment, revoke the token.
+
+### Idle fleet tokens go to sleep
+
+A fleet token that enrolled no machine for **30 days** (setting, 0 for never) is
+put to sleep: it refuses new enrolments and one notification is sent. The token
+list shows it as **Asleep**, with a **Reactivate** button that puts it back in
+service (its idle delay starts again). Revoking stays possible at any time.
+Machines already enrolled with a sleeping token keep reporting. On upgrade, the
+idle delay of existing tokens starts from the upgrade.
+
+These settings are part of the backup. A backup made before this version restores
+the automatic acceptance its instance had.
+
 ## Existing agents and the transition
 
 On an instance that already had agents when it was updated, the plain channel

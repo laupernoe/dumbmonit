@@ -323,24 +323,29 @@ async fn enrol(
             }
         }
     }
-    let registration =
-        match agent::enrol(&state.pool, &state.cipher, bearer, secret, &request.identity).await {
-            Ok(registration) => registration,
-            Err(IngestError::Unauthorized) => {
-                return fail(
-                    StatusCode::UNAUTHORIZED,
-                    "Enrollment token missing, unknown or revoked.",
-                );
-            }
-            Err(IngestError::Forbidden(message)) => return fail(StatusCode::FORBIDDEN, &message),
-            Err(IngestError::BadRequest(message)) => {
-                return fail(StatusCode::BAD_REQUEST, &message);
-            }
-            Err(IngestError::Internal(cause)) => {
-                tracing::error!(error = %format!("{cause:#}"), "agent enrolment failed");
-                return error(StatusCode::INTERNAL_SERVER_ERROR, "Internal server error.");
-            }
-        };
+    let origin = agent::EnrolOrigin::network(ip);
+    let enrolled =
+        agent::enrol(&state.pool, &state.cipher, bearer, secret, &request.identity, &origin).await;
+    let registration = match enrolled {
+        Ok(registration) => registration,
+        Err(IngestError::Unauthorized) => {
+            return fail(StatusCode::UNAUTHORIZED, "Enrollment token missing, unknown or revoked.");
+        }
+        // En attente de validation : ni certificat ni échec compté, l'agent
+        // réessaie de lui-même sans faire bloquer son adresse.
+        Err(IngestError::Pending(message)) => return error(StatusCode::FORBIDDEN, &message),
+        Err(IngestError::TooMany(message)) => {
+            return error(StatusCode::TOO_MANY_REQUESTS, &message);
+        }
+        Err(IngestError::Forbidden(message)) => return fail(StatusCode::FORBIDDEN, &message),
+        Err(IngestError::BadRequest(message)) => {
+            return fail(StatusCode::BAD_REQUEST, &message);
+        }
+        Err(IngestError::Internal(cause)) => {
+            tracing::error!(error = %format!("{cause:#}"), "agent enrolment failed");
+            return error(StatusCode::INTERNAL_SERVER_ERROR, "Internal server error.");
+        }
+    };
     state.agent_tls().limits().record_success(&keys);
     if let Err(cause) = super::note_route(&state.pool, registration.target_id, via_relay).await {
         tracing::warn!(error = %format!("{cause:#}"), "agent relay not recorded");

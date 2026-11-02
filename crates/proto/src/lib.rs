@@ -54,9 +54,9 @@ pub use logs::{
 };
 pub use push::{
     AGENT_KEY_HEADER, AGENT_SECRET_HEADER, AGENT_SECRET_PREFIX, AgentIdentity, BINDING_MISMATCH,
-    DeclaredMonitor, INGEST_PATH, InstalledPackage, MAX_BATCH_SAMPLES, MAX_DECLARED_MONITORS,
-    MAX_INVENTORY_PACKAGES, PUSH_PROTOCOL_VERSION, PushAck, PushBatch, RelaySetting,
-    SoftwareInventory, TOKEN_PREFIX,
+    DeclaredMonitor, ENROLMENT_PENDING, ENROLMENT_REJECTED, INGEST_PATH, InstalledPackage,
+    MAX_BATCH_SAMPLES, MAX_DECLARED_MONITORS, MAX_INVENTORY_PACKAGES, PUSH_PROTOCOL_VERSION,
+    PushAck, PushBatch, RelaySetting, SoftwareInventory, TOKEN_PREFIX,
 };
 pub use remediation::{CMD_SCRIPT_RUN, CMD_SERVICE_RESTART, DeclaredScript, RemediationInfo};
 pub use sample::{MetricKind, Sample};
