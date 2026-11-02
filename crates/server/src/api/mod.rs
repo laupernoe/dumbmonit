@@ -1,6 +1,7 @@
 mod activedirectory;
 mod ad_deploy;
 pub(crate) mod agent_commands;
+mod agent_enrolment;
 mod agent_events;
 pub(crate) mod agent_files;
 mod agent_logs;
@@ -254,6 +255,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/agent/install", get(ingest::install_params))
         // Canal chiffré des agents : état, exigence de mTLS, rotation de l'autorité.
         .merge(agent_tls::routes())
+        // Garde de l'enrôlement : validation, débit, jetons en veille.
+        .merge(agent_enrolment::routes())
         // HTTPS de l'interface, redirection et relevé de ce qui passe en clair.
         .merge(https::routes())
         // Ports à ouvrir dans le pare-feu, calculés depuis la configuration réelle.

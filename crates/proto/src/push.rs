@@ -80,6 +80,20 @@ pub const BINDING_MISMATCH: &str = "This machine is already enrolled and bound t
      If you reinstalled it, open its device page in DumbMonit and click \
      'Allow re-enrolment', then restart the agent.";
 
+/// Ce que le serveur répond à une machine dont l'enrôlement attend la
+/// validation d'un administrateur.
+///
+/// Fait partie du protocole, comme [`BINDING_MISMATCH`] : l'agent le reconnaît
+/// pour écrire « waiting for approval » dans son journal au lieu d'un refus, et
+/// réessaie avec sa temporisation habituelle.
+pub const ENROLMENT_PENDING: &str = "This machine is waiting for approval: an administrator must \
+     accept it in DumbMonit (Settings > Agents > Waiting for approval). The agent retries on its \
+     own; nothing is recorded until then.";
+
+/// Ce que le serveur répond à une machine dont l'enrôlement a été refusé.
+pub const ENROLMENT_REJECTED: &str = "An administrator rejected the enrolment of this machine. It \
+     can ask again in 24 hours, or right away with another enrolment token.";
+
 /// Ce que la machine surveillée déclare d'elle-même.
 ///
 /// C'est cette identité qui permet l'enregistrement automatique : un agent qui

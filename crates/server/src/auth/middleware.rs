@@ -160,6 +160,8 @@ pub const TOKEN_DENIED: &[&str] = &[
     "/agent/ad-kit",
     "/agent/tls",
     "/agent/updates",
+    // Accepter une machine, c'est lui ouvrir le serveur : un geste de session.
+    "/agent/enrolment",
     "/account",
     // HTTPS de l'interface : couper la redirection se fait en session.
     "/security/https",

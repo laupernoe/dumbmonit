@@ -82,6 +82,12 @@ impl From<agent::IngestError> for IngestRejection {
             agent::IngestError::BadRequest(why) => {
                 Self { status: StatusCode::BAD_REQUEST, message: why }
             }
+            agent::IngestError::Pending(why) => {
+                Self { status: StatusCode::FORBIDDEN, message: why }
+            }
+            agent::IngestError::TooMany(why) => {
+                Self { status: StatusCode::TOO_MANY_REQUESTS, message: why }
+            }
             agent::IngestError::Internal(error) => {
                 // Même politique que `ApiError` : la panne est journalisée en
                 // entier, mais son détail ne part pas sur le réseau.
@@ -206,7 +212,10 @@ pub async fn receive(
         }
     }
 
-    match agent::ingest(&state.pool, &state.cipher, &state.sink, bearer, secret, batch).await {
+    let origin = agent::EnrolOrigin::network(ip.0);
+    match agent::ingest(&state.pool, &state.cipher, &state.sink, bearer, secret, batch, &origin)
+        .await
+    {
         Ok(mut ack) => {
             if let Err(error) =
                 crate::agent_tls::note_channel(&state.pool, ack.target_id, cert.as_ref()).await
@@ -287,6 +296,9 @@ pub struct TokenView {
     pub ad_domain: Option<String>,
     /// Mode MSP : le client chez lequel ce jeton enrôle.
     pub client_id: i64,
+    /// Jeton de flotte en veille faute d'enrôlement récent : il n'enrôle plus
+    /// tant qu'on ne le remet pas en service. `null` : en service.
+    pub dormant_at: Option<String>,
 }
 
 impl From<agent::TokenRecord> for TokenView {
@@ -305,6 +317,7 @@ impl From<agent::TokenRecord> for TokenView {
             relay_site: record.relay_site,
             ad_domain: record.ad_domain,
             client_id: clients::DEFAULT_CLIENT,
+            dormant_at: None,
         }
     }
 }
@@ -426,13 +439,16 @@ pub async fn list_tokens(
 ) -> ApiResult<Json<Vec<TokenView>>> {
     let tokens = agent::list_tokens(&state.pool).await?;
     let owners = clients::owners(&state.pool, clients::Kind::AgentToken).await?;
+    let dormant = agent::enrolment::dormant_tokens(&state.pool).await?;
     Ok(Json(
         tokens
             .into_iter()
             .map(|record| {
                 let client = owners.get(&record.id).copied();
+                let asleep = dormant.get(&record.id).cloned();
                 let mut view = TokenView::from(record);
                 view.client_id = client.unwrap_or(clients::DEFAULT_CLIENT);
+                view.dormant_at = asleep;
                 view
             })
             .collect(),

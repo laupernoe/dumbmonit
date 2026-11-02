@@ -9,7 +9,7 @@
 	 * (`/targets/new?kind=agent`), never here; the agents themselves are on the
 	 * rack and their own pages.
 	 */
-	import { Cpu, OctagonX, Plus } from 'lucide-svelte';
+	import { Cpu, OctagonX, Plus, RotateCcw } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { closeAgentToken, listAgentTokens, listTokenMachines, revokeAgentToken, type AgentToken, type TokenMachine } from '#lib/api/index.js';
 	import { formatDateTime, formatRelative } from '#lib/format.js';
@@ -17,6 +17,8 @@
 	import { Button, Confirm, Disclosure, EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import AgentChannel from '#lib/components/settings/AgentChannel.svelte';
 	import AgentUpdates from '#lib/components/settings/AgentUpdates.svelte';
+	import AgentEnrolment from '#lib/components/settings/AgentEnrolment.svelte';
+	import { reactivateAgentToken } from '#lib/api/agent_enrolment.js';
 	import { getAgentChannel } from '#lib/api/agent_tls.js';
 	import type { AgentChannelOverview } from '#lib/api/types.js';
 
@@ -115,6 +117,23 @@
 		}
 	}
 
+	// --- Reactivate a sleeping fleet token ---------------------------------------
+
+	let reactivating = $state<number | null>(null);
+
+	async function reactivate(token: AgentToken) {
+		reactivating = token.id;
+		revokeError = null;
+		try {
+			await reactivateAgentToken(token.id);
+			tokens = await listAgentTokens();
+		} catch (cause) {
+			revokeError = { id: token.id, cause };
+		} finally {
+			reactivating = null;
+		}
+	}
+
 	// --- Revoke ---------------------------------------------------------------
 
 	let revoking = $state<number | null>(null);
@@ -165,6 +184,7 @@
 	{/if}
 
 	{#if auth.isAdmin}
+		<AgentEnrolment />
 		<AgentUpdates />
 	{/if}
 
@@ -199,6 +219,7 @@
 										{#if !revoked}
 											<Plate tone={token.max_uses === null ? 'info' : 'ghost'} label={scopeLabel(token)} />
 											{#if spent(token)}<Plate tone="advisory" label={m.settings_agents_enrols_no_more()} />{/if}
+											{#if token.dormant_at}<Plate tone="ghost" label={m.settings_agents_enrol_dormant_badge()} />{/if}
 										{/if}
 									</div>
 									<p class="mt-1 text-sm text-ink-2">
@@ -225,7 +246,17 @@
 											{m.settings_agents_spent_note()}
 										</p>
 									{/if}
+									{#if !revoked && token.dormant_at}
+										<p class="mt-1 text-sm text-ink-2">
+											<time class="tnum" title={formatDateTime(token.dormant_at)}>{m.settings_agents_enrol_dormant_note({ when: formatRelative(token.dormant_at) })}</time>
+										</p>
+									{/if}
 								</div>
+								{#if !revoked && auth.isAdmin && token.dormant_at}
+									<Button variant="secondary" size="sm" loading={reactivating === token.id} onclick={() => reactivate(token)}>
+										<RotateCcw class="size-4" aria-hidden="true" />{m.settings_agents_enrol_reactivate()}
+									</Button>
+								{/if}
 								{#if !revoked && auth.isAdmin && token.ad_domain && !spent(token)}
 									<Confirm variant="secondary" confirmLabel={m.settings_agents_ad_token_stop_confirm()} loading={stopping === token.id} onconfirm={() => stopEnrolments(token)}>
 										<OctagonX class="size-4" aria-hidden="true" />{m.settings_agents_ad_token_stop()}

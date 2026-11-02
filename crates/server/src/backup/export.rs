@@ -97,6 +97,11 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         netscan_schedules: netscan_schedules(pool, &refs).await?,
         lun_links: lun_links(pool, &refs).await?,
         upgrade_notes_closed: upgrade_notes_closed(pool).await?,
+        // Toujours écrite, valeurs par défaut comprises : un lot sans elle vient
+        // d'une version antérieure à la garde (voir `restore_agent_enrolment`).
+        agent_enrolment: Some(serde_json::to_value(
+            crate::collectors::agent::enrolment::load_settings(pool).await?,
+        )?),
     })
 }
 

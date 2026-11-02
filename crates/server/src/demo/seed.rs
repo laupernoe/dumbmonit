@@ -221,7 +221,10 @@ pub async fn push_agent_batch(
         declared_monitors: None,
     };
     let bearer = format!("Bearer {token}");
-    let ack = agent::ingest(pool, cipher, sink, Some(&bearer), secret, batch)
+    // Données de démonstration : rien ne vient du réseau, la garde de
+    // l'enrôlement n'a rien à valider.
+    let origin = agent::EnrolOrigin::Internal;
+    let ack = agent::ingest(pool, cipher, sink, Some(&bearer), secret, batch, &origin)
         .await
         .map_err(|error| anyhow::anyhow!("demo agent push refused: {error:?}"))?;
     Ok((ack.target_id, ack.agent_secret))
