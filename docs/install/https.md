@@ -195,3 +195,5 @@ otherwise.
 | `DUMBMONIT_TLS_KEY` | *(unset)* | PEM private key of that certificate. Set both, or neither. |
 | `DUMBMONIT_TLS_NAMES` | *(empty)* | Extra names and addresses of the self-signed certificate, comma-separated. |
 | `DUMBMONIT_TRUSTED_PROXIES` | *(empty)* | Reverse proxies whose forwarded headers count (client address, HSTS). |
+
+Which ports to open, and which never to expose: see [Network ports](ports.md).
