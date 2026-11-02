@@ -254,7 +254,8 @@
 					<span class="flex-1 truncate text-left text-sm max-lg:hidden">{m.console_search_placeholder()}</span>
 					<kbd class="rounded border border-line-strong px-1.5 py-px font-mono text-[0.6875rem] text-ink-2 max-lg:hidden">{palette.shortcutLabel}</kbd>
 				</button>
-				{#if auth.isAdmin}
+				<!-- Monitors and the add page carry their own "Add a monitor": no second one up here. -->
+				{#if auth.isAdmin && path !== '/targets' && !path.startsWith('/targets/new')}
 					<a
 						href="/targets/new"
 						use:sparkle
