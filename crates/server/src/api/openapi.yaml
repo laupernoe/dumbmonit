@@ -11241,9 +11241,8 @@ components:
         revoked_at: { type: [string, "null"], format: date-time }
     ApiTokenCreate:
       type: object
-      required: [name]
       properties:
-        name: { type: string, minLength: 1, maxLength: 80 }
+        name: { type: string, maxLength: 80, description: 'Optional. Absent or blank, the server generates one ("API token · 2026-11-02").' }
         scope: { $ref: "#/components/schemas/TokenScope", default: read }
         expires_in_days:
           type: [integer, "null"]
@@ -11416,9 +11415,8 @@ components:
               last_seen_at: { type: [string, "null"] }
     AgentTokenCreate:
       type: object
-      required: [name]
       properties:
-        name: { type: string }
+        name: { type: string, description: 'Optional. Absent or blank, the server generates one ("Agent enrolment · 2026-11-02", "Fleet enrolment · 2026-11-02", "Relay enrolment · <site>"); a name given is kept.' }
         base_url: { type: string, description: The URL agents will use; the listen address by default. }
         reusable: { type: boolean, default: false, description: 'Without it, the token enrols one machine.' }
         max_uses: { type: [integer, "null"], minimum: 1 }

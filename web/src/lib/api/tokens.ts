@@ -38,7 +38,8 @@ export interface CreatedApiToken extends ApiToken {
 }
 
 export interface ApiTokenPayload {
-	name: string;
+	/** Optional: blank or absent, the server generates a generic dated name. */
+	name?: string;
 	scope?: ApiTokenScope;
 	/** 1 to 3650; `null` or absent: never expires. */
 	expires_in_days?: number | null;
