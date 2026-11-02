@@ -20,7 +20,7 @@ couleur.
 
 ## Ouvrir et quitter
 
-Ouvrez-le avec l'icône **Mode mur** de la barre du haut, depuis la palette de
+Ouvrez-le avec l'icône **Mode mur** en bas du menu de gauche, depuis la palette de
 commandes (« Mode mur ») ou en tapant l'URL. ++esc++ ou **Quitter** retourne à la
 console. Un compte limité à certaines équipes ou à certains clients n'a pas le
 mur, puisqu'il montre toute la flotte.

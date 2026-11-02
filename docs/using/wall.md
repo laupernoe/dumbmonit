@@ -19,7 +19,7 @@ written next to a shape and never by colour alone.
 
 ## Opening and leaving
 
-Open it with the **Wall mode** icon in the top bar, from the command palette
+Open it with the **Wall mode** icon at the bottom of the left menu, from the command palette
 ("Wall mode") or by typing the URL. ++esc++ or **Exit** returns to the console.
 An account limited to some teams or clients does not get the wall, since it
 shows the whole fleet.

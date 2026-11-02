@@ -20,7 +20,7 @@ estados escritos junto a una forma y nunca solo con color.
 
 ## Abrir y salir
 
-Ábrelo con el icono **Wall mode** de la barra superior, desde la paleta de
+Ábrelo con el icono **Wall mode** al pie del menú lateral, desde la paleta de
 comandos («Wall mode») o escribiendo la URL. ++esc++ o **Exit** vuelve a la
 consola. Una cuenta limitada a algunos equipos o clientes no tiene el modo pared,
 porque muestra toda la flota.

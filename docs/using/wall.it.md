@@ -19,7 +19,7 @@ console, stati scritti accanto a una forma e mai solo a colori.
 
 ## Aprire e uscire
 
-Aprila con l'icona **Wall mode** della barra in alto, dalla command palette
+Aprila con l'icona **Wall mode** in fondo al menu laterale, dalla command palette
 («Wall mode») o digitando l'URL. ++esc++ o **Exit** torna alla console. Un
 account limitato ad alcuni team o clienti non ha la modalità Wall, perché mostra
 l'intera flotta.
