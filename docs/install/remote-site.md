@@ -33,10 +33,11 @@ proxy. Two things travel on that link:
 - the **monitor credentials** of the monitors the relay probes (SNMP community,
   Proxmox API token…), decrypted, inside each probe job.
 
-Over plain HTTP across the internet both would be readable on the way: put the
-server behind HTTPS before relaying anything outside your own network. On a
-LAN or a VPN, HTTP is acceptable and the token is the only secret in flight
-until you assign monitors to the relay. Credentials are never written to disk
+The web port is HTTPS only, so both are encrypted on the way. Across the
+internet, put the server behind a reverse proxy with a public certificate (it
+connects to DumbMonit over HTTPS); on a LAN or a VPN the self-signed
+certificate works, pinned by the fingerprint in the displayed command. The token
+is the only secret in flight until you assign monitors to the relay. Credentials are never written to disk
 on either side: a probe job lives in the server's memory until the relay
 reports it, and the agent keeps nothing between two probes.
 

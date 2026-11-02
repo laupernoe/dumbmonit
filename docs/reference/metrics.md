@@ -193,8 +193,8 @@ rather than one that asks for everything.
 for monitors probed less often than every five minutes.
 
 ```bash
-curl -H 'Authorization: Bearer dmt_…' http://localhost:8080/metrics
-curl -H 'Authorization: Bearer dmt_…' -G http://localhost:8080/federate \
+curl -H 'Authorization: Bearer dmt_…' https://localhost:8080/metrics
+curl -H 'Authorization: Bearer dmt_…' -G https://localhost:8080/federate \
   --data-urlencode 'match[]={__name__=~"dumbmonit_.*",target="4"}'
 ```
 
@@ -207,7 +207,7 @@ them. DumbMonit relays the read half of the Prometheus API under `/prometheus`,
 behind the same token, so Grafana talks to a normal Prometheus data source:
 
 1. **Connections → Data sources → Add → Prometheus**.
-2. **URL**: `http://dumbmonit.lan:8080/prometheus` (Grafana appends
+2. **URL**: `https://dumbmonit.lan:8080/prometheus` (Grafana appends
    `/api/v1/query` itself).
 3. **HTTP headers**: add one, `Authorization` = `Bearer dmt_…`. Grafana stores
    it encrypted and never shows it again.

@@ -524,7 +524,7 @@ Both routes proxy VictoriaMetrics and return series in the Prometheus shape:
 | `GET` | `/api/metrics/query_range?query=…&start=…&end=…&step=…` | Range query. `start` and `end` are **milliseconds** since the epoch; `step` is in seconds and is widened so that a series never exceeds 2,000 points. |
 
 ```bash
-curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
+curl -b cookies.txt -G https://localhost:8080/api/metrics/query \
   --data-urlencode 'query=avg by (target, host) (dumbmonit_cpu_usage_percent)'
 ```
 
@@ -829,7 +829,7 @@ tokens need the `write` scope for changes. See [Email reports](../using/reports.
 | Method | Route | Auth | Purpose |
 |---|---|---|---|
 | `GET` | `/api/agent/tokens` | session only | Every token: `id`, `name`, `prefix`, `created_at`, `last_used_at`, `revoked_at`, `max_uses` (`null` for a fleet token), `uses`, `expires_at`. |
-| `POST` | `/api/agent/tokens` | admin, session only | `{"name": "Home fleet", "base_url": "http://server:8080", "reusable": false, "max_uses": null, "expires_in_days": null}`. `201` with the token fields plus `secret` (shown once), `install_linux` and `install_windows`. `base_url` is the URL agents will use; it defaults to the listen address. Without `reusable`, the token is **single use**: it enrols one machine and no more. With it, `max_uses` caps the enrolments (`null`: no limit). `expires_in_days` stops *enrolments* after that many days; machines already enrolled keep reporting. `400` on a count below 1. |
+| `POST` | `/api/agent/tokens` | admin, session only | `{"name": "Home fleet", "base_url": "https://server:8080", "reusable": false, "max_uses": null, "expires_in_days": null}`. `201` with the token fields plus `secret` (shown once), `install_linux` and `install_windows`. `base_url` is the URL agents will use; it defaults to the listen address. Without `reusable`, the token is **single use**: it enrols one machine and no more. With it, `max_uses` caps the enrolments (`null`: no limit). `expires_in_days` stops *enrolments* after that many days; machines already enrolled keep reporting. `400` on a count below 1. |
 | `DELETE` | `/api/agent/tokens/{id}` | admin, session only | Revoke. `204`; `404` when unknown or already revoked. |
 | `POST` | `/api/ingest` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | Receives a batch of samples from an agent (bodies up to 16 MB). Not meant to be called by hand. The header carries the machine's binding secret; an agent that has none omits it, which is how it asks for one. The response adds `agent_secret` (the secret, returned exactly once, when the machine is bound) and `bound`. `403` when the machine is bound to another agent installation, or when the token can no longer enrol — the message says which, and what to do. |
 | `GET` | `/api/agent/relay?wait=N` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | Probes delegated to a relay agent (`relay: true`). Held up to `wait` seconds (25 at most) when nothing is pending. Each item is a command of kind `probe` whose `args` carry the target, its decrypted credential, `timeout_secs` and `discover`. Never written to disk. |
@@ -844,8 +844,8 @@ tokens need the `write` scope for changes. See [Email reports](../using/reports.
   "id": 1, "name": "Home fleet", "prefix": "dmon_ab12",
   "created_at": "2026-09-15 13:00:00", "last_used_at": null, "revoked_at": null,
   "secret": "dmon_…",
-  "install_linux": "curl -sSL http://server:8080/install.sh | sh -s -- --token=dmon_… --url=http://server:8080",
-  "install_windows": "& ([scriptblock]::Create((irm http://server:8080/install.ps1))) -Token dmon_… -Url http://server:8080"
+  "install_linux": "curl -sSL https://server:8080/install.sh | sh -s -- --token=dmon_… --url=https://server:8080",
+  "install_windows": "& ([scriptblock]::Create((irm https://server:8080/install.ps1))) -Token dmon_… -Url https://server:8080"
 }
 ```
 
