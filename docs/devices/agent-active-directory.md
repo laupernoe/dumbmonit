@@ -3,49 +3,60 @@
 Install the agent on every Windows server of a domain with one group policy
 (GPO), instead of running the install command server by server.
 
-When you add a monitor of type **Server with the agent** (or in the setup
-assistant), **Deploy with Active Directory** creates a fleet
-token limited to your domain (reusable, valid 30 days by default, with an
-optional maximum number of servers) and downloads `Deploy-DumbMonit.ps1`. You
-run that script once, as a Domain Admin, on a domain controller or on a machine
-that has the GroupPolicy and ActiveDirectory PowerShell modules (RSAT). It
-creates or updates the **DumbMonit Agent** GPO and links it to an OU. The GPO
-runs an immediate scheduled task, as SYSTEM, at every policy refresh. Each
-server installs the agent and enrols under its fully qualified name
+## 1. What it does
+
+**Deploy with Active Directory** (when you add a monitor of type **Server with
+the agent**) creates a fleet token limited to your domain and gives you one
+file, `Deploy-DumbMonit.ps1`. You run it once, as a Domain Admin. It:
+
+- creates (or updates) a group policy called **DumbMonit Agent**;
+- puts in it one immediate **scheduled task**, run as SYSTEM at every policy
+  refresh, that installs the agent when it is missing or out of date and does
+  nothing otherwise;
+- links the policy where you chose (the whole domain, one OU, or a group).
+
+Each server then installs the agent and **enrols under its fully qualified name**
 (`srv01.corp.example.com`). It lands in the folder **Active Directory
 &lt;domain&gt;**, with the tags `ad=<domain>` and `ad_ou=<OU>`.
 
-## Steps
+## 2. Prerequisites
 
-1. Add a monitor, pick **Server with the agent**, and click **Deploy with
-   Active Directory**. Enter the domain, the name (FQDN) or address of the
-   DumbMonit server the agents must contact (by default the address you are
-   using) and, optionally, a DNS server that resolves that name — or, for a
-   domain at a site behind a firewall, pick a relay under **Route**: the
-   servers then download the agent from the relay's gateway and report through
-   it, end-to-end encrypted to the server (see
-   [Monitor a remote site](../install/remote-site.md#5-install-agents-behind-the-relay)) — adjust the options if needed, create the
-   token and download `Deploy-DumbMonit.ps1`. The token is shown only now. The
-   server name and the DNS server are checked for format, written into the
-   script, and repeated in the summary of the next step.
-2. Copy the script to a domain controller and open PowerShell as a domain
-   administrator. Preview first, which changes nothing:
+- You are a member of **Domain Admins** (or Enterprise Admins).
+- The machine that runs the script is a domain controller, or has the
+  GroupPolicy and ActiveDirectory PowerShell modules (RSAT).
+- The servers can reach the DumbMonit server over **HTTPS**, on the web port
+  (to download the agent) and on the **agent port, TCP 8443** (to report). Open
+  nothing inbound on the servers. See [Ports](../install/ports.md).
+- The DumbMonit address you give is resolvable from the servers (otherwise
+  enter a DNS server in the wizard).
+
+## 3. Steps with the wizard
+
+1. Add a monitor, pick **Server with the agent**, click **Deploy with Active
+   Directory**. Enter the domain (`corp.example.com`) and, if needed, the name
+   (FQDN) of the DumbMonit server the agents contact and a DNS server that
+   resolves it. For a domain at a site behind a firewall, pick a relay under
+   **Route** (see
+   [Monitor a remote site](../install/remote-site.md#5-install-agents-behind-the-relay)).
+2. Choose **which servers** get the agent (see [Choosing the scope](#4-choosing-the-scope))
+   and the **token validity** (see [The token](#6-the-token)).
+3. The wizard shows the exact **command to run**, which changes as you change
+   the options. Create the token and download `Deploy-DumbMonit.ps1`. The token
+   is shown only now.
+4. Copy the script to a domain controller, open PowerShell **as a domain
+   administrator** in its folder, and paste the single line the wizard shows:
 
     ```powershell
-    .\Deploy-DumbMonit.ps1 -WhatIf
+    Unblock-File .\Deploy-DumbMonit.ps1; powershell -NoProfile -ExecutionPolicy Bypass -File .\Deploy-DumbMonit.ps1
     ```
 
-3. Apply:
-
-    ```powershell
-    .\Deploy-DumbMonit.ps1 -TargetOU "OU=Servers,DC=corp,DC=example,DC=com"
-    ```
-
-4. Servers install the agent at their next policy refresh, within 90 minutes, or
-   right away with `gpupdate /force` on a server. They appear in the wizard and
-   in the folder **Active Directory &lt;domain&gt;** as they enrol.
-5. When the fleet is deployed, delete the script and click **Stop new
-   enrolments** (see [Security](#security)).
+    `Unblock-File` removes the "security warning" Windows puts on a downloaded
+    file, and `-ExecutionPolicy Bypass` ignores the execution policy for this run
+    only. To see what would be done without changing anything, add `-WhatIf`.
+5. Without any targeting parameter, the script asks what to cover (all servers,
+   one OU, or one group), prints the plan, and asks one confirmation:
+   `Continue? (Y/n)` (Enter means yes). `-Yes` skips the questions.
+6. Wait for the servers (next section), then delete the script.
 
 The script is idempotent: running it again updates the GPO in place.
 
@@ -59,6 +70,55 @@ The script is idempotent: running it again updates the GPO in place.
     the name through it and records it in the server's `hosts` file (lines
     marked `# DumbMonit`). See [Agent channel security](../install/agent-security.md).
 
+## 4. Choosing the scope
+
+| Scope | Parameter | Example | Use it when |
+|---|---|---|---|
+| All Windows servers of the domain, including future ones (recommended) | `-AllServers` | `.\Deploy-DumbMonit.ps1 -AllServers` | You want every server, now and later, with nothing to maintain. |
+| Servers of one OU | `-TargetOU` | `-TargetOU "OU=Servers,DC=corp,DC=example,DC=com"` | Your servers live in one OU (a parent OU covers its children). |
+| Members of a security group | `-SecurityGroup` | `-SecurityGroup "DumbMonit Servers"` | You want to pick the servers by hand, by adding them to a group. |
+
+`-AllServers` links the policy to the domain root and filters it with a WMI
+filter on Windows Server (domain controllers included); workstations are left
+alone. It cannot be combined with `-SecurityGroup`. `-IncludeDomainControllers`
+links the policy to the Domain Controllers OU too (not needed with
+`-AllServers`). `-UseSysvol` also copies the agent binary to SYSVOL for servers
+without internet access.
+
+Pitfalls:
+
+- **`CN=Computers` is not an OU.** Servers left in the default *Computers*
+  container are not covered by an OU link. Only `-AllServers` (link at the
+  domain root) covers them, or move them to an OU.
+- **A security group needs a restart.** A computer's group membership is read
+  when it signs in to the domain. After adding a server to the group, restart
+  it, or run `klist -li 0x3e7 purge` on it and then `gpupdate /force`.
+- **Domain controllers are not "Domain Computers".** They are in their own group,
+  and live in the Domain Controllers OU. Use `-AllServers` or
+  `-IncludeDomainControllers` to include them.
+
+## 5. Install quickly, and check
+
+Servers install at their next policy refresh, within 90 minutes. To go faster
+from the domain controller, for all servers at once:
+
+```powershell
+Get-ADComputer -Filter 'OperatingSystem -like "*Server*"' |
+    ForEach-Object { Invoke-Command -ComputerName $_.DnsHostName -ScriptBlock {
+        klist -li 0x3e7 purge | Out-Null; gpupdate /force } }
+```
+
+(`Invoke-GPUpdate -Computer srv01 -Force` also works, without the `klist` step,
+if remote scheduled tasks are allowed.) Or run `gpupdate /force` on one server.
+
+To check:
+
+- the servers appear in the wizard and in the folder **Active Directory
+  &lt;domain&gt;** as they enrol;
+- on a server, open Event Viewer, Windows Logs, Application, and filter on the
+  source `DumbMonit` (see the event table below); `gpresult /r` shows whether
+  the GPO applies.
+
 ## Script parameters
 
 The wizard options are baked in as defaults; any parameter can be overridden on
@@ -66,11 +126,13 @@ the command line.
 
 | Parameter | Effect |
 |---|---|
-| `-TargetOU` | Distinguished name of the OU the GPO is linked to; a parent OU covers its children. Omitted: if exactly one OU (domain controllers excluded) holds Windows Server computers, it is used; if there are several, the script lists them and stops so that you pick one. |
+| `-AllServers` | Link the GPO to the domain root, restricted to Windows Server by a WMI filter. |
+| `-TargetOU` | Distinguished name of the OU the GPO is linked to; a parent OU covers its children. Omitted and non-interactive: if exactly one OU (domain controllers excluded) holds Windows Server computers, it is used; if there are several, the script lists them and stops. |
 | `-IncludeDomainControllers` | Also link the GPO to the Domain Controllers OU. |
 | `-SecurityGroup` | Security filtering: only computers in this group apply the GPO. Also restricts who can read the SYSVOL kit. |
 | `-UseSysvol` | Also copy the agent binary to SYSVOL, for servers that cannot download it from DumbMonit. They still need to reach the server to send their measurements. |
 | `-GpoName` | Name of the GPO. Default `DumbMonit Agent`. |
+| `-Yes` | Do not ask anything. |
 | `-UninstallAgents` | Switch the GPO to uninstalling the agent from the servers it applies to. |
 | `-Remove` | Delete the GPO, its links and the SYSVOL kit. Installed agents keep running. |
 | `-WhatIf` | Show what would be done, change nothing. |
@@ -148,7 +210,20 @@ predates automatic updates. Agents older than the kit are still upgraded by the
 GPO; download a new kit first, as it embeds the SHA-256 of the agent binary
 shipped by your server (otherwise servers refuse the binary, Event ID 1002).
 
-## Removing the deployment
+## 6. The token
+
+The wizard offers a validity of **30 days**, **1 year** or **Never expires**.
+With *all servers* the default is *Never expires*, because servers added to the
+domain later must still be able to enrol; otherwise the default is 30 days.
+Machines already enrolled keep reporting after the token expires.
+
+A token that never expires keeps its safeguards: it only enrols machines **of
+your domain**, it is reusable up to the optional maximum number of servers, and
+you can revoke it at any time in **Settings, Agents**. Keep the script like a
+password, and revoke the token there (or use **Stop new enrolments**) once all
+your servers are in.
+
+## 7. Uninstalling
 
 1. Run `.\Deploy-DumbMonit.ps1 -UninstallAgents`.
 2. After the servers have refreshed their policy (Event ID 1004), run
@@ -157,21 +232,20 @@ shipped by your server (otherwise servers refuse the binary, Event ID 1002).
 Without the first step, `-Remove` leaves the installed agents running. Also
 stop the token's enrolments in DumbMonit.
 
-## Troubleshooting
+## 8. Troubleshooting
 
-- **A module is missing.** On a server:
-  `Install-WindowsFeature GPMC, RSAT-AD-PowerShell`. On Windows 10/11, add the
-  RSAT capabilities `Rsat.GroupPolicy.Management.Tools` and
-  `Rsat.ActiveDirectory.DS-LDS.Tools`.
-- **"This enrollment token is limited to an Active Directory domain".** The server enrols under a name that does
-  not end with the domain of the token: check that the machine is joined to the
-  domain and that its primary DNS suffix matches. The kit is also tied to one
-  domain: run the script in the domain it was generated for.
-- **Several OUs hold servers.** Pass `-TargetOU` with a common parent OU, or run
-  the script once per OU.
-- **Nothing happens on a server.** Run `gpresult /r` to check that the GPO
-  applies, then open Event Viewer → Windows Logs → Application and filter on
-  the source `DumbMonit`.
+| Message or symptom | Cause and fix |
+|---|---|
+| "Servers are spread over several organisational units" | The script was run without a target and several OUs hold servers. Run it in an interactive console to pick, or pass `-AllServers`, or `-TargetOU` with a common parent OU. |
+| `sddlForm` error when setting the SYSVOL permissions | Fixed in current kits (it came from a one-item list reduced to a string). Download a new kit from DumbMonit. |
+| "Security warning: Do you want to run Deploy-DumbMonit.ps1?" | The file is marked as downloaded. Run `Unblock-File .\Deploy-DumbMonit.ps1` first, or use the single line from the wizard. |
+| "running scripts is disabled on this system" | Use `powershell -NoProfile -ExecutionPolicy Bypass -File .\Deploy-DumbMonit.ps1`. |
+| The module GroupPolicy or ActiveDirectory is missing | On a server: `Install-WindowsFeature GPMC, RSAT-AD-PowerShell`. On Windows 10/11, add the RSAT capabilities `Rsat.GroupPolicy.Management.Tools` and `Rsat.ActiveDirectory.DS-LDS.Tools`. |
+| Servers do not appear, event 1002, or the download fails | The server cannot reach DumbMonit. From the server: `Test-NetConnection <dumbmonit-host> -Port 8443` (and the web port). Check the name resolves, the firewall, and the certificate. |
+| "This enrollment token is limited to an Active Directory domain" | The server enrols under a name that does not end with the domain of the token: check that it is joined to the domain and that its primary DNS suffix matches. The kit is tied to one domain. |
+| A server in a security group does nothing | Restart it, or `klist -li 0x3e7 purge` then `gpupdate /force`. |
+| A server sits in `CN=Computers` and is not covered | Use `-AllServers`, or move it to an OU. |
+| Nothing happens on a server | `gpresult /r` to check that the GPO applies, then Event Viewer, Application, source `DumbMonit`. |
 
 ## No MSI
 
