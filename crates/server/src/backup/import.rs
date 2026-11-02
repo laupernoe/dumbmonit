@@ -30,6 +30,7 @@ use sqlx::{Row, Sqlite, SqlitePool, Transaction};
 
 use crate::api::topology_edits::{self, CorrectionKind, RuleKind, RuleSpec, RuleStatus};
 use crate::backup::bundle::*;
+use crate::collectors::agent;
 use crate::crypto::Cipher;
 
 /// Sort d'une ligne du lot.
@@ -1721,11 +1722,28 @@ async fn restore_agent_tokens(
             report.skipped += 1;
             continue;
         }
+        // Les jetons d'enrôlement n'ont plus de nom lisible : une sauvegarde
+        // ancienne est normalisée en identifiant opaque.
+        let name = if agent::is_token_name(&token.name) {
+            token.name.clone()
+        } else {
+            loop {
+                let candidate = agent::generate_token_name();
+                let taken = sqlx::query("SELECT 1 FROM agent_tokens WHERE name = ?")
+                    .bind(&candidate)
+                    .fetch_optional(&mut **tx)
+                    .await
+                    .context("recherche du nom du jeton d'agent")?;
+                if taken.is_none() {
+                    break candidate;
+                }
+            }
+        };
         sqlx::query(
             "INSERT INTO agent_tokens (name, token_hash, prefix, created_at, revoked_at)
              VALUES (?, ?, ?, COALESCE(?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now')), ?)",
         )
-        .bind(&token.name)
+        .bind(&name)
         .bind(&token.token_hash)
         .bind(&token.prefix)
         .bind(&token.created_at)

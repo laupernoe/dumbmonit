@@ -119,12 +119,53 @@ impl EnrolmentDenied {
     }
 }
 
+/// Préfixe des noms de jeton d'enrôlement.
+const TOKEN_NAME_PREFIX: &str = "tok_";
+/// Nombre de caractères aléatoires après le préfixe.
+const TOKEN_NAME_LEN: usize = 10;
+/// Alphabet base32 minuscule (RFC 4648), 32 symboles : un octet aléatoire masqué
+/// sur 5 bits le choisit sans biais.
+const TOKEN_NAME_ALPHABET: &[u8; 32] = b"abcdefghijklmnopqrstuvwxyz234567";
+
+/// Identifiant opaque d'un jeton d'enrôlement : `tok_` + 10 caractères base32
+/// minuscules tirés du générateur du système. Il ne dit rien de la machine ni de
+/// la date : on retrouve l'usage d'un jeton par ses données, pas par son nom.
+pub fn generate_token_name() -> String {
+    let bytes: [u8; TOKEN_NAME_LEN] = rand::random();
+    let mut name = String::from(TOKEN_NAME_PREFIX);
+    name.extend(bytes.iter().map(|b| TOKEN_NAME_ALPHABET[(b & 31) as usize] as char));
+    name
+}
+
+/// Vrai si `name` a déjà la forme d'un identifiant opaque.
+pub fn is_token_name(name: &str) -> bool {
+    name.strip_prefix(TOKEN_NAME_PREFIX).is_some_and(|rest| {
+        rest.len() == TOKEN_NAME_LEN && rest.bytes().all(|b| TOKEN_NAME_ALPHABET.contains(&b))
+    })
+}
+
+/// Identifiant opaque qu'aucun jeton ne porte encore (nouveau tirage en cas de
+/// collision).
+pub async fn unused_token_name(pool: &SqlitePool) -> Result<String> {
+    loop {
+        let name = generate_token_name();
+        let taken = sqlx::query("SELECT 1 FROM agent_tokens WHERE name = ?")
+            .bind(&name)
+            .fetch_optional(pool)
+            .await
+            .context("checking the enrollment token name")?;
+        if taken.is_none() {
+            return Ok(name);
+        }
+    }
+}
+
 /// Crée un jeton et renvoie sa forme en clair — la seule et unique fois.
 pub async fn create_token(
     pool: &SqlitePool,
-    name: &str,
     policy: TokenPolicy,
 ) -> Result<(TokenRecord, String)> {
+    let name = unused_token_name(pool).await?;
     let clear = token::generate();
     let expires_at = policy.expires_in_days.map(|days| {
         (chrono::Utc::now() + chrono::Duration::days(days)).format("%Y-%m-%dT%H:%M:%SZ").to_string()
@@ -135,7 +176,7 @@ pub async fn create_token(
          RETURNING id, name, prefix, created_at, last_used_at, revoked_at,
                    max_uses, uses, expires_at, relay, relay_site, ad_domain",
     )
-    .bind(name)
+    .bind(&name)
     .bind(token::fingerprint(&clear))
     .bind(token::display_prefix(&clear))
     .bind(policy.max_uses)
@@ -1237,8 +1278,8 @@ mod tests {
         AgentIdentity { binding_supported: false, ..identity(hostname, machine_id) }
     }
 
-    async fn token(db: &TestDb, name: &str) -> i64 {
-        create_token(&db.pool, name, TokenPolicy { max_uses: None, expires_in_days: None })
+    async fn token(db: &TestDb, _name: &str) -> i64 {
+        create_token(&db.pool, TokenPolicy { max_uses: None, expires_in_days: None })
             .await
             .expect("création")
             .0
@@ -1254,7 +1295,7 @@ mod tests {
     async fn a_created_token_can_be_verified_then_revoked() {
         let db = setup().await;
         let (record, clear) =
-            create_token(&db.pool, "parc", TokenPolicy::default()).await.expect("création");
+            create_token(&db.pool, TokenPolicy::default()).await.expect("création");
 
         let found =
             find_active_token(&db.pool, &token::fingerprint(&clear)).await.expect("vérification");
@@ -1274,7 +1315,7 @@ mod tests {
     async fn the_clear_token_is_never_stored() {
         let db = setup().await;
         let (_, clear) =
-            create_token(&db.pool, "parc", TokenPolicy::default()).await.expect("création");
+            create_token(&db.pool, TokenPolicy::default()).await.expect("création");
 
         let row = sqlx::query("SELECT token_hash, prefix FROM agent_tokens")
             .fetch_one(&db.pool)
@@ -1639,7 +1680,7 @@ mod tests {
         let own = token(&db, "parc").await;
         let target_id = legacy_host(&db, "nas", "id-nas", own).await;
         let (spent, _) =
-            create_token(&db.pool, "épuisé", TokenPolicy::default()).await.expect("création");
+            create_token(&db.pool, TokenPolicy::default()).await.expect("création");
         enrol(&db, &identity("autre", Some("id-autre")), spent.id).await;
 
         allow_rebind(&db.pool, target_id).await.unwrap().expect("fenêtre");
@@ -1702,7 +1743,7 @@ mod tests {
     async fn a_single_use_token_enrols_one_machine_and_not_a_second() {
         let db = setup().await;
         let (record, _) =
-            create_token(&db.pool, "portable", TokenPolicy::default()).await.expect("création");
+            create_token(&db.pool, TokenPolicy::default()).await.expect("création");
         assert_eq!(record.max_uses, Some(1), "l'usage unique est le défaut");
 
         let first = enrol(&db, &identity("portable", Some("id-1")), record.id).await;
@@ -1732,16 +1773,41 @@ mod tests {
         );
     }
 
+    #[test]
+    fn token_names_are_opaque_and_uniform() {
+        let first = generate_token_name();
+        assert_eq!(first.len(), 14);
+        assert!(is_token_name(&first), "{first}");
+        assert_ne!(first, generate_token_name());
+        assert!(!is_token_name("Agent enrolment · 2026-11-02"));
+        assert!(!is_token_name("tok_ABCDEFGHIJ"));
+        assert!(!is_token_name("tok_abc"));
+        assert!(!is_token_name("tok_abcdefghi1"));
+    }
+
+    #[tokio::test]
+    async fn created_tokens_get_distinct_opaque_names() {
+        let db = setup().await;
+        let first = token(&db, "ignored").await;
+        let second = token(&db, "ignored").await;
+        let names: Vec<String> = list_tokens(&db.pool)
+            .await
+            .unwrap()
+            .into_iter()
+            .filter(|t| t.id == first || t.id == second)
+            .map(|t| t.name)
+            .collect();
+        assert_eq!(names.len(), 2);
+        assert!(names.iter().all(|n| is_token_name(n)));
+        assert_ne!(names[0], names[1]);
+    }
+
     #[tokio::test]
     async fn a_fleet_token_enrols_as_many_machines_as_it_is_allowed() {
         let db = setup().await;
-        let (record, _) = create_token(
-            &db.pool,
-            "flotte",
-            TokenPolicy { max_uses: Some(2), expires_in_days: None },
-        )
-        .await
-        .expect("création");
+        let (record, _) = create_token(&db.pool, TokenPolicy { max_uses: Some(2), expires_in_days: None })
+            .await
+            .expect("création");
 
         enrol(&db, &identity("a", Some("id-a")), record.id).await;
         enrol(&db, &identity("b", Some("id-b")), record.id).await;
@@ -1768,13 +1834,9 @@ mod tests {
     #[tokio::test]
     async fn a_token_past_its_deadline_stops_enrolling_but_not_reporting() {
         let db = setup().await;
-        let (record, _) = create_token(
-            &db.pool,
-            "fenêtre",
-            TokenPolicy { max_uses: None, expires_in_days: Some(1) },
-        )
-        .await
-        .expect("création");
+        let (record, _) = create_token(&db.pool, TokenPolicy { max_uses: None, expires_in_days: Some(1) })
+            .await
+            .expect("création");
         let registration = enrol(&db, &identity("nas", Some("id-nas")), record.id).await;
         let secret = registration.issued_secret.clone().expect("secret");
 

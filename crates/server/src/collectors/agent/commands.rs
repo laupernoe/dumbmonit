@@ -575,7 +575,7 @@ mod tests {
             .await
             .expect("chiffrement");
         let (token, _) =
-            store::create_token(&pool, "parc", store::TokenPolicy::default()).await.expect("jeton");
+            store::create_token(&pool, store::TokenPolicy::default()).await.expect("jeton");
         let identity = AgentIdentity {
             hostname: "nas".into(),
             os: "linux".into(),

@@ -323,3 +323,24 @@ async fn a_bulk_policy_change_applies_to_every_named_container() {
         reply.status
     );
 }
+
+#[tokio::test]
+async fn enrolment_tokens_get_an_opaque_name_whatever_is_sent() {
+    let app = setup().await;
+    let admin = app.admin_cookie().await;
+
+    let mut names = Vec::new();
+    for body in [json!({}), json!({ "name": "Lyon laptop" }), json!({ "reusable": true })] {
+        let reply = app.post("/api/agent/tokens", body, Some(&admin)).await;
+        assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
+        names.push(reply.body["name"].as_str().expect("name").to_string());
+    }
+    for name in &names {
+        let rest = name.strip_prefix("tok_").expect("prefix");
+        assert_eq!(rest.len(), 10, "{name}");
+        assert!(rest.bytes().all(|b| b.is_ascii_lowercase() || (b'2'..=b'7').contains(&b)));
+    }
+    names.sort();
+    names.dedup();
+    assert_eq!(names.len(), 3);
+}
