@@ -164,6 +164,9 @@ pub struct Agent {
     /// Vrai une fois le refus de liaison signalé, pour ne le dire qu'une fois
     /// par panne plutôt qu'à chaque tentative.
     binding_refused: bool,
+    /// Vrai tant que le serveur fait attendre l'enrôlement de cette machine
+    /// (validation par un administrateur) : dit une fois, pas à chaque essai.
+    awaiting_approval: bool,
     /// Modules décochés dans l'interface, tels que le dernier accusé de
     /// réception les nomme : leur collecte est sautée. Le serveur écarte de
     /// toute façon leurs mesures ; ne pas les lire épargne la machine (un test
@@ -287,6 +290,7 @@ impl Agent {
             server_sentinel: None,
             binding,
             binding_refused: false,
+            awaiting_approval: false,
             disabled_modules: BTreeSet::new(),
             batch_limit: MAX_BATCH_SAMPLES,
             all_refused: false,
@@ -741,6 +745,7 @@ impl Agent {
                 }
                 self.backoff.reset();
                 self.binding_refused = false;
+                self.note_approved();
                 debug!(target = ack.target_id, accepted = ack.accepted, "batch accepted");
                 self.note_acceptance(count, ack.accepted);
                 self.forget_inventory(batch.inventory.as_ref());
@@ -907,8 +912,15 @@ impl Agent {
                 if let Some(secret) = issued.agent_secret.clone() {
                     self.adopt_binding(Some(secret), true);
                 }
+                self.note_approved();
                 self.adopt_certificate(&mut state, issued, &key);
                 info!(url = state.url, "enrolled on the encrypted agent channel (TLS 1.3, mTLS)");
+            }
+            // Validation attendue : rien d'anormal, l'agent réessaie à son
+            // rythme sans le signaler comme une panne.
+            Err(PushError::Forbidden(message)) if message == dumbmonit_proto::ENROLMENT_PENDING => {
+                self.note_awaiting_approval();
+                self.tls_retry_at = Some(Instant::now() + TLS_RETRY);
             }
             Err(error) => {
                 if let PushError::Forbidden(message) = &error {
@@ -1123,6 +1135,10 @@ impl Agent {
     /// machine à la main. Les mesures restent en tampon dans les deux cas,
     /// l'agent réessaie avec sa temporisation habituelle.
     fn on_binding_refused(&mut self, message: &str) {
+        if message == dumbmonit_proto::ENROLMENT_PENDING {
+            self.note_awaiting_approval();
+            return;
+        }
         if message == dumbmonit_proto::BINDING_MISMATCH {
             self.binding.forget();
             self.client.set_secret(None);
@@ -1133,6 +1149,27 @@ impl Agent {
         }
         self.binding_refused = true;
         warn!(reason = message, "this agent is not recognised for this machine");
+    }
+
+    /// Le serveur fait attendre l'enrôlement : un administrateur doit accepter
+    /// la machine. Dit une fois, puis en `debug` à chaque nouvelle tentative.
+    fn note_awaiting_approval(&mut self) {
+        if self.awaiting_approval {
+            debug!("still waiting for approval");
+            return;
+        }
+        self.awaiting_approval = true;
+        info!(
+            "waiting for approval: an administrator must accept this machine in DumbMonit \
+             (Settings > Agents > Waiting for approval); retrying on its own"
+        );
+    }
+
+    /// Fin de l'attente de validation, si l'agent attendait.
+    fn note_approved(&mut self) {
+        if std::mem::take(&mut self.awaiting_approval) {
+            info!("enrolment approved by the server");
+        }
     }
 
     /// Adopte la période demandée par le serveur.
@@ -1726,6 +1763,32 @@ mod tests {
         assert!(agent.binding_refused);
         assert!(!dir.path().join("agent-secret").exists());
         assert!(matches!(agent.flush().await, FlushOutcome::Failed(_)));
+    }
+
+    #[tokio::test]
+    async fn an_enrolment_waiting_for_approval_keeps_everything_and_retries() {
+        // Le serveur fait attendre la machine : ni secret effacé, ni mesure
+        // perdue, et le journal le dit une seule fois.
+        let dir = tempfile::tempdir().unwrap();
+        let body = serde_json::json!({ "error": dumbmonit_proto::ENROLMENT_PENDING });
+        let pending = (403u16, body.to_string());
+        let answer = std::sync::Arc::new(std::sync::Mutex::new(pending));
+        let shared = answer.clone();
+        let (url, _calls) =
+            crate::testsupport::fake_http(move |_| shared.lock().unwrap().clone()).await;
+        let mut agent = agent_for(&url, &dir);
+        let samples = agent.collect().await;
+        let count = samples.len();
+        agent.buffer.push(samples);
+        assert!(matches!(agent.flush().await, FlushOutcome::Failed(PushError::Forbidden(_))));
+        assert!(agent.awaiting_approval);
+        assert!(!agent.binding_refused, "une attente n'est pas un refus de liaison");
+        assert_eq!(agent.buffer.len(), count, "les mesures restent en tampon");
+
+        // Acceptée : le lot suivant passe et l'attente est close.
+        *answer.lock().unwrap() = (200, ACK.to_string());
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+        assert!(!agent.awaiting_approval);
     }
 
     #[tokio::test]

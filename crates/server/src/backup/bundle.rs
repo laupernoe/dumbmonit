@@ -213,6 +213,11 @@ pub struct Bundle {
     /// l'instance restaurée.
     #[serde(default)]
     pub upgrade_notes_closed: Vec<BundleUpgradeNote>,
+    /// Garde de l'enrôlement des agents : validation des nouvelles machines,
+    /// débit par jeton, mise en veille des jetons inactifs (clé
+    /// `agent.enrolment` de `settings`, migration 0233).
+    #[serde(default)]
+    pub agent_enrolment: Option<Value>,
 }
 
 impl Bundle {

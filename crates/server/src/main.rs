@@ -266,6 +266,8 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
     dumbmonit_server::netinventory::spawn(state.clone());
     dumbmonit_server::netconfig::spawn(state.clone());
     collectors::agent::spawn_policy_scheduler(state.clone());
+    // Garde de l'enrôlement : message groupé chaque minute, jetons en veille.
+    collectors::agent::enrolment::spawn(state.clone());
     match seeded {
         Some(seeded) => demo::spawn(state.clone(), seeded),
         // Sauvegardes locales planifiées de la base, et la mesure qui dit qu'elles

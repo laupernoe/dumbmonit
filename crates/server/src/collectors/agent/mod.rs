@@ -20,6 +20,7 @@
 
 pub mod catalog;
 pub mod commands;
+pub mod enrolment;
 pub mod eventlog;
 pub mod logs;
 pub mod modules;
@@ -41,6 +42,7 @@ use tokio::sync::OnceCell;
 
 pub use modules::AgentServiceCollector;
 pub use policy::spawn_policy_scheduler;
+pub use enrolment::EnrolOrigin;
 pub use receive::{
     AGENT_TOO_OLD, BINDING_MISMATCH, IngestError, NOT_BOUND, enrol, ingest, token_client_of,
 };

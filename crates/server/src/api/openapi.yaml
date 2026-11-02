@@ -5054,6 +5054,101 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/agent/tokens/{id}/reactivate:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: reactivateAgentToken
+      tags: [Agents]
+      summary: Put a sleeping fleet token back in service
+      description: >-
+        Administrator session only. A fleet token that enrolled no machine for the
+        configured number of days is put to sleep and refuses new enrolments (machines
+        already enrolled keep reporting). This puts it back in service; its inactivity
+        delay starts again from now.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Token back in service. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/agent/enrolment:
+    get:
+      operationId: getAgentEnrolment
+      tags: [Agents]
+      summary: Enrolment approval settings and machines waiting for approval
+      description: >-
+        Administrator session only. Lists the machines waiting for approval (at most
+        `max_pending`; beyond it, new requests are refused with 429).
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Settings and waiting machines.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentEnrolmentOverview" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: updateAgentEnrolment
+      tags: [Agents]
+      summary: Change the enrolment approval settings
+      description: Administrator session only. The whole settings object.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentEnrolmentSettings" }
+      responses:
+        "200":
+          description: Settings saved.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentEnrolmentOverview" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/agent/enrolment/decide:
+    post:
+      operationId: decideAgentEnrolments
+      tags: [Agents]
+      summary: Accept or reject machines waiting for approval
+      description: >-
+        Administrator session only. One machine or many. An accepted machine enrols
+        at its next attempt; a rejected one is refused and no longer listed for 24
+        hours, unless it comes back with another enrolment token.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids, approve]
+              properties:
+                ids: { type: array, items: { type: integer, format: int64 }, maxItems: 200 }
+                approve: { type: boolean }
+      responses:
+        "200":
+          description: Number of requests decided (one already decided is ignored).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [decided]
+                properties:
+                  decided: { type: integer }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/agent/ad-kit:
     post:
       operationId: createAgentAdKit
@@ -11420,6 +11515,39 @@ components:
         relay_site: { type: [string, "null"] }
         ad_domain: { type: [string, "null"], description: Active Directory fleet token - enrols only fully qualified names in this domain. }
         client_id: { type: integer, format: int64, description: "MSP mode: the client this token enrols into, and the only one its machines report to." }
+        dormant_at: { type: [string, "null"], description: "Fleet token put to sleep after enrolling no machine for the configured days; `null` while in service." }
+    AgentEnrolmentSettings:
+      type: object
+      properties:
+        fleet_approval:
+          type: string
+          enum: [auto, manual, ad_domain]
+          description: "Fleet tokens: accept automatically, require approval, or accept automatically when the full host name is in the AD domain of the token."
+        single_use_approval: { type: string, enum: [auto, manual, ad_domain] }
+        rate_per_hour: { type: integer, minimum: 0, maximum: 10000, description: Enrolments per token per hour; 0 for no limit. }
+        dormant_days: { type: integer, minimum: 0, maximum: 3650, description: Days without enrolment before a fleet token is put to sleep; 0 for never. }
+    AgentEnrolmentRequest:
+      type: object
+      required: [id, hostname, os, requested_at, last_seen_at]
+      properties:
+        id: { type: integer, format: int64 }
+        hostname: { type: string }
+        os: { type: string }
+        source_ip: { type: [string, "null"] }
+        token_id: { type: [integer, "null"], format: int64 }
+        token_name: { type: [string, "null"], description: Identifier of the enrolment token used, never its secret. }
+        requested_at: { type: string }
+        last_seen_at: { type: string }
+    AgentEnrolmentOverview:
+      type: object
+      required: [settings, pending, max_pending, reject_hold_hours]
+      properties:
+        settings: { $ref: "#/components/schemas/AgentEnrolmentSettings" }
+        pending:
+          type: array
+          items: { $ref: "#/components/schemas/AgentEnrolmentRequest" }
+        max_pending: { type: integer }
+        reject_hold_hours: { type: integer }
     AgentInstallParams:
       type: object
       required: [base_url, checksums, linux_template, windows_template]
