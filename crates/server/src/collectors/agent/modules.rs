@@ -50,6 +50,7 @@ pub const MODULES: &[Module] = &[
     Module { id: "docker", label: "Docker", prefixes: &["container_"] },
     Module { id: "plakar", label: "Plakar", prefixes: &["backup_"] },
     Module { id: "backup_repos", label: "restic/Borg", prefixes: &["agent_backup_repo_"] },
+    Module { id: "databases", label: "Databases", prefixes: &["agent_database_"] },
     Module { id: "zfs", label: "ZFS", prefixes: &["agent_zfs_"] },
     Module { id: "libvirt", label: "libvirt", prefixes: &["agent_libvirt_"] },
     Module { id: "wireguard", label: "WireGuard", prefixes: &["agent_wireguard_"] },
@@ -434,6 +435,7 @@ mod tests {
         assert_eq!(module("container_up"), Some("docker"));
         assert_eq!(module("backup_last_status"), Some("plakar"));
         assert_eq!(module("agent_backup_repo_reachable"), Some("backup_repos"));
+        assert_eq!(module("agent_database_up"), Some("databases"));
         assert_eq!(module("agent_zfs_pool_health"), Some("zfs"));
         assert_eq!(module("agent_libvirt_domain_running"), Some("libvirt"));
         assert_eq!(module("agent_wireguard_peer_rx_bytes"), Some("wireguard"));

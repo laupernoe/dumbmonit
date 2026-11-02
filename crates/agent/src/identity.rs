@@ -166,6 +166,7 @@ mod tests {
             inventory: false,
             self_update: true,
             backup_repos: crate::collect::backup_repos::BackupReposConfig::default(),
+            databases: crate::collect::databases::DatabasesConfig::default(),
             perf_counters: crate::collect::perf_counters::PerfCountersConfig::default(),
             max_buffered_samples: 100,
             secret_path: std::path::PathBuf::from("/inexistant/agent-secret"),

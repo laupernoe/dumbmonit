@@ -13519,7 +13519,7 @@ components:
       type: object
       required: [id, label, detected, enabled, automatic, target_id, last_seen_at]
       properties:
-        id: { type: string, description: "`docker`, `plakar`, `backup_repos`, `zfs`, `libvirt`, `wireguard`, `ipsec`, `speedtest`." }
+        id: { type: string, description: "`docker`, `plakar`, `backup_repos`, `databases`, `zfs`, `libvirt`, `wireguard`, `ipsec`, `speedtest`." }
         label: { type: string }
         detected: { type: boolean, description: The agent has reported this service on this machine. }
         enabled: { type: boolean, description: "Ticked: a device exists (or will) for this service." }

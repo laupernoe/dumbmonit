@@ -14,6 +14,7 @@ use anyhow::{Context, Result, bail};
 use serde::Deserialize;
 
 use crate::collect::backup_repos::{self, BackupReposConfig, RepoConfig, Tool};
+use crate::collect::databases::{self, BackupRule, DatabasesConfig, Engine};
 use crate::collect::docker::DEFAULT_MAX_CONTAINERS;
 use crate::collect::filter::NameFilter;
 use crate::collect::ipsec::IpsecConfig;
@@ -69,6 +70,7 @@ pub const MODULES: &[&str] = &[
     "libvirt",
     "wireguard",
     "ipsec",
+    "databases",
     "perf_counters",
 ];
 
@@ -151,6 +153,7 @@ struct FileConfig {
     max_buffered_samples: Option<usize>,
     log_level: Option<String>,
     system_health: Option<SystemHealthFile>,
+    databases: Option<DatabasesFile>,
 }
 
 /// Liste de motifs, écrite en YAML soit comme une liste, soit comme une seule
@@ -209,6 +212,33 @@ struct RepoFile {
     args: Vec<String>,
     host: Option<String>,
     glob_archives: Option<String>,
+}
+
+/// Section `databases` du fichier : bases de données détectées et dossiers de
+/// leurs sauvegardes.
+///
+/// ```text
+/// databases:
+///   backups:
+///     sqlserver:
+///       paths: ['D:\Backups\SQL\*.bak']
+///       max_age_hours: 26
+/// ```
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
+struct DatabasesFile {
+    enabled: Option<bool>,
+    #[serde(alias = "interval_seconds")]
+    interval_secs: Option<u64>,
+    backups: BTreeMap<String, DatabaseBackupFile>,
+}
+
+/// Les sauvegardes d'un moteur : des chemins (jokers admis) et un âge maximal.
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
+struct DatabaseBackupFile {
+    paths: Vec<String>,
+    max_age_hours: Option<u64>,
 }
 
 /// Section `system_health` du fichier : santé du système d'exploitation.
@@ -300,6 +330,8 @@ pub struct Config {
     pub self_update: bool,
     /// Dépôts restic et Borg déclarés.
     pub backup_repos: BackupReposConfig,
+    /// Bases de données détectées et fraîcheur de leurs sauvegardes.
+    pub databases: DatabasesConfig,
     /// Compteurs de performance Windows : liste libre, jeux MDaemon et Hyper-V.
     pub perf_counters: PerfCountersConfig,
     pub max_buffered_samples: usize,
@@ -355,6 +387,7 @@ impl fmt::Debug for Config {
             .field("inventory", &self.inventory)
             .field("self_update", &self.self_update)
             .field("backup_repos", &self.backup_repos)
+            .field("databases", &self.databases)
             .field("perf_counters", &self.perf_counters)
             .finish()
     }
@@ -790,6 +823,12 @@ impl Config {
             )?),
         };
 
+        let databases = Self::merge_databases(
+            file.databases.unwrap_or_default(),
+            &env,
+            wanted("databases"),
+        )?;
+
         let perf_counters = Self::merge_perf_counters(
             file.perf_counters,
             file.mdaemon,
@@ -860,6 +899,7 @@ impl Config {
             inventory,
             self_update,
             backup_repos,
+            databases,
             perf_counters,
             max_buffered_samples,
             secret_path: Self::resolve_secret_path(&env, config_path),
@@ -958,6 +998,54 @@ impl Config {
                 })?,
             },
         })
+    }
+
+    /// Bases de données : drapeau, période et chemins de sauvegarde par moteur.
+    fn merge_databases(
+        file: DatabasesFile,
+        env: &EnvSource,
+        wanted: bool,
+    ) -> Result<DatabasesConfig> {
+        let enabled = match env.get("DUMBMONIT_AGENT_DATABASES") {
+            Some(raw) => parse_bool(&raw).context("DUMBMONIT_AGENT_DATABASES")?,
+            None => file.enabled.unwrap_or(wanted),
+        };
+        let interval = Duration::from_secs(read_interval(
+            env,
+            "DUMBMONIT_AGENT_DATABASES_INTERVAL_SECS",
+            file.interval_secs,
+            databases::DEFAULT_INTERVAL_SECS,
+            databases::MIN_INTERVAL_SECS,
+            "the database reading period",
+        )?);
+        let mut backups = Vec::new();
+        for (key, entry) in file.backups {
+            let Some(engine) = Engine::parse(&key) else {
+                let known: Vec<&str> = Engine::ALL.iter().map(|e| e.as_str()).collect();
+                bail!("databases.backups: unknown engine '{key}' (known: {})", known.join(", "));
+            };
+            let paths: Vec<String> = entry
+                .paths
+                .into_iter()
+                .map(|path| path.trim().to_string())
+                .filter(|path| !path.is_empty())
+                .collect();
+            if paths.is_empty() {
+                bail!("databases.backups.{key}: at least one path is needed");
+            }
+            if paths.len() > databases::MAX_PATHS_PER_ENGINE {
+                bail!(
+                    "databases.backups.{key}: at most {} paths",
+                    databases::MAX_PATHS_PER_ENGINE
+                );
+            }
+            let max_age_hours = entry.max_age_hours.unwrap_or(databases::DEFAULT_MAX_AGE_HOURS);
+            if max_age_hours == 0 {
+                bail!("databases.backups.{key}: max_age_hours must be at least 1");
+            }
+            backups.push(BackupRule { engine, paths, max_age_hours });
+        }
+        Ok(DatabasesConfig { enabled, interval, backups })
     }
 
     fn merge_system_health(
@@ -1770,6 +1858,47 @@ system_health:
         assert!(!config.system_health.enabled);
         assert!(!config.system_health.check_failed_units);
         assert_eq!(config.system_health.updates_interval, Duration::from_secs(7200));
+    }
+
+    #[test]
+    fn databases_are_detected_by_default_without_any_backup_path() {
+        let config = Config::merge(file_with_url_and_token(), env(&[])).expect("configuration");
+        assert_eq!(config.databases, DatabasesConfig::default());
+        assert!(config.databases.enabled && config.databases.backups.is_empty());
+        let off = Config::merge(
+            file_with_url_and_token(),
+            env(&[("DUMBMONIT_AGENT_DATABASES", "false")]),
+        )
+        .expect("configuration");
+        assert!(!off.databases.enabled);
+        let listed = Config::merge(with_yaml("modules: [docker]\n"), env(&[])).expect("config");
+        assert!(!listed.databases.enabled, "absent de la liste des modules");
+    }
+
+    #[test]
+    fn database_backup_paths_are_read_per_engine() {
+        let yaml = "databases:\n  backups:\n    sqlserver:\n      paths: ['D:\\Backups\\SQL\\*.bak']\n      max_age_hours: 26\n    mariadb:\n      paths: [/var/backups/mysql/*.sql.gz]\n";
+        let config = Config::merge(with_yaml(yaml), env(&[])).expect("configuration");
+        let rules = &config.databases.backups;
+        assert_eq!(rules.len(), 2);
+        let sql = rules.iter().find(|r| r.engine == Engine::Sqlserver).expect("sqlserver");
+        assert_eq!(sql.paths, vec!["D:\\Backups\\SQL\\*.bak".to_string()]);
+        assert_eq!(sql.max_age_hours, 26);
+        let mysql = rules.iter().find(|r| r.engine == Engine::Mysql).expect("mysql");
+        assert_eq!(mysql.max_age_hours, databases::DEFAULT_MAX_AGE_HOURS);
+    }
+
+    #[test]
+    fn invalid_database_backup_sections_are_refused() {
+        let unknown = "databases:\n  backups:\n    oracle:\n      paths: [/x/*]\n";
+        let error = Config::merge(with_yaml(unknown), env(&[])).expect_err("unknown engine");
+        assert!(error.to_string().contains("unknown engine 'oracle'"), "{error}");
+        let empty = "databases:\n  backups:\n    postgresql:\n      paths: []\n";
+        assert!(Config::merge(with_yaml(empty), env(&[])).is_err());
+        let zero = "databases:\n  backups:\n    postgresql:\n      paths: [/x/*]\n      max_age_hours: 0\n";
+        assert!(Config::merge(with_yaml(zero), env(&[])).is_err());
+        let fast = "databases:\n  interval_secs: 5\n";
+        assert!(Config::merge(with_yaml(fast), env(&[])).is_err());
     }
 
     #[test]

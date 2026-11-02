@@ -8,6 +8,7 @@
 	import type { Target } from '#lib/api/index.js';
 	import PlakarPanel from '#lib/components/devices/docker/PlakarPanel.svelte';
 	import BackupReposPanel from './BackupReposPanel.svelte';
+	import DatabasesPanel from './DatabasesPanel.svelte';
 	import WireguardPanel from './WireguardPanel.svelte';
 	import IpsecPanel from './IpsecPanel.svelte';
 	import SpeedtestPanel from './SpeedtestPanel.svelte';
@@ -26,6 +27,8 @@
 	<PlakarPanel {target} />
 {:else if module === 'backup_repos'}
 	<BackupReposPanel {target} />
+{:else if module === 'databases'}
+	<DatabasesPanel {target} />
 {:else if module === 'wireguard'}
 	<WireguardPanel {target} />
 {:else if module === 'ipsec'}
