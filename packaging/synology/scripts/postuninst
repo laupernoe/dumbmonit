@@ -1,0 +1,7 @@
+#!/bin/sh
+# On a real removal, make sure no secret is left behind. DSM may run this
+# script during an upgrade too (SYNOPKG_PKG_STATUS=UPGRADE): keep the data then.
+if [ "$SYNOPKG_PKG_STATUS" = "UNINSTALL" ]; then
+    rm -rf "/var/packages/dumbmonit-agent/var" 2>/dev/null
+fi
+exit 0

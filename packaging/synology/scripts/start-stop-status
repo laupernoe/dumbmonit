@@ -1,0 +1,54 @@
+#!/bin/sh
+# DumbMonit agent service control for DSM 7 (runs as the package user).
+
+PKG="dumbmonit-agent"
+BIN="/var/packages/$PKG/target/bin/dumbmonit-agent"
+VAR="/var/packages/$PKG/var"
+CONFIG="$VAR/agent.yaml"
+PIDFILE="$VAR/agent.pid"
+LOG="$VAR/agent.log"
+
+is_running() {
+    [ -f "$PIDFILE" ] || return 1
+    pid="$(cat "$PIDFILE" 2>/dev/null)"
+    [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null
+}
+
+case "$1" in
+    start)
+        is_running && exit 0
+        [ -f "$CONFIG" ] || { echo "Missing configuration $CONFIG" >> "$LOG"; exit 1; }
+        # Keep the log small: one previous generation only.
+        if [ -f "$LOG" ] && [ "$(wc -c < "$LOG")" -gt 1048576 ]; then
+            mv -f "$LOG" "$LOG.1"
+        fi
+        nohup "$BIN" --config="$CONFIG" >> "$LOG" 2>&1 &
+        echo $! > "$PIDFILE"
+        exit 0
+        ;;
+    stop)
+        if is_running; then
+            pid="$(cat "$PIDFILE")"
+            kill "$pid" 2>/dev/null
+            i=0
+            while kill -0 "$pid" 2>/dev/null && [ "$i" -lt 20 ]; do
+                sleep 1
+                i=$((i + 1))
+            done
+            kill -9 "$pid" 2>/dev/null || true
+        fi
+        rm -f "$PIDFILE"
+        exit 0
+        ;;
+    status)
+        is_running && exit 0
+        exit 3
+        ;;
+    log)
+        echo "$LOG"
+        exit 0
+        ;;
+    *)
+        exit 1
+        ;;
+esac
