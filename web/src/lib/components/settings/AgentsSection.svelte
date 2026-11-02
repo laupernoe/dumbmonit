@@ -188,7 +188,7 @@
 							<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
 								<div class="min-w-0 flex-1">
 									<div class="flex flex-wrap items-center gap-2">
-										<span class={`font-semibold ${revoked ? 'text-ink-2' : 'text-ink'}`}>{token.name}</span>
+										<span class={`select-all font-mono text-[0.8125rem] font-semibold ${revoked ? 'text-ink-2' : 'text-ink'}`}>{token.name}</span>
 										<code class="rounded-md border border-line bg-canvas-deep px-1.5 py-0.5 font-mono text-[0.75rem] text-ink-2">{token.prefix}…</code>
 										{#if revoked}<Plate tone="ghost" label={m.settings_agents_revoked()} />{/if}
 										{#if token.ad_domain}<Plate tone="info" label={m.settings_agents_ad_badge({ domain: token.ad_domain })} />{/if}

@@ -326,8 +326,9 @@ pub struct CreatedToken {
 
 #[derive(Debug, Deserialize)]
 pub struct TokenPayload {
-    /// Facultatif : absent ou vide, le serveur en génère un (voir
-    /// [`token_display_name`]). Un nom fourni explicitement reste conservé.
+    /// Accepté par compatibilité, mais ignoré : le nom d'un jeton est toujours
+    /// l'identifiant opaque généré par le serveur (voir
+    /// [`agent::generate_token_name`]).
     #[serde(default)]
     pub name: String,
     /// URL par laquelle les agents joindront ce serveur.
@@ -369,32 +370,6 @@ pub struct TokenPayload {
     /// celle déjà réglée, à défaut son nom d'hôte.
     #[serde(default)]
     pub relay_host: Option<String>,
-}
-
-/// Nom d'un jeton : celui fourni (nettoyé), sinon un nom générique et lisible,
-/// daté en UTC. Le contexte (site du relais) s'y ajoute pour un jeton de relais.
-pub(crate) fn token_display_name(
-    provided: &str,
-    reusable: bool,
-    relay: bool,
-    site: Option<&str>,
-    today: chrono::NaiveDate,
-) -> String {
-    let provided = provided.trim();
-    if !provided.is_empty() {
-        return provided.to_string();
-    }
-    let date = today.format("%Y-%m-%d");
-    if relay {
-        return match site.map(str::trim).filter(|s| !s.is_empty()) {
-            Some(site) => format!("Relay enrolment · {site}"),
-            None => format!("Relay enrolment · {date}"),
-        };
-    }
-    if reusable {
-        return format!("Fleet enrolment · {date}");
-    }
-    format!("Agent enrolment · {date}")
 }
 
 impl TokenPayload {
@@ -446,13 +421,6 @@ pub async fn create_token(
     Json(payload): Json<TokenPayload>,
 ) -> ApiResult<(StatusCode, Json<CreatedToken>)> {
     let site = agent::clean_site(payload.site.as_deref());
-    let name = token_display_name(
-        &payload.name,
-        payload.reusable,
-        payload.relay,
-        site.as_deref(),
-        chrono::Utc::now().date_naive(),
-    );
     let max = agent::MAX_SITE_LEN;
     if site.as_ref().is_some_and(|s| s.chars().count() > max) {
         return Err(ApiError::BadRequest(format!("Site name is limited to {max} characters.")));
@@ -480,7 +448,7 @@ pub async fn create_token(
         agent::set_relay_gateway(&state.pool, route.relay_id, Some(route.port), Some(&route.host))
             .await?;
     }
-    let (mut record, secret) = agent::create_token(&state.pool, &name, policy).await?;
+    let (mut record, secret) = agent::create_token(&state.pool, policy).await?;
     clients::assign(&state.pool, clients::Kind::AgentToken, &[record.id], Some(client))
         .await
         .map_err(super::clients::api_error)?;
@@ -489,7 +457,8 @@ pub async fn create_token(
         record.relay = true;
         record.relay_site = site;
     }
-    audit::record(&state.pool, Some(&me.username), "agent_token.created", Some(&name), ip).await;
+    audit::record(&state.pool, Some(&me.username), "agent_token.created", Some(&record.name), ip)
+        .await;
     let params = install_parameters_via(&state, payload.base_url.as_deref(), route).await;
 
     let mut token = TokenView::from(record);
@@ -874,41 +843,6 @@ fn install_windows(
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn day() -> chrono::NaiveDate {
-        chrono::NaiveDate::from_ymd_opt(2026, 11, 2).unwrap()
-    }
-
-    #[test]
-    fn a_missing_or_blank_token_name_is_generated() {
-        let absent = payload(r#"{}"#);
-        assert_eq!(absent.name, "");
-        assert_eq!(
-            token_display_name(&absent.name, false, false, None, day()),
-            "Agent enrolment · 2026-11-02"
-        );
-        assert_eq!(
-            token_display_name("   \t ", false, false, None, day()),
-            "Agent enrolment · 2026-11-02"
-        );
-        assert_eq!(
-            token_display_name("", true, false, None, day()),
-            "Fleet enrolment · 2026-11-02"
-        );
-        assert_eq!(
-            token_display_name("", false, true, Some(" Lyon "), day()),
-            "Relay enrolment · Lyon"
-        );
-        assert_eq!(
-            token_display_name("", false, true, None, day()),
-            "Relay enrolment · 2026-11-02"
-        );
-    }
-
-    #[test]
-    fn an_explicit_token_name_is_kept() {
-        assert_eq!(token_display_name("  portable  ", true, true, Some("x"), day()), "portable");
-    }
 
     fn payload(json: &str) -> TokenPayload {
         serde_json::from_str(json).expect("désérialisation")

@@ -47,9 +47,9 @@ pub use receive::{
 pub use store::{
     HostInfo, KeyAuth, MAX_SITE_LEN, REBIND_WINDOW_MINUTES, Registration, TokenMachine,
     TokenPolicy, TokenRecord, ad_folder, allow_rebind, authorise_key, clean_ad_domain,
-    clean_gateway_host, clean_site, close_enrolment, create_token, host, list_hosts, list_tokens,
-    revoke_token, set_relay_gateway, set_relay_wanted, set_token_ad_domain, set_token_relay,
-    target_of_key, token_machines,
+    clean_gateway_host, clean_site, close_enrolment, create_token, generate_token_name, host,
+    is_token_name, list_hosts, list_tokens, revoke_token, set_relay_gateway, set_relay_wanted,
+    set_token_ad_domain, set_token_relay, target_of_key, token_machines,
 };
 
 /// Vérifie un en-tête `Authorization` d'agent et renvoie l'identifiant du jeton.
@@ -291,7 +291,7 @@ mod tests {
             .expect("chiffrement");
 
         let (token_record, _) =
-            store::create_token(&pool, "parc", store::TokenPolicy::default()).await.expect("jeton");
+            store::create_token(&pool, store::TokenPolicy::default()).await.expect("jeton");
         let identity = dumbmonit_proto::AgentIdentity {
             hostname: "nas".into(),
             os: "linux".into(),

@@ -331,7 +331,7 @@
 		{/if}
 
 		<div class="grid gap-1.5">
-			<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_token()} <span class="font-normal text-ink-2">— {token?.name}</span></p>
+			<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_token()} <span class="font-normal text-ink-2">— <span class="select-all font-mono">{token?.name}</span></span></p>
 			<CopyBlock value={token?.secret ?? ''} label={m.deviceform_enroll_copy_token()} secret />
 		</div>
 		<AgentChannelNote />

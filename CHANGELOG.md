@@ -5,6 +5,10 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Changed
+
+- Enrolment tokens are now opaque identifiers; existing tokens are renamed automatically.
+
 ### Security
 
 - **The web port is HTTPS only.** Plain HTTP requests are redirected. Agent install
