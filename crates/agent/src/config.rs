@@ -493,7 +493,8 @@ impl Config {
         // Une URL en clair hors boucle locale n'est tolérée que pour un agent
         // déjà enrôlé, qui ne parlera alors qu'à son canal chiffré rangé : c'est
         // `Agent::new` qui le vérifie (il lit l'état du canal), et refuse sinon.
-        let plain_server_url = !server_url.starts_with("https://") && !is_loopback_http(&server_url);
+        let plain_server_url =
+            !server_url.starts_with("https://") && !is_loopback_http(&server_url);
 
         let token = env.get("DUMBMONIT_AGENT_TOKEN").or(file.token).unwrap_or_default();
         let token = token.trim().to_string();

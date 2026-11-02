@@ -1190,9 +1190,9 @@ fn initial_tls(config: &Config, stored: Option<TlsState>) -> Option<TlsState> {
 /// ni jeton ni mesure ne partent en clair. Sinon, une erreur explicite plutôt
 /// qu'un repli sur le clair.
 fn plain_url_channel(server_url: &str, tls: Option<&mut TlsState>) -> Result<()> {
-    let Some(state) = tls.filter(|state| {
-        state.identity().is_some() && state.url.starts_with("https://")
-    }) else {
+    let Some(state) =
+        tls.filter(|state| state.identity().is_some() && state.url.starts_with("https://"))
+    else {
         anyhow::bail!(
             "the server URL '{server_url}' is plain http and no enrolled encrypted channel is \
              stored: run the installer again with the https:// command shown by DumbMonit"
