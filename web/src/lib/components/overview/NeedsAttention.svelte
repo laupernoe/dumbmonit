@@ -1,23 +1,26 @@
 <script lang="ts">
 	/**
 	 * "Needs attention": only what is broken now (see `attention.ts`), worst
-	 * first, each row with its quick action — acknowledge or snooze an alert,
-	 * silence a monitor for an hour — then the week ahead in one line at the
-	 * foot (what expires in the next seven days). With nothing broken, the
-	 * pigeon sleeps and the card says so. Phones keep the first five rows.
+	 * first, each row with its quick action: acknowledge or snooze an alert,
+	 * mute a monitor (a small cross, see `MuteControl`). Then the week ahead
+	 * in one line at the foot (what expires in the next seven days). With
+	 * nothing broken, the pigeon sleeps and the card says so. Phones keep the
+	 * first five rows.
 	 */
 	import { ArrowRight } from 'lucide-svelte';
-	import { createSilence, listAlertRules, toApiError, type AlertRule, type Deadline, type Target } from '#lib/api/index.js';
+	import { listAlertRules, listSilences, type AlertRule, type Deadline, type Silence } from '#lib/api/index.js';
 	import { listDeadlines } from '#lib/api/deadlines.js';
 	import AlertActions from '#lib/components/alerts/AlertActions.svelte';
-	import { quickSilencePayload, TONE_BAR } from '#lib/components/alerts/helpers.js';
+	import { TONE_BAR } from '#lib/components/alerts/helpers.js';
 	import { kindName, whenLabel } from '#lib/components/deadlines/labels.js';
 	import Mascot from '#lib/components/Mascot.svelte';
 	import { formatRelative } from '#lib/format.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, Plate } from '#lib/ui/index.js';
+	import { Plate } from '#lib/ui/index.js';
+	import MuteControl from './MuteControl.svelte';
+	import { mutedBy } from './mute.js';
 	import { readSky, type SkyRow } from './sky.js';
 	import { attentionRows, weekAhead } from './attention.js';
 
@@ -63,24 +66,31 @@
 		return row.target ? `/targets/${row.target.id}` : '/alerts';
 	}
 
-	// --- Silence a monitor for an hour (a device row has no alert to snooze) --
-	let busy = $state<number | null>(null);
-	let silenced = $state<number[]>([]);
+	// --- Mute a monitor (a device row has no alert to snooze) -----------------
+	// The windows come from the server, so a mute survives a reload; the one a
+	// row has just created is remembered too, in case the server's clock is
+	// a few seconds behind the browser's.
+	let silences = $state<Silence[]>([]);
+	let justCreated = $state<number[]>([]);
 	let failure = $state<{ id: number; message: string } | null>(null);
 
-	async function silence(target: Target) {
-		if (busy !== null) return;
-		busy = target.id;
-		failure = null;
-		try {
-			await createSilence(quickSilencePayload(target));
-			silenced = [...silenced, target.id];
-			void alertsStore.refresh();
-		} catch (cause) {
-			failure = { id: target.id, message: toApiError(cause).message };
-		} finally {
-			busy = null;
-		}
+	$effect(() => {
+		const controller = new AbortController();
+		listSilences(controller.signal)
+			.then((list) => (silences = list))
+			.catch(() => {});
+		return () => controller.abort();
+	});
+
+	function muted(silence: Silence) {
+		silences = [...silences.filter((s) => s.id !== silence.id), silence];
+		justCreated = [...justCreated, silence.id];
+		void alertsStore.refresh();
+	}
+	function unmuted(silence: Silence) {
+		silences = silences.filter((s) => s.id !== silence.id);
+		justCreated = justCreated.filter((id) => id !== silence.id);
+		void alertsStore.refresh();
 	}
 </script>
 
@@ -133,13 +143,13 @@
 						{#if row.kind === 'alert'}
 							<AlertActions alert={row.alert} target={row.target} onchanged={() => void alertsStore.refresh()} />
 						{:else if auth.canOperate}
-							{#if silenced.includes(row.target.id)}
-								<Plate tone="muted" size="sm" draw>{m.console_panel_silenced()}</Plate>
-							{:else}
-								<Button size="sm" variant="secondary" loading={busy === row.target.id} disabled={busy !== null} onclick={() => void silence(row.target)}>
-									{m.console_panel_silence()}
-								</Button>
-							{/if}
+							<MuteControl
+								target={row.target}
+								muted={mutedBy(silences, row.target.id, justCreated)}
+								onmuted={muted}
+								onunmuted={unmuted}
+								onfail={(message) => (failure = message ? { id: row.target.id, message } : null)}
+							/>
 						{/if}
 					</div>
 				</li>
