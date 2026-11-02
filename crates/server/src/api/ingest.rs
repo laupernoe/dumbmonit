@@ -343,6 +343,7 @@ pub struct TokenPayload {
     /// l'identifiant opaque généré par le serveur (voir
     /// [`agent::generate_token_name`]).
     #[serde(default)]
+    #[allow(dead_code)]
     pub name: String,
     /// URL par laquelle les agents joindront ce serveur.
     ///
