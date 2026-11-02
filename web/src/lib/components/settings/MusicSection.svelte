@@ -97,21 +97,21 @@
 		if (!value) return;
 		const url = new URL(page.url.href);
 		// What Spotify sent back, as the server handed it over: code and state (or error).
-		const landing = url.search;
+		const returned = url.search;
 		for (const key of ['spotify', 'code', 'state', 'error']) url.searchParams.delete(key);
 		// Forget it in the address bar: a reload should not say it again.
 		void goto(url, { shallow: true, replace: true, state: page.state });
-		if (value === 'callback') untrack(() => void finishReturn(landing));
+		if (value === 'callback') untrack(() => void finishReturn(returned));
 		else outcome = value;
 	});
 
 	/** Finishes a direct return from Spotify, under this page's session. */
-	async function finishReturn(landing: string) {
+	async function finishReturn(returned: string) {
 		returning = true;
 		returnError = null;
 		outcome = null;
 		try {
-			await completeSpotifyConnection(landing);
+			await completeSpotifyConnection(returned);
 			outcome = 'connected';
 			await load();
 		} catch (cause) {
