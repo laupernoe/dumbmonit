@@ -57,6 +57,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Security
 
+- **The web port is HTTPS only.** Plain HTTP requests are redirected. Agent install
+  commands are `https` with the certificate pinned. Reverse proxies must connect
+  over HTTPS.
 - **HTTPS on the web port itself.** Port 8080 now speaks HTTP and HTTPS at once
   (told apart by the first byte), so nothing new needs publishing. TLS 1.3 and
   TLS 1.2 with ECDHE + AEAD suites only, hybrid post-quantum key exchange
