@@ -14,7 +14,7 @@ As Configurações reúnem o que é administrativo: a própria instância, sua c
 | Tela de parede | `/settings/wall` | Modo parede: o que mostra e como abrir ([Modo parede](wall.md)) |
 | Sistema | `/settings/system` | Backup, Arquivos de configuração, O próprio DumbMonit, Dados e retenção, Logs, API e assistentes, Sobre |
 
-Cada seção mantém sua âncora: `/settings#agents` redireciona para `/settings/monitoring#agents`. Os links antigos (`/alerts#notifications`) também redirecionam para o novo lugar. As páginas de status e os relatórios não estão mais nas Configurações: eles têm páginas próprias, **Páginas de status** (`/status`) e **Relatórios** (`/reports`); `/settings/status` e `/settings/reports` redirecionam para lá. A música, as notícias e os widgets da parede deixaram de existir: seus links antigos (`#music`, `#news`, `#widgets`) abrem a aba Tela de parede.
+Cada seção mantém sua âncora: `/settings#agents` redireciona para `/settings/monitoring#agents`. Os links antigos (`/alerts#notifications`) também redirecionam para o novo lugar. As páginas de status e os relatórios não estão mais nas Configurações: eles têm páginas próprias, **Páginas de status** (`/status`) e **Relatórios** (`/reports`); `/settings/status` e `/settings/reports` redirecionam para lá. As notícias e os widgets da parede deixaram de existir: seus links antigos (`#news`, `#widgets`) abrem a aba Tela de parede, onde fica **Música de parede** (`#music`).
 
 ## Aparência {#appearance}
 
@@ -26,8 +26,13 @@ seus temas claro e escuro.
 
 **Abrir o modo parede**: o painel do console, em tela cheia, para um monitor na
 sala. ++esc++ sai, e a paleta de comandos abre de qualquer lugar. A parede não
-tem mais música, notícias nem widgets; se quiser, uma cidade à noite pode ficar
-atrás do veredito. Veja [Modo parede](wall.md).
+tem mais notícias nem widgets; se quiser, uma cidade à noite pode ficar atrás do
+veredito. Veja [Modo parede](wall.md).
+
+**Música de parede**: conecte uma conta do Spotify (a parede vira um
+alto-falante Spotify Connect e mostra o que está tocando, com tocar / pausar),
+ou envie um link do Spotify, Deezer ou YouTube para todas as paredes. Veja
+[Música na parede](wall.md#music-on-the-wall).
 
 ## Conta e segurança {#account--security}
 

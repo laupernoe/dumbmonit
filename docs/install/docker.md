@@ -171,6 +171,9 @@ you need under `environment:` of the service, as shown in
 | `DUMBMONIT_RESET_PASSWORD` | *(empty)* | Set to `1` to clear the password and every session at startup. |
 | `DUMBMONIT_SETUP_CODE` | *(generated)* | Setup code asked by `/setup` while no admin exists. Unset, a random one is printed in the logs at each start. |
 | `DUMBMONIT_COOKIE_SECURE` | *(off)* | Set to `1` behind a TLS reverse proxy to mark the session cookie `Secure`. |
+| `DUMBMONIT_TLS` | `on` | HTTPS on the web port, next to HTTP. `off` serves plain HTTP only. See [HTTPS and encryption](https.md). |
+| `DUMBMONIT_TLS_CERT` / `DUMBMONIT_TLS_KEY` | *(self-signed)* | PEM certificate chain and key to serve over HTTPS; re-read when they change. |
+| `DUMBMONIT_HTTPS_REDIRECT` | *(setting)* | `on`/`off` forces the redirect of plain-HTTP page visits to HTTPS (on by default on a new installation). |
 | `DUMBMONIT_ALERT_INTERVAL_SECS` | `30` | Alert evaluation period (never below 10). |
 | `DUMBMONIT_ALERT_HISTORY_DAYS` | 90 days | Retention of alert history. See the [configuration reference](../reference/configuration.md) for a caveat about its unit. |
 | `DUMBMONIT_BACKUP_ENABLED` | on | Scheduled local backups of the database into `/data/backups/`. `DUMBMONIT_BACKUP_DIR`, `_INTERVAL_HOURS` (24) and `_KEEP` (7) tune them; see [Backup and restore](backup.md). |
@@ -371,9 +374,16 @@ If the notice stays after the restart, check `docker compose logs browser`, that
 
 ## Reverse proxy
 
-The UI and the API are served on one port over plain HTTP. No WebSocket is used:
-the interface polls the API, so any reverse proxy works without special
-configuration.
+The UI and the API are served on one port, which speaks both plain HTTP and
+HTTPS (see [HTTPS and encryption](https.md)). A proxy that terminates TLS can
+keep talking plain HTTP to the container. No WebSocket is used: the interface
+polls the API, so any reverse proxy works without special configuration.
+
+Forward the scheme (`X-Forwarded-Proto`, sent by default by Caddy and Traefik)
+and declare the proxy in `DUMBMONIT_TRUSTED_PROXIES`: a request that carries
+forwarded headers is never redirected to HTTPS by DumbMonit itself, and from a
+trusted proxy `X-Forwarded-Proto: https` makes the session cookie `Secure` and
+turns HSTS on.
 
 === "Caddy"
 
@@ -401,8 +411,9 @@ configuration.
     }
     ```
 
-When the proxy terminates TLS, set `DUMBMONIT_COOKIE_SECURE: "1"` so the session
-cookie is only sent over HTTPS. Do not set it on a plain-HTTP deployment: the
+When the proxy terminates TLS and is declared in `DUMBMONIT_TRUSTED_PROXIES`,
+the cookie becomes `Secure` by itself. `DUMBMONIT_COOKIE_SECURE: "1"` forces it
+for a proxy you cannot declare. Do not set it on a plain-HTTP deployment: the
 browser would never send the cookie back and login would be impossible.
 
 !!! note "Agents behind a proxy"

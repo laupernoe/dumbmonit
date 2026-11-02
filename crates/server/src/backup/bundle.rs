@@ -162,9 +162,6 @@ pub struct Bundle {
     /// Règles de la carte, acceptées ou refusées (migration 0072).
     #[serde(default)]
     pub topology_rules: Vec<BundleTopologyRule>,
-    /// Tableaux de bord, partagés et personnels (migration 0120).
-    #[serde(default)]
-    pub dashboards: Vec<BundleDashboard>,
     /// Procédures et leurs rattachements (migration 0150).
     #[serde(default)]
     pub runbooks: Vec<BundleRunbook>,
@@ -197,7 +194,7 @@ pub struct Bundle {
     /// Rattachement des objets aux clients, par clé naturelle : un objet
     /// absent de la liste reste au client par défaut (équipements, pages,
     /// jetons d'agent) ou à l'instance (le reste).
-    #[serde(default)]
+    #[serde(default, deserialize_with = "lenient_assignments")]
     pub client_assignments: Vec<BundleAssignment>,
     /// Scans de découverte planifiés et appareils connus ou ignorés de leur
     /// inventaire (migrations 0082 et 0211). Les appareils encore « nouveaux »
@@ -207,6 +204,15 @@ pub struct Bundle {
     /// Liens manuels entre un LUN d'un NAS et l'équipement qui l'utilise.
     #[serde(default)]
     pub lun_links: Vec<BundleLunLink>,
+    /// Changements de configuration que l'administrateur a fermés après une
+    /// mise à jour (migration 0220) : une note fermée ne doit pas revenir sur
+    /// l'instance restaurée.
+    #[serde(default)]
+    pub upgrade_notes_closed: Vec<BundleUpgradeNote>,
+    /// Redirection HTTP → HTTPS de l'interface (réglage `web_https_redirect`).
+    /// Le certificat, lui, ne voyage pas : il est propre à l'instance.
+    #[serde(default)]
+    pub https_redirect: Option<bool>,
 }
 
 impl Bundle {
@@ -231,7 +237,6 @@ impl Bundle {
             ("oncall".to_string(), self.oncall.count()),
             ("topology_corrections".to_string(), self.topology_corrections.len()),
             ("topology_rules".to_string(), self.topology_rules.len()),
-            ("dashboards".to_string(), self.dashboards.len()),
             ("runbooks".to_string(), self.runbooks.len()),
             ("remediation_actions".to_string(), self.remediation_actions.len()),
             ("remediation_policies".to_string(), self.remediation_policies.len()),
@@ -240,6 +245,7 @@ impl Bundle {
             ("clients".to_string(), self.clients.len()),
             ("netscan_schedules".to_string(), self.netscan_schedules.len()),
             ("lun_links".to_string(), self.lun_links.len()),
+            ("upgrade_notes_closed".to_string(), self.upgrade_notes_closed.len()),
         ])
     }
 }
@@ -342,6 +348,19 @@ pub struct BundleLunLink {
     pub entity: String,
     #[serde(default)]
     pub author: String,
+}
+
+/// Un changement de configuration fermé (table `upgrade_notes_closed`).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleUpgradeNote {
+    /// Version du catalogue qui l'introduit.
+    pub version: String,
+    pub note_id: String,
+    /// UTC sans suffixe.
+    #[serde(default)]
+    pub closed_at: String,
+    #[serde(default)]
+    pub closed_by: String,
 }
 
 /// Une correction de la carte de topologie.
@@ -456,6 +475,18 @@ fn utc() -> String {
     "UTC".to_string()
 }
 
+/// Relit les rattachements en ignorant ceux d'une sorte d'objet disparue : les
+/// sauvegardes d'avant le retrait des tableaux de bord personnalisés portent
+/// des rattachements `dashboard` (la table `dashboards` est conservée, mais plus
+/// lue ni restaurée), et ils ne doivent pas faire échouer toute la restauration.
+fn lenient_assignments<'de, D>(deserializer: D) -> Result<Vec<BundleAssignment>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let raw = Vec::<Value>::deserialize(deserializer)?;
+    Ok(raw.into_iter().filter_map(|entry| serde_json::from_value(entry).ok()).collect())
+}
+
 /// Un objet rattaché à un client. `key` : `kind|address` pour un équipement
 /// (comme [`target_ref`]), le `slug` d'une page, l'empreinte d'un jeton d'agent,
 /// le nom d'un canal ou d'un rapport, l'`uid` d'une règle, et pour un silence
@@ -479,22 +510,6 @@ pub struct BundleLocation {
     pub site: String,
     #[serde(default)]
     pub main_site: bool,
-}
-
-/// Un tableau de bord, désigné par son nom et son propriétaire (nom de
-/// compte ; `None` pour un tableau partagé).
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BundleDashboard {
-    pub name: String,
-    #[serde(default)]
-    pub shared: bool,
-    #[serde(default)]
-    pub owner: Option<String>,
-    pub range_secs: i64,
-    pub refresh_secs: i64,
-    /// Grille de widgets telle que stockée ; revalidée à la restauration.
-    #[serde(default)]
-    pub widgets: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

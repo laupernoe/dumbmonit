@@ -55,7 +55,7 @@ plus étroit, il s'ouvre en tiroir. Pour la liste complète, voir la
 
 `/wall` montre un tableau pour un écran de salle : le verdict, l'horloge, les cinq
 chiffres, la rivière de santé, les alertes ouvertes et qui est d'astreinte.
-Ouvrez-le avec l'icône **Mode mur** de la barre du haut ou la palette de
+Ouvrez-le avec l'icône **Mode mur** en bas du menu de gauche ou la palette de
 commandes ; ++esc++ ou **Quitter** retourne à la console. Voir
 [Mode mur](wall.md).
 

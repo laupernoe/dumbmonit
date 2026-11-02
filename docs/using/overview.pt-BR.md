@@ -52,7 +52,7 @@ estreita ele abre como gaveta. A lista completa está na
 
 `/wall` mostra um quadro para um monitor de sala: o veredito, o relógio, os cinco
 números, o rio de saúde, os alertas abertos e quem está de plantão. Abra-o com o
-ícone **Wall mode** da barra superior ou com a paleta de comandos; ++esc++ ou
+ícone **Wall mode** no fundo do menu lateral ou com a paleta de comandos; ++esc++ ou
 **Exit** volta ao console. Veja [Modo parede](wall.md).
 
 ## Instale-o em um celular {#install-it-on-a-phone}

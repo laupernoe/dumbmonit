@@ -42,7 +42,6 @@ With the mode on:
 | Alert rules | A client, or the instance |
 | Maintenance windows | A client, or the instance (a window on one monitor follows that monitor) |
 | Report schedules | A client, or the instance |
-| Shared dashboards | A client, or the instance (a personal dashboard stays with its owner) |
 | On-call schedules and escalation policies | A client, or the instance |
 | Runbooks | A client, or the instance |
 | Remediation actions | A client, or the instance (an action bound to a monitor follows that monitor) |
@@ -60,13 +59,10 @@ concerns that client:
 - a client's **runbooks and actions** only show under that client's alerts and
   monitors, and a client's action never runs on another client's monitor, by
   hand or through an automatic policy;
-- a client's **shared dashboard** is only shown to that client's members.
-  Instance dashboards are not shown to members at all: their widgets could name
-  other clients.
 
 Objects you create while a client is picked in the header belong to that
 client. To move an existing object, use the client menu next to it (status
-pages, channels, report schedules, shared dashboards, on-call schedules and
+pages, channels, report schedules, on-call schedules and
 policies, runbooks, actions) or the **Client** field of a monitor.
 Alert rules and maintenance windows are moved through the API
 (`PUT /api/clients/assign`).
@@ -135,14 +131,13 @@ server only opens to it a closed list of pages — monitors, metrics, alerts,
 maintenance on its own monitors, the map, status pages, vulnerabilities, its
 clients' logos and reports — and refuses everything else (settings, logs,
 backups, tokens, the assistant endpoint, raw metrics, log search, runbooks and
-remediation, on-call, configuration files, status page subscribers). Their own
-shared dashboards and the metrics explorer stay open, filtered to their
-monitors. Every list is filtered
+remediation, on-call, configuration files, status page subscribers). The
+metrics explorer stays open, filtered to their monitors. Every list is filtered
 on the server; a monitor of another client answers *not found*, as if it did not
 exist. API tokens of a member inherit the same limits.
 
 When the MSP administrator picks a client in the header, lists follow that
-client: dashboards, on-call schedules and policies, runbooks, actions and their
+client: on-call schedules and policies, runbooks, actions and their
 run log, and the log search, which then only shows lines of that client's
 monitors (DumbMonit's own logs belong to no client). Configuration files
 (GitOps export, plan and apply) always describe the whole instance and stay

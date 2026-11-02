@@ -1,11 +1,13 @@
 <script lang="ts">
 	/**
-	 * The one button. `primary` is solid teal (one per view, the thing to do
-	 * next); `secondary` is an outlined faceplate; `ghost` is text; `danger`
-	 * is outlined red and asks for a `confirm` word when the action is final.
+	 * The one button. `primary` is the solid one (one per view, the thing to do
+	 * next) and answers a click with the green spark burst; `secondary` is an
+	 * outlined faceplate; `ghost` is text; `danger` is outlined red and asks
+	 * for a `confirm` word when the action is final.
 	 */
 	import type { Snippet } from 'svelte';
 	import { Loader2 } from 'lucide-svelte';
+	import { sparkle } from './effects/spark';
 
 	interface Props {
 		children: Snippet;
@@ -54,11 +56,11 @@
 </script>
 
 {#if href && !disabled}
-	<a {href} class={classes} {onclick} {...rest}>
+	<a {href} class={classes} {onclick} {...rest} use:sparkle={{ enabled: variant === 'primary' }}>
 		{@render children()}
 	</a>
 {:else}
-	<button {type} class={classes} disabled={disabled || loading} aria-busy={loading} {onclick} {...rest}>
+	<button {type} class={classes} disabled={disabled || loading} aria-busy={loading} {onclick} {...rest} use:sparkle={{ enabled: variant === 'primary' }}>
 		{#if loading}
 			<Loader2 class="size-4 animate-spin" aria-hidden="true" />
 		{/if}

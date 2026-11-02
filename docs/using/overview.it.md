@@ -53,7 +53,7 @@ stretto si apre come cassetto. L'elenco completo è nella
 
 `/wall` mostra una lavagna per un monitor in sala: il verdetto, l'orologio, le
 cinque cifre, il fiume di salute, gli allarmi aperti e chi è reperibile. Aprila
-con l'icona **Wall mode** della barra in alto o con la command palette; ++esc++ o
+con l'icona **Wall mode** in fondo al menu laterale o con la command palette; ++esc++ o
 **Exit** torna alla console. Vedi [Modalità Wall](wall.md).
 
 ## Installarla su un telefono {#install-it-on-a-phone}

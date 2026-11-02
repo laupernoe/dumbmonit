@@ -24,6 +24,7 @@
 
 mod listener;
 pub mod pki;
+pub mod probe;
 mod routes;
 mod tunnel;
 

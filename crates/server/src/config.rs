@@ -181,6 +181,24 @@ pub struct Config {
     /// (`DUMBMONIT_AGENT_LEGACY_DAYS`). `None` : jusqu'à ce qu'un administrateur
     /// exige mTLS dans l'interface.
     pub agent_legacy_days: Option<u32>,
+    /// HTTPS de l'interface et de l'API sur le port même de l'interface
+    /// (`DUMBMONIT_TLS`, actif par défaut ; `off` le coupe). Le port sert alors
+    /// HTTP et HTTPS : le premier octet de la connexion décide (voir
+    /// [`crate::web_tls`]).
+    pub tls_enabled: bool,
+    /// Certificat fourni (`DUMBMONIT_TLS_CERT`, chaîne PEM) et sa clé
+    /// (`DUMBMONIT_TLS_KEY`). Absents : un certificat autosigné est créé au
+    /// premier démarrage et gardé, clé chiffrée, dans la base.
+    pub tls_cert: Option<PathBuf>,
+    pub tls_key: Option<PathBuf>,
+    /// Noms et adresses ajoutés au certificat autosigné (`DUMBMONIT_TLS_NAMES`,
+    /// séparés par des virgules), en plus de `localhost`, de la boucle locale,
+    /// du nom d'hôte et de l'hôte de `DUMBMONIT_PUBLIC_URL`.
+    pub tls_names: Vec<String>,
+    /// Redirection HTTP → HTTPS imposée par l'environnement
+    /// (`DUMBMONIT_HTTPS_REDIRECT`). `None` : le réglage de l'interface, actif
+    /// d'office sur une installation neuve.
+    pub https_redirect: Option<bool>,
 }
 
 /// Réglages d'instance du collecteur `website`.
@@ -310,6 +328,13 @@ impl Config {
                     })
                 })
                 .transpose()?,
+            tls_enabled: env_flag_or("DUMBMONIT_TLS", true),
+            tls_cert: env_path("DUMBMONIT_TLS_CERT"),
+            tls_key: env_path("DUMBMONIT_TLS_KEY"),
+            tls_names: parse_tls_names(&env_or("DUMBMONIT_TLS_NAMES", "")),
+            https_redirect: env_var("DUMBMONIT_HTTPS_REDIRECT")
+                .filter(|raw| !raw.trim().is_empty())
+                .map(|_| env_flag("DUMBMONIT_HTTPS_REDIRECT")),
         })
     }
 
@@ -437,6 +462,29 @@ pub fn parse_scan_subnets(raw: &str) -> Vec<ipnet::Ipv4Net> {
     found
 }
 
+/// Chemin de fichier lu dans l'environnement ; vide vaut absent.
+fn env_path(key: &str) -> Option<PathBuf> {
+    env_var(key).map(|raw| raw.trim().to_string()).filter(|raw| !raw.is_empty()).map(PathBuf::from)
+}
+
+/// Lit `DUMBMONIT_TLS_NAMES` : noms DNS ou adresses IP séparés par des
+/// virgules, en minuscules, sans doublon. Une entrée qui n'est ni l'un ni
+/// l'autre est ignorée avec un avertissement.
+pub fn parse_tls_names(raw: &str) -> Vec<String> {
+    let mut names: Vec<String> = Vec::new();
+    for entry in raw.split(',').map(|entry| entry.trim().to_ascii_lowercase()) {
+        if entry.is_empty() || names.contains(&entry) {
+            continue;
+        }
+        if crate::web_tls::cert::is_valid_name(&entry) {
+            names.push(entry);
+        } else {
+            tracing::warn!(entry, "DUMBMONIT_TLS_NAMES: entry ignored (not a host name or IP)");
+        }
+    }
+    names
+}
+
 fn env_or(key: &str, default: &str) -> String {
     env_var(key).unwrap_or_else(|| default.to_string())
 }
@@ -497,6 +545,15 @@ mod tests {
         assert_eq!(parse_agent_listen(Some("off")).unwrap(), None);
         assert_eq!(parse_agent_listen(Some("")).unwrap(), None);
         assert!(parse_agent_listen(Some("8443")).is_err(), "une adresse complète est attendue");
+    }
+
+    #[test]
+    fn extra_certificate_names_are_cleaned() {
+        assert_eq!(
+            parse_tls_names(" NAS.lan, 192.168.1.10,,nas.lan, pas un nom!, ::1 "),
+            vec!["nas.lan".to_string(), "192.168.1.10".into(), "::1".into()]
+        );
+        assert!(parse_tls_names("").is_empty());
     }
 
     #[test]

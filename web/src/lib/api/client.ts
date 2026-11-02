@@ -7,6 +7,7 @@
  */
 
 import { m } from '#lib/paraglide/messages.js';
+import { shareFlight } from './flight';
 import { notifyMutation } from './mutations';
 
 /** Normalised error, always carrying a message that can be displayed as is. */
@@ -153,13 +154,23 @@ export function setDemoRefusalHandler(handler: DemoRefusalHandler | null): void 
 	demoRefusalHandler = handler;
 }
 
+/** What the network answered: status and body, read once so that callers can share it. */
+interface Settled {
+	ok: boolean;
+	status: number;
+	text: string;
+}
+
+async function fetchSettled(url: string, init: RequestInit): Promise<Settled> {
+	const response = await fetch(url, init);
+	return { ok: response.ok, status: response.status, text: response.status === 204 ? '' : await response.text() };
+}
+
 /** Extracts the error message from the `{ "error": "..." }` body returned by the server. */
-async function readError(
-	response: Response
-): Promise<{ message: string; demo: boolean; access: 'password' | 'users' | null }> {
-	const fallback = { message: m.api_error_status({ status: response.status }), demo: false, access: null };
+function readError(settled: Settled): { message: string; demo: boolean; access: 'password' | 'users' | null } {
+	const fallback = { message: m.api_error_status({ status: settled.status }), demo: false, access: null };
 	try {
-		const text = await response.text();
+		const text = settled.text;
 		if (!text) return fallback;
 		const parsed: unknown = JSON.parse(text);
 		if (parsed && typeof parsed === 'object' && 'error' in parsed) {
@@ -193,23 +204,33 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 		allowUnauthorized = false
 	} = options;
 
-	let response: Response;
+	const url = buildUrl(path, query);
+	const headers: Record<string, string> = {
+		// Proof of origin for cookie-authenticated writes (anti-CSRF): a
+		// third-party page cannot add this header without CORS consent.
+		'x-requested-with': 'DumbMonit',
+		...clientViewHeaders(),
+		...(body === undefined
+			? {}
+			: { 'content-type': body instanceof Blob ? 'application/octet-stream' : 'application/json' })
+	};
+	let response: Settled;
 	try {
-		response = await fetch(buildUrl(path, query), {
-			method,
-			signal,
-			headers: {
-				// Proof of origin for cookie-authenticated writes (anti-CSRF): a
-				// third-party page cannot add this header without CORS consent.
-				'x-requested-with': 'DumbMonit',
-				...clientViewHeaders(),
-				...(body === undefined
-					? {}
-					: { 'content-type': body instanceof Blob ? 'application/octet-stream' : 'application/json' })
-			},
-			// A file is sent as is (an upload); anything else travels as JSON.
-			body: body === undefined ? undefined : body instanceof Blob ? body : JSON.stringify(body)
-		});
+		response =
+			method === 'GET' && body === undefined
+				? // The same read asked again while it is in flight costs no new request.
+					await shareFlight(
+						`${url}\n${headers['x-dumbmonit-client'] ?? ''}`,
+						(shared) => fetchSettled(url, { method, signal: shared, headers }),
+						signal
+					)
+				: await fetchSettled(url, {
+						method,
+						signal,
+						headers,
+						// A file is sent as is (an upload); anything else travels as JSON.
+						body: body === undefined ? undefined : body instanceof Blob ? body : JSON.stringify(body)
+					});
 	} catch (cause) {
 		// A cancelled request is not an outage: propagate it as is so the caller
 		// can ignore it silently.
@@ -218,7 +239,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 	}
 
 	if (!response.ok) {
-		const { message, demo, access } = await readError(response);
+		const { message, demo, access } = readError(response);
 		// The session has expired, or the instance has just been protected: notify
 		// once, at the client level, rather than screen by screen.
 		if (response.status === 401 && !allowUnauthorized) unauthorizedHandler?.();
@@ -233,7 +254,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
 	if (response.status === 204) return undefined as T;
 
-	const text = await response.text();
+	const text = response.text;
 	if (!text) return undefined as T;
 	try {
 		return JSON.parse(text) as T;

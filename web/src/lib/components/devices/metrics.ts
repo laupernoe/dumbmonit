@@ -105,17 +105,18 @@ export async function loadDeviceMetrics(
 	rated: readonly string[] = []
 ): Promise<DeviceMetricGroup[]> {
 	const end = Date.now();
-	return loadDeviceMetricsBetween(targetId, end - rangeSeconds * 1000, end, rangeSeconds, signal);
+	return loadDeviceMetricsBetween(targetId, end - rangeSeconds * 1000, end, rangeSeconds, signal, rated);
 }
 
 /** Same families over a past window (seconds in), for the charts' "last week" overlay. */
 export function loadDeviceMetricsWindow(
 	targetId: TargetId,
 	window: { start: number; end: number },
-	signal?: AbortSignal
+	signal?: AbortSignal,
+	rated: readonly string[] = []
 ): Promise<DeviceMetricGroup[]> {
 	const span = Math.max(window.end - window.start, 1);
-	return loadDeviceMetricsBetween(targetId, window.start * 1000, window.end * 1000, span, signal);
+	return loadDeviceMetricsBetween(targetId, window.start * 1000, window.end * 1000, span, signal, rated);
 }
 
 async function loadDeviceMetricsBetween(
@@ -123,7 +124,8 @@ async function loadDeviceMetricsBetween(
 	start: number,
 	end: number,
 	rangeSeconds: number,
-	signal?: AbortSignal
+	signal?: AbortSignal,
+	rated: readonly string[] = []
 ): Promise<DeviceMetricGroup[]> {
 	const step = stepFor(rangeSeconds);
 	// The rate window must cover at least two samples at the slowest cadence

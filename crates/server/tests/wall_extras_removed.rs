@@ -1,8 +1,9 @@
-//! La musique, les actualités et les widgets du mur ont disparu avec
-//! l'interface Homelab. Une instance qui les avait réglés garde ses lignes en
-//! base (réglages `wall.*`, tables `music_*`) : rien ne les lit plus, rien ne
-//! casse, leurs routes répondent 404, et une sauvegarde — y compris un lot qui
-//! porterait des sections inconnues — s'exporte et se restaure.
+//! Les actualités et les widgets du mur ont disparu avec l'interface Homelab.
+//! Une instance qui les avait réglés garde ses lignes en base (réglages
+//! `wall.*`) : rien ne les lit plus, rien ne casse, leurs routes répondent 404,
+//! et une sauvegarde — y compris un lot qui porterait des sections inconnues —
+//! s'exporte et se restaure. La musique du mur, elle, est revenue : ses tables
+//! `music_*`, restées en place, sont relues telles quelles.
 
 mod common;
 
@@ -46,12 +47,20 @@ async fn les_anciens_reglages_du_mur_ne_genent_rien_et_leurs_routes_ont_disparu(
         "/api/wall/widgets/settings",
         "/api/wall/news",
         "/api/wall/news/settings",
-        "/api/music/now",
-        "/api/music/spotify",
     ] {
         let reply = app.get(uri, Some(&admin)).await;
         assert_eq!(reply.status, StatusCode::NOT_FOUND, "{uri} : {}", reply.body);
     }
+    // La musique relit ce qu'une instance d'avant sa disparition avait laissé.
+    let reply = app.get("/api/music/now", Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(
+        reply.body["link"]["link"],
+        "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M"
+    );
+    assert_eq!(reply.body["spotify"]["status"], "off");
+    let reply = app.get("/api/music/spotify", Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
     // Le reste de l'instance se charge comme avant.
     let reply = app.get("/api/instance/settings", Some(&admin)).await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);

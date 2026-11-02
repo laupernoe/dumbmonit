@@ -79,7 +79,6 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         oncall: crate::backup::oncall::collect(pool, cipher).await?,
         topology_corrections: topology_corrections(pool, &refs).await?,
         topology_rules: topology_rules(pool, &refs).await?,
-        dashboards: dashboards(pool).await?,
         runbooks: runbooks(pool).await?,
         remediation_actions: remediation_actions(pool, cipher, &refs).await?,
         remediation_policies: remediation_policies(pool, &refs).await?,
@@ -96,7 +95,24 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         client_assignments: client_assignments(pool, &refs).await?,
         netscan_schedules: netscan_schedules(pool, &refs).await?,
         lun_links: lun_links(pool, &refs).await?,
+        upgrade_notes_closed: upgrade_notes_closed(pool).await?,
+        https_redirect: crate::auth::settings::get::<bool>(pool, crate::web_tls::SETTING_REDIRECT)
+            .await?,
     })
+}
+
+/// Changements de configuration fermés.
+async fn upgrade_notes_closed(pool: &SqlitePool) -> Result<Vec<BundleUpgradeNote>> {
+    Ok(crate::upgrade_notes::closed_rows(pool)
+        .await?
+        .into_iter()
+        .map(|row| BundleUpgradeNote {
+            version: row.version,
+            note_id: row.note_id,
+            closed_at: row.closed_at,
+            closed_by: row.closed_by,
+        })
+        .collect())
 }
 
 /// Scans planifiés et leurs appareils connus ou ignorés.
@@ -256,13 +272,8 @@ async fn client_assignments(
         let target = target.and_then(|id| refs.get(&id)).cloned().unwrap_or_default();
         push(Kind::Silence, format!("{name}\n{target}"), client);
     }
-    // Objets du lot 4, par nom (titre pour une procédure). Seuls les tableaux
-    // partagés ont un client.
+    // Objets du lot 4, par nom (titre pour une procédure).
     for (kind, sql) in [
-        (
-            Kind::Dashboard,
-            "SELECT name, client_id FROM dashboards WHERE shared = 1 AND client_id IS NOT NULL",
-        ),
         (
             Kind::Schedule,
             "SELECT name, client_id FROM oncall_schedules WHERE client_id IS NOT NULL",
@@ -426,29 +437,6 @@ async fn topology_rules(
             })
         })
         .collect())
-}
-
-async fn dashboards(pool: &SqlitePool) -> Result<Vec<BundleDashboard>> {
-    let rows = sqlx::query(
-        "SELECT d.name, d.shared, u.username AS owner, d.range_secs, d.refresh_secs, d.widgets
-         FROM dashboards d LEFT JOIN users u ON u.id = d.owner_id ORDER BY d.id",
-    )
-    .fetch_all(pool)
-    .await
-    .context("lecture des tableaux de bord")?;
-    rows.iter()
-        .map(|row| {
-            let widgets: String = row.try_get("widgets")?;
-            Ok(BundleDashboard {
-                name: row.try_get("name")?,
-                shared: row.try_get::<i64, _>("shared")? != 0,
-                owner: row.try_get("owner")?,
-                range_secs: row.try_get("range_secs")?,
-                refresh_secs: row.try_get("refresh_secs")?,
-                widgets: serde_json::from_str(&widgets).unwrap_or_default(),
-            })
-        })
-        .collect()
 }
 
 async fn locations(pool: &SqlitePool) -> Result<Vec<BundleLocation>> {

@@ -14,7 +14,7 @@
 	import { Button, Confirm, Plate } from '#lib/ui/index.js';
 	import { BellOff } from 'lucide-svelte';
 	import { formatDateTime } from '#lib/format.js';
-	import { quickSilencePayload, scheduleLabel } from '#lib/components/alerts/helpers.js';
+	import { datetimeLocalIn, quickSilencePayload, scheduleLabel } from '#lib/components/alerts/helpers.js';
 
 	interface Props {
 		target: Target;
@@ -57,15 +57,8 @@
 			: `· ${scheduleLabel(silence.schedule)}`;
 	}
 
-	/** Default for the picker: one hour from now, in the input's local format. */
-	function defaultUntil(): string {
-		const d = new Date(Date.now() + 3600_000);
-		const pad = (n: number) => String(n).padStart(2, '0');
-		return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-	}
-
 	function openPicker() {
-		until = defaultUntil();
+		until = datetimeLocalIn();
 		error = null;
 		picking = true;
 		queueMicrotask(() => pickerInput?.focus());
@@ -75,12 +68,7 @@
 		busy = true;
 		error = null;
 		try {
-			const payload = quickSilencePayload(target);
-			await createSilence({
-				...payload,
-				name: m.devices_silence_name({ name: target.name }),
-				schedule: { ...payload.schedule, ends_at: endsAt.toISOString() }
-			});
+			await createSilence({ ...quickSilencePayload(target, endsAt), name: m.devices_silence_name({ name: target.name }) });
 			picking = false;
 			await load();
 		} catch (cause) {

@@ -265,7 +265,7 @@
 							<div class="flex flex-wrap items-center gap-3" aria-live="polite">
 								<Plate tone={view.logs_store.running ? 'signal' : 'warning'} label={view.logs_store.running ? m.storage_running() : m.storage_stopped()} />
 								{#if view.logs_store.running}
-									<a href="/logs" class="inline-flex min-h-10 items-center text-sm font-semibold text-signal-ink hover:underline">{m.storage_open_logs()}</a>
+									<a href="/targets?tab=logs" class="inline-flex min-h-10 items-center text-sm font-semibold text-signal-ink hover:underline">{m.storage_open_logs()}</a>
 								{/if}
 							</div>
 							{#if view.logs_store.last_error}

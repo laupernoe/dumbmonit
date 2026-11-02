@@ -14,7 +14,7 @@ Ajustes reúne lo administrativo: la propia instancia, tu cuenta, quién puede i
 | Pantalla de pared | `/settings/wall` | Modo pared: qué muestra y cómo abrirlo ([Modo pared](wall.md)) |
 | Sistema | `/settings/system` | Copia de seguridad, Archivos de configuración, El propio DumbMonit, Datos y retención, Registros, API y asistentes, Acerca de |
 
-Cada sección conserva su ancla: `/settings#agents` redirige a `/settings/monitoring#agents`. Los enlaces antiguos (`/alerts#notifications`) también redirigen al nuevo lugar. Las páginas de estado y los informes ya no están en Ajustes: tienen sus propias páginas, **Páginas de estado** (`/status`) e **Informes** (`/reports`); `/settings/status` y `/settings/reports` redirigen allí. La música, las noticias y los widgets de la pared han desaparecido: sus enlaces antiguos (`#music`, `#news`, `#widgets`) abren la pestaña Pantalla de pared.
+Cada sección conserva su ancla: `/settings#agents` redirige a `/settings/monitoring#agents`. Los enlaces antiguos (`/alerts#notifications`) también redirigen al nuevo lugar. Las páginas de estado y los informes ya no están en Ajustes: tienen sus propias páginas, **Páginas de estado** (`/status`) e **Informes** (`/reports`); `/settings/status` y `/settings/reports` redirigen allí. Las noticias y los widgets de la pared han desaparecido: sus enlaces antiguos (`#news`, `#widgets`) abren la pestaña Pantalla de pared, donde está **Música de pared** (`#music`).
 
 ## Apariencia {#appearance}
 
@@ -26,9 +26,13 @@ conservan sus temas claro y oscuro.
 
 **Abrir el modo pared**: el tablero de la consola, a pantalla completa, para un
 monitor en la sala. ++esc++ sale, y la paleta de comandos lo abre desde
-cualquier sitio. La pared ya no tiene música, noticias ni widgets; si quieres,
-una ciudad de noche puede ir detrás de su veredicto. Consulta
-[Modo pared](wall.md).
+cualquier sitio. La pared ya no tiene noticias ni widgets; si quieres, una
+ciudad de noche puede ir detrás de su veredicto. Consulta [Modo pared](wall.md).
+
+**Música de pared**: conecta una cuenta de Spotify (la pared se convierte en un
+altavoz Spotify Connect y muestra lo que suena, con reproducir / pausa), o envía
+un enlace de Spotify, Deezer o YouTube a todas las paredes. Consulta [Música en
+la pared](wall.md#music-on-the-wall).
 
 ## Account & security {#account-security}
 

@@ -126,7 +126,7 @@ pub async fn restore(
     report.push(restore_topology_corrections(&mut tx, bundle, &refs).await?);
     report.push(restore_topology_rules(&mut tx, bundle, &refs).await?);
     report.push(restore_lun_links(&mut tx, bundle, &refs).await?);
-    report.push(restore_dashboards(&mut tx, bundle).await?);
+    report.push(restore_upgrade_notes(&mut tx, bundle).await?);
 
     report.push(restore_channels(&mut tx, cipher, bundle).await?);
     let channels = channel_ids(&mut tx).await?;
@@ -919,6 +919,20 @@ async fn restore_instance(
     bundle: &Bundle,
 ) -> Result<SectionReport> {
     let mut report = SectionReport::new("instance");
+    // Redirection vers HTTPS : un réglage de sécurité de l'instance, repris tel
+    // quel (le serveur l'applique aussitôt après la restauration).
+    if let Some(redirect) = bundle.https_redirect {
+        sqlx::query(
+            "INSERT INTO settings (key, value) VALUES (?, ?)
+             ON CONFLICT(key) DO UPDATE SET value = excluded.value,
+                 updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')",
+        )
+        .bind(crate::web_tls::SETTING_REDIRECT)
+        .bind(serde_json::to_vec(&redirect)?)
+        .execute(&mut **tx)
+        .await
+        .context("réglage de redirection HTTPS")?;
+    }
     let Some(incoming) = &bundle.instance else { return Ok(report) };
 
     let existing = sqlx::query("SELECT value FROM settings WHERE key = ?")
@@ -1217,6 +1231,21 @@ async fn restore_status_pages(
                 domain = None;
             }
         }
+        // Le lien du site passe par la même règle que l'API (http/https, sans
+        // identifiants) : un lot fabriqué ne pose pas un `javascript:` sur une
+        // page publique.
+        let homepage_url =
+            match crate::api::status_pages::validate_homepage(page.homepage_url.trim()) {
+                Ok(url) => url,
+                Err(_) => {
+                    report.notes.push(format!(
+                        "Status page \"{}\": the website link is not an http(s) address and \
+                         was left out.",
+                        page.slug
+                    ));
+                    String::new()
+                }
+            };
         let existing = sqlx::query(
             "SELECT id, title, description, published, theme, show_uptime_days,
                  accent, scenes, scene_rotation, footer_text, homepage_url, domain
@@ -1239,7 +1268,7 @@ async fn restore_status_pages(
                     && row.try_get::<String, _>("scenes")? == scenes
                     && row.try_get::<String, _>("scene_rotation")? == scene_rotation
                     && row.try_get::<String, _>("footer_text")? == page.footer_text
-                    && row.try_get::<String, _>("homepage_url")? == page.homepage_url
+                    && row.try_get::<String, _>("homepage_url")? == homepage_url
                     && row.try_get::<Option<String>, _>("domain")? == domain;
                 if !same {
                     sqlx::query(
@@ -1258,7 +1287,7 @@ async fn restore_status_pages(
                     .bind(&scenes)
                     .bind(scene_rotation)
                     .bind(&page.footer_text)
-                    .bind(&page.homepage_url)
+                    .bind(&homepage_url)
                     .bind(&domain)
                     .bind(id)
                     .execute(&mut **tx)
@@ -1284,7 +1313,7 @@ async fn restore_status_pages(
                 .bind(&scenes)
                 .bind(scene_rotation)
                 .bind(&page.footer_text)
-                .bind(&page.homepage_url)
+                .bind(&homepage_url)
                 .bind(&domain)
                 .fetch_one(&mut **tx)
                 .await
@@ -2293,114 +2322,6 @@ async fn restore_teams(tx: &mut Transaction<'_, Sqlite>, bundle: &Bundle) -> Res
     Ok(report)
 }
 
-/// Tableaux de bord, par propriétaire et nom (sans casse) : identique, laissé ;
-/// différent, mis à jour. Un tableau personnel dont le compte n'existe pas ici
-/// est ignoré (les comptes sont restaurés avant).
-async fn restore_dashboards(
-    tx: &mut Transaction<'_, Sqlite>,
-    bundle: &Bundle,
-) -> Result<SectionReport> {
-    use crate::api::dashboards::{DashboardPayload, validate};
-    let mut report = SectionReport::new("dashboards");
-    for entry in &bundle.dashboards {
-        let name = entry.name.trim();
-        let widgets = match serde_json::from_value(if entry.widgets.is_null() {
-            serde_json::json!([])
-        } else {
-            entry.widgets.clone()
-        }) {
-            Ok(widgets) => widgets,
-            Err(_) => {
-                report.skipped += 1;
-                report.notes.push(format!("dashboard \"{name}\" has an unreadable grid"));
-                continue;
-            }
-        };
-        let input = match validate(DashboardPayload {
-            name: name.to_string(),
-            shared: entry.shared,
-            range_secs: entry.range_secs,
-            refresh_secs: entry.refresh_secs,
-            widgets,
-        }) {
-            Ok(input) => input,
-            Err(_) => {
-                report.skipped += 1;
-                report.notes.push(format!("dashboard \"{name}\" is not valid"));
-                continue;
-            }
-        };
-        let owner_id: Option<i64> = match &entry.owner {
-            Some(owner) => {
-                sqlx::query_scalar("SELECT id FROM users WHERE username = ? COLLATE NOCASE")
-                    .bind(owner)
-                    .fetch_optional(&mut **tx)
-                    .await
-                    .context("propriétaire d'un tableau de bord")?
-            }
-            None => None,
-        };
-        if !entry.shared && owner_id.is_none() {
-            report.skipped += 1;
-            report.notes.push(format!("dashboard \"{name}\": its owner does not exist here"));
-            continue;
-        }
-        let widgets = serde_json::to_string(&input.widgets).context("grille d'un tableau")?;
-        let existing = sqlx::query(
-            "SELECT id, range_secs, refresh_secs, widgets FROM dashboards
-             WHERE name = ? COLLATE NOCASE AND shared = ? AND (shared = 1 OR owner_id = ?)",
-        )
-        .bind(&input.name)
-        .bind(input.shared)
-        .bind(owner_id)
-        .fetch_optional(&mut **tx)
-        .await
-        .context("recherche du tableau de bord")?;
-        if let Some(row) = &existing {
-            if row.try_get::<i64, _>("range_secs")? == input.range_secs
-                && row.try_get::<i64, _>("refresh_secs")? == input.refresh_secs
-                && row.try_get::<String, _>("widgets")? == widgets
-            {
-                report.skipped += 1;
-                continue;
-            }
-            let id: i64 = row.try_get("id")?;
-            let result = sqlx::query(
-                "UPDATE dashboards SET range_secs = ?, refresh_secs = ?, widgets = ?,
-                     updated_at = strftime('%Y-%m-%d %H:%M:%S', 'now') WHERE id = ?",
-            )
-            .bind(input.range_secs)
-            .bind(input.refresh_secs)
-            .bind(&widgets)
-            .bind(id)
-            .execute(&mut **tx)
-            .await;
-            match result {
-                Ok(_) => report.count(RestoreOutcome::Updated),
-                Err(error) => report.refused(&format!("dashboard \"{name}\""), &error.into()),
-            }
-            continue;
-        }
-        let result = sqlx::query(
-            "INSERT INTO dashboards (name, shared, owner_id, range_secs, refresh_secs, widgets)
-             VALUES (?, ?, ?, ?, ?, ?)",
-        )
-        .bind(&input.name)
-        .bind(input.shared)
-        .bind(owner_id)
-        .bind(input.range_secs)
-        .bind(input.refresh_secs)
-        .bind(&widgets)
-        .execute(&mut **tx)
-        .await;
-        match result {
-            Ok(_) => report.count(RestoreOutcome::Created),
-            Err(error) => report.refused(&format!("dashboard \"{name}\""), &error.into()),
-        }
-    }
-    Ok(report)
-}
-
 /// Un nœud du lot, avec les identifiants d'ici ; `None` : son équipement
 /// n'est pas là.
 fn local_node(node: &BundleNode, refs: &HashMap<String, i64>) -> Option<(String, i64)> {
@@ -2543,6 +2464,45 @@ async fn restore_lun_links(
         match result {
             Ok(_) => report.count(outcome),
             Err(error) => report.refused(&format!("LUN link \"{}\"", entry.lun), &error.into()),
+        }
+    }
+    Ok(report)
+}
+
+/// Changements de configuration fermés, par (version, identifiant) : déjà
+/// fermé, laissé tel quel — la date d'origine est conservée.
+async fn restore_upgrade_notes(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+) -> Result<SectionReport> {
+    let mut report = SectionReport::new("upgrade_notes_closed");
+    for entry in &bundle.upgrade_notes_closed {
+        let valid = |text: &str| !text.is_empty() && text.len() <= 64;
+        if !valid(&entry.version) || !valid(&entry.note_id) {
+            report.skipped += 1;
+            report.notes.push("A closed configuration change has no usable identifier".into());
+            continue;
+        }
+        // Une date absente devient « maintenant ».
+        let closed_at = (!entry.closed_at.trim().is_empty()).then_some(entry.closed_at.as_str());
+        let result = sqlx::query(
+            "INSERT INTO upgrade_notes_closed (version, note_id, closed_at, closed_by)
+             VALUES (?, ?, COALESCE(?, strftime('%Y-%m-%d %H:%M:%S', 'now')), ?)
+             ON CONFLICT (version, note_id) DO NOTHING",
+        )
+        .bind(&entry.version)
+        .bind(&entry.note_id)
+        .bind(closed_at)
+        .bind(&entry.closed_by)
+        .execute(&mut **tx)
+        .await;
+        match result {
+            Ok(done) if done.rows_affected() > 0 => report.count(RestoreOutcome::Created),
+            Ok(_) => report.count(RestoreOutcome::Skipped),
+            Err(error) => {
+                let what = format!("configuration change \"{}\"", entry.note_id);
+                report.refused(&what, &error.into());
+            }
         }
     }
     Ok(report)
@@ -2833,14 +2793,6 @@ async fn restore_client_assignments(
                     .await?
                     .rows_affected()
             }
-            Kind::Dashboard => sqlx::query(
-                "UPDATE dashboards SET client_id = ? WHERE shared = 1 AND name = ? COLLATE NOCASE",
-            )
-            .bind(client)
-            .bind(&assignment.key)
-            .execute(&mut **tx)
-            .await?
-            .rows_affected(),
             Kind::Schedule => {
                 sqlx::query("UPDATE oncall_schedules SET client_id = ? WHERE name = ?")
                     .bind(client)

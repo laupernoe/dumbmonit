@@ -2,7 +2,8 @@
 	/**
 	 * The signed-in account: a round avatar with the initials, and a small menu
 	 * (name and role, "My account", sign out). `placement="rail"` is for the
-	 * foot of the rail: the menu opens beside the button, upwards. Opens on click or tap,
+	 * foot of the rail: the menu opens beside the button, upwards; `wide` (the
+	 * expanded rail) writes the name beside the avatar. Opens on click or tap,
 	 * on hover with a mouse, and from the keyboard (Enter, Space, ↓); arrows
 	 * move between items, Escape closes and gives the focus back.
 	 */
@@ -10,7 +11,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 
-	let { placement = 'bar' }: { placement?: 'bar' | 'rail' } = $props();
+	let { placement = 'bar', wide = false }: { placement?: 'bar' | 'rail'; wide?: boolean } = $props();
 
 	let open = $state(false);
 	/** Opened by the mouse passing over: closes again when it leaves. */
@@ -113,11 +114,13 @@
 {#if auth.user}
 	<!-- Hover only adds to the button: click, tap and keys open the menu too. -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class={placement === 'rail' ? 'relative' : 'relative ml-1'} bind:this={root} {onpointerenter} {onpointerleave}>
+	<div class={placement === 'rail' ? (wide ? 'relative w-full' : 'relative') : 'relative ml-1'} bind:this={root} {onpointerenter} {onpointerleave}>
 		<button
 			bind:this={button}
 			type="button"
-			class="inline-flex size-10 items-center justify-center rounded-full transition-colors hover:bg-surface-2"
+			class={wide
+				? 'flex h-10 w-full min-w-0 items-center gap-2.5 rounded-[10px] px-1 text-left transition-colors hover:bg-surface-2'
+				: 'inline-flex size-10 items-center justify-center rounded-full transition-colors hover:bg-surface-2'}
 			aria-haspopup="menu"
 			aria-expanded={open}
 			aria-controls={open ? menuId : undefined}
@@ -126,9 +129,12 @@
 			onkeydown={onbuttonkeydown}
 		>
 			<span
-				class="inline-flex size-8 items-center justify-center rounded-full border border-line-strong bg-signal-soft text-[0.75rem] font-bold tracking-wide text-signal-ink"
+				class="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-line-strong bg-signal-soft text-[0.75rem] font-bold tracking-wide text-signal-ink"
 				aria-hidden="true">{initials}</span
 			>
+			{#if wide}
+				<span class="min-w-0 flex-1 truncate text-sm font-medium text-ink-2" aria-hidden="true">{name}</span>
+			{/if}
 		</button>
 		{#if open}
 			<div

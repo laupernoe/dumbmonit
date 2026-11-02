@@ -51,7 +51,7 @@ estreito abre-se como gaveta. A lista completa está na
 
 `/wall` mostra um quadro para um monitor de sala: o veredicto, o relógio, os cinco
 números, o rio de saúde, os alertas abertos e quem está de prevenção. Abra-o com
-o ícone **Wall mode** da barra superior ou com a paleta de comandos; ++esc++ ou
+o ícone **Wall mode** no fundo do menu lateral ou com a paleta de comandos; ++esc++ ou
 **Exit** volta à consola. Ver [Modo parede](wall.md).
 
 ## Instalar num telefone {#install-it-on-a-phone}
