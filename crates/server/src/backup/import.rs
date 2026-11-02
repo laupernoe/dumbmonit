@@ -2050,10 +2050,9 @@ async fn restore_agent_sentinels(
     for entry in &bundle.agent_sentinels {
         let Some(target_id) = refs.get(&entry.agent).copied() else {
             report.skipped += 1;
-            report.notes.push(format!(
-                "Sentinel: its agent ({}) is not in this backup.",
-                entry.agent
-            ));
+            report
+                .notes
+                .push(format!("Sentinel: its agent ({}) is not in this backup.", entry.agent));
             continue;
         };
         if let Some(channel) = &entry.channel

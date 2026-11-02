@@ -87,12 +87,7 @@ pub async fn load(pool: &SqlitePool, cipher: &Cipher, id: TargetId) -> Result<Op
     }))
 }
 
-pub async fn save(
-    pool: &SqlitePool,
-    cipher: &Cipher,
-    id: TargetId,
-    stored: &Stored,
-) -> Result<()> {
+pub async fn save(pool: &SqlitePool, cipher: &Cipher, id: TargetId, stored: &Stored) -> Result<()> {
     let encrypted = match &stored.channel {
         Some(channel) => Some(cipher.encrypt(&serde_json::to_vec(channel)?)?),
         None => None,

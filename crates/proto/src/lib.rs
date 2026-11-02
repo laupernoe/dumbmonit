@@ -60,13 +60,13 @@ pub use push::{
 };
 pub use remediation::{CMD_SCRIPT_RUN, CMD_SERVICE_RESTART, DeclaredScript, RemediationInfo};
 pub use sample::{MetricKind, Sample};
-pub use sentinel::{
-    SENTINEL_MAX_INTERVAL_SECS, SENTINEL_MAX_THRESHOLD, SENTINEL_MAX_URL_LEN, SENTINEL_MAX_URLS,
-    SENTINEL_MIN_INTERVAL_SECS, SentinelChannel, SentinelSetting, https_authority, normalize_pin,
-};
 pub use selfupdate::{
     AGENT_FILE_PREFIX, AgentUpdateOffer, SIGNATURE_SUFFIX, SelfUpdateAbility, SelfUpdateInfo,
     SelfUpdateOutcome, SelfUpdateReport, UPDATE_DOWNLOAD_PATH, UPDATE_TRIAL_SECS, agent_file_name,
+};
+pub use sentinel::{
+    SENTINEL_MAX_INTERVAL_SECS, SENTINEL_MAX_THRESHOLD, SENTINEL_MAX_URL_LEN, SENTINEL_MAX_URLS,
+    SENTINEL_MIN_INTERVAL_SECS, SentinelChannel, SentinelSetting, https_authority, normalize_pin,
 };
 pub use target::{
     EXPORTED_LABEL_PREFIX, MAX_TAG_LABEL_LEN, TAG_LABEL_PREFIX, Target, TargetId, apply_identity,

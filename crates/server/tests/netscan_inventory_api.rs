@@ -525,9 +525,8 @@ async fn l_ajout_en_bloc_rend_un_resultat_par_appareil_meme_mixte() {
     let results = reply.body["results"].as_array().unwrap();
     // Le doublon `a` n'est traité qu'une fois.
     assert_eq!(results.len(), 4, "{}", reply.body);
-    let outcome = |device: i64| {
-        results.iter().find(|r| r["device_id"] == device).unwrap()["outcome"].clone()
-    };
+    let outcome =
+        |device: i64| results.iter().find(|r| r["device_id"] == device).unwrap()["outcome"].clone();
     assert_eq!(outcome(a), "added");
     assert_eq!(outcome(b), "already_present");
     assert_eq!(outcome(none), "error");
@@ -607,9 +606,8 @@ async fn l_ajout_en_bloc_est_plafonne_et_reserve_aux_administrateurs() {
     let admin = app.admin_cookie().await;
     let uri = "/api/discovery/inventory/bulk";
     let too_many: Vec<i64> = (1..=201).collect();
-    let reply = app
-        .post(uri, json!({ "action": "ignore", "device_ids": too_many }), Some(&admin))
-        .await;
+    let reply =
+        app.post(uri, json!({ "action": "ignore", "device_ids": too_many }), Some(&admin)).await;
     assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{}", reply.body);
     let reply = app.post(uri, json!({ "action": "ignore", "device_ids": [] }), Some(&admin)).await;
     assert_eq!(reply.status, StatusCode::BAD_REQUEST);

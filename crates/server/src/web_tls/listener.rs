@@ -279,8 +279,7 @@ fn redirect_location(head: &[u8]) -> Option<String> {
             break;
         }
         // Repli d'en-tête obsolète, caractère de contrôle : on ne devine pas.
-        if line.starts_with([' ', '\t'])
-            || line.bytes().any(|b| b.is_ascii_control() && b != b'\t')
+        if line.starts_with([' ', '\t']) || line.bytes().any(|b| b.is_ascii_control() && b != b'\t')
         {
             return None;
         }
@@ -327,9 +326,7 @@ fn split_host(host: &str) -> Option<(&str, u16)> {
         "" => 80,
         _ => {
             let digits = port.strip_prefix(':')?;
-            if digits.is_empty()
-                || digits.len() > 5
-                || !digits.bytes().all(|b| b.is_ascii_digit())
+            if digits.is_empty() || digits.len() > 5 || !digits.bytes().all(|b| b.is_ascii_digit())
             {
                 return None;
             }
