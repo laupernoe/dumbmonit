@@ -3,11 +3,45 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## Unreleased
+## 0.16.0 — 2026-11-03
+
+### Added
+
+- **NAS fleet.** With two or more Synology NAS monitored, the monitors page shows
+  "N NAS, M healthy" and a one-line-per-NAS view (model, DSM version, a verdict
+  with an icon and a word, and the reason). Also a minimal Synology DSM 7 package
+  (`packaging/synology/`) that installs the agent from Package Center.
+- **Databases on agents.** Agents detect PostgreSQL, MySQL/MariaDB, SQL Server
+  (including Express and named instances), HFSQL and MongoDB, and check the age of
+  the latest backup file (read only, no credentials). Alert rules for an overdue
+  backup and a stopped service.
+- **Active Directory kit, simpler.** One command (`Unblock-File` and
+  `-ExecutionPolicy Bypass`), an interactive menu in the script, a scope chooser in
+  the wizard (all Windows servers including future ones, one OU, or a group), a
+  token that never expires as an option, and an immediate refresh of every server
+  with a live "X of N installed" check.
+- **Sentinel.** A designated agent watches the main server (or another HTTPS
+  instance) and sends its own alert through a webhook or ntfy when it stops
+  answering, with the configuration kept on the agent so it survives restarts.
+- **Network ports.** Settings > System lists the ports to open, what each is for,
+  who must reach it, and whether it may face the Internet, with ready-to-copy
+  `ports:` and `ufw` blocks.
+- **Periodic discovery.** Scheduled network scans (6 h, 24 h, 7 days) feed a
+  "To review" list; add or ignore several devices at once.
+- **Copy as Markdown** on every documentation page, and a roadmap with votes
+  (GitHub reactions) on the website.
 
 ### Changed
 
-- Enrolment tokens are now opaque identifiers; existing tokens are renamed automatically.
+- Enrolment tokens are now opaque identifiers (`tok_…`), without a name to type or edit; existing tokens are renamed automatically, and the list shows which machine used each one.
+- The app icon is back on its grey tile (favicon, logo, PNG icons, docs and website).
+- Agent ports in the docs: readings and commands travel on 8443, 8080 serves the installer and the download.
+
+### Fixed
+
+- A push reminder for an alert already on screen replaces it silently instead of ringing again.
+- The Active Directory script no longer fails with a security group (reader list) and reports the installer's real error.
+- Install commands and the agent check that the encrypted port is reachable first, with a clear message.
 
 ### Security
 
