@@ -23,6 +23,10 @@ pub struct PlannedPort {
     pub port: u16,
     pub protocol: String,
     pub product: String,
+    /// Type de moniteur proposé par la détection.
+    pub kind: Option<String>,
+    /// Champs de formulaire pré-remplis, en JSON (jamais de secret).
+    pub prefill: Option<String>,
     /// Absent de l'inventaire jusqu'ici.
     pub is_new: bool,
 }
@@ -117,6 +121,8 @@ pub fn plan(known: &[KnownDevice], hosts: &[DiscoveredHost]) -> Vec<PlannedDevic
                 port: service.port,
                 protocol,
                 product: service.product.clone(),
+                kind: service.kind.clone(),
+                prefill: service.prefill.as_ref().map(ToString::to_string),
                 is_new,
             });
         }
