@@ -115,7 +115,7 @@ les chiffres de disque et de mémoire sont dans
 
 ## Premier démarrage {#first-start}
 
-Ouvrez `http://<votre-hôte>:8080`. Une instance vierge affiche l'écran `/setup`,
+Ouvrez `https://<votre-hôte>:8080`. Le navigateur affiche une alerte une seule fois à cause du certificat autosigné (voir [HTTPS and encryption](https.md)). Une instance vierge affiche l'écran `/setup`,
 où vous créez le premier compte administrateur (mot de passe d'au moins 12
 caractères).
 
@@ -171,9 +171,7 @@ Tout passe par des variables d'environnement ; aucune n'est obligatoire.
 | `DUMBMONIT_RESET_PASSWORD` | *(vide)* | Définir à `1` pour effacer le mot de passe et toutes les sessions au démarrage. |
 | `DUMBMONIT_SETUP_CODE` | *(généré)* | Code d'installation demandé par `/setup` tant qu'aucun admin n'existe. Non défini, un code aléatoire est affiché dans les journaux à chaque démarrage. |
 | `DUMBMONIT_COOKIE_SECURE` | *(désactivé)* | Définir à `1` derrière un reverse proxy TLS pour marquer le cookie de session `Secure`. |
-| `DUMBMONIT_TLS` | `on` | HTTPS sur le port de l'interface, à côté du HTTP. `off` ne sert que du HTTP en clair. Voir [HTTPS and encryption](https.md). |
-| `DUMBMONIT_TLS_CERT` / `DUMBMONIT_TLS_KEY` | *(autosigné)* | Chaîne de certificats et clé PEM servies en HTTPS ; relues quand elles changent. |
-| `DUMBMONIT_HTTPS_REDIRECT` | *(réglage)* | `on`/`off` impose la redirection des visites HTTP vers HTTPS (active par défaut sur une installation neuve). |
+| `DUMBMONIT_TLS_CERT` / `DUMBMONIT_TLS_KEY` | *(autosigné)* | Chaîne de certificats et clé PEM à servir ; relues quand elles changent. Voir [HTTPS and encryption](https.md). |
 | `DUMBMONIT_ALERT_INTERVAL_SECS` | `30` | Période d'évaluation des alertes (jamais en dessous de 10). |
 | `DUMBMONIT_ALERT_HISTORY_DAYS` | 90 jours | Rétention de l'historique des alertes. Voir la [référence de configuration](../reference/configuration.md) pour une réserve sur son unité. |
 | `DUMBMONIT_BACKUP_ENABLED` | activé | Sauvegardes locales planifiées de la base dans `/data/backups/`. `DUMBMONIT_BACKUP_DIR`, `_INTERVAL_HOURS` (24) et `_KEEP` (7) les ajustent ; voir [Sauvegarde et restauration](backup.md). |
@@ -377,21 +375,26 @@ Si l'encart reste après le redémarrage, vérifiez `docker compose logs browser
 
 ## Reverse proxy {#reverse-proxy}
 
-L'interface et l'API sont servies sur un seul port, qui parle à la fois HTTP et HTTPS (voir
-[HTTPS and encryption](https.md)). Un proxy qui termine le TLS peut continuer à parler HTTP au
-conteneur. Aucun WebSocket n'est utilisé : l'interface interroge l'API périodiquement, donc
+L'interface et l'API sont servies sur un seul port, qui ne parle que HTTPS (une requête HTTP simple
+reçoit une redirection, voir [HTTPS and encryption](https.md)). Un reverse proxy doit donc se connecter
+au conteneur en HTTPS (`https://dumbmonit:8080`), avec la vérification du certificat désactivée pour ce
+saut ou le certificat de DumbMonit approuvé. Aucun WebSocket n'est utilisé : l'interface interroge l'API périodiquement, donc
 n'importe quel reverse proxy fonctionne sans configuration particulière.
 
 Transmettez le schéma (`X-Forwarded-Proto`, envoyé d'office par Caddy et Traefik) et déclarez le
 proxy dans `DUMBMONIT_TRUSTED_PROXIES` : une requête qui porte des en-têtes transmis n'est jamais
-redirigée vers HTTPS par DumbMonit lui-même, et depuis un proxy de confiance
+redirigée par DumbMonit lui-même, et depuis un proxy de confiance
 `X-Forwarded-Proto: https` rend le cookie de session `Secure` et active HSTS.
 
 === "Caddy"
 
     ```
     monit.example.com {
-        reverse_proxy 127.0.0.1:8080
+        reverse_proxy https://127.0.0.1:8080 {
+            transport http {
+                tls_insecure_skip_verify
+            }
+        }
     }
     ```
 
@@ -404,7 +407,8 @@ redirigée vers HTTPS par DumbMonit lui-même, et depuis un proxy de confiance
         # ssl_certificate / ssl_certificate_key …
 
         location / {
-            proxy_pass http://127.0.0.1:8080;
+            proxy_pass https://127.0.0.1:8080;
+            proxy_ssl_verify off;
             proxy_set_header Host $host;
             proxy_set_header X-Forwarded-Proto $scheme;
             # Les agents envoient des lots de rattrapage après une panne :
@@ -414,7 +418,7 @@ redirigée vers HTTPS par DumbMonit lui-même, et depuis un proxy de confiance
     ```
 
 Lorsque le proxy termine le TLS, définissez `DUMBMONIT_COOKIE_SECURE: "1"` pour que le cookie de session
-ne soit envoyé que par HTTPS. Ne le définissez pas sur un déploiement en HTTP simple : le
+ne soit envoyé que par HTTPS. Ne le définissez que si chaque navigateur atteint DumbMonit en HTTPS : le
 navigateur ne renverrait jamais le cookie et la connexion serait impossible.
 
 !!! note "Agents derrière un proxy"

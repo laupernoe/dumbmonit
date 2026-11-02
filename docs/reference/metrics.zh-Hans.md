@@ -54,7 +54,7 @@ DumbMonit 将每一次测量存储在 VictoriaMetrics 中，并通过服务器�
 
 - 通过服务器：`GET /api/metrics/query` 和 `GET /api/metrics/query_range`，使用会话 cookie。范围查询结果每条序列最多 2,000 个点。
 - 从已有的 Prometheus 或 Grafana：`GET /federate`、`GET /metrics` 和 `/prometheus` 数据源，使用 API 令牌——见[下文](#scraping-dumbmonit)。
-- 开发时直接访问：覆盖文件 `docker-compose.dev.yml` 会将内置的 VictoriaMetrics 发布在 `http://localhost:8428`，其自带界面位于 `http://localhost:8428/vmui/`。在生产环境中，它只监听容器的回环地址；如果希望 Grafana 或其他工具使用同一份数据，请设置 `DUMBMONIT_VM_LISTEN=0.0.0.0:8428` 并自行发布该端口。
+- 开发时直接访问：覆盖文件 `docker-compose.dev.yml` 会将内置的 VictoriaMetrics 发布在 `https://localhost:8428`，其自带界面位于 `https://localhost:8428/vmui/`。在生产环境中，它只监听容器的回环地址；如果希望 Grafana 或其他工具使用同一份数据，请设置 `DUMBMONIT_VM_LISTEN=0.0.0.0:8428` 并自行发布该端口。
 
 ```
 # Interface throughput in bits per second
@@ -113,8 +113,8 @@ scrape_configs:
 没有 `match[]` 时，`/federate` 选择 `{__name__=~"dumbmonit_.*"}`——即 DumbMonit 写入的每一条序列，并且不包含共用同一个 VictoriaMetrics 的其他工具的任何数据。可以缩小范围以保持联邦较小：对单个监控项用 `{__name__=~"dumbmonit_.*",target="4"}`，只看可用性用 `{__name__="dumbmonit_up"}`。每个请求最多 10 个选择器，超过 8 MiB 的响应会被拒绝，并附带一条要求缩小范围的消息——请用范围更窄的选择器把大型监控项群拆分成多个任务，而不是用一个任务请求全部。`max_lookback=15m` 会扩大查找最后一个点的时间窗口，适用于探测间隔超过五分钟的监控项。
 
 ```bash
-curl -H 'Authorization: Bearer dmt_…' http://localhost:8080/metrics
-curl -H 'Authorization: Bearer dmt_…' -G http://localhost:8080/federate \
+curl -H 'Authorization: Bearer dmt_…' https://localhost:8080/metrics
+curl -H 'Authorization: Bearer dmt_…' -G https://localhost:8080/federate \
   --data-urlencode 'match[]={__name__=~"dumbmonit_.*",target="4"}'
 ```
 
@@ -123,7 +123,7 @@ curl -H 'Authorization: Bearer dmt_…' -G http://localhost:8080/federate \
 让 Grafana 指向 **DumbMonit**，而不是它所运行的 VictoriaMetrics：该子进程监听容器的回环地址，自身没有认证，并且暴露*删除*序列的路由，就像暴露读取路由一样随意。DumbMonit 在 `/prometheus` 下中继 Prometheus API 的读取部分，并受同一令牌保护，因此 Grafana 与一个普通的 Prometheus 数据源通信：
 
 1. **Connections → Data sources → Add → Prometheus**。
-2. **URL**：`http://dumbmonit.lan:8080/prometheus`（Grafana 会自行追加 `/api/v1/query`）。
+2. **URL**：`https://dumbmonit.lan:8080/prometheus`（Grafana 会自行追加 `/api/v1/query`）。
 3. **HTTP headers**：添加一项，`Authorization` = `Bearer dmt_…`。Grafana 会加密存储它，并且不再显示。
 4. **Save & test**——Grafana 报告数据源工作正常，此后每条 `dumbmonit_*` 序列都可在 PromQL 中使用，并对指标和标签名称提供自动补全。
 

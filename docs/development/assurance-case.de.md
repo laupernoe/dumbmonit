@@ -100,9 +100,8 @@ Das Argument folgt den Entwurfsprinzipien von Saltzer und Schroeder.
 - Zweiter Faktor: TOTP, mit gehashten Einmal-Wiederherstellungscodes (`auth/totp.rs`).
 - OpenID Connect: State, Nonce und PKCE `S256` (`auth/oidc/pkce.rs`).
 - Alle Primitive stammen aus gepflegten Bibliotheken (`aes-gcm`, `argon2`, `sha2`); nichts ist
-  Eigenbau. Der eingebaute Listener spricht unverschlüsseltes HTTP; die Dokumentation verlangt
-  einen TLS-Reverse-Proxy, und Cookies erhalten `Secure`, wenn die Anfrage über HTTPS eintrifft
-  (`auth/cookie.rs`).
+  Eigenbau. Der eingebaute Listener spricht nur HTTPS (eine einfache HTTP-Anfrage erhält eine
+  Weiterleitung), und Cookies erhalten `Secure` (`auth/cookie.rs`).
 
 ## Gegenmaßnahmen zu verbreiteten Schwachstellen {#countermeasures-to-common-weaknesses}
 
@@ -122,7 +121,7 @@ Das Argument folgt den Entwurfsprinzipien von Saltzer und Schroeder.
 | Software- und Datenintegrität, CWE-494 | Die Agent-Installer prüfen den SHA-256 des heruntergeladenen Binarys | `crates/agent/install/install.sh`, `install.ps1` |
 | Mängel bei Protokollierung und Überwachung, CWE-778 | Sicherheitsprotokoll der Anmeldungen und sensiblen Änderungen | `auth/audit.rs`; Test `security_audit_api.rs` |
 
-Bekannte Restrisiken stehen im Sicherheitsmodell (HTTP-Listener ohne Verschlüsselung,
+Bekannte Restrisiken stehen im Sicherheitsmodell (selbstsigniertes Standardzertifikat,
 unverschlüsselte Monitoroptionen, eingebettetes VictoriaMetrics ohne Authentifizierung). Die CSP
 erlaubt Inline-Stile (`style-src 'unsafe-inline'`), was sie gegen Style-Injection schwächt, nicht
 aber gegen die Ausführung von Skripten. Es gibt ein akzeptiertes Advisory, `RUSTSEC-2023-0071`,

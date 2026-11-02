@@ -94,7 +94,7 @@ sysctl 的作用，参见[权限与数据目录](#permissions)和
 
 ## 首次启动 {#first-start}
 
-打开 `http://<your-host>:8080`。全新的实例会显示 `/setup` 界面，
+打开 `https://<your-host>:8080`。浏览器会因自签名证书提示一次警告（见 [HTTPS and encryption](https.md)）。全新的实例会显示 `/setup` 界面，
 你可以在这里创建第一个管理员账户（密码至少 12
 个字符）。
 
@@ -335,7 +335,7 @@ services:
 
 ## 反向代理 {#reverse-proxy}
 
-UI 和 API 通过同一个端口以纯 HTTP 提供服务。不使用 WebSocket：
+UI 和 API 通过同一个端口提供服务，该端口仅支持 HTTPS（普通 HTTP 请求会收到重定向，见 [HTTPS and encryption](https.md)）。因此反向代理必须通过 HTTPS 连接容器（`https://dumbmonit:8080`），并对该跳关闭证书验证，或信任 DumbMonit 的证书。不使用 WebSocket：
 界面通过轮询 API 获取数据，因此任何反向代理都无需特殊
 配置即可使用。
 
@@ -343,7 +343,11 @@ UI 和 API 通过同一个端口以纯 HTTP 提供服务。不使用 WebSocket�
 
     ```
     monit.example.com {
-        reverse_proxy 127.0.0.1:8080
+        reverse_proxy https://127.0.0.1:8080 {
+            transport http {
+                tls_insecure_skip_verify
+            }
+        }
     }
     ```
 
@@ -356,7 +360,8 @@ UI 和 API 通过同一个端口以纯 HTTP 提供服务。不使用 WebSocket�
         # ssl_certificate / ssl_certificate_key …
 
         location / {
-            proxy_pass http://127.0.0.1:8080;
+            proxy_pass https://127.0.0.1:8080;
+            proxy_ssl_verify off;
             proxy_set_header Host $host;
             proxy_set_header X-Forwarded-Proto $scheme;
             # 代理在故障后会发送补传的批量数据：
@@ -366,7 +371,7 @@ UI 和 API 通过同一个端口以纯 HTTP 提供服务。不使用 WebSocket�
     ```
 
 当代理终止 TLS 时，请设置 `DUMBMONIT_COOKIE_SECURE: "1"`，使会话
-cookie 只通过 HTTPS 发送。纯 HTTP 部署中不要设置它：
+cookie 只通过 HTTPS 发送。仅当每个浏览器都通过 HTTPS 访问 DumbMonit 时才设置它：
 浏览器将永远不会回传该 cookie，导致无法登录。
 
 !!! note "代理之后的代理"

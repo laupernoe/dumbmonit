@@ -86,8 +86,8 @@ waren, ebenso, beides in SQLite (siehe die [Konfigurationsreferenz](configuratio
 - Aus einem bestehenden Prometheus oder Grafana: `GET /federate`, `GET /metrics` und die
   Datenquelle `/prometheus`, mit einem API-Token — [unten](#scraping-dumbmonit).
 - Direkt, in der Entwicklung: Das Overlay `docker-compose.dev.yml` veröffentlicht das
-  eingebettete VictoriaMetrics auf `http://localhost:8428`, mit eigener Oberfläche unter
-  `http://localhost:8428/vmui/`. In Produktion lauscht es nur auf dem Loopback des Containers;
+  eingebettete VictoriaMetrics auf `https://localhost:8428`, mit eigener Oberfläche unter
+  `https://localhost:8428/vmui/`. In Produktion lauscht es nur auf dem Loopback des Containers;
   setzen Sie `DUMBMONIT_VM_LISTEN=0.0.0.0:8428` und veröffentlichen Sie den Port selbst, wenn Sie
   Grafana oder ein anderes Werkzeug auf denselben Daten wollen.
 
@@ -165,8 +165,8 @@ alles verlangt. `max_lookback=15m` weitet das Fenster aus, in dem der letzte Pun
 für Monitore, die seltener als alle fünf Minuten geprüft werden.
 
 ```bash
-curl -H 'Authorization: Bearer dmt_…' http://localhost:8080/metrics
-curl -H 'Authorization: Bearer dmt_…' -G http://localhost:8080/federate \
+curl -H 'Authorization: Bearer dmt_…' https://localhost:8080/metrics
+curl -H 'Authorization: Bearer dmt_…' -G https://localhost:8080/federate \
   --data-urlencode 'match[]={__name__=~"dumbmonit_.*",target="4"}'
 ```
 
@@ -179,7 +179,7 @@ Lesehälfte der Prometheus-API unter `/prometheus` weiter, hinter demselben Toke
 mit einer normalen Prometheus-Datenquelle spricht:
 
 1. **Connections → Data sources → Add → Prometheus**.
-2. **URL**: `http://dumbmonit.lan:8080/prometheus` (Grafana hängt `/api/v1/query` selbst an).
+2. **URL**: `https://dumbmonit.lan:8080/prometheus` (Grafana hängt `/api/v1/query` selbst an).
 3. **HTTP headers**: Fügen Sie einen hinzu, `Authorization` = `Bearer dmt_…`. Grafana speichert
    ihn verschlüsselt und zeigt ihn nie wieder an.
 4. **Save & test** — Grafana meldet, dass die Datenquelle funktioniert, und jede Serie

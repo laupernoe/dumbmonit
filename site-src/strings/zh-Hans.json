@@ -5,7 +5,7 @@
  "k012": "[[svg2]]MIT，没有付费版",
  "k014": "一个容器即可监控服务器、网络设备、NAS、虚拟化平台、云服务和网站。实用的告警规则开箱即用，在真正需要你之前保持安静。",
  "k015": "复制",
- "k016": "然后打开 <code>http://localhost:8080</code> 并创建第一个账户。镜像支持 amd64 和 arm64：<code>ghcr.io/laupernoe/dumbmonit</code>。",
+ "k016": "然后打开 <code>https://localhost:8080</code>（浏览器会因自签名证书提示一次警告）并创建第一个账户。镜像支持 amd64 和 arm64：<code>ghcr.io/laupernoe/dumbmonit</code>。",
  "k017": "[[svg3]]试用在线演示",
  "k018": "[[svg4]]在 GitHub 上查看",
  "k021": "<strong>DumbMonit 尚处于 1.0 之前</strong>（当前版本为 @@VERSION@@）。它每天在作者自己的网络上运行，但 HTTP API 和数据库结构在小版本之间仍可能变化；changelog 会说明如何升级。部分集成只在测试实例上验证过。欢迎试用，并<a href=\"https://github.com/laupernoe/dumbmonit/issues\">告诉我们哪里出了问题</a>。",

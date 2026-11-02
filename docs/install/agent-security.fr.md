@@ -153,11 +153,12 @@ Non protégé contre :
 - un administrateur de la machine agent (il peut lire sa clé, comme tout le
   reste) ;
 - quiconque accède à la fois à `/data` et à la clé de l'instance du serveur ;
-- la toute première installation en HTTP clair : le script et le binaire
-  viennent du port web. Servez l'interface en HTTPS (ou vérifiez le SHA-256
-  affiché à côté de la commande) si le réseau entre vous et le serveur n'est
-  pas de confiance. Le canal des agents, lui, est épinglé dès la première
-  requête.
+- le tout premier téléchargement : le script et le binaire viennent du port
+  web, en HTTPS. La commande affichée dans l'interface porte l'empreinte du
+  certificat du serveur et l'épingle, donc le téléchargement est vérifié même
+  avec le certificat autosigné (un reverse proxy avec un certificat public est
+  vérifié de la façon habituelle). Le canal des agents, lui, est épinglé dès la
+  première requête.
 
 ## Agents existants et transition
 
@@ -196,7 +197,7 @@ Ne placez pas de mandataire inverse qui termine TLS devant le port agents : le
 certificat client s'arrêterait au mandataire. Un relais TCP transparent
 (HAProxy `mode tcp`, nginx `stream`, routeur TCP Traefik en passthrough,
 redirection de port) fonctionne. Le port web peut rester derrière votre
-mandataire HTTPS habituel.
+mandataire habituel, qui s'y connecte en HTTPS.
 
 ## Rotation de l'autorité de certification
 

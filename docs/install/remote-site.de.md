@@ -26,9 +26,10 @@ Dinge laufen über diese Verbindung:
 - die **Zugangsdaten der Monitore**, die das Relay prüft (SNMP-Community, Proxmox-API-Token …),
   entschlüsselt, in jedem Prüfauftrag.
 
-Über unverschlüsseltes HTTP durch das Internet wären beide unterwegs lesbar: Stellen Sie den
-Server hinter HTTPS, bevor Sie etwas außerhalb Ihres eigenen Netzwerks weiterleiten. In einem
-LAN oder VPN ist HTTP akzeptabel, und das Token ist das einzige Geheimnis im Transit, bis Sie
+Der Webport akzeptiert nur HTTPS, daher sind beide unterwegs verschlüsselt. Stellen Sie im Internet
+den Server hinter einen Reverse-Proxy mit öffentlichem Zertifikat (er verbindet sich per HTTPS mit
+DumbMonit); in einem LAN oder VPN genügt das selbstsignierte Zertifikat, angeheftet an den
+Fingerabdruck im angezeigten Befehl. Das Token ist das einzige Geheimnis im Transit, bis Sie
 dem Relay Monitore zuweisen. Zugangsdaten werden auf keiner Seite auf die Festplatte
 geschrieben: Ein Prüfauftrag lebt im Speicher des Servers, bis das Relay ihn meldet, und der
 Agent behält zwischen zwei Prüfungen nichts.

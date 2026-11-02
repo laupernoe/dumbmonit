@@ -52,7 +52,7 @@ Ping 监控需要一个 ICMP echo 套接字。容器在没有任何 capability
   `/etc/dumbmonit/agent.yaml` 并重启 `dumbmonit-agent`。
 - 安装命令中的 URL 是你浏览器用来访问界面的那个地址。从被监控的
   机器上,这个 URL 必须能够访问到服务器:在那台机器上执行
-  `curl http://server:8080/api/health` 就能说明问题。
+  `curl https://server:8080/api/health` 就能说明问题。
 - 在反向代理之后,必须转发 `/api/ingest`,并允许最多 16 MB 的
   请求体(nginx 中的 `client_max_body_size 16m`)。
 - `journalctl -u dumbmonit-agent -f` 会显示每一次被拒绝的推送。

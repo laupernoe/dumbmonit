@@ -59,7 +59,7 @@ capacidad](install/docker.md#icmp-ping-without-a-capability).
   `dumbmonit-agent`.
 - La URL en el comando de instalación es la que tu navegador usó para
   alcanzar la interfaz. Desde la máquina monitorizada, esa URL debe
-  alcanzar el servidor: `curl http://server:8080/api/health` desde ahí
+  alcanzar el servidor: `curl https://server:8080/api/health` desde ahí
   te lo dice.
 - Detrás de un proxy inverso, `/api/ingest` debe reenviarse y permitir
   cuerpos de hasta 16 MB (`client_max_body_size 16m` en nginx).

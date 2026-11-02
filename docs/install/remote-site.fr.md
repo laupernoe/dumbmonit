@@ -38,10 +38,10 @@ voyagent sur ce lien :
   (communauté SNMP, jeton d'API Proxmox…), déchiffrés, à l'intérieur de
   chaque tâche de sonde.
 
-En HTTP simple à travers l'internet, les deux seraient lisibles en chemin :
-mettez le serveur derrière HTTPS avant de relayer quoi que ce soit en
-dehors de votre propre réseau. Sur un LAN ou un VPN, HTTP est acceptable et
-le jeton est le seul secret en vol jusqu'à ce que vous assigniez des
+Le port web n'accepte que HTTPS, donc les deux sont chiffrés en chemin. Sur
+internet, placez le serveur derrière un reverse proxy avec un certificat public
+(il se connecte à DumbMonit en HTTPS) ; sur un LAN ou un VPN, le certificat
+autosigné convient, épinglé par l'empreinte de la commande affichée. Le jeton est le seul secret en vol jusqu'à ce que vous assigniez des
 surveillances au relais. Les identifiants ne sont jamais écrits sur disque d'un
 côté ou de l'autre : une tâche de sonde vit dans la mémoire du serveur
 jusqu'à ce que le relais la rapporte, et l'agent ne garde rien entre deux

@@ -59,7 +59,7 @@ assicurati che le righe `sysctls:` siano ancora presenti, poi
   Correggi `/etc/dumbmonit/agent.yaml` e riavvia `dumbmonit-agent`.
 - L'URL nel comando di installazione è quello che il tuo browser ha usato
   per raggiungere l'interfaccia. Dalla macchina monitorata, quell'URL deve
-  raggiungere il server: `curl http://server:8080/api/health` da lì te lo
+  raggiungere il server: `curl https://server:8080/api/health` da lì te lo
   dice.
 - Dietro un reverse proxy, `/api/ingest` deve essere forwardato e i corpi
   fino a 16 MB consentiti (`client_max_body_size 16m` in nginx).
