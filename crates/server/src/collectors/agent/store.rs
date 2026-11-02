@@ -88,6 +88,9 @@ pub enum EnrolmentDenied {
     OtherClient,
     /// Mode MSP : le client du jeton a atteint son quota d'équipements.
     QuotaReached,
+    /// Jeton de flotte mis en veille faute d'enrôlement récent (voir
+    /// [`super::enrolment`]). Les machines déjà enrôlées continuent de remonter.
+    Dormant,
 }
 
 impl EnrolmentDenied {
@@ -114,6 +117,11 @@ impl EnrolmentDenied {
             Self::QuotaReached => {
                 "The client of this enrollment token has reached its target quota. Ask your \
                  MSP administrator to raise it."
+            }
+            Self::Dormant => {
+                "This fleet enrollment token enrolled no machine for a long time and was put to \
+                 sleep. An administrator can reactivate it in DumbMonit (Settings > Agents > \
+                 Enrolment tokens); machines already enrolled keep reporting."
             }
         }
     }
@@ -535,6 +543,9 @@ pub enum RegisterError {
     /// Le binaire ne sait pas recevoir de secret de liaison : la machine ne
     /// pourrait jamais être liée, donc elle n'entre pas.
     AgentTooOld,
+    /// Garde de l'enrôlement : la machine attend sa validation, a été refusée,
+    /// ou le jeton a dépassé son débit (voir [`super::enrolment`]).
+    Held(super::enrolment::Refusal),
     Internal(anyhow::Error),
 }
 
@@ -584,6 +595,21 @@ pub async fn register(
     token_id: i64,
     presented_secret: Option<&str>,
 ) -> Result<Registration, RegisterError> {
+    let origin = super::enrolment::EnrolOrigin::Internal;
+    register_with(pool, cipher, identity, token_id, presented_secret, &origin).await
+}
+
+/// [`register`], avec la garde de l'enrôlement appliquée à une machine
+/// inconnue venue du réseau : validation, débit du jeton, mise en veille.
+/// Tant que la garde la retient, rien n'est créé pour elle.
+pub async fn register_with(
+    pool: &SqlitePool,
+    cipher: &Cipher,
+    identity: &AgentIdentity,
+    token_id: i64,
+    presented_secret: Option<&str>,
+    origin: &super::enrolment::EnrolOrigin,
+) -> Result<Registration, RegisterError> {
     let key = identity.key();
 
     if let Some(host) = find_host(pool, &key).await? {
@@ -601,6 +627,16 @@ pub async fn register(
     // portée du jeton compte.
     if let Err(denied) = enrolment_allowed_for(pool, token_id, identity).await? {
         return Err(RegisterError::EnrolmentDenied(denied));
+    }
+
+    // Garde de l'enrôlement, avant que quoi que ce soit n'existe pour elle.
+    let now = chrono::Utc::now();
+    match super::enrolment::admit(pool, token_id, identity, &key, origin, now).await? {
+        Ok(_) => {}
+        Err(super::enrolment::Refusal::Dormant) => {
+            return Err(RegisterError::EnrolmentDenied(EnrolmentDenied::Dormant));
+        }
+        Err(refusal) => return Err(RegisterError::Held(refusal)),
     }
 
     // Mode MSP : la machine entre chez le client du jeton, et nulle part ailleurs.
@@ -671,6 +707,7 @@ pub async fn register(
     insert_host(pool, target_id, &key, identity, token_id, Some(&secret)).await?;
     apply_token_relay(pool, target_id, token_id).await?;
     consume_enrolment(pool, token_id).await?;
+    super::enrolment::note_enrolled(pool, token_id, &key, &identity.hostname, now).await?;
     Ok(Registration { target_id, created, bound: true, issued_secret: Some(secret) })
 }
 

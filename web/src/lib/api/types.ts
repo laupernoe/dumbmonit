@@ -1673,6 +1673,51 @@ export interface AgentToken {
 	ad_domain: string | null;
 	/** MSP mode: the client this token enrols into, and the only one its machines report to. */
 	client_id?: number;
+	/**
+	 * A fleet token put to sleep after enrolling no machine for the configured
+	 * days: it refuses new enrolments until reactivated. `null` (or absent on an
+	 * older server) while in service.
+	 */
+	dormant_at?: string | null;
+}
+
+// --- Agents (enrolment approval) ----------------------------------------------
+
+/** What the server does with a machine it does not know yet. */
+export type EnrolmentApprovalMode = 'auto' | 'manual' | 'ad_domain';
+
+/** `GET`/`PUT /api/agent/enrolment` settings. */
+export interface AgentEnrolmentSettings {
+	/** Machines enrolled with a fleet (reusable) token. */
+	fleet_approval: EnrolmentApprovalMode;
+	/** Machines enrolled with a single-use token. */
+	single_use_approval: EnrolmentApprovalMode;
+	/** Enrolments per token per hour; 0 means no limit. */
+	rate_per_hour: number;
+	/** Days without enrolment before a fleet token is put to sleep; 0 means never. */
+	dormant_days: number;
+}
+
+/** A machine waiting for approval. */
+export interface AgentEnrolmentRequest {
+	id: number;
+	hostname: string;
+	os: string;
+	source_ip: string | null;
+	token_id: number | null;
+	/** Identifier of the enrolment token used, never its secret. */
+	token_name: string | null;
+	requested_at: string;
+	last_seen_at: string;
+}
+
+export interface AgentEnrolmentOverview {
+	settings: AgentEnrolmentSettings;
+	pending: AgentEnrolmentRequest[];
+	/** Beyond this many waiting machines, new requests are refused. */
+	max_pending: number;
+	/** Hours a rejected machine stays hidden. */
+	reject_hold_hours: number;
 }
 
 /** Body of `POST /api/agent/tokens`. Omitting everything gives a single-use token. */

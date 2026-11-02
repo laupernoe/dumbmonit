@@ -36,6 +36,7 @@ async fn lab_with<T>(before_init: impl AsyncFnOnce(&TestApp, &str) -> T) -> (Lab
     let config = common::base_config(dir.path());
     let pool = db::open(&config.database_path()).await.expect("base");
     let cipher = db::init_cipher(&pool, "secret-de-test-suffisamment-long").await.expect("chiffre");
+    common::accept_enrolments(&pool).await;
     let mut registry = collectors::Registry::new();
     registry.register(Arc::new(collectors::AgentCollector::new(pool.clone())));
     let victoria = tsdb::Victoria::new(common::UNREACHABLE_VICTORIA.to_string()).expect("client");
@@ -281,6 +282,43 @@ async fn a_bad_token_is_refused_and_repeated_attempts_are_throttled() {
         last = enrol(&lab, "dmon_faux", "id-x", None).await.0.status();
     }
     assert_eq!(last, StatusCode::TOO_MANY_REQUESTS);
+}
+
+#[tokio::test]
+async fn a_machine_waiting_for_approval_gets_no_certificate_until_it_is_accepted() {
+    let (lab, admin) = lab().await;
+    let settings = json!({
+        "fleet_approval": "manual", "single_use_approval": "auto",
+        "rate_per_hour": 60, "dormant_days": 30
+    });
+    let reply = lab.app.put("/api/agent/enrolment", settings, Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    let enrolment = token(&lab.app, &admin).await;
+
+    // L'agent réessaie : toujours en attente, jamais un certificat, et ses
+    // tentatives ne comptent pas comme des échecs (pas de 429).
+    for _ in 0..8 {
+        let (response, _) = enrol(&lab, &enrolment, "id-new", None).await;
+        assert_eq!(response.status(), StatusCode::FORBIDDEN);
+        let body: Value = response.json().await.unwrap();
+        assert_eq!(body["error"], dumbmonit_proto::ENROLMENT_PENDING);
+    }
+    let certificates: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM agent_hosts")
+        .fetch_one(&lab.state.pool)
+        .await
+        .unwrap();
+    assert_eq!(certificates, 0, "aucune machine tant qu'elle attend");
+
+    let view = lab.app.get("/api/agent/enrolment", Some(&admin)).await;
+    let id = view.body["pending"][0]["id"].as_i64().expect("en attente");
+    let decided = json!({ "ids": [id], "approve": true });
+    let reply = lab.app.post("/api/agent/enrolment/decide", decided, Some(&admin)).await;
+    assert_eq!(reply.body["decided"], 1, "{}", reply.body);
+
+    let agent = enrolled(&lab, &enrolment, "id-new", None).await;
+    assert!(agent.secret.is_some(), "acceptée : enrôlée, certificat et secret remis");
+    let response = push_tls(&lab, &agent, &enrolment, "id-new").await;
+    assert_eq!(response.status(), StatusCode::OK);
 }
 
 #[tokio::test]
