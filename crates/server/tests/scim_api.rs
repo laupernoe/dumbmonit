@@ -188,7 +188,7 @@ async fn the_admin_settings_follow_the_contract() {
         reply.body,
         json!({
             "enabled": false,
-            "base_url": "http://localhost:8080/api/scim/v2",
+            "base_url": "https://localhost:8080/api/scim/v2",
             "token_set": false,
             "token_created_at": null,
             "default_role": "viewer",
@@ -417,7 +417,7 @@ async fn an_entra_id_user_lifecycle() {
     assert_eq!(reply.body["externalId"], "jane");
     assert_eq!(reply.body["emails"][0]["value"], "jane@contoso.com");
     assert_eq!(reply.body["meta"]["resourceType"], "User");
-    let location = format!("http://localhost:8080/api/scim/v2/Users/{id}");
+    let location = format!("https://localhost:8080/api/scim/v2/Users/{id}");
     assert_eq!(reply.body["meta"]["location"], location);
     assert_eq!(reply.location.as_deref(), Some(location.as_str()));
 
