@@ -119,7 +119,7 @@ async fn app_with_sso(provider: &Shared, adjust: impl FnOnce(&mut OidcConfig)) -
             client_secret: CLIENT_SECRET.into(),
             provider_name: "Lab SSO".into(),
             auto_create: true,
-            public_url: "http://monit.lab".into(),
+            public_url: "https://monit.lab".into(),
             ..Default::default()
         };
         adjust(&mut oidc);
@@ -148,7 +148,7 @@ async fn sign_in(app: &TestApp, provider: &Shared, redirect: Option<&str>) -> co
     assert_eq!(param("response_type").as_deref(), Some("code"));
     assert_eq!(param("client_id").as_deref(), Some(CLIENT_ID));
     assert_eq!(param("code_challenge_method").as_deref(), Some("S256"));
-    assert_eq!(param("redirect_uri").as_deref(), Some("http://monit.lab/api/auth/oidc/callback"));
+    assert_eq!(param("redirect_uri").as_deref(), Some("https://monit.lab/api/auth/oidc/callback"));
     let state = param("state").expect("state");
     provider.lock().unwrap().nonce = param("nonce").expect("nonce");
     // Le navigateur qui revient est celui qui est parti : il rapporte le cookie.
@@ -226,7 +226,7 @@ async fn a_first_login_creates_a_viewer_and_opens_a_session() {
         assert!(state.last_authorization.as_ref().is_some_and(|a| a.starts_with("Basic ")));
         assert_eq!(
             state.last_redirect_uri.as_deref(),
-            Some("http://monit.lab/api/auth/oidc/callback")
+            Some("https://monit.lab/api/auth/oidc/callback")
         );
     }
 
@@ -431,7 +431,7 @@ async fn auto_create_is_off_when_the_variable_is_not_set() {
                 issuer,
                 client_id: CLIENT_ID.into(),
                 client_secret: CLIENT_SECRET.into(),
-                public_url: "http://monit.lab".into(),
+                public_url: "https://monit.lab".into(),
                 ..Default::default()
             }
             .normalized(),
@@ -456,7 +456,7 @@ async fn auto_create_is_off_when_the_variable_is_not_set() {
         .put(
             "/api/auth/oidc/config",
             json!({ "issuer": provider.lock().unwrap().issuer.clone(), "client_id": CLIENT_ID,
-                    "client_secret": CLIENT_SECRET, "public_url": "http://monit.lab" }),
+                    "client_secret": CLIENT_SECRET, "public_url": "https://monit.lab" }),
             Some(&admin),
         )
         .await;
@@ -553,7 +553,7 @@ async fn saved_settings_win_over_the_environment_and_the_secret_never_comes_back
     assert_eq!(current.body["source"], json!("env"));
     assert_eq!(current.body["has_client_secret"], json!(true));
     assert!(current.body.get("client_secret").is_none());
-    assert_eq!(current.body["redirect_uri"], json!("http://monit.lab/api/auth/oidc/callback"));
+    assert_eq!(current.body["redirect_uri"], json!("https://monit.lab/api/auth/oidc/callback"));
 
     let issuer = provider.lock().unwrap().issuer.clone();
     let saved = app

@@ -307,8 +307,8 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
         });
     }
 
-    // HTTPS sur le port de l'interface : certificat fourni ou autosigné, et
-    // redirection des navigations en clair (voir `web_tls`).
+    // HTTPS sur le port de l'interface, et lui seul : certificat fourni ou
+    // autosigné ; sans certificat, pas de démarrage (voir `web_tls`).
     dumbmonit_server::web_tls::init(&state).await.context("preparing HTTPS on the web port")?;
     dumbmonit_server::web_tls::spawn_refresh(state.clone());
 
@@ -317,16 +317,10 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
         .with_context(|| format!("cannot listen on {bind}"))?;
     let listener = dumbmonit_server::web_tls::listen(state.web_tls().clone(), tcp)
         .context("web port listener")?;
-    info!(
-        %bind,
-        https = state.web_tls().server_config().is_some(),
-        redirect = state.web_tls().redirect_enabled(),
-        "interface available (HTTP and HTTPS on the same port)"
-    );
+    info!(%bind, "interface available over HTTPS (plain HTTP is redirected, never served)");
 
-    // `ConnectInfo` : l'adresse du client et le chiffrement de la connexion,
-    // pour les compteurs de tentatives, le journal d'audit (voir
-    // `auth::client_ip`) et les cookies `Secure`.
+    // `ConnectInfo` : l'adresse du client, pour les compteurs de tentatives et
+    // le journal d'audit (voir `auth::client_ip`).
     let state_for_shutdown = state.clone();
     axum::serve(
         listener,

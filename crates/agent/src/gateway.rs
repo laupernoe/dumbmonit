@@ -13,11 +13,11 @@
 //!   site, de bout en bout : le relais ne voit que du chiffré, ne peut rien y
 //!   changer sans casser la session, et ne peut pas se faire passer pour
 //!   l'agent (il n'a ni sa clé privée ni son jeton). L'enrôlement passe par le
-//!   même chemin.
-//! - **HTTP** (`GET`) : seulement `/install.sh`, `/install.ps1` et
-//!   `/download/<binaire>`, relus auprès du serveur par le canal chiffré du
-//!   relais. Le script vérifie le binaire contre l'empreinte SHA-256 que porte
-//!   la commande d'installation affichée par le serveur.
+//!   même chemin, et l'installation aussi : `curl` ou PowerShell lisent
+//!   `https://relais:8443/install.sh` sous TLS jusqu'au serveur, qu'ils
+//!   reconnaissent à la clé épinglée dans leur commande.
+//! - **HTTP en clair** (`GET`) : un refus, sans rien servir — ni script, ni
+//!   binaire, ni jeton ne passent en clair sur le réseau du site.
 //! - **Tout le reste** est fermé aussitôt.
 //!
 //! Ce n'est pas un mandataire ouvert : la destination est toujours le serveur
@@ -30,7 +30,6 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
-use dumbmonit_proto::RELAY_FILES_PATH;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::Semaphore;
@@ -47,17 +46,14 @@ pub const DEFAULT_MAX_CONNECTIONS: usize = 64;
 /// Débit par défaut de chaque tunnel, dans chaque sens, en Kio/s.
 pub const DEFAULT_RATE_KIB: u32 = 4096;
 
-/// Délai pour recevoir le premier octet, puis l'en-tête d'une requête HTTP :
-/// une connexion qui n'a rien à dire ne retient pas une place.
+/// Délai pour recevoir le premier octet : une connexion qui n'a rien à dire
+/// ne retient pas une place.
 const FIRST_BYTES_TIMEOUT: Duration = Duration::from_secs(10);
 
 /// Silence au-delà duquel un tunnel est coupé. Bien au-delà de l'attente longue
 /// des commandes et du relais (25 s) et de la durée de vie des connexions
 /// gardées ouvertes par l'agent (5 min).
 const IDLE_TIMEOUT: Duration = Duration::from_secs(15 * 60);
-
-/// Taille maximale de l'en-tête d'une requête HTTP acceptée.
-const MAX_REQUEST_HEAD: usize = 4096;
 
 /// Taille d'une lecture, et donc dépassement maximal du débit sur une fenêtre.
 const CHUNK: usize = 16 * 1024;
@@ -89,14 +85,6 @@ impl<T: AsyncRead + AsyncWrite + Unpin + Send> Io for T {}
 pub trait Upstream: Send + Sync + 'static {
     /// Ouvre un tunnel vers le port des agents du serveur.
     fn open(&self) -> impl Future<Output = Result<Box<dyn Io>, String>> + Send;
-
-    /// Relit un fichier d'installation (`install.sh`, `download/<nom>`) et écrit
-    /// la réponse HTTP complète dans `out`.
-    fn fetch(
-        &self,
-        file: &str,
-        out: &mut (dyn AsyncWrite + Unpin + Send),
-    ) -> impl Future<Output = Result<(), String>> + Send;
 }
 
 /// Le serveur, joint par le canal chiffré du relais.
@@ -114,37 +102,6 @@ impl Upstream for ServerUpstream {
     async fn open(&self) -> Result<Box<dyn Io>, String> {
         let tunnel = self.client.open_tunnel().await.map_err(|error| error.to_string())?;
         Ok(Box::new(tunnel))
-    }
-
-    async fn fetch(
-        &self,
-        file: &str,
-        out: &mut (dyn AsyncWrite + Unpin + Send),
-    ) -> Result<(), String> {
-        let mut response =
-            self.client.fetch_relay_file(file).await.map_err(|error| error.to_string())?;
-        let status = response.status();
-        let content_type = response
-            .headers()
-            .get(reqwest::header::CONTENT_TYPE)
-            .and_then(|value| value.to_str().ok())
-            .filter(|value| value.bytes().all(|b| b.is_ascii_graphic() || b == b' '))
-            .unwrap_or("application/octet-stream")
-            .to_string();
-        let mut head = format!(
-            "HTTP/1.1 {} {}\r\nContent-Type: {content_type}\r\nConnection: close\r\nCache-Control: no-cache\r\n",
-            status.as_u16(),
-            status.canonical_reason().unwrap_or("")
-        );
-        if let Some(length) = response.content_length() {
-            head.push_str(&format!("Content-Length: {length}\r\n"));
-        }
-        head.push_str("\r\n");
-        out.write_all(head.as_bytes()).await.map_err(|error| error.to_string())?;
-        while let Some(chunk) = response.chunk().await.map_err(|error| error.to_string())? {
-            out.write_all(&chunk).await.map_err(|error| error.to_string())?;
-        }
-        out.flush().await.map_err(|error| error.to_string())
     }
 }
 
@@ -201,7 +158,7 @@ pub async fn serve<U: Upstream>(
 enum Opening {
     /// Enregistrement TLS « handshake » : un ClientHello.
     Tls,
-    /// Une requête HTTP en clair (`GET`).
+    /// Une requête HTTP en clair (`GET`), refusée.
     Http,
     Other,
 }
@@ -234,86 +191,36 @@ async fn handle<U: Upstream>(upstream: Arc<U>, mut socket: TcpStream, peer: Sock
             splice(socket, tunnel, rate, IDLE_TIMEOUT).await;
             debug!(%peer, "relay gateway: tunnel closed");
         }
-        Opening::Http => serve_file(upstream.as_ref(), &mut socket, peer).await,
+        Opening::Http => refuse_plain(&mut socket, peer).await,
         Opening::Other => debug!(%peer, "relay gateway: neither TLS nor HTTP, connection closed"),
     }
 }
 
-/// Répond à une requête HTTP : un fichier d'installation, ou un refus.
-async fn serve_file<U: Upstream>(upstream: &U, socket: &mut TcpStream, peer: SocketAddr) {
-    let head = match tokio::time::timeout(FIRST_BYTES_TIMEOUT, read_head(socket)).await {
-        Ok(Some(head)) => head,
-        _ => return,
-    };
-    let Some(file) = requested_file(&head) else {
-        let _ = socket
-            .write_all(
-                b"HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 34\r\nConnection: close\r\n\r\nThis relay only serves the agent.\n",
-            )
-            .await;
-        return;
-    };
-    debug!(%peer, file, "relay gateway: install file requested");
-    if let Err(error) = upstream.fetch(&file, &mut *socket).await {
-        warn!(%peer, file, %error, "relay gateway: cannot fetch the install file from the server");
-        let _ = socket
-            .write_all(
-                b"HTTP/1.1 502 Bad Gateway\r\nContent-Type: text/plain\r\nContent-Length: 35\r\nConnection: close\r\n\r\nThe relay cannot reach the server.\n",
-            )
-            .await;
-    }
+/// Corps du refus opposé à une requête en clair.
+const PLAIN_REFUSAL: &str = "Use https:// to reach this relay.\n";
+
+/// Répond à une requête en clair par un refus, sans rien servir ni relayer :
+/// la passerelle ne parle que TLS.
+async fn refuse_plain(socket: &mut TcpStream, peer: SocketAddr) {
+    debug!(%peer, "relay gateway: plain HTTP refused");
+    let reply = format!(
+        "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\
+         Connection: close\r\n\r\n{PLAIN_REFUSAL}",
+        PLAIN_REFUSAL.len()
+    );
+    let _ = socket.write_all(reply.as_bytes()).await;
     let _ = socket.shutdown().await;
-}
-
-/// Lit l'en-tête d'une requête jusqu'à la ligne vide, borné en taille.
-async fn read_head(socket: &mut TcpStream) -> Option<Vec<u8>> {
-    let mut head = Vec::with_capacity(512);
-    let mut buffer = [0u8; 512];
-    loop {
-        let read = socket.read(&mut buffer).await.ok()?;
-        if read == 0 {
-            return None;
+    // La requête est lue et jetée, bornée en taille et en durée : fermer avec
+    // des octets non lus ferait perdre la réponse au client.
+    let mut sink = [0u8; 4096];
+    let _ = tokio::time::timeout(FIRST_BYTES_TIMEOUT, async {
+        for _ in 0..16 {
+            if !matches!(socket.read(&mut sink).await, Ok(read) if read > 0) {
+                break;
+            }
         }
-        head.extend_from_slice(&buffer[..read]);
-        if head.windows(4).any(|w| w == b"\r\n\r\n") || head.windows(2).any(|w| w == b"\n\n") {
-            return Some(head);
-        }
-        if head.len() > MAX_REQUEST_HEAD {
-            return None;
-        }
-    }
-}
-
-/// Le fichier demandé, tel que le serveur le connaît sous
-/// [`RELAY_FILES_PATH`] — ou `None` pour tout ce qui n'est pas l'agent.
-fn requested_file(head: &[u8]) -> Option<String> {
-    let line = head.split(|&b| b == b'\n').next()?;
-    let line = std::str::from_utf8(line).ok()?.trim_end_matches('\r');
-    let mut parts = line.split(' ');
-    let (method, target, version) = (parts.next()?, parts.next()?, parts.next()?);
-    if method != "GET" || !version.starts_with("HTTP/1.") || parts.next().is_some() {
-        return None;
-    }
-    let path = target.split(['?', '#']).next()?;
-    match path {
-        "/install.sh" => Some("install.sh".to_string()),
-        "/install.ps1" => Some("install.ps1".to_string()),
-        _ => {
-            let name = path.strip_prefix("/download/")?;
-            let valid = !name.is_empty()
-                && name.len() <= 128
-                && !name.starts_with('.')
-                && name
-                    .bytes()
-                    .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'-' | b'_'));
-            valid.then(|| format!("download/{name}"))
-        }
-    }
-}
-
-/// Chemin, côté serveur, d'un fichier d'installation relu par le relais.
-pub fn files_path(file: &str) -> String {
-    format!("{RELAY_FILES_PATH}/{file}")
+    })
+    .await;
 }
 
 /// Recopie les octets dans les deux sens, au débit donné, jusqu'à la fin des
@@ -400,31 +307,6 @@ mod tests {
     }
 
     #[test]
-    fn only_the_agent_files_are_served() {
-        let ask = |line: &str| requested_file(format!("{line}\r\nHost: x\r\n\r\n").as_bytes());
-        assert_eq!(ask("GET /install.sh HTTP/1.1").as_deref(), Some("install.sh"));
-        assert_eq!(ask("GET /install.ps1 HTTP/1.1").as_deref(), Some("install.ps1"));
-        assert_eq!(
-            ask("GET /download/dumbmonit-agent-linux-x86_64 HTTP/1.1").as_deref(),
-            Some("download/dumbmonit-agent-linux-x86_64")
-        );
-        assert_eq!(
-            ask("GET /download/dumbmonit-agent-linux-x86_64.sha256?x=1 HTTP/1.0").as_deref(),
-            Some("download/dumbmonit-agent-linux-x86_64.sha256")
-        );
-        // Ni l'API, ni l'interface, ni une traversée de répertoire, ni une URL
-        // absolue de mandataire.
-        assert_eq!(ask("GET /api/targets HTTP/1.1"), None);
-        assert_eq!(ask("GET / HTTP/1.1"), None);
-        assert_eq!(ask("GET /download/../secret.key HTTP/1.1"), None);
-        assert_eq!(ask("GET /download/.hidden HTTP/1.1"), None);
-        assert_eq!(ask("GET /download/a%2Fb HTTP/1.1"), None);
-        assert_eq!(ask("GET http://intranet/install.sh HTTP/1.1"), None);
-        assert_eq!(ask("POST /install.sh HTTP/1.1"), None);
-        assert_eq!(ask("GET /install.sh"), None);
-    }
-
-    #[test]
     fn the_pace_lets_a_window_through_then_waits_for_the_next() {
         let start = Instant::now();
         let mut pace = Pace::new(1000, start);
@@ -439,7 +321,7 @@ mod tests {
         assert_eq!(pace.wait_after(1000, start + Duration::from_millis(2500)), Duration::ZERO);
     }
 
-    /// Serveur factice : un écho pour les tunnels, un fichier fixe pour HTTP.
+    /// Serveur factice : un écho pour les tunnels.
     struct Echo {
         opened: AtomicUsize,
     }
@@ -462,16 +344,6 @@ mod tests {
                 }
             });
             Ok(Box::new(near))
-        }
-
-        async fn fetch(
-            &self,
-            file: &str,
-            out: &mut (dyn AsyncWrite + Unpin + Send),
-        ) -> Result<(), String> {
-            let body = format!("file={file}");
-            let reply = format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{body}", body.len());
-            out.write_all(reply.as_bytes()).await.map_err(|e| e.to_string())
         }
     }
 
@@ -502,20 +374,20 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn an_install_file_is_served_but_nothing_else() {
+    async fn nothing_is_served_in_clear_and_nothing_else_is_carried() {
         let (addr, echo, _stop) = gateway(4).await;
-        let mut socket = TcpStream::connect(addr).await.expect("connexion");
-        socket.write_all(b"GET /install.sh HTTP/1.1\r\nHost: relais\r\n\r\n").await.unwrap();
-        let mut reply = String::new();
-        socket.read_to_string(&mut reply).await.unwrap();
-        assert!(reply.starts_with("HTTP/1.1 200"), "{reply}");
-        assert!(reply.ends_with("file=install.sh"), "{reply}");
-
-        let mut socket = TcpStream::connect(addr).await.expect("connexion");
-        socket.write_all(b"GET /api/targets HTTP/1.1\r\n\r\n").await.unwrap();
-        let mut reply = String::new();
-        socket.read_to_string(&mut reply).await.unwrap();
-        assert!(reply.starts_with("HTTP/1.1 404"), "{reply}");
+        // Une requête en clair, même pour un fichier d'installation : un refus,
+        // sans contenu, et aucun tunnel.
+        let requests: [&[u8]; 2] =
+            [b"GET /install.sh HTTP/1.1\r\nHost: relais\r\n\r\n", b"GET / HTTP/1.1\r\n\r\n"];
+        for request in requests {
+            let mut socket = TcpStream::connect(addr).await.expect("connexion");
+            socket.write_all(request).await.unwrap();
+            let mut reply = String::new();
+            let _ = socket.read_to_string(&mut reply).await;
+            assert!(reply.starts_with("HTTP/1.1 400"), "{reply}");
+            assert!(reply.ends_with(PLAIN_REFUSAL), "{reply}");
+        }
 
         // Un CONNECT de mandataire est fermé sans réponse, et rien n'est ouvert.
         let mut socket = TcpStream::connect(addr).await.expect("connexion");

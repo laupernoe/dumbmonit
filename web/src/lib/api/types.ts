@@ -1299,7 +1299,7 @@ export interface HttpsStatus {
 }
 
 // --- HTTPS and cleartext report (Settings → Security) -----------------------
-// Mirrors `GET/PUT /api/security/https` (crates/server/src/api/https.rs).
+// Mirrors `GET /api/security/https` (crates/server/src/api/https.rs).
 
 export interface HttpsCertificate {
 	source: 'provided' | 'self_signed';
@@ -1324,15 +1324,10 @@ export interface HttpsFinding {
 }
 
 export interface HttpsView {
-	enabled: boolean;
+	/** A certificate is loaded and served: always, the web port only serves HTTPS. */
 	available: boolean;
 	certificate: HttpsCertificate | null;
 	error: string | null;
-	redirect: boolean;
-	/** Forced by DUMBMONIT_HTTPS_REDIRECT: the setting cannot be changed here. */
-	redirect_forced: boolean | null;
-	request_https: boolean;
-	request_tls: boolean;
 	trusted_proxies: number;
 	hsts: string;
 	findings: HttpsFinding[];

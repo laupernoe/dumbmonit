@@ -181,7 +181,8 @@ OPTIONS:
 
 ENVIRONMENT VARIABLES (override the file):
     DUMBMONIT_AGENT_CONFIG           Configuration file path
-    DUMBMONIT_AGENT_URL              Server URL, for example http://server:8080
+    DUMBMONIT_AGENT_URL              Server URL, https:// only, for example https://server:8080
+    DUMBMONIT_AGENT_SERVER_PIN       Public key pin (sha256//...) of a self-signed server certificate
     DUMBMONIT_AGENT_TOKEN            Enrollment token
     DUMBMONIT_AGENT_INTERVAL_SECS    Sampling period
     DUMBMONIT_AGENT_HOSTNAME         Hostname announced to the server

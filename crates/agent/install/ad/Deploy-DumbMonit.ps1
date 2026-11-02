@@ -78,6 +78,10 @@ $Url            = '__DM_URL__'
 # arrivent pas (vide : aucun).
 $DnsServer      = '__DM_DNS_SERVER__'
 $AgentPort      = '__DM_AGENT_PORT__'
+# Clé publique du certificat du serveur (sha256//…, celle de curl
+# --pinnedpubkey), quand il est autosigné ; vide : certificat d'une autorité de
+# confiance, vérifié par Windows.
+$PinnedKey      = '__DM_PINNED_KEY__'
 $ExpectedSha256 = '__DM_SHA256__'
 $TokenHint      = '__DM_TOKEN_PREFIX__'
 $Generated      = '__DM_GENERATED__'
@@ -104,6 +108,19 @@ function Stop-Deploy([string]$Message) {
 # ANSI, et un tiret cadratin y devient un guillemet qui casse la syntaxe.
 function Write-TextFile([string]$Path, [string]$Text, [bool]$Bom = $true) {
     [System.IO.File]::WriteAllText($Path, $Text, (New-Object System.Text.UTF8Encoding($Bom)))
+}
+
+# Le serveur ne parle que HTTPS : TLS 1.2 au moins (Windows PowerShell 5 ne le
+# propose pas toujours), et, pour un certificat autosigné, seul celui dont la
+# clé publique a l'empreinte du kit est accepté. Le rappel est retiré après
+# usage.
+function Use-ServerTls {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    if (-not $PinnedKey) { return }
+    if ($PinnedKey -cnotmatch '^sha256//[A-Za-z0-9+/]{43}=$') { Stop-Deploy "Invalid server key pin in this kit: download a new kit from DumbMonit." }
+    # En-tête SubjectPublicKeyInfo d'une clé P-256, suivi du point de la clé.
+    [Net.ServicePointManager]::ServerCertificateValidationCallback = [scriptblock]::Create(
+        "param(`$s, `$c) ('sha256//' + [Convert]::ToBase64String([Security.Cryptography.SHA256]::Create().ComputeHash([byte[]]((48,89,48,19,6,7,42,134,72,206,61,2,1,6,8,42,134,72,206,61,3,1,7,3,66,0) + `$c.GetPublicKey())))) -ceq '$PinnedKey'")
 }
 
 function Read-B64([string]$Value) {
@@ -276,11 +293,10 @@ if ($PSCmdlet.ShouldProcess($kitDir, 'Create the installation kit')) {
         if (-not $ExpectedSha256) { Stop-Deploy 'This DumbMonit server does not ship the Windows agent binary: -UseSysvol is not available.' }
         $download = Join-Path $env:TEMP "dumbmonit-$([guid]::NewGuid()).exe"
         Write-Plan "Downloading $Url/download/$BinaryName"
-        $progress = $ProgressPreference
-        $ProgressPreference = 'SilentlyContinue'
-        try { Invoke-WebRequest -Uri "$Url/download/$BinaryName" -OutFile $download -UseBasicParsing }
-        catch { Stop-Deploy "Download failed: $_" }
-        finally { $ProgressPreference = $progress }
+        Use-ServerTls
+        try { (New-Object Net.WebClient).DownloadFile("$Url/download/$BinaryName", $download) }
+        catch { Stop-Deploy "Download failed (is the server certificate the one of this kit?): $_" }
+        finally { [Net.ServicePointManager]::ServerCertificateValidationCallback = $null }
         $actual = (Get-FileHash -LiteralPath $download -Algorithm SHA256).Hash.ToLowerInvariant()
         if ($actual -ne $ExpectedSha256) {
             Remove-Item -LiteralPath $download -Force -ErrorAction SilentlyContinue

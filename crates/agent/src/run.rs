@@ -203,6 +203,9 @@ impl Agent {
             HTTP_TIMEOUT,
         )
         .context("preparing the push client")?;
+        if let Some(pin) = &config.server_pin {
+            client.pin_server(pin).context("pinning the server key")?;
+        }
         let tls_path = crate::tls::beside(&config.secret_path);
         let tls = initial_tls(&config, TlsState::load(&tls_path));
         if let Some(state) = &tls {
@@ -1207,6 +1210,7 @@ mod tests {
             secret_path: std::path::PathBuf::from("/inexistant/agent-secret"),
             tls_url: None,
             ca_pin: None,
+            server_pin: None,
             log_level: tracing::Level::INFO,
             deprecated_env: Vec::new(),
         }

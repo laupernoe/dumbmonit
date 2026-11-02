@@ -109,10 +109,12 @@ fn normalise_origin(raw: &str) -> String {
     raw.trim().trim_end_matches('/').to_ascii_lowercase()
 }
 
-/// Vrai si l'origine désigne l'hôte même auquel la requête est adressée.
+/// Vrai si l'origine désigne l'hôte même auquel la requête est adressée, en
+/// `https://` : nous ne servons que HTTPS, une page en clair au même nom n'est
+/// pas la nôtre.
 pub fn same_host(origin: &str, headers: &HeaderMap) -> bool {
     let host = headers.get(header::HOST).and_then(|v| v.to_str().ok()).map(str::trim);
-    let origin_host = origin.split_once("://").map_or(origin, |(_, rest)| rest);
+    let Some(origin_host) = origin.strip_prefix("https://") else { return false };
     let origin_host = origin_host.split('/').next().unwrap_or(origin_host);
     host.is_some_and(|host| host.eq_ignore_ascii_case(origin_host))
 }
@@ -241,7 +243,8 @@ mod tests {
     fn our_own_origin_is_always_accepted() {
         let mut headers = HeaderMap::new();
         headers.insert(header::HOST, "monit.lan:8080".parse().unwrap());
-        assert!(CorsPolicy::Off.accepts("http://monit.lan:8080", &headers));
+        assert!(CorsPolicy::Off.accepts("https://monit.lan:8080", &headers));
+        assert!(!CorsPolicy::Off.accepts("http://monit.lan:8080", &headers));
         assert!(!CorsPolicy::Off.accepts("http://evil.example", &headers));
         assert!(CorsPolicy::Any.accepts("http://evil.example", &headers));
     }
