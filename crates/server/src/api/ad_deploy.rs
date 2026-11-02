@@ -43,9 +43,13 @@ const WINDOWS_BINARY: &str = "dumbmonit-agent-windows-x86_64.exe";
 /// Longueur maximale d'un nom distinctif d'OU ou de groupe saisi.
 const MAX_FIELD_LEN: usize = 512;
 
-/// Validité par défaut d'un jeton de flotte, en jours : le temps de déployer,
-/// pas davantage. Les machines inscrites continuent après le terme.
-const DEFAULT_EXPIRES_IN_DAYS: i64 = 30;
+/// Validité d'un jeton de flotte selon `expires_in_days` : absent, `null` ou 0
+/// (ou moins) veut dire « n'expire jamais », pour que les serveurs ajoutés plus
+/// tard au domaine puissent encore s'inscrire. Le jeton reste limité à son
+/// domaine, réutilisable et révocable depuis Réglages › Agents.
+fn token_validity(expires_in_days: Option<i64>) -> Option<i64> {
+    expires_in_days.filter(|days| *days > 0)
+}
 
 #[derive(Debug, Deserialize)]
 pub struct AdKitPayload {
@@ -57,10 +61,14 @@ pub struct AdKitPayload {
     /// Nombre maximal de serveurs inscrits. Absent : sans limite.
     #[serde(default)]
     pub max_uses: Option<i64>,
-    /// Jours pendant lesquels le jeton inscrit. Absent : 30 ; `null` explicite
-    /// n'est pas distingué de l'absence.
+    /// Jours pendant lesquels le jeton inscrit. Absent, `null` ou 0 : n'expire
+    /// jamais (voir [`token_validity`]).
     #[serde(default)]
     pub expires_in_days: Option<i64>,
+    /// Couvrir tous les serveurs Windows du domaine, y compris ceux ajoutés plus
+    /// tard : réglage par défaut `-AllServers` du script. Incompatible avec un groupe.
+    #[serde(default)]
+    pub all_servers: bool,
     /// OU à laquelle lier la GPO (nom distinctif). Absent : le script cherche.
     #[serde(default)]
     pub target_ou: Option<String>,
@@ -238,6 +246,8 @@ pub struct KitParams<'a> {
     pub target_ou: &'a str,
     pub include_domain_controllers: bool,
     pub security_group: &'a str,
+    /// Valeur par défaut de `-AllServers` dans le script.
+    pub all_servers: bool,
     pub sysvol_binary: bool,
     /// Serveur DNS à utiliser pour résoudre l'hôte de `url` ; vide : aucun.
     pub dns_server: &'a str,
@@ -277,6 +287,7 @@ pub fn render_deploy_script(params: &KitParams<'_>) -> String {
             if params.include_domain_controllers { "true" } else { "false" },
         )
         .replace("__DM_SECURITY_GROUP_B64__", &b64(params.security_group))
+        .replace("__DM_ALL_SERVERS__", if params.all_servers { "true" } else { "false" })
         .replace("__DM_SYSVOL__", if params.sysvol_binary { "true" } else { "false" })
         .replace("__DM_DOMAIN__", params.domain)
         .replace("__DM_URL__", params.url)
@@ -307,7 +318,12 @@ pub async fn create_kit(
     })?;
     let target_ou = optional_field(payload.target_ou.as_deref(), "organisational unit")?;
     let security_group = optional_field(payload.security_group.as_deref(), "security group")?;
-    let expires_in_days = payload.expires_in_days.unwrap_or(DEFAULT_EXPIRES_IN_DAYS);
+    if payload.all_servers && security_group.is_some() {
+        return Err(ApiError::BadRequest(
+            "Covering all servers cannot be combined with a security group.".into(),
+        ));
+    }
+    let expires_in_days = token_validity(payload.expires_in_days);
     // Refusée avant de créer quoi que ce soit, plutôt qu'avec un jeton déjà fait.
     if let Some(url) = payload.base_url.as_deref().filter(|url| !url.trim().is_empty()) {
         script_safe_url(url)?;
@@ -388,6 +404,7 @@ pub async fn create_kit(
         target_ou: target_ou.as_deref().unwrap_or(""),
         include_domain_controllers: payload.include_domain_controllers,
         security_group: security_group.as_deref().unwrap_or(""),
+        all_servers: payload.all_servers,
         sysvol_binary: payload.sysvol_binary,
         dns_server: dns_server.as_deref().unwrap_or(""),
         agent_port: &agent_port,
@@ -443,6 +460,7 @@ mod tests {
             target_ou: "OU=Servers,DC=corp,DC=example,DC=com",
             include_domain_controllers: true,
             security_group: "Serveurs l'équipe",
+            all_servers: false,
             sysvol_binary: false,
             dns_server: "10.0.0.2",
             agent_port: "9443",
@@ -509,6 +527,10 @@ mod tests {
         assert!(script.contains(pin), "la clé du serveur, pour le téléchargement du binaire");
         assert!(script.contains("[bool]::Parse('true')"), "contrôleurs de domaine inclus");
         assert!(script.contains("[bool]::Parse('false')"), "pas de binaire dans SYSVOL");
+        assert!(
+            script.contains("[switch]$AllServers = [bool]::Parse('false')"),
+            "-AllServers par défaut du kit"
+        );
         // Le jeton n'apparaît pas en clair : il n'est que dans le script de la
         // tâche, encodé, lui-même encodé dans celui-ci.
         assert!(!script.contains("dmon_secret"));
@@ -530,6 +552,33 @@ mod tests {
     }
 
     #[test]
+    fn all_servers_becomes_the_default_of_the_script_without_leaving_a_placeholder() {
+        let mut kit = params("-Token t -Url https://dm.example.com");
+        kit.all_servers = true;
+        kit.security_group = "";
+        let script = render_deploy_script(&kit);
+        assert!(!script.contains("__DM_"), "un paramètre n'a pas été remplacé");
+        assert!(script.contains("[switch]$AllServers = [bool]::Parse('true')"));
+    }
+
+    #[test]
+    fn a_missing_validity_means_the_token_never_expires() {
+        assert_eq!(token_validity(None), None);
+        assert_eq!(token_validity(Some(0)), None);
+        assert_eq!(token_validity(Some(-5)), None);
+        assert_eq!(token_validity(Some(30)), Some(30));
+        assert_eq!(token_validity(Some(365)), Some(365));
+        let payload: AdKitPayload =
+            serde_json::from_str(r#"{"domain": "corp.example.com"}"#).unwrap();
+        assert_eq!(token_validity(payload.expires_in_days), None);
+        assert!(!payload.all_servers);
+        let null: AdKitPayload =
+            serde_json::from_str(r#"{"domain": "corp.example.com", "expires_in_days": null}"#)
+                .unwrap();
+        assert_eq!(token_validity(null.expires_in_days), None);
+    }
+
+    #[test]
     fn the_deployment_script_does_what_the_wizard_promises() {
         // Prérequis, simulation, GPO idempotente, tâche immédiate SYSTEM,
         // filtrage, liens, SYSVOL et retrait.
@@ -548,6 +597,9 @@ mod tests {
             "[switch]$IncludeDomainControllers",
             "[string]$SecurityGroup",
             "[switch]$UseSysvol",
+            "Unblock-File .\\Deploy-DumbMonit.ps1; powershell -NoProfile -ExecutionPolicy Bypass -File .\\Deploy-DumbMonit.ps1",
+            "Continue? (Y/n)",
+            "[switch]$Yes",
             "[switch]$Remove",
             "Remove-GPO",
             "SetAccessRuleProtection($true, $false)",
