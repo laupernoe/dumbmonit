@@ -33,6 +33,7 @@
 	import { countAlertsByTarget } from '#lib/alerts-attention.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
+	import ReviewNotice from '#lib/components/device-form/ReviewNotice.svelte';
 	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Menu, SelectionBar, Skeleton } from '#lib/ui/index.js';
 	import RackList from '#lib/components/devices/RackList.svelte';
 	import type { ReorderControls, RowSelection } from '#lib/components/devices/RackList.svelte';
@@ -1001,6 +1002,8 @@
 		};
 	});
 </script>
+
+<ReviewNotice />
 
 {#if auth.isAdmin && (firstLoad || pageError)}
 	<!-- Loading or failed: the toolbar is not there yet, the add button still is. The empty state carries its own. -->
