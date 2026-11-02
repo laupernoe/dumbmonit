@@ -169,10 +169,7 @@ pub async fn unused_token_name(pool: &SqlitePool) -> Result<String> {
 }
 
 /// Crée un jeton et renvoie sa forme en clair — la seule et unique fois.
-pub async fn create_token(
-    pool: &SqlitePool,
-    policy: TokenPolicy,
-) -> Result<(TokenRecord, String)> {
+pub async fn create_token(pool: &SqlitePool, policy: TokenPolicy) -> Result<(TokenRecord, String)> {
     let name = unused_token_name(pool).await?;
     let clear = token::generate();
     let expires_at = policy.expires_in_days.map(|days| {
@@ -1351,8 +1348,7 @@ mod tests {
     #[tokio::test]
     async fn the_clear_token_is_never_stored() {
         let db = setup().await;
-        let (_, clear) =
-            create_token(&db.pool, TokenPolicy::default()).await.expect("création");
+        let (_, clear) = create_token(&db.pool, TokenPolicy::default()).await.expect("création");
 
         let row = sqlx::query("SELECT token_hash, prefix FROM agent_tokens")
             .fetch_one(&db.pool)
@@ -1716,8 +1712,7 @@ mod tests {
         let db = setup().await;
         let own = token(&db, "parc").await;
         let target_id = legacy_host(&db, "nas", "id-nas", own).await;
-        let (spent, _) =
-            create_token(&db.pool, TokenPolicy::default()).await.expect("création");
+        let (spent, _) = create_token(&db.pool, TokenPolicy::default()).await.expect("création");
         enrol(&db, &identity("autre", Some("id-autre")), spent.id).await;
 
         allow_rebind(&db.pool, target_id).await.unwrap().expect("fenêtre");
@@ -1779,8 +1774,7 @@ mod tests {
     #[tokio::test]
     async fn a_single_use_token_enrols_one_machine_and_not_a_second() {
         let db = setup().await;
-        let (record, _) =
-            create_token(&db.pool, TokenPolicy::default()).await.expect("création");
+        let (record, _) = create_token(&db.pool, TokenPolicy::default()).await.expect("création");
         assert_eq!(record.max_uses, Some(1), "l'usage unique est le défaut");
 
         let first = enrol(&db, &identity("portable", Some("id-1")), record.id).await;
@@ -1842,9 +1836,10 @@ mod tests {
     #[tokio::test]
     async fn a_fleet_token_enrols_as_many_machines_as_it_is_allowed() {
         let db = setup().await;
-        let (record, _) = create_token(&db.pool, TokenPolicy { max_uses: Some(2), expires_in_days: None })
-            .await
-            .expect("création");
+        let (record, _) =
+            create_token(&db.pool, TokenPolicy { max_uses: Some(2), expires_in_days: None })
+                .await
+                .expect("création");
 
         enrol(&db, &identity("a", Some("id-a")), record.id).await;
         enrol(&db, &identity("b", Some("id-b")), record.id).await;
@@ -1871,9 +1866,10 @@ mod tests {
     #[tokio::test]
     async fn a_token_past_its_deadline_stops_enrolling_but_not_reporting() {
         let db = setup().await;
-        let (record, _) = create_token(&db.pool, TokenPolicy { max_uses: None, expires_in_days: Some(1) })
-            .await
-            .expect("création");
+        let (record, _) =
+            create_token(&db.pool, TokenPolicy { max_uses: None, expires_in_days: Some(1) })
+                .await
+                .expect("création");
         let registration = enrol(&db, &identity("nas", Some("id-nas")), record.id).await;
         let secret = registration.issued_secret.clone().expect("secret");
 
