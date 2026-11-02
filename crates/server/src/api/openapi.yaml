@@ -8317,6 +8317,29 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/security/ports:
+    get:
+      operationId: getNetworkPorts
+      tags: [Security]
+      summary: Network ports to open in the firewall (admin only)
+      description: >-
+        Computed from the real configuration, not a fixed list: the web port
+        (HTTPS only), the agent channel, syslog (UDP and TCP), SNMP traps, the
+        embedded storage processes when they listen outside the loopback
+        interface, and the gateway of each relay. A disabled listener is
+        `off` (nothing to open), one bound to the loopback interface is
+        `local`. `compose` and `ufw` are ready-to-copy blocks for the ports
+        that are listening on this host and safe to open.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The ports and the two copyable blocks.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PortsView" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/security/https:
     get:
       operationId: getHttps
@@ -10906,6 +10929,25 @@ components:
             secure: { type: boolean, description: This request came over HTTPS (direct, or through a trusted proxy). }
             fingerprint_sha256: { type: [string, "null"], description: SHA-256 of the served certificate, as browsers show it. }
             self_signed: { type: boolean }
+    PortsView:
+      type: object
+      properties:
+        ports:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string, description: "Stable identifier (`web`, `agents`, `syslog_udp`, `syslog_tcp`, `traps`, `metrics_store`, `long_store`, `logs_store`, `relay_gateway`)." }
+              port: { type: integer, description: Port the process listens on (inside the container or on the relay machine). }
+              host_port: { type: integer, description: Port to open on the host (the published one). }
+              protocol: { type: string, enum: [tcp, udp] }
+              exposure: { type: string, enum: [lan, wan_conditional, never], description: Recommended exposure. }
+              status: { type: string, enum: [listening, "off", local], description: "`off`: disabled, nothing to open. `local`: bound to the loopback interface." }
+              bind: { type: string, description: Listen address; empty for a relay gateway. }
+              subject: { type: [string, "null"], description: Name of the relay for a relay gateway. }
+              on_this_host: { type: boolean, description: False when the port is on another machine (relay). }
+        compose: { type: string, description: "`ports:` block for docker-compose." }
+        ufw: { type: string, description: "`ufw allow` rules with a network to replace." }
     HttpsView:
       type: object
       properties:
