@@ -8,5 +8,31 @@
       <p class="admonition-title">{{ page.meta.fallback_notice }}</p>
     </div>
   {% endif %}
+  {#- One click copies the page as Markdown, to paste into an AI assistant. The source
+      travels in a JSON script (</ is escaped by tojson) and is read on click only. -#}
+  {% if page and page.markdown and config.extra.copy_md %}
+    <div class="dm-copymd-row">
+      <button type="button" class="dm-copymd" data-done="{{ config.extra.copy_md.done | e }}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-3M5 8h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>{{ config.extra.copy_md.label | e }}</span>
+      </button>
+    </div>
+    <script type="application/json" id="dm-page-md">{{ ("# " ~ page.title ~ "\n\n" ~ page.markdown if not page.markdown.lstrip().startswith("# ") else page.markdown) | tojson }}</script>
+    <script>
+      document.querySelector(".dm-copymd").addEventListener("click", async function () {
+        var btn = this, label = btn.querySelector("span"), text = JSON.parse(document.getElementById("dm-page-md").textContent);
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch (e) {
+          var ta = document.createElement("textarea");
+          ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+          document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove();
+        }
+        var old = label.textContent;
+        label.textContent = btn.dataset.done; btn.classList.add("dm-copymd--done");
+        setTimeout(function () { label.textContent = old; btn.classList.remove("dm-copymd--done"); }, 1800);
+      });
+    </script>
+  {% endif %}
   {{ super() }}
 {% endblock %}
