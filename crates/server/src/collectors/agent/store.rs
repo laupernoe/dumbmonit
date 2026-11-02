@@ -626,6 +626,7 @@ struct HostRow {
 /// - machine connue mais non liée (agent installé avant la liaison) : refusée.
 ///   La période de transition est close : elle ne se lie plus que par une
 ///   fenêtre de reliaison ouverte par un administrateur.
+#[cfg(test)]
 pub async fn register(
     pool: &SqlitePool,
     cipher: &Cipher,
