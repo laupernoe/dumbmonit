@@ -51,7 +51,11 @@ async fn les_changements_fermes_sont_sauvegardes_et_restaures() {
     assert_eq!(rows[0].closed_at, "2026-10-31 08:30:00", "la date d'origine est gardée");
 
     let again = restore(&pool, &cipher, &lot, true).await.expect("seconde restauration");
-    assert_eq!(counts(&again, "upgrade_notes_closed"), (0, 0, 1), "la seconde fois, la note existe déjà");
+    assert_eq!(
+        counts(&again, "upgrade_notes_closed"),
+        (0, 0, 1),
+        "la seconde fois, la note existe déjà"
+    );
     assert_eq!(upgrade_notes::closed_rows(&pool).await.unwrap().len(), 1);
 }
 
