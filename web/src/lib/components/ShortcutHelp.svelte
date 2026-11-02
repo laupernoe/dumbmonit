@@ -21,6 +21,7 @@
 
 	const rows = $derived([
 		{ label: m.misc_palette_label(), keys: [palette.isMac ? '⌘' : 'Ctrl', 'K'], sequence: false },
+		{ label: m.misc_shortcuts_rail(), keys: [palette.isMac ? '⌘' : 'Ctrl', 'B'], sequence: false },
 		...SHORTCUTS.filter((s) => !s.admin || auth.isAdmin).map((s) => ({
 			label: LABEL[s.id](),
 			keys: shortcutKeys(s.keys),
