@@ -181,3 +181,5 @@ otherwise.
 | `DUMBMONIT_TLS_NAMES` | *(empty)* | Extra names and addresses of the self-signed certificate, comma-separated. |
 | `DUMBMONIT_HTTPS_REDIRECT` | *(setting)* | `on`/`off` forces the redirect of plain-HTTP navigations; unset, the setting decides (on for new installations). |
 | `DUMBMONIT_TRUSTED_PROXIES` | *(empty)* | Reverse proxies whose forwarded headers count (cookies, HSTS, client address). |
+
+Which ports to open, and which never to expose: see [Network ports](ports.md).

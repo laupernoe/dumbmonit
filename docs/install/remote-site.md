@@ -222,3 +222,5 @@ A monitor does not have to choose between the server and one relay: it can be pr
 - A relay agent needs the collectors compiled in: agents older than this
   feature ignore `relay: true`, and the server reports their probes as timed
   out. Reinstall with the current binary or image.
+
+Which ports to open, and which never to expose: see [Network ports](ports.md).
