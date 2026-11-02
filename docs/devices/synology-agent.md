@@ -15,7 +15,7 @@ opens no port on the NAS. It runs under a dedicated package user, not as root.
    DumbMonit releases.
 3. In DSM, open **Package Center**, click **Manual Install**, and select the file.
    DSM warns that the publisher is unknown: the package is not signed yet.
-4. In the wizard, enter the server URL (for example `http://192.168.1.10:8080`)
+4. In the wizard, enter the server URL (for example `https://monit.example.lan:8080`)
    and paste the token.
 5. Finish. The NAS appears in DumbMonit within a minute. If the server is
    unreachable or the token refused, the installation stops with a message:
@@ -34,4 +34,9 @@ DumbMonit if you no longer want it listed.
 - DSM 7.0 or later only. DSM 6 is not supported.
 - Only what the agent collects on any Linux machine; no Synology-specific
   volumes, RAID or backup data from this package.
+- The wizard has no field for the certificate pin, so the server address must
+  use a certificate the NAS trusts (a reverse proxy with a public certificate).
+  With DumbMonit's own self-signed certificate the test send fails and the
+  installation stops: install the agent from a shell instead, with the command
+  DumbMonit shows (see [the agent](agent.md#install)).
 - The wizard does not ask for the encrypted agent channel settings yet.

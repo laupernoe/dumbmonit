@@ -74,7 +74,7 @@ wall tells you on its own screen which one is missing:
 |---|---|---|
 | **Spotify Premium** on the connected account | Spotify only lets Premium accounts use browser speakers | the wall shows *Spotify Premium is required*; Settings shows *Premium: No* |
 | **The phone signed in to the same Spotify account** | a browser speaker is listed only for the account whose token it holds — it is not discovered on the network like a smart speaker, and other members of a Family plan do not see it | the phone simply does not list the wall |
-| **HTTPS** (or `http://localhost` on the display itself) | browsers only allow protected media (DRM) in a secure page | the wall shows *opened over plain HTTP* |
+| **A trusted HTTPS page** | browsers only allow protected media (DRM) in a secure page, and a certificate you have not accepted does not count | the wall shows *opened over plain HTTP* |
 | **A browser whose DRM works** (Widevine, PlayReady or FairPlay) | Spotify streams encrypted audio | the wall shows *This browser cannot play Spotify* |
 | **One tap or key press on the wall per page load** | browsers keep a page silent until someone interacts with it | the wall shows *Tap to enable sound* |
 

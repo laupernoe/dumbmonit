@@ -78,9 +78,7 @@ Config**, then add to `claude_desktop_config.json` and restart Claude Desktop:
 ```
 
 The header goes through an environment variable, with no space after the
-colon, because some platforms split arguments on spaces. For a server reached
-over plain HTTP on your network, add `"--allow-http"` to `args` — the settings
-page does it for you when it is itself served over HTTP.
+colon, because some platforms split arguments on spaces. DumbMonit only serves HTTPS, so `--allow-http` is not needed.
 
 ### VS Code
 
@@ -254,8 +252,8 @@ can relay.
   together: an assistant stuck in a loop gets `429` with `Retry-After`, not
   your server's full attention.
 - **HTTPS before the internet.** ChatGPT's connectors need a public URL. Put
-  DumbMonit behind a reverse proxy with TLS (Caddy, Traefik, nginx…) and set
-  `DUMBMONIT_COOKIE_SECURE=1`. Never expose the plain HTTP port. Claude Desktop,
+  DumbMonit behind a reverse proxy with a public certificate (Caddy, Traefik,
+  nginx…) that talks HTTPS to the container. Claude Desktop,
   Claude Code, VS Code and Cursor run on your machine and can reach a LAN
   address directly, so they need no exposure at all.
 - **Watch "last used".** The token list shows when each token was last used
@@ -277,5 +275,5 @@ can relay.
 | A tool answers "needs a token with the "write" scope" | The token is read-only, or its creator is no longer an administrator. Create a write token if you want the assistant to act. |
 | `429` | 120 calls in a minute: the assistant is probably looping. Wait for `Retry-After`, then ask a narrower question. |
 | "Unsupported protocol version" | The client speaks a version DumbMonit does not; update the client. |
-| Claude Desktop shows the server as failed | Node.js must be installed for `npx`; over plain HTTP, `--allow-http` must be in `args`. |
-| ChatGPT cannot connect | It needs a public HTTPS URL; a LAN address or plain HTTP does not work from OpenAI's servers. |
+| Claude Desktop shows the server as failed | Node.js must be installed for `npx`; the URL must start with `https://`. |
+| ChatGPT cannot connect | It needs a public HTTPS URL; a LAN address does not work from OpenAI's servers. |

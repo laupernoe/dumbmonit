@@ -12,7 +12,7 @@ Settings holds what is administrative: the instance itself, your account, who ca
 | Monitoring | `/settings/monitoring` | Agents, Integration packs, [Security score](security-score.md), Locations |
 | Notifications | `/settings/notifications` | Channels, Notification policy ([Notification channels](../notifications.md)) |
 | Wall display | `/settings/wall` | Wall mode: what it shows, and the way in ([Wall mode](wall.md)) |
-| System | `/settings/system` | Backup, Configuration files, DumbMonit itself, Data & retention, Logs, API & assistants, About |
+| System | `/settings/system` | Backup, Configuration files, DumbMonit itself, HTTPS and encryption, Network ports, Data & retention, Logs, API & assistants, About |
 
 Each section keeps its own anchor: `/settings#agents` forwards to `/settings/monitoring#agents`. The old links (`/alerts#notifications`) forward to the new place too. Status pages and reports are not in Settings any more: they have their own pages, **Status pages** (`/status`) and **Reports** (`/reports`); `/settings/status` and `/settings/reports` forward there. The wall's news and widgets are gone: their old links (`#news`, `#widgets`) open the Wall display tab, where **Wall music** (`#music`) is.
 
@@ -199,6 +199,16 @@ Adding a machine (token, install command, first connection, a route through a
 relay, the Active Directory kit) happens in the add flow, **New monitor →
 Agent** (`/targets/new?kind=agent`), not here. The agents themselves are on
 their own pages.
+
+Under **Enrolment approval**, choose what happens to a machine that enrols with a token (accept it, ask an administrator, or accept it when it belongs to the token's Active Directory domain), and the hourly limit per token. Waiting machines are listed there. A fleet token that enrolled nothing for 30 days goes to sleep and shows **Asleep** with a **Reactivate** button. Details: [Protecting enrolment](../install/agent-security.md#protecting-enrolment).
+
+## HTTPS and encryption {#https}
+
+Admin-only, in **Settings → System**. Shows the certificate the web port serves (self-signed or yours), its fingerprint and expiry, and a download of the certificate (PEM). It also lists every connection that still travels in clear or without certificate checks, with a link to where to change it. See [HTTPS and encryption](../install/https.md).
+
+## Network ports {#ports}
+
+Admin-only, in **Settings → System**. The ports DumbMonit listens on, computed from the running configuration: the web interface (HTTPS), the agent channel, syslog, SNMP traps, the bundled storage, and the gateway of each relay agent. For each one: who must reach it, whether it may face the Internet, and whether it is on, off or loopback only. Below the list, a ready-to-paste `ports:` block for Docker Compose and `ufw` rules. See [Network ports](../install/ports.md).
 
 ## Security score {#security-score}
 

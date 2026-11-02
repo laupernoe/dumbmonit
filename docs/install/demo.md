@@ -48,8 +48,8 @@ to put a showcase on your own site.
 - **A guided tour** opens after the first sign-in; the banner reopens it.
 
 Rate limiting of the sign-in works as usual. Put the demo behind your usual
-reverse proxy with HTTPS and set `DUMBMONIT_COOKIE_SECURE=1` and
-`DUMBMONIT_TRUSTED_PROXIES` as for any public instance.
+reverse proxy with a public certificate (the proxy talks HTTPS to the container) and
+set `DUMBMONIT_TRUSTED_PROXIES` as for any public instance.
 
 ## Start it
 

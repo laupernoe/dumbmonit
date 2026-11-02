@@ -38,15 +38,15 @@ Load it in any OpenAPI tool:
 ```bash
 # Browse it, and try calls with your token, in Swagger UI
 docker run --rm -p 8081:8080 \
-  -e SWAGGER_JSON_URL=http://monit.lan:8080/api/openapi.json swaggerapi/swagger-ui
+  -e SWAGGER_JSON_URL=https://monit.lan:8080/api/openapi.json swaggerapi/swagger-ui
 # then open http://localhost:8081 and paste "dmt_…" under Authorize → bearerAuth
 
 # Generate a client library (here Python)
 docker run --rm -v "$PWD:/local" openapitools/openapi-generator-cli generate \
-  -i http://monit.lan:8080/api/openapi.json -g python -o /local/dumbmonit-client
+  -i https://monit.lan:8080/api/openapi.json -g python -o /local/dumbmonit-client
 
 # Or just list what is there
-curl -s http://monit.lan:8080/api/openapi.json | jq -r '.paths | keys[]'
+curl -s https://monit.lan:8080/api/openapi.json | jq -r '.paths | keys[]'
 ```
 
 Postman and Insomnia import it from the same URL.
@@ -56,8 +56,7 @@ Postman and Insomnia import it from the same URL.
 Two ways in, accepted on every protected route:
 
 - **Session cookie** — what the web UI uses. Sign in with a password (or SSO)
-  and send the HttpOnly `dumbmonit_session` cookie (SameSite Lax; `Secure`
-  when `DUMBMONIT_COOKIE_SECURE=1`; 30 days). Every state-changing request
+  and send the HttpOnly `__Host-dumbmonit_session` cookie (SameSite Strict, `Secure`; 30 days). Every state-changing request
   (`POST`, `PUT`, `DELETE`) must also carry `X-Requested-With: DumbMonit` —
   the anti-CSRF proof the UI adds automatically; without it the request is
   refused with `403`.
@@ -68,24 +67,28 @@ Two ways in, accepted on every protected route:
 
 ```bash
 # API token: one header, nothing else
-curl -H 'Authorization: Bearer dmt_…' http://monit.lan:8080/api/targets
-curl -H 'Authorization: Bearer dmt_…' -X POST http://monit.lan:8080/api/targets/4/probe
+curl -H 'Authorization: Bearer dmt_…' https://monit.lan:8080/api/targets
+curl -H 'Authorization: Bearer dmt_…' -X POST https://monit.lan:8080/api/targets/4/probe
 
 # Session: sign in (204 and a Set-Cookie header), then send the cookie
-curl -c cookies.txt -X POST http://monit.lan:8080/api/auth/login \
+curl -c cookies.txt -X POST https://monit.lan:8080/api/auth/login \
   -H 'content-type: application/json' \
   -d '{"username":"admin","password":"…"}'
-curl -b cookies.txt http://monit.lan:8080/api/targets
-curl -b cookies.txt -X POST http://monit.lan:8080/api/targets \
+curl -b cookies.txt https://monit.lan:8080/api/targets
+curl -b cookies.txt -X POST https://monit.lan:8080/api/targets \
   -H 'X-Requested-With: DumbMonit' -H 'content-type: application/json' \
   -d '{"name":"NAS","address":"nas.lan","kind":"snmp","credential":{"type":"snmp_community","community":"public"}}'
 ```
+
+With the self-signed certificate, curl refuses the connection: pass
+`--cacert dumbmonit.pem` (the certificate downloaded from **Settings → System →
+HTTPS and encryption**), or `-k` to skip the check on a trusted network.
 
 When a request carries a bearer token, the cookie is ignored: a revoked token
 is refused even from a signed-in browser, rather than quietly falling back on
 the session.
 
-Agent enrollment tokens (`dmon_…`) are a different thing: they only work on
+Agent enrollment tokens (secrets starting with `dmon_`) are a different thing: they only work on
 the agent routes (`/api/ingest`, `/api/agent/commands/*`, `/api/agent/relay*`).
 They say that a machine may talk, not *which* machine: on those routes a bound
 machine must also present its own binding secret in `X-DumbMonit-Agent-Secret`
@@ -232,16 +235,16 @@ Every error is JSON: `{"error": "message"}`, written for a person.
 | `500` | A server fault; the details are in the server log, never in the response. |
 
 ```bash
-$ curl -i -H 'Authorization: Bearer dmt_revoked…' http://monit.lan:8080/api/targets
+$ curl -i -H 'Authorization: Bearer dmt_revoked…' https://monit.lan:8080/api/targets
 HTTP/1.1 401 Unauthorized
 www-authenticate: Bearer
 {"error":"A valid API token is required."}
 
-$ curl -i -X DELETE -H 'Authorization: Bearer dmt_…read…' http://monit.lan:8080/api/targets/4
+$ curl -i -X DELETE -H 'Authorization: Bearer dmt_…read…' https://monit.lan:8080/api/targets/4
 HTTP/1.1 403 Forbidden
 {"error":"This action needs a token with the \"write\" scope; the token \"Grafana\" is \"read\" only. Create a write token in Settings → API & assistants."}
 
-$ curl -i -H 'Authorization: Bearer dmt_…' http://monit.lan:8080/api/alerts   # the 121st call this minute
+$ curl -i -H 'Authorization: Bearer dmt_…' https://monit.lan:8080/api/alerts   # the 121st call this minute
 HTTP/1.1 429 Too Many Requests
 retry-after: 17
 ratelimit-limit: 120

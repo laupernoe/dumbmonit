@@ -33,7 +33,7 @@ curl -fsSLO https://raw.githubusercontent.com/laupernoe/dumbmonit/main/docker-co
 docker compose up -d
 ```
 
-1. Open https://localhost:8080 (the browser warns once about the self-signed certificate: accept it, or see [HTTPS](docs/install/https.md)) and create the first account.
+1. Open https://localhost:8080. DumbMonit only speaks HTTPS, with a certificate it creates itself: the browser warns once that it does not know it. Accept the exception, or see [HTTPS and encryption](https://dumbmonit.readthedocs.io/en/latest/install/https/).
 2. Create the first admin account with the one-time code printed by `docker compose logs dumbmonit`.
 3. Add a monitor, connect a notification channel, send a test message.
 
@@ -42,21 +42,23 @@ Back up *Settings → Backup* **and** `/data/secret.key`. Updating, ports, lost 
 
 ## What it watches
 
-67 integrations (monitor types), each with its own page in [the documentation](https://dumbmonit.readthedocs.io/en/latest/devices/):
+Over 100 integrations (monitor types), each with its own page in [the documentation](https://dumbmonit.readthedocs.io/en/latest/devices/):
 
-- **Network and servers**: SNMP, firewalls (OPNsense, pfSense, FortiGate, MikroTik, UniFi…), Redfish, Active Directory, and an **agent** for Linux, Windows, macOS and FreeBSD.
-- **Virtualisation and storage**: Proxmox (VE, Backup Server, Datacenter Manager, Mail Gateway), vSphere, Synology, TrueNAS, Unraid, Veeam.
+- **Network and servers**: SNMP, firewalls (OPNsense, pfSense, FortiGate, MikroTik, UniFi…), Redfish, Active Directory, and an **agent** for Linux, Windows, macOS and FreeBSD. The agent also finds the databases on a machine and checks that they are backed up, and can be deployed to a whole Windows domain with one group policy.
+- **Virtualisation and storage**: Proxmox (VE, Backup Server, Datacenter Manager, Mail Gateway), vSphere, Synology (DSM, plus an agent package for DSM 7 and a **NAS fleet** view of all your NAS at once), TrueNAS, Unraid, Veeam.
 - **Apps and services**: Nextcloud, Immich, Jellyfin, GitLab, Kubernetes, databases, HTTP/TCP/DNS/ping/TLS checks, heartbeats, **mail server and IP range blocklists** (Spamhaus, Barracuda, SpamCop…, with delisting links), and **website health and SEO** (blank page, `noindex`, title or canonical changes, redirects, slowness) with bulk CSV import sorted by platform.
-- **Anything else**: network discovery and YAML **integration packs**, no release needed.
+- **Anything else**: network discovery (one-off or **scheduled**, with an inventory that flags new devices and ports) and YAML **integration packs**, no release needed.
 
 ## What it does
 
 - **Alerting that does not cry wolf**: a parent that is down hides its children, maintenance windows and silences (recoveries stay quiet too), forecasts, a seasonal baseline, and a bell on each monitor counting its active alerts.
-- **23 notification channels**: Discord, Slack, Telegram, Matrix, ntfy, email, PagerDuty, webhook and more.
+- **38 notification channels**: Discord, Slack, Telegram, Matrix, ntfy, email, PagerDuty, webhook and more.
 - **Public status pages** with history, incidents, email subscribers, badges and four night cities (Paris, Tokyo, New York, Dubai).
 - **Wall mode**: the console's board full screen for a room monitor, with an optional night city behind it, and an optional **security score** next to the main products (hosts, Proxmox, Synology, OPNsense, websites, Active Directory).
-- **API and MCP server** (27 tools): ask Claude or ChatGPT "is everything fine?", or read it from Prometheus and Grafana.
-- **Encrypted backup**, accounts with TOTP, OIDC single sign-on and **LDAP / Active Directory** sign-in, an installable phone app (PWA), and remote sites through an outbound-only relay agent.
+- **API and MCP server** (28 tools): ask Claude or ChatGPT "is everything fine?", or read it from Prometheus and Grafana.
+- **HTTPS only**, with an encrypted agent channel (TLS 1.3, client certificates) and approval of new agents before they enrol.
+- **A sentinel agent** that warns you from inside your network when DumbMonit itself stops answering.
+- **Encrypted backup**, accounts with TOTP and passkeys, OIDC and SAML single sign-on, **LDAP / Active Directory** sign-in, an installable phone app (PWA), and remote sites through an outbound-only relay agent.
 
 One Rust binary with the UI embedded, VictoriaMetrics started by it, SQLite for configuration.
 
@@ -68,7 +70,7 @@ Security issues: [SECURITY.md](SECURITY.md). Roadmap: [public project](https://g
 
 ## Status
 
-**Version 0.14.** It runs daily on the author's own network. Before 1.0 the HTTP API and the database schema can still change between minor versions (the [changelog](CHANGELOG.md) lists every change and how to upgrade), and some integrations have only met test instances, not years-old production hardware.
+It runs daily on the author's own network. Before 1.0 the HTTP API and the database schema can still change between minor versions (the [changelog](CHANGELOG.md) lists every change and how to upgrade), and some integrations have only met test instances, not years-old production hardware.
 Formerly called EzyMonit; the old `EZYMONIT_*` variables are still accepted.
 
 ## License
