@@ -1,0 +1,3 @@
+#!/bin/sh
+# Nothing to prepare: DSM stops the service before this script runs.
+exit 0

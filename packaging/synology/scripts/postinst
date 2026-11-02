@@ -1,0 +1,61 @@
+#!/bin/sh
+# Enrolls this NAS with the DumbMonit server. Runs as the package user.
+# wizard_server_url / wizard_token come from WIZARD_UIFILES/install_uifile
+# (absent on upgrade: the existing configuration is kept).
+
+PKG="dumbmonit-agent"
+BIN="/var/packages/$PKG/target/bin/dumbmonit-agent"
+VAR="/var/packages/$PKG/var"
+CONFIG="$VAR/agent.yaml"
+
+# Never trace: the token must not reach a log.
+set +x
+umask 077
+mkdir -p "$VAR"
+chmod 0700 "$VAR"
+chmod 0755 "$BIN"
+
+# Upgrade without new answers: keep the identity and the configuration.
+if [ -z "$wizard_token" ] && [ -f "$CONFIG" ]; then
+    exit 0
+fi
+
+if [ -z "$wizard_server_url" ] || [ -z "$wizard_token" ]; then
+    echo "The server URL and the enrollment token are required." >> "$SYNOPKG_TEMP_LOGFILE"
+    exit 1
+fi
+
+# The wizard validates these fields; check again, as the values end up in YAML.
+case "$wizard_server_url" in
+    http://*|https://*) ;;
+    *) echo "Invalid server URL." >> "$SYNOPKG_TEMP_LOGFILE"; exit 1 ;;
+esac
+case "$wizard_server_url$wizard_token" in
+    *[!]A-Za-z0-9._:/[-]*)
+        echo "The URL or the token contains forbidden characters." >> "$SYNOPKG_TEMP_LOGFILE"
+        exit 1
+        ;;
+esac
+
+# The file is created 0600 (umask 077) before the token is written.
+: > "$CONFIG"
+chmod 0600 "$CONFIG"
+{
+    echo "# DumbMonit agent configuration, written by the package installer."
+    echo "server_url: ${wizard_server_url%/}"
+    echo "token: $wizard_token"
+    echo "tags:"
+    echo "  role: nas"
+    echo "  vendor: synology"
+} >> "$CONFIG"
+
+# Test send before the service starts: a wrong token or an unreachable server
+# fails the installation with an explicit message. Output is discarded so the
+# token can never be echoed to a log.
+if ! "$BIN" --config="$CONFIG" --once >/dev/null 2>&1; then
+    rm -f "$CONFIG"
+    echo "The agent could not reach the server or the token was refused. Check the URL and use a fresh token." >> "$SYNOPKG_TEMP_LOGFILE"
+    exit 1
+fi
+
+exit 0

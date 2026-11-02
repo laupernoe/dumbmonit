@@ -97,6 +97,7 @@ nav:
       - XCP-ng / XenServer: devices/xcpng.md
       - Nutanix AHV: devices/nutanix.md
       - Synology DSM: devices/synology.md
+      - Synology agent (DSM 7): devices/synology-agent.md
       - OPNsense: devices/opnsense.md
       - pfSense: devices/pfsense.md
       - FortiGate: devices/fortigate.md
