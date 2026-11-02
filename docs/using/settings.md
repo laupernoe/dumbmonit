@@ -14,7 +14,7 @@ Settings holds what is administrative: the instance itself, your account, who ca
 | Wall display | `/settings/wall` | Wall mode: what it shows, and the way in ([Wall mode](wall.md)) |
 | System | `/settings/system` | Backup, Configuration files, DumbMonit itself, Data & retention, Logs, API & assistants, About |
 
-Each section keeps its own anchor: `/settings#agents` forwards to `/settings/monitoring#agents`. The old links (`/alerts#notifications`) forward to the new place too. Status pages and reports are not in Settings any more: they have their own pages, **Status pages** (`/status`) and **Reports** (`/reports`); `/settings/status` and `/settings/reports` forward there. The wall's music, news and widgets are gone: their old links (`#music`, `#news`, `#widgets`) open the Wall display tab.
+Each section keeps its own anchor: `/settings#agents` forwards to `/settings/monitoring#agents`. The old links (`/alerts#notifications`) forward to the new place too. Status pages and reports are not in Settings any more: they have their own pages, **Status pages** (`/status`) and **Reports** (`/reports`); `/settings/status` and `/settings/reports` forward there. The wall's news and widgets are gone: their old links (`#news`, `#widgets`) open the Wall display tab, where **Wall music** (`#music`) is.
 
 ## Appearance {#appearance}
 
@@ -24,10 +24,14 @@ light and dark themes.
 
 ## Wall display {#wall}
 
-**Open wall mode**: the console's board, full screen, for a monitor in the
-room. ++esc++ leaves it, and the command palette opens it from anywhere. The
-wall has no music, news or widgets any more; an optional night city can sit
-behind its verdict. See [Wall mode](wall.md).
+**Open wall mode**: the console's board, full screen, for a monitor in the room.
+++esc++ leaves it, and the command palette opens it from anywhere. The wall has
+no news or widgets any more; an optional night city can sit behind its verdict.
+See [Wall mode](wall.md).
+
+**Wall music**: connect a Spotify account (the wall becomes a Spotify Connect
+speaker and shows what plays, with play / pause), or send a Spotify, Deezer or
+YouTube link to every wall. See [Music on the wall](wall.md#music-on-the-wall).
 
 ## Account & security
 

@@ -564,6 +564,7 @@ akzeptiert wird (nur Sitzung).
 | `GET` | `/api/music/spotify/token` | none | Ein kurzlebiges Spotify-Zugriffstoken für den Player der Wand. Nur Sitzung. |
 | `GET`, `PUT` | `/api/music/speaker` | read, write | Der Spotify-Lautsprecher der Wand, wie ihn die Einstellungen zeigen; ihn umbenennen (Admin). |
 | `POST` | `/api/music/speaker/report`, `/play` | none | Eine Wand meldet den Zustand ihres Lautsprechers; das Konto darauf abspielen. Nur Sitzung. |
+| `POST` | `/api/music/spotify/playback` | none | Die Wiedergabe des Kontos von der Wand aus anhalten oder fortsetzen, wo immer sie läuft. Nur Sitzung. |
 
 ## Alarme {#alerts}
 

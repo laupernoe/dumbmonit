@@ -594,6 +594,7 @@ response shapes. *read* and *write* are the token scope needed; *none* means no 
 | `GET` | `/api/music/spotify/token` | none | A short-lived Spotify access token for the wall's player. Session only. |
 | `GET`, `PUT` | `/api/music/speaker` | read, write | The wall's Spotify speaker as Settings shows it; rename it (admin). |
 | `POST` | `/api/music/speaker/report`, `/play` | none | A wall reports its speaker's state; play the account on it. Session only. |
+| `POST` | `/api/music/spotify/playback` | none | Pause or resume the account from the wall, wherever it plays. Session only. |
 
 ## Alerts
 
