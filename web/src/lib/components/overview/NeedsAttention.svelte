@@ -127,7 +127,7 @@
 						{/if}
 					</div>
 					{#if row.since}
-						<span class="w-14 shrink-0 text-right font-mono text-xs text-ink-3 tabular-nums max-md:hidden">{formatRelative(row.since)}</span>
+						<span class="w-16 shrink-0 whitespace-nowrap text-right font-mono text-xs text-ink-3 tabular-nums max-md:hidden">{formatRelative(row.since)}</span>
 					{/if}
 					<div class="flex shrink-0 items-center">
 						{#if row.kind === 'alert'}
