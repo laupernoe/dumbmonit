@@ -1669,35 +1669,46 @@ main {
 }
 .final-box {
 	display: grid;
-	justify-items: center;
-	gap: 0;
-	max-width: 46rem;
+	gap: 28px;
+	max-width: 70rem;
 	margin-inline: auto;
 	padding: 28px 18px;
 	border: 1px solid var(--c-line-strong);
 	border-radius: 16px;
-	background: radial-gradient(40rem 16rem at 50% 0, rgb(125 169 255 / 0.08), transparent 70%), var(--c-surface);
+	background: radial-gradient(40rem 16rem at 0 0, rgb(125 169 255 / 0.08), transparent 70%), var(--c-surface);
 }
 @media (min-width: 900px) {
 	.final-box {
+		grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+		align-items: center;
+		gap: 48px;
 		padding: 44px 48px;
 	}
 }
-.final-box .section-head {
-	margin-bottom: 24px;
+.final-text h2 {
+	font-size: clamp(1.75rem, 1.3rem + 1.4vw, 2.4rem);
+	letter-spacing: -0.03em;
 }
-.final-box .code {
-	width: 100%;
+.final-text p {
+	max-width: 28rem;
+	margin-top: 10px;
+	color: var(--c-ink-2);
+}
+.final-text .cta {
+	margin-top: 24px;
+}
+.final-code {
+	min-width: 0;
+}
+.final-code .code {
 	max-width: none;
+	margin-inline: 0;
 	text-align: left;
-}
-.final-box .code-note {
-	text-align: center;
 }
 /* the warning under the box: same column, same width */
 .final-note {
 	box-sizing: border-box;
-	max-width: 46rem;
+	max-width: 70rem;
 	margin: 24px auto 0;
 }
 .dev-badge {

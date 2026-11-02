@@ -143,20 +143,22 @@
 <section class="block final" id="start">
 	<div class="wrap">
 		<div class="final-box">
-			<div class="section-head center">
+			<div class="final-text">
 				<h2>{{home_cta_h}}</h2>
 				<p>{{home_cta_p}}</p>
+				<div class="cta">
+					<a class="btn btn-primary btn-lg" href="@@LINK:install/@@">{{h_install}}</a>
+					<a class="btn btn-secondary btn-lg" href="https://demo.dumbmonit.app">{{k008}}</a>
+				</div>
 			</div>
-			<div class="code">
-				<pre id="quickstart"><code><span class="prompt">$ </span>mkdir dumbmonit &amp;&amp; cd dumbmonit
+			<div class="final-code">
+				<div class="code">
+					<pre id="quickstart"><code><span class="prompt">$ </span>mkdir dumbmonit &amp;&amp; cd dumbmonit
 <span class="prompt">$ </span>curl -fsSLO https://raw.githubusercontent.com/laupernoe/dumbmonit/main/docker-compose.yml
 <span class="prompt">$ </span>docker compose up -d</code></pre>
-				<button class="copy" type="button" data-copied="{{k171}}" data-copy="quickstart">{{k015}}</button>
-			</div>
-			<p class="code-note">{{k016}}</p>
-			<div class="cta center-row">
-				<a class="btn btn-primary btn-lg" href="@@LINK:install/@@">{{h_install}}</a>
-				<a class="btn btn-secondary btn-lg" href="https://demo.dumbmonit.app">{{k008}}</a>
+					<button class="copy" type="button" data-copied="{{k171}}" data-copy="quickstart">{{k015}}</button>
+				</div>
+				<p class="code-note">{{k016}}</p>
 			</div>
 		</div>
 		<div class="notice final-note" role="note">
