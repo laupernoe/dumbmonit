@@ -24,6 +24,7 @@ mod geocode;
 mod gitops;
 mod health;
 mod https;
+mod ports;
 mod ical;
 mod ingest;
 mod instance;
@@ -251,6 +252,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(agent_tls::routes())
         // HTTPS de l'interface, redirection et relevé de ce qui passe en clair.
         .merge(https::routes())
+        // Ports à ouvrir dans le pare-feu, calculés depuis la configuration réelle.
+        .merge(ports::routes())
         // Mise à jour automatique des agents : réglages, état, « Update now ».
         .merge(agent_updates::routes())
         .route("/tokens", get(tokens::list).post(tokens::create))
