@@ -28,7 +28,7 @@ mod pbs;
 mod pve;
 mod pve_files;
 mod redfish;
-mod synology;
+pub mod synology;
 mod truenas;
 mod unifi;
 mod veeam;
@@ -47,6 +47,14 @@ pub const M365_NAME: &str = "Microsoft 365 (muller-archi.ch)";
 pub const ENTRA_NAME: &str = "Entra ID (muller-archi.ch)";
 /// Adresse du faux Microsoft Graph : connexion et lectures sur le même hôte.
 const GRAPH: &str = "http://graph.muller.home.arpa";
+
+/// NAS Synology supplémentaires : mise à jour de DSM proposée, volume dégradé,
+/// injoignable. Le NAS principal (`nas`) est le sain.
+pub const EXTRA_NAS: &[(&str, &str, synology::Variant)] = &[
+    ("nas-office", "nas-office.home.arpa", synology::Variant::UpdateAvailable),
+    ("nas-archive", "nas-archive.home.arpa", synology::Variant::Degraded),
+    ("nas-offsite", "nas-offsite.home.arpa", synology::Variant::Down),
+];
 
 /// Un équipement du parc fictif, tel que la base doit l'enregistrer.
 pub struct DemoDevice {
@@ -68,7 +76,7 @@ pub struct Estate {
 
 /// Lance tous les faux équipements et décrit le parc.
 pub async fn start() -> anyhow::Result<Estate> {
-    let fakes: [(DemoDevice, Router); 12] = [
+    let mut fakes: Vec<(DemoDevice, Router)> = vec![
         (
             DemoDevice {
                 key: "pve",
@@ -242,6 +250,24 @@ pub async fn start() -> anyhow::Result<Estate> {
             graph::router(),
         ),
     ];
+    // D'autres NAS Synology, pour que la vue « Parc NAS » montre chaque état.
+    for &(key, name, variant) in EXTRA_NAS {
+        fakes.push((
+            DemoDevice {
+                key,
+                name,
+                kind: "synology",
+                address: format!("http://{name}"),
+                tags: vec![("scheme", "http".into())],
+                credential: Credential::UsernamePassword {
+                    username: synology::USERNAME.into(),
+                    password: synology::PASSWORD.into(),
+                },
+                interval_secs: 60,
+            },
+            synology::router_variant(variant),
+        ));
+    }
 
     let mut devices = Vec::new();
     let mut resolve = Vec::new();
