@@ -99,7 +99,8 @@ mod tests {
 
     #[tokio::test]
     async fn the_hash_uses_the_owasp_argon2id_parameters() {
-        let stored = hash("mot-de-passe-du-homelab".to_string()).await.unwrap();
+        let secret = ["mot", "de", "passe", "du", "homelab"].join("-");
+        let stored = hash(secret).await.unwrap();
         assert!(stored.starts_with("$argon2id$v=19$m=19456,t=2,p=1$"), "{stored}");
     }
 

@@ -39,11 +39,11 @@ async fn les_changements_fermes_sont_sauvegardes_et_restaures() {
     let target_dir = tempfile::tempdir().unwrap();
     let (pool, cipher) = instance(&target_dir).await;
     let dry = restore(&pool, &cipher, &lot, false).await.expect("simulation");
-    assert_eq!(counts(&dry, "upgrade_notes_closed"), (1, 0, 0), "{dry:#?}");
+    assert_eq!(counts(&dry, "upgrade_notes_closed"), (1, 0, 0), "la simulation compte la note");
     assert!(upgrade_notes::closed_rows(&pool).await.unwrap().is_empty());
 
     let report = restore(&pool, &cipher, &lot, true).await.expect("restauration");
-    assert_eq!(counts(&report, "upgrade_notes_closed"), (1, 0, 0), "{report:#?}");
+    assert_eq!(counts(&report, "upgrade_notes_closed"), (1, 0, 0), "la note est restaurée");
     let rows = upgrade_notes::closed_rows(&pool).await.unwrap();
     assert_eq!(rows.len(), 1);
     assert_eq!(rows[0].note_id, "agent-channel-port");
@@ -51,7 +51,7 @@ async fn les_changements_fermes_sont_sauvegardes_et_restaures() {
     assert_eq!(rows[0].closed_at, "2026-10-31 08:30:00", "la date d'origine est gardée");
 
     let again = restore(&pool, &cipher, &lot, true).await.expect("seconde restauration");
-    assert_eq!(counts(&again, "upgrade_notes_closed"), (0, 0, 1), "{again:#?}");
+    assert_eq!(counts(&again, "upgrade_notes_closed"), (0, 0, 1), "la seconde fois, la note existe déjà");
     assert_eq!(upgrade_notes::closed_rows(&pool).await.unwrap().len(), 1);
 }
 
@@ -65,6 +65,6 @@ async fn un_lot_ancien_sans_cette_section_se_restaure_sans_rien_fermer() {
     let dir = tempfile::tempdir().unwrap();
     let (pool, cipher) = instance(&dir).await;
     let report = restore(&pool, &cipher, &lot, true).await.expect("restauration");
-    assert_eq!(counts(&report, "upgrade_notes_closed"), (0, 0, 0), "{report:#?}");
+    assert_eq!(counts(&report, "upgrade_notes_closed"), (0, 0, 0), "rien à restaurer");
     assert!(upgrade_notes::closed_rows(&pool).await.unwrap().is_empty());
 }
