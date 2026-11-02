@@ -45,6 +45,18 @@ function safePath(url) {
 	return url;
 }
 
+/**
+ * Whether a push must make the device ring again. The tag is the alert's
+ * fingerprint, so a periodic reminder of an alert already on screen (same
+ * title: same severity and count) replaces the notification silently instead
+ * of coming back as a new one. A change of title (escalation, more alerts) or
+ * a first display still rings; a resolution never does.
+ */
+function shouldRenotify(data, title, shown) {
+	if (!data.tag || data.resolved) return false;
+	return !shown.some((n) => n.title === title);
+}
+
 self.addEventListener('push', (event) => {
 	const data = readPayload(event);
 	const title = typeof data.title === 'string' && data.title ? data.title : 'DumbMonit';
@@ -54,7 +66,6 @@ self.addEventListener('push', (event) => {
 		badge: '/icon-192.png',
 		// One notification per alert: the resolution replaces the firing.
 		tag: typeof data.tag === 'string' && data.tag ? data.tag : undefined,
-		renotify: Boolean(data.tag) && !data.resolved,
 		requireInteraction: data.severity === 'critical' && !data.resolved,
 		timestamp: typeof data.timestamp === 'number' ? data.timestamp : Date.now(),
 		data: { url: safePath(data.url), actions: {} }
@@ -68,8 +79,20 @@ self.addEventListener('push', (event) => {
 		options.actions = actions.map((a) => ({ action: a.action, title: a.title }));
 		for (const a of actions) options.data.actions[a.action] = safePath(a.url);
 	}
-	if (!options.tag) delete options.renotify;
-	event.waitUntil(self.registration.showNotification(title, options));
+	event.waitUntil(
+		(async () => {
+			if (options.tag) {
+				let shown = [];
+				try {
+					shown = await self.registration.getNotifications({ tag: options.tag });
+				} catch {
+					/* Unsupported: fall back to ringing. */
+				}
+				options.renotify = shouldRenotify(data, title, shown);
+			}
+			await self.registration.showNotification(title, options);
+		})()
+	);
 });
 
 self.addEventListener('notificationclick', (event) => {
