@@ -5357,11 +5357,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "For a fleet (a playbook, a machine image), tick Several machines with this command; a whole Windows domain goes through the Active Directory kit, offered on the same page.",
                 ],
                 ports: &[
-                    to_server!(
-                        8443,
-                        "tcp",
-                        "Readings and commands: the encrypted agent channel",
-                    ),
+                    to_server!(8443, "tcp", "Readings and commands: the encrypted agent channel",),
                     to_server!(
                         8080,
                         "tcp",
@@ -5391,11 +5387,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "To stop watching one, untick it in the machine's \"Services found by the agent\" panel or delete its monitor.",
                 ],
                 ports: &[
-                    to_server!(
-                        8443,
-                        "tcp",
-                        "Readings and commands: the encrypted agent channel",
-                    ),
+                    to_server!(8443, "tcp", "Readings and commands: the encrypted agent channel",),
                     to_server!(
                         8080,
                         "tcp",
