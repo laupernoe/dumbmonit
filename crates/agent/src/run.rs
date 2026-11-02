@@ -230,7 +230,11 @@ impl Agent {
             &config.docker_socket,
         )
         .with_actions(config.actions.clone());
-        let sentinel = SentinelRunner::new(client.clone(), identity.hostname.clone());
+        let sentinel = SentinelRunner::new(
+            client.clone(),
+            identity.hostname.clone(),
+            config.secret_path.with_file_name("sentinel.json"),
+        );
         let logs = LogRunner::new(
             client.clone(),
             identity.key(),
@@ -452,6 +456,8 @@ impl Agent {
             None => info!("modules: auto-detected (set 'modules' in agent.yaml to choose)"),
         }
         self.restore_pending();
+        // La sentinelle repart seule, sans attendre le serveur (peut-être en panne).
+        self.sentinel.resume(&shutdown);
         self.probe.warm_up().await;
 
         let mut next_collect = Instant::now();

@@ -11,12 +11,14 @@
 //! ni le réseau ni l'horloge, elle reçoit des résultats et un instant.
 
 use std::collections::{BTreeMap, VecDeque};
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use dumbmonit_proto::{
     SENTINEL_MAX_INTERVAL_SECS, SENTINEL_MAX_THRESHOLD, SENTINEL_MAX_URLS,
-    SENTINEL_MIN_INTERVAL_SECS, SentinelChannel, SentinelSetting, https_authority,
+    SENTINEL_MIN_INTERVAL_SECS, SentinelChannel, SentinelSetting, https_authority, normalize_pin,
 };
+use sha2::{Digest, Sha256};
 use tokio::task::{JoinHandle, JoinSet};
 use tokio::time::Instant;
 use tracing::{info, warn};
@@ -297,9 +299,16 @@ fn checked(setting: &SentinelSetting) -> Result<SentinelSetting, &'static str> {
     if urls.is_empty() {
         return Err("no valid HTTPS address to watch");
     }
+    let pins = setting
+        .pins
+        .iter()
+        .filter(|(url, _)| urls.contains(url))
+        .filter_map(|(url, raw)| Some((url.clone(), normalize_pin(raw)?)))
+        .collect();
     Ok(SentinelSetting {
         enabled: true,
         urls,
+        pins,
         interval_secs: setting
             .interval_secs
             .clamp(SENTINEL_MIN_INTERVAL_SECS, SENTINEL_MAX_INTERVAL_SECS),
@@ -312,10 +321,48 @@ fn checked(setting: &SentinelSetting) -> Result<SentinelSetting, &'static str> {
 // Mise en œuvre à chaud
 // --------------------------------------------------------------------------
 
+/// Écrit le réglage sur disque, en `0600` : il porte le canal de notification.
+/// Écriture par fichier temporaire puis renommage, pour ne jamais laisser un
+/// fichier à moitié écrit après une coupure.
+fn save(path: &Path, setting: &SentinelSetting) -> std::io::Result<()> {
+    use std::io::Write;
+    let temporary = path.with_extension("tmp");
+    let mut options = std::fs::OpenOptions::new();
+    options.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let mut file = options.open(&temporary)?;
+    file.write_all(&serde_json::to_vec(setting).map_err(std::io::Error::other)?)?;
+    file.sync_all()?;
+    std::fs::rename(&temporary, path)
+}
+
+/// Relit le réglage gardé : `None` s'il n'y en a pas ou s'il est illisible.
+fn load(path: &Path) -> Option<SentinelSetting> {
+    serde_json::from_slice(&std::fs::read(path).ok()?).ok()
+}
+
+/// Hôte d'une adresse HTTPS, sans port.
+fn host_of(url: &str) -> Option<&str> {
+    let authority = https_authority(url)?;
+    if authority.starts_with('[') {
+        return authority.find(']').map(|end| &authority[..=end]);
+    }
+    Some(authority.split(':').next().unwrap_or(authority))
+}
+
 /// Tient la tâche de la sentinelle et la relance quand le réglage change.
+///
+/// Le réglage est gardé sur disque : la sentinelle repart seule après un
+/// redémarrage de l'agent, y compris pendant une panne du serveur — c'est tout
+/// son but.
 pub struct SentinelRunner {
     client: PushClient,
     host: String,
+    file: PathBuf,
     current: Option<SentinelSetting>,
     /// Dernier refus journalisé, pour ne le dire qu'une fois.
     refused: Option<&'static str>,
@@ -323,60 +370,90 @@ pub struct SentinelRunner {
 }
 
 impl SentinelRunner {
-    pub fn new(client: PushClient, host: String) -> Self {
-        Self { client, host, current: None, refused: None, task: None }
+    pub fn new(client: PushClient, host: String, file: PathBuf) -> Self {
+        Self { client, host, file, current: None, refused: None, task: None }
     }
 
-    /// Applique le réglage de l'accusé de réception. `None` ou désactivé :
-    /// la sentinelle s'arrête.
+    /// Au démarrage de l'agent : reprend le réglage gardé, sans attendre le serveur.
+    pub fn resume(&mut self, shutdown: &Shutdown) {
+        if let Some(setting) = load(&self.file).and_then(|s| checked(&s).ok()) {
+            info!("sentinel resumed from the saved setting");
+            self.start(setting, shutdown);
+        }
+    }
+
+    /// Applique le réglage de l'accusé de réception. `None` (serveur antérieur,
+    /// agent non désigné) ou réglage refusé : rien ne bouge, une sentinelle déjà
+    /// en marche continue. Seul un réglage explicitement désactivé l'arrête.
     pub fn apply(&mut self, setting: Option<SentinelSetting>, shutdown: &Shutdown) {
+        let Some(setting) = setting else { return };
         if self.task.as_ref().is_some_and(JoinHandle::is_finished) {
             self.task = None;
         }
-        let wanted = match setting.filter(|s| s.enabled).map(|s| checked(&s)) {
-            Some(Ok(setting)) => {
-                self.refused = None;
-                Some(setting)
+        if !setting.enabled {
+            if let Some(task) = self.task.take() {
+                task.abort();
+                info!("sentinel stopped");
             }
-            Some(Err(reason)) => {
+            self.current = None;
+            let _ = std::fs::remove_file(&self.file);
+            return;
+        }
+        let wanted = match checked(&setting) {
+            Ok(wanted) => wanted,
+            Err(reason) => {
                 if self.refused != Some(reason) {
                     warn!(reason, "sentinel not started");
                     self.refused = Some(reason);
                 }
-                None
+                return;
             }
-            None => None,
         };
-        if wanted == self.current && (wanted.is_none() || self.task.is_some()) {
+        self.refused = None;
+        if self.current.as_ref() == Some(&wanted) && self.task.is_some() {
             return;
         }
+        if let Err(error) = save(&self.file, &wanted) {
+            warn!(%error, "sentinel setting not saved: it will not survive a restart");
+        }
+        info!(
+            urls = wanted.urls.len(),
+            interval_s = wanted.interval_secs,
+            threshold = wanted.threshold,
+            "sentinel switched on from the server"
+        );
+        self.start(wanted, shutdown);
+    }
+
+    fn start(&mut self, setting: SentinelSetting, shutdown: &Shutdown) {
         if let Some(task) = self.task.take() {
             task.abort();
-            info!("sentinel stopped");
         }
-        self.current = wanted.clone();
-        if let Some(setting) = wanted {
-            info!(
-                urls = setting.urls.len(),
-                interval_s = setting.interval_secs,
-                threshold = setting.threshold,
-                "sentinel switched on from the server"
-            );
-            self.task = Some(tokio::spawn(watch(
-                setting,
-                self.client.clone(),
-                self.host.clone(),
-                shutdown.clone(),
-            )));
-        }
+        self.current = Some(setting.clone());
+        self.task = Some(tokio::spawn(watch(
+            setting,
+            self.client.clone(),
+            self.host.clone(),
+            shutdown.clone(),
+        )));
     }
+}
+
+/// Empreinte SHA-256 (hex) du certificat feuille présenté, si la réponse la porte.
+fn peer_fingerprint(response: &reqwest::Response) -> Option<String> {
+    let info = response.extensions().get::<reqwest::tls::TlsInfo>()?;
+    Some(hex::encode(Sha256::digest(info.peer_certificate()?)))
 }
 
 /// Sonde une adresse : toute réponse HTTP en dessous de 500 prouve que le
 /// service est là (une page de connexion ou un 404 du port des agents aussi).
-async fn probe(http: &reqwest::Client, url: &str) -> bool {
+/// Avec une empreinte attendue, le certificat présenté doit lui correspondre.
+async fn probe(http: &reqwest::Client, url: &str, pin: Option<&str>) -> bool {
     match http.get(url).timeout(PROBE_TIMEOUT).send().await {
-        Ok(response) => response.status().as_u16() < 500,
+        Ok(response) => {
+            let pinned = |expected: &str| peer_fingerprint(&response).as_deref() == Some(expected);
+            response.status().as_u16() < 500 && pin.is_none_or(pinned)
+        }
         Err(_) => false,
     }
 }
@@ -385,26 +462,38 @@ async fn watch(setting: SentinelSetting, client: PushClient, host: String, mut s
     let Some(channel) = setting.channel.clone() else { return };
     // Les notifications partent vers des services publics : autorités du
     // système, pas l'autorité épinglée du canal des agents.
+    // Aussi utilisé pour sonder une instance indépendante : validation par les
+    // racines du système (jamais désactivée), HTTPS seulement, aucune
+    // redirection suivie, et le certificat lisible pour l'empreinte facultative.
     let Ok(notifier) = reqwest::Client::builder()
         .https_only(true)
         .redirect(reqwest::redirect::Policy::none())
+        .tls_info(true)
         .user_agent(concat!("dumbmonit-sentinel/", env!("CARGO_PKG_VERSION")))
         .build()
     else {
         warn!("sentinel: cannot build the notification client");
         return;
     };
+    // Une adresse sur le même hôte que le serveur de l'agent, sans empreinte,
+    // se sonde comme le canal des agents (autorité épinglée, certificat client).
+    let server_host = host_of(&client.url()).map(str::to_ascii_lowercase);
     let started = Instant::now();
     let mut decider = Decider::new(setting.threshold);
     loop {
         // Le client est relu à chaque tour : le canal peut avoir changé
         // (certificat renouvelé) depuis le tour précédent.
-        let http = client.probe_http();
+        let pinned = client.probe_http();
         let mut probes = JoinSet::new();
         for url in &setting.urls {
-            let (http, url) = (http.clone(), url.clone());
+            let pin = setting.pins.get(url).cloned();
+            let known = pin.is_none()
+                && host_of(url).map(str::to_ascii_lowercase) == server_host
+                && server_host.is_some();
+            let http = if known { pinned.clone() } else { notifier.clone() };
+            let url = url.clone();
             probes.spawn(async move {
-                let alive = probe(&http, &url).await;
+                let alive = probe(&http, &url, pin.as_deref()).await;
                 (url, alive)
             });
         }
@@ -582,6 +671,10 @@ mod tests {
         let good = SentinelSetting {
             enabled: true,
             urls: vec!["https://a.example.org".into(), "http://insecure.example.org".into()],
+            pins: BTreeMap::from([
+                ("https://a.example.org".to_string(), "AB".repeat(32)),
+                ("https://gone.example.org".to_string(), "cd".repeat(32)),
+            ]),
             interval_secs: 1,
             threshold: 0,
             channel: Some(SentinelChannel::Webhook { url: "https://hooks.example.org/x".into() }),
@@ -590,6 +683,8 @@ mod tests {
         assert_eq!(cleaned.urls, vec!["https://a.example.org".to_string()]);
         assert_eq!(cleaned.interval_secs, SENTINEL_MIN_INTERVAL_SECS);
         assert_eq!(cleaned.threshold, 1);
+        assert_eq!(cleaned.pins.len(), 1, "only the pin of a kept address survives");
+        assert_eq!(cleaned.pins["https://a.example.org"], "ab".repeat(32));
 
         let no_channel = SentinelSetting { channel: None, ..good.clone() };
         assert!(checked(&no_channel).is_err());
@@ -600,5 +695,41 @@ mod tests {
         assert!(checked(&plain_webhook).is_err());
         let only_plain = SentinelSetting { urls: vec!["http://a.example.org".into()], ..good };
         assert!(checked(&only_plain).is_err());
+    }
+
+    #[test]
+    fn the_setting_is_kept_on_disk_with_owner_only_rights() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("sentinel.json");
+        assert!(load(&file).is_none(), "nothing saved yet");
+        let setting = SentinelSetting {
+            enabled: true,
+            urls: vec!["https://a.example.org".into()],
+            pins: BTreeMap::new(),
+            interval_secs: 60,
+            threshold: 3,
+            channel: Some(SentinelChannel::Webhook { url: "https://hooks.example.org/x".into() }),
+        };
+        save(&file, &setting).unwrap();
+        assert_eq!(load(&file), Some(setting.clone()));
+        // Le réglage relu est directement exploitable : la sentinelle repart seule.
+        assert!(checked(&load(&file).unwrap()).is_ok());
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mode = std::fs::metadata(&file).unwrap().permissions().mode() & 0o777;
+            assert_eq!(mode, 0o600);
+        }
+        // Une réécriture remplace le fichier sans laisser de temporaire.
+        save(&file, &SentinelSetting { threshold: 5, ..setting }).unwrap();
+        assert_eq!(load(&file).unwrap().threshold, 5);
+        assert!(!file.with_extension("tmp").exists());
+    }
+
+    #[test]
+    fn the_host_of_an_address_drops_the_port() {
+        assert_eq!(host_of("https://mon.example.org:8443/x"), Some("mon.example.org"));
+        assert_eq!(host_of("https://[::1]:8443/"), Some("[::1]"));
+        assert_eq!(host_of("http://mon.example.org"), None);
     }
 }

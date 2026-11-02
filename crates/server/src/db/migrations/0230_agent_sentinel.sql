@@ -8,6 +8,7 @@ CREATE TABLE agent_sentinel (
     target_id     INTEGER PRIMARY KEY REFERENCES targets(id) ON DELETE CASCADE,
     enabled       INTEGER NOT NULL DEFAULT 0 CHECK (enabled IN (0, 1)),
     urls          TEXT    NOT NULL DEFAULT '[]',   -- tableau JSON d'adresses HTTPS
+    pins          TEXT    NOT NULL DEFAULT '{}',   -- objet JSON adresse -> empreinte SHA-256
     interval_secs INTEGER NOT NULL DEFAULT 60,
     threshold     INTEGER NOT NULL DEFAULT 3,
     channel_enc   BLOB,                            -- chiffré ; NULL : pas de canal

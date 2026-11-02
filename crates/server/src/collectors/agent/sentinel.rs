@@ -4,10 +4,13 @@
 //! d'instance, absent de toute réponse d'API, confié à la seule machine
 //! désignée et seulement sur le canal chiffré des agents.
 
+use std::collections::BTreeMap;
+
 use anyhow::{Context, Result};
 use dumbmonit_proto::{
     SENTINEL_MAX_INTERVAL_SECS, SENTINEL_MAX_THRESHOLD, SENTINEL_MAX_URLS,
     SENTINEL_MIN_INTERVAL_SECS, SentinelChannel, SentinelSetting, TargetId, https_authority,
+    normalize_pin,
 };
 use sqlx::{Row, SqlitePool};
 
@@ -18,6 +21,7 @@ use crate::crypto::Cipher;
 pub struct Stored {
     pub enabled: bool,
     pub urls: Vec<String>,
+    pub pins: BTreeMap<String, String>,
     pub interval_secs: u64,
     pub threshold: u32,
     pub channel: Option<SentinelChannel>,
@@ -25,7 +29,14 @@ pub struct Stored {
 
 impl Default for Stored {
     fn default() -> Self {
-        Self { enabled: false, urls: Vec::new(), interval_secs: 60, threshold: 3, channel: None }
+        Self {
+            enabled: false,
+            urls: Vec::new(),
+            pins: BTreeMap::new(),
+            interval_secs: 60,
+            threshold: 3,
+            channel: None,
+        }
     }
 }
 
@@ -36,6 +47,9 @@ pub struct Input {
     pub enabled: bool,
     #[serde(default)]
     pub urls: Vec<String>,
+    /// Empreinte de certificat attendue, par adresse (facultatif).
+    #[serde(default)]
+    pub pins: BTreeMap<String, String>,
     pub interval_secs: u64,
     pub threshold: u32,
     #[serde(default)]
@@ -47,7 +61,7 @@ pub struct Input {
 /// Réglage de la machine, s'il en existe un.
 pub async fn load(pool: &SqlitePool, cipher: &Cipher, id: TargetId) -> Result<Option<Stored>> {
     let row = sqlx::query(
-        "SELECT enabled, urls, interval_secs, threshold, channel_enc FROM agent_sentinel \
+        "SELECT enabled, urls, pins, interval_secs, threshold, channel_enc FROM agent_sentinel \
          WHERE target_id = ?",
     )
     .bind(id)
@@ -56,6 +70,7 @@ pub async fn load(pool: &SqlitePool, cipher: &Cipher, id: TargetId) -> Result<Op
     .context("reading the sentinel setting")?;
     let Some(row) = row else { return Ok(None) };
     let urls: String = row.try_get("urls")?;
+    let pins: String = row.try_get("pins")?;
     let encrypted: Option<Vec<u8>> = row.try_get("channel_enc")?;
     // Un canal illisible (clé d'instance changée) vaut « pas de canal » : la
     // sentinelle ne démarre pas, l'interface dit qu'il faut le ressaisir.
@@ -65,6 +80,7 @@ pub async fn load(pool: &SqlitePool, cipher: &Cipher, id: TargetId) -> Result<Op
     Ok(Some(Stored {
         enabled: row.try_get::<i64, _>("enabled")? != 0,
         urls: serde_json::from_str(&urls).unwrap_or_default(),
+        pins: serde_json::from_str(&pins).unwrap_or_default(),
         interval_secs: row.try_get::<i64, _>("interval_secs")?.max(0) as u64,
         threshold: row.try_get::<i64, _>("threshold")?.max(0) as u32,
         channel,
@@ -83,15 +99,17 @@ pub async fn save(
     };
     sqlx::query(
         "INSERT INTO agent_sentinel \
-             (target_id, enabled, urls, interval_secs, threshold, channel_enc) \
-         VALUES (?, ?, ?, ?, ?, ?) \
+             (target_id, enabled, urls, pins, interval_secs, threshold, channel_enc) \
+         VALUES (?, ?, ?, ?, ?, ?, ?) \
          ON CONFLICT(target_id) DO UPDATE SET enabled = excluded.enabled, urls = excluded.urls, \
-             interval_secs = excluded.interval_secs, threshold = excluded.threshold, \
+             pins = excluded.pins, interval_secs = excluded.interval_secs, \
+             threshold = excluded.threshold, \
              channel_enc = excluded.channel_enc, updated_at = datetime('now')",
     )
     .bind(id)
     .bind(i64::from(stored.enabled))
     .bind(serde_json::to_string(&stored.urls)?)
+    .bind(serde_json::to_string(&stored.pins)?)
     .bind(stored.interval_secs as i64)
     .bind(i64::from(stored.threshold))
     .bind(encrypted)
@@ -139,6 +157,18 @@ pub fn merge(current: Option<&Stored>, input: Input) -> Result<Stored, String> {
         }
         urls.push(url.to_string());
     }
+    // Une empreinte ne vaut que pour une adresse de la liste.
+    let mut pins = BTreeMap::new();
+    for (url, raw) in &input.pins {
+        let url = url.trim();
+        if !urls.iter().any(|u| u == url) || raw.trim().is_empty() {
+            continue;
+        }
+        let pin = normalize_pin(raw).ok_or_else(|| {
+            format!("The certificate fingerprint of \"{url}\" is 64 hexadecimal digits (SHA-256).")
+        })?;
+        pins.insert(url.to_string(), pin);
+    }
     if urls.len() > SENTINEL_MAX_URLS {
         return Err(format!("At most {SENTINEL_MAX_URLS} addresses."));
     }
@@ -167,6 +197,7 @@ pub fn merge(current: Option<&Stored>, input: Input) -> Result<Stored, String> {
     Ok(Stored {
         enabled: input.enabled,
         urls,
+        pins,
         interval_secs: input.interval_secs,
         threshold: input.threshold,
         channel,
@@ -178,6 +209,7 @@ pub fn for_agent(stored: Stored, encrypted: bool) -> SentinelSetting {
     SentinelSetting {
         enabled: stored.enabled,
         urls: stored.urls,
+        pins: stored.pins,
         interval_secs: stored.interval_secs,
         threshold: stored.threshold,
         channel: if encrypted { stored.channel } else { None },
@@ -192,6 +224,7 @@ mod tests {
         Input {
             enabled: true,
             urls: vec!["https://dumbmonit.example.org/api/health".into()],
+            pins: BTreeMap::new(),
             interval_secs: 60,
             threshold: 3,
             channel: Some(SentinelChannel::Webhook { url: "https://hooks.example.org/x".into() }),
@@ -204,6 +237,20 @@ mod tests {
         let stored = merge(None, input()).expect("valid");
         assert!(stored.enabled);
         assert_eq!(stored.urls.len(), 1);
+    }
+
+    #[test]
+    fn a_pin_is_normalised_and_must_match_a_listed_address() {
+        let url = "https://dumbmonit.example.org/api/health".to_string();
+        let pins = BTreeMap::from([
+            (url.clone(), "AB".repeat(32)),
+            ("https://other.example.org".to_string(), "cd".repeat(32)),
+        ]);
+        let stored = merge(None, Input { pins, ..input() }).unwrap();
+        assert_eq!(stored.pins.len(), 1, "a pin for an unlisted address is dropped");
+        assert_eq!(stored.pins[&url], "ab".repeat(32));
+        let bad = BTreeMap::from([(url, "nothex".to_string())]);
+        assert!(merge(None, Input { pins: bad, ..input() }).is_err());
     }
 
     #[test]

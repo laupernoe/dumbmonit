@@ -6,6 +6,8 @@
 //! `channel_kind`). Le réglage part vers l'agent dans l'accusé de réception de
 //! ses lots (`ingest.rs`), sur le canal chiffré seulement.
 
+use std::collections::BTreeMap;
+
 use axum::extract::{Extension, Path, State};
 use axum::routing::get;
 use axum::{Json, Router};
@@ -26,17 +28,23 @@ pub fn routes() -> Router<AppState> {
 pub struct SentinelView {
     pub enabled: bool,
     pub urls: Vec<String>,
+    pub pins: BTreeMap<String, String>,
     pub interval_secs: u64,
     pub threshold: u32,
+    /// Vrai si l'agent a parlé sur le canal chiffré en dernier : sans cela, il ne
+    /// reçoit pas le canal de notification et ne peut pas être sentinelle.
+    pub encrypted: bool,
     /// Un canal de notification est enregistré.
     pub has_secret: bool,
     /// `webhook` ou `ntfy`, quand un canal est enregistré.
     pub channel_kind: Option<&'static str>,
 }
 
-impl From<&Stored> for SentinelView {
-    fn from(stored: &Stored) -> Self {
+impl SentinelView {
+    fn new(stored: &Stored, encrypted: bool) -> Self {
         Self {
+            encrypted,
+            pins: stored.pins.clone(),
             enabled: stored.enabled,
             urls: stored.urls.clone(),
             interval_secs: stored.interval_secs,
@@ -54,6 +62,20 @@ fn admin(principal: &Principal) -> ApiResult<()> {
             "Only an administrator signed in to the web interface can set the sentinel.".into(),
         )),
     }
+}
+
+/// Le dernier lot de la machine est-il passé par le canal chiffré ?
+async fn on_tls(state: &AppState, id: TargetId) -> ApiResult<bool> {
+    let seen: Option<(Option<i64>, Option<i64>)> =
+        sqlx::query_as("SELECT tls_seen_ms, legacy_seen_ms FROM agent_hosts WHERE target_id = ?")
+            .bind(id)
+            .fetch_optional(&state.pool)
+            .await
+            .map_err(|error| ApiError::Internal(error.into()))?;
+    Ok(match seen {
+        Some((Some(tls), legacy)) => legacy.is_none_or(|legacy| tls >= legacy),
+        _ => false,
+    })
 }
 
 async fn agent_target(state: &AppState, id: TargetId) -> ApiResult<()> {
@@ -78,7 +100,7 @@ async fn get_setting(
     admin(&principal)?;
     agent_target(&state, id).await?;
     let stored = sentinel::load(&state.pool, &state.cipher, id).await?.unwrap_or_default();
-    Ok(Json(SentinelView::from(&stored)))
+    Ok(Json(SentinelView::new(&stored, on_tls(&state, id).await?)))
 }
 
 /// `PUT /api/targets/{id}/agent/sentinel` : règle la sentinelle ; l'agent
@@ -101,5 +123,5 @@ async fn put_setting(
         par = principal.label(),
         "sentinelle de l'agent réglée depuis l'interface"
     );
-    Ok(Json(SentinelView::from(&stored)))
+    Ok(Json(SentinelView::new(&stored, on_tls(&state, id).await?)))
 }
