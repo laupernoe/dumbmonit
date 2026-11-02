@@ -16,6 +16,7 @@ use crate::binding::Binding;
 use crate::buffer::PendingBuffer;
 use crate::client::{PushClient, PushError};
 use crate::collect::backup_repos::BackupReposProbe;
+use crate::collect::databases::DatabasesProbe;
 use crate::collect::docker::DockerProbe;
 use crate::collect::eventlog::{self, PlatformProbe as EventLogProbe};
 use crate::collect::inventory::{self, PendingInventory};
@@ -95,6 +96,8 @@ pub struct Agent {
     plakar: PlakarProbe,
     /// Dépôts restic et Borg déclarés dans la configuration.
     backup_repos: BackupReposProbe,
+    /// Bases de données et fraîcheur de leurs sauvegardes : muet sans base.
+    databases: DatabasesProbe,
     /// Tunnels WireGuard : muet sans `wg` ni interface.
     wireguard: WireguardProbe,
     /// Tunnels IPsec : muet sans `swanctl` ni connexion.
@@ -252,6 +255,7 @@ impl Agent {
             updates: UpdateChecker::new(),
             plakar: PlakarProbe::new(&config.plakar),
             backup_repos: BackupReposProbe::new(&config.backup_repos),
+            databases: DatabasesProbe::new(&config.databases),
             wireguard: WireguardProbe::new(&config.wireguard),
             ipsec: IpsecProbe::new(&config.ipsec),
             speedtest: SpeedtestProbe::new(&config.speedtest),
@@ -316,6 +320,9 @@ impl Agent {
         }
         if self.wants("backup_repos") {
             snapshot.backup_repos = self.backup_repos.read().await;
+        }
+        if self.wants("databases") {
+            snapshot.databases = self.databases.read().await;
         }
         if self.wants("wireguard") {
             snapshot.wireguard = self.wireguard.read().await;
@@ -1226,6 +1233,7 @@ mod tests {
             inventory: false,
             self_update: true,
             backup_repos: crate::collect::backup_repos::BackupReposConfig::default(),
+            databases: crate::collect::databases::DatabasesConfig::default(),
             perf_counters: crate::collect::perf_counters::PerfCountersConfig::default(),
             max_buffered_samples: 1_000,
             secret_path: std::path::PathBuf::from("/inexistant/agent-secret"),
