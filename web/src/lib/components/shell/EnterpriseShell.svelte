@@ -39,7 +39,8 @@
 	import PigeonStatus from './PigeonStatus.svelte';
 	import { CLIENTS_ENTRY, NAV, homeHref, isActive, visible, type NavEntry } from './nav.js';
 
-	let { children }: { children: Snippet } = $props();
+	/** `banner`: notices drawn above the top bar, in the page column (demo, cleartext session). */
+	let { children, banner }: { children: Snippet; banner?: Snippet } = $props();
 
 	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/';
 	const GITHUB_URL = 'https://github.com/laupernoe/dumbmonit';
@@ -263,6 +264,7 @@
 	</nav>
 
 	<div class="flex min-w-0 flex-1 flex-col">
+		{@render banner?.()}
 		<header class="vt-nav-top sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-line bg-canvas/95 px-4 backdrop-blur sm:gap-3 sm:px-5">
 			<PigeonStatus />
 			<nav aria-label={m.console_breadcrumb()} class="flex min-w-0 items-center gap-2 text-sm text-ink-2">
