@@ -62,8 +62,8 @@
 				</div>
 				<div class="code" style="max-width:none">
 					<pre id="agent-cmd"><code><span class="comment"># {{k170}}</span>
-curl -sSL http://server:8080/install.sh | sh -s -- \
-  --token=dmon_xxx --url=http://server:8080</code></pre>
+curl -sSL https://server:8080/install.sh | sh -s -- \
+  --token=dmon_xxx --url=https://server:8080</code></pre>
 					<button class="copy" type="button" data-copied="{{k171}}" data-copy="agent-cmd">{{k015}}</button>
 				</div>
 				<p class="code-note">{{k095}}</p>
@@ -75,6 +75,13 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 				<li><span class="os">{{k104}}</span><span class="plate plate-info">{{k102}}</span><span class="how">{{k105}}</span></li>
 			</ul>
 		</div>
+		<ul class="points" style="margin-top:32px">
+				<li><strong>{{f_ag_secure_t}}</strong><p>{{f_ag_secure_p}}</p></li>
+				<li><strong>{{f_ag_db_t}}</strong><p>{{f_ag_db_p}}</p></li>
+				<li><strong>{{f_ag_sent_t}}</strong><p>{{f_ag_sent_p}}</p></li>
+				<li><strong>{{f_ag_disc_t}}</strong><p>{{f_ag_disc_p}}</p></li>
+				<li><strong>{{f_ag_nas_t}}</strong><p>{{f_ag_nas_p}}</p></li>
+		</ul>
 		<div class="section-head" style="margin-top:48px">
 			<h2>{{k106}}</h2>
 			<p>{{k107}}</p>
@@ -133,6 +140,8 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 				<h2>{{k114}}</h2>
 				<p>{{k115}}</p>
 				<p>{{f_sec_note}}</p>
+				<h3>{{f_https_t}}</h3>
+				<p>{{f_https_p}}</p>
 				<p><a href="@@DOCS@@using/security-score/">{{f_more}}</a></p>
 			</div>
 		</div>
