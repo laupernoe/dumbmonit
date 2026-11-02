@@ -7,8 +7,9 @@
 use std::collections::BTreeMap;
 
 use dumbmonit_proto::{
-    AgentIdentity, ENROLMENT_PENDING, ENROLMENT_REJECTED, MAX_BATCH_SAMPLES, MAX_INVENTORY_PACKAGES,
-    MetricKind, PUSH_PROTOCOL_VERSION, PushAck, PushBatch, Sample, SoftwareInventory, Target,
+    AgentIdentity, ENROLMENT_PENDING, ENROLMENT_REJECTED, MAX_BATCH_SAMPLES,
+    MAX_INVENTORY_PACKAGES, MetricKind, PUSH_PROTOCOL_VERSION, PushAck, PushBatch, Sample,
+    SoftwareInventory, Target,
 };
 use sqlx::SqlitePool;
 

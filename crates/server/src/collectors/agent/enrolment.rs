@@ -615,8 +615,7 @@ pub async fn admit(
                 return Ok(Err(Refusal::TooManyPending));
             }
             upsert_pending(pool, key, identity, source_ip, token_id, now).await?;
-            record_event(pool, Some(token_id), &identity.hostname, EventKind::Pending, now)
-                .await?;
+            record_event(pool, Some(token_id), &identity.hostname, EventKind::Pending, now).await?;
             info!(hote = identity.hostname, jeton = token_id, "enrôlement en attente");
             Ok(Err(Refusal::Pending))
         }
@@ -889,11 +888,13 @@ pub async fn take_unnotified(pool: &SqlitePool) -> Result<Vec<Event>> {
         });
     }
     if let Some(last) = last {
-        sqlx::query("UPDATE agent_enrolment_events SET notified = 1 WHERE notified = 0 AND id <= ?")
-            .bind(last)
-            .execute(&mut *tx)
-            .await
-            .context("marking enrolment events as notified")?;
+        sqlx::query(
+            "UPDATE agent_enrolment_events SET notified = 1 WHERE notified = 0 AND id <= ?",
+        )
+        .bind(last)
+        .execute(&mut *tx)
+        .await
+        .context("marking enrolment events as notified")?;
     }
     tx.commit().await.context("saving the notice state")?;
     Ok(events)
