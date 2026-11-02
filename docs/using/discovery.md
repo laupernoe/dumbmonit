@@ -80,14 +80,17 @@ For each schedule you choose:
 
 - the **network** (CIDR, 1024 addresses at most, like a manual scan);
 - **who scans**: the server, or a [relay agent](../devices/agent.md) on another site;
-- the **interval**, from 5 minutes to 30 days;
+- the **interval**: every 6 hours, daily (the default) or weekly (the API accepts 5 minutes to 30 days);
 - the **depth** (the same *Standard* or *Extended* port list as a manual scan);
 - whether it is **enabled**. *Scan now* runs it at the next cycle (a few seconds)
   without waiting for the interval.
 
 A network is never scanned twice at once, and a server or a relay agent runs one
 discovery scan at a time: a scheduled scan that finds its scanner busy (a manual
-scan, another schedule) simply starts a little later.
+scan, another schedule) simply starts a little later. When several schedules are
+due at once, only one starts per scanner and the others follow on the next cycles:
+periodic passes use the same rate and concurrency limits as a manual scan and never
+overlap. Turn a schedule off with its switch to stop re-scanning that network.
 
 ### The inventory
 
@@ -141,6 +144,31 @@ the way to accept a new port or device you expected.
 *Ignore* goes further for a device you never want to hear about (a guest's phone, a
 visiting printer): it counts as known, and neither it nor its ports raise alerts.
 *Mark as known* on an ignored device puts it back in the inventory.
+
+### To review: accepting new devices in bulk
+
+Every scheduled pass that finds a device the inventory did not have adds it to the
+**To review** list at the top of the panel (devices that are already monitored or
+that you ignored never appear there). A discreet *Network discovery: N to review*
+counter appears on the Monitors page and on the add page, and **one** notice is shown
+per batch of new devices, not one per device. Opening the discovery or dismissing the
+notice acknowledges the batch, so it does not come back.
+
+Tick devices (or *Select all*) and use the action bar:
+
+- *Add selected as monitors* creates one monitor per device, with the type the
+  detection proposed (shown on each row; a device where nothing was recognised is
+  reported as not added and can be created by hand). A type that needs credentials
+  (for example Proxmox or SNMP v3) is created **paused** and tagged
+  `pending=credentials`: open it, enter the credentials, and resume it. A device that
+  is already monitored is reported as *already present*, not duplicated.
+- *Ignore selected* removes the devices from the list for good. *Undo*, right after,
+  puts them back.
+
+Each device is handled on its own, so one failure never cancels the others, and the
+result line says how many were added, are waiting for credentials, were already
+there, or failed. At most 200 devices are handled per call
+(`POST /api/discovery/inventory/bulk`, see the API reference).
 
 ### MAC address changes
 

@@ -5502,6 +5502,8 @@ export interface NetscanPort {
 	port: number;
 	protocol: 'tcp' | 'udp';
 	product: string;
+	/** Monitor type the detection proposes for this service, when it recognised one. */
+	kind: string | null;
 	known: boolean;
 	first_seen: string;
 	last_seen: string;
@@ -5523,6 +5525,39 @@ export interface NetscanDevice {
 	first_seen: string;
 	last_seen: string;
 	ports: NetscanPort[];
+}
+
+/** Mirrors `GET /api/discovery/review`. */
+export interface NetscanReview {
+	/** New devices that are neither monitored nor ignored. */
+	to_review: number;
+	/** The latest batch of new devices was not acknowledged yet: announce it once. */
+	announce: boolean;
+	/** New devices in that batch. */
+	batch_count: number;
+	batch: number;
+}
+
+export type NetscanBulkAction = 'add' | 'ignore' | 'restore';
+
+export type NetscanBulkOutcome = 'added' | 'pending_credentials' | 'already_present' | 'ignored' | 'restored' | 'error';
+
+export interface NetscanBulkResult {
+	device_id: number;
+	outcome: NetscanBulkOutcome;
+	/** The monitor created, or the one that already existed. */
+	target_id: number | null;
+	/** English text from the server (an error, mostly). */
+	message: string | null;
+}
+
+/** Mirrors `POST /api/discovery/inventory/bulk` (200 devices at most per call). */
+export interface NetscanBulkReport {
+	results: NetscanBulkResult[];
+	added: number;
+	pending_credentials: number;
+	already_present: number;
+	errors: number;
 }
 
 // --- Server logs (Settings → System → Logs) -----------------------------------
