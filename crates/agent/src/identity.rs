@@ -173,6 +173,7 @@ mod tests {
             tls_url: None,
             ca_pin: None,
             server_pin: None,
+            plain_server_url: false,
             log_level: tracing::Level::INFO,
             deprecated_env: Vec::new(),
         }
