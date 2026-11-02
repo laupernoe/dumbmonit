@@ -337,3 +337,42 @@ input {
     text-overflow: ellipsis;
   }
 }
+
+/* "Copy as Markdown": top right of every page, to paste the page into an AI assistant. */
+.dm-copymd-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: -0.4rem;
+}
+
+.dm-copymd {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0 0.8rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--md-default-fg-color--light);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dm-copymd svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.dm-copymd:hover,
+.dm-copymd:focus-visible {
+  border-color: var(--md-accent-fg-color);
+  color: var(--md-accent-fg-color);
+}
+
+.dm-copymd--done {
+  border-color: var(--md-accent-fg-color);
+  color: var(--md-accent-fg-color);
+}
