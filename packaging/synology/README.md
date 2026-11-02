@@ -8,8 +8,9 @@ Synology-specific collection yet.
 
 - `INFO.in`: package metadata template (`@VERSION@`, `@SPK_ARCH@` are injected).
 - `conf/privilege`: the service runs as the dedicated package user, not root.
-- `WIZARD_UIFILES/install_uifile`: asks for the server URL and the enrollment
-  token (password field).
+- `WIZARD_UIFILES/install_uifile`: asks for the server HTTPS URL, the enrollment
+  token (password field) and the server certificate pin (`sha256//...`, from
+  Settings > System > HTTPS; optional only with a CA-trusted certificate).
 - `scripts/`: `start-stop-status`, `postinst`, `preuninst`, `postuninst` (POSIX sh).
 - `build-spk.sh`: assembles the package.
 
@@ -32,8 +33,8 @@ is installed; otherwise the originals are copied unresized.
 `postinst` writes `agent.yaml` (mode 0600, owned by the package user) in the
 package `var` directory (`/var/packages/dumbmonit-agent/var`, mode 0700), then
 runs a single test send (`--once`) with its output discarded. If the server is
-unreachable or the token refused, the installation fails and the file is
-removed. The token is never logged (no tracing, output discarded). The agent
+unreachable, the pin does not match or the token is refused, the installation fails and the file is
+removed. The pin is written to `agent.yaml` as `server_pin`. The token and the pin are never logged (no tracing, output discarded). The agent
 reads its enrollment token from that file at every start, so it stays there,
 readable by the package user only, and is deleted with the package. The agent
 only makes outbound connections; the package opens no port.
@@ -52,4 +53,4 @@ Install on DSM 7 (x86_64 and ARM), wizard validation, run-as user permissions
 (reading `/proc`, `/sys`, volumes), start/stop from the Package Center,
 upgrade keeping the configuration, uninstall cleanup, behaviour when the
 server uses the encrypted agent channel (`tls_url`/`ca_pin` are not asked by
-the wizard yet).
+the wizard yet), self-signed server with and without the pin.
