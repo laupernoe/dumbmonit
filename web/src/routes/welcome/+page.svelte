@@ -27,6 +27,7 @@
 	import WizardChannel from '#lib/components/wizard/WizardChannel.svelte';
 	import WizardMonitors from '#lib/components/wizard/WizardMonitors.svelte';
 	import WizardOnCall from '#lib/components/wizard/WizardOnCall.svelte';
+	import WizardPigeon from '#lib/components/wizard/WizardPigeon.svelte';
 	import AgentEnroll from '#lib/components/device-form/AgentEnroll.svelte';
 	import SsoSection from '#lib/components/settings/SsoSection.svelte';
 	import UsersSection from '#lib/components/settings/UsersSection.svelte';
@@ -37,17 +38,19 @@
 		id: StepId;
 		title: () => string;
 		text: () => string;
+		/** What the pigeon says on this step. */
+		say: () => string;
 		optional?: boolean;
 	}
 
 	const STEPS: Step[] = [
-		{ id: 'instance', title: () => m.wizard_instance_title(), text: () => m.wizard_instance_text() },
-		{ id: 'channel', title: () => m.wizard_channel_title(), text: () => m.wizard_channel_text() },
-		{ id: 'monitors', title: () => m.wizard_monitors_title(), text: () => m.wizard_monitors_text() },
-		{ id: 'agent', title: () => m.wizard_agent_title(), text: () => m.wizard_agent_text() },
-		{ id: 'sso', title: () => m.wizard_sso_title(), text: () => m.wizard_sso_text(), optional: true },
-		{ id: 'oncall', title: () => m.wizard_oncall_title(), text: () => m.wizard_oncall_text(), optional: true },
-		{ id: 'retention', title: () => m.wizard_retention_title(), text: () => m.wizard_retention_text(), optional: true }
+		{ id: 'instance', title: () => m.wizard_instance_title(), text: () => m.wizard_instance_text(), say: () => m.wizard_pigeon_instance() },
+		{ id: 'channel', title: () => m.wizard_channel_title(), text: () => m.wizard_channel_text(), say: () => m.wizard_pigeon_channel() },
+		{ id: 'monitors', title: () => m.wizard_monitors_title(), text: () => m.wizard_monitors_text(), say: () => m.wizard_pigeon_monitors() },
+		{ id: 'agent', title: () => m.wizard_agent_title(), text: () => m.wizard_agent_text(), say: () => m.wizard_pigeon_agent() },
+		{ id: 'sso', title: () => m.wizard_sso_title(), text: () => m.wizard_sso_text(), say: () => m.wizard_pigeon_sso(), optional: true },
+		{ id: 'oncall', title: () => m.wizard_oncall_title(), text: () => m.wizard_oncall_text(), say: () => m.wizard_pigeon_oncall(), optional: true },
+		{ id: 'retention', title: () => m.wizard_retention_title(), text: () => m.wizard_retention_text(), say: () => m.wizard_pigeon_retention(), optional: true }
 	];
 
 	const steps = STEPS;
@@ -55,6 +58,8 @@
 	const index = $derived(Math.max(0, steps.findIndex((s) => s.id === asked)));
 	const step = $derived(steps[index]);
 	const last = $derived(index === steps.length - 1);
+	/** Happy on the last step: after it, the rounds start. */
+	const pigeonMood = $derived(last ? 'happy' : 'watch');
 
 	let name = $state('');
 	let language = $state('');
@@ -145,30 +150,38 @@
 		</div>
 	</header>
 
-	<div class="mx-auto grid max-w-5xl gap-8 px-4 py-6 sm:px-6 sm:py-10 lg:grid-cols-[14rem_minmax(0,1fr)]">
-		<nav aria-label={m.wizard_steps_label()} class="max-lg:hidden">
-			<ol class="grid gap-1">
-				{#each steps as s, i (s.id)}
-					{@const done = i < index}
-					{@const current = i === index}
-					<li>
-						<button
-							type="button"
-							onclick={() => go(i)}
-							aria-current={current ? 'step' : undefined}
-							class={`flex min-h-10 w-full items-center gap-3 rounded-lg px-2 text-left text-sm transition-colors hover:bg-surface-2 ${current ? 'font-semibold text-ink' : 'text-ink-2'}`}
-						>
-							<span aria-hidden="true" class={`grid size-6 shrink-0 place-items-center rounded-full border font-mono text-xs ${current ? 'border-ink bg-ink text-canvas' : done ? 'border-line-strong text-ink' : 'border-line text-ink-3'}`}>
-								{#if done}<Check class="size-3.5" />{:else}{i + 1}{/if}
-							</span>
-							<span class="min-w-0 flex-1 truncate">{s.title()}</span>
-							{#if s.optional}<span class="text-[0.6875rem] text-ink-3">{m.wizard_optional()}</span>{/if}
-						</button>
-					</li>
-				{/each}
-			</ol>
-			<p class="mt-6 px-2 text-[0.8125rem] text-ink-2">{m.wizard_intro()}</p>
-		</nav>
+	<!-- Two columns from `lg`: the steps (a fixed width, never squeezed or overflowing) and the step itself (`minmax(0, 1fr)`: it shrinks, it never pushes). -->
+	<div class="mx-auto grid max-w-5xl gap-8 px-4 py-6 sm:px-6 sm:py-10 lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-10">
+		<div class="min-w-0 max-lg:hidden">
+			<nav aria-label={m.wizard_steps_label()}>
+				<!-- One explicit column: an implicit one grows to the widest title and spills over the step. -->
+				<ol class="grid grid-cols-1 gap-1">
+					{#each steps as s, i (s.id)}
+						{@const done = i < index}
+						{@const current = i === index}
+						<li class="min-w-0">
+							<button
+								type="button"
+								onclick={() => go(i)}
+								aria-current={current ? 'step' : undefined}
+								class={`flex min-h-10 w-full items-start gap-3 rounded-lg px-2 py-2 text-left text-sm transition-colors hover:bg-surface-2 ${current ? 'font-semibold text-ink' : 'text-ink-2'}`}
+							>
+								<span aria-hidden="true" class={`grid size-6 shrink-0 place-items-center rounded-full border font-mono text-xs ${current ? 'border-ink bg-ink text-canvas' : done ? 'border-line-strong text-ink' : 'border-line text-ink-3'}`}>
+									{#if done}<Check class="size-3.5" />{:else}{i + 1}{/if}
+								</span>
+								<span class="min-w-0 flex-1">
+									<span class="block py-0.5 leading-5 [overflow-wrap:anywhere]">{s.title()}</span>
+									{#if s.optional}<span class="block text-[0.6875rem] leading-4 font-normal text-ink-3">{m.wizard_optional()}</span>{/if}
+								</span>
+							</button>
+						</li>
+					{/each}
+				</ol>
+				<p class="mt-6 px-2 text-[0.8125rem] text-ink-2">{m.wizard_intro()}</p>
+			</nav>
+			<!-- Under the steps, where the eye rests; phones and tablets keep the progress bar only. -->
+			<WizardPigeon class="mt-8 px-2" message={step.say()} mood={pigeonMood} />
+		</div>
 
 		<section class="min-w-0" aria-labelledby="wizard-step-title">
 			<div class="lg:hidden">
@@ -223,3 +236,10 @@
 		</section>
 	</div>
 </div>
+
+<style>
+	/* The title takes the focus on every step, for screen readers; it is not a control, so no ring. */
+	#wizard-step-title:focus-visible {
+		outline: none;
+	}
+</style>
