@@ -5356,11 +5356,18 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Optional, for Docker: if the agent runs under a dedicated user, add that user to the \"docker\" group and restart the agent.\nusermod -aG docker dumbmonit",
                     "For a fleet (a playbook, a machine image), tick Several machines with this command; a whole Windows domain goes through the Active Directory kit, offered on the same page.",
                 ],
-                ports: &[to_server!(
-                    8080,
-                    "tcp",
-                    "Readings and commands (default port, 443 behind a TLS proxy)",
-                )],
+                ports: &[
+                    to_server!(
+                        8443,
+                        "tcp",
+                        "Readings and commands: the encrypted agent channel",
+                    ),
+                    to_server!(
+                        8080,
+                        "tcp",
+                        "Install script and agent download, at install and update time",
+                    ),
+                ],
                 permissions: &[],
                 warning: "The agent contacts the server, never the other way round: no port needs to be opened on the monitored machine.",
             },
@@ -5383,11 +5390,18 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Install the agent on the machine: each service it finds becomes a monitor under that machine on its first report.",
                     "To stop watching one, untick it in the machine's \"Services found by the agent\" panel or delete its monitor.",
                 ],
-                ports: &[to_server!(
-                    8080,
-                    "tcp",
-                    "Readings and commands (default port, 443 behind a TLS proxy)",
-                )],
+                ports: &[
+                    to_server!(
+                        8443,
+                        "tcp",
+                        "Readings and commands: the encrypted agent channel",
+                    ),
+                    to_server!(
+                        8080,
+                        "tcp",
+                        "Install script and agent download, at install and update time",
+                    ),
+                ],
                 permissions: &[],
                 warning: "If the machine stops reporting, its services are shown as hidden behind it rather than raising alerts of their own.",
             },
