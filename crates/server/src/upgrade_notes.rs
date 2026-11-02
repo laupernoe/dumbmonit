@@ -117,9 +117,9 @@ pub const CATALOG: &[Note] = &[
                   and pin the server certificate: agents already installed keep reporting \
                   over their encrypted channel, and a new kit or install command moves them \
                   to https.",
-        compose: "# Reverse proxy upstream (Nginx Proxy Manager, Traefik, Caddy):\n# \
-                  https://dumbmonit:8080   (skip certificate verification, or trust the \
-                  DumbMonit certificate)",
+        compose: "services:\n  dumbmonit:\n    # Reverse proxy upstream (Nginx Proxy Manager, \
+                  Traefik, Caddy): https://dumbmonit:8080\n    # Skip certificate \
+                  verification, or trust the DumbMonit certificate",
         apply: None,
         docs_url: Some("https://dumbmonit.readthedocs.io/en/latest/install/https/"),
         check: None,
