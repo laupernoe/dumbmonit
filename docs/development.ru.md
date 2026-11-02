@@ -27,7 +27,7 @@ docs/            эта документация (MkDocs, опубликован
 Компиляция происходит в Docker; на хосте не требуется устанавливать ничего, что нужно для Rust.
 
 ```bash
-# Полный стек (создает образ: около 10 мин в холодном состоянии) — интерфейс на http://localhost:8080
+# Полный стек (создает образ: около 10 мин в холодном состоянии) — интерфейс на https://localhost:8080
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 # Rust, внутри этапа builder (musl/alpine)

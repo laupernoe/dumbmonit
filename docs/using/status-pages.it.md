@@ -287,7 +287,7 @@ Per configurarlo:
 1. **DNS.** Crea il record per il nome (oppure l'hostname pubblico di
    un Cloudflare Tunnel), puntando sul tuo reverse proxy.
 2. **Proxy.** Invia il nome all'indirizzo di DumbMonit, per esempio
-   `http://dumbmonit:8080`, **senza riscrivere il percorso**: il proxy
+   `https://dumbmonit:8080`, **senza riscrivere il percorso**: il proxy
    inoltra `/`, non `/s/<address>`.
 3. **Host header.** Passa avanti l'header `Host` originale: è così che
    DumbMonit distingue il dominio della pagina dal proprio indirizzo.
@@ -315,7 +315,7 @@ porta `8080`, e un certificato SSL. Nulla altro: passa `Host` avanti
 per impostazione predefinita. Lascia vuote le **Custom locations**.
 
 Cloudflare Tunnel — aggiungi un **Public hostname**
-`status.example.com` con il servizio `http://dumbmonit:8080` e nessun
+`status.example.com` con il servizio `https://dumbmonit:8080` e nessun
 percorso. Il tunnel mantiene l'`Host` del visitatore; lascia vuoto
 **HTTP Host Header** nelle impostazioni avanzate.
 
@@ -338,7 +338,7 @@ server {
     # ssl_certificate … ;
 
     location / {
-        proxy_pass http://dumbmonit:8080;
+        proxy_pass https://dumbmonit:8080;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
@@ -384,7 +384,7 @@ Con nginx:
 
 ```nginx
 location ~ ^/(s/|api/public/|_app/|favicon\.svg) {
-    proxy_pass http://dumbmonit:8080;
+    proxy_pass https://dumbmonit:8080;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-Proto $scheme;
 }

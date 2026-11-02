@@ -139,7 +139,7 @@
 设置方法：
 
 1. **DNS。** 为该名称创建记录（或 Cloudflare Tunnel 的公开主机名），指向你的反向代理。
-2. **代理。** 将该名称转发到 DumbMonit 的地址，例如 `http://dumbmonit:8080`，**不要重写路径**：代理转发的是 `/`，而不是 `/s/<address>`。
+2. **代理。** 将该名称转发到 DumbMonit 的地址，例如 `https://dumbmonit:8080`，**不要重写路径**：代理转发的是 `/`，而不是 `/s/<address>`。
 3. **Host 头。** 原样传递原始的 `Host` 头：DumbMonit 靠它区分页面的域名与自己的地址。DumbMonit 只读取 `Host`；`X-Forwarded-Host` 仅在来自列于 `DUMBMONIT_TRUSTED_PROXIES` 的代理时才被采信。
 4. **HTTPS** 由代理处理。DumbMonit 在订阅者邮件、RSS 订阅源和编辑器的**分享**面板中链接到 `https://<domain>/`。
 
@@ -156,7 +156,7 @@ labels:
 
 Nginx Proxy Manager——添加一个**代理主机**，域名 `status.example.com`，协议 `http`，转发主机名 `dumbmonit`，端口 `8080`，并配置 SSL 证书。无需其他设置：它默认会传递 `Host`。**自定义位置**保持为空。
 
-Cloudflare Tunnel——添加一个**公开主机名** `status.example.com`，服务为 `http://dumbmonit:8080`，不带路径。隧道会保留访客的 `Host`；高级设置中的 **HTTP Host Header** 请留空。
+Cloudflare Tunnel——添加一个**公开主机名** `status.example.com`，服务为 `https://dumbmonit:8080`，不带路径。隧道会保留访客的 `Host`；高级设置中的 **HTTP Host Header** 请留空。
 
 Caddy——`reverse_proxy` 会传递 `Host`，且 Caddy 会自动获取证书：
 
@@ -175,7 +175,7 @@ server {
     # ssl_certificate … ;
 
     location / {
-        proxy_pass http://dumbmonit:8080;
+        proxy_pass https://dumbmonit:8080;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
@@ -206,7 +206,7 @@ status.example.com {
 
 ```nginx
 location ~ ^/(s/|api/public/|_app/|favicon\.svg) {
-    proxy_pass http://dumbmonit:8080;
+    proxy_pass https://dumbmonit:8080;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-Proto $scheme;
 }

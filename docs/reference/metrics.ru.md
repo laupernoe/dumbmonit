@@ -89,8 +89,8 @@ MetricsQL через [прокси метрик](api.md#metrics) сервера.
   источник данных `/prometheus`, с токеном API —
   [ниже](#scraping-dumbmonit).
 - Напрямую, в разработке: оверлей `docker-compose.dev.yml` публикует
-  встроенную VictoriaMetrics на `http://localhost:8428`, с её собственным интерфейсом на
-  `http://localhost:8428/vmui/`. В продакшене она слушает только loopback контейнера;
+  встроенную VictoriaMetrics на `https://localhost:8428`, с её собственным интерфейсом на
+  `https://localhost:8428/vmui/`. В продакшене она слушает только loopback контейнера;
   задайте `DUMBMONIT_VM_LISTEN=0.0.0.0:8428` и опубликуйте порт
   самостоятельно, если хотите подключить Grafana или другой инструмент к тем же данным.
 
@@ -171,8 +171,8 @@ VictoriaMetrics. Сузьте выборку, чтобы федерация ос
 для мониторов, опрашиваемых реже, чем раз в пять минут.
 
 ```bash
-curl -H 'Authorization: Bearer dmt_…' http://localhost:8080/metrics
-curl -H 'Authorization: Bearer dmt_…' -G http://localhost:8080/federate \
+curl -H 'Authorization: Bearer dmt_…' https://localhost:8080/metrics
+curl -H 'Authorization: Bearer dmt_…' -G https://localhost:8080/federate \
   --data-urlencode 'match[]={__name__=~"dumbmonit_.*",target="4"}'
 ```
 
@@ -185,7 +185,7 @@ DumbMonit ретранслирует читающую половину API Prome
 за тем же токеном, поэтому Grafana работает с обычным источником данных Prometheus:
 
 1. **Connections → Data sources → Add → Prometheus**.
-2. **URL**: `http://dumbmonit.lan:8080/prometheus` (Grafana сама добавляет
+2. **URL**: `https://dumbmonit.lan:8080/prometheus` (Grafana сама добавляет
    `/api/v1/query`).
 3. **HTTP headers**: добавьте один, `Authorization` = `Bearer dmt_…`. Grafana хранит
    его в зашифрованном виде и больше никогда не показывает.

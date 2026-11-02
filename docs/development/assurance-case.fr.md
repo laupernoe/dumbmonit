@@ -111,9 +111,9 @@ L'argument suit les principes de conception de Saltzer et Schroeder.
   forme d'empreintes (`auth/totp.rs`).
 - OpenID Connect : state, nonce et PKCE `S256` (`auth/oidc/pkce.rs`).
 - Toutes les primitives viennent de bibliothèques maintenues (`aes-gcm`,
-  `argon2`, `sha2`) ; aucune n'est faite maison. Le serveur intégré parle en
-  HTTP clair ; la documentation impose un reverse proxy TLS, et les cookies
-  reçoivent `Secure` quand la requête arrive en HTTPS (`auth/cookie.rs`).
+  `argon2`, `sha2`) ; aucune n'est faite maison. Le serveur intégré ne parle que
+  HTTPS (une requête HTTP simple reçoit une redirection), et les cookies
+  reçoivent `Secure` (`auth/cookie.rs`).
 
 ## Parades aux faiblesses courantes
 
@@ -133,8 +133,8 @@ L'argument suit les principes de conception de Saltzer et Schroeder.
 | Intégrité des logiciels et des données, CWE-494 | Les installeurs d'agent vérifient le SHA-256 du binaire téléchargé | `crates/agent/install/install.sh`, `install.ps1` |
 | Journalisation insuffisante, CWE-778 | Journal de sécurité des connexions et des changements sensibles | `auth/audit.rs` ; test `security_audit_api.rs` |
 
-Les risques résiduels connus figurent dans le modèle de sécurité (serveur en
-HTTP clair, options de surveillance non chiffrées, VictoriaMetrics embarqué sans
+Les risques résiduels connus figurent dans le modèle de sécurité (serveur à
+certificat autosigné par défaut, options de surveillance non chiffrées, VictoriaMetrics embarqué sans
 authentification). La CSP autorise les styles en ligne (`style-src
 'unsafe-inline'`), ce qui l'affaiblit contre l'injection de style mais pas
 contre l'exécution de script. Un avis est accepté, `RUSTSEC-2023-0071`, ignoré

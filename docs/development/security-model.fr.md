@@ -82,7 +82,7 @@ l'argument de conception sûre et les preuves de chaque affirmation.
 
 ## Limites connues
 
-- Le port de l'interface répond encore en HTTP clair à côté du HTTPS, pour les reverse proxies, les scripts et les agents d'anciennes versions ; les visites de pages sont redirigées vers HTTPS sur les installations neuves seulement, et une instance mise à jour affiche une bannière tant qu'un administrateur n'active pas la redirection.
+- Le port de l'interface ne sert que du HTTPS ; une requête HTTP simple reçoit une redirection `308` vers le même hôte et le même port, et rien d'autre. Les reverse proxies doivent se connecter en HTTPS.
 - Le certificat autosigné n'est pas reconnu des navigateurs : la première visite demande de comparer son empreinte. Fournissez un certificat pour une installation sans avertissement.
 - Les options de surveillance sont stockées en clair. Mettez les secrets dans les
   champs d'identifiants.

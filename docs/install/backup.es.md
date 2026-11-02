@@ -152,19 +152,19 @@ cada credencial de la instancia.
 
 ```bash
 # Iniciar sesión
-curl -s -c jar -X POST http://localhost:8080/api/auth/login \
+curl -s -c jar -X POST https://localhost:8080/api/auth/login \
   -H 'content-type: application/json' -H 'X-Requested-With: DumbMonit' \
   -d '{"username":"admin","password":"…"}'
 
 # Exportar
-curl -s -b jar -X POST http://localhost:8080/api/backup \
+curl -s -b jar -X POST https://localhost:8080/api/backup \
   -H 'content-type: application/json' -H 'X-Requested-With: DumbMonit' \
   -d '{"passphrase":"three words are enough"}' -o backup.json
 
 # Simulación, luego aplicar
 jq -n --slurpfile b backup.json \
   '{bundle: $b[0], passphrase: "three words are enough", apply: false}' > restore.json
-curl -s -b jar -X POST http://localhost:8080/api/backup/restore \
+curl -s -b jar -X POST https://localhost:8080/api/backup/restore \
   -H 'content-type: application/json' -H 'X-Requested-With: DumbMonit' \
   -d @restore.json | jq
 ```

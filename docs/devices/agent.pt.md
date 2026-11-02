@@ -147,7 +147,7 @@ um token.
 === "Linux (systemd ou OpenRC)"
 
     ```sh
-    curl -sSL http://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://server:8080
+    curl -sSL https://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     O script é `sh` POSIX (BusyBox e dash funcionam), descarrega do servidor o
@@ -162,7 +162,7 @@ um token.
     O mesmo comando que no Linux, executado com `sudo`:
 
     ```sh
-    curl -sSL http://server:8080/install.sh | sudo sh -s -- --token=dmon_xxx --url=http://server:8080
+    curl -sSL https://server:8080/install.sh | sudo sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     Os binários macOS **não** estão na imagem do DumbMonit: compilá-los exige o
@@ -183,8 +183,8 @@ um token.
 
     ```sh
     curl -sSLO https://github.com/laupernoe/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
-    curl -sSL http://server:8080/install.sh | sudo sh -s -- \
-        --token=dmon_xxx --url=http://server:8080 --bin=./dumbmonit-agent-macos-aarch64
+    curl -sSL https://server:8080/install.sh | sudo sh -s -- \
+        --token=dmon_xxx --url=https://server:8080 --bin=./dumbmonit-agent-macos-aarch64
     ```
 
     O script instala o binário em `/usr/local/bin` (e remove o atributo de
@@ -203,7 +203,7 @@ um token.
 === "FreeBSD (rc.d)"
 
     ```sh
-    fetch -qo - http://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://server:8080
+    fetch -qo - https://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     Apenas x86_64. O script descarrega `dumbmonit-agent-freebsd-x86_64` do
@@ -218,7 +218,7 @@ um token.
 === "Windows (serviço)"
 
     ```powershell
-    & ([scriptblock]::Create((irm http://server:8080/install.ps1))) -Token dmon_xxx -Url http://server:8080
+    & ([scriptblock]::Create((irm https://server:8080/install.ps1))) -Token dmon_xxx -Url https://server:8080
     ```
 
     O script descarrega `dumbmonit-agent-windows-x86_64.exe` do servidor,
@@ -325,7 +325,7 @@ todos os sistemas.
 | `install.sh` | `install.ps1` | Efeito |
 |---|---|---|
 | `--token=TOKEN` | `-Token` | Token de registo (obrigatório). |
-| `--url=URL` | `-Url` | URL do servidor, por exemplo `http://server:8080`. No Linux, `DUMBMONIT_URL` no ambiente é usado se a flag estiver ausente. |
+| `--url=URL` | `-Url` | URL do servidor, por exemplo `https://server:8080`. No Linux, `DUMBMONIT_URL` no ambiente é usado se a flag estiver ausente. |
 | `--interval=N` | `-Interval` | Período de amostragem em segundos (predefinição 30). |
 | `--services=a,b,c` | `-Services @('a','b')` | Serviços cujo estado é reportado, nomeados como o sistema anfitrião os nomeia: units systemd no Linux, labels launchd (`com.apple.sshd`) no macOS, nomes rc.d no FreeBSD, serviços do Windows. |
 | `--tags=key=value,…` | `-Tags @{key='value'}` | Tags, copiadas como `tag_<key>` em cada série. |
@@ -405,7 +405,7 @@ O histórico fica onde foi escrito: o VictoriaMetrics não consegue reetiquetar 
 macOS e FreeBSD, `C:\ProgramData\DumbMonit\agent.yaml` no Windows:
 
 ```yaml
-server_url: http://server:8080
+server_url: https://server:8080
 token: dmon_...
 interval_secs: 30          # sampling period
 hostname: nas-basement     # optional: name announced to the server

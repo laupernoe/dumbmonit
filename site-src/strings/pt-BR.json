@@ -5,7 +5,7 @@
  "k012": "[[svg2]]MIT, sem edição paga",
  "k014": "Um único contêiner vigia servidores, equipamentos de rede, NAS, hipervisores, serviços de nuvem e sites. Regras de alerta úteis ativas desde o início, que ficam em silêncio até algo precisar de você.",
  "k015": "Copiar",
- "k016": "Depois abra <code>http://localhost:8080</code> e crie a primeira conta. Imagem para amd64 e arm64: <code>ghcr.io/laupernoe/dumbmonit</code>.",
+ "k016": "Depois abra <code>https://localhost:8080</code> (o navegador mostra um aviso uma vez por causa do certificado autoassinado) e crie a primeira conta. Imagem para amd64 e arm64: <code>ghcr.io/laupernoe/dumbmonit</code>.",
  "k017": "[[svg3]]Experimentar a demo ao vivo",
  "k018": "[[svg4]]Ver no GitHub",
  "k021": "<strong>O DumbMonit está antes da 1.0</strong> (@@VERSION@@ é a versão atual). Ele roda todo dia na rede do autor, mas a API HTTP e o esquema do banco de dados ainda podem mudar entre versões menores; o changelog explica como atualizar. Algumas integrações só conheceram instâncias de teste. Experimente e <a href=\"https://github.com/laupernoe/dumbmonit/issues\">conte para nós o que quebra</a>.",

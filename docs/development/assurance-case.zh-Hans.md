@@ -80,8 +80,8 @@
   备份包(`backup/bundle.rs`)。
 - 第二因素:TOTP,配合经过哈希的一次性恢复码(`auth/totp.rs`)。
 - OpenID Connect:state、nonce 和 PKCE `S256`(`auth/oidc/pkce.rs`)。
-- 所有原语都来自维护中的库(`aes-gcm`、`argon2`、`sha2`);没有任何自行实现的算法。内置监听器使用
-  明文 HTTP;文档要求使用 TLS 反向代理,并且当请求通过 HTTPS 到达时,cookie 会加上 `Secure`
+- 所有原语都来自维护中的库(`aes-gcm`、`argon2`、`sha2`);没有任何自行实现的算法。内置监听器只提供
+  HTTPS(普通 HTTP 请求会收到重定向),cookie 会加上 `Secure`
   (`auth/cookie.rs`)。
 
 ## 常见弱点的对策
@@ -102,7 +102,7 @@
 | 软件和数据完整性,CWE-494 | 代理安装程序会校验所下载二进制文件的 SHA-256 | `crates/agent/install/install.sh`、`install.ps1` |
 | 日志记录和监控失败,CWE-778 | 登录和敏感变更的安全日志 | `auth/audit.rs`;测试 `security_audit_api.rs` |
 
-已知的剩余风险列在安全模型中(明文 HTTP 监听器、未加密的监控项选项、不带身份验证的内置
+已知的剩余风险列在安全模型中(自签名默认证书、未加密的监控项选项、不带身份验证的内置
 VictoriaMetrics)。CSP 允许内联样式(`style-src 'unsafe-inline'`),这会削弱其对样式注入的防护,
 但不影响对脚本执行的防护。存在一条已接受的公告 `RUSTSEC-2023-0071`,在 `deny.toml` 中连同理由一起被
 忽略:`rsa` crate 使用提供商的公钥验证 RS256 签名,从不使用私钥。
