@@ -452,9 +452,14 @@ pub async fn set_playing(
     access_token: &str,
     play: bool,
 ) -> Result<Authorized<()>, SpotifyError> {
-    let action = if play { "play" } else { "pause" };
+    // Deux URL fixes : rien de la requête du client n'entre dans l'adresse.
+    let url = if play {
+        format!("{}/v1/me/player/play", endpoints.api)
+    } else {
+        format!("{}/v1/me/player/pause", endpoints.api)
+    };
     let response = http
-        .put(format!("{}/v1/me/player/{action}", endpoints.api))
+        .put(url)
         .bearer_auth(access_token)
         .send()
         .await
