@@ -591,6 +591,7 @@
 	}
 	.headline {
 		margin: 0;
+		white-space: nowrap;
 		font-size: clamp(2.5rem, 11vw, 3.5rem);
 		font-weight: 600;
 		line-height: 1;
@@ -740,7 +741,7 @@
 			margin-inline: -3.5rem;
 		}
 		.headline {
-			font-size: clamp(4.25rem, 5.6vw, 7rem);
+			font-size: clamp(4.25rem, 5vw, 6rem);
 		}
 		.status-mark {
 			width: clamp(4rem, 4.8vw, 5.75rem);
