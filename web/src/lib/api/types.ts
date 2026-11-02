@@ -1842,7 +1842,7 @@ export interface RebindWindow {
  * `profile_id` set to the module id.
  */
 export interface AgentModule {
-	/** `docker`, `plakar`, `backup_repos`, `zfs`, `libvirt`, `wireguard`, `ipsec`, `speedtest` — or one this build does not know. */
+	/** `docker`, `plakar`, `backup_repos`, `databases`, `zfs`, `libvirt`, `wireguard`, `ipsec`, `speedtest` — or one this build does not know. */
 	id: string;
 	/** Display name, for a module the UI has no translation for. */
 	label: string;

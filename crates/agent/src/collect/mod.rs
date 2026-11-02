@@ -12,6 +12,7 @@
 //! ce serait ce même état qui mentirait au premier redémarrage.
 
 pub mod backup_repos;
+pub mod databases;
 pub mod docker;
 pub mod docker_labels;
 pub mod docker_stats;
@@ -41,6 +42,7 @@ use sysinfo::{
 };
 
 use crate::collect::backup_repos::BackupReposReport;
+use crate::collect::databases::DatabasesReport;
 use crate::collect::docker::{ContainerInventory, ContainerStat, ContainerUsage};
 use crate::collect::filter::NameFilter;
 use crate::collect::ipsec::IpsecReport;
@@ -269,6 +271,9 @@ pub struct Snapshot {
     pub speedtest: Option<SpeedtestReport>,
     /// Dépôts restic et Borg déclarés. `None` : aucun, ou première lecture en cours.
     pub backup_repos: Option<BackupReposReport>,
+    /// Bases de données détectées et fraîcheur de leurs sauvegardes. `None` :
+    /// aucune base, ou première lecture en cours.
+    pub databases: Option<DatabasesReport>,
     /// Domaines KVM et pools libvirt. `None` : pas de `virsh` sur cette machine,
     /// ou première lecture en cours.
     pub libvirt: Option<LibvirtReport>,
@@ -333,6 +338,9 @@ impl Snapshot {
         }
         if let Some(report) = &self.libvirt {
             samples.extend(libvirt::samples(report, now_ms));
+        }
+        if let Some(report) = &self.databases {
+            samples.extend(databases::samples(report, now_ms));
         }
         samples
     }
@@ -651,6 +659,7 @@ impl SystemProbe {
             ipsec: None,
             speedtest: None,
             backup_repos: None,
+            databases: None,
             libvirt: None,
             machine: None,
         }
@@ -1335,6 +1344,20 @@ mod tests {
                     capacity_bytes: Some(100),
                     allocation_bytes: Some(40),
                     available_bytes: Some(60),
+                }],
+            }),
+            databases: Some(databases::DatabasesReport {
+                databases: vec![databases::DatabaseStat {
+                    db: databases::Detected {
+                        engine: databases::Engine::Postgresql,
+                        instance: "16-main".into(),
+                        version: Some("16".into()),
+                        running: true,
+                        port: Some(5432),
+                        backup_dir: None,
+                        exe_dir: None,
+                    },
+                    backup: None,
                 }],
             }),
             machine: Some(MachineStat { oom_kills: Some(1), ..MachineStat::default() }),
