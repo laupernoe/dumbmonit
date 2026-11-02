@@ -70,12 +70,6 @@ pub const RELAY_TUNNEL_PATH: &str = "/api/agent/relay/tunnel";
 /// Protocole de la mise à niveau HTTP d'un tunnel de relais.
 pub const RELAY_TUNNEL_PROTOCOL: &str = "dumbmonit-tunnel/1";
 
-/// Scripts d'installation et binaires servis à un agent relais, pour les
-/// machines de son site qui ne joignent pas le serveur : `…/files/install.sh`,
-/// `…/files/install.ps1`, `…/files/download/<nom>`. Le binaire est vérifié par
-/// le script contre l'empreinte SHA-256 que porte la commande d'installation.
-pub const RELAY_FILES_PATH: &str = "/api/agent/relay/files";
-
 /// Port d'écoute par défaut de la passerelle d'un relais (côté site).
 pub const DEFAULT_RELAY_GATEWAY_PORT: u16 = 8443;
 

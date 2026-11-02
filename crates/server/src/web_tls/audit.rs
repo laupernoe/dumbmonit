@@ -156,13 +156,8 @@ pub async fn collect(state: &AppState) -> Result<Vec<Finding>> {
     // Interface.
     if web.server_config().is_none() {
         found.push(finding("web", "https_unavailable", "warning", "", None));
-    } else {
-        if !web.redirect_enabled() {
-            found.push(finding("web", "https_redirect_off", "warning", "", None));
-        }
-        if web.summary().is_some_and(|s| s.source == super::Source::SelfSigned) {
-            found.push(finding("web", "self_signed", "info", "", None));
-        }
+    } else if web.summary().is_some_and(|s| s.source == super::Source::SelfSigned) {
+        found.push(finding("web", "self_signed", "info", "", None));
     }
 
     // Stockage des mesures.

@@ -320,12 +320,13 @@ ENV DUMBMONIT_BIND=0.0.0.0:8080 \
     DUMBMONIT_VLOGS_BINARY=/victoria-logs-prod
 
 VOLUME ["/data"]
-# 8080 : interface web. 8443 : canal chiffré des agents (TLS 1.3, mTLS), le
+# 8080 : interface web, HTTPS seulement (le clair y est renvoyé vers HTTPS).
+# 8443 : canal chiffré des agents (TLS 1.3, mTLS), le
 # seul à publier pour des agents sur d'autres réseaux.
 EXPOSE 8080 8443
 
 # Santé du conteneur (Docker, Portainer, Unraid) : l'image n'a ni shell ni curl,
-# le binaire se sonde lui-même sur DUMBMONIT_BIND (voir healthcheck.rs).
+# le binaire se sonde lui-même en HTTPS sur DUMBMONIT_BIND (voir healthcheck.rs).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
     CMD ["/dumbmonit", "healthcheck"]
 

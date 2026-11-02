@@ -36,7 +36,7 @@ info:
     - **API token** — `Authorization: Bearer dmt_…`, created in Settings →
       *API & assistants*. Meant for scripts, dashboards and assistants. No
       cookie is involved, so no anti-CSRF header is needed.
-    - **Session cookie** — `dumbmonit_session`, what the web UI uses after
+    - **Session cookie** — `__Host-dumbmonit_session`, what the web UI uses after
       `POST /api/auth/login`. Every state-changing request (`POST`, `PUT`,
       `DELETE`) sent with the cookie must also carry
       `X-Requested-With: DumbMonit`, or it is refused with `403`.
@@ -473,7 +473,7 @@ paths:
           description: Signed in; the session cookie is set.
           headers:
             Set-Cookie:
-              description: "`dumbmonit_session` (`__Host-dumbmonit_session` over HTTPS, then also `Secure`), HttpOnly, SameSite=Strict."
+              description: "`__Host-dumbmonit_session`, Secure, HttpOnly, SameSite=Strict."
               schema: { type: string }
         "200":
           description: Two-factor authentication required.
@@ -500,7 +500,7 @@ paths:
           description: Signed in; the session cookie is set.
           headers:
             Set-Cookie:
-              description: "`dumbmonit_session` (`__Host-dumbmonit_session` over HTTPS, then also `Secure`), HttpOnly, SameSite=Strict."
+              description: "`__Host-dumbmonit_session`, Secure, HttpOnly, SameSite=Strict."
               schema: { type: string }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
@@ -611,7 +611,7 @@ paths:
           description: Signed in; the session cookie is set.
           headers:
             Set-Cookie:
-              description: "`dumbmonit_session` (`__Host-dumbmonit_session` over HTTPS, then also `Secure`), HttpOnly, SameSite=Strict."
+              description: "`__Host-dumbmonit_session`, Secure, HttpOnly, SameSite=Strict."
               schema: { type: string }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
@@ -8389,9 +8389,10 @@ paths:
       summary: HTTPS of the web port and what still travels in clear (admin only)
       description: >-
         The certificate served on the web port (provided or self-signed, its
-        SHA-256 fingerprint), the redirect of plain-HTTP page visits, whether
-        this request came over HTTPS, and every connection the server makes or
-        accepts in clear or without certificate checks. Session only.
+        SHA-256 fingerprint and public-key pin), and every connection the
+        server makes or accepts in clear or without certificate checks. The web
+        port only serves HTTPS: plain-HTTP requests get a 308 to `https://` and
+        nothing else. Session only.
       security: [{ cookieAuth: [] }]
       x-token-scope: none
       responses:
@@ -8402,34 +8403,6 @@ paths:
               schema: { $ref: "#/components/schemas/HttpsView" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
-    put:
-      operationId: setHttpsRedirect
-      tags: [Security]
-      summary: Send plain-HTTP page visits to HTTPS (admin only)
-      description: >-
-        Recorded in the security log. 409 when `DUMBMONIT_HTTPS_REDIRECT` forces
-        the value, 400 when HTTPS is not available. Session only.
-      security: [{ cookieAuth: [] }]
-      x-token-scope: none
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [redirect]
-              properties:
-                redirect: { type: boolean }
-      responses:
-        "200":
-          description: The new state.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/HttpsView" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "409": { $ref: "#/components/responses/Conflict" }
 
   /api/security/https/certificate.pem:
     get:
@@ -8867,7 +8840,7 @@ paths:
         description: >-
           One of `query`, `query_range`, `query_exemplars`, `series`, `labels`,
           `label/{name}/values`, `metadata`, `status/buildinfo`; anything else is
-          `404`. Lets Grafana use `http://…/prometheus` as a Prometheus data source.
+          `404`. Lets Grafana use `https://…/prometheus` as a Prometheus data source.
         schema: { type: string }
     get:
       operationId: prometheusApiGet
@@ -10296,7 +10269,7 @@ components:
     cookieAuth:
       type: apiKey
       in: cookie
-      name: dumbmonit_session
+      name: __Host-dumbmonit_session
       description: >-
         Session opened by `POST /api/auth/login`. State-changing requests must
         also carry `X-Requested-With: DumbMonit`.
@@ -10967,8 +10940,8 @@ components:
           type: object
           description: HTTPS of the web port, for the "session in clear" banner. Nothing secret.
           properties:
-            available: { type: boolean, description: The web port also serves HTTPS. }
-            secure: { type: boolean, description: This request came over HTTPS (direct, or through a trusted proxy). }
+            available: { type: boolean, description: "The web port serves HTTPS (always: it only serves HTTPS)." }
+            secure: { type: boolean, description: "This request came over HTTPS (always)." }
             fingerprint_sha256: { type: [string, "null"], description: SHA-256 of the served certificate, as browsers show it. }
             self_signed: { type: boolean }
     PortsView:
@@ -10993,8 +10966,7 @@ components:
     HttpsView:
       type: object
       properties:
-        enabled: { type: boolean, description: "`DUMBMONIT_TLS`: the web port also serves HTTPS." }
-        available: { type: boolean, description: A certificate is loaded and served. }
+        available: { type: boolean, description: A certificate is loaded and served (always, once started). }
         certificate:
           type: [object, "null"]
           properties:
@@ -11006,10 +10978,6 @@ components:
             not_after: { type: [string, "null"] }
             names: { type: array, items: { type: string } }
         error: { type: [string, "null"], description: Last reload error of a provided certificate. }
-        redirect: { type: boolean }
-        redirect_forced: { type: [boolean, "null"], description: "Set by `DUMBMONIT_HTTPS_REDIRECT`." }
-        request_https: { type: boolean }
-        request_tls: { type: boolean }
         trusted_proxies: { type: integer }
         hsts: { type: string }
         findings:
@@ -11367,7 +11335,7 @@ components:
       type: object
       required: [base_url, checksums, linux_template, windows_template]
       properties:
-        base_url: { type: string, description: URL of the web port (install scripts and binaries). }
+        base_url: { type: string, description: "`https://` URL of the web port, or of a relay's gateway (install scripts and binaries)." }
         agent_url: { type: [string, "null"], description: "URL of the encrypted agent channel, `https://host:8443`." }
         ca_pin: { type: [string, "null"], description: SHA-256 fingerprint of the agent certificate authority. }
         checksums:
@@ -11383,9 +11351,12 @@ components:
         https_pin:
           type: [string, "null"]
           description: >-
-            Public-key pin (`sha256//…`) of the self-signed HTTPS certificate, when the
-            interface is reached over direct HTTPS: the Unix command then downloads over
-            HTTPS checked by it (`curl --pinnedpubkey`, `--pinned-key=`).
+            Public-key pin (`sha256//…`) of the certificate `base_url` presents when it
+            is not from a trusted authority: the self-signed web certificate, or the agent
+            port through a relay. Both commands check the server by it before reading
+            anything (`curl --pinnedpubkey`, a PowerShell validation callback), and the
+            agent keeps it (`server_pin`). `null`: a provided certificate, checked by the
+            system's authorities.
         via_relay:
           oneOf:
             - type: "null"
