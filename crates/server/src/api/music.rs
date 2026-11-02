@@ -376,35 +376,6 @@ fn encode_query_value(value: &str) -> String {
     out
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn the_callback_hands_the_code_to_the_settings_page_and_nothing_else() {
-        let params = CallbackParams {
-            code: Some("AQB-x_1".into()),
-            state: Some("s1&admin=1#x".into()),
-            error: None,
-        };
-        assert_eq!(
-            settings_return(&params),
-            "/settings/wall?spotify=callback&code=AQB-x_1&state=s1%26admin%3D1%23x#music"
-        );
-        let denied = CallbackParams {
-            code: None,
-            state: Some("s2".into()),
-            error: Some("access_denied".into()),
-        };
-        assert_eq!(
-            settings_return(&denied),
-            "/settings/wall?spotify=callback&state=s2&error=access_denied#music"
-        );
-        let huge = CallbackParams { code: Some("a".repeat(5000)), ..CallbackParams::default() };
-        assert_eq!(settings_return(&huge), "/settings/wall?spotify=callback#music");
-    }
-}
-
 /// `DELETE /api/music/spotify` — délie le compte et oublie ses jetons.
 async fn disconnect(
     State(state): State<AppState>,
@@ -443,4 +414,33 @@ fn music_error(error: MusicError) -> Response {
         SpotifyError::Rejected(_) | SpotifyError::Unreachable(_) => StatusCode::BAD_GATEWAY,
     };
     no_store((status, Json(json!({ "error": error.message() }))))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_callback_hands_the_code_to_the_settings_page_and_nothing_else() {
+        let params = CallbackParams {
+            code: Some("AQB-x_1".into()),
+            state: Some("s1&admin=1#x".into()),
+            error: None,
+        };
+        assert_eq!(
+            settings_return(&params),
+            "/settings/wall?spotify=callback&code=AQB-x_1&state=s1%26admin%3D1%23x#music"
+        );
+        let denied = CallbackParams {
+            code: None,
+            state: Some("s2".into()),
+            error: Some("access_denied".into()),
+        };
+        assert_eq!(
+            settings_return(&denied),
+            "/settings/wall?spotify=callback&state=s2&error=access_denied#music"
+        );
+        let huge = CallbackParams { code: Some("a".repeat(5000)), ..CallbackParams::default() };
+        assert_eq!(settings_return(&huge), "/settings/wall?spotify=callback#music");
+    }
 }
