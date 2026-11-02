@@ -297,7 +297,7 @@ pub async fn login_step(
     auth.limiter().lock().await.record_success(&keys);
     auth.pending_totp().lock().await.finish(&payload.pending);
 
-    open_session(&state, &auth, &user, ip).await
+    open_session(&state, &user, ip).await
 }
 
 /// `GET /api/auth/audit?limit=200` — les derniers gestes de sécurité.

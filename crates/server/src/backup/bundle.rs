@@ -209,10 +209,6 @@ pub struct Bundle {
     /// l'instance restaurée.
     #[serde(default)]
     pub upgrade_notes_closed: Vec<BundleUpgradeNote>,
-    /// Redirection HTTP → HTTPS de l'interface (réglage `web_https_redirect`).
-    /// Le certificat, lui, ne voyage pas : il est propre à l'instance.
-    #[serde(default)]
-    pub https_redirect: Option<bool>,
 }
 
 impl Bundle {

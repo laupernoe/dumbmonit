@@ -63,7 +63,7 @@
 			<ol class="grid list-decimal gap-1 pl-5">
 				<li>{m.status_domain_step_dns()}</li>
 				<li>
-					{m.status_domain_step_proxy({ url: 'http://dumbmonit:8080' })}
+					{m.status_domain_step_proxy({ url: 'https://dumbmonit:8080' })}
 				</li>
 				<li>
 					{m.status_domain_step_host({ header: 'Host', directive: 'proxy_set_header Host $host;' })}

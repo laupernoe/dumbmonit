@@ -171,6 +171,7 @@ mod tests {
             secret_path: std::path::PathBuf::from("/inexistant/agent-secret"),
             tls_url: None,
             ca_pin: None,
+            server_pin: None,
             log_level: tracing::Level::INFO,
             deprecated_env: Vec::new(),
         }

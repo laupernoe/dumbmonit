@@ -177,7 +177,7 @@ async fn complete(app: &TestApp, location: &str, binding: Option<&str>) -> Resul
     assert_eq!(next, "/");
     let session = cookies
         .iter()
-        .find(|cookie| cookie.starts_with("dumbmonit_session="))
+        .find(|cookie| cookie.starts_with("__Host-dumbmonit_session="))
         .and_then(|cookie| cookie.split(';').next())
         .expect("cookie de session")
         .to_string();

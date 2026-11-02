@@ -59,14 +59,6 @@ use tokio::sync::Mutex;
 
 use crate::auth::rate_limit::Buckets;
 
-/// Variable d'environnement pilotant l'attribut `Secure` du cookie de session.
-///
-/// Elle est désactivée par défaut, et ce n'est pas un oubli : DumbMonit tourne très
-/// majoritairement en HTTP sur un réseau local, où un cookie `Secure` ne serait
-/// jamais renvoyé par le navigateur — la connexion deviendrait impossible. Derrière
-/// un reverse proxy TLS, on la met à `1`.
-const COOKIE_SECURE_ENV: &str = "DUMBMONIT_COOKIE_SECURE";
-
 /// État d'authentification partagé par les gestionnaires et par le middleware.
 ///
 /// Il vit à côté de [`crate::state::AppState`] plutôt que dedans : tout ce qu'il
@@ -76,8 +68,6 @@ const COOKIE_SECURE_ENV: &str = "DUMBMONIT_COOKIE_SECURE";
 pub struct AuthState(Arc<Inner>);
 
 struct Inner {
-    /// Attribut `Secure` du cookie, lu une fois à la construction du routeur.
-    cookie_secure: bool,
     /// Cache de « un mot de passe existe-t-il ? », voir [`Configured`].
     ///
     /// Sans lui, chaque requête d'API paierait une lecture en base alors que la
@@ -113,11 +103,16 @@ mod configured {
     pub const PRESENT: u8 = 2;
 }
 
+impl Default for AuthState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AuthState {
     /// Construit l'état à partir de l'environnement et de la configuration.
     pub fn from_env(config: &crate::config::Config) -> Self {
-        let mut state = Self::new(env_flag(COOKIE_SECURE_ENV))
-            .with_trusted_proxies(config.trusted_proxies.clone());
+        let mut state = Self::new().with_trusted_proxies(config.trusted_proxies.clone());
         if let Some(code) = &config.setup_code {
             Arc::get_mut(&mut state.0)
                 .expect("état d'authentification pas encore partagé")
@@ -133,14 +128,13 @@ impl AuthState {
         self
     }
 
-    pub fn new(cookie_secure: bool) -> Self {
+    pub fn new() -> Self {
         let http = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(15))
             .user_agent(concat!("DumbMonit/", env!("CARGO_PKG_VERSION")))
             .build()
             .expect("client HTTP OIDC");
         Self(Arc::new(Inner {
-            cookie_secure,
             configured: AtomicU8::new(configured::UNKNOWN),
             purged: AtomicBool::new(false),
             limiter: Mutex::new(Buckets::new()),
@@ -160,10 +154,6 @@ impl AuthState {
     /// Le code de première configuration attendu.
     pub fn setup_code(&self) -> &str {
         &self.0.setup_code
-    }
-
-    pub fn cookie_secure(&self) -> bool {
-        self.0.cookie_secure
     }
 
     pub fn limiter(&self) -> &Mutex<Buckets> {
@@ -231,13 +221,6 @@ impl AuthState {
             tracing::warn!(?error, "purge des sessions expirées impossible");
         }
     }
-}
-
-fn env_flag(key: &str) -> bool {
-    matches!(
-        crate::config::env_var(key).unwrap_or_default().trim().to_ascii_lowercase().as_str(),
-        "1" | "true" | "yes" | "on" | "oui"
-    )
 }
 
 /// Erreur d'authentification.
@@ -309,15 +292,3 @@ impl AuthError {
 
 pub type AuthResult<T> = Result<T, AuthError>;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn the_secure_flag_is_off_unless_explicitly_requested() {
-        // Rappel de l'intention : un cookie `Secure` posé par défaut rendrait le
-        // produit inutilisable sur le http://192.168.x.x d'un homelab.
-        assert!(!AuthState::new(false).cookie_secure());
-        assert!(AuthState::new(true).cookie_secure());
-    }
-}

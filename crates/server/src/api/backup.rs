@@ -208,14 +208,6 @@ pub async fn restore(
     let report = import::restore(&state.pool, &state.cipher, &opened, payload.apply).await?;
 
     if payload.apply {
-        // Redirection vers HTTPS restaurée : appliquée tout de suite, sauf si
-        // l'environnement l'impose ou si le HTTPS n'est pas servi.
-        if let Some(redirect) = opened.https_redirect
-            && state.config.https_redirect.is_none()
-        {
-            let available = state.web_tls().server_config().is_some();
-            state.web_tls().set_redirect(redirect && available);
-        }
         // Les paquets restaurés définissent des types : le registre les prend
         // tout de suite, sans attendre un redémarrage.
         if let Err(error) = crate::packs::sync_registry(&state.pool, &state.collectors).await {
