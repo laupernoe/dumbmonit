@@ -142,6 +142,7 @@ pub async fn restore(
     report.push(restore_agent_tokens(&mut tx, bundle).await?);
     report.push(restore_api_tokens(&mut tx, bundle).await?);
     report.push(restore_push_monitors(&mut tx, cipher, bundle, &refs).await?);
+    report.push(restore_agent_sentinels(&mut tx, cipher, bundle, &refs).await?);
     report.push(crate::backup::oncall::restore(&mut tx, cipher, &bundle.oncall).await?);
     report.push(restore_runbooks(&mut tx, bundle).await?);
     report.push(restore_remediation_actions(&mut tx, cipher, bundle, &refs).await?);
@@ -2044,6 +2045,122 @@ async fn restore_netconfig_versions(
                 &format!("Configuration version of {} ({})", entry.target, entry.fetched_at),
                 &error.into(),
             ),
+        }
+    }
+    Ok(report)
+}
+
+/// Sentinelles : un agent absent du lot (ou de l'instance) est signalé, un réglage
+/// identique à celui en place n'est pas réécrit.
+async fn restore_agent_sentinels(
+    tx: &mut Transaction<'_, Sqlite>,
+    cipher: &Cipher,
+    bundle: &Bundle,
+    refs: &HashMap<String, i64>,
+) -> Result<SectionReport> {
+    use crate::collectors::agent::sentinel::check_channel;
+
+    let mut report = SectionReport::new("agent_sentinels");
+    for entry in &bundle.agent_sentinels {
+        let Some(target_id) = refs.get(&entry.agent).copied() else {
+            report.skipped += 1;
+            report.notes.push(format!(
+                "Sentinel: its agent ({}) is not in this backup.",
+                entry.agent
+            ));
+            continue;
+        };
+        if let Some(channel) = &entry.channel
+            && let Err(why) = check_channel(channel)
+        {
+            report.skipped += 1;
+            report.notes.push(format!("Sentinel of {}: {why}", entry.agent));
+            continue;
+        }
+        let urls: Vec<&String> = entry
+            .urls
+            .iter()
+            .filter(|url| dumbmonit_proto::https_authority(url).is_some())
+            .take(dumbmonit_proto::SENTINEL_MAX_URLS)
+            .collect();
+        let interval = entry.interval_secs.clamp(
+            dumbmonit_proto::SENTINEL_MIN_INTERVAL_SECS,
+            dumbmonit_proto::SENTINEL_MAX_INTERVAL_SECS,
+        );
+        let threshold = entry.threshold.clamp(1, dumbmonit_proto::SENTINEL_MAX_THRESHOLD);
+        // Sans adresse ni canal, une sentinelle ne peut pas être active.
+        let enabled = entry.enabled && !urls.is_empty() && entry.channel.is_some();
+        let pins: std::collections::BTreeMap<&String, String> = entry
+            .pins
+            .iter()
+            .filter(|(url, _)| urls.contains(url))
+            .filter_map(|(url, raw)| Some((url, dumbmonit_proto::normalize_pin(raw)?)))
+            .collect();
+        let urls_json = serde_json::to_string(&urls)?;
+        let pins_json = serde_json::to_string(&pins)?;
+
+        let existing = sqlx::query(
+            "SELECT enabled, urls, pins, interval_secs, threshold, channel_enc \
+             FROM agent_sentinel WHERE target_id = ?",
+        )
+        .bind(target_id)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("recherche de la sentinelle")?;
+
+        if let Some(row) = &existing {
+            let stored_channel: Option<Vec<u8>> = row.try_get("channel_enc")?;
+            let same_channel = match (&entry.channel, stored_channel) {
+                (None, None) => true,
+                (Some(wanted), Some(bytes)) => cipher
+                    .decrypt(&bytes)
+                    .ok()
+                    .and_then(|plain| serde_json::from_slice(&plain).ok())
+                    .is_some_and(|stored: dumbmonit_proto::SentinelChannel| &stored == wanted),
+                _ => false,
+            };
+            if same_channel
+                && (row.try_get::<i64, _>("enabled")? != 0) == enabled
+                && row.try_get::<String, _>("urls")? == urls_json
+                && row.try_get::<String, _>("pins")? == pins_json
+                && row.try_get::<i64, _>("interval_secs")? == interval as i64
+                && row.try_get::<i64, _>("threshold")? == i64::from(threshold)
+            {
+                report.skipped += 1;
+                continue;
+            }
+        }
+
+        let encrypted = match &entry.channel {
+            Some(channel) => Some(cipher.encrypt(&serde_json::to_vec(channel)?)?),
+            None => None,
+        };
+        let outcome = sqlx::query(
+            "INSERT INTO agent_sentinel \
+                 (target_id, enabled, urls, pins, interval_secs, threshold, channel_enc) \
+             VALUES (?, ?, ?, ?, ?, ?, ?) \
+             ON CONFLICT(target_id) DO UPDATE SET enabled = excluded.enabled, \
+                 urls = excluded.urls, pins = excluded.pins, \
+                 interval_secs = excluded.interval_secs, \
+                 threshold = excluded.threshold, channel_enc = excluded.channel_enc, \
+                 updated_at = datetime('now')",
+        )
+        .bind(target_id)
+        .bind(i64::from(enabled))
+        .bind(&urls_json)
+        .bind(&pins_json)
+        .bind(interval as i64)
+        .bind(i64::from(threshold))
+        .bind(encrypted)
+        .execute(&mut **tx)
+        .await;
+        match outcome {
+            Ok(_) => report.count(if existing.is_some() {
+                RestoreOutcome::Updated
+            } else {
+                RestoreOutcome::Created
+            }),
+            Err(error) => report.refused(&entry.agent, &anyhow::Error::from(error)),
         }
     }
     Ok(report)

@@ -22,6 +22,7 @@ mod relay;
 mod remediation;
 mod run;
 mod selfupdate;
+mod sentinel;
 mod shutdown;
 #[cfg(test)]
 mod testsupport;

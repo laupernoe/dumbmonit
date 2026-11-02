@@ -16,6 +16,7 @@
 	import { Button, Confirm, ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
 	import RelayPanel from '#lib/components/devices/relay/RelayPanel.svelte';
 	import LogsPanel from '#lib/components/devices/agent/LogsPanel.svelte';
+	import SentinelPanel from '#lib/components/devices/agent/SentinelPanel.svelte';
 	import MailAgentPanel from '#lib/components/devices/mdaemon/MailAgentPanel.svelte';
 	import AgentModulesPanel from './AgentModulesPanel.svelte';
 	import AgentEventsPanel from './AgentEventsPanel.svelte';
@@ -146,6 +147,9 @@
 
 <!-- Log collection, off until an administrator turns it on. -->
 <LogsPanel {target} />
+
+<!-- Sentinel mode: this machine watches DumbMonit itself, off until set up. -->
+<SentinelPanel {target} />
 
 <!-- Shown only when this machine runs MDaemon or SecurityGateway and the agent found it. -->
 <MailAgentPanel agent={target.id} product="mdaemon" />
