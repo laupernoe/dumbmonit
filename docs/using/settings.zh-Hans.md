@@ -14,7 +14,7 @@
 | 墙屏显示 | `/settings/wall` | 墙屏模式：显示什么以及如何打开（[墙屏模式](wall.md)） |
 | 系统 | `/settings/system` | 备份、配置文件、DumbMonit 自身、数据与保留、日志、API 和助手、关于 |
 
-每一节都保留自己的锚点：`/settings#agents` 会跳转到 `/settings/monitoring#agents`。旧链接（`/alerts#notifications`）也会跳转到新位置。状态页和报告已不在设置中：它们有自己的页面，**状态页**（`/status`）和**报告**（`/reports`）；`/settings/status` 和 `/settings/reports` 会跳转过去。墙屏的音乐、新闻和小组件已经移除：它们的旧链接（`#music`、`#news`、`#widgets`）会打开“墙屏显示”标签页。
+每一节都保留自己的锚点：`/settings#agents` 会跳转到 `/settings/monitoring#agents`。旧链接（`/alerts#notifications`）也会跳转到新位置。状态页和报告已不在设置中：它们有自己的页面，**状态页**（`/status`）和**报告**（`/reports`）；`/settings/status` 和 `/settings/reports` 会跳转过去。墙屏的新闻和小组件已经移除：它们的旧链接（`#news`、`#widgets`）会打开“墙屏显示”标签页，**墙屏音乐**（`#music`）就在那里。
 
 ## 外观 {#appearance}
 
@@ -22,7 +22,9 @@
 
 ## 墙屏显示 {#wall}
 
-**打开墙屏模式**：全屏显示控制台的看板，适合房间里的显示器。++esc++ 退出，命令面板可随时打开它。墙屏不再有音乐、新闻或小组件；可以选择在结论后方显示一座夜景城市。参见[墙屏模式](wall.md)。
+**打开墙屏模式**：全屏显示控制台的看板，适合房间里的显示器。++esc++ 退出，命令面板可随时打开它。墙屏不再有新闻或小组件；可以选择在结论后方显示一座夜景城市。参见[墙屏模式](wall.md)。
+
+**墙屏音乐**：连接一个 Spotify 账户（墙屏会变成 Spotify Connect 音箱并显示正在播放的内容，带播放 / 暂停），或把 Spotify、Deezer 或 YouTube 链接发送到所有墙屏。参见[大屏上的音乐](wall.md#music-on-the-wall)。
 
 ## 账户与安全 {#account--security}
 

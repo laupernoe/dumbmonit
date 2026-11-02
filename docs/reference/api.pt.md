@@ -609,6 +609,7 @@ Rotas não detalhadas acima; o documento OpenAPI dá os seus parâmetros e forma
 | `GET` | `/api/music/spotify/token` | none | Um token de acesso Spotify de curta duração para o leitor da parede. Apenas sessão. |
 | `GET`, `PUT` | `/api/music/speaker` | read, write | A coluna Spotify da parede como as Definições a mostram; renomeá-la (admin). |
 | `POST` | `/api/music/speaker/report`, `/play` | none | Uma parede reporta o estado da sua coluna; tocar a conta nela. Apenas sessão. |
+| `POST` | `/api/music/spotify/playback` | none | Pausa ou retoma a conta a partir da parede, onde quer que toque. Apenas sessão. |
 
 ## Alertas {#alerts}
 

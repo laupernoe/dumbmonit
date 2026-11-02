@@ -14,7 +14,7 @@ As Definições reúnem o que é administrativo: a própria instância, a sua co
 | Ecrã de parede | `/settings/wall` | Modo parede: o que mostra e como abri-lo ([Modo parede](wall.md)) |
 | Sistema | `/settings/system` | Cópia de segurança, Ficheiros de configuração, O próprio DumbMonit, Dados e retenção, Registos, API e assistentes, Acerca |
 
-Cada secção mantém a sua âncora: `/settings#agents` reencaminha para `/settings/monitoring#agents`. As ligações antigas (`/alerts#notifications`) também reencaminham para o novo lugar. As páginas de estado e os relatórios já não estão nas Definições: têm as suas próprias páginas, **Páginas de estado** (`/status`) e **Relatórios** (`/reports`); `/settings/status` e `/settings/reports` reencaminham para lá. A música, as notícias e os widgets da parede desapareceram: as suas ligações antigas (`#music`, `#news`, `#widgets`) abrem o separador Ecrã de parede.
+Cada secção mantém a sua âncora: `/settings#agents` reencaminha para `/settings/monitoring#agents`. As ligações antigas (`/alerts#notifications`) também reencaminham para o novo lugar. As páginas de estado e os relatórios já não estão nas Definições: têm as suas próprias páginas, **Páginas de estado** (`/status`) e **Relatórios** (`/reports`); `/settings/status` e `/settings/reports` reencaminham para lá. As notícias e os widgets da parede desapareceram: as suas ligações antigas (`#news`, `#widgets`) abrem o separador Ecrã de parede, onde está **Música da parede** (`#music`).
 
 ## Aparência {#appearance}
 
@@ -26,8 +26,13 @@ os seus temas claro e escuro.
 
 **Abrir o modo parede**: o painel da consola, em ecrã inteiro, para um ecrã na
 sala. ++esc++ sai, e a paleta de comandos abre-o a partir de qualquer lado. A
-parede já não tem música, notícias nem widgets; se quiser, uma cidade à noite
-pode ficar por trás do seu veredicto. Consulte [Modo parede](wall.md).
+parede já não tem notícias nem widgets; se quiser, uma cidade à noite pode ficar
+por trás do seu veredicto. Consulte [Modo parede](wall.md).
+
+**Música da parede**: ligue uma conta Spotify (a parede torna-se um altifalante
+Spotify Connect e mostra o que está a tocar, com reproduzir / pausa), ou envie
+uma ligação Spotify, Deezer ou YouTube para todas as paredes. Consulte [Música
+na parede](wall.md#music-on-the-wall).
 
 ## Conta e segurança {#account-security}
 
