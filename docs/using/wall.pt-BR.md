@@ -19,7 +19,7 @@ estados escritos junto de uma forma e nunca só por cor.
 
 ## Abrir e sair
 
-Abra-o com o ícone **Wall mode** da barra superior, pela paleta de comandos
+Abra-o com o ícone **Wall mode** no fundo do menu lateral, pela paleta de comandos
 ("Wall mode") ou digitando a URL. ++esc++ ou **Exit** volta ao console. Uma conta
 limitada a algumas equipes ou clientes não tem o modo parede, porque ele mostra
 toda a frota.

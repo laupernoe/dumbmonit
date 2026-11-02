@@ -20,7 +20,7 @@ Konsole, Zustände neben einer Form und nie allein durch Farbe.
 
 ## Öffnen und verlassen
 
-Öffnen Sie sie mit dem Symbol **Wall mode** in der oberen Leiste, über die
+Öffnen Sie sie mit dem Symbol **Wall mode** unten im linken Menü, über die
 Befehlspalette („Wall mode“) oder durch Eingabe der URL. ++esc++ oder **Exit**
 führt zurück zur Konsole. Ein auf einige Teams oder Kunden beschränktes Konto
 erhält die Wand nicht, da sie die gesamte Flotte zeigt.

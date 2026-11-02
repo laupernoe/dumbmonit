@@ -52,7 +52,7 @@ más estrecha se abre como cajón. La lista completa está en la
 
 `/wall` muestra un tablero para un monitor de sala: el veredicto, el reloj, las
 cinco cifras, el río de salud, las alertas abiertas y quién está de guardia.
-Ábrelo con el icono **Wall mode** de la barra superior o con la paleta de
+Ábrelo con el icono **Wall mode** al pie del menú lateral o con la paleta de
 comandos; ++esc++ o **Exit** vuelve a la consola. Consulta
 [Modo pared](wall.md).
 
