@@ -891,10 +891,17 @@
       ],
       "ports": [
         {
+          "port": 8443,
+          "protocol": "tcp",
+          "direction": "to_server",
+          "purpose": "Readings and commands: the encrypted agent channel",
+          "optional": false
+        },
+        {
           "port": 8080,
           "protocol": "tcp",
           "direction": "to_server",
-          "purpose": "Readings and commands (default port, 443 behind a TLS proxy)",
+          "purpose": "Install script and agent download, at install and update time",
           "optional": false
         }
       ],
@@ -1453,10 +1460,17 @@
       ],
       "ports": [
         {
+          "port": 8443,
+          "protocol": "tcp",
+          "direction": "to_server",
+          "purpose": "Readings and commands: the encrypted agent channel",
+          "optional": false
+        },
+        {
           "port": 8080,
           "protocol": "tcp",
           "direction": "to_server",
-          "purpose": "Readings and commands (default port, 443 behind a TLS proxy)",
+          "purpose": "Install script and agent download, at install and update time",
           "optional": false
         }
       ],
