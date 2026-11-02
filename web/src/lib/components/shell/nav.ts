@@ -1,9 +1,11 @@
 /**
  * The destinations of the shell: five, the same on the rail and on the
- * phone's tab bar. What used to be a page of its own now lives in a tab of
- * one of them (Map, Logs, Security under Monitors; automation under Alerts;
- * reports under Status); Explore and Clients are reached from the command
- * palette and the client picker. A new destination is one line here.
+ * phone's tab bar (the rail sets the `foot` ones apart, in its bottom group;
+ * the tab bar keeps the order below). What used to be a page of its own now
+ * lives in a tab of one of them (Map, Logs, Security under Monitors;
+ * automation under Alerts; reports under Status); Explore and Clients are
+ * reached from the command palette and the client picker. A new destination
+ * is one line here.
  */
 import type { Icon as LucideIcon } from 'lucide-svelte';
 import { Activity, Bell, Building2, Globe, House, Settings } from 'lucide-svelte';
@@ -28,6 +30,8 @@ export interface NavEntry {
 	msp?: boolean;
 	/** `data-tour` anchor of the demo's guided tour. */
 	tour?: string;
+	/** On the rail: in the bottom group, above wall mode, the docs and the account, not in the main list. */
+	foot?: boolean;
 }
 
 export const NAV: NavEntry[] = [
@@ -35,7 +39,7 @@ export const NAV: NavEntry[] = [
 	{ href: '/targets', label: () => m.misc_nav_devices(), icon: Activity, also: ['/map', '/logs', '/security'], tour: 'nav-devices' },
 	{ href: '/alerts', label: () => m.misc_nav_alerts(), icon: Bell, badge: true, also: ['/actions', '/runbooks'], tour: 'nav-alerts' },
 	{ href: '/status', label: () => m.shell_nav_status(), icon: Globe, also: ['/reports'] },
-	{ href: '/settings', label: () => m.misc_nav_settings(), icon: Settings, tour: 'nav-settings' }
+	{ href: '/settings', label: () => m.misc_nav_settings(), icon: Settings, tour: 'nav-settings', foot: true }
 ];
 
 /** The MSP clients page, off the rail: reached from the client picker and the palette. */

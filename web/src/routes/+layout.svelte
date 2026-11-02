@@ -111,6 +111,8 @@
 	});
 
 	const publicPath = $derived(isPublicRoute(page.url.pathname));
+	// The branch below that renders `EnterpriseShell`.
+	const inShell = $derived(!statusHost && !publicPath && auth.canUseApi && !onWelcome);
 
 	// Three situations: fresh instance, no session, valid session.
 	$effect(() => {
@@ -258,7 +260,8 @@
 	{#if auth.demo}
 		<DemoNotice />
 	{/if}
-	{#if !onWall && !statusHost && !page.url.pathname.startsWith('/status')}
+	<!-- Inside the shell the tag sits in the page column (see EnterpriseShell): under the shell it would shorten the rail's sticky course. -->
+	{#if !onWall && !statusHost && !page.url.pathname.startsWith('/status') && !inShell}
 		<VersionTag />
 	{/if}
 </div>
