@@ -241,6 +241,10 @@ pub struct Config {
     /// l'interface, que la commande d'installation a vérifiée : l'ancien
     /// canal ne reconnaît alors que ce serveur.
     pub server_pin: Option<String>,
+    /// `server_url` est en `http://` hors boucle locale (agent installé avant
+    /// le passage au tout-HTTPS) : seul le canal chiffré déjà enrôlé sert,
+    /// jamais l'ancien canal en clair.
+    pub plain_server_url: bool,
     pub interval: Duration,
     /// Nom d'hôte annoncé au serveur. `None` : celui que le système déclare.
     pub hostname: Option<String>,
@@ -326,6 +330,7 @@ impl fmt::Debug for Config {
             .field("tls_url", &self.tls_url)
             .field("ca_pin", &self.ca_pin)
             .field("server_pin", &self.server_pin)
+            .field("plain_server_url", &self.plain_server_url)
             .field("interval", &self.interval)
             .field("hostname", &self.hostname)
             .field("services", &self.services)
@@ -449,12 +454,13 @@ impl Config {
         if server_url.is_empty() {
             bail!("the server URL is required (key 'server_url' or variable DUMBMONIT_AGENT_URL)");
         }
-        if !server_url.starts_with("https://") && !is_loopback_http(&server_url) {
-            bail!(
-                "the server URL must start with https:// (got '{server_url}'): DumbMonit only \
-                 serves HTTPS"
-            );
+        if !server_url.starts_with("http://") && !server_url.starts_with("https://") {
+            bail!("the server URL must start with https:// (got '{server_url}')");
         }
+        // Une URL en clair hors boucle locale n'est tolérée que pour un agent
+        // déjà enrôlé, qui ne parlera alors qu'à son canal chiffré rangé : c'est
+        // `Agent::new` qui le vérifie (il lit l'état du canal), et refuse sinon.
+        let plain_server_url = !server_url.starts_with("https://") && !is_loopback_http(&server_url);
 
         let token = env.get("DUMBMONIT_AGENT_TOKEN").or(file.token).unwrap_or_default();
         let token = token.trim().to_string();
@@ -825,6 +831,7 @@ impl Config {
             tls_url,
             ca_pin,
             server_pin,
+            plain_server_url,
             interval: Duration::from_secs(interval_secs),
             hostname: env
                 .get("DUMBMONIT_AGENT_HOSTNAME")
@@ -1259,7 +1266,21 @@ mod tests {
             token: Some("dmon_x".into()),
             ..FileConfig::default()
         };
-        assert!(Config::merge(plain, env(&[])).is_err(), "jamais le jeton en clair sur le réseau");
+        // Lu (un agent déjà enrôlé doit pouvoir redémarrer), mais marqué : sans
+        // canal chiffré rangé, l'agent refusera de démarrer (voir `run.rs`).
+        assert!(Config::merge(plain, env(&[])).unwrap().plain_server_url);
+        let local = FileConfig {
+            server_url: Some("http://127.0.0.1:8080".into()),
+            token: Some("dmon_x".into()),
+            ..FileConfig::default()
+        };
+        assert!(!Config::merge(local, env(&[])).unwrap().plain_server_url);
+        let ftp = FileConfig {
+            server_url: Some("ftp://serveur".into()),
+            token: Some("dmon_x".into()),
+            ..FileConfig::default()
+        };
+        assert!(Config::merge(ftp, env(&[])).is_err());
         let pinned = FileConfig {
             server_url: Some("https://serveur:8080".into()),
             token: Some("dmon_x".into()),
