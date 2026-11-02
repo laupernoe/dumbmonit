@@ -112,7 +112,7 @@ All notable changes to this project are documented here. The format follows
 
 - **Left menu.** It stays in place while the page scrolls; hovering the logo
   turns it into the expand button (the collapse button sits next to the name
-  once open), ++ctrl+b++ / ++cmd+b++ toggles it. Settings moved to the bottom
+  once open), Ctrl+B (⌘B on a Mac) toggles it. Settings moved to the bottom
   with Wall mode, Docs and GitHub; wall mode is no longer in the top bar. The
   logo and the app icons have a night-sky background instead of plain black.
 - **Needs attention.** "Silence 1 h" became a small cross that mutes the monitor
