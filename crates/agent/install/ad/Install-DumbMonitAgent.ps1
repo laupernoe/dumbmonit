@@ -94,8 +94,19 @@ function Invoke-Installer([string]$Arguments) {
     $command = "& '$($Installer -replace "'", "''")' $Arguments"
     $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($command))
     $powershell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
-    $output = & $powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand $encoded 2>&1 | Out-String
-    return @{ Code = $LASTEXITCODE; Output = (Hide-Secrets $output) }
+    # Sortie en texte : redirigée, le processus fils écrirait son flux d'erreurs en CLIXML,
+    # que ce script ne sait pas relire (« Données non valides au niveau racine »), ce qui
+    # masquait la vraie erreur de l'installateur. Et `Stop` ferait d'une simple ligne sur
+    # stderr une erreur fatale : on le relâche le temps de l'appel.
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $output = & $powershell -NoProfile -NonInteractive -OutputFormat Text -ExecutionPolicy Bypass -EncodedCommand $encoded 2>&1 | Out-String
+        $code = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previous
+    }
+    return @{ Code = $code; Output = (Hide-Secrets $output) }
 }
 
 try {
