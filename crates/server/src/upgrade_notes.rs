@@ -36,7 +36,7 @@ use crate::update::Version;
 
 /// Dernière version publiée avant que les instances n'enregistrent la leur :
 /// celle dont est supposée venir une instance existante sans historique.
-pub const BASELINE: &str = "0.14.3";
+pub const BASELINE: &str = "0.14.2";
 
 const KEY_SEEN: &str = "upgrade_notes_seen";
 const KEY_FROM: &str = "upgrade_notes_from";
