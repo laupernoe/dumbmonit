@@ -1757,7 +1757,10 @@ export interface AdKitPayload {
 	base_url?: string;
 	/** Servers allowed to enrol. `null` or left out: no limit. */
 	max_uses?: number | null;
+	/** Days the token may enrol servers. `null`, `0` or left out: never expires. */
 	expires_in_days?: number | null;
+	/** Cover every Windows Server of the domain, future ones included (script default `-AllServers`). Not with `security_group`. */
+	all_servers?: boolean;
 	/** Distinguished name of the OU the policy is linked to. Left out: the whole domain. */
 	target_ou?: string | null;
 	include_domain_controllers?: boolean;

@@ -11587,7 +11587,8 @@ components:
         domain: { type: string, description: 'DNS name of the domain, e.g. corp.example.com.' }
         base_url: { type: string, description: The URL servers will use; the listen address by default. }
         max_uses: { type: [integer, "null"], minimum: 1, description: Servers it may enrol; unlimited when absent. }
-        expires_in_days: { type: [integer, "null"], minimum: 1, default: 30 }
+        expires_in_days: { type: [integer, "null"], minimum: 0, description: "Days the token may enrol servers. Absent, null or 0: never expires (the token stays limited to the domain, reusable and revocable in Settings > Agents)." }
+        all_servers: { type: boolean, default: false, description: "Make -AllServers the default of the script: link the policy to the domain root, filtered on Windows Server (domain controllers included), so servers added later are covered. Not combinable with security_group." }
         target_ou: { type: [string, "null"], maxLength: 512, description: Distinguished name of the OU to link the group policy to. }
         include_domain_controllers: { type: boolean, default: false }
         security_group: { type: [string, "null"], maxLength: 512, description: Only members of this group apply the group policy. }
