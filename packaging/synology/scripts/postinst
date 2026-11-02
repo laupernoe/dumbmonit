@@ -1,6 +1,6 @@
 #!/bin/sh
 # Enrolls this NAS with the DumbMonit server. Runs as the package user.
-# wizard_server_url / wizard_token come from WIZARD_UIFILES/install_uifile
+# wizard_server_url / wizard_token / wizard_server_pin come from WIZARD_UIFILES/install_uifile
 # (absent on upgrade: the existing configuration is kept).
 
 PKG="dumbmonit-agent"
@@ -27,9 +27,16 @@ fi
 
 # The wizard validates these fields; check again, as the values end up in YAML.
 case "$wizard_server_url" in
-    http://*|https://*) ;;
-    *) echo "Invalid server URL." >> "$SYNOPKG_TEMP_LOGFILE"; exit 1 ;;
+    https://*) ;;
+    *) echo "Invalid server URL: DumbMonit only serves HTTPS, use https://host:port." >> "$SYNOPKG_TEMP_LOGFILE"; exit 1 ;;
 esac
+# Certificate pin (optional with a CA-trusted certificate); never logged.
+if [ -n "$wizard_server_pin" ]; then
+    if ! printf '%s' "$wizard_server_pin" | grep -Eq '^sha256//[A-Za-z0-9+/]{43}=$'; then
+        echo "Invalid certificate pin: paste the pin shown in Settings > System > HTTPS (sha256//...)." >> "$SYNOPKG_TEMP_LOGFILE"
+        exit 1
+    fi
+fi
 case "$wizard_server_url$wizard_token" in
     *[!]A-Za-z0-9._:/[-]*)
         echo "The URL or the token contains forbidden characters." >> "$SYNOPKG_TEMP_LOGFILE"
@@ -44,6 +51,7 @@ chmod 0600 "$CONFIG"
     echo "# DumbMonit agent configuration, written by the package installer."
     echo "server_url: ${wizard_server_url%/}"
     echo "token: $wizard_token"
+    if [ -n "$wizard_server_pin" ]; then echo "server_pin: $wizard_server_pin"; fi
     echo "tags:"
     echo "  role: nas"
     echo "  vendor: synology"
@@ -51,10 +59,14 @@ chmod 0600 "$CONFIG"
 
 # Test send before the service starts: a wrong token or an unreachable server
 # fails the installation with an explicit message. Output is discarded so the
-# token can never be echoed to a log.
+# token and the pin can never be echoed to a log.
 if ! "$BIN" --config="$CONFIG" --once >/dev/null 2>&1; then
     rm -f "$CONFIG"
-    echo "The agent could not reach the server or the token was refused. Check the URL and use a fresh token." >> "$SYNOPKG_TEMP_LOGFILE"
+    if [ -z "$wizard_server_pin" ]; then
+        echo "The agent could not reach the server. If it uses the default self-signed certificate, paste the pin shown in Settings > System > HTTPS. Otherwise check the URL and use a fresh token." >> "$SYNOPKG_TEMP_LOGFILE"
+        exit 1
+    fi
+    echo "The agent could not reach the server or the token was refused. Check the URL, the pin (Settings > System > HTTPS) and use a fresh token." >> "$SYNOPKG_TEMP_LOGFILE"
     exit 1
 fi
 
