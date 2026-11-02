@@ -178,7 +178,7 @@ Mit einem API-Token, das den Scope `write` hat:
 
 ```bash
 curl -H 'Authorization: Bearer dmt_…' -H 'Content-Type: application/yaml' \
-  --data-binary @shelly-plug/pack.yaml http://localhost:8080/api/packs
+  --data-binary @shelly-plug/pack.yaml https://localhost:8080/api/packs
 ```
 
 Öffnen Sie **Monitors → Add monitor**: *Shelly plug (Gen2+)* steht in

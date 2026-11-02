@@ -23,7 +23,7 @@ GET /api/openapi.json
 # Browse it, and try calls with your token, in Swagger UI
 docker run --rm -p 8081:8080 \
   -e SWAGGER_JSON_URL=http://monit.lan:8080/api/openapi.json swaggerapi/swagger-ui
-# then open http://localhost:8081 and paste "dmt_…" under Authorize → bearerAuth
+# then open https://localhost:8081 and paste "dmt_…" under Authorize → bearerAuth
 
 # Generate a client library (here Python)
 docker run --rm -v "$PWD:/local" openapitools/openapi-generator-cli generate \
@@ -383,7 +383,7 @@ script-src 'self' 'nonce-<per response>'; frame-ancestors 'none'
 | `GET` | `/api/metrics/query_range?query=…&start=…&end=…&step=…` | 范围查询。`start` 和 `end` 是自纪元起的**毫秒**；`step` 以秒为单位，并会被放宽，使一条序列绝不超过 2,000 个点。 |
 
 ```bash
-curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
+curl -b cookies.txt -G https://localhost:8080/api/metrics/query \
   --data-urlencode 'query=avg by (target, host) (dumbmonit_cpu_usage_percent)'
 ```
 
@@ -632,7 +632,7 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 | 方法 | 路由 | 认证 | 用途 |
 |---|---|---|---|
 | `GET` | `/api/agent/tokens` | 仅会话 | 每个令牌：`id`、`name`、`prefix`、`created_at`、`last_used_at`、`revoked_at`、`max_uses`（机群令牌为 `null`）、`uses`、`expires_at`。 |
-| `POST` | `/api/agent/tokens` | 管理员，仅会话 | `{"name": "Home fleet", "base_url": "http://server:8080", "reusable": false, "max_uses": null, "expires_in_days": null}`。`201`，返回令牌字段外加 `secret`（只显示一次）、`install_linux` 和 `install_windows`。`base_url` 是代理将使用的 URL；默认为监听地址。没有 `reusable` 时，令牌是**一次性**的：只注册一台机器，不能再多。有它时，`max_uses` 限制注册次数（`null`：无限制）。`expires_in_days` 在这么多天之后停止*注册*；已注册的机器继续上报。次数小于 1 时返回 `400`。 |
+| `POST` | `/api/agent/tokens` | 管理员，仅会话 | `{"name": "Home fleet", "base_url": "https://server:8080", "reusable": false, "max_uses": null, "expires_in_days": null}`。`201`，返回令牌字段外加 `secret`（只显示一次）、`install_linux` 和 `install_windows`。`base_url` 是代理将使用的 URL；默认为监听地址。没有 `reusable` 时，令牌是**一次性**的：只注册一台机器，不能再多。有它时，`max_uses` 限制注册次数（`null`：无限制）。`expires_in_days` 在这么多天之后停止*注册*；已注册的机器继续上报。次数小于 1 时返回 `400`。 |
 | `DELETE` | `/api/agent/tokens/{id}` | 管理员，仅会话 | 吊销。`204`；未知或已吊销时返回 `404`。 |
 | `POST` | `/api/ingest` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | 接收代理发来的一批样本（正文最大 16 MB）。不应手动调用。该头携带机器的绑定密钥；尚无密钥的代理省略它，这就是它请求密钥的方式。响应会增加 `agent_secret`（密钥，在机器被绑定时仅返回一次）和 `bound`。当机器被绑定到另一个代理安装，或令牌已无法再注册时返回 `403`——消息会说明是哪种情况以及该怎么做。 |
 | `GET` | `/api/agent/relay?wait=N` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | 委派给中继代理（`relay: true`）的探测。没有待处理项时最多保持 `wait` 秒（最多 25 秒）。每一项都是 `probe` 类型的命令，其 `args` 携带目标、其解密后的凭据、`timeout_secs` 和 `discover`。绝不写入磁盘。 |
@@ -647,8 +647,8 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
   "id": 1, "name": "Home fleet", "prefix": "dmon_ab12",
   "created_at": "2026-09-15 13:00:00", "last_used_at": null, "revoked_at": null,
   "secret": "dmon_…",
-  "install_linux": "curl -sSL http://server:8080/install.sh | sh -s -- --token=dmon_… --url=http://server:8080",
-  "install_windows": "& ([scriptblock]::Create((irm http://server:8080/install.ps1))) -Token dmon_… -Url http://server:8080"
+  "install_linux": "curl -sSL https://server:8080/install.sh | sh -s -- --token=dmon_… --url=https://server:8080",
+  "install_windows": "& ([scriptblock]::Create((irm https://server:8080/install.ps1))) -Token dmon_… -Url https://server:8080"
 }
 ```
 

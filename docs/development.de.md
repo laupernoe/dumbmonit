@@ -30,7 +30,7 @@ docs/            this documentation (MkDocs, published on Read the Docs)
 Die Kompilierung läuft in Docker; auf dem Host muss nichts von Rust installiert sein.
 
 ```bash
-# Full stack (builds the image: about 10 min cold) — UI on http://localhost:8080
+# Full stack (builds the image: about 10 min cold) — UI on https://localhost:8080
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 # Rust, inside the builder stage (musl/alpine)

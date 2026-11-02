@@ -33,7 +33,7 @@ La compilación ocurre en Docker; nada de Rust necesita instalarse en el
 host.
 
 ```bash
-# Stack completo (construye la imagen: unos 10 min en frío) — UI en http://localhost:8080
+# Stack completo (construye la imagen: unos 10 min en frío) — UI en https://localhost:8080
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 # Rust, dentro de la etapa builder (musl/alpine)
