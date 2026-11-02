@@ -15,9 +15,12 @@ windows are scheduled.
 ![The overview page: the bulletin sentence, the "Needs you" list and the forecasts](assets/screenshots/overview-light.png){ loading=lazy }
 
 <div class="dm-links" markdown>
-<a href="install/docker/">Install<small>Docker Compose, first start, backups</small></a>
-<a href="install/first-device/">Add your first monitor<small>SNMP, network scan, what happens next</small></a>
-<a href="alerting/">Alerting<small>Built-in rules, quiet by construction</small></a>
+<a href="install/">Get started<small>Docker Compose, HTTPS, first monitor, backups</small></a>
+<a href="overview/">Overview<small>The banner, the figures, wall mode</small></a>
+<a href="monitors/">Monitors<small>List, map, logs, security and the integrations</small></a>
+<a href="alerting/">Alerts<small>Now, history, rules, automation, on-call</small></a>
+<a href="status/">Status<small>Public status pages and reports</small></a>
+<a href="settings/">Settings<small>Account, team and access, notifications, system</small></a>
 </div>
 
 ## What it watches

@@ -5,6 +5,8 @@ when it is a web page or a DNS name. Each type is a collector on the server; the
 server describes every type to the interface (`GET /api/collectors`), so the
 form always matches what this version can monitor.
 
+In the app, **Add a monitor** offers these types. In this documentation, the menu on the left groups them by category; the table below lists them all, with what each one needs.
+
 | Type | `kind` | Credential | Typical use |
 |---|---|---|---|
 | [SNMP device](snmp.md) | `snmp` | community or SNMP v3 | Switch, router, NAS, UPS, printer |

@@ -18,7 +18,7 @@ avec les seuls ports et la table des voisins.
 
 ## Lancer un balayage
 
-Sur la page **Moniteurs**, lancez un balayage, choisissez un réseau suggéré (ou
+Depuis **Ajouter une surveillance** (ou *Scanner mon réseau* dans la palette de commandes), lancez un balayage, choisissez un réseau suggéré (ou
 saisissez-en un) et la profondeur :
 
 - **Standard** balaie une trentaine de ports courants, plus SNMP.
@@ -76,8 +76,8 @@ Le mode réseau host :
 ## Scans planifiés et inventaire
 
 Un balayage ponctuel dit ce qu'il y a sur le réseau aujourd'hui. Pour être
-prévenu quand quelque chose de **nouveau** apparaît, planifiez-le : sur la page
-**Équipements**, dans la vue de balayage réseau, le panneau *Scans planifiés et
+prévenu quand quelque chose de **nouveau** apparaît, planifiez-le : dans la vue de balayage réseau
+de **Ajouter une surveillance**, le panneau *Scans planifiés et
 inventaire* garde la liste des appareils et des ports ouverts que chaque réseau
 planifié a montrés, et signale ce qui est nouveau.
 
@@ -100,7 +100,7 @@ peu plus tard.
 Chaque balayage terminé met à jour l'inventaire de son réseau :
 
 - un **appareil** est identifié par son **adresse MAC** quand elle est lisible
-  (voir [adresses MAC](#adresses-mac-et-mode-reseau-host)), sinon par son adresse IP.
+  (voir [adresses MAC](#adresses-mac-et-mode-réseau-host)), sinon par son adresse IP.
   Un appareil dont l'IP change mais qui garde sa MAC est le même appareil, pas un
   nouveau ;
 - chaque **port ouvert** trouvé sur un appareil est listé avec sa première et sa

@@ -139,7 +139,7 @@ Three routes sit outside `/api`, where a scraper looks for them:
 | `GET /prometheus/api/v1/…` | The read half of the Prometheus API, relayed to the store: what a Grafana data source calls. |
 
 All three take `Authorization: Bearer dmt_…` with the **`read`** scope — a token
-created in Settings → *API & assistants*, the same kind the
+created in **Settings › System › API & assistants**, the same kind the
 [MCP server](../using/assistant.md) uses. No cookie is involved, so no
 `X-Requested-With` header is needed; a session cookie is accepted too, so you
 can open any of them from a signed-in browser. A token is limited to 120 calls

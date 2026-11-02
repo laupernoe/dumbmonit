@@ -29,7 +29,7 @@ too; that is at the bottom of this page.
 
 ## The encrypted bundle
 
-**Settings → Backup → Download the bundle.** Choose a passphrase of at least 16
+**Settings › System › Backup › Download the bundle.** Choose a passphrase of at least 16
 characters — three words is enough — and confirm it. The file that comes down is
 plain JSON with an encrypted body:
 
@@ -104,7 +104,7 @@ somewhere that has never seen `secret.key`.
 
 1. Start the new container and create the first administrator account at
    `/setup`, with the setup code printed in its logs. That account is yours; the restore will not touch it.
-2. **Settings → Backup → Restore a bundle.** Pick the file, type the passphrase,
+2. **Settings › System › Backup › Restore a bundle.** Pick the file, type the passphrase,
    and press **Check this backup**.
 3. Read the report. It says, section by section, what would be **created**, what
    would be **updated** because it differs from what is already here, and what is
@@ -209,7 +209,7 @@ old — one missed night can be a restart, two is a problem. The series only
 exists once a first backup has been written, so an instance with the schedule
 turned off is never nagged about it.
 
-**Settings → Backup** shows the same thing without MetricsQL: the last run and
+**Settings › System › Backup** shows the same thing without MetricsQL: the last run and
 whether it succeeded, the files kept and their size, and **Back up now** to
 write one immediately.
 
@@ -263,7 +263,7 @@ container first if you want these directories consistent.
 
 ## What to do before an upgrade
 
-1. **Settings → Backup → Back up now** — thirty seconds, and it includes the
+1. **Settings › System › Backup › Back up now** — thirty seconds, and it includes the
    secret.
 2. Download a bundle as well if the upgrade is a big one, or if you are moving
    to another machine.

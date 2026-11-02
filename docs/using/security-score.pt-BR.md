@@ -18,7 +18,7 @@ monitores não mostram nada.
 ## Ativar
 
 A pontuação vem **desativada por padrão**. Um administrador a ativa em
-**Configurações → Conta e segurança → Pontuação de segurança**. Depois de
+**Configurações › Monitoramento › Pontuação de segurança**. Depois de
 ativada:
 
 - cada monitor pontuado recebe um pequeno **selo em forma de escudo** com

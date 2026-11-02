@@ -1,7 +1,7 @@
 # Topologiekarte
 
-Die Seite **Karte** (Schaltfläche **Karte** auf der Monitorseite, *Karte* in der
-Befehlspalette, `/map`) zeichnet Ihre gesamte Infrastruktur in einem Bild. Nichts
+Der Tab **Karte** (**Monitore › Karte**, `g m`, oder *Karte* in der
+Befehlspalette) zeichnet Ihre gesamte Infrastruktur in einem Bild. Nichts
 wird von Hand eingegeben: Jede Verbindung stammt aus dem, was DumbMonit bereits weiß.
 
 ## Woher die Verbindungen kommen

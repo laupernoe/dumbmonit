@@ -13,7 +13,7 @@ and compares it with the version you run. Pre-releases such as
 on a stable version is never offered a pre-release.
 
 When a newer version exists, **Update available: vX** appears at the bottom
-right of every page and in **Settings → About**, where **How to update** opens
+right of every page and in **Settings › System › About**, where **How to update** opens
 the steps below and **See what's new** reopens the *What's new* window.
 **Check now** looks again immediately (once a minute at most).
 
@@ -25,7 +25,7 @@ the steps below and **See what's new** reopens the *What's new* window.
 ### Turning the check off
 
 For air-gapped networks, switch off **Check for new versions** in
-**Settings → About** (administrators), or set the environment variable, which
+**Settings › System › About** (administrators), or set the environment variable, which
 wins over the switch:
 
 ```yaml
@@ -38,7 +38,7 @@ The same information is available to scripts and API tokens at
 
 ## Updating
 
-1. **Back up.** Download a backup from **Settings → Backup**, and keep a copy
+1. **Back up.** Download a backup from **Settings › System › Backup**, and keep a copy
    of `/data/secret.key` (see [Backup and restore](backup.md)). Without that
    key, stored passwords and tokens cannot be decrypted.
 2. **Pull and restart**, from the folder that holds your `docker-compose.yml`:
@@ -49,7 +49,7 @@ The same information is available to scripts and API tokens at
 
     Your data lives in the `/data` volume and is kept; database migrations run
     on start.
-3. **Reload the page.** **Settings → About** shows the new version and
+3. **Reload the page.** **Settings › System › About** shows the new version and
    *You are up to date*.
 
 To pin a version instead of following `:latest`, change the image tag in the
@@ -77,7 +77,7 @@ afterwards, a window lists what to change, each with the block to copy:
 - A change that a check finds missing stays listed even if you updated long ago,
   so an instance that skipped a step in an earlier release is caught up.
 
-**Settings → About → Configuration changes → View the list** shows every change
+**Settings › System › About › Configuration changes › View the list** shows every change
 a release has asked for (to apply, closed, or not needed on this instance) with
 its block, whenever you want to read it again. Only administrators see it, and
 it is switched off in the public demo.

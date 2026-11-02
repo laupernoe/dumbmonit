@@ -14,7 +14,7 @@ n'importe quel `0.1.0-alpha.N`. Les brouillons sont ignorés, et une instance
 sur une version stable ne se voit jamais proposer de pré-version.
 
 Quand une version plus récente existe, **Mise à jour disponible : vX** apparaît
-en bas à droite de chaque page et dans **Réglages → À propos**, où **Comment
+en bas à droite de chaque page et dans **Réglages › Système › À propos**, où **Comment
 mettre à jour** ouvre les étapes ci-dessous et **Voir les nouveautés** rouvre
 la fenêtre *Nouveautés*. **Vérifier maintenant** relance la vérification
 immédiatement (au plus une fois par minute).
@@ -27,7 +27,7 @@ immédiatement (au plus une fois par minute).
 ### Désactiver la vérification
 
 Pour les réseaux isolés (air-gapped), désactivez **Vérifier les nouvelles
-versions** dans **Réglages → À propos** (administrateurs), ou définissez la
+versions** dans **Réglages › Système › À propos** (administrateurs), ou définissez la
 variable d'environnement, qui l'emporte sur l'interrupteur :
 
 ```yaml
@@ -40,7 +40,7 @@ La même information est disponible pour les scripts et les jetons d'API sur
 
 ## Mettre à jour
 
-1. **Sauvegardez.** Téléchargez une sauvegarde depuis **Réglages → Sauvegarde**,
+1. **Sauvegardez.** Téléchargez une sauvegarde depuis **Réglages › Système › Sauvegarde**,
    et conservez une copie de `/data/secret.key` (voir
    [Sauvegarde et restauration](backup.md)). Sans cette clé, les mots de passe
    et jetons stockés ne peuvent pas être déchiffrés.
@@ -53,7 +53,7 @@ La même information est disponible pour les scripts et les jetons d'API sur
 
     Vos données vivent dans le volume `/data` et sont conservées ; les
     migrations de base de données s'exécutent au démarrage.
-3. **Rechargez la page.** **Réglages → À propos** affiche la nouvelle version
+3. **Rechargez la page.** **Réglages › Système › À propos** affiche la nouvelle version
    et *Vous êtes à jour*.
 
 Pour figer une version plutôt que de suivre `:latest`, changez le tag d'image
@@ -86,7 +86,7 @@ bloc à copier :
   mis à jour il y a longtemps : une instance qui a sauté une étape dans une
   version antérieure est rattrapée.
 
-**Réglages → À propos → Changements de configuration → Voir la liste** montre
+**Réglages › Système › À propos › Changements de configuration › Voir la liste** montre
 tous les changements demandés par une version (à faire, fermés, ou inutiles sur
 cette instance) avec leur bloc, quand vous voulez les relire. Seuls les
 administrateurs la voient, et elle est coupée dans la démo publique.

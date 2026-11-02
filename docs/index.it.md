@@ -15,9 +15,12 @@ di manutenzione sono pianificate.
 ![La pagina di panoramica: la frase del bollettino, l'elenco "Needs you" e le previsioni](assets/screenshots/overview-light.png){ loading=lazy }
 
 <div class="dm-links" markdown>
-<a href="install/docker/">Installazione<small>Docker Compose, primo avvio, backup</small></a>
-<a href="install/first-device/">Aggiungi il tuo primo monitor<small>SNMP, scansione di rete, cosa succede dopo</small></a>
-<a href="alerting/">Avvisi<small>Regole integrate, silenziosi per costruzione</small></a>
+<a href="install/">Introduzione<small>Docker Compose, HTTPS, primo monitor, backup</small></a>
+<a href="overview/">Panoramica<small>Il banner, i numeri, la modalità parete</small></a>
+<a href="monitors/">Monitor<small>Elenco, mappa, log, sicurezza e integrazioni</small></a>
+<a href="alerting/">Avvisi<small>Adesso, cronologia, regole, automazione, reperibilità</small></a>
+<a href="status/">Stato<small>Pagine di stato pubbliche e report</small></a>
+<a href="settings/">Impostazioni<small>Account, team e accesso, notifiche, sistema</small></a>
 </div>
 
 ## Cosa controlla {#what-it-watches}

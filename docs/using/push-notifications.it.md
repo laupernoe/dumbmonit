@@ -37,7 +37,7 @@ decidere quali avvisi vi arrivano con un canale **Web Push**
 2. Facoltativo: installalo come app (barra degli indirizzi → **Installa**, oppure
    menu del browser → **Aggiungi alla schermata Home**). Le notifiche
    funzionano in entrambi i casi.
-3. **Impostazioni → Notifiche push → Abilita su questo dispositivo**, e consenti
+3. **Impostazioni › Il mio account › Notifiche push › Abilita su questo dispositivo**, e consenti
    le notifiche quando il browser lo chiede.
 4. **Invia un test.** Una *DumbMonit — notifica di test* dovrebbe comparire
    entro pochi secondi.
@@ -50,7 +50,7 @@ Apple fornisce il push solo ai siti aggiunti alla schermata Home (iOS e iPadOS
 1. Apri DumbMonit in **Safari**.
 2. **Condividi → Aggiungi alla schermata Home**, poi apri DumbMonit **dalla
    nuova icona**.
-3. Accedi, poi **Impostazioni → Notifiche push → Abilita su questo
+3. Accedi, poi **Impostazioni › Il mio account › Notifiche push › Abilita su questo
    dispositivo**, e consenti le notifiche.
 4. **Invia un test.**
 
@@ -58,7 +58,7 @@ In Safari senza installazione, la sezione indica **Installa prima**.
 
 ## Scegliere quali avvisi arrivano
 
-In **Impostazioni → Notifiche e report**, aggiungi un canale di tipo **Web Push**. Senza
+In **Impostazioni › Notifiche**, aggiungi un canale di tipo **Web Push**. Senza
 impostazioni, lo ricevono tutti i dispositivi iscritti di ogni account; elenca i
 nomi degli account in **Account** per rivolgerti solo ad alcune persone. Si
 applica la consueta politica dei canali (gravità minima, ore di silenzio, filtro

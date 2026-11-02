@@ -24,30 +24,21 @@ li elimina tutti e tre. La scelta viene memorizzata sull'istanza, così un
 secondo browser non ricomincia la guida da capo. Vedi
 [Aggiungi il tuo primo monitor](../install/first-device.md#the-three-first-steps).
 
-## Le cinque cifre e il fiume di salute {#the-figures}
+## Le quattro cifre {#the-figures}
 
-Sotto il banner, cinque cifre: **Monitors up** (sul totale, con i monitor giù e
-in pausa), **Availability 30 d**, **p95 response time**, **Open alerts** (critici
-e avvisi) e **MTTR 30 d** (tempo medio di risoluzione). L'intervallo di tempo
-nell'intestazione governa il p95 e il fiume.
+Sotto il banner ci sono quattro cifre: **Monitor attivi** (sul totale, con i conteggi di quelli giù e in pausa), **Disponibilità 30 g**, **Risposta p95** e **Avvisi aperti** (critici e di avviso). L'intervallo di tempo nell'intestazione governa il p95 e il fiume.
 
-Il **fiume di salute** è una striscia per monitor, una cella per fetta
-dell'intervallo, con i monitor peggiori in alto. Uno stato è sempre scritto
-accanto a una forma (cerchio attivo, rombo degradato, quadrato giù), mai solo a
-colori.
+## Cosa richiede attenzione {#what-needs-attention}
 
-## La tabella dei monitor {#the-monitor-table}
+L'elenco accanto al fiume contiene solo ciò che è rotto adesso, il peggiore per primo, ogni riga con la sua azione rapida: riconoscere o posticipare un avviso, o silenziare un monitor (la piccola croce). Senza nulla di rotto, il piccione dorme e la scheda lo dice. In fondo, la **settimana in arrivo** in una riga: ciò che scade nei prossimi sette giorni. **Vedi tutto** apre gli [Avvisi](alerts.md).
 
-La tabella elenca ogni monitor, il peggiore per primo. Si filtra per stato, tipo e
-testo, consente di aggiungere colonne (indirizzo, cartella) o toglierne, e si usa
-con la tastiera: ++j++ / ++k++ si spostano, ++enter++ seleziona, ++o++ apre.
+## Il fiume della salute {#the-health-river}
 
-Il monitor selezionato alimenta il **pannello di contesto** a destra, come un
-inspector: ciò che richiede attenzione (con le azioni sugli allarmi, vedi
-[Pagina Alerts](alerts.md)), **Check now** e **Silence 1 h**, le previsioni più
-vicine e chi è reperibile. ++i++ lo mostra o lo nasconde; su uno schermo più
-stretto si apre come cassetto. L'elenco completo è nella
-[pagina dei monitor](devices.md).
+Una banda per monitor, una cella per fascia dell'intervallo, i monitor peggiori in alto. La panoramica mostra i primi otto; **Vedi tutti i monitor** apre la scheda [Elenco](devices.md) di Monitor. Uno stato è sempre scritto accanto a una forma (cerchio attivo, rombo degradato, quadrato giù), mai indicato dal solo colore. Su un telefono il fiume si apre con un tocco.
+
+## Due grafici {#charts}
+
+Più in basso: il **tempo di risposta** dell'intera flotta nell'intervallo (p95 e mediana, con i monitor più lenti) e gli **avvisi degli ultimi sette giorni** (scattati e risolti).
 
 ## Modalità Wall {#wall-mode}
 
@@ -77,28 +68,19 @@ input, risultati in tre gruppi.
 
 | Gruppo | Voci |
 |---|---|
-| Pages | Overview, Monitors, Alerts, Notifications, Status pages, Settings, Wall mode, Documentation |
+| Pages | Panoramica, Monitor, Mappa, Avvisi, Automazione, Notifiche, Esplora metriche, Sicurezza, Pagine di stato, Report, Log, Impostazioni, Modalità parete, Documentazione |
 | Actions | Add a monitor, Scan my network, Schedule maintenance, Add notification channel, New status page, Announce an incident |
 | Monitors | Ogni monitor, con il suo LED di stato; ++enter++ lo apre |
 
 ## Navigazione {#navigation}
 
-Una **barra di icone** sottile a sinistra elenca ogni destinazione: Overview,
-Monitors, Alerts (con il conteggio di ciò che richiede attenzione), Dashboards,
-Explore, la mappa della topologia, Security, Logs, Status pages, Reports e
-Settings. In fondo ci sono la documentazione, GitHub e il tuo account.
-L'intestazione dice dove sei, con l'interruttore **LIVE** che mette in pausa gli
-aggiornamenti della console, l'intervallo di tempo, la palette, **Wall mode** e
-**New monitor**. Su un telefono, la barra diventa una barra di tab in basso con
-l'essenziale e **More**.
+Un **menu** stretto a sinistra elenca quattro destinazioni: **Panoramica**, **Monitor**, **Avvisi** (con il conteggio di ciò che richiede attenzione) e **Stato**. In fondo ci sono **Impostazioni**, la **modalità parete**, la documentazione, GitHub e il tuo account. Ciò che prima era una pagina a sé ora è una scheda di queste voci. L'intestazione indica dove sei, con l'interruttore **LIVE** che mette in pausa gli aggiornamenti della console, l'intervallo di tempo, la palette e **Aggiungi un monitor**. Su un telefono il menu diventa una barra di tab in basso con l'essenziale e **Altro**.
 
-- **Overview**: va tutto bene, e cosa richiede attenzione.
-- **Monitors**: ogni fonte che monitori. Vedi la
-  [pagina dei monitor](devices.md).
-- **Alerts**: cosa è attivo, finestre di manutenzione, cronologia e regole. Vedi
-  [Pagina Alerts](alerts.md).
-- **Settings**: il tuo account, utenti e single sign-on, token, canali di
-  notifica, aspetto, informazioni. Vedi [Settings](settings.md).
+- **Panoramica**: va tutto bene, e cosa richiede attenzione.
+- **Monitor**: ogni fonte che monitori, in quattro schede: **Elenco**, **Mappa**, **Log** e **Sicurezza**. Vedi [Monitor](../monitors/index.md).
+- **Avvisi**: cinque schede: **Adesso**, **Cronologia**, **Regole**, **Automazione** e **Reperibilità**. Vedi la [pagina degli avvisi](alerts.md).
+- **Stato**: **Pagine** (pagine di stato pubbliche) e **Report**. Vedi [Stato](../status/index.md).
+- **Impostazioni**: il tuo account, team e accesso, monitoraggio, notifiche, la parete e il sistema. Vedi [Impostazioni](../settings/index.md).
 
 L'interfaccia è scura e nulla vi trasmette lo stato solo con il colore: un
 indicatore ha sempre una parola accanto (Reporting, Unreachable, Advisory,

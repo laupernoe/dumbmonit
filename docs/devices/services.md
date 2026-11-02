@@ -15,8 +15,7 @@ read the server's clock without a session.
 
 ## Coming from Uptime Kuma
 
-**Monitors > ⋯ > Import from Uptime Kuma**, also on **Monitors > Add a
-monitor > Import** (administrators), reads the database of Uptime Kuma 1.x or
+**Monitors › Add a monitor › Import** (administrators) reads the database of Uptime Kuma 1.x or
 2.x, or the JSON backup of 1.x. Nothing is created before you have seen the
 preview: what will be created, and what is skipped with the reason. Tick the
 monitors you want, then import them in one click.
@@ -37,7 +36,7 @@ docker start uptime-kuma
   groups, tags, intervals and the number of notifications are read from it.
 - Uptime Kuma 2 installed on **MariaDB** is not supported: only the SQLite file
   `kuma.db` can be imported.
-- The JSON backup of 1.x (**Settings > Backup > Export**, at most 4 MB) still
+- The JSON backup of 1.x (**Settings › System › Backup**, at most 4 MB) still
   works, with the same preview.
 
 | Uptime Kuma | DumbMonit |

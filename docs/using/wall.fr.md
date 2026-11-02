@@ -99,7 +99,7 @@ Spotify, quoi que fasse DumbMonit. Pour une telle TV, voir
    [Spotify Developer Dashboard](https://developer.spotify.com/dashboard),
    créez une application (n'importe quel nom), cochez **Web API** et
    **Web Playback SDK**, et ajoutez l'URI de redirection que
-   **Réglages → Musique du mur** montre :
+   **Réglages › Mur › Musique murale** montre :
     - DumbMonit servi en HTTPS :
       `https://<votre adresse>/api/music/spotify/callback`. Spotify
       revient directement sur DumbMonit après votre approbation.
@@ -108,7 +108,7 @@ Spotify, quoi que fasse DumbMonit. Pour une telle TV, voir
       `localhost`), depuis 2025. Rien ne répond à cette adresse : après
       votre approbation, votre navigateur montre une page d'erreur dont
       l'adresse porte le code — copiez-le et collez-le dans DumbMonit.
-2. **Connectez.** Dans **Réglages → Musique du mur**, collez le
+2. **Connectez.** Dans **Réglages › Mur › Musique murale**, collez le
    **Client ID** de l'application (il n'y a pas de secret : DumbMonit
    utilise Authorization Code avec PKCE) et choisissez **Connecter
    Spotify**, puis approuvez sur Spotify **avec le compte que votre
@@ -122,7 +122,7 @@ Spotify, quoi que fasse DumbMonit. Pour une telle TV, voir
    des appareils et choisissez **DumbMonit Wall**. Le son sort de la TV, et
    le mur montre la pochette, le titre et la progression.
 
-**Réglages → Musique du mur → Haut-parleur** montre si tout tient, sans
+**Réglages › Mur › Musique murale › Haut-parleur** montre si tout tient, sans
 marcher jusqu'à la TV : le compte, Premium, si Spotify liste le
 haut-parleur parmi les appareils du compte en ce moment (et quels
 appareils il liste), et chaque mur qui s'est signalé dans les quinze
@@ -134,7 +134,7 @@ aussi son propre **Tester le son**. Sur le mur lui-même, le panneau
 cet affichage.
 
 **Le nom.** Renommez le haut-parleur dans
-**Réglages → Musique du mur → Haut-parleur** (« TV du salon ») ; chaque
+**Réglages › Mur › Musique murale › Haut-parleur** (« TV du salon ») ; chaque
 mur reprend le nouveau nom en quelques secondes. Pour nommer un seul mur,
 ajoutez `?speaker=Cuisine` à son adresse — l'affichage s'en souvient
 (`?speaker=` l'oublie).
@@ -207,7 +207,7 @@ mieux le travail.
 
 ### Un lien envoyé à chaque mur
 
-Dans **Réglages → Musique du mur** (ou le propre panneau **Musique** du
+Dans **Réglages › Mur › Musique murale** (ou le propre panneau **Musique** du
 mur), collez un lien Spotify, Deezer ou YouTube vers un titre, un album,
 une playlist, un épisode ou une vidéo et choisissez **Jouer sur le mur**.
 Chaque mur le joue dans le lecteur embarqué officiel du service ; un lien

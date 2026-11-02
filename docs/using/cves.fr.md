@@ -1,6 +1,6 @@
 # CVE et failles
 
-**Sécurité → CVE et failles** liste les failles connues (CVE) des logiciels
+**Surveillances › Sécurité** liste les failles connues (CVE) des logiciels
 installés sur vos équipements, et dit pour chacune si l'équipement est déjà
 **corrigé**, encore **vulnérable**, ou **à vérifier** à la main. La page d'un
 équipement montre la même chose pour lui seul.

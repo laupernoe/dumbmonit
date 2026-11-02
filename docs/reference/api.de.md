@@ -60,7 +60,7 @@ Zwei Zugänge, auf jeder geschützten Route akzeptiert:
   muss außerdem `X-Requested-With: DumbMonit` tragen — der Anti-CSRF-Nachweis, den die Oberfläche
   automatisch hinzufügt; ohne ihn wird die Anfrage mit `403` abgelehnt.
 - **API-Token** — `Authorization: Bearer dmt_…`, für Skripte, Dashboards und Assistenten. Erstellt
-  unter Einstellungen → **API & Assistenten** (dieselben Tokens, die der
+  unter Einstellungen › System › **API und Assistenten** (dieselben Tokens, die der
   [MCP-Server](../using/assistant.md) verwendet) und einmalig angezeigt. Es ist kein Cookie im
   Spiel, daher ist nie ein Header `X-Requested-With` nötig.
 
@@ -139,7 +139,7 @@ Token nie ein anderes ausstellen — geschweige denn ein mächtigeres.
 - **Protokolliert.** Jeder mit einem Token ausgeführte Schreibvorgang wird mit Name und ID des
   Tokens, der Methode, dem Pfad (ohne Query-String) und dem Status ins Serverlog geschrieben — nie
   das Token, nie der Body. Das Erstellen und Widerrufen eines Tokens wird im Audit-Log aufgezeichnet
-  (Einstellungen → Sicherheit).
+  (Einstellungen › Mein Konto › Konto und Sicherheit).
 
 ## Ratenlimits {#rate-limits}
 

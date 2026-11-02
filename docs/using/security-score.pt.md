@@ -18,7 +18,7 @@ outros monitores não mostram nada.
 ## Ativá-la
 
 A pontuação está **desativada por predefinição**. Um administrador ativa-a em
-**Definições → Conta e segurança → Pontuação de segurança**. Depois de ativada:
+**Definições › Monitorização › Pontuação de segurança**. Depois de ativada:
 
 - cada monitor pontuado recebe um pequeno **distintivo em forma de escudo**
   com a sua letra na lista de monitores, e um distintivo **Security** com a

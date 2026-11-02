@@ -15,9 +15,12 @@ DumbMonit читает сеть как **метеосводку**: главна�
 ![Страница обзора: предложение-сводка, список «Needs you» и прогнозы](assets/screenshots/overview-light.png){ loading=lazy }
 
 <div class="dm-links" markdown>
-<a href="install/docker/">Установка<small>Docker Compose, первый запуск, резервные копии</small></a>
-<a href="install/first-device/">Добавьте первый монитор<small>SNMP, сканирование сети, что будет дальше</small></a>
-<a href="alerting/">Оповещения<small>Встроенные правила, тишина по умолчанию</small></a>
+<a href="install/">Начало работы<small>Docker Compose, HTTPS, первый монитор, резервные копии</small></a>
+<a href="overview/">Обзор<small>Баннер, показатели, режим стены</small></a>
+<a href="monitors/">Мониторы<small>Список, карта, логи, безопасность и интеграции</small></a>
+<a href="alerting/">Оповещения<small>Сейчас, история, правила, автоматизация, дежурства</small></a>
+<a href="status/">Статус<small>Публичные страницы статуса и отчёты</small></a>
+<a href="settings/">Настройки<small>Учётная запись, команда и доступ, уведомления, система</small></a>
 </div>
 
 ## Что отслеживается {#what-it-watches}

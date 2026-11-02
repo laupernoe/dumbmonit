@@ -100,7 +100,7 @@ sein, egal was DumbMonit tut. Für einen solchen Fernseher siehe
    [Spotify Developer Dashboard](https://developer.spotify.com/dashboard),
    erstellen Sie eine App (beliebiger Name), kreuzen Sie **Web API**
    und **Web Playback SDK** an, und fügen Sie die Redirect-URI hinzu,
-   die **Settings → Wall music** zeigt:
+   die **Einstellungen › Wandanzeige › Wandmusik** zeigt:
     - DumbMonit über HTTPS bedient: `https://<Ihre Adresse>/api/music/spotify/callback`.
       Spotify kommt direkt zu DumbMonit zurück, nachdem Sie zugestimmt
       haben.
@@ -110,7 +110,7 @@ sein, egal was DumbMonit tut. Für einen solchen Fernseher siehe
       antwortet nichts: Nach Ihrer Zustimmung zeigt Ihr Browser eine
       Fehlerseite, deren Adresse den Code trägt — kopieren Sie ihn
       und fügen Sie ihn in DumbMonit ein.
-2. **Verbinden.** Fügen Sie unter **Settings → Wall music** die
+2. **Verbinden.** Fügen Sie unter **Einstellungen › Wandanzeige › Wandmusik** die
    **Client ID** der App ein (es gibt kein Secret: DumbMonit nutzt
    Authorization Code mit PKCE) und wählen Sie **Connect Spotify**,
    dann stimmen Sie auf Spotify **mit dem Konto zu, das Ihr Telefon
@@ -126,7 +126,7 @@ sein, egal was DumbMonit tut. Für einen solchen Fernseher siehe
    dem Fernseher, und die Wall zeigt das Cover, den Titel und den
    Fortschritt.
 
-**Settings → Wall music → Speaker** zeigt, ob alles stimmt, ohne zum
+**Einstellungen › Wandanzeige › Wandmusik › Speaker** zeigt, ob alles stimmt, ohne zum
 Fernseher zu laufen: das Konto, Premium, ob Spotify den Lautsprecher
 gerade unter den Geräten des Kontos listet (und welche Geräte es
 listet), und jede Wall, die sich in den letzten fünfzehn Minuten
@@ -213,7 +213,7 @@ Arbeit besser.
 
 ### Ein an jede Wall gesendeter Link
 
-Fügen Sie unter **Settings → Wall music** (oder dem eigenen
+Fügen Sie unter **Einstellungen › Wandanzeige › Wandmusik** (oder dem eigenen
 **Music**-Panel der Wall) einen Spotify-, Deezer- oder YouTube-Link
 zu einem Track, Album, einer Playlist, Episode oder einem Video ein
 und wählen Sie **Play on the wall**. Jede Wall spielt ihn im

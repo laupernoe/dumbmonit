@@ -14,7 +14,7 @@ Die Einstellungen enthalten das Administrative: die Instanz selbst, Ihr Konto, w
 | Wandanzeige | `/settings/wall` | Wandmodus: was er zeigt und wie man ihn öffnet ([Wandmodus](wall.md)) |
 | System | `/settings/system` | Sicherung, Konfigurationsdateien, DumbMonit selbst, Daten und Aufbewahrung, Logs, API und Assistenten, Info |
 
-Jeder Abschnitt behält seinen Anker: `/settings#agents` leitet an `/settings/monitoring#agents` weiter. Die alten Links (`/alerts#notifications`) leiten ebenfalls an die neue Stelle weiter. Statusseiten und Berichte sind nicht mehr in den Einstellungen: Sie haben eigene Seiten, **Statusseiten** (`/status`) und **Berichte** (`/reports`); `/settings/status` und `/settings/reports` leiten dorthin weiter. Nachrichten und Widgets der Wand gibt es nicht mehr: Ihre alten Links (`#news`, `#widgets`) öffnen den Tab Wandanzeige, in dem **Wandmusik** (`#music`) liegt.
+Jeder Abschnitt behält seinen Anker: `/settings#agents` leitet an `/settings/monitoring#agents` weiter. Die alten Links (`/alerts#notifications`) leiten ebenfalls an die neue Stelle weiter. Statusseiten und Berichte sind nicht mehr in den Einstellungen: Sie sind die Tabs **Seiten** und **Berichte** von **Status** (`/status`); `/settings/status` und `/settings/reports` leiten dorthin weiter. Nachrichten und Widgets der Wand gibt es nicht mehr: Ihre alten Links (`#news`, `#widgets`) öffnen den Tab Wandanzeige, in dem **Wandmusik** (`#music`) liegt.
 
 ## Darstellung {#appearance}
 
@@ -79,8 +79,7 @@ behält die letzten 5 000 Einträge.
 
 Native Benachrichtigungen auf diesem Smartphone oder Computer, auch bei geschlossenem DumbMonit:
 **Auf diesem Gerät aktivieren**, dann **Test senden**. Jedes Konto verwaltet hier seine eigenen
-Geräte (auch Betrachter); welche Alarme sie erreichen, legt ein Kanal **Web Push** unter Einstellungen →
-Benachrichtigungen & Berichte fest. Die Schaltfläche **i** fasst die Voraussetzungen zusammen: HTTPS (oder
+Geräte (auch Betrachter); welche Alarme sie erreichen, legt ein Kanal **Web Push** unter Einstellungen › Benachrichtigungen fest. Die Schaltfläche **i** fasst die Voraussetzungen zusammen: HTTPS (oder
 localhost), Installation auf dem Home-Bildschirm bei iPhone und iPad und die Domains der
 Push-Dienste, die der Server erreichen muss. Vollständige Anleitung:
 [Push-Benachrichtigungen (PWA)](push-notifications.md).
@@ -191,7 +190,7 @@ In **Einstellungen → Überwachung**, unter den Agenten: eine Bewertung, wie gu
 
 ## Berichte {#reports}
 
-Unter **Einstellungen → Benachrichtigungen & Berichte**, unterhalb der Richtlinie: periodische Verfügbarkeits-E-Mails für das Team. Wählen Sie wöchentlich, täglich oder monatlich,
+In **Status › Berichte** (`/status?tab=reports`): periodische Verfügbarkeits-E-Mails für das Team. Wählen Sie wöchentlich, täglich oder monatlich,
 den Tag, die Uhrzeit und die Zeitzone, die Empfänger und den E-Mail-Kanal, dann **Vorschau
 senden**, um das Ergebnis zu sehen. Nur Admins. Siehe [E-Mail-Berichte](reports.md).
 

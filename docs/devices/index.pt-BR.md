@@ -6,6 +6,8 @@ servidor; o servidor descreve cada tipo para a interface
 (`GET /api/collectors`), então o formulário sempre corresponde ao que esta
 versão pode monitorar.
 
+No aplicativo, **Adicionar um monitor** oferece estes tipos. Nesta documentação, o menu da esquerda os agrupa por categoria; a tabela abaixo lista todos, com o que cada um precisa.
+
 | Tipo | `kind` | Credencial | Uso típico |
 |---|---|---|---|
 | [Monitor SNMP](snmp.md) | `snmp` | comunidade ou SNMP v3 | Switch, roteador, NAS, nobreak, impressora |

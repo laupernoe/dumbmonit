@@ -180,7 +180,7 @@ docker compose up -d
 As migrações da base de dados correm no arranque. Os dados do VictoriaMetrics não são tocados.
 
 !!! tip "Faça primeiro uma cópia de segurança"
-    **Definições → Cópia de segurança → Copiar agora** escreve em poucos segundos uma cópia consistente da base de dados
+    **Definições › Sistema › Cópia de segurança › Copiar agora** escreve em poucos segundos uma cópia consistente da base de dados
     e de `secret.key` em `/data/backups/`, e é a partir dela que
     restaura se a atualização correr mal. Veja
     [Cópia de segurança e restauro](backup.md).

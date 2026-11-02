@@ -21,16 +21,16 @@ evaluate (hysteresis, per-device overrides)
 |---|---|---|
 | Limiar de limpeza (histerese) | Editor de regra → *Clear below / above* | nenhum (CPU: 85%, disco: 88% nas regras incluídas) |
 | Substituições por monitor | Editor de regra → *Per-device overrides* | nenhuma |
-| Deteção de oscilação | Settings → Notifications & reports → Notification policy → More options | 4 alterações em 30 min, retenção de 30 min |
+| Deteção de oscilação | Definições › Notificações › Notification policy › More options | 4 alterações em 30 min, retenção de 30 min |
 | Severidade mínima | Canal → Delivery options → *Send* | tudo |
 | Avisar-me quando se resolve | Canal → Delivery options | ativado |
 | Intervalo mínimo por alerta | Canal → Delivery options | nenhum |
 | Horas de silêncio | Canal → Delivery options | desligado |
 | Filtro de encaminhamento (etiquetas, tipo, regra) | Canal → Delivery options → *Only some alerts* | desligado (o canal ouve tudo) |
-| Escalonamento se ninguém confirmar | Settings → Notifications & reports → Notification policy | desligado |
-| Janela de lote | Settings → Notifications & reports → Notification policy | 60 s |
-| Mensagens por canal por hora | Settings → Notifications & reports → Notification policy | 20 |
-| URL público (ligações diretas) | Settings → Notifications & reports → Notification policy, ou `DUMBMONIT_PUBLIC_URL` | vazio |
+| Escalonamento se ninguém confirmar | Definições › Notificações › Notification policy | desligado |
+| Janela de lote | Definições › Notificações › Notification policy | 60 s |
+| Mensagens por canal por hora | Definições › Notificações › Notification policy | 20 |
+| URL público (ligações diretas) | Definições › Notificações › Notification policy, ou `DUMBMONIT_PUBLIC_URL` | vazio |
 
 ## Histerese e substituições por monitor {#hysteresis-and-per-device-overrides}
 
@@ -64,8 +64,7 @@ ou se resolveu 4 vezes dentro de 30 minutos está *a oscilar*: um
 aviso sai («flapping: 4 changes in 30 min, notifications held for 30
 min») e nada mais sobre esse alerta é enviado até a retenção
 terminar. Uma resolução depois da retenção continua a ser anunciada.
-Ajuste-a ou desligue-a em Settings → Notifications & reports →
-Notification policy → More options (`flap_events`, `flap_window_secs`,
+Ajuste-a ou desligue-a em Definições › Notificações › Notification policy › More options (`flap_events`, `flap_window_secs`,
 `flap_hold_secs`; `flap_events: 0` desativa-a).
 
 ## Opções de entrega por canal {#per-channel-delivery-options}

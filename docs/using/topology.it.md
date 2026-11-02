@@ -1,7 +1,7 @@
 # Mappa della topologia
 
-La pagina **Mappa** (pulsante **Mappa** nella pagina dei monitor, *Mappa* nella
-palette dei comandi, `/map`) disegna tutta l'infrastruttura in un'immagine. Nulla
+La scheda **Mappa** (**Monitor › Mappa**, `g m`, o *Mappa* nella
+palette dei comandi) disegna tutta l'infrastruttura in un'immagine. Nulla
 si inserisce a mano: ogni collegamento viene da ciò che DumbMonit sa già.
 
 ## Da dove vengono i collegamenti

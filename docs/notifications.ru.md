@@ -45,7 +45,7 @@
 
 ## Создание и проверка канала {#creating-and-testing-a-channel}
 
-1. Откройте **Settings → Notifications & reports → Add channel** (`/settings/notifications`).
+1. Откройте **Настройки › Уведомления › Add channel** (`/settings/notifications`).
 2. Дайте ему осмысленное имя ("Discord — family", "SMS — on-call"). Именно это
    имя вы позже выберете в правилах оповещений.
 3. Выберите тип канала, затем заполните описанные ниже поля.
@@ -599,8 +599,7 @@ warning, `timeSensitive` для критического оповещения. �
 браузер (установленный как приложение или нет) получает оповещения даже при
 закрытых вкладках.
 
-1. На каждом телефоне или компьютере откройте DumbMonit и перейдите в **Settings
-   → Push notifications → Enable on this device**, затем **Send a test**. На
+1. На каждом телефоне или компьютере откройте DumbMonit и перейдите в **Настройки › Моя учётная запись › Push-уведомления › Enable on this device**, затем **Send a test**. На
    iPhone и iPad сначала добавьте DumbMonit на экран «Домой». Пошаговое
    руководство находится в [Push-уведомления (PWA)](using/push-notifications.md).
 2. Создайте здесь канал **Web Push**. У него нет секрета: его получатели —

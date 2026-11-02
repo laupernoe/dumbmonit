@@ -2,20 +2,21 @@
 
 ![Die Alerts-Seite: was gerade passiert, Wartung, Historie und die Regeln](../assets/screenshots/alerts-light.png){ loading=lazy }
 
-Alles zur Alarmierung auf einer Seite, hinter vier Tabs. Der Tab steht in
-der URL (`/alerts#rules`), sodass eine Ansicht verlinkbar ist.
+Alles zur Alarmierung auf einer Seite, hinter fünf Tabs. Der Tab steht in
+der URL (`/alerts?tab=rules`), sodass eine Ansicht verlinkbar ist.
 **Schedule maintenance**, oben rechts, öffnet das Formular für ein
 Fenster von jedem Tab aus.
 
 | Tab | Was er enthält |
 |---|---|
-| **Now** | Die Live-Liste der Probleme, eine Zeile je Problem. Siehe [Die Now-Liste](#the-now-list). Das Badge auf dem Tab, und auf Alerts in der oberen Leiste, ist die Anzahl dessen, was noch Ihre Aufmerksamkeit braucht. |
-| **Maintenance** | Wartungsfenster, *Active now* oder *Scheduled*, einmalig, wöchentlich oder monatlich, jeweils mit dem nächsten Vorkommen (`#scheduled`). Siehe [Wartungsfenster](../alerting/maintenance.md). |
-| **History** | Die letzten 200 Übergänge, jeder mit Monitor, Regel und dem Geschehenen; behobene können gelöscht werden. |
-| **Rules** | Jede Regel mit ihrem Schweregrad, einer *Built-in*-Markierung und, falls ein Monitor sie ignoriert, *Ignored on N monitors*; aktivieren, inline bearbeiten, eigene löschen, eine Schwellenwertregel erstellen. Siehe [Regeln](../alerting/rules.md). |
+| **Jetzt** | Die Live-Liste der Probleme, eine Zeile je Problem. Siehe [Die Now-Liste](#the-now-list). Das Badge auf dem Tab und auf Warnungen im linken Menü ist die Anzahl dessen, was noch Ihre Aufmerksamkeit braucht. Die Wartungsfenster, *Active now* oder *Scheduled* (einmalig, wöchentlich oder monatlich, jeweils mit dem nächsten Vorkommen), klappen über der Liste ein. Siehe [Wartungsfenster](../alerting/maintenance.md). |
+| **Verlauf** | Die letzten 200 Übergänge, jeder mit Monitor, Regel und dem Geschehenen; behobene können gelöscht werden. |
+| **Regeln** | Jede Regel mit ihrem Schweregrad, einer *Built-in*-Markierung und, falls ein Monitor sie ignoriert, *Ignored on N monitors*; aktivieren, inline bearbeiten, eigene löschen, eine Schwellenwertregel erstellen. Siehe [Regeln](../alerting/rules.md). |
+| **Automatisierung** | Runbooks, Behebungsaktionen und Richtlinien sowie das Protokoll dessen, was lief. Siehe [Runbooks und Behebung](../alerting/remediation.md). |
+| **Bereitschaft** | Pläne und Eskalationsrichtlinien. Siehe [Bereitschaft](../alerting/oncall.md). |
 
 Benachrichtigungskanäle und die Benachrichtigungsrichtlinie finden Sie unter
-**Settings → Notifications & reports** (siehe [Notifications](#notifications)).
+**Einstellungen › Benachrichtigungen** (siehe [Notifications](#notifications)).
 
 Dasselbe Wahrheitsmodell füttert das Übersichts-Bulletin und diese
 Seite, daher sind sich beide immer einig, was Ihre Aufmerksamkeit

@@ -25,30 +25,21 @@ der Instanz gespeichert, sodass ein zweiter Browser die Anleitung nicht
 neu beginnt. Siehe
 [Ihren ersten Monitor hinzufügen](../install/first-device.md#the-three-first-steps).
 
-## Die fünf Kennzahlen und der Health River {#the-figures}
+## Die vier Kennzahlen {#the-figures}
 
-Unter dem Banner stehen fünf Kennzahlen: **Monitors up** (von der Gesamtzahl, mit
-den Zahlen ausgefallener und pausierter Monitore), **Availability 30 d**,
-**p95 response time**, **Open alerts** (kritisch und Warnung) und **MTTR 30 d**
-(mittlere Zeit bis zur Behebung). Der Zeitraum in der Kopfzeile steuert p95 und
-den River.
+Unter dem Banner stehen vier Kennzahlen: **Monitore online** (von der Gesamtzahl, mit den Zahlen ausgefallener und pausierter Monitore), **Verfügbarkeit 30 T**, **p95-Antwortzeit** und **Offene Alarme** (kritisch und Warnung). Der Zeitraum in der Kopfzeile steuert p95 und den Gesundheitsverlauf.
 
-Der **Health River** ist ein Streifen pro Monitor, eine Zelle pro Abschnitt des
-Zeitraums, die schlechtesten Monitore oben. Ein Zustand steht immer neben einer
-Form (Kreis aktiv, Raute beeinträchtigt, Quadrat ausgefallen), nie allein als
-Farbe.
+## Was Aufmerksamkeit braucht {#what-needs-attention}
 
-## Die Monitortabelle {#the-monitor-table}
+Die Liste neben dem Gesundheitsverlauf enthält nur, was jetzt kaputt ist, das Schlimmste zuerst, jede Zeile mit ihrer Schnellaktion: einen Alarm bestätigen oder zurückstellen oder einen Monitor stummschalten (das kleine Kreuz). Ist nichts kaputt, schläft die Taube und die Karte sagt es. Am Fuß steht die **Woche voraus** in einer Zeile: was in den nächsten sieben Tagen abläuft. **Alle ansehen** öffnet die [Warnungen](alerts.md).
 
-Die Tabelle listet jeden Monitor, den schlechtesten zuerst. Sie filtert nach Zustand,
-Typ und Text, lässt Sie Spalten hinzufügen (Adresse, Ordner) oder entfernen und
-wird per Tastatur bedient: ++j++ / ++k++ bewegen, ++enter++ wählt, ++o++ öffnet.
+## Der Gesundheitsverlauf {#the-health-river}
 
-Der gewählte Monitor speist das **Kontextpanel** rechts, wie ein Inspektor: was
-Aufmerksamkeit braucht (mit den Alarmaktionen, siehe [Alerts-Seite](alerts.md)),
-**Check now** und **Silence 1 h**, die nächsten Vorhersagen und wer Bereitschaft
-hat. ++i++ blendet es ein oder aus; auf schmaleren Bildschirmen öffnet es sich als
-Schublade. Die vollständige Liste steht auf der [Monitors-Seite](devices.md).
+Ein Streifen pro Monitor, eine Zelle pro Abschnitt des Zeitraums, die schlechtesten Monitore oben. Die Übersicht zeigt die ersten acht; **Alle Monitore ansehen** öffnet den Tab [Liste](devices.md) von Monitore. Ein Zustand steht immer neben einer Form (Kreis aktiv, Raute beeinträchtigt, Quadrat ausgefallen), nie allein als Farbe. Auf einem Telefon öffnet sich der Verlauf per Tipp.
+
+## Zwei Diagramme {#charts}
+
+Weiter unten: die **Antwortzeit** der gesamten Flotte über den Zeitraum (p95 und Median, mit den langsamsten Monitoren) und die **Warnungen der letzten sieben Tage** (ausgelöst und behoben).
 
 ## Wall-Modus {#wall-mode}
 
@@ -79,27 +70,19 @@ Eingabefeld, Ergebnisse in drei Gruppen.
 
 | Gruppe | Einträge |
 |---|---|
-| Pages | Overview, Monitors, Alerts, Notifications, Status pages, Settings, Wall mode, Documentation |
+| Pages | Übersicht, Monitore, Karte, Warnungen, Automatisierung, Benachrichtigungen, Metrik-Explorer, Sicherheit, Statusseiten, Berichte, Logs, Einstellungen, Wandmodus, Dokumentation |
 | Actions | Add a monitor, Scan my network, Schedule maintenance, Add notification channel, New status page, Announce an incident |
 | Monitors | Jeder Monitor, mit seiner Zustands-LED; ++enter++ öffnet ihn |
 
 ## Navigation {#navigation}
 
-Eine schmale **Icon-Leiste** links listet jedes Ziel: Overview, Monitors, Alerts
-(mit der Anzahl dessen, was Ihre Aufmerksamkeit braucht), Dashboards, Explore, die
-Topologiekarte, Security, Logs, Status pages, Reports und Settings. Unten stehen
-die Dokumentation, GitHub und Ihr Konto. Die Kopfzeile zeigt, wo Sie sind, den
-Schalter **LIVE**, der die eigenen Aktualisierungen der Konsole pausiert, den
-Zeitraum, die Palette, **Wall mode** und **New monitor**. Auf einem Telefon wird
-die Leiste zu einer unteren Tab-Leiste mit dem Wichtigsten und **More**.
+Ein schmales **Menü** links listet vier Ziele: **Übersicht**, **Monitore**, **Warnungen** (mit der Anzahl dessen, was Ihre Aufmerksamkeit braucht) und **Status**. Unten stehen **Einstellungen**, **Wandmodus**, die Dokumentation, GitHub und Ihr Konto. Was früher eine eigene Seite war, ist jetzt ein Tab dieser Einträge. Die Kopfzeile zeigt, wo Sie sind, den Schalter **LIVE**, der die eigenen Aktualisierungen der Konsole pausiert, den Zeitraum, die Palette und **Monitor hinzufügen**. Auf einem Telefon wird das Menü zu einer unteren Tab-Leiste mit dem Wichtigsten und **Mehr**.
 
-- **Overview**: ist alles in Ordnung, und was braucht Sie.
-- **Monitors**: jede überwachte Quelle. Siehe [Monitors-Seite](devices.md).
-- **Alerts**: was feuert, Wartungsfenster, Historie und die Regeln. Siehe
-  [Alerts-Seite](alerts.md).
-- **Settings**: Ihr Konto, Benutzer und Single Sign-On, Tokens,
-  Benachrichtigungskanäle, Erscheinungsbild, About. Siehe
-  [Settings](settings.md).
+- **Übersicht**: ist alles in Ordnung, und was braucht Sie.
+- **Monitore**: jede überwachte Quelle, in vier Tabs: **Liste**, **Karte**, **Logs** und **Sicherheit**. Siehe [Monitore](../monitors/index.md).
+- **Warnungen**: fünf Tabs: **Jetzt**, **Verlauf**, **Regeln**, **Automatisierung** und **Bereitschaft**. Siehe [Alerts-Seite](alerts.md).
+- **Status**: **Seiten** (öffentliche Statusseiten) und **Berichte**. Siehe [Status](../status/index.md).
+- **Einstellungen**: Ihr Konto, Team und Zugang, Überwachung, Benachrichtigungen, die Wand und das System. Siehe [Einstellungen](../settings/index.md).
 
 Die Oberfläche ist dunkel, und nichts darauf vermittelt Status allein durch
 Farbe: Eine Markierung kommt immer mit einem Wort (Reporting, Unreachable,

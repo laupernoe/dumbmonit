@@ -14,7 +14,7 @@ Settings holds what is administrative: the instance itself, your account, who ca
 | Wall display | `/settings/wall` | Wall mode: what it shows, and the way in ([Wall mode](wall.md)) |
 | System | `/settings/system` | Backup, Configuration files, DumbMonit itself, Data & retention, Logs, API & assistants, About |
 
-Each section keeps its own anchor: `/settings#agents` forwards to `/settings/monitoring#agents`. The old links (`/alerts#notifications`) forward to the new place too. Status pages and reports are not in Settings any more: they have their own pages, **Status pages** (`/status`) and **Reports** (`/reports`); `/settings/status` and `/settings/reports` forward there. The wall's news and widgets are gone: their old links (`#news`, `#widgets`) open the Wall display tab, where **Wall music** (`#music`) is.
+Each section keeps its own anchor: `/settings#agents` forwards to `/settings/monitoring#agents`. The old links (`/alerts#notifications`) forward to the new place too. Status pages and reports are not in Settings any more: they are the tabs **Pages** and **Reports** of **Status** (`/status`); `/settings/status` and `/settings/reports` forward there. The wall's news and widgets are gone: their old links (`#news`, `#widgets`) open the Wall display tab, where **Wall music** (`#music`) is.
 
 ## Appearance {#appearance}
 
@@ -206,7 +206,7 @@ In **Settings → Monitoring**, below the agents: a score for how well the insta
 
 ## Reports
 
-On its own **Reports** page (`/reports`; it used to sit in Settings → Notifications): the availability (SLA) export of a period, the periodic availability emails for the team and the history of their sends. Admin-only. See [Email reports](reports.md).
+In **Status › Reports** (`/status?tab=reports`; it used to sit in Settings › Notifications): the availability (SLA) export of a period, the periodic availability emails for the team and the history of their sends. Admin-only. See [Email reports](reports.md).
 
 ## Data & retention {#data-retention}
 
@@ -222,7 +222,7 @@ volume is full.
   state (last window written, history copy progress). Graphs, status pages and
   reports reaching past the raw retention are answered from it.
 * **Log store**: off by default. Turning it on starts the embedded VictoriaLogs
-  and opens the admin-only **Logs** page, a LogsQL search over the server's
+  and opens the admin-only **Monitors › Logs** tab, a LogsQL search over the server's
   own logs.
 
 Saving a retention restarts the embedded process concerned for a few seconds;

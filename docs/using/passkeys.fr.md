@@ -32,7 +32,7 @@ et en ajouter de nouvelles.
 
 ## Ajouter une clé
 
-**Réglages → Compte et sécurité → Clés d'accès → Ajouter une clé d'accès.**
+**Réglages › Mon compte › Compte et sécurité › Clés d'accès › Ajouter une clé d'accès.**
 Donnez-lui un nom (Portable, Téléphone, YubiKey), confirmez avec votre mot de
 passe, puis suivez l'invite du navigateur. Jusqu'à 20 clés par compte : une par
 appareil, et une clé de sécurité en secours.

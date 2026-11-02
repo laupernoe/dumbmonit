@@ -25,31 +25,36 @@ Le choix est stocké sur l'instance, un second navigateur ne relance donc
 pas le guide. Voir
 [Ajouter votre première surveillance](../install/first-device.md#the-three-first-steps).
 
-## Les cinq chiffres et la rivière de santé {#the-figures}
+## Les quatre chiffres {#the-figures}
 
-Sous le bandeau, cinq chiffres : **Moniteurs actifs** (sur le total, avec les
-nombres en panne et en pause), **Disponibilité 30 j**, **Temps de réponse p95**,
-**Alertes ouvertes** (critiques et avertissements) et **MTTR 30 j** (temps moyen
-de résolution). La période choisie dans l'en-tête pilote le p95 et la rivière.
+Sous le bandeau, quatre chiffres : **Moniteurs actifs** (sur le total, avec les
+nombres en panne et en pause), **Disponibilité 30 j**, **Réponse p95** et
+**Alertes ouvertes** (critiques et avertissements). La période choisie dans
+l'en-tête pilote le p95 et la rivière.
 
-La **rivière de santé** est une bande par moniteur, une case par tranche de la
-période, les pires moniteurs en haut. Un état est toujours écrit à côté d'une
-forme (rond actif, losange dégradé, carré en panne), jamais indiqué par la seule
-couleur.
+## Ce qui demande attention {#what-needs-attention}
 
-## Le tableau des moniteurs {#the-monitor-table}
+La liste à côté de la rivière ne contient que ce qui est cassé maintenant, du
+pire au moins grave, chaque ligne avec son action rapide : acquitter ou reporter
+une alerte, ou mettre une surveillance en sourdine (la petite croix). Sans rien
+de cassé, le pigeon dort et la carte le dit. À son pied, la **semaine à venir**
+en une ligne : ce qui expire dans les sept jours. **Tout voir** ouvre les
+[Alertes](alerts.md).
 
-Le tableau liste chaque moniteur, du pire au meilleur. Il se filtre par état, type
-et texte, accepte des colonnes en plus (adresse, dossier) ou en moins, et se
-pilote au clavier : ++j++ / ++k++ pour se déplacer, ++enter++ pour sélectionner,
-++o++ pour ouvrir.
+## La rivière de santé {#the-health-river}
 
-Le moniteur sélectionné alimente le **panneau de contexte** à droite, façon
-inspecteur : ce qui est à traiter (avec les actions sur les alertes, voir la
-[page Alertes](alerts.md)), **Vérifier** et **Silence 1 h**, les prévisions les
-plus proches et qui est d'astreinte. ++i++ l'affiche ou le masque ; sur un écran
-plus étroit, il s'ouvre en tiroir. Pour la liste complète, voir la
-[page Moniteurs](devices.md).
+Une bande par surveillance, une case par tranche de la période, les pires en
+haut. La vue d'ensemble montre les huit premières ; **Voir toutes les
+surveillances** ouvre l'onglet [Liste](devices.md) de Surveillances. Un état est
+toujours écrit à côté d'une forme (rond actif, losange dégradé, carré en panne),
+jamais indiqué par la seule couleur. Sur téléphone, la rivière s'ouvre d'un
+toucher.
+
+## Deux graphiques {#charts}
+
+Plus bas : le **temps de réponse** de tout le parc sur la période (p95 et
+médiane, avec les surveillances les plus lentes) et les **alertes des sept
+derniers jours** (déclenchées et résolues).
 
 ## Mode mur {#wall-mode}
 
@@ -80,27 +85,31 @@ champ, des résultats en trois groupes.
 
 | Groupe | Entrées |
 |---|---|
-| Pages | Aperçu, Moniteurs, Alertes, Notifications, Pages de statut, Réglages, Mode mur, Documentation |
+| Pages | Vue d’ensemble, Surveillances, Carte, Alertes, Automatisation, Notifications, Explorateur de métriques, Sécurité, Pages de statut, Rapports, Journaux, Réglages, Mode mural, Documentation |
 | Actions | Ajouter un moniteur, Scanner mon réseau, Planifier une maintenance, Ajouter un canal de notification, Nouvelle page de statut, Annoncer un incident |
 | Moniteurs | Chaque moniteur, avec sa LED d'état ; ++enter++ l'ouvre |
 
 ## Navigation {#navigation}
 
-Un **rail d'icônes** étroit à gauche liste chaque destination : Aperçu, Moniteurs,
-Alertes (avec le nombre de ce qui vous réclame), Tableaux de bord, Explorer, la
-carte de topologie, Sécurité, Journaux, Pages de statut, Rapports et Réglages. Au
-pied : la documentation, GitHub et votre compte. L'en-tête dit où vous êtes, avec
-l'interrupteur **DIRECT** qui met en pause les rafraîchissements de la console,
-la période, la palette, **Mode mur** et **Nouveau moniteur**. Sur téléphone, le
-rail devient une barre d'onglets avec l'essentiel et **Plus**.
+Un **menu** étroit à gauche liste quatre destinations : **Vue d’ensemble**,
+**Surveillances**, **Alertes** (avec le nombre de ce qui vous réclame) et
+**Statut**. Au pied : **Réglages**, **Mode mural**, la documentation, GitHub et
+votre compte. Ce qui était une page à part est désormais un onglet de ces
+entrées. L'en-tête dit où vous êtes, avec l'interrupteur **DIRECT** qui met en
+pause les rafraîchissements de la console, la période, la palette et **Nouvelle
+surveillance**. Sur téléphone, le menu devient une barre d'onglets avec
+l'essentiel et **Plus**.
 
-- **Aperçu** : tout va-t-il bien, et qu'est-ce qui vous réclame.
-- **Moniteurs** : chaque source que vous surveillez. Voir la
-  [page Moniteurs](devices.md).
-- **Alertes** : ce qui se déclenche, fenêtres de maintenance, historique et
-  règles. Voir la [page Alertes](alerts.md).
-- **Réglages** : votre compte, utilisateurs et authentification unique, jetons,
-  canaux de notification, apparence, à propos. Voir [Réglages](settings.md).
+- **Vue d’ensemble** : tout va-t-il bien, et qu'est-ce qui vous réclame.
+- **Surveillances** : chaque source que vous surveillez, en quatre onglets :
+  **Liste**, **Carte**, **Journaux** et **Sécurité**. Voir
+  [Surveillances](../monitors/index.md).
+- **Alertes** : cinq onglets : **Maintenant**, **Historique**, **Règles**,
+  **Automatisation** et **Astreintes**. Voir la [page Alertes](alerts.md).
+- **Statut** : **Pages** (pages de statut publiques) et **Rapports**. Voir
+  [Statut](../status/index.md).
+- **Réglages** : votre compte, équipe et accès, supervision, notifications, le
+  mur et le système. Voir [Réglages](../settings/index.md).
 
 L'interface est sombre, et rien n'y indique un état par la seule couleur : un
 repère s'accompagne toujours d'un mot (Reporting, Unreachable, Advisory, Warning,

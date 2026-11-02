@@ -20,7 +20,7 @@ die Web-UI auf.
 
 ## 1. Ein Token erstellen
 
-Settings → **API & assistants** (`/settings#assistant`). Benennen Sie
+Einstellungen › System › **API und Assistenten** (`/settings#assistant`). Benennen Sie
 das Token nach dem Assistant oder der Maschine, auf der er läuft
 ("Claude on my laptop"), wählen Sie dann:
 
@@ -297,7 +297,7 @@ unbekannter Monitor — ist kein Protokollfehler: Es antwortet normal mit
   Token-Namen und dem Werkzeug protokolliert, nie den Argumenten;
   jeder Schreibvorgang über die REST-API mit dem Token-Namen, der
   Methode, dem Pfad und dem Status, nie dem Body. Das Erstellen und
-  Widerrufen von Tokens steht im Audit-Log (Settings → Security).
+  Widerrufen von Tokens steht im Audit-Log (Einstellungen › Mein Konto › Konto und Sicherheit).
 
 ## Fehlerbehebung
 

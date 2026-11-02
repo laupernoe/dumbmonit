@@ -97,7 +97,7 @@ de Spotify, haga lo que haga DumbMonit. Para una TV así, consulta
 1. **Crea una app de Spotify.** Abre el
    [Spotify Developer Dashboard](https://developer.spotify.com/dashboard), crea
    una app (cualquier nombre), marca **Web API** y **Web Playback SDK**, y
-   añade el URI de redirección que muestra **Settings → Wall music**:
+   añade el URI de redirección que muestra **Ajustes › Pantalla de pared › Música de pared**:
     - DumbMonit servido por HTTPS: `https://<tu dirección>/api/music/spotify/callback`.
       Spotify vuelve directamente a DumbMonit después de que apruebes.
     - DumbMonit servido por HTTP plano: `http://127.0.0.1:8888/callback`.
@@ -105,7 +105,7 @@ de Spotify, haga lo que haga DumbMonit. Para una TV así, consulta
       `localhost`), desde 2025. Nada responde en esa dirección: tras
       aprobar, tu navegador muestra una página de error cuya dirección
       lleva el código — cópialo y pégalo de vuelta en DumbMonit.
-2. **Conecta.** En **Settings → Wall music**, pega el **Client ID** de
+2. **Conecta.** En **Ajustes › Pantalla de pared › Música de pared**, pega el **Client ID** de
    la app (no hay secreto: DumbMonit usa Authorization Code con PKCE) y
    elige **Connect Spotify**, y luego aprueba en Spotify **con la
    cuenta que usa tu teléfono**.
@@ -119,7 +119,7 @@ de Spotify, haga lo que haga DumbMonit. Para una TV así, consulta
    dispositivos y elige **DumbMonit Wall**. El sonido sale de la TV, y
    la pared muestra la portada, título y progreso.
 
-**Settings → Wall music → Speaker** muestra si todo se cumple, sin
+**Ajustes › Pantalla de pared › Música de pared › Speaker** muestra si todo se cumple, sin
 caminar hasta la TV: la cuenta, Premium, si Spotify lista el altavoz
 entre los dispositivos de la cuenta ahora mismo (y qué dispositivos
 lista), y cada pared que reportó en los últimos quince minutos — su
@@ -129,8 +129,7 @@ sonaba por última vez); cada pared lista también tiene su propio **Test
 sound**. En la propia pared, el panel **Music** tiene **Play here**, que
 mueve lo que sea que suena en la cuenta a esta pantalla.
 
-**El nombre.** Renombra el altavoz en **Settings → Wall music →
-Speaker** («Living room TV»); cada pared recoge el nombre nuevo en
+**El nombre.** Renombra el altavoz en **Ajustes › Pantalla de pared › Música de pared › Speaker** («Living room TV»); cada pared recoge el nombre nuevo en
 segundos. Para nombrar solo una pared, añade `?speaker=Kitchen` a su
 dirección — la pantalla lo recuerda (`?speaker=` lo olvida).
 
@@ -203,7 +202,7 @@ trabajo.
 
 ### Un enlace enviado a cada pared {#a-link-sent-to-every-wall}
 
-En **Settings → Wall music** (o en el propio panel **Music** de la
+En **Ajustes › Pantalla de pared › Música de pared** (o en el propio panel **Music** de la
 pared), pega un enlace de Spotify, Deezer o YouTube a una pista, álbum,
 lista de reproducción, episodio o vídeo y elige **Play on the wall**.
 Cada pared lo reproduce en el reproductor embebido oficial del

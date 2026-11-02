@@ -1,99 +1,955 @@
 # Navigation titles per language (suffix of the translated pages, e.g. page.fr.md).
+# Section titles and generic page titles of mkdocs.yml; product names stay as they are.
+# A title ending in " (beta)" is translated as "<translated title> (<translated beta>)" by the hook.
 
 fr:
-  "Home": "Accueil"
-  "Live demo": "Démo en ligne"
-  "Install": "Installation"
-  "Devices": "Appareils"
-  "Integration packs": "Packs d'intégration"
-  "Alerting": "Alertes"
-  "Using DumbMonit": "Utiliser DumbMonit"
-  "Reference": "Référence"
-  "Sizing": "Dimensionnement"
-  "External VictoriaMetrics / cluster": "VictoriaMetrics externe / cluster"
-  "Development": "Développement"
-  "FAQ": "FAQ"
+  Home: Accueil
+  Get started: Démarrer
+  Overview: Vue d’ensemble
+  Monitors: Surveillances
+  Alerts: Alertes
+  Status: Statut
+  Settings: Réglages
+  Works with: Compatible avec
+  Integration packs: Packs d'intégration
+  Reference: Référence
+  Development: Développement
+  FAQ: FAQ
+  Install: Installation
+  First steps: Premiers pas
+  Keep it running: Exploitation
+  HTTPS and encryption: HTTPS et chiffrement
+  Agent channel security: Sécurité du canal des agents
+  Update: Mise à jour
+  Verify a release: Vérifier une version
+  Run a demo instance: Lancer une instance de démonstration
+  Interface and setup wizard: Interface et assistant de configuration
+  Add your first monitor: Ajouter votre première surveillance
+  Monitor a remote site: Surveiller un site distant
+  Backup and restore: Sauvegarde et restauration
+  Watching DumbMonit itself: Surveiller DumbMonit lui-même
+  Server logs: Journaux du serveur
+  Overview page: Page Vue d’ensemble
+  Wall mode and music: Mode mural et musique
+  Monitors page: Page Surveillances
+  Map: Carte
+  Topology map: Carte de topologie
+  World map: Carte du monde
+  Logs (agents, syslog, SNMP traps): Journaux (agents, syslog, traps SNMP)
+  Security: Sécurité
+  Security score: Score de sécurité
+  CVE & vulnerabilities: CVE et vulnérabilités
+  Metrics explorer: Explorateur de métriques
+  Add monitors: Ajouter des surveillances
+  Network discovery: Découverte du réseau
+  Monitors from Docker labels: Surveillances par labels Docker
+  Import from other tools: Importer depuis d'autres outils
+  Configuration files (GitOps): Fichiers de configuration (GitOps)
+  Integrations: Intégrations
+  All integrations: Toutes les intégrations
+  Servers and agents: Serveurs et agents
+  Virtualization and containers: Virtualisation et conteneurs
+  Storage and NAS: Stockage et NAS
+  Network and firewalls: Réseau et pare-feu
+  Hardware and power: Matériel et alimentation
+  Databases and messaging: Bases de données et files de messages
+  Web servers and proxies: Serveurs web et proxys
+  Identity and security: Identité et sécurité
+  Cloud and SaaS: Cloud et SaaS
+  Home and media: Maison et médias
+  Self-hosted apps: Applications auto-hébergées
+  Backup: Sauvegarde
+  Email: E-mail
+  Observability and logs: Observabilité et journaux
+  Internet and website checks: Vérifications Internet et sites web
+  Linux, macOS, FreeBSD and Windows agent: Agent Linux, macOS, FreeBSD et Windows
+  Deploy the agent with Active Directory: Déployer l'agent avec Active Directory
+  Windows event log alerts: Alertes sur le journal d'événements Windows
+  Windows without an agent (WinRM): Windows sans agent (WinRM)
+  Network configuration backup: Sauvegarde de la configuration réseau
+  OpenVPN server: Serveur OpenVPN
+  Server hardware (Redfish): Matériel serveur (Redfish)
+  UPS with NUT: Onduleur avec NUT
+  Redis and Valkey: Redis et Valkey
+  GitLab (self-managed): GitLab (auto-hébergé)
+  Third-party service status: État des services tiers
+  VictoriaMetrics and VictoriaLogs: VictoriaMetrics et VictoriaLogs
+  Prometheus exporter: Exporter Prometheus
+  OpenTelemetry source: Source OpenTelemetry
+  Services (HTTP, TCP, DNS, ping, TLS, NTP): Services (HTTP, TCP, DNS, ping, TLS, NTP)
+  Heartbeat (push): Heartbeat (push)
+  Website health & SEO: Santé et SEO des sites web
+  Website changes: Modifications de sites web
+  Domain expiry: Expiration de domaine
+  Mail server reputation: Réputation du serveur de messagerie
+  IP range blocklist: Listes de blocage de plages IP
+  Demo monitor: Surveillance de démonstration
+  How alerting works: Fonctionnement des alertes
+  Now and History: Maintenant et Historique
+  Rules: Règles
+  Automation and runbooks: Automatisation et procédures
+  On-call: Astreintes
+  Maintenance windows: Fenêtres de maintenance
+  Notifications: Notifications
+  Notification policy: Politique de notification
+  Notification channels: Canaux de notification
+  Status pages: Pages de statut
+  Reports: Rapports
+  All settings: Tous les réglages
+  My account: Mon compte
+  Passkeys: Clés d'accès (passkeys)
+  Push notifications (PWA): Notifications push (PWA)
+  Team and access: Équipe et accès
+  Teams and permissions: Équipes et permissions
+  SCIM provisioning: Provisionnement SCIM
+  Multi-client (MSP): Multi-clients (MSP)
+  Connect an assistant (MCP): Connecter un assistant (MCP)
+  Website banner: Bandeau de site web
+  What a pack is: Qu'est-ce qu'un pack
+  Write your first pack: Écrire votre premier pack
+  Format reference: Référence du format
+  HTTP API: API HTTP
+  Configuration: Configuration
+  Metrics: Métriques
+  Sizing: Dimensionnement
+  External VictoriaMetrics / cluster: VictoriaMetrics externe / cluster
+  Architecture: Architecture
+  Security model: Modèle de sécurité
+  Assurance case: Argumentaire d'assurance
+  Reproducible builds: Builds reproductibles
+  Signing the agent binaries: Signature des binaires de l'agent
+  Roadmap: Feuille de route
+  (beta): bêta
 
 de:
-  "Home": "Startseite"
-  "Live demo": "Live-Demo"
-  "Install": "Installation"
-  "Devices": "Geräte"
-  "Integration packs": "Integrationspakete"
-  "Alerting": "Alarmierung"
-  "Using DumbMonit": "DumbMonit verwenden"
-  "Reference": "Referenz"
-  "Development": "Entwicklung"
-  "FAQ": "FAQ"
+  Home: Startseite
+  Get started: Los geht's
+  Overview: Übersicht
+  Monitors: Monitore
+  Alerts: Warnungen
+  Status: Status
+  Settings: Einstellungen
+  Works with: Funktioniert mit
+  Integration packs: Integrationspakete
+  Reference: Referenz
+  Development: Entwicklung
+  FAQ: FAQ
+  Install: Installation
+  First steps: Erste Schritte
+  Keep it running: Im Betrieb
+  HTTPS and encryption: HTTPS und Verschlüsselung
+  Agent channel security: Sicherheit des Agentenkanals
+  Update: Aktualisierung
+  Verify a release: Release überprüfen
+  Run a demo instance: Demo-Instanz starten
+  Interface and setup wizard: Oberfläche und Einrichtungsassistent
+  Add your first monitor: Ersten Monitor hinzufügen
+  Monitor a remote site: Einen entfernten Standort überwachen
+  Backup and restore: Sicherung und Wiederherstellung
+  Watching DumbMonit itself: DumbMonit selbst überwachen
+  Server logs: Server-Logs
+  Overview page: Die Übersichtsseite
+  Wall mode and music: Wandmodus und Musik
+  Monitors page: Die Monitor-Seite
+  Map: Karte
+  Topology map: Topologiekarte
+  World map: Weltkarte
+  Logs (agents, syslog, SNMP traps): Logs (Agenten, Syslog, SNMP-Traps)
+  Security: Sicherheit
+  Security score: Sicherheitsbewertung
+  CVE & vulnerabilities: CVE und Schwachstellen
+  Metrics explorer: Metrik-Explorer
+  Add monitors: Monitore hinzufügen
+  Network discovery: Netzwerkerkennung
+  Monitors from Docker labels: Monitore über Docker-Labels
+  Import from other tools: Import aus anderen Tools
+  Configuration files (GitOps): Konfigurationsdateien (GitOps)
+  Integrations: Integrationen
+  All integrations: Alle Integrationen
+  Servers and agents: Server und Agenten
+  Virtualization and containers: Virtualisierung und Container
+  Storage and NAS: Speicher und NAS
+  Network and firewalls: Netzwerk und Firewalls
+  Hardware and power: Hardware und Stromversorgung
+  Databases and messaging: Datenbanken und Messaging
+  Web servers and proxies: Webserver und Proxys
+  Identity and security: Identität und Sicherheit
+  Cloud and SaaS: Cloud und SaaS
+  Home and media: Smart Home und Medien
+  Self-hosted apps: Selbst gehostete Apps
+  Backup: Backup
+  Email: E-Mail
+  Observability and logs: Observability und Logs
+  Internet and website checks: Internet- und Website-Prüfungen
+  Linux, macOS, FreeBSD and Windows agent: Agent für Linux, macOS, FreeBSD und Windows
+  Deploy the agent with Active Directory: Agent mit Active Directory verteilen
+  Windows event log alerts: Warnungen aus dem Windows-Ereignisprotokoll
+  Windows without an agent (WinRM): Windows ohne Agent (WinRM)
+  Network configuration backup: Sicherung der Netzwerkkonfiguration
+  OpenVPN server: OpenVPN-Server
+  Server hardware (Redfish): Server-Hardware (Redfish)
+  UPS with NUT: USV mit NUT
+  Redis and Valkey: Redis und Valkey
+  GitLab (self-managed): GitLab (selbst verwaltet)
+  Third-party service status: Status von Drittanbieter-Diensten
+  VictoriaMetrics and VictoriaLogs: VictoriaMetrics und VictoriaLogs
+  Prometheus exporter: Prometheus-Exporter
+  OpenTelemetry source: OpenTelemetry-Quelle
+  Services (HTTP, TCP, DNS, ping, TLS, NTP): Dienste (HTTP, TCP, DNS, Ping, TLS, NTP)
+  Heartbeat (push): Heartbeat (Push)
+  Website health & SEO: Website-Zustand und SEO
+  Website changes: Website-Änderungen
+  Domain expiry: Domain-Ablauf
+  Mail server reputation: Reputation des Mailservers
+  IP range blocklist: Sperrlisten für IP-Bereiche
+  Demo monitor: Demo-Monitor
+  How alerting works: So funktioniert die Alarmierung
+  Now and History: Jetzt und Verlauf
+  Rules: Regeln
+  Automation and runbooks: Automatisierung und Runbooks
+  On-call: Bereitschaft
+  Maintenance windows: Wartungsfenster
+  Notifications: Benachrichtigungen
+  Notification policy: Benachrichtigungsrichtlinie
+  Notification channels: Benachrichtigungskanäle
+  Status pages: Statusseiten
+  Reports: Berichte
+  All settings: Alle Einstellungen
+  My account: Mein Konto
+  Passkeys: Passkeys
+  Push notifications (PWA): Push-Benachrichtigungen (PWA)
+  Team and access: Team und Zugang
+  Teams and permissions: Teams und Berechtigungen
+  SCIM provisioning: SCIM-Provisionierung
+  Multi-client (MSP): Mandantenfähigkeit (MSP)
+  Connect an assistant (MCP): Assistenten anbinden (MCP)
+  Website banner: Website-Banner
+  What a pack is: Was ein Paket ist
+  Write your first pack: Das erste Paket schreiben
+  Format reference: Formatreferenz
+  HTTP API: HTTP-API
+  Configuration: Konfiguration
+  Metrics: Metriken
+  Sizing: Dimensionierung
+  External VictoriaMetrics / cluster: Externes VictoriaMetrics / Cluster
+  Architecture: Architektur
+  Security model: Sicherheitsmodell
+  Assurance case: Assurance Case
+  Reproducible builds: Reproduzierbare Builds
+  Signing the agent binaries: Signieren der Agent-Binärdateien
+  Roadmap: Roadmap
+  (beta): Beta
 
 es:
-  "Home": "Inicio"
-  "Live demo": "Demo en vivo"
-  "Install": "Instalación"
-  "Devices": "Dispositivos"
-  "Integration packs": "Paquetes de integración"
-  "Alerting": "Alertas"
-  "Using DumbMonit": "Usar DumbMonit"
-  "Reference": "Referencia"
-  "Development": "Desarrollo"
-  "FAQ": "Preguntas frecuentes"
+  Home: Inicio
+  Get started: Empezar
+  Overview: Resumen
+  Monitors: Monitores
+  Alerts: Alertas
+  Status: Estado
+  Settings: Ajustes
+  Works with: Compatible con
+  Integration packs: Packs de integración
+  Reference: Referencia
+  Development: Desarrollo
+  FAQ: Preguntas frecuentes
+  Install: Instalación
+  First steps: Primeros pasos
+  Keep it running: En funcionamiento
+  HTTPS and encryption: HTTPS y cifrado
+  Agent channel security: Seguridad del canal de agentes
+  Update: Actualización
+  Verify a release: Verificar una versión
+  Run a demo instance: Ejecutar una instancia de demostración
+  Interface and setup wizard: Interfaz y asistente de configuración
+  Add your first monitor: Añadir su primer monitor
+  Monitor a remote site: Supervisar un sitio remoto
+  Backup and restore: Copia de seguridad y restauración
+  Watching DumbMonit itself: Vigilar DumbMonit mismo
+  Server logs: Registros del servidor
+  Overview page: La página de resumen
+  Wall mode and music: Modo pared y música
+  Monitors page: La página de monitores
+  Map: Mapa
+  Topology map: Mapa de topología
+  World map: Mapa mundial
+  Logs (agents, syslog, SNMP traps): Registros (agentes, syslog, traps SNMP)
+  Security: Seguridad
+  Security score: Puntuación de seguridad
+  CVE & vulnerabilities: CVE y vulnerabilidades
+  Metrics explorer: Explorador de métricas
+  Add monitors: Añadir monitores
+  Network discovery: Descubrimiento de red
+  Monitors from Docker labels: Monitores desde etiquetas de Docker
+  Import from other tools: Importar desde otras herramientas
+  Configuration files (GitOps): Archivos de configuración (GitOps)
+  Integrations: Integraciones
+  All integrations: Todas las integraciones
+  Servers and agents: Servidores y agentes
+  Virtualization and containers: Virtualización y contenedores
+  Storage and NAS: Almacenamiento y NAS
+  Network and firewalls: Red y cortafuegos
+  Hardware and power: Hardware y alimentación
+  Databases and messaging: Bases de datos y mensajería
+  Web servers and proxies: Servidores web y proxies
+  Identity and security: Identidad y seguridad
+  Cloud and SaaS: Nube y SaaS
+  Home and media: Hogar y multimedia
+  Self-hosted apps: Aplicaciones autoalojadas
+  Backup: Copias de seguridad
+  Email: Correo electrónico
+  Observability and logs: Observabilidad y registros
+  Internet and website checks: Comprobaciones de Internet y sitios web
+  Linux, macOS, FreeBSD and Windows agent: Agente para Linux, macOS, FreeBSD y Windows
+  Deploy the agent with Active Directory: Desplegar el agente con Active Directory
+  Windows event log alerts: Alertas del registro de eventos de Windows
+  Windows without an agent (WinRM): Windows sin agente (WinRM)
+  Network configuration backup: Copia de la configuración de red
+  OpenVPN server: Servidor OpenVPN
+  Server hardware (Redfish): Hardware de servidor (Redfish)
+  UPS with NUT: SAI con NUT
+  Redis and Valkey: Redis y Valkey
+  GitLab (self-managed): GitLab (autoalojado)
+  Third-party service status: Estado de servicios de terceros
+  VictoriaMetrics and VictoriaLogs: VictoriaMetrics y VictoriaLogs
+  Prometheus exporter: Exporter de Prometheus
+  OpenTelemetry source: Fuente OpenTelemetry
+  Services (HTTP, TCP, DNS, ping, TLS, NTP): Servicios (HTTP, TCP, DNS, ping, TLS, NTP)
+  Heartbeat (push): Heartbeat (push)
+  Website health & SEO: Estado y SEO de sitios web
+  Website changes: Cambios en sitios web
+  Domain expiry: Vencimiento de dominio
+  Mail server reputation: Reputación del servidor de correo
+  IP range blocklist: Listas de bloqueo de rangos IP
+  Demo monitor: Monitor de demostración
+  How alerting works: Cómo funcionan las alertas
+  Now and History: Ahora e Historial
+  Rules: Reglas
+  Automation and runbooks: Automatización y runbooks
+  On-call: Guardias
+  Maintenance windows: Ventanas de mantenimiento
+  Notifications: Notificaciones
+  Notification policy: Política de notificaciones
+  Notification channels: Canales de notificación
+  Status pages: Páginas de estado
+  Reports: Informes
+  All settings: Todos los ajustes
+  My account: Mi cuenta
+  Passkeys: Claves de acceso (passkeys)
+  Push notifications (PWA): Notificaciones push (PWA)
+  Team and access: Equipo y acceso
+  Teams and permissions: Equipos y permisos
+  SCIM provisioning: Aprovisionamiento SCIM
+  Multi-client (MSP): Multicliente (MSP)
+  Connect an assistant (MCP): Conectar un asistente (MCP)
+  Website banner: Banner de sitio web
+  What a pack is: Qué es un pack
+  Write your first pack: Escribir su primer pack
+  Format reference: Referencia del formato
+  HTTP API: API HTTP
+  Configuration: Configuración
+  Metrics: Métricas
+  Sizing: Dimensionamiento
+  External VictoriaMetrics / cluster: VictoriaMetrics externo / clúster
+  Architecture: Arquitectura
+  Security model: Modelo de seguridad
+  Assurance case: Caso de aseguramiento
+  Reproducible builds: Compilaciones reproducibles
+  Signing the agent binaries: Firma de los binarios del agente
+  Roadmap: Hoja de ruta
+  (beta): beta
 
 it:
-  "Home": "Home"
-  "Live demo": "Demo online"
-  "Install": "Installazione"
-  "Devices": "Dispositivi"
-  "Integration packs": "Pacchetti di integrazione"
-  "Alerting": "Allarmi"
-  "Using DumbMonit": "Usare DumbMonit"
-  "Reference": "Riferimento"
-  "Development": "Sviluppo"
-  "FAQ": "FAQ"
+  Home: Home
+  Get started: Introduzione
+  Overview: Panoramica
+  Monitors: Monitor
+  Alerts: Avvisi
+  Status: Stato
+  Settings: Impostazioni
+  Works with: Compatibile con
+  Integration packs: Pacchetti di integrazione
+  Reference: Riferimento
+  Development: Sviluppo
+  FAQ: FAQ
+  Install: Installazione
+  First steps: Primi passi
+  Keep it running: In esercizio
+  HTTPS and encryption: HTTPS e cifratura
+  Agent channel security: Sicurezza del canale degli agent
+  Update: Aggiornamento
+  Verify a release: Verificare una release
+  Run a demo instance: Avviare un'istanza dimostrativa
+  Interface and setup wizard: Interfaccia e procedura guidata
+  Add your first monitor: Aggiungere il primo monitor
+  Monitor a remote site: Monitorare una sede remota
+  Backup and restore: Backup e ripristino
+  Watching DumbMonit itself: Sorvegliare DumbMonit stesso
+  Server logs: Log del server
+  Overview page: La pagina Panoramica
+  Wall mode and music: Modalità parete e musica
+  Monitors page: La pagina dei monitor
+  Map: Mappa
+  Topology map: Mappa della topologia
+  World map: Mappa del mondo
+  Logs (agents, syslog, SNMP traps): Log (agent, syslog, trap SNMP)
+  Security: Sicurezza
+  Security score: Punteggio di sicurezza
+  CVE & vulnerabilities: CVE e vulnerabilità
+  Metrics explorer: Esplora metriche
+  Add monitors: Aggiungere monitor
+  Network discovery: Rilevamento della rete
+  Monitors from Docker labels: Monitor dalle etichette Docker
+  Import from other tools: Importare da altri strumenti
+  Configuration files (GitOps): File di configurazione (GitOps)
+  Integrations: Integrazioni
+  All integrations: Tutte le integrazioni
+  Servers and agents: Server e agent
+  Virtualization and containers: Virtualizzazione e container
+  Storage and NAS: Storage e NAS
+  Network and firewalls: Rete e firewall
+  Hardware and power: Hardware e alimentazione
+  Databases and messaging: Database e messaging
+  Web servers and proxies: Server web e proxy
+  Identity and security: Identità e sicurezza
+  Cloud and SaaS: Cloud e SaaS
+  Home and media: Casa e media
+  Self-hosted apps: App self-hosted
+  Backup: Backup
+  Email: E-mail
+  Observability and logs: Osservabilità e log
+  Internet and website checks: Controlli Internet e siti web
+  Linux, macOS, FreeBSD and Windows agent: Agent per Linux, macOS, FreeBSD e Windows
+  Deploy the agent with Active Directory: Distribuire l'agent con Active Directory
+  Windows event log alerts: Avvisi dal registro eventi di Windows
+  Windows without an agent (WinRM): Windows senza agent (WinRM)
+  Network configuration backup: Backup della configurazione di rete
+  OpenVPN server: Server OpenVPN
+  Server hardware (Redfish): Hardware dei server (Redfish)
+  UPS with NUT: UPS con NUT
+  Redis and Valkey: Redis e Valkey
+  GitLab (self-managed): GitLab (self-managed)
+  Third-party service status: Stato dei servizi di terze parti
+  VictoriaMetrics and VictoriaLogs: VictoriaMetrics e VictoriaLogs
+  Prometheus exporter: Exporter Prometheus
+  OpenTelemetry source: Sorgente OpenTelemetry
+  Services (HTTP, TCP, DNS, ping, TLS, NTP): Servizi (HTTP, TCP, DNS, ping, TLS, NTP)
+  Heartbeat (push): Heartbeat (push)
+  Website health & SEO: Stato e SEO dei siti web
+  Website changes: Modifiche ai siti web
+  Domain expiry: Scadenza del dominio
+  Mail server reputation: Reputazione del server di posta
+  IP range blocklist: Blocklist di intervalli IP
+  Demo monitor: Monitor dimostrativo
+  How alerting works: Come funzionano gli avvisi
+  Now and History: Adesso e Cronologia
+  Rules: Regole
+  Automation and runbooks: Automazione e runbook
+  On-call: Reperibilità
+  Maintenance windows: Finestre di manutenzione
+  Notifications: Notifiche
+  Notification policy: Criteri di notifica
+  Notification channels: Canali di notifica
+  Status pages: Pagine di stato
+  Reports: Report
+  All settings: Tutte le impostazioni
+  My account: Il mio account
+  Passkeys: Passkey
+  Push notifications (PWA): Notifiche push (PWA)
+  Team and access: Team e accesso
+  Teams and permissions: Team e permessi
+  SCIM provisioning: Provisioning SCIM
+  Multi-client (MSP): Multi-cliente (MSP)
+  Connect an assistant (MCP): Collegare un assistente (MCP)
+  Website banner: Banner per sito web
+  What a pack is: Che cos'è un pacchetto
+  Write your first pack: Scrivere il primo pacchetto
+  Format reference: Riferimento del formato
+  HTTP API: API HTTP
+  Configuration: Configurazione
+  Metrics: Metriche
+  Sizing: Dimensionamento
+  External VictoriaMetrics / cluster: VictoriaMetrics esterno / cluster
+  Architecture: Architettura
+  Security model: Modello di sicurezza
+  Assurance case: Caso di assurance
+  Reproducible builds: Build riproducibili
+  Signing the agent binaries: Firma dei binari dell'agent
+  Roadmap: Roadmap
+  (beta): beta
 
 pt:
-  "Home": "Início"
-  "Live demo": "Demonstração online"
-  "Install": "Instalação"
-  "Devices": "Dispositivos"
-  "Integration packs": "Pacotes de integração"
-  "Alerting": "Alertas"
-  "Using DumbMonit": "Utilizar o DumbMonit"
-  "Reference": "Referência"
-  "Development": "Desenvolvimento"
-  "FAQ": "FAQ"
+  Home: Início
+  Get started: Começar
+  Overview: Visão geral
+  Monitors: Monitores
+  Alerts: Alertas
+  Status: Estado
+  Settings: Definições
+  Works with: Compatível com
+  Integration packs: Pacotes de integração
+  Reference: Referência
+  Development: Desenvolvimento
+  FAQ: FAQ
+  Install: Instalação
+  First steps: Primeiros passos
+  Keep it running: Em funcionamento
+  HTTPS and encryption: HTTPS e encriptação
+  Agent channel security: Segurança do canal dos agentes
+  Update: Atualização
+  Verify a release: Verificar uma versão
+  Run a demo instance: Executar uma instância de demonstração
+  Interface and setup wizard: Interface e assistente de configuração
+  Add your first monitor: Adicionar o primeiro monitor
+  Monitor a remote site: Monitorizar um site remoto
+  Backup and restore: Cópia de segurança e restauro
+  Watching DumbMonit itself: Vigiar o próprio DumbMonit
+  Server logs: Registos do servidor
+  Overview page: A página Visão geral
+  Wall mode and music: Modo parede e música
+  Monitors page: A página de monitores
+  Map: Mapa
+  Topology map: Mapa de topologia
+  World map: Mapa-múndi
+  Logs (agents, syslog, SNMP traps): Registos (agentes, syslog, traps SNMP)
+  Security: Segurança
+  Security score: Pontuação de segurança
+  CVE & vulnerabilities: CVE e vulnerabilidades
+  Metrics explorer: Explorador de métricas
+  Add monitors: Adicionar monitores
+  Network discovery: Descoberta de rede
+  Monitors from Docker labels: Monitores a partir de etiquetas Docker
+  Import from other tools: Importar de outras ferramentas
+  Configuration files (GitOps): Ficheiros de configuração (GitOps)
+  Integrations: Integrações
+  All integrations: Todas as integrações
+  Servers and agents: Servidores e agentes
+  Virtualization and containers: Virtualização e contentores
+  Storage and NAS: Armazenamento e NAS
+  Network and firewalls: Rede e firewalls
+  Hardware and power: Hardware e energia
+  Databases and messaging: Bases de dados e mensagens
+  Web servers and proxies: Servidores web e proxies
+  Identity and security: Identidade e segurança
+  Cloud and SaaS: Cloud e SaaS
+  Home and media: Casa e multimédia
+  Self-hosted apps: Aplicações auto-alojadas
+  Backup: Cópias de segurança
+  Email: E-mail
+  Observability and logs: Observabilidade e registos
+  Internet and website checks: Verificações de Internet e de sites
+  Linux, macOS, FreeBSD and Windows agent: Agente para Linux, macOS, FreeBSD e Windows
+  Deploy the agent with Active Directory: Implementar o agente com o Active Directory
+  Windows event log alerts: Alertas do registo de eventos do Windows
+  Windows without an agent (WinRM): Windows sem agente (WinRM)
+  Network configuration backup: Cópia de segurança da configuração de rede
+  OpenVPN server: Servidor OpenVPN
+  Server hardware (Redfish): Hardware de servidor (Redfish)
+  UPS with NUT: UPS com NUT
+  Redis and Valkey: Redis e Valkey
+  GitLab (self-managed): GitLab (auto-alojado)
+  Third-party service status: Estado de serviços de terceiros
+  VictoriaMetrics and VictoriaLogs: VictoriaMetrics e VictoriaLogs
+  Prometheus exporter: Exporter do Prometheus
+  OpenTelemetry source: Fonte OpenTelemetry
+  Services (HTTP, TCP, DNS, ping, TLS, NTP): Serviços (HTTP, TCP, DNS, ping, TLS, NTP)
+  Heartbeat (push): Heartbeat (push)
+  Website health & SEO: Estado e SEO de sites
+  Website changes: Alterações em sites
+  Domain expiry: Expiração de domínio
+  Mail server reputation: Reputação do servidor de e-mail
+  IP range blocklist: Listas de bloqueio de intervalos de IP
+  Demo monitor: Monitor de demonstração
+  How alerting works: Como funcionam os alertas
+  Now and History: Agora e Histórico
+  Rules: Regras
+  Automation and runbooks: Automação e runbooks
+  On-call: Plantões
+  Maintenance windows: Janelas de manutenção
+  Notifications: Notificações
+  Notification policy: Política de notificações
+  Notification channels: Canais de notificação
+  Status pages: Páginas de estado
+  Reports: Relatórios
+  All settings: Todas as definições
+  My account: A minha conta
+  Passkeys: Chaves de acesso (passkeys)
+  Push notifications (PWA): Notificações push (PWA)
+  Team and access: Equipa e acesso
+  Teams and permissions: Equipas e permissões
+  SCIM provisioning: Aprovisionamento SCIM
+  Multi-client (MSP): Multicliente (MSP)
+  Connect an assistant (MCP): Ligar um assistente (MCP)
+  Website banner: Faixa para sites
+  What a pack is: O que é um pacote
+  Write your first pack: Escrever o primeiro pacote
+  Format reference: Referência do formato
+  HTTP API: API HTTP
+  Configuration: Configuração
+  Metrics: Métricas
+  Sizing: Dimensionamento
+  External VictoriaMetrics / cluster: VictoriaMetrics externo / cluster
+  Architecture: Arquitetura
+  Security model: Modelo de segurança
+  Assurance case: Argumentário de garantia
+  Reproducible builds: Compilações reproduzíveis
+  Signing the agent binaries: Assinatura dos binários do agente
+  Roadmap: Roteiro
+  (beta): beta
 
 pt-BR:
-  "Home": "Início"
-  "Live demo": "Demonstração online"
-  "Install": "Instalação"
-  "Devices": "Dispositivos"
-  "Integration packs": "Pacotes de integração"
-  "Alerting": "Alertas"
-  "Using DumbMonit": "Usando o DumbMonit"
-  "Reference": "Referência"
-  "Development": "Desenvolvimento"
-  "FAQ": "FAQ"
+  Home: Início
+  Get started: Começar
+  Overview: Visão geral
+  Monitors: Monitores
+  Alerts: Alertas
+  Status: Status
+  Settings: Configurações
+  Works with: Compatível com
+  Integration packs: Pacotes de integração
+  Reference: Referência
+  Development: Desenvolvimento
+  FAQ: FAQ
+  Install: Instalação
+  First steps: Primeiros passos
+  Keep it running: Em operação
+  HTTPS and encryption: HTTPS e criptografia
+  Agent channel security: Segurança do canal dos agentes
+  Update: Atualização
+  Verify a release: Verificar uma versão
+  Run a demo instance: Executar uma instância de demonstração
+  Interface and setup wizard: Interface e assistente de configuração
+  Add your first monitor: Adicionar seu primeiro monitor
+  Monitor a remote site: Monitorar um site remoto
+  Backup and restore: Backup e restauração
+  Watching DumbMonit itself: Monitorar o próprio DumbMonit
+  Server logs: Logs do servidor
+  Overview page: A página Visão geral
+  Wall mode and music: Modo parede e música
+  Monitors page: A página de monitores
+  Map: Mapa
+  Topology map: Mapa de topologia
+  World map: Mapa-múndi
+  Logs (agents, syslog, SNMP traps): Logs (agentes, syslog, traps SNMP)
+  Security: Segurança
+  Security score: Pontuação de segurança
+  CVE & vulnerabilities: CVE e vulnerabilidades
+  Metrics explorer: Explorador de métricas
+  Add monitors: Adicionar monitores
+  Network discovery: Descoberta de rede
+  Monitors from Docker labels: Monitores a partir de rótulos do Docker
+  Import from other tools: Importar de outras ferramentas
+  Configuration files (GitOps): Arquivos de configuração (GitOps)
+  Integrations: Integrações
+  All integrations: Todas as integrações
+  Servers and agents: Servidores e agentes
+  Virtualization and containers: Virtualização e contêineres
+  Storage and NAS: Armazenamento e NAS
+  Network and firewalls: Rede e firewalls
+  Hardware and power: Hardware e energia
+  Databases and messaging: Bancos de dados e mensageria
+  Web servers and proxies: Servidores web e proxies
+  Identity and security: Identidade e segurança
+  Cloud and SaaS: Nuvem e SaaS
+  Home and media: Casa e mídia
+  Self-hosted apps: Aplicativos auto-hospedados
+  Backup: Backup
+  Email: E-mail
+  Observability and logs: Observabilidade e logs
+  Internet and website checks: Verificações de Internet e de sites
+  Linux, macOS, FreeBSD and Windows agent: Agente para Linux, macOS, FreeBSD e Windows
+  Deploy the agent with Active Directory: Implantar o agente com o Active Directory
+  Windows event log alerts: Alertas do log de eventos do Windows
+  Windows without an agent (WinRM): Windows sem agente (WinRM)
+  Network configuration backup: Backup da configuração de rede
+  OpenVPN server: Servidor OpenVPN
+  Server hardware (Redfish): Hardware de servidor (Redfish)
+  UPS with NUT: No-break com NUT
+  Redis and Valkey: Redis e Valkey
+  GitLab (self-managed): GitLab (auto-hospedado)
+  Third-party service status: Status de serviços de terceiros
+  VictoriaMetrics and VictoriaLogs: VictoriaMetrics e VictoriaLogs
+  Prometheus exporter: Exporter do Prometheus
+  OpenTelemetry source: Fonte OpenTelemetry
+  Services (HTTP, TCP, DNS, ping, TLS, NTP): Serviços (HTTP, TCP, DNS, ping, TLS, NTP)
+  Heartbeat (push): Heartbeat (push)
+  Website health & SEO: Saúde e SEO de sites
+  Website changes: Mudanças em sites
+  Domain expiry: Expiração de domínio
+  Mail server reputation: Reputação do servidor de e-mail
+  IP range blocklist: Listas de bloqueio de faixas de IP
+  Demo monitor: Monitor de demonstração
+  How alerting works: Como funcionam os alertas
+  Now and History: Agora e Histórico
+  Rules: Regras
+  Automation and runbooks: Automação e runbooks
+  On-call: Plantões
+  Maintenance windows: Janelas de manutenção
+  Notifications: Notificações
+  Notification policy: Política de notificações
+  Notification channels: Canais de notificação
+  Status pages: Páginas de status
+  Reports: Relatórios
+  All settings: Todas as configurações
+  My account: Minha conta
+  Passkeys: Chaves de acesso (passkeys)
+  Push notifications (PWA): Notificações push (PWA)
+  Team and access: Equipe e acesso
+  Teams and permissions: Equipes e permissões
+  SCIM provisioning: Provisionamento SCIM
+  Multi-client (MSP): Multicliente (MSP)
+  Connect an assistant (MCP): Conectar um assistente (MCP)
+  Website banner: Banner para sites
+  What a pack is: O que é um pacote
+  Write your first pack: Escrever o primeiro pacote
+  Format reference: Referência do formato
+  HTTP API: API HTTP
+  Configuration: Configuração
+  Metrics: Métricas
+  Sizing: Dimensionamento
+  External VictoriaMetrics / cluster: VictoriaMetrics externo / cluster
+  Architecture: Arquitetura
+  Security model: Modelo de segurança
+  Assurance case: Argumentário de garantia
+  Reproducible builds: Builds reproduzíveis
+  Signing the agent binaries: Assinatura dos binários do agente
+  Roadmap: Roteiro
+  (beta): beta
 
 ru:
-  "Home": "Главная"
-  "Live demo": "Живая демонстрация"
-  "Install": "Установка"
-  "Devices": "Устройства"
-  "Integration packs": "Пакеты интеграции"
-  "Alerting": "Оповещения"
-  "Using DumbMonit": "Работа с DumbMonit"
-  "Reference": "Справочник"
-  "Development": "Разработка"
-  "FAQ": "Вопросы и ответы"
+  Home: Главная
+  Get started: Начало работы
+  Overview: Обзор
+  Monitors: Мониторы
+  Alerts: Оповещения
+  Status: Статус
+  Settings: Настройки
+  Works with: Совместимо с
+  Integration packs: Пакеты интеграции
+  Reference: Справочник
+  Development: Разработка
+  FAQ: Вопросы и ответы
+  Install: Установка
+  First steps: Первые шаги
+  Keep it running: Эксплуатация
+  HTTPS and encryption: HTTPS и шифрование
+  Agent channel security: Безопасность канала агентов
+  Update: Обновление
+  Verify a release: Проверка релиза
+  Run a demo instance: Запуск демонстрационного экземпляра
+  Interface and setup wizard: Интерфейс и мастер настройки
+  Add your first monitor: Добавление первого монитора
+  Monitor a remote site: Мониторинг удалённой площадки
+  Backup and restore: Резервное копирование и восстановление
+  Watching DumbMonit itself: Наблюдение за самим DumbMonit
+  Server logs: Журналы сервера
+  Overview page: Страница «Обзор»
+  Wall mode and music: Режим стены и музыка
+  Monitors page: Страница мониторов
+  Map: Карта
+  Topology map: Карта топологии
+  World map: Карта мира
+  Logs (agents, syslog, SNMP traps): Логи (агенты, syslog, SNMP-трапы)
+  Security: Безопасность
+  Security score: Оценка безопасности
+  CVE & vulnerabilities: CVE и уязвимости
+  Metrics explorer: Обозреватель метрик
+  Add monitors: Добавление мониторов
+  Network discovery: Обнаружение сети
+  Monitors from Docker labels: Мониторы из меток Docker
+  Import from other tools: Импорт из других инструментов
+  Configuration files (GitOps): Файлы конфигурации (GitOps)
+  Integrations: Интеграции
+  All integrations: Все интеграции
+  Servers and agents: Серверы и агенты
+  Virtualization and containers: Виртуализация и контейнеры
+  Storage and NAS: Хранилища и NAS
+  Network and firewalls: Сеть и межсетевые экраны
+  Hardware and power: Оборудование и питание
+  Databases and messaging: Базы данных и очереди сообщений
+  Web servers and proxies: Веб-серверы и прокси
+  Identity and security: Идентификация и безопасность
+  Cloud and SaaS: Облако и SaaS
+  Home and media: Дом и медиа
+  Self-hosted apps: Самостоятельно размещаемые приложения
+  Backup: Резервное копирование
+  Email: Электронная почта
+  Observability and logs: Наблюдаемость и логи
+  Internet and website checks: Проверки Интернета и сайтов
+  Linux, macOS, FreeBSD and Windows agent: Агент для Linux, macOS, FreeBSD и Windows
+  Deploy the agent with Active Directory: Развёртывание агента через Active Directory
+  Windows event log alerts: Оповещения из журнала событий Windows
+  Windows without an agent (WinRM): Windows без агента (WinRM)
+  Network configuration backup: Резервное копирование конфигурации сети
+  OpenVPN server: Сервер OpenVPN
+  Server hardware (Redfish): Оборудование серверов (Redfish)
+  UPS with NUT: ИБП с NUT
+  Redis and Valkey: Redis и Valkey
+  GitLab (self-managed): GitLab (самостоятельно управляемый)
+  Third-party service status: Статус сторонних сервисов
+  VictoriaMetrics and VictoriaLogs: VictoriaMetrics и VictoriaLogs
+  Prometheus exporter: Экспортёр Prometheus
+  OpenTelemetry source: Источник OpenTelemetry
+  Services (HTTP, TCP, DNS, ping, TLS, NTP): Сервисы (HTTP, TCP, DNS, ping, TLS, NTP)
+  Heartbeat (push): Heartbeat (push)
+  Website health & SEO: Состояние и SEO сайтов
+  Website changes: Изменения на сайтах
+  Domain expiry: Срок действия домена
+  Mail server reputation: Репутация почтового сервера
+  IP range blocklist: Блоклисты диапазонов IP
+  Demo monitor: Демонстрационный монитор
+  How alerting works: Как работают оповещения
+  Now and History: Сейчас и История
+  Rules: Правила
+  Automation and runbooks: Автоматизация и ранбуки
+  On-call: Дежурства
+  Maintenance windows: Окна обслуживания
+  Notifications: Уведомления
+  Notification policy: Политика уведомлений
+  Notification channels: Каналы уведомлений
+  Status pages: Страницы статуса
+  Reports: Отчёты
+  All settings: Все настройки
+  My account: Моя учётная запись
+  Passkeys: Ключи доступа (passkeys)
+  Push notifications (PWA): Push-уведомления (PWA)
+  Team and access: Команда и доступ
+  Teams and permissions: Команды и права
+  SCIM provisioning: Подготовка учётных записей SCIM
+  Multi-client (MSP): Несколько клиентов (MSP)
+  Connect an assistant (MCP): Подключение ассистента (MCP)
+  Website banner: Баннер для сайта
+  What a pack is: Что такое пакет
+  Write your first pack: Ваш первый пакет
+  Format reference: Справочник по формату
+  HTTP API: HTTP API
+  Configuration: Конфигурация
+  Metrics: Метрики
+  Sizing: Планирование ресурсов
+  External VictoriaMetrics / cluster: Внешний VictoriaMetrics / кластер
+  Architecture: Архитектура
+  Security model: Модель безопасности
+  Assurance case: Обоснование надёжности
+  Reproducible builds: Воспроизводимые сборки
+  Signing the agent binaries: Подпись бинарных файлов агента
+  Roadmap: Дорожная карта
+  (beta): бета
 
 zh-Hans:
-  "Home": "首页"
-  "Live demo": "在线演示"
-  "Install": "安装"
-  "Devices": "设备"
-  "Integration packs": "集成包"
-  "Alerting": "告警"
-  "Using DumbMonit": "使用 DumbMonit"
-  "Reference": "参考"
-  "Development": "开发"
-  "FAQ": "常见问题"
+  Home: 首页
+  Get started: 开始使用
+  Overview: 概览
+  Monitors: 监控项
+  Alerts: 告警
+  Status: 状态
+  Settings: 设置
+  Works with: 兼容工具
+  Integration packs: 集成包
+  Reference: 参考
+  Development: 开发
+  FAQ: 常见问题
+  Install: 安装
+  First steps: 上手第一步
+  Keep it running: 日常运维
+  HTTPS and encryption: HTTPS 与加密
+  Agent channel security: 代理通道安全
+  Update: 更新
+  Verify a release: 验证发布版本
+  Run a demo instance: 运行演示实例
+  Interface and setup wizard: 界面与设置向导
+  Add your first monitor: 添加第一个监控项
+  Monitor a remote site: 监控远程站点
+  Backup and restore: 备份与恢复
+  Watching DumbMonit itself: 监视 DumbMonit 自身
+  Server logs: 服务器日志
+  Overview page: 概览页面
+  Wall mode and music: 墙屏模式与音乐
+  Monitors page: 监控项页面
+  Map: 地图
+  Topology map: 拓扑图
+  World map: 世界地图
+  Logs (agents, syslog, SNMP traps): 日志(代理、syslog、SNMP trap)
+  Security: 安全
+  Security score: 安全评分
+  CVE & vulnerabilities: CVE 与漏洞
+  Metrics explorer: 指标浏览器
+  Add monitors: 添加监控项
+  Network discovery: 网络发现
+  Monitors from Docker labels: 通过 Docker 标签添加监控项
+  Import from other tools: 从其他工具导入
+  Configuration files (GitOps): 配置文件(GitOps)
+  Integrations: 集成
+  All integrations: 所有集成
+  Servers and agents: 服务器与代理
+  Virtualization and containers: 虚拟化与容器
+  Storage and NAS: 存储与 NAS
+  Network and firewalls: 网络与防火墙
+  Hardware and power: 硬件与供电
+  Databases and messaging: 数据库与消息队列
+  Web servers and proxies: Web 服务器与代理
+  Identity and security: 身份与安全
+  Cloud and SaaS: 云与 SaaS
+  Home and media: 家庭与媒体
+  Self-hosted apps: 自托管应用
+  Backup: 备份
+  Email: 电子邮件
+  Observability and logs: 可观测性与日志
+  Internet and website checks: 互联网与网站检查
+  Linux, macOS, FreeBSD and Windows agent: Linux、macOS、FreeBSD 和 Windows 代理
+  Deploy the agent with Active Directory: 通过 Active Directory 部署代理
+  Windows event log alerts: Windows 事件日志告警
+  Windows without an agent (WinRM): 无代理的 Windows(WinRM)
+  Network configuration backup: 网络配置备份
+  OpenVPN server: OpenVPN 服务器
+  Server hardware (Redfish): 服务器硬件(Redfish)
+  UPS with NUT: 使用 NUT 的 UPS
+  Redis and Valkey: Redis 与 Valkey
+  GitLab (self-managed): GitLab(自托管)
+  Third-party service status: 第三方服务状态
+  VictoriaMetrics and VictoriaLogs: VictoriaMetrics 与 VictoriaLogs
+  Prometheus exporter: Prometheus exporter
+  OpenTelemetry source: OpenTelemetry 数据源
+  Services (HTTP, TCP, DNS, ping, TLS, NTP): 服务(HTTP、TCP、DNS、ping、TLS、NTP)
+  Heartbeat (push): 心跳(push)
+  Website health & SEO: 网站健康与 SEO
+  Website changes: 网站变更
+  Domain expiry: 域名到期
+  Mail server reputation: 邮件服务器信誉
+  IP range blocklist: IP 段黑名单
+  Demo monitor: 演示监控项
+  How alerting works: 告警的工作原理
+  Now and History: 当前与历史
+  Rules: 规则
+  Automation and runbooks: 自动化与运行手册
+  On-call: 值班
+  Maintenance windows: 维护窗口
+  Notifications: 通知
+  Notification policy: 通知策略
+  Notification channels: 通知渠道
+  Status pages: 状态页
+  Reports: 报告
+  All settings: 全部设置
+  My account: 我的账户
+  Passkeys: 通行密钥(passkeys)
+  Push notifications (PWA): 推送通知(PWA)
+  Team and access: 团队与访问
+  Teams and permissions: 团队与权限
+  SCIM provisioning: SCIM 配置同步
+  Multi-client (MSP): 多客户(MSP)
+  Connect an assistant (MCP): 连接助手(MCP)
+  Website banner: 网站横幅
+  What a pack is: 什么是集成包
+  Write your first pack: 编写第一个集成包
+  Format reference: 格式参考
+  HTTP API: HTTP API
+  Configuration: 配置
+  Metrics: 指标
+  Sizing: 容量规划
+  External VictoriaMetrics / cluster: 外部 VictoriaMetrics / 集群
+  Architecture: 架构
+  Security model: 安全模型
+  Assurance case: 保证论证
+  Reproducible builds: 可复现构建
+  Signing the agent binaries: 代理二进制文件签名
+  Roadmap: 路线图
+  (beta): 测试版

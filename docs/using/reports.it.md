@@ -7,7 +7,7 @@ sono a un clic di distanza. I report riutilizzano un **canale di notifica
 email (SMTP)**, quindi configuralo prima (vedi
 [Canali di notifica](../notifications.md)).
 
-Apri **Settings > Reports** per configurarli. Tutto qui è riservato agli
+Apri **Stato › Report** per configurarli. Tutto qui è riservato agli
 amministratori, lettura compresa, perché la pagina elenca gli indirizzi dei
 destinatari.
 

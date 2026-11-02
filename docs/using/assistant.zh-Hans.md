@@ -12,7 +12,7 @@ DumbMonit 有一个内置 [MCP](https://modelcontextprotocol.io) 服务器：模
 
 ## 1. 创建一个令牌 {#1-create-a-token}
 
-Settings → **API & assistants** (`/settings#assistant`)。在助手或运行它的机器之后命名令牌（"Claude on my laptop"），然后选择：
+设置 › 系统 › **API 和助手** (`/settings#assistant`)。在助手或运行它的机器之后命名令牌（"Claude on my laptop"），然后选择：
 
 | Setting | Choices |
 | --- | --- |

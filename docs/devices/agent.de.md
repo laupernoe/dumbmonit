@@ -114,7 +114,7 @@ Die folgenden Schritte sind die, die der Hinweis neben dem Formular zeigt. Auf d
 kein Konto zu erstellen: Das Enrollment-Token ist das einzige Geheimnis.
 
 1. Fügen Sie in DumbMonit einen Monitor hinzu und wählen Sie **Server mit dem Agenten**. Wählen Sie, wie der Rechner den Server erreicht: **Direkt** oder über ein **Relay** eines entfernten Standorts hinter einer Firewall (siehe [Einen entfernten Standort überwachen](../install/remote-site.md#5-install-agents-behind-the-relay)). Ein Enrollment-Token (dmon_…) wird einmalig angezeigt, mit dem kopierfertigen Installationsbefehl für Linux/macOS, Windows und Docker.
-2. Dieses Token ist der Schlüssel des Agenten, um seine Messungen an DumbMonit zu senden; auf dem Rechner ist kein Konto zu erstellen. Standardmäßig ist es einmalig verwendbar: Es meldet genau diesen Rechner an. Für eine Flotte (ein Playbook, ein Maschinen-Image) setzen Sie vor dem Erstellen des Befehls das Häkchen *Mehrere Maschinen mit diesem Befehl*; eine ganze Windows-Domäne geht über das [Active-Directory-Kit](agent-active-directory.md), auf derselben Seite angeboten. Ein verlorenes Token widerrufen Sie unter Einstellungen → Agenten.
+2. Dieses Token ist der Schlüssel des Agenten, um seine Messungen an DumbMonit zu senden; auf dem Rechner ist kein Konto zu erstellen. Standardmäßig ist es einmalig verwendbar: Es meldet genau diesen Rechner an. Für eine Flotte (ein Playbook, ein Maschinen-Image) setzen Sie vor dem Erstellen des Befehls das Häkchen *Mehrere Maschinen mit diesem Befehl*; eine ganze Windows-Domäne geht über das [Active-Directory-Kit](agent-active-directory.md), auf derselben Seite angeboten. Ein verlorenes Token widerrufen Sie unter Einstellungen › Überwachung › Agenten.
 3. Führen Sie den Installationsbefehl auf dem zu überwachenden Rechner mit erhöhten Rechten aus (sudo unter Linux und macOS, eine PowerShell als Administrator unter Windows).
 4. Die Seite wartet auf die erste Meldung (einige Sekunden) und lässt Sie dann den Rechner sofort benennen, in einen Ordner legen und einem Standort zuordnen. Bei diesem ersten Batch gibt der Server dem Agenten ein eigenes Geheimnis (`/etc/dumbmonit/agent-secret`, für niemand sonst lesbar): Von da an ist dieser Rechner der einzige, der unter diesem Monitor melden kann.
 5. Docker: Um die Container zu sehen und DumbMonit sie neu starten oder aktualisieren zu lassen,
@@ -802,7 +802,7 @@ protokolliert und mit behaltenem Geheimnis wiederholt.
   Antwort auf die Erstellung angezeigt, mit den beiden Installationsbefehlen.
 - Der Agent sendet es als `Authorization: Bearer dmon_…` auf `POST /api/ingest`. Es erscheint nie
   in den Logs des Agenten, auch nicht gekürzt.
-- **Einstellungen → Agenten** listet Tokens mit Präfix, Umfang, Erstellungsdatum und letzter
+- **Einstellungen › Überwachung › Agenten** listet Tokens mit Präfix, Umfang, Erstellungsdatum und letzter
   Verwendung. **Widerrufen** stoppt jeden Agenten, der dieses Token verwendet, bei seinem nächsten
   Push; die Rechner werden dann nach drei verpassten Perioden *nicht erreichbar*. Führen Sie den
   Installer mit einem neuen Token erneut aus, um sie neu anzumelden.
@@ -823,7 +823,7 @@ Rechner melden auch nach ihrem Ablauf weiter, was für ein Installationsfenster 
 wollen. Das Widerrufen ist es, was eine Flotte abschneidet.
 
 Ein Token, das nicht mehr anmelden kann — aufgebraucht oder über seine Frist —, wird unter
-Einstellungen → Agenten als **Meldet nicht mehr an** angezeigt. Seine Rechner melden weiter; es
+Einstellungen › Überwachung › Agenten als **Meldet nicht mehr an** angezeigt. Seine Rechner melden weiter; es
 kann nur keinen neuen mehr hereinlassen.
 
 ## Ausfälle und Diagnose {#outages-and-diagnostics}

@@ -21,7 +21,7 @@ mots : *actif*, *inaccessible*, *en attente*, *avis*, *avertissement*,
 
 ## 1. Créer un jeton
 
-Réglages → **API & assistants** (`/settings#assistant`). Nommez le jeton
+Réglages › Système › **API et assistants** (`/settings#assistant`). Nommez le jeton
 d'après l'assistant ou la machine sur laquelle il tourne (« Claude sur
 mon portable »), puis choisissez :
 
@@ -292,7 +292,7 @@ n'est pas une erreur de protocole : il répond normalement avec
   nom du jeton et l'outil, jamais les arguments ; chaque écriture via
   l'API REST avec le nom du jeton, la méthode, le chemin et le statut,
   jamais le corps. Créer et révoquer des jetons est dans le journal
-  d'audit (Réglages → Sécurité).
+  d'audit (Réglages › Mon compte › Compte et sécurité).
 
 ## Dépannage
 

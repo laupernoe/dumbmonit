@@ -21,7 +21,7 @@ dell'interfaccia web.
 
 ## 1. Creare un token
 
-Settings → **API & assistants** (`/settings#assistant`). Dai al token
+Impostazioni › Sistema › **API e assistenti** (`/settings#assistant`). Dai al token
 il nome dell'assistente o della macchina su cui funziona ("Claude on
 my laptop"), poi scegli:
 
@@ -286,7 +286,7 @@ sconosciuto — non è un errore di protocollo: risponde normalmente con
   `info` con il nome del token e lo strumento, mai gli argomenti; ogni
   scrittura tramite l'API REST con il nome del token, il metodo, il
   percorso e lo stato, mai il corpo. Creare e revocare token è nel log
-  di audit (Settings → Security).
+  di audit (Impostazioni › Il mio account › Account e sicurezza).
 
 ## Risoluzione dei problemi
 

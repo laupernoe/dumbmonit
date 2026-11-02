@@ -61,7 +61,7 @@ Due modi per entrare, accettati su ogni rotta protetta:
   — la prova anti-CSRF che l'interfaccia aggiunge automaticamente; senza di essa la
   richiesta viene rifiutata con `403`.
 - **Token API** — `Authorization: Bearer dmt_…`, per script, dashboard e assistenti.
-  Creato in Impostazioni → **API e assistenti** (gli stessi token usati dal
+  Creato in Impostazioni › Sistema › **API e assistenti** (gli stessi token usati dal
   [server MCP](../using/assistant.md)) e mostrato una sola volta. Non è coinvolto
   alcun cookie, quindi non serve mai l'header `X-Requested-With`.
 
@@ -146,7 +146,7 @@ token, un token non può mai crearne un altro — tanto meno uno più potente.
 - **Registrato nei log.** Ogni scrittura effettuata con un token viene scritta nel
   log del server con il nome e l'id del token, il metodo, il percorso (senza query
   string) e lo stato — mai il token, mai il corpo. La creazione e la revoca di un
-  token sono registrate nel registro di audit (Impostazioni → Sicurezza).
+  token sono registrate nel registro di audit (Impostazioni › Il mio account › Account e sicurezza).
 
 ## Limiti di frequenza {#rate-limits}
 

@@ -106,7 +106,7 @@ Raw data is kept for the retention above, which you can also change in
 730 days, 64 MB of cache), and graphs, status pages and reports that reach back
 further than the raw retention are answered from it. VictoriaLogs
 (`/victoria-logs-prod`, `/data/vlogs`) is also in the image but off until you
-turn it on in the same place; the **Logs** page then searches the server's
+turn it on in the same place; the **Monitors › Logs** tab then searches the server's
 logs. All variables are in the
 [configuration reference](../reference/configuration.md#long-term-history);
 disk and memory figures are in [Sizing](../reference/sizing.md).
@@ -208,7 +208,7 @@ docker compose up -d
 Database migrations run at startup. VictoriaMetrics data is untouched.
 
 !!! tip "Take a backup first"
-    **Settings → Backup → Back up now** writes a consistent copy of the database
+    **Settings › System › Backup › Back up now** writes a consistent copy of the database
     and of `secret.key` into `/data/backups/` in a few seconds, and it is what
     you restore from if the upgrade goes wrong. See
     [Backup and restore](backup.md).

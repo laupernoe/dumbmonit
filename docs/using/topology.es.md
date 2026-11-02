@@ -1,7 +1,7 @@
 # Mapa de topología
 
-La página **Mapa** (botón **Mapa** en la página de monitores, *Mapa* en la paleta
-de comandos, `/map`) dibuja toda tu infraestructura en una imagen. Nada se
+La pestaña **Mapa** (**Monitores › Mapa**, `g m`, o *Mapa* en la paleta
+de comandos) dibuja toda tu infraestructura en una imagen. Nada se
 introduce a mano: cada enlace procede de lo que DumbMonit ya sabe.
 
 ## De dónde vienen los enlaces

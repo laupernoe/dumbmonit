@@ -2,7 +2,7 @@
 
 ## I lost the password
 
-Ask another administrator first: in Settings → **Users**, **Edit** on your
+Ask another administrator first: in **Settings › Team & access › Users**, **Edit** on your
 account sets a new password and shows it once, and **Reset 2FA** on the same
 row clears a second factor that locks you out. That is the everyday answer —
 an instance with two admin accounts never needs the rest of this page.
@@ -113,7 +113,7 @@ LAN or behind a VPN; if you expose it, use a reverse proxy with TLS and set
 
 ## Is there an API token?
 
-Yes. Settings → **API & assistants** creates `dmt_…` tokens with a `read` or
+Yes. **Settings › System › API & assistants** creates `dmt_…` tokens with a `read` or
 `write` scope; send one as `Authorization: Bearer dmt_…` on any route and
 no cookie or CSRF header is needed. The same token connects an
 [assistant](using/assistant.md) through MCP. Tokens never manage accounts,

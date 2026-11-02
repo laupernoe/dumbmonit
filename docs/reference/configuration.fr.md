@@ -114,7 +114,7 @@ métriques de disponibilité, `:5m_sum` et `:5m_count`.
 
 Facultatif et **désactivé par défaut** : activez-le dans **Réglages → Système**.
 Le serveur démarre alors VictoriaLogs, lui envoie ses propres lignes de journal,
-et la page **Logs**, réservée aux administrateurs, les cherche en LogsQL.
+et l'onglet **Surveillances › Journaux**, réservé aux administrateurs, les cherche en LogsQL.
 
 | Variable | Défaut | Rôle |
 |---|---|---|

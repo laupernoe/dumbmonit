@@ -18,7 +18,7 @@ Directory. Los demás monitores no muestran nada.
 ## Activarla
 
 La puntuación está **desactivada por defecto**. Un administrador la activa en
-**Ajustes → Cuenta y seguridad → Puntuación de seguridad**. Una vez activada:
+**Ajustes › Supervisión › Puntuación de seguridad**. Una vez activada:
 
 - cada monitor puntuado recibe una pequeña **insignia con forma de escudo**
   con su letra en la lista de monitores, y una insignia **Security** con la

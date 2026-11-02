@@ -31,7 +31,7 @@ gráficos de volta também; isso está no final desta página.
 
 ## O pacote criptografado {#the-encrypted-bundle}
 
-**Configurações → Backup → Baixar o pacote.** Escolha uma frase secreta
+**Configurações › Sistema › Backup › Baixar o pacote.** Escolha uma frase secreta
 de pelo menos 16 caracteres — três palavras são suficientes — e a
 confirme. O arquivo que vem é JSON simples com um corpo criptografado:
 
@@ -109,7 +109,7 @@ possa ser restaurado em algum lugar que nunca viu `secret.key`.
 1. Inicie o novo contêiner e crie a primeira conta de administrador em
    `/setup`, com o código de configuração impresso em seus logs. Essa
    conta é sua; a restauração não a tocará.
-2. **Configurações → Backup → Restaurar um pacote.** Escolha o arquivo,
+2. **Configurações › Sistema › Backup › Restaurar um pacote.** Escolha o arquivo,
    digite a frase secreta, e clique em **Verificar este backup**.
 3. Leia o relatório. Ele diz, seção por seção, o que seria **criado**, o
    que seria **atualizado** porque difere do que já está aqui, e o que já
@@ -220,7 +220,7 @@ dois dias — uma noite perdida pode ser um reinício, duas é um problema.
 A série só existe uma vez que um primeiro backup foi escrito, então uma
 instância com a programação desligada nunca é incomodada com isso.
 
-**Configurações → Backup** mostra a mesma coisa sem MetricsQL: a última
+**Configurações › Sistema › Backup** mostra a mesma coisa sem MetricsQL: a última
 execução e se teve sucesso, os arquivos mantidos e seu tamanho, e
 **Fazer backup agora** para escrever um imediatamente.
 
@@ -275,7 +275,7 @@ de dados e o segredo são a configuração, `vm/` é só o histórico.
 
 ## O que fazer antes de uma atualização {#what-to-do-before-an-upgrade}
 
-1. **Configurações → Backup → Fazer backup agora** — trinta segundos, e
+1. **Configurações › Sistema › Backup › Fazer backup agora** — trinta segundos, e
    inclui o segredo.
 2. Baixe um pacote também se a atualização for grande, ou se você está
    mudando para outra máquina.

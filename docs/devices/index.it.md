@@ -2,6 +2,8 @@
 
 DumbMonit chiama tutto quello che controlla un *monitor* (l'API dice *target*), anche quando è una pagina web o un nome DNS. Ogni tipo è un collector sul server; il server descrive ogni tipo all'interfaccia (`GET /api/collectors`), quindi il modulo corrisponde sempre a quello che questa versione può monitorare.
 
+Nell'app, **Aggiungi un monitor** offre questi tipi. In questa documentazione, il menu di sinistra li raggruppa per categoria; la tabella qui sotto li elenca tutti, con ciò che serve a ciascuno.
+
 | Tipo | `kind` | Credenziale | Uso tipico |
 |---|---|---|---|
 | [Dispositivo SNMP](snmp.md) | `snmp` | comunità o SNMP v3 | Switch, router, NAS, UPS, stampante |

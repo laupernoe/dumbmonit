@@ -111,7 +111,7 @@ tries a user password. Each step says what failed, for example
 
 ## Accounts
 
-Directory accounts show **LDAP** in **Settings → Users**. They have no
+Directory accounts show **LDAP** in **Settings › Team & access › Users**. They have no
 DumbMonit password: they change it in the directory. If an admin sets a
 password on such an account, it becomes a local account that no longer asks the
 directory.

@@ -17,7 +17,7 @@ nothing.
 ## Turn it on
 
 The score is **off by default**. An administrator turns it on in
-**Settings → Account & security → Security score**. Once on:
+**Settings › Monitoring › Security score**. Once on:
 
 - each rated monitor gets a small **shield badge** with its letter in the
   monitor list, and a **Security** badge with the score on its page;
@@ -32,7 +32,7 @@ Turning it off hides the badges, stops the periodic computation, and the
     The score used to be always on, with its own **Security** page. An
     installation that already monitored a rated monitor keeps the score on
     after the upgrade; a new installation starts with it off. The
-    `/security` address now opens [CVE & vulnerabilities](cves.md).
+    `/security` address now opens the Security tab of Monitors ([CVE & vulnerabilities](cves.md)).
 
 ## How the score is computed
 

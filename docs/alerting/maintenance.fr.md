@@ -7,8 +7,9 @@ une fois, plutôt que d'apparaître de nulle part après deux heures.
 
 ## Où
 
-- **Alertes → Maintenance** : la liste des fenêtres, avec *Active
-  maintenant* ou *Planifiée*, et le formulaire pour en ajouter une.
+- **Alertes › Maintenant** : les fenêtres, *Active maintenant* ou *Planifiée*,
+  se replient au-dessus de la liste des alertes ; **Planifier une maintenance**,
+  en haut à droite de la page, ouvre le formulaire pour en ajouter une.
 - **Page de la surveillance → Silence 1 h / Silence jusqu'à…** : une fenêtre
   ponctuelle rapide pour toute la surveillance.
 - ++ctrl+k++ → *Planifier une maintenance*.

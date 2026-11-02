@@ -43,8 +43,18 @@ theme:
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
+  # The menu follows the application: one tab per entry of its left menu (Overview,
+  # Monitors, Alerts, Status, Settings), the pages of the section on the left, an index
+  # page per section (navigation.indexes: the first page of a section named index.md),
+  # a breadcrumb, previous/next links at the foot of a page and a back-to-top button.
   features:
+    - navigation.tabs
     - navigation.sections
+    - navigation.indexes
+    - navigation.path
+    - navigation.top
+    - navigation.footer
+    - toc.follow
     - search.suggest
     - content.code.copy
 
@@ -72,162 +82,198 @@ markdown_extensions:
 plugins:
   - search
 
+# The order follows the application (see web/src/lib/components/shell/nav.ts): Overview,
+# Monitors (List, Map, Logs, Security), Alerts (Now, History, Rules, Automation, On-call),
+# Status (Pages, Reports), Settings. A section's first page, named index.md, is its index.
+# Section and page titles are translated in hooks/nav_translations.yml.
 nav:
   - Home: index.md
-  - Install:
-      - Docker: install/docker.md
-      - HTTPS and encryption: install/https.md
-      - Add your first monitor: install/first-device.md
-      - Monitor a remote site: install/remote-site.md
-      - Agent channel security: install/agent-security.md
-      - Backup and restore: install/backup.md
-      - Watching DumbMonit itself: install/self-monitoring.md
-      - Server logs: install/logs.md
-      - Update: install/update.md
-      - Verify a release: install/verify.md
-      - Run a demo instance: install/demo.md
+  - Get started:
+      - Get started: install/index.md
+      - Install:
+          - Docker: install/docker.md
+          - HTTPS and encryption: install/https.md
+          - Agent channel security: install/agent-security.md
+          - Update: install/update.md
+          - Verify a release: install/verify.md
+          - Run a demo instance: install/demo.md
+      - First steps:
+          - Interface and setup wizard: using/product-modes.md
+          - Add your first monitor: install/first-device.md
+          - Monitor a remote site: install/remote-site.md
+      - Keep it running:
+          - Backup and restore: install/backup.md
+          - Watching DumbMonit itself: install/self-monitoring.md
+          - Server logs: install/logs.md
+  - Overview:
+      - Overview: overview/index.md
+      - Overview page: using/overview.md
+      - Wall mode and music: using/wall.md
   - Monitors:
-      - Overview: devices/index.md
-      - SNMP: devices/snmp.md
-      - Proxmox VE: devices/proxmox.md
-      - Proxmox Backup Server: devices/pbs.md
-      - Proxmox Datacenter Manager: devices/pdm.md
-      - Proxmox Mail Gateway: devices/pmg.md
-      - VMware vSphere: devices/vsphere.md
-      - XCP-ng / XenServer: devices/xcpng.md
-      - Nutanix AHV: devices/nutanix.md
-      - Synology DSM: devices/synology.md
-      - OPNsense: devices/opnsense.md
-      - pfSense: devices/pfsense.md
-      - FortiGate: devices/fortigate.md
-      - Sophos Firewall: devices/sophos.md
-      - Cisco Meraki: devices/meraki.md
-      - TP-Link Omada: devices/omada.md
-      - Aruba Central: devices/arubacentral.md
-      - Palo Alto PAN-OS: devices/paloalto.md
-      - SonicWall SonicOS: devices/sonicwall.md
-      - OpenVPN server: devices/openvpn.md
-      - UniFi Network: devices/unifi.md
-      - Home Assistant: devices/homeassistant.md
-      - TrueNAS: devices/truenas.md
-      - Unraid: devices/unraid.md
-      - QNAP QTS / QuTS hero: devices/qnap.md
-      - Ceph: devices/ceph.md
-      - MinIO: devices/minio.md
-      - MikroTik RouterOS: devices/mikrotik.md
-      - UPS with NUT: devices/nut.md
-      - Server hardware (Redfish): devices/redfish.md
-      - VictoriaMetrics and VictoriaLogs: devices/victoriametrics.md
-      - Grafana Loki: devices/loki.md
-      - Graylog: devices/graylog.md
-      - Pi-hole: devices/pihole.md
-      - AdGuard Home: devices/adguard.md
-      - MDaemon Email Server: devices/mdaemon.md
-      - SecurityGateway for Email Servers: devices/securitygateway.md
-      - Redis and Valkey: devices/redis.md
-      - MongoDB: devices/mongodb.md
-      - RabbitMQ: devices/rabbitmq.md
-      - SQL Server: devices/mssql.md
-      - Oracle Database: devices/oracle.md
-      - Elasticsearch / OpenSearch: devices/elasticsearch.md
-      - InfluxDB: devices/influxdb.md
-      - Apache Kafka: devices/kafka.md
-      - CrowdSec: devices/crowdsec.md
-      - Traefik: devices/traefik.md
-      - Caddy: devices/caddy.md
-      - Prometheus exporter: devices/prometheus.md
-      - OpenTelemetry source: devices/otlp.md
-      - Nginx: devices/nginx.md
-      - Apache httpd: devices/apache.md
-      - Nginx Proxy Manager: devices/npm.md
-      - Domain expiry: devices/domain.md
-      - Third-party service status: devices/provider.md
-      - Mail server reputation: devices/mail_blacklist.md
-      - IP range blocklist: devices/ip_blacklist.md
-      - Kubernetes / k3s: devices/kubernetes.md
-      - Active Directory: devices/activedirectory.md
-      - Veeam Backup & Replication: devices/veeam.md
-      - Windows without an agent (WinRM): devices/winrm.md
-      - Kopia (beta): devices/kopia.md
-      - Duplicati (beta): devices/duplicati.md
-      - Tailscale: devices/tailscale.md
-      - Microsoft 365: devices/m365.md
-      - Microsoft Entra ID: devices/entra.md
-      - Microsoft Azure: devices/azure.md
-      - AWS CloudWatch: devices/aws.md
-      - Cloudflare: devices/cloudflare.md
-      - Hetzner Cloud: devices/hetzner.md
-      - OVHcloud: devices/ovh.md
-      - Infomaniak: devices/infomaniak.md
-      - Nextcloud: devices/nextcloud.md
-      - Immich: devices/immich.md
-      - Paperless-ngx: devices/paperless.md
-      - Jellyfin: devices/jellyfin.md
-      - Plex Media Server: devices/plex.md
-      - GitLab (self-managed): devices/gitlab.md
-      - Forgejo / Gitea: devices/forgejo.md
-      - Sonarr (beta): devices/sonarr.md
-      - Radarr (beta): devices/radarr.md
-      - Lidarr (beta): devices/lidarr.md
-      - Prowlarr (beta): devices/prowlarr.md
-      - qBittorrent (beta): devices/qbittorrent.md
-      - UniFi Protect (beta): devices/unifiprotect.md
-      - Frigate NVR (beta): devices/frigate.md
-      - Keycloak (beta): devices/keycloak.md
-      - authentik (beta): devices/authentik.md
-      - Vaultwarden (beta): devices/vaultwarden.md
-      - mailcow (beta): devices/mailcow.md
-      - Linux, macOS, FreeBSD and Windows agent: devices/agent.md
-      - Deploy the agent with Active Directory: devices/agent-active-directory.md
-      - Windows event log alerts: devices/agent-windows-events.md
-      - Services (HTTP, TCP, DNS, ping, TLS, NTP): devices/services.md
-      - Heartbeat (push): devices/push.md
-      - Website changes: devices/webchange.md
-      - Website health & SEO: devices/website.md
-      - Network configuration backup: devices/netconfig.md
-      - Demo monitor: devices/demo.md
-  - Integrations:
+      - Monitors: monitors/index.md
+      - Monitors page: using/devices.md
+      - Map:
+          - Topology map: using/topology.md
+          - World map: using/world-map.md
+      - Logs (agents, syslog, SNMP traps): using/logs.md
+      - Security:
+          - Security score: using/security-score.md
+          - CVE & vulnerabilities: using/cves.md
+      - Metrics explorer: using/dashboards.md
+      - Add monitors:
+          - Network discovery: using/discovery.md
+          - Monitors from Docker labels: using/docker-labels.md
+          - Import from other tools: using/imports.md
+          - Configuration files (GitOps): using/config-files.md
+      - Integrations:
+          - All integrations: devices/index.md
+          - Servers and agents:
+              - Linux, macOS, FreeBSD and Windows agent: devices/agent.md
+              - Deploy the agent with Active Directory: devices/agent-active-directory.md
+              - Windows event log alerts: devices/agent-windows-events.md
+              - Windows without an agent (WinRM): devices/winrm.md
+          - Virtualization and containers:
+              - Proxmox VE: devices/proxmox.md
+              - Proxmox Datacenter Manager: devices/pdm.md
+              - VMware vSphere: devices/vsphere.md
+              - XCP-ng / XenServer: devices/xcpng.md
+              - Nutanix AHV: devices/nutanix.md
+              - Kubernetes / k3s: devices/kubernetes.md
+          - Storage and NAS:
+              - Synology DSM: devices/synology.md
+              - TrueNAS: devices/truenas.md
+              - Unraid: devices/unraid.md
+              - QNAP QTS / QuTS hero: devices/qnap.md
+              - Ceph: devices/ceph.md
+              - MinIO: devices/minio.md
+          - Network and firewalls:
+              - SNMP: devices/snmp.md
+              - Network configuration backup: devices/netconfig.md
+              - OPNsense: devices/opnsense.md
+              - pfSense: devices/pfsense.md
+              - FortiGate: devices/fortigate.md
+              - Sophos Firewall: devices/sophos.md
+              - Palo Alto PAN-OS: devices/paloalto.md
+              - SonicWall SonicOS: devices/sonicwall.md
+              - MikroTik RouterOS: devices/mikrotik.md
+              - UniFi Network: devices/unifi.md
+              - Cisco Meraki: devices/meraki.md
+              - TP-Link Omada: devices/omada.md
+              - Aruba Central: devices/arubacentral.md
+              - OpenVPN server: devices/openvpn.md
+              - Tailscale: devices/tailscale.md
+              - Pi-hole: devices/pihole.md
+              - AdGuard Home: devices/adguard.md
+          - Hardware and power:
+              - Server hardware (Redfish): devices/redfish.md
+              - UPS with NUT: devices/nut.md
+          - Databases and messaging:
+              - Redis and Valkey: devices/redis.md
+              - MongoDB: devices/mongodb.md
+              - RabbitMQ: devices/rabbitmq.md
+              - SQL Server: devices/mssql.md
+              - Oracle Database: devices/oracle.md
+              - Elasticsearch / OpenSearch: devices/elasticsearch.md
+              - InfluxDB: devices/influxdb.md
+              - Apache Kafka: devices/kafka.md
+          - Web servers and proxies:
+              - Nginx: devices/nginx.md
+              - Apache httpd: devices/apache.md
+              - Nginx Proxy Manager: devices/npm.md
+              - Traefik: devices/traefik.md
+              - Caddy: devices/caddy.md
+          - Identity and security:
+              - Active Directory: devices/activedirectory.md
+              - Keycloak (beta): devices/keycloak.md
+              - authentik (beta): devices/authentik.md
+              - Vaultwarden (beta): devices/vaultwarden.md
+              - CrowdSec: devices/crowdsec.md
+          - Cloud and SaaS:
+              - Microsoft 365: devices/m365.md
+              - Microsoft Entra ID: devices/entra.md
+              - Microsoft Azure: devices/azure.md
+              - AWS CloudWatch: devices/aws.md
+              - Cloudflare: devices/cloudflare.md
+              - Hetzner Cloud: devices/hetzner.md
+              - OVHcloud: devices/ovh.md
+              - Infomaniak: devices/infomaniak.md
+              - Third-party service status: devices/provider.md
+          - Home and media:
+              - Home Assistant: devices/homeassistant.md
+              - Immich: devices/immich.md
+              - Jellyfin: devices/jellyfin.md
+              - Plex Media Server: devices/plex.md
+              - Sonarr (beta): devices/sonarr.md
+              - Radarr (beta): devices/radarr.md
+              - Lidarr (beta): devices/lidarr.md
+              - Prowlarr (beta): devices/prowlarr.md
+              - qBittorrent (beta): devices/qbittorrent.md
+              - UniFi Protect (beta): devices/unifiprotect.md
+              - Frigate NVR (beta): devices/frigate.md
+          - Self-hosted apps:
+              - Nextcloud: devices/nextcloud.md
+              - Paperless-ngx: devices/paperless.md
+              - GitLab (self-managed): devices/gitlab.md
+              - Forgejo / Gitea: devices/forgejo.md
+          - Backup:
+              - Proxmox Backup Server: devices/pbs.md
+              - Veeam Backup & Replication: devices/veeam.md
+              - Kopia (beta): devices/kopia.md
+              - Duplicati (beta): devices/duplicati.md
+          - Email:
+              - Proxmox Mail Gateway: devices/pmg.md
+              - MDaemon Email Server: devices/mdaemon.md
+              - SecurityGateway for Email Servers: devices/securitygateway.md
+              - mailcow (beta): devices/mailcow.md
+          - Observability and logs:
+              - VictoriaMetrics and VictoriaLogs: devices/victoriametrics.md
+              - Grafana Loki: devices/loki.md
+              - Graylog: devices/graylog.md
+              - Prometheus exporter: devices/prometheus.md
+              - OpenTelemetry source: devices/otlp.md
+          - Internet and website checks:
+              - Services (HTTP, TCP, DNS, ping, TLS, NTP): devices/services.md
+              - Heartbeat (push): devices/push.md
+              - Website health & SEO: devices/website.md
+              - Website changes: devices/webchange.md
+              - Domain expiry: devices/domain.md
+              - Mail server reputation: devices/mail_blacklist.md
+              - IP range blocklist: devices/ip_blacklist.md
+          - Demo monitor: devices/demo.md
+  - Alerts:
+      - How alerting works: alerting/index.md
+      - Now and History: using/alerts.md
+      - Rules: alerting/rules.md
+      - Automation and runbooks: alerting/remediation.md
+      - On-call: alerting/oncall.md
+      - Maintenance windows: alerting/maintenance.md
+      - Notifications:
+          - Notification policy: alerting/notifications.md
+          - Notification channels: notifications.md
+  - Status:
+      - Status: status/index.md
+      - Status pages: using/status-pages.md
+      - Reports: using/reports.md
+  - Settings:
+      - Settings: settings/index.md
+      - All settings: using/settings.md
+      - My account:
+          - Passkeys: using/passkeys.md
+          - Push notifications (PWA): using/push-notifications.md
+      - Team and access:
+          - Teams and permissions: using/teams.md
+          - LDAP / Active Directory: using/ldap.md
+          - SAML 2.0: using/saml.md
+          - SCIM provisioning: using/scim.md
+          - Multi-client (MSP): using/msp.md
+      - Connect an assistant (MCP): using/assistant.md
+  - Works with:
       - Website banner: integrations/website-banner.md
       - Homepage and Homarr: integrations/homepage.md
   - Integration packs:
       - What a pack is: packs/index.md
       - Write your first pack: packs/first-pack.md
       - Format reference: packs/format.md
-  - Alerting:
-      - How alerting works: alerting/index.md
-      - Rules: alerting/rules.md
-      - Maintenance windows: alerting/maintenance.md
-      - Notification policy: alerting/notifications.md
-      - On-call: alerting/oncall.md
-      - Runbooks and remediation: alerting/remediation.md
-      - Notification channels: notifications.md
-  - Using DumbMonit:
-      - Interface and setup wizard: using/product-modes.md
-      - Overview page: using/overview.md
-      - Network discovery: using/discovery.md
-      - Wall mode and music: using/wall.md
-      - Monitors page: using/devices.md
-      - Monitors from Docker labels: using/docker-labels.md
-      - Import from other tools: using/imports.md
-      - Topology map: using/topology.md
-      - World map: using/world-map.md
-      - Metrics explorer: using/dashboards.md
-      - Security score: using/security-score.md
-      - CVE & vulnerabilities: using/cves.md
-      - Alerts page: using/alerts.md
-      - Logs (agents, syslog, SNMP traps): using/logs.md
-      - Status pages: using/status-pages.md
-      - Email reports: using/reports.md
-      - Settings: using/settings.md
-      - Configuration files (GitOps): using/config-files.md
-      - LDAP / Active Directory: using/ldap.md
-      - SAML 2.0: using/saml.md
-      - SCIM provisioning: using/scim.md
-      - Teams and permissions: using/teams.md
-      - Multi-client (MSP): using/msp.md
-      - Passkeys: using/passkeys.md
-      - Push notifications (PWA): using/push-notifications.md
-      - Connect an assistant (MCP): using/assistant.md
   - Reference:
       - HTTP API: reference/api.md
       - Configuration: reference/configuration.md

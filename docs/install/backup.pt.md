@@ -30,7 +30,7 @@ gráficos de volta; isso está no fundo desta página.
 
 ## O pacote encriptado {#the-encrypted-bundle}
 
-**Settings → Backup → Download the bundle.** Escolha uma frase-passe
+**Definições › Sistema › Cópia de segurança › Download the bundle.** Escolha uma frase-passe
 de pelo menos 16 caracteres — três palavras bastam — e confirme-a. O
 ficheiro que desce é JSON simples com um corpo encriptado:
 
@@ -109,7 +109,7 @@ viu `secret.key`.
 1. Inicie o contentor novo e crie a primeira conta de administrador em
    `/setup`, com o código de configuração impresso nos seus registos.
    Essa conta é sua; o restauro não a tocará.
-2. **Settings → Backup → Restore a bundle.** Escolha o ficheiro,
+2. **Definições › Sistema › Cópia de segurança › Restore a bundle.** Escolha o ficheiro,
    escreva a frase-passe, e pressione **Check this backup**.
 3. Leia o relatório. Diz, secção por secção, o que seria **criado**, o
    que seria **atualizado** porque difere do que já está aqui, e o que
@@ -223,7 +223,7 @@ problema. A série só existe uma vez a primeira cópia de segurança
 escrita, por isso uma instância com a agenda desligada nunca é
 incomodada com isso.
 
-**Settings → Backup** mostra a mesma coisa sem MetricsQL: a última
+**Definições › Sistema › Cópia de segurança** mostra a mesma coisa sem MetricsQL: a última
 execução e se teve sucesso, os ficheiros mantidos e o seu tamanho, e
 **Back up now** para escrever uma de imediato.
 
@@ -277,7 +277,7 @@ de dados e o segredo são a configuração, `vm/` é só o histórico.
 
 ## O que fazer antes de uma atualização {#what-to-do-before-an-upgrade}
 
-1. **Settings → Backup → Back up now** — trinta segundos, e inclui o
+1. **Definições › Sistema › Cópia de segurança › Back up now** — trinta segundos, e inclui o
    segredo.
 2. Descarregue também um pacote se a atualização for grande, ou se
    estiver a mudar para outra máquina.

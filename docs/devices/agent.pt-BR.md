@@ -126,7 +126,7 @@ Os passos abaixo são os que o aviso ao lado do formulário mostra. Não há
 conta para criar na máquina: o token de cadastro é o único segredo.
 
 1. No DumbMonit, adicione um monitoramento e escolha **Servidor com o agente**. Escolha como a máquina chega ao servidor: **Diretamente** ou por meio de um **relay** de um site remoto atrás de um firewall (veja [Monitorar um site remoto](../install/remote-site.md#5-install-agents-behind-the-relay)). Um token de cadastro (dmon_…) é mostrado uma vez, com o comando de instalação pronto para copiar para Linux/macOS, Windows e Docker.
-2. Esse token é a chave do agente para enviar suas medições; não há conta nenhuma para criar na máquina. Por padrão ele é de uso único: cadastra esta máquina e nada mais. Para uma frota (um playbook, uma imagem de máquina), marque *Várias máquinas com este comando* antes de criar o comando; um domínio Windows inteiro passa pelo [kit do Active Directory](agent-active-directory.md), oferecido na mesma página. Um token perdido é revogado em Configurações → Agentes.
+2. Esse token é a chave do agente para enviar suas medições; não há conta nenhuma para criar na máquina. Por padrão ele é de uso único: cadastra esta máquina e nada mais. Para uma frota (um playbook, uma imagem de máquina), marque *Várias máquinas com este comando* antes de criar o comando; um domínio Windows inteiro passa pelo [kit do Active Directory](agent-active-directory.md), oferecido na mesma página. Um token perdido é revogado em Configurações › Monitoramento › Agentes.
 3. Execute o comando de instalação na máquina a monitorar, com privilégios elevados (sudo no Linux e no macOS, um PowerShell como administrador no Windows).
 4. A página espera o primeiro envio (alguns segundos) e então deixa você nomear a máquina, colocá-la em uma pasta e em um local, na hora. Nesse primeiro lote o servidor dá ao agente um segredo próprio (`/etc/dumbmonit/agent-secret`, legível só por ele): a partir daí essa máquina é a única que pode reportar neste monitoramento.
 5. Docker: para ver os contêineres e deixar o DumbMonit reiniciá-los ou
@@ -863,7 +863,7 @@ segredo mantido.
 - O agente o envia como `Authorization: Bearer dmon_…` em
   `POST /api/ingest`. Nunca aparece nos logs do agente, nem mesmo
   truncado.
-- **Configurações → Agentes** lista tokens com seu prefixo, escopo, data
+- **Configurações › Monitoramento › Agentes** lista tokens com seu prefixo, escopo, data
   de criação e último uso. **Revogar** para todo agente usando esse token
   em seu próximo envio; as máquinas então se tornam *inacessíveis* depois
   de três períodos perdidos. Execute o instalador de novo com um token
@@ -886,7 +886,7 @@ passa, que é o que você quer para uma janela de instalação. Revogar é o
 que corta uma frota.
 
 Um token que não pode mais cadastrar — esgotado, ou passado seu prazo —
-é mostrado como **Não cadastra mais** em Configurações → Agentes. Suas
+é mostrado como **Não cadastra mais** em Configurações › Monitoramento › Agentes. Suas
 máquinas continuam reportando; só não consegue deixar uma nova entrar.
 
 ## Indisponibilidades e diagnósticos {#outages-and-diagnostics}

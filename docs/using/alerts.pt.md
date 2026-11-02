@@ -2,20 +2,21 @@
 
 ![A página Alerts: o que se passa agora, a manutenção, o histórico e as regras](../assets/screenshots/alerts-light.png){ loading=lazy }
 
-Tudo sobre alertas numa página, atrás de quatro separadores. O separador está
-no URL (`/alerts#rules`), por isso uma vista pode ser ligada. **Schedule
+Tudo sobre alertas numa página, atrás de cinco separadores. O separador está
+no URL (`/alerts?tab=rules`), por isso uma vista pode ser ligada. **Schedule
 maintenance**, no canto superior direito, abre o formulário para uma janela
 a partir de qualquer separador.
 
 | Separador | O que contém |
 |---|---|
-| **Now** | A lista em direto dos problemas, uma linha cada. Ver [A lista Now](#the-now-list). O emblema no separador, e em Alerts na barra superior, é a contagem do que ainda precisa de si. |
-| **Maintenance** | Janelas de manutenção, *Active now* ou *Scheduled*, pontuais, semanais ou mensais, cada uma com a próxima ocorrência (`#scheduled`). Ver [Janelas de manutenção](../alerting/maintenance.md). |
-| **History** | As últimas 200 transições, cada uma nomeando o monitor, a regra e o que aconteceu; as resolvidas podem ser limpas. |
-| **Rules** | Todas as regras com a sua severidade, uma marca *Built-in* e, se algum monitor a ignora, *Ignored on N devices*; ativar, editar em linha, eliminar as suas próprias, criar uma regra de limiar. Ver [Regras](../alerting/rules.md). |
+| **Agora** | A lista em tempo real dos problemas, uma linha cada. Veja [A lista Now](#the-now-list). O selo no separador e em Alertas no menu da esquerda é a contagem do que ainda precisa de si. As janelas de manutenção, *Active now* ou *Scheduled* (pontuais, semanais ou mensais, cada uma com a sua próxima ocorrência), dobram-se por cima da lista. Veja [Janelas de manutenção](../alerting/maintenance.md). |
+| **Histórico** | As últimas 200 transições, cada uma nomeando o monitor, a regra e o que aconteceu; as resolvidas podem ser limpas. |
+| **Regras** | Todas as regras com a sua severidade, uma marca *Built-in* e, se algum monitor a ignora, *Ignored on N devices*; ativar, editar em linha, eliminar as suas próprias, criar uma regra de limiar. Ver [Regras](../alerting/rules.md). |
+| **Automação** | Runbooks, ações de remediação e políticas, e o registo do que correu. Veja [Runbooks e remediação](../alerting/remediation.md). |
+| **Plantões** | Escalas e políticas de escalonamento. Veja [Plantões](../alerting/oncall.md). |
 
 Os canais de notificação e a política de notificação estão em
-**Settings → Notifications & reports** (ver [Notificações](#notifications)).
+**Definições › Notificações** (ver [Notificações](#notifications)).
 
 O mesmo modelo de verdade alimenta o boletim de visão geral e esta página,
 por isso os dois estão sempre de acordo sobre o que precisa de si.
@@ -80,7 +81,7 @@ regra ignorada, por outro lado, nunca produziu um alerta, para começar.
 
 ## Notificações {#notifications}
 
-Os canais e a política vivem em **Settings → Notifications & reports**
+Os canais e a política vivem em **Definições › Notificações**
 (`/settings/notifications`), seguidos dos [Relatórios](reports.md). Dois
 painéis:
 

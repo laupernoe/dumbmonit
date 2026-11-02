@@ -137,7 +137,7 @@ The steps below are the ones the notice next to the form shows. There is no acco
     usermod -aG docker dumbmonit
     ```
 
-5. For a fleet (a playbook, a machine image), tick Several machines with this command; a whole Windows domain goes through the Active Directory kit, offered on the same page. Revoke a lost token in Settings → Agents. See [Active Directory](agent-active-directory.md).
+5. For a fleet (a playbook, a machine image), tick Several machines with this command; a whole Windows domain goes through the Active Directory kit, offered on the same page. Revoke a lost token in **Settings › Monitoring › Agents**. See [Active Directory](agent-active-directory.md).
 
 !!! warning
     The agent contacts the server, never the other way round: no port needs to be opened on the monitored machine.
@@ -450,7 +450,7 @@ that folder is the only place the agent can write besides its cache.
 
 ### Settings {#automatic-updates-settings}
 
-**Settings → Agents → Automatic agent updates** (admin session only; API tokens
+**Settings › Monitoring › Agents › Automatic agent updates** (admin session only; API tokens
 cannot change these settings). The same settings are available through
 `GET`/`PUT /api/agent/updates`, `PUT /api/agent/updates/{id}`,
 `POST /api/agent/updates/{id}/now` and `POST /api/agent/updates/all`.
@@ -529,7 +529,7 @@ rollback then happens at its next start.
 
 ### Turning it off {#automatic-updates-off}
 
-- For everyone: turn off **Agents update themselves** in Settings → Agents, or
+- For everyone: turn off **Agents update themselves** in **Settings › Monitoring › Agents**, or
   choose **manual only** to update on demand.
 - For one agent: set its override to **off**.
 - On the machine itself: `self_update: false` in `agent.yaml`, or
@@ -1040,7 +1040,7 @@ DumbMonit, is logged and retried with the secret kept.
   the creation response, with the two install commands.
 - The agent sends it as `Authorization: Bearer dmon_…` on `POST /api/ingest`.
   It never appears in the agent's logs, not even truncated.
-- **Settings → Agents** lists tokens with their prefix, scope, creation date and
+- **Settings › Monitoring › Agents** lists tokens with their prefix, scope, creation date and
   last use. **Revoke** stops every agent that uses that token at its next push;
   the machines then become *unreachable* after three missed periods. Re-run the
   installer with a new token to re-enrol them.
@@ -1061,7 +1061,7 @@ already enrolled keep reporting after it passes, which is what you want for an
 install window. Revoking is what cuts a fleet off.
 
 A token that can no longer enrol — used up, or past its deadline — is shown as
-**Enrols no more** in Settings → Agents. Its machines keep reporting; it just
+**Enrols no more** in **Settings › Monitoring › Agents**. Its machines keep reporting; it just
 cannot let a new one in.
 
 ## Outages and diagnostics

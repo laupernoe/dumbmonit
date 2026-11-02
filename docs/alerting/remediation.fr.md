@@ -2,8 +2,8 @@
 
 Quand une alerte sonne, DumbMonit peut dire quoi faire (**procédures**) et, si
 vous l’y autorisez, en faire une partie (**actions de remédiation**), à la main
-ou automatiquement. Tout se trouve sur la page **Actions** (dans la barre du
-haut ; sur téléphone, depuis la page Alertes).
+ou automatiquement. Tout se trouve dans **Alertes › Automatisation** : procédures, actions,
+politiques et journal.
 
 Exécuter quelque chose sur une machine est sensible. La conception ci-dessous
 fait passer la sécurité d’abord : catalogue fermé, dernier mot à la machine,
@@ -22,7 +22,7 @@ rattaché à un ou plusieurs éléments :
 
 Une procédure apparaît :
 
-- sous l’alerte, quand on la déplie sur la page Alertes ;
+- sous l’alerte, quand on la déplie dans **Alertes › Maintenant** ;
 - sur la page de l’équipement, sous ses alertes ;
 - dans les notifications, sous forme de lien
   (`Runbook: <titre>: https://…/runbooks/12`), quand l’URL publique est
@@ -101,7 +101,7 @@ refuse d’emblée ce que la machine refuserait de toute façon.
 
 ## Lancer une action à la main
 
-Dépliez une alerte sur la page Alertes : les actions applicables à son
+Dépliez une alerte dans **Alertes › Maintenant** : les actions applicables à son
 équipement sont listées sous **Remédiation**. Cliquez, puis confirmez.
 Opérateurs et administrateurs peuvent le faire. Un opérateur agit toujours sur
 l’équipement de l’alerte (ou sur celui qu’un administrateur a fixé sur
@@ -139,7 +139,7 @@ ou l’action qu’elle emploie, la désarme.
 Chaque exécution est journalisée : qui (compte, ou `policy:<id>`), quoi
 (action, type, paramètres sans secrets), où (équipement, alerte), quand, et le
 résultat avec sa sortie (tronquée à 4 Kio, fin conservée). Le journal
-apparaît sous l’alerte, sur la page de l’équipement et sur la page Actions. Il
+apparaît sous l’alerte, sur la page de l’équipement et dans **Alertes › Automatisation**. Il
 est conservé 180 jours et ne fait pas partie des sauvegardes.
 
 ## Sécurité

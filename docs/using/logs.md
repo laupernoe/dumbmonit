@@ -2,12 +2,12 @@
 
 DumbMonit can keep the log lines of your machines and equipment next to their
 metrics, search them, and alert on patterns. Everything lands in the embedded
-VictoriaLogs and is searched on the admin-only **Logs** page with
+VictoriaLogs and is searched in the admin-only **Monitors › Logs** tab with
 [LogsQL](https://docs.victoriametrics.com/victorialogs/logsql/).
 
 !!! note "Turn the log store on first"
-    **Settings → System → Log store**. While it is off, received lines are
-    dropped (and counted), and the Logs page says so.
+    **Settings › System › Server logs**. While it is off, received lines are
+    dropped (and counted), and the Logs tab says so.
 
 ## What can feed it
 
@@ -70,9 +70,9 @@ are named after the built-in SNMP profiles when they know the OID.
 
 ## Searching
 
-The **Logs** page adds a **Source** (server, agents, syslog, SNMP traps, all)
+The **Logs** tab adds a **Source** (server, agents, syslog, SNMP traps, all)
 and a **Device** filter to the period, minimum level and LogsQL query. A device
-page has a **Logs** button that opens the page already filtered. The
+page has a **Logs** button that opens the tab already filtered. The
 **Receivers** block shows what listens and what arrived.
 
 ## Alerting on a pattern
@@ -82,8 +82,8 @@ rule from the current source, level and query. The rule counts matching lines
 over a sliding window (1 minute to 24 hours) and fires when the count reaches
 your threshold, **per device** (one alert per `target`) or overall. It is a
 normal alert rule: severity, hold time, channels, silences, dependency
-suppression, history and backups all apply, and it can be edited on the
-**Alerts** page.
+suppression, history and backups all apply, and it can be edited in
+**Alerts › Rules**.
 
 Examples (the query part):
 

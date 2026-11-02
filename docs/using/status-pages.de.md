@@ -16,10 +16,10 @@ Monitornamen, Adressen, Arten und Kennungen verlassen den Server nie
 
 ## 1. Eine Seite erstellen
 
-**Settings → Status pages** → **New page**. Diese Seite listet
+**Status › Seiten** → **New page**. Diese Seite listet
 Ihre Statusseiten (öffnen, bearbeiten, löschen) mit den Ankündigungen
 darunter; der Editor öffnet sich auf seiner eigenen Route
-(`/settings/status/new`, `/settings/status/<id>`). Die öffentliche Darstellung liegt
+(`/status/new`, `/status/<id>`). Die öffentliche Darstellung liegt
 unter `/s/<address>`.
 
 | Feld | Was es tut |
@@ -135,7 +135,7 @@ seine stillen Slots.
 
 ## 3. Vorfälle und Wartung ankündigen
 
-Auf **Settings → Status pages**, unter der Liste der Seiten, **Incidents
+Auf **Status › Seiten**, unter der Liste der Seiten, **Incidents
 and maintenance** → **New announcement** (auch ++ctrl+k++ →
 *Announce an incident*).
 

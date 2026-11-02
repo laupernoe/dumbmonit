@@ -57,7 +57,7 @@ CrowdSec。它会用一句话说明哪里出了问题(本地 API、bouncer、日
 是每个 bouncer 上次拉取至今的时间、按来源划分的决策,以及每个
 日志来源未解析的比例。
 
-使用机器登录时，下方会出现一张威胁地图：最近 24 小时的告警，按国家着色。同样的计数也会进入安全页面的威胁地图，与防火墙的拦截和 Cloudflare 的威胁并列。
+使用机器登录时，下方会出现一张威胁地图：最近 24 小时的告警，按国家着色。同样的计数也会进入**监控项 › 安全**的威胁地图，与防火墙的拦截和 Cloudflare 的威胁并列。
 
 ## 让 DumbMonit 读取 CrowdSec 的指标 {#let-dumbmonit-read-crowdsecs-metrics}
 
@@ -82,7 +82,7 @@ CrowdSec。它会用一句话说明哪里出了问题(本地 API、bouncer、日
     sudo cscli bouncers add dumbmonit
     ```
 
-5. 或者，为了安全页面的威胁地图：创建一个机器登录，并在下面选择“机器登录”。每条告警只保留国家。
+5. 或者，为了**监控项 › 安全**的威胁地图：创建一个机器登录，并在下面选择“机器登录”。每条告警只保留国家。
 
     ```
     sudo cscli machines add dumbmonit --password 'a-long-password'

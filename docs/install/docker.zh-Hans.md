@@ -175,7 +175,7 @@ docker compose up -d
 数据库迁移会在启动时运行。VictoriaMetrics 的数据不受影响。
 
 !!! tip "先做备份"
-    **Settings → Backup → Back up now** 会在几秒内把数据库
+    **设置 › 系统 › 备份 › Back up now** 会在几秒内把数据库
     和 `secret.key` 的一致性副本写入 `/data/backups/`，
     如果升级出了问题，你就从它来恢复。参见
     [备份与恢复](backup.md)。

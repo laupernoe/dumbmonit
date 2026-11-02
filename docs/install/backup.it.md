@@ -31,7 +31,7 @@ riavere anche i grafici; quello è in fondo a questa pagina.
 
 ## Il bundle cifrato
 
-**Settings → Backup → Download the bundle.** Scegli una passphrase di
+**Impostazioni › Sistema › Backup › Download the bundle.** Scegli una passphrase di
 almeno 16 caratteri — tre parole bastano — e confermala. Il file che
 scarichi è JSON semplice con un corpo cifrato:
 
@@ -112,7 +112,7 @@ possa essere ripristinato da qualche parte che non ha mai visto
 1. Avvia il nuovo container e crea il primo account amministratore su
    `/setup`, con il codice di configurazione stampato nei suoi log.
    Quell'account è tuo; il ripristino non lo toccherà.
-2. **Settings → Backup → Restore a bundle.** Scegli il file, digita la
+2. **Impostazioni › Sistema › Backup › Restore a bundle.** Scegli il file, digita la
    passphrase, e premi **Check this backup**.
 3. Leggi il report. Dice, sezione per sezione, cosa verrebbe **creato**,
    cosa verrebbe **aggiornato** perché differisce da ciò che è già qui,
@@ -224,7 +224,7 @@ problema. La serie esiste solo una volta scritto un primo backup, così
 un'istanza con la pianificazione disattivata non viene mai infastidita
 su questo.
 
-**Settings → Backup** mostra la stessa cosa senza MetricsQL: l'ultima
+**Impostazioni › Sistema › Backup** mostra la stessa cosa senza MetricsQL: l'ultima
 esecuzione e se è riuscita, i file conservati e la loro dimensione, e
 **Back up now** per scriverne uno immediatamente.
 
@@ -279,7 +279,7 @@ cronologia.
 
 ## Cosa fare prima di un aggiornamento
 
-1. **Settings → Backup → Back up now** — trenta secondi, e include il
+1. **Impostazioni › Sistema › Backup › Back up now** — trenta secondi, e include il
    segreto.
 2. Scarica anche un bundle se l'aggiornamento è importante, oppure se
    ti stai spostando su un'altra macchina.

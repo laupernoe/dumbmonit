@@ -2,7 +2,7 @@
 
 DumbMonit writes its own logs to disk, lets an administrator download the last
 days, and can forward them to a log server as they are written. Everything is in
-**Settings → System → Logs** (administrators only).
+**Settings › System › Server logs** (administrators only).
 
 ## Where the files are
 

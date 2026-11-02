@@ -15,9 +15,12 @@ janelas de manutenção são programadas.
 ![A página de visão geral: a frase do boletim, a lista "Precisa de você" e as previsões](assets/screenshots/overview-light.png){ loading=lazy }
 
 <div class="dm-links" markdown>
-<a href="install/docker/">Instalar<small>Docker Compose, primeira inicialização, backups</small></a>
-<a href="install/first-device/">Adicione seu primeiro monitor<small>SNMP, varredura de rede, o que acontece depois</small></a>
-<a href="alerting/">Alertas<small>Regras integradas, silenciosas por construção</small></a>
+<a href="install/">Começar<small>Docker Compose, HTTPS, primeiro monitor, backups</small></a>
+<a href="overview/">Visão geral<small>O banner, os números, o modo parede</small></a>
+<a href="monitors/">Monitores<small>Lista, mapa, logs, segurança e integrações</small></a>
+<a href="alerting/">Alertas<small>Agora, histórico, regras, automação, plantões</small></a>
+<a href="status/">Status<small>Páginas de status públicas e relatórios</small></a>
+<a href="settings/">Configurações<small>Conta, equipe e acesso, notificações, sistema</small></a>
 </div>
 
 ## O que ele monitora {#what-it-watches}

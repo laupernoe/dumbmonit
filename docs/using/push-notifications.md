@@ -36,7 +36,7 @@ there with a **Web Push** channel
 1. Open DumbMonit in Chrome, Edge, Firefox or Safari and sign in.
 2. Optional: install it as an app (address bar → **Install**, or the browser
    menu → **Add to Home screen**). Notifications work either way.
-3. **Settings → Push notifications → Enable on this device**, and allow
+3. **Settings › My account › Push notifications › Enable on this device**, and allow
    notifications when the browser asks.
 4. **Send a test.** A *DumbMonit — test notification* should appear within a
    few seconds.
@@ -48,7 +48,7 @@ or later):
 
 1. Open DumbMonit in **Safari**.
 2. **Share → Add to Home Screen**, then open DumbMonit **from the new icon**.
-3. Sign in, then **Settings → Push notifications → Enable on this device**,
+3. Sign in, then **Settings › My account › Push notifications › Enable on this device**,
    and allow notifications.
 4. **Send a test.**
 

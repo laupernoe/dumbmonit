@@ -64,7 +64,7 @@ por origen y la proporción no analizada de cada fuente de log.
 
 Con un acceso de máquina aparece un mapa de amenazas: las alertas de las
 últimas 24 horas, coloreadas por país. Los mismos recuentos alimentan el mapa de
-amenazas de la página Seguridad, junto a los bloqueos de los cortafuegos y las
+amenazas de **Monitores › Seguridad**, junto a los bloqueos de los cortafuegos y las
 amenazas de Cloudflare.
 
 ## Dejar que DumbMonit lea las métricas de CrowdSec {#let-dumbmonit-read-crowdsecs-metrics}
@@ -103,7 +103,7 @@ amenazas de Cloudflare.
     sudo cscli bouncers add dumbmonit
     ```
 
-5. O, para el mapa de amenazas de la página Seguridad: crea un acceso de máquina y elige Acceso de máquina más abajo. Solo se guarda el país de cada alerta.
+5. O, para el mapa de amenazas de **Monitores › Seguridad**: crea un acceso de máquina y elige Acceso de máquina más abajo. Solo se guarda el país de cada alerta.
 
     ```
     sudo cscli machines add dumbmonit --password 'a-long-password'

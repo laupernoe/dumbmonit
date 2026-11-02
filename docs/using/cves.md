@@ -1,6 +1,6 @@
 # CVE & vulnerabilities
 
-**Security → CVE & vulnerabilities** lists the known vulnerabilities (CVE) of
+**Monitors › Security** lists the known vulnerabilities (CVE) of
 the software installed on your monitors, and says for each one whether the
 monitor is already **patched**, still **vulnerable**, or **to check** by hand.
 The device page shows the same for one monitor.

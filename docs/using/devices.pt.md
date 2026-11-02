@@ -62,7 +62,7 @@ quantos contentores têm uma política. **Manage containers** abre a lista;
   após este parar (no máximo uma vez a cada dez minutos);
 - **Auto-update in maintenance windows** — quando o registo tem uma imagem
   mais recente para a mesma etiqueta, o contentor é recriado durante uma
-  janela de manutenção agendada (página Alerts → Maintenance) e revertido se
+  janela de manutenção agendada (Alertas › Agora, janelas de manutenção) e revertido se
   falhar a sua verificação de saúde.
 
 Cada interruptor guarda por si só. Detalhes e regras de segurança:

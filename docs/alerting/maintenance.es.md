@@ -8,8 +8,7 @@ después de dos horas.
 
 ## Dónde {#where}
 
-- **Alerts → Maintenance**: la lista de ventanas, con *Active
-  now* o *Scheduled*, y el formulario para añadir una.
+- **Alertas › Ahora**: las ventanas, *Active now* o *Scheduled*, se pliegan sobre la lista de alertas; **Schedule maintenance**, arriba a la derecha de la página, abre el formulario para añadir una.
 - **Página del monitor → Silence 1 h / Silence until…**: una ventana
   puntual rápida para todo el monitor.
 - ++ctrl+k++ → *Schedule maintenance*.

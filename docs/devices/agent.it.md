@@ -125,7 +125,7 @@ alcun account da creare sulla macchina: il token di registrazione è l'unico
 segreto.
 
 1. In DumbMonit, aggiungi un monitor e scegli **Server con l'agente**. Scegli come la macchina raggiunge il server: **Direttamente** o tramite un **relay** di un sito remoto dietro un firewall (vedi [Monitorare un sito remoto](../install/remote-site.md#5-install-agents-behind-the-relay)). Un token di registrazione (dmon_…) viene mostrato una volta, con il comando di installazione pronto da copiare per Linux/macOS, Windows e Docker.
-2. Quel token è la chiave con cui l'agent invia le proprie misure; sulla macchina non c'è alcun account da creare. Per impostazione predefinita è monouso: registra questa macchina e nient'altro. Per una flotta (un playbook, un'immagine di macchina), spunta *Più macchine con questo comando* prima di creare il comando; un intero dominio Windows passa dal [kit Active Directory](agent-active-directory.md), proposto nella stessa pagina. Un token perso si revoca in Impostazioni → Agent.
+2. Quel token è la chiave con cui l'agent invia le proprie misure; sulla macchina non c'è alcun account da creare. Per impostazione predefinita è monouso: registra questa macchina e nient'altro. Per una flotta (un playbook, un'immagine di macchina), spunta *Più macchine con questo comando* prima di creare il comando; un intero dominio Windows passa dal [kit Active Directory](agent-active-directory.md), proposto nella stessa pagina. Un token perso si revoca in Impostazioni › Monitoraggio › Agenti.
 3. Esegui il comando di installazione sulla macchina da monitorare, con diritti elevati (sudo su Linux e macOS, un PowerShell come amministratore su Windows).
 4. La pagina attende il primo invio (qualche secondo), poi ti lascia dare un nome alla macchina, metterla in una cartella e collocarla in una sede, subito. Con quel primo batch il server dà all'agent un segreto proprio (`/etc/dumbmonit/agent-secret`, leggibile solo da lui): da quel momento quella macchina è l'unica che può inviare dati sotto questo monitor.
 5. Docker: per vedere i container e lasciare che DumbMonit li riavvii o li
@@ -325,8 +325,7 @@ sistema.
     SHA-256 (`sha256sum`, `shasum`, `sha256`).
 
     I checksum cambiano a ogni release del server: dopo aver aggiornato
-    DumbMonit, copia un comando di installazione nuovo da **Impostazioni →
-    Agent** (o da un nuovo token) invece di rieseguirne uno vecchio, che si
+    DumbMonit, copia un comando di installazione nuovo da **Impostazioni › Monitoraggio › Agenti** (o da un nuovo token) invece di rieseguirne uno vecchio, che si
     fermerebbe con "checksum mismatch". Gli stessi checksum sono mostrati sotto
     il comando di installazione, e pubblicati in `/download/<file>.sha256`.
 
@@ -841,7 +840,7 @@ a DumbMonit, viene registrato nel log e ritentato mantenendo il secret.
   di installazione.
 - L'agent lo invia come `Authorization: Bearer dmon_…` su `POST /api/ingest`.
   Non compare mai nei log dell'agent, nemmeno troncato.
-- **Impostazioni → Agent** elenca i token con il loro prefisso, ambito, data di
+- **Impostazioni › Monitoraggio › Agenti** elenca i token con il loro prefisso, ambito, data di
   creazione e ultimo utilizzo. **Revoca** ferma ogni agent che usa quel token al
   suo prossimo invio; le macchine diventano poi *irraggiungibili* dopo tre
   periodi saltati. Riesegui l'installer con un nuovo token per registrarle di
@@ -864,7 +863,7 @@ passaggio, ed è ciò che serve per una finestra di installazione. È la revoca 
 tagliare fuori una flotta.
 
 Un token che non può più registrare — esaurito, o oltre la scadenza — è mostrato
-come **Non registra più** in Impostazioni → Agent. Le sue macchine continuano a
+come **Non registra più** in Impostazioni › Monitoraggio › Agenti. Le sue macchine continuano a
 riferire; semplicemente non può far entrare una nuova macchina.
 
 ## Interruzioni e diagnostica

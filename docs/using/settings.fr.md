@@ -14,7 +14,7 @@ Réglages contient ce qui est administratif : l'instance elle-même, votre compt
 | Mur | `/settings/wall` | Mode mural : ce qu'il montre, et comment l'ouvrir ([Mode mur](wall.md)) |
 | Système | `/settings/system` | Sauvegarde, Fichiers de configuration, DumbMonit lui-même, Données et rétention, Journaux, API et assistants, À propos |
 
-Chaque section garde son ancre : `/settings#agents` redirige vers `/settings/monitoring#agents`. Les anciens liens (`/alerts#notifications`) redirigent aussi vers le nouvel emplacement. Les pages de statut et les rapports ne sont plus dans les Réglages : ils ont leur propre page, **Pages de statut** (`/status`) et **Rapports** (`/reports`) ; `/settings/status` et `/settings/reports` y redirigent. Les actualités et les widgets du mur ont disparu : leurs anciens liens (`#news`, `#widgets`) ouvrent l'onglet Mur, où se trouve **Musique murale** (`#music`).
+Chaque section garde son ancre : `/settings#agents` redirige vers `/settings/monitoring#agents`. Les anciens liens (`/alerts#notifications`) redirigent aussi vers le nouvel emplacement. Les pages de statut et les rapports ne sont plus dans les Réglages : ce sont les onglets **Pages** et **Rapports** de **Statut** (`/status`) ; `/settings/status` et `/settings/reports` y redirigent. Les actualités et les widgets du mur ont disparu : leurs anciens liens (`#news`, `#widgets`) ouvrent l'onglet Mur, où se trouve **Musique murale** (`#music`).
 
 ## Apparence {#appearance}
 
@@ -235,7 +235,7 @@ Dans **Réglages → Supervision**, sous les agents : une note qui dit à quel p
 
 ## Rapports
 
-Sur sa propre page **Rapports** (`/reports` ; elle était dans Réglages → Notifications) : l'export de disponibilité (SLA) d'une période, les emails de disponibilité périodiques pour l'équipe et l'historique de leurs envois. Réservé aux administrateurs. Voir [Rapports par email](reports.md).
+Dans **Statut › Rapports** (`/status?tab=reports` ; elle était dans Réglages › Notifications) : l'export de disponibilité (SLA) d'une période, les emails de disponibilité périodiques pour l'équipe et l'historique de leurs envois. Réservé aux administrateurs. Voir [Rapports par email](reports.md).
 
 ## Données et rétention {#data-retention}
 

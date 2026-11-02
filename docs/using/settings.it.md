@@ -14,7 +14,7 @@ Le Impostazioni raccolgono ciò che è amministrativo: l'istanza stessa, il tuo 
 | Schermo a parete | `/settings/wall` | Modalità parete: cosa mostra e come aprirla ([Modalità parete](wall.md)) |
 | Sistema | `/settings/system` | Backup, File di configurazione, DumbMonit stesso, Dati e conservazione, Log, API e assistenti, Informazioni |
 
-Ogni sezione mantiene la propria ancora: `/settings#agents` reindirizza a `/settings/monitoring#agents`. Anche i vecchi link (`/alerts#notifications`) reindirizzano alla nuova posizione. Le pagine di stato e i report non sono più nelle Impostazioni: hanno pagine proprie, **Pagine di stato** (`/status`) e **Report** (`/reports`); `/settings/status` e `/settings/reports` reindirizzano lì. Notizie e widget della parete non ci sono più: i loro vecchi link (`#news`, `#widgets`) aprono la scheda Schermo a parete, dove si trova **Musica per la parete** (`#music`).
+Ogni sezione mantiene la propria ancora: `/settings#agents` reindirizza a `/settings/monitoring#agents`. Anche i vecchi link (`/alerts#notifications`) reindirizzano alla nuova posizione. Le pagine di stato e i report non sono più nelle Impostazioni: sono le schede **Pagine** e **Report** di **Stato** (`/status`); `/settings/status` e `/settings/reports` reindirizzano lì. Notizie e widget della parete non ci sono più: i loro vecchi link (`#news`, `#widgets`) aprono la scheda Schermo a parete, dove si trova **Musica per la parete** (`#music`).
 
 ## Aspetto {#appearance}
 
@@ -86,7 +86,7 @@ token e account, con l'indirizzo del client. Conserva le ultime 5 000 voci.
 Notifiche native su questo telefono o computer, anche con DumbMonit chiuso:
 **Abilita su questo dispositivo**, poi **Invia un test**. Ogni account gestisce
 qui i propri dispositivi (anche gli osservatori); quali avvisi li raggiungono è
-stabilito da un canale **Web Push** in Impostazioni → Notifiche e report. Il pulsante **i**
+stabilito da un canale **Web Push** in Impostazioni › Notifiche. Il pulsante **i**
 riassume i requisiti: HTTPS (o localhost), installazione nella schermata Home su
 iPhone e iPad, e i domini dei servizi push che il server deve raggiungere. Guida
 completa: [Notifiche push (PWA)](push-notifications.md).
@@ -208,7 +208,7 @@ In **Impostazioni → Monitoraggio**, sotto gli agent: un punteggio di quanto so
 
 ## Report
 
-In **Impostazioni → Notifiche e report**, sotto la politica: email periodiche di disponibilità per il team. Scegli settimanale, giornaliero o
+In **Stato › Report** (`/status?tab=reports`): email periodiche di disponibilità per il team. Scegli settimanale, giornaliero o
 mensile, il giorno, l'ora e il fuso orario, i destinatari e il canale email, poi
 **Invia un'anteprima** per vedere il risultato. Solo amministratori. Vedi
 [Report via email](reports.md).

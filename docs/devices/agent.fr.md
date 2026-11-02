@@ -138,7 +138,7 @@ virtuel Hyper-V** (voir [Hôtes Hyper-V](#hyper-v-hosts)).
 
 Les étapes ci-dessous sont celles que montre l'avis à côté du formulaire. Il n'y a aucun compte à créer sur la machine : le jeton d'enrôlement est le seul secret.
 
-1. Dans DumbMonit, ajoutez une surveillance et choisissez **Serveur avec l'agent**. Choisissez comment la machine joint le serveur : **En direct**, ou **Via un relais** d'un site distant derrière un pare-feu (voir [Surveiller un site distant](../install/remote-site.fr.md#5-installer-des-agents-derriere-le-relais)). Un jeton d'enrôlement (dmon_…) est montré une fois, avec la commande d'installation prête à copier pour Linux/macOS, Windows et Docker.
+1. Dans DumbMonit, ajoutez une surveillance et choisissez **Serveur avec l'agent**. Choisissez comment la machine joint le serveur : **En direct**, ou **Via un relais** d'un site distant derrière un pare-feu (voir [Surveiller un site distant](../install/remote-site.fr.md#5-installer-des-agents-derrière-le-relais)). Un jeton d'enrôlement (dmon_…) est montré une fois, avec la commande d'installation prête à copier pour Linux/macOS, Windows et Docker.
 2. Lancez cette commande d'installation sur la machine, avec des droits élevés (sudo sur Linux et macOS, un PowerShell élevé sur Windows).
 3. La page attend le premier envoi (quelques secondes), puis permet de nommer la machine, de la ranger dans un dossier et de la placer sur un site, sur place.
 4. Facultatif, pour Docker : si l'agent tourne sous un utilisateur dédié, ajoutez cet utilisateur au groupe « docker » et redémarrez l'agent.
@@ -147,7 +147,7 @@ Les étapes ci-dessous sont celles que montre l'avis à côté du formulaire. Il
     usermod -aG docker dumbmonit
     ```
 
-5. Pour un parc (un playbook, une image de machine), cochez *Plusieurs machines avec cette commande* avant de créer la commande ; tout un domaine Windows passe par le [kit Active Directory](agent-active-directory.fr.md), proposé sur la même page. Révoquez un jeton perdu dans Réglages → Agents.
+5. Pour un parc (un playbook, une image de machine), cochez *Plusieurs machines avec cette commande* avant de créer la commande ; tout un domaine Windows passe par le [kit Active Directory](agent-active-directory.fr.md), proposé sur la même page. Révoquez un jeton perdu dans Réglages › Supervision › Agents.
 
 !!! warning
     L'agent contacte le serveur, jamais l'inverse : aucun port n'a besoin d'être ouvert sur la machine surveillée.
@@ -481,7 +481,7 @@ ce dossier est le seul endroit où l'agent peut écrire en dehors de son cache.
 
 ### Réglages {#automatic-updates-settings}
 
-**Réglages → Agents → Mises à jour automatiques des agents** (session
+**Réglages › Supervision › Agents › Mises à jour automatiques des agents** (session
 administrateur uniquement ; les jetons d'API ne peuvent pas modifier ces
 réglages). Les mêmes réglages sont disponibles par `GET`/`PUT /api/agent/updates`,
 `PUT /api/agent/updates/{id}`, `POST /api/agent/updates/{id}/now` et
@@ -564,8 +564,7 @@ pas un agent planté : le retour arrière a alors lieu à son prochain démarrag
 
 ### Désactiver {#automatic-updates-off}
 
-- Pour tous : désactivez **Les agents se mettent à jour** dans Réglages →
-  Agents, ou choisissez **manuel uniquement** pour mettre à jour à la demande.
+- Pour tous : désactivez **Les agents se mettent à jour** dans Réglages › Supervision › Agents, ou choisissez **manuel uniquement** pour mettre à jour à la demande.
 - Pour un agent : mettez sa surcharge sur **désactivé**.
 - Sur la machine elle-même : `self_update: false` dans `agent.yaml`, ou
   `DUMBMONIT_AGENT_SELF_UPDATE=false` (état *désactivé localement*). Cela
@@ -789,7 +788,7 @@ utilisable dans un conteneur sans monter un fichier :
 | `DUMBMONIT_AGENT_LOG` | `trace`, `debug`, `info`, `warn`, `error` |
 | `DUMBMONIT_AGENT_RELAY` | `true` pour faire tourner, pour le serveur, les sondes des surveillances assignées à cet agent (voir [Faire tourner l'agent dans Docker / sur un autre réseau](#run-the-agent-in-docker--on-another-network)) |
 | `DUMBMONIT_AGENT_SITE` | Libellé de site montré à côté de l'agent quand il est proposé comme relais |
-| `DUMBMONIT_AGENT_GATEWAY_LISTEN` | Passerelle d'un relais pour les agents de son site, par exemple `0.0.0.0:8443` (`gateway_listen:`) ; prime sur le port réglé dans l'interface (voir [Installer des agents derrière le relais](../install/remote-site.fr.md#5-installer-des-agents-derriere-le-relais)) |
+| `DUMBMONIT_AGENT_GATEWAY_LISTEN` | Passerelle d'un relais pour les agents de son site, par exemple `0.0.0.0:8443` (`gateway_listen:`) ; prime sur le port réglé dans l'interface (voir [Installer des agents derrière le relais](../install/remote-site.fr.md#5-installer-des-agents-derrière-le-relais)) |
 | `DUMBMONIT_AGENT_GATEWAY_MAX_CONNECTIONS` | Connexions tenues à la fois par la passerelle, 64 par défaut (`gateway_max_connections:`) |
 | `DUMBMONIT_AGENT_GATEWAY_RATE_KIB` | Débit de chaque tunnel de la passerelle, par sens, en Kio/s, 4096 par défaut (`gateway_rate_kib:`) |
 
@@ -1072,7 +1071,7 @@ DumbMonit, est journalisé et réessayé en conservant le secret.
 - L'agent l'envoie comme `Authorization: Bearer dmon_…` sur
   `POST /api/ingest`. Il n'apparaît jamais dans les journaux de l'agent,
   même tronqué.
-- **Réglages → Agents** liste les jetons avec leur préfixe, leur portée,
+- **Réglages › Supervision › Agents** liste les jetons avec leur préfixe, leur portée,
   leur date de création et leur dernière utilisation. **Révoquer** arrête
   chaque agent qui utilise ce jeton à son prochain envoi ; les machines
   deviennent alors *inaccessibles* après trois périodes manquées.
@@ -1096,7 +1095,7 @@ après qu'elle passe, ce que vous voulez pour une fenêtre d'installation.
 Révoquer est ce qui coupe un parc.
 
 Un jeton qui ne peut plus enrôler — épuisé, ou passé son échéance — se
-montre comme **N'enrôle plus** dans Réglages → Agents. Ses machines
+montre comme **N'enrôle plus** dans Réglages › Supervision › Agents. Ses machines
 continuent de rapporter ; il ne peut simplement plus en laisser entrer une
 nouvelle.
 

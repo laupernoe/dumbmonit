@@ -5,6 +5,18 @@ ajuste. O que faz a diferença no uso diário é o que mantém o ruído
 baixo: supressão por dependência, agrupamento por anfitrião, janelas de
 manutenção, e uma linha de base que aprende antes de falar.
 
+Na aplicação são os **Alertas** no menu da esquerda (`g a`), com cinco separadores. O selo do menu conta o que ainda precisa de si.
+
+| Separador | O que é | Ler |
+|---|---|---|
+| **Agora** | O que está a disparar, por gravidade ou por monitor; reconhecer, adiar, ignorar. As janelas de manutenção dobram-se por cima da lista | [Agora e Histórico](../using/alerts.md), [Janelas de manutenção](maintenance.md) |
+| **Histórico** | O que aconteceu e quando, e quem agiu | [Agora e Histórico](../using/alerts.md) |
+| **Regras** | Cada regra, o seu limiar e a sua espera; ajustar ou criar | [Regras](rules.md) |
+| **Automação** | Runbooks, ações e o registo de remediação | [Automação e runbooks](remediation.md) |
+| **Plantões** | Escalas e políticas de escalonamento | [Plantões](oncall.md) |
+
+Quem é avisado, e como, define-se em **Definições › Notificações**: [Canais de notificação](../notifications.md) e [Política de notificações](notifications.md).
+
 ![A página Alerts: o que se passa agora, a manutenção, o histórico e as regras](../assets/screenshots/alerts-light.png){ loading=lazy }
 
 ## Severidades {#severities}
@@ -142,7 +154,7 @@ previsão do PBS.
 
 As regras incorporadas não têm nenhum canal associado, o que significa
 **todo canal ativado**. Uma regra que edita pode nomear canais
-específicos. Os canais são configurados em Settings → Notifications & reports; ver
+específicos. Os canais são configurados em Definições › Notificações; ver
 [Canais de notificação](../notifications.md).
 
 ## Notificações inteligentes {#smart-notifications}

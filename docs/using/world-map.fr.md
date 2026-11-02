@@ -1,6 +1,6 @@
 # Carte du monde
 
-La vue **Monde** de la page Carte (`/map?view=world`) montre vos emplacements
+La vue **Monde** de **Surveillances › Carte** (`/targets?tab=map&view=world`) montre vos emplacements
 sur une carte du monde : une pastille par emplacement, avec l'état des
 moniteurs qu'il réunit. À côté de la carte, les mêmes emplacements sont listés,
 les plus mal en point d'abord ; un clic sur une pastille ou une ligne affiche
@@ -22,7 +22,7 @@ Les emplacements trop proches pour être distingués au zoom courant forment une
 
 ## Emplacements
 
-Les emplacements se règlent dans **Réglages → Surveillance → Emplacements**
+Les emplacements se règlent dans **Réglages › Supervision › Emplacements**
 (administrateurs). Un emplacement a un nom, une adresse facultative (texte
 libre, seulement affiché) et un endroit, choisi de trois façons :
 

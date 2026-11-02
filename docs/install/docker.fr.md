@@ -108,7 +108,7 @@ des agrégats de 5 minutes dans un second VictoriaMetrics embarqué
 statut et rapports qui remontent plus loin que la rétention brute sont servis
 depuis lui. VictoriaLogs (`/victoria-logs-prod`, `/data/vlogs`) est aussi dans
 l'image mais reste éteint tant que vous ne l'activez pas au même endroit ; la
-page **Logs** cherche alors dans les journaux du serveur. Toutes les variables
+onglet **Surveillances › Journaux** cherche alors dans les journaux du serveur. Toutes les variables
 sont dans la [référence de configuration](../reference/configuration.md#historique-long) ;
 les chiffres de disque et de mémoire sont dans
 [Dimensionnement](../reference/sizing.md).
@@ -208,7 +208,7 @@ docker compose up -d
 Les migrations de base de données s'exécutent au démarrage. Les données de VictoriaMetrics restent intactes.
 
 !!! tip "Faites d'abord une sauvegarde"
-    **Settings → Backup → Back up now** écrit en quelques secondes une copie cohérente de la base
+    **Réglages › Système › Sauvegarde › Back up now** écrit en quelques secondes une copie cohérente de la base
     et de `secret.key` dans `/data/backups/`, et c'est de là que vous
     restaurez si la mise à jour tourne mal. Voir
     [Sauvegarde et restauration](backup.md).

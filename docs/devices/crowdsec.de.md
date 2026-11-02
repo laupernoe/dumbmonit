@@ -65,7 +65,7 @@ Log-Quelle.
 
 Mit einem Maschinen-Login folgt eine Bedrohungskarte: die Alarme der letzten
 24 Stunden, nach Land eingefärbt. Dieselben Zahlen speisen die Bedrohungskarte
-der Sicherheitsseite, neben den Blockierungen der Firewalls und den Bedrohungen
+von **Monitore › Sicherheit**, neben den Blockierungen der Firewalls und den Bedrohungen
 von Cloudflare.
 
 ## DumbMonit CrowdSecs Metriken lesen lassen
@@ -105,7 +105,7 @@ von Cloudflare.
     sudo cscli bouncers add dumbmonit
     ```
 
-5. Oder, für die Bedrohungskarte der Sicherheitsseite: Legen Sie ein Maschinen-Login an und wählen Sie unten Maschinen-Login. Nur das Land jedes Alarms wird behalten.
+5. Oder, für die Bedrohungskarte von **Monitore › Sicherheit**: Legen Sie ein Maschinen-Login an und wählen Sie unten Maschinen-Login. Nur das Land jedes Alarms wird behalten.
 
     ```
     sudo cscli machines add dumbmonit --password 'a-long-password'

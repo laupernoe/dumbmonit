@@ -661,7 +661,7 @@ compte tiers : le navigateur (installé comme application ou non) reçoit
 les alertes même avec chaque onglet fermé.
 
 1. Sur chaque téléphone ou ordinateur, ouvrez DumbMonit et allez à
-   **Réglages → Notifications push → Activer sur cet appareil**, puis
+   **Réglages › Mon compte › Notifications push › Activer sur cet appareil**, puis
    **Envoyer un test**. Sur iPhone et iPad, ajoutez d'abord DumbMonit à
    l'écran d'accueil. Le guide pas à pas est dans
    [Notifications push (PWA)](using/push-notifications.md).

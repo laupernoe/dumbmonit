@@ -41,7 +41,7 @@ uno con sus fixtures y salida esperada:
 
 ## Instalar un pack {#install-a-pack}
 
-En la interfaz, como administrador: **Settings → Integration packs**.
+En la interfaz, como administrador: **Ajustes › Supervisión › Paquetes de integración**.
 Pega el YAML del pack o sube su `pack.yaml`, y luego **Install the
 pack**. Un pack que no pasa las comprobaciones se rechaza con la lista
 de qué corregir; uno que pasa se guarda con sus notas, si las hay. La
@@ -50,7 +50,7 @@ instalados aparecen bajo **Community packs** al añadir un monitor,
 marcados *Pack*.
 
 A través de la API HTTP, necesitas una sesión de administrador o un
-token de API con el alcance `write` (Settings → **API & assistants**).
+token de API con el alcance `write` (Ajustes › Sistema › **API y asistentes**).
 
 ```bash
 # Instalar, o actualizar a una versión más reciente del mismo pack

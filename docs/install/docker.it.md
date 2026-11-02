@@ -180,7 +180,7 @@ docker compose up -d
 Le migrazioni del database vengono eseguite all'avvio. I dati di VictoriaMetrics non vengono toccati.
 
 !!! tip "Fai prima un backup"
-    **Settings → Backup → Back up now** scrive in pochi secondi una copia coerente del database
+    **Impostazioni › Sistema › Backup › Back up now** scrive in pochi secondi una copia coerente del database
     e di `secret.key` in `/data/backups/`, ed è da lì che
     ripristini se l'aggiornamento va male. Vedi
     [Backup e ripristino](backup.md).

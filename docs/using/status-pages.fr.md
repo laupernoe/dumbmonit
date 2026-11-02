@@ -16,7 +16,7 @@ serveur — ni dans la page, ni dans un badge, ni dans un email.
 
 ## 1. Créer une page
 
-**Pages de statut** (dans le rail d'icônes) → **Nouvelle page**. Cette page liste vos
+**Statut › Pages** → **Nouvelle page**. Cet onglet liste vos
 pages d'état (ouvrir, modifier, supprimer) avec les annonces en
 dessous ; l'éditeur s'ouvre sur sa propre route (`/status/new`,
 `/status/<id>`). Le rendu public est à `/s/<adresse>`. Les pages de statut étaient dans les

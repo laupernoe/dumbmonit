@@ -16,8 +16,7 @@ de NTP, assez pour lire l'horloge du serveur sans session.
 
 ## Venir d'Uptime Kuma
 
-**Surveillances > ⋯ > Importer depuis Uptime Kuma**, aussi sur
-**Surveillances > Ajouter une surveillance > Import** (administrateurs), lit la
+**Surveillances › Ajouter une surveillance › Import** (administrateurs) lit la
 base d'Uptime Kuma 1.x ou 2.x, ou la sauvegarde JSON de la 1.x. Rien n'est créé
 avant que vous ayez vu l'aperçu : ce qui sera créé, et ce qui est ignoré avec la
 raison. Cochez les surveillances voulues, puis importez-les en un clic.
@@ -39,7 +38,7 @@ docker start uptime-kuma
   notifications en sont lus.
 - Uptime Kuma 2 installé sur **MariaDB** n'est pas pris en charge : seul le
   fichier SQLite `kuma.db` peut être importé.
-- La sauvegarde JSON de la 1.x (**Réglages > Sauvegarde > Exporter**, 4 Mo au
+- La sauvegarde JSON de la 1.x (**Réglages › Système › Sauvegarde › Exporter**, 4 Mo au
   plus) fonctionne toujours, avec le même aperçu.
 
 | Uptime Kuma | DumbMonit |

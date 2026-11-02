@@ -49,7 +49,7 @@ aparecem sob **Pacotes da comunidade** ao adicionar um monitor, marcados
 *Pacote*.
 
 Pela API HTTP, você precisa de uma sessão de administrador ou um token de
-API com o escopo `write` (Configurações → **API e assistentes**).
+API com o escopo `write` (Configurações › Sistema › **API e assistentes**).
 
 ```bash
 # Instalar, ou atualizar para uma versão mais nova do mesmo pacote

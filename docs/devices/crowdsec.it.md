@@ -63,7 +63,7 @@ quota non analizzata di ogni fonte di log.
 
 Con un accesso macchina segue una mappa delle minacce: gli avvisi delle ultime
 24 ore, colorati per paese. Gli stessi conteggi alimentano la mappa delle
-minacce della pagina Sicurezza, accanto ai blocchi dei firewall e alle minacce
+minacce di **Monitor › Sicurezza**, accanto ai blocchi dei firewall e alle minacce
 di Cloudflare.
 
 ## Lasciare che DumbMonit legga le metriche di CrowdSec
@@ -89,7 +89,7 @@ di Cloudflare.
     sudo cscli bouncers add dumbmonit
     ```
 
-5. Oppure, per la mappa delle minacce della pagina Sicurezza: crea un accesso macchina e scegli Accesso macchina qui sotto. Viene conservato solo il paese di ogni avviso.
+5. Oppure, per la mappa delle minacce di **Monitor › Sicurezza**: crea un accesso macchina e scegli Accesso macchina qui sotto. Viene conservato solo il paese di ogni avviso.
 
     ```
     sudo cscli machines add dumbmonit --password 'a-long-password'

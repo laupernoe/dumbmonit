@@ -39,7 +39,7 @@ decide qué alertas llegan ahí con un canal **Web Push**
 2. Opcional: instálalo como app (barra de direcciones → **Install**, o el
    menú del navegador → **Add to Home screen**). Las notificaciones
    funcionan de cualquiera de las dos formas.
-3. **Settings → Push notifications → Enable on this device**, y permite
+3. **Ajustes › Mi cuenta › Notificaciones push › Enable on this device**, y permite
    las notificaciones cuando el navegador lo pregunte.
 4. **Send a test.** Debería aparecer un *DumbMonit — test notification*
    en unos segundos.
@@ -52,7 +52,7 @@ iPadOS 16.4 o posteriores):
 1. Abre DumbMonit en **Safari**.
 2. **Share → Add to Home Screen**, y luego abre DumbMonit **desde el
    nuevo icono**.
-3. Inicia sesión, luego **Settings → Push notifications → Enable on this
+3. Inicia sesión, luego **Ajustes › Mi cuenta › Notificaciones push › Enable on this
    device**, y permite las notificaciones.
 4. **Send a test.**
 
@@ -60,7 +60,7 @@ En Safari sin instalar, la sección indica **Install first**.
 
 ## Elegir qué alertas llegan {#choose-which-alerts-arrive}
 
-En **Settings → Notifications & reports**, añade un canal de tipo **Web Push**. Sin
+En **Ajustes › Notificaciones**, añade un canal de tipo **Web Push**. Sin
 ningún ajuste, cada dispositivo suscrito de cada cuenta lo recibe; lista
 nombres de cuenta en **Accounts** para dirigirlo solo a algunas personas.
 Se aplica la política de canal habitual (severidad mínima, horas de

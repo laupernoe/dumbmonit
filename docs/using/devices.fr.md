@@ -4,7 +4,7 @@
 
 ## La liste
 
-La page **Surveillances** montre chaque surveillance dans l'une de deux dispositions,
+L'onglet **Liste** de **Surveillances** montre chaque surveillance dans l'une de deux dispositions,
 mémorisée dans votre navigateur :
 
 - **Compact** (par défaut) : une ligne par surveillance — voyant d'état, nom,
@@ -39,9 +39,14 @@ Une seule barre d'outils regroupe tout :
   surveillance et une barre flottante en bas avec les actions groupées (activer,
   désactiver, déplacer dans un dossier, supprimer) ; **Terminé** ou Échap
   quitte le mode ;
-- **⋯** (plus d'actions) : la **Carte** de topologie, **Créer un dossier**,
-  **Importer des sites (CSV)** et **Importer depuis Uptime Kuma** ;
-- **Ajouter une surveillance**, l’action principale.
+- **Créer un dossier** (administrateurs), l'icône de dossier : un dossier vide
+  où déplacer des surveillances ;
+- **Ajouter une surveillance**, l’action principale. Les imports (sites en CSV,
+  Uptime Kuma et d'autres) sont sur cette page : voir
+  [Importer depuis d'autres outils](imports.md).
+
+Les autres onglets de Surveillances sont la [Carte](topology.md), les
+[Journaux](logs.md) (administrateurs) et l'onglet [Sécurité](cves.md).
 
 ## Une surveillance
 
@@ -82,7 +87,7 @@ et une ligne « Appliquer à tous » :
   qui suit son arrêt (au plus une fois toutes les dix minutes) ;
 - **Mise à jour automatique dans les fenêtres de maintenance** — quand le
   registre a une image plus récente pour le même tag, le conteneur est recréé
-  pendant une fenêtre de maintenance planifiée (page Alertes → Maintenance) et
+  pendant une fenêtre de maintenance planifiée (Alertes › Maintenant, fenêtres de maintenance) et
   annulé s'il échoue son test de santé.
 
 Chaque interrupteur s'enregistre seul. Détails et règles de sécurité :

@@ -19,7 +19,7 @@ interface and the [assistant](../using/assistant.md) show.
 
 ## 1. Create a read-only token
 
-**Settings → API tokens → New token**, scope **read**. The token can read and
+**Settings › System › API & assistants**, scope **read**. The token can read and
 nothing else (it cannot acknowledge an alert, change a monitor or create another
 token). Copy it: it is shown once. You can also limit it to your dashboard's
 network address and give it an expiry date.

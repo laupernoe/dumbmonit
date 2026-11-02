@@ -27,7 +27,7 @@ dossier **Active Directory &lt;domaine&gt;**, avec les tags `ad=<domaine>` et
    pare-feu, choisissez un relais sous **Chemin** : les serveurs téléchargent
    alors l'agent depuis la passerelle du relais et remontent à travers elle,
    chiffrés de bout en bout jusqu'au serveur (voir
-   [Surveiller un site distant](../install/remote-site.fr.md#5-installer-des-agents-derriere-le-relais)) — ajustez les options si
+   [Surveiller un site distant](../install/remote-site.fr.md#5-installer-des-agents-derrière-le-relais)) — ajustez les options si
    besoin, créez le jeton et téléchargez `Deploy-DumbMonit.ps1`. Le jeton n'est
    affiché qu'à ce moment. Le format du nom et du serveur DNS est vérifié, ils
    sont écrits dans le script et rappelés dans le récapitulatif de l'étape
@@ -121,7 +121,7 @@ Le jeton d'inscription n'apparaît jamais dans ces journaux.
   administrateurs.
 - **Stop new enrolments** (bouton de l'assistant et du jeton) clôt le jeton :
   les serveurs déjà inscrits continuent de remonter leurs mesures.
-  **Revoke** (Settings → Agents) coupe tous les agents qui utilisent le jeton.
+  **Revoke** (Réglages › Supervision › Agents) coupe tous les agents qui utilisent le jeton.
   Arrêtez les inscriptions une fois le parc déployé ; ne révoquez que pour
   couper des agents.
 - Utilisez HTTPS pour l'URL de DumbMonit, puisque les agents y envoient leurs

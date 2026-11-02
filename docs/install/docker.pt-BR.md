@@ -180,7 +180,7 @@ docker compose up -d
 As migrações do banco rodam na inicialização. Os dados do VictoriaMetrics não são tocados.
 
 !!! tip "Faça um backup antes"
-    **Settings → Backup → Back up now** grava em poucos segundos uma cópia consistente do banco
+    **Configurações › Sistema › Backup › Back up now** grava em poucos segundos uma cópia consistente do banco
     e de `secret.key` em `/data/backups/`, e é a partir dela que você
     restaura se a atualização der errado. Veja
     [Backup e restauração](backup.md).

@@ -15,9 +15,12 @@ sind geplant.
 ![Die Übersichtsseite: der Berichtssatz, die Liste „Needs you" und die Prognosen](assets/screenshots/overview-light.png){ loading=lazy }
 
 <div class="dm-links" markdown>
-<a href="install/docker/">Installation<small>Docker Compose, erster Start, Backups</small></a>
-<a href="install/first-device/">Ersten Monitor hinzufügen<small>SNMP, Netzwerk-Scan, wie es danach weitergeht</small></a>
-<a href="alerting/">Alarmierung<small>Eingebaute Regeln, von Grund auf ruhig</small></a>
+<a href="install/">Los geht's<small>Docker Compose, HTTPS, erster Monitor, Backups</small></a>
+<a href="overview/">Übersicht<small>Das Banner, die Kennzahlen, der Wandmodus</small></a>
+<a href="monitors/">Monitore<small>Liste, Karte, Logs, Sicherheit und die Integrationen</small></a>
+<a href="alerting/">Warnungen<small>Jetzt, Verlauf, Regeln, Automatisierung, Bereitschaft</small></a>
+<a href="status/">Status<small>Öffentliche Statusseiten und Berichte</small></a>
+<a href="settings/">Einstellungen<small>Konto, Team und Zugang, Benachrichtigungen, System</small></a>
 </div>
 
 ## Was überwacht wird {#what-it-watches}

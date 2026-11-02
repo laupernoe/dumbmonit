@@ -40,7 +40,7 @@ com os seus fixtures e a saída esperada:
 
 ## Instalar um pacote {#install-a-pack}
 
-Na interface, como administrador: **Settings → Integration packs**. Cole o
+Na interface, como administrador: **Definições › Monitorização › Pacotes de integração**. Cole o
 YAML do pacote ou envie o seu `pack.yaml`, depois **Install the pack**. Um
 pacote que não passa as verificações é recusado com a lista do que
 corrigir; um que passa é guardado com as suas notas, se existirem. A mesma
@@ -49,7 +49,7 @@ aparecem em **Community packs** ao adicionar um monitor, marcados
 *Pack*.
 
 Através da API HTTP, precisa de uma sessão de administrador ou um token de
-API com o âmbito `write` (Settings → **API & assistants**).
+API com o âmbito `write` (Definições › Sistema › **API e assistentes**).
 
 ```bash
 # Instalar, ou atualizar para uma versão mais recente do mesmo pacote

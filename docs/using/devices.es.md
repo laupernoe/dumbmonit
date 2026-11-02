@@ -64,8 +64,7 @@ interruptores por contenedor y una fila «Apply to all»:
   minutos);
 - **Auto-update in maintenance windows** — cuando el registro tiene una
   imagen más reciente para la misma etiqueta, el contenedor se recrea
-  durante una ventana de mantenimiento programada (página Alerts →
-  Maintenance) y se revierte si falla su healthcheck.
+  durante una ventana de mantenimiento programada (Alertas › Ahora, ventanas de mantenimiento) y se revierte si falla su healthcheck.
 
 Cada interruptor se guarda por separado. Detalles y reglas de seguridad:
 [Contenedores Docker](../devices/agent.md#docker-containers).

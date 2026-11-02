@@ -7,8 +7,7 @@ uma vez, em vez de aparecer do nada depois de duas horas.
 
 ## Onde {#where}
 
-- **Alertas → Manutenção**: a lista de janelas, com *Ativa agora*
-  ou *Programada*, e o formulário para adicionar uma.
+- **Alertas › Agora**: as janelas, *Ativa agora* ou *Programada*, se recolhem acima da lista de alertas; **Programar manutenção**, no canto superior direito da página, abre o formulário para adicionar uma.
 - **Página do monitor → Silenciar 1 h / Silenciar até…**: uma janela
   pontual rápida para o monitor inteiro.
 - ++ctrl+k++ → *Programar manutenção*.

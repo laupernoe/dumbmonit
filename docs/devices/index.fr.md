@@ -6,6 +6,8 @@ sur le serveur ; le serveur décrit chaque type à l'interface
 (`GET /api/collectors`), si bien que le formulaire correspond toujours à ce
 que cette version peut surveiller.
 
+Dans l'application, **Ajouter une surveillance** propose ces types. Dans cette documentation, le menu de gauche les regroupe par catégorie ; le tableau ci-dessous les liste tous, avec ce dont chacun a besoin.
+
 | Type | `kind` | Identifiant | Usage typique |
 |---|---|---|---|
 | [Appareil SNMP](snmp.md) | `snmp` | communauté ou SNMP v3 | Commutateur, routeur, NAS, onduleur, imprimante |

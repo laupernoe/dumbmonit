@@ -5,6 +5,18 @@ que faz a diferença no uso diário é o que mantém o ruído baixo: supressão
 por dependência, agrupamento por host, janelas de manutenção, e uma linha
 de base que aprende antes de falar.
 
+No aplicativo são os **Alertas** no menu da esquerda (`g a`), com cinco abas. O selo do menu conta o que ainda precisa de você.
+
+| Aba | O que é | Ler |
+|---|---|---|
+| **Agora** | O que está disparando, por gravidade ou por monitor; reconhecer, adiar, ignorar. As janelas de manutenção se recolhem acima da lista | [Agora e Histórico](../using/alerts.md), [Janelas de manutenção](maintenance.md) |
+| **Histórico** | O que aconteceu e quando, e quem agiu | [Agora e Histórico](../using/alerts.md) |
+| **Regras** | Cada regra, o seu limite e a sua espera; ajustar ou criar | [Regras](rules.md) |
+| **Automação** | Runbooks, ações e o registro de remediação | [Automação e runbooks](remediation.md) |
+| **Plantões** | Escalas e políticas de escalonamento | [Plantões](oncall.md) |
+
+Quem é avisado, e como, é definido em **Configurações › Notificações**: [Canais de notificação](../notifications.md) e [Política de notificações](notifications.md).
+
 ![A página de alertas: o que está acontecendo agora, manutenção, histórico e as regras](../assets/screenshots/alerts-light.png){ loading=lazy }
 
 ## Severidades {#severities}
@@ -140,7 +152,7 @@ datastore do PBS é um limite simples sobre a própria previsão do PBS.
 
 Regras integradas não têm canal associado, o que significa **todo canal
 ativado**. Uma regra que você edita pode nomear canais específicos. Canais
-são configurados em Configurações → Notificações e relatórios; veja
+são configurados em Configurações › Notificações; veja
 [Canais de notificação](../notifications.md).
 
 ## Notificações inteligentes {#smart-notifications}
@@ -183,6 +195,5 @@ inundado de mensagens. O caminho completo de um alerta, em ordem:
 11. **Enviar** — com um link "Abrir no DumbMonit" por monitor quando
     uma URL pública é conhecida.
 
-Os passos 6 a 10 são configurados em Configurações → Notificações e relatórios →
-Política de notificação (global) e em cada canal (Opções de entrega). Veja
+Os passos 6 a 10 são configurados em Configurações › Notificações › Política de notificação (global) e em cada canal (Opções de entrega). Veja
 [Política de notificação](notifications.md).

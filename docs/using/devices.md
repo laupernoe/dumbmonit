@@ -4,7 +4,7 @@
 
 ## The list
 
-The **Monitors** page shows every monitor in one of two layouts, remembered in
+The **List** tab of **Monitors** shows every monitor in one of two layouts, remembered in
 your browser:
 
 - **Compact** (the default): one line per monitor — status light, name, kind,
@@ -37,9 +37,13 @@ One toolbar holds everything:
 - **Select** (administrators), which turns on a checkbox per monitor and a
   floating bar at the bottom with the bulk actions (enable, disable, move to a
   folder, delete); **Done** or Escape leaves the mode;
-- **⋯** (more actions): the topology **Map**, **Create folder**, **Import
-  websites (CSV)** and **Import from Uptime Kuma**;
-- **Add a monitor**, the primary action.
+- **Create folder** (administrators), the folder icon: an empty folder to move
+  monitors into;
+- **Add a monitor**, the primary action. The imports (websites CSV, Uptime Kuma
+  and others) are on that page: see [Import from other tools](imports.md).
+
+The other tabs of Monitors are the [Map](topology.md), the [Logs](logs.md)
+(administrators) and the [Security](cves.md) tab.
 
 ## A monitor
 
@@ -77,7 +81,7 @@ opens a table with two switches per container and an "Apply to all" row:
   it stopping (at most once every ten minutes);
 - **Auto-update in maintenance windows** — when the registry has a newer image
   for the same tag, the container is recreated during a scheduled maintenance
-  window (Alerts page → Maintenance) and rolled back if it fails its healthcheck.
+  window (Alerts › Now, maintenance windows) and rolled back if it fails its healthcheck.
 
 Each switch saves on its own. Details and safety rules: [Docker
 containers](../devices/agent.md#docker-containers).

@@ -14,7 +14,7 @@ Ajustes reúne lo administrativo: la propia instancia, tu cuenta, quién puede i
 | Pantalla de pared | `/settings/wall` | Modo pared: qué muestra y cómo abrirlo ([Modo pared](wall.md)) |
 | Sistema | `/settings/system` | Copia de seguridad, Archivos de configuración, El propio DumbMonit, Datos y retención, Registros, API y asistentes, Acerca de |
 
-Cada sección conserva su ancla: `/settings#agents` redirige a `/settings/monitoring#agents`. Los enlaces antiguos (`/alerts#notifications`) también redirigen al nuevo lugar. Las páginas de estado y los informes ya no están en Ajustes: tienen sus propias páginas, **Páginas de estado** (`/status`) e **Informes** (`/reports`); `/settings/status` y `/settings/reports` redirigen allí. Las noticias y los widgets de la pared han desaparecido: sus enlaces antiguos (`#news`, `#widgets`) abren la pestaña Pantalla de pared, donde está **Música de pared** (`#music`).
+Cada sección conserva su ancla: `/settings#agents` redirige a `/settings/monitoring#agents`. Los enlaces antiguos (`/alerts#notifications`) también redirigen al nuevo lugar. Las páginas de estado y los informes ya no están en Ajustes: son las pestañas **Páginas** e **Informes** de **Estado** (`/status`); `/settings/status` y `/settings/reports` redirigen allí. Las noticias y los widgets de la pared han desaparecido: sus enlaces antiguos (`#news`, `#widgets`) abren la pestaña Pantalla de pared, donde está **Música de pared** (`#music`).
 
 ## Apariencia {#appearance}
 
@@ -92,7 +92,7 @@ Notificaciones nativas en este teléfono u ordenador, incluso con
 DumbMonit cerrado: **Enable on this device**, luego **Send a test**.
 Cada cuenta gestiona sus propios dispositivos aquí (también los
 visores); qué alertas les llegan se define con un canal **Web Push** en
-Settings → Notifications & reports. El botón **i** resume los requisitos: HTTPS (o
+Ajustes › Notificaciones. El botón **i** resume los requisitos: HTTPS (o
 localhost), instalación en pantalla de inicio en iPhone y iPad, y los
 dominios de servicio push que el servidor debe alcanzar. Guía completa:
 [Notificaciones push (PWA)](push-notifications.md).
@@ -223,7 +223,7 @@ En **Settings → Supervisión**, bajo los agentes: una puntuación de lo bien r
 
 ## Reports
 
-En **Settings → Notifications & reports**, bajo la política: correos
+En **Estado › Informes** (`/status?tab=reports`): correos
 periódicos de disponibilidad para el equipo. Elige semanal,
 diario o mensual, el día, hora y zona horaria, los destinatarios y el
 canal de correo, y luego **Send a preview** para ver el resultado. Solo

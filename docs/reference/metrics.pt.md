@@ -125,7 +125,7 @@ rotas ficam fora de `/api`, onde um recoletor as procura:
 | `GET /prometheus/api/v1/…` | A metade de leitura da API do Prometheus, retransmitida para o armazenamento: o que uma fonte de dados do Grafana chama. |
 
 As três aceitam `Authorization: Bearer dmt_…` com o âmbito **`read`** — um token
-criado em Definições → *API e assistentes*, do mesmo tipo que o
+criado em Definições › Sistema › *API e assistentes*, do mesmo tipo que o
 [servidor MCP](../using/assistant.md) usa. Não há cookie envolvido, pelo que não
 é preciso o cabeçalho `X-Requested-With`; um cookie de sessão também é aceite,
 para poder abrir qualquer uma a partir de um navegador com sessão iniciada. Um

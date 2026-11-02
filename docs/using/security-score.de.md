@@ -19,7 +19,7 @@ Directory. Andere Monitore zeigen nichts an.
 ## Einschalten
 
 Die Bewertung ist **standardmäßig ausgeschaltet**. Ein Administrator schaltet
-sie unter **Einstellungen → Konto und Sicherheit → Sicherheitsbewertung** ein.
+sie unter **Einstellungen › Überwachung › Sicherheitsbewertung** ein.
 Danach gilt:
 
 - jeder bewertete Monitor erhält in der Monitorliste ein kleines

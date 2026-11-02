@@ -64,7 +64,7 @@ zwei Schaltern pro Container und einer "Apply to all"-Zeile:
   Minute nach seinem Stopp neu (höchstens einmal alle zehn Minuten);
 - **Auto-update in maintenance windows** — wenn die Registry ein neueres
   Image für denselben Tag hat, wird der Container während eines
-  geplanten Wartungsfensters (Alerts-Seite → Maintenance) neu erstellt und
+  geplanten Wartungsfensters (Warnungen › Jetzt, Wartungsfenster) neu erstellt und
   zurückgerollt, falls er seinen Healthcheck nicht besteht.
 
 Jeder Schalter speichert für sich. Details und Sicherheitsregeln:

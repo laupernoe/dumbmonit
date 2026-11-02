@@ -113,8 +113,7 @@ Routen liegen außerhalb von `/api`, dort, wo ein Scraper sie sucht:
 | `GET /federate` | Die Messungen, per `match[]` ausgewählt, genau wie Prometheus ein anderes Prometheus föderiert: der jüngste Punkt jeder ausgewählten Serie. |
 | `GET /prometheus/api/v1/…` | Die Lesehälfte der Prometheus-API, an den Speicher weitergereicht: das, was eine Grafana-Datenquelle aufruft. |
 
-Alle drei nehmen `Authorization: Bearer dmt_…` mit dem Scope **`read`** — ein unter Einstellungen
-→ *API & Assistenten* erstelltes Token, dieselbe Art, die der [MCP-Server](../using/assistant.md)
+Alle drei nehmen `Authorization: Bearer dmt_…` mit dem Scope **`read`** — ein unter Einstellungen › System › *API und Assistenten* erstelltes Token, dieselbe Art, die der [MCP-Server](../using/assistant.md)
 verwendet. Es ist kein Cookie im Spiel, daher ist kein Header `X-Requested-With` nötig; ein
 Sitzungscookie wird ebenfalls akzeptiert, sodass Sie jede davon aus einem angemeldeten Browser
 öffnen können. Ein Token ist auf 120 Aufrufe pro Minute begrenzt: reichlich für einen Scrape alle

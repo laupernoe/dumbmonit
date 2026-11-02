@@ -5,6 +5,18 @@ the difference in daily use is what keeps the noise down: dependency
 suppression, grouping by host, maintenance windows, and a baseline that learns
 before it speaks.
 
+In the app it is **Alerts** in the left menu (`g a`), with five tabs. The badge on the menu counts what still needs you.
+
+| Tab | What it is | Read |
+|---|---|---|
+| **Now** | What is firing, by severity or by monitor; acknowledge, snooze, ignore. The maintenance windows fold above the list | [Now and History](../using/alerts.md), [Maintenance windows](maintenance.md) |
+| **History** | What happened and when, with who acted | [Now and History](../using/alerts.md) |
+| **Rules** | Every rule, its threshold and hold; tune or create | [Rules](rules.md) |
+| **Automation** | Runbooks, actions and the remediation log | [Automation and runbooks](remediation.md) |
+| **On-call** | Schedules and escalation policies | [On-call](oncall.md) |
+
+Who is told, and how, is set in **Settings › Notifications**: [Notification channels](../notifications.md) and [Notification policy](notifications.md).
+
 ![The Alerts page: what is happening now, maintenance, history and the rules](../assets/screenshots/alerts-light.png){ loading=lazy }
 
 ## Severities

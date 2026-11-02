@@ -14,7 +14,7 @@
 | 墙屏显示 | `/settings/wall` | 墙屏模式：显示什么以及如何打开（[墙屏模式](wall.md)） |
 | 系统 | `/settings/system` | 备份、配置文件、DumbMonit 自身、数据与保留、日志、API 和助手、关于 |
 
-每一节都保留自己的锚点：`/settings#agents` 会跳转到 `/settings/monitoring#agents`。旧链接（`/alerts#notifications`）也会跳转到新位置。状态页和报告已不在设置中：它们有自己的页面，**状态页**（`/status`）和**报告**（`/reports`）；`/settings/status` 和 `/settings/reports` 会跳转过去。墙屏的新闻和小组件已经移除：它们的旧链接（`#news`、`#widgets`）会打开“墙屏显示”标签页，**墙屏音乐**（`#music`）就在那里。
+每一节都保留自己的锚点：`/settings#agents` 会跳转到 `/settings/monitoring#agents`。旧链接（`/alerts#notifications`）也会跳转到新位置。状态页和报告已不在设置中：它们是**状态**（`/status`）的**页面**和**报告**标签页；`/settings/status` 和 `/settings/reports` 会跳转过去。墙屏的新闻和小组件已经移除：它们的旧链接（`#news`、`#widgets`）会打开“墙屏显示”标签页，**墙屏音乐**（`#music`）就在那里。
 
 ## 外观 {#appearance}
 
@@ -42,7 +42,7 @@
 
 ## 推送通知 {#push-notifications}
 
-在此手机或电脑上的原生通知，即使 DumbMonit 已关闭也能收到：**在此设备上启用**，然后**发送测试**。每个账户（包括查看者）在这里管理自己的设备；哪些告警会送达它们，由设置 → 通知与报告中的 **Web Push** 渠道决定。**i** 按钮概括了要求：HTTPS（或 localhost）、iPhone 和 iPad 上需添加到主屏幕，以及服务器必须能访问的推送服务域名。完整指南：[推送通知（PWA）](push-notifications.md)。
+在此手机或电脑上的原生通知，即使 DumbMonit 已关闭也能收到：**在此设备上启用**，然后**发送测试**。每个账户（包括查看者）在这里管理自己的设备；哪些告警会送达它们，由设置 › 通知中的 **Web Push** 渠道决定。**i** 按钮概括了要求：HTTPS（或 localhost）、iPhone 和 iPad 上需添加到主屏幕，以及服务器必须能访问的推送服务域名。完整指南：[推送通知（PWA）](push-notifications.md)。
 
 ## 用户 {#users}
 
@@ -88,7 +88,7 @@
 
 ## 报告 {#reports}
 
-在**设置 → 通知与报告**中，位于策略下方：面向团队的定期可用性邮件。选择每周、每日或每月，指定日期、时间和时区、收件人及邮件渠道，然后**发送预览**查看结果。仅限管理员。参见[邮件报告](reports.md)。
+在**状态 › 报告**（`/status?tab=reports`）中：面向团队的定期可用性邮件。选择每周、每日或每月，指定日期、时间和时区、收件人及邮件渠道，然后**发送预览**查看结果。仅限管理员。参见[邮件报告](reports.md)。
 
 ## 备份 {#backup}
 

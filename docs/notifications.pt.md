@@ -45,7 +45,7 @@ Três princípios aplicam-se a todos os canais:
 
 ## Criar e testar um canal {#creating-and-testing-a-channel}
 
-1. Abra **Settings → Notifications & reports → Add channel** (`/settings/notifications`).
+1. Abra **Definições › Notificações › Add channel** (`/settings/notifications`).
 2. Dê-lhe um nome com significado («Discord — família», «SMS — piquete»). É o
    nome que escolherá mais tarde nas suas regras de alerta.
 3. Escolha o tipo de canal, depois preencha os campos descritos abaixo.
@@ -594,8 +594,7 @@ Notificações nativas nos seus telemóveis e computadores, diretamente do seu p
 DumbMonit, sem app a instalar nem conta de terceiros: o navegador (instalado como
 app ou não) recebe os alertas mesmo com todos os separadores fechados.
 
-1. Em cada telemóvel ou computador, abra o DumbMonit e vá a **Definições →
-   Notificações push → Ativar neste dispositivo**, depois **Enviar um teste**. No
+1. Em cada telemóvel ou computador, abra o DumbMonit e vá a **Definições › A minha conta › Notificações push › Ativar neste dispositivo**, depois **Enviar um teste**. No
    iPhone e no iPad, adicione primeiro o DumbMonit ao Ecrã Principal. O guia
    passo a passo está em [Notificações push (PWA)](using/push-notifications.md).
 2. Crie aqui um canal **Web Push**. Não tem segredo: os seus destinatários são os

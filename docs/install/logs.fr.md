@@ -2,7 +2,7 @@
 
 DumbMonit écrit ses propres journaux sur disque, permet à un administrateur de
 télécharger les derniers jours, et peut les envoyer à un serveur de logs au fil de
-l'eau. Tout se trouve dans **Réglages → Système → Journaux du serveur**
+l'eau. Tout se trouve dans **Réglages › Système › Journaux du serveur**
 (administrateurs seulement).
 
 ## Où sont les fichiers

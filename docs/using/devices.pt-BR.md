@@ -64,7 +64,7 @@ uma linha "Aplicar a todos":
   minuto após ele parar (no máximo uma vez a cada dez minutos);
 - **Atualização automática em janelas de manutenção** — quando o registro tem
   uma imagem mais nova para a mesma tag, o contêiner é recriado durante uma
-  janela de manutenção programada (página Alertas → Manutenção) e revertido
+  janela de manutenção programada (Alertas › Agora, janelas de manutenção) e revertido
   se falhar na verificação de saúde.
 
 Cada chave salva por conta própria. Detalhes e regras de segurança:

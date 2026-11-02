@@ -14,7 +14,7 @@ As Definições reúnem o que é administrativo: a própria instância, a sua co
 | Ecrã de parede | `/settings/wall` | Modo parede: o que mostra e como abri-lo ([Modo parede](wall.md)) |
 | Sistema | `/settings/system` | Cópia de segurança, Ficheiros de configuração, O próprio DumbMonit, Dados e retenção, Registos, API e assistentes, Acerca |
 
-Cada secção mantém a sua âncora: `/settings#agents` reencaminha para `/settings/monitoring#agents`. As ligações antigas (`/alerts#notifications`) também reencaminham para o novo lugar. As páginas de estado e os relatórios já não estão nas Definições: têm as suas próprias páginas, **Páginas de estado** (`/status`) e **Relatórios** (`/reports`); `/settings/status` e `/settings/reports` reencaminham para lá. As notícias e os widgets da parede desapareceram: as suas ligações antigas (`#news`, `#widgets`) abrem o separador Ecrã de parede, onde está **Música da parede** (`#music`).
+Cada secção mantém a sua âncora: `/settings#agents` reencaminha para `/settings/monitoring#agents`. As ligações antigas (`/alerts#notifications`) também reencaminham para o novo lugar. As páginas de estado e os relatórios já não estão nas Definições: são os separadores **Páginas** e **Relatórios** de **Estado** (`/status`); `/settings/status` e `/settings/reports` reencaminham para lá. As notícias e os widgets da parede desapareceram: as suas ligações antigas (`#news`, `#widgets`) abrem o separador Ecrã de parede, onde está **Música da parede** (`#music`).
 
 ## Aparência {#appearance}
 
@@ -86,8 +86,7 @@ alterações de tokens e de contas, com o endereço do cliente. Mantém as últi
 Notificações nativas neste telemóvel ou computador, mesmo com o DumbMonit
 fechado: **Ativar neste dispositivo**, depois **Enviar um teste**. Cada conta
 gere aqui os seus próprios dispositivos (os visualizadores também); os alertas
-que lhes chegam são definidos por um canal **Web Push** em Settings →
-Notifications & reports. O botão **i** resume os requisitos: HTTPS (ou localhost),
+que lhes chegam são definidos por um canal **Web Push** em Definições › Notificações. O botão **i** resume os requisitos: HTTPS (ou localhost),
 instalação no Ecrã Principal no iPhone e iPad, e os domínios dos serviços push
 que o servidor tem de alcançar. Guia completo:
 [Notificações push (PWA)](push-notifications.md).
@@ -210,7 +209,7 @@ Em **Settings → Monitorização**, abaixo dos agentes: uma pontuação de quã
 
 ## Relatórios {#reports}
 
-Em **Settings → Notifications & reports**, abaixo da política: emails periódicos
+Em **Estado › Relatórios** (`/status?tab=reports`): emails periódicos
 de disponibilidade para a equipa. Escolha semanal, diário ou mensal, o dia, a hora e o fuso horário, os destinatários e o canal de email,
 depois **Enviar uma pré-visualização** para ver o resultado. Apenas
 administradores. Veja [Relatórios por email](reports.md).

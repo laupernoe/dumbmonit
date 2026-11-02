@@ -66,7 +66,7 @@ Dos formas de acceso, aceptadas en cada ruta protegida:
   `X-Requested-With: DumbMonit` — la prueba anti-CSRF que añade
   automáticamente la UI; sin ella la petición se rechaza con `403`.
 - **Token de API** — `Authorization: Bearer dmt_…`, para scripts,
-  dashboards y asistentes. Creado en Settings → **API & assistants**
+  dashboards y asistentes. Creado en Ajustes › Sistema › **API y asistentes**
   (los mismos tokens que usa el [servidor MCP](../using/assistant.md))
   y mostrado una vez. No hay ninguna cookie implicada, así que nunca se
   necesita ninguna cabecera `X-Requested-With`.
@@ -159,7 +159,7 @@ mucho menos uno más poderoso.
   registro del servidor con el nombre e id del token, el método, la
   ruta (sin la cadena de consulta) y el estado — nunca el token, nunca
   el cuerpo. Crear y revocar un token se registran en el registro de
-  auditoría (Settings → Security).
+  auditoría (Ajustes › Mi cuenta › Cuenta y seguridad).
 
 ## Límites de tasa {#rate-limits}
 

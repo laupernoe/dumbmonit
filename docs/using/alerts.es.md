@@ -2,20 +2,21 @@
 
 ![La página de alertas: qué ocurre ahora, el mantenimiento, el historial y las reglas](../assets/screenshots/alerts-light.png){ loading=lazy }
 
-Todo sobre las alertas en una página, detrás de cuatro pestañas. La
-pestaña está en la URL (`/alerts#rules`), así que una vista se puede
+Todo sobre las alertas en una página, detrás de cinco pestañas. La
+pestaña está en la URL (`/alerts?tab=rules`), así que una vista se puede
 enlazar. **Schedule maintenance**, arriba a la derecha, abre el
 formulario para una ventana desde cualquier pestaña.
 
 | Pestaña | Qué contiene |
 |---|---|
-| **Now** | La lista en vivo de problemas, una línea cada uno. Consulta [La lista Now](#the-now-list). El distintivo en la pestaña, y en Alerts en la barra superior, es el recuento de lo que aún requiere tu atención. |
-| **Maintenance** | Ventanas de mantenimiento, *Active now* o *Scheduled*, puntuales, semanales o mensuales, cada una con su próxima ocurrencia (`#scheduled`). Consulta [Ventanas de mantenimiento](../alerting/maintenance.md). |
-| **History** | Las últimas 200 transiciones, cada una nombrando el monitor, la regla y lo que ocurrió; las resueltas se pueden limpiar. |
-| **Rules** | Cada regla con su severidad, una marca *Built-in* y, si algún monitor la ignora, *Ignored on N devices*; activar, editar en línea, eliminar las propias, crear una regla de umbral. Consulta [Reglas](../alerting/rules.md). |
+| **Ahora** | La lista en vivo de problemas, una línea cada uno. Consulta [La lista Now](#the-now-list). El distintivo en la pestaña y en Alertas en el menú izquierdo es el recuento de lo que aún requiere tu atención. Las ventanas de mantenimiento, *Active now* o *Scheduled* (puntuales, semanales o mensuales, cada una con su próxima ocurrencia), se pliegan sobre la lista. Consulta [Ventanas de mantenimiento](../alerting/maintenance.md). |
+| **Historial** | Las últimas 200 transiciones, cada una nombrando el monitor, la regla y lo que ocurrió; las resueltas se pueden limpiar. |
+| **Reglas** | Cada regla con su severidad, una marca *Built-in* y, si algún monitor la ignora, *Ignored on N devices*; activar, editar en línea, eliminar las propias, crear una regla de umbral. Consulta [Reglas](../alerting/rules.md). |
+| **Automatización** | Runbooks, acciones de remediación y políticas, y el registro de lo que se ejecutó. Consulta [Runbooks y remediación](../alerting/remediation.md). |
+| **Guardias** | Turnos y políticas de escalado. Consulta [Guardias](../alerting/oncall.md). |
 
 Los canales de notificación y la política de notificación están en
-**Settings → Notifications & reports** (consulta
+**Ajustes › Notificaciones** (consulta
 [Notificaciones](#notifications)).
 
 El mismo modelo de verdad alimenta el boletín de resumen y esta página,
@@ -84,7 +85,7 @@ ninguna alerta en primer lugar.
 
 ## Notificaciones {#notifications}
 
-Los canales y la política viven en **Settings → Notifications & reports**
+Los canales y la política viven en **Ajustes › Notificaciones**
 (`/settings/notifications`), seguidos de los [Informes](reports.md). Dos
 paneles:
 

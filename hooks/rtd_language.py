@@ -67,6 +67,19 @@ def _code() -> str:
     return code
 
 
+RE_BETA = re.compile(r"^(.*) \(beta\)$")
+
+
+def _translate_title(title, titles):
+    """The translated title; "<name> (beta)" becomes "<name> (<beta in the language>)"."""
+    if title in titles:
+        return titles[title]
+    m = RE_BETA.match(title)
+    if m:
+        return f"{titles.get(m.group(1), m.group(1))} ({titles.get('(beta)', 'beta')})"
+    return title
+
+
 def _translate_nav(items, titles):
     out = []
     for item in items:
@@ -74,7 +87,7 @@ def _translate_nav(items, titles):
             ((title, value),) = item.items()
             if isinstance(value, list):
                 value = _translate_nav(value, titles)
-            out.append({titles.get(title, title): value})
+            out.append({_translate_title(title, titles): value})
         else:
             out.append(item)
     return out

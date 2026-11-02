@@ -2,7 +2,7 @@
 
 ## Perdí la contraseña {#i-lost-the-password}
 
-Primero pregunta a otro administrador: en Settings → **Users**, **Edit**
+Primero pregunta a otro administrador: en Ajustes › Equipo y acceso › **Usuarios**, **Edit**
 en tu cuenta define una contraseña nueva y la muestra una vez, y **Reset
 2FA** en la misma fila borra un segundo factor que te deja fuera. Esa es
 la respuesta habitual — una instancia con dos cuentas de administrador
@@ -124,7 +124,7 @@ una VPN; si lo expones, usa un proxy inverso con TLS y define
 
 ## ¿Hay un token de API? {#is-there-an-api-token}
 
-Sí. Settings → **API & assistants** crea tokens `dmt_…` con un alcance
+Sí. Ajustes › Sistema › **API y asistentes** crea tokens `dmt_…` con un alcance
 `read` o `write`; envía uno como `Authorization: Bearer dmt_…` en
 cualquier ruta y no se necesita ninguna cookie ni cabecera CSRF. El mismo
 token conecta un [asistente](using/assistant.md) a través de MCP. Los

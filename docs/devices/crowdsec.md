@@ -67,7 +67,7 @@ read per second, then the time since each bouncer last pulled, the decisions
 by origin and the unparsed share of each log source.
 
 With a machine login, a threat map follows: the alerts of the last 24 hours,
-shaded by country. The same counts feed the threat map of the Security page,
+shaded by country. The same counts feed the threat map of **Monitors › Security**,
 next to the firewalls' blocks and Cloudflare's threats.
 
 ## Let DumbMonit read CrowdSec's metrics
@@ -92,7 +92,7 @@ next to the firewalls' blocks and Cloudflare's threats.
     sudo cscli bouncers add dumbmonit
     ```
 
-5. Or, for the threat map of the Security page: create a machine login and choose Machine login below. Only the country of each alert is kept.
+5. Or, for the threat map of **Monitors › Security**: create a machine login and choose Machine login below. Only the country of each alert is kept.
 
     ```
     sudo cscli machines add dumbmonit --password 'a-long-password'

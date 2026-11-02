@@ -17,7 +17,7 @@ table alone.
 
 ## Running a scan
 
-On the **Monitors** page, start a discovery scan, choose a suggested network (or
+From **Add a monitor** (or *Scan my network* in the command palette), start a discovery scan, choose a suggested network (or
 type one), and pick the depth:
 
 - **Standard** sweeps about thirty common ports plus SNMP.
@@ -72,7 +72,7 @@ Host network mode:
 ## Scheduled scans and inventory
 
 A one-off scan tells you what is on the network today. To be told when something
-**new** shows up, schedule it: on the **Monitors** page, in the network scan view,
+**new** shows up, schedule it: in the network scan view of **Add a monitor**,
 the *Scheduled scans and inventory* panel keeps a list of the devices and open
 ports each scheduled network has shown, and flags what is new.
 

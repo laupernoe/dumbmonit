@@ -17,9 +17,9 @@ servidor — nem na página, nem num emblema, nem num email.
 
 ## 1. Criar uma página {#1-create-a-page}
 
-**Settings → Status pages** → **New page**. Essa página lista as suas
+**Estado › Páginas** → **New page**. Essa página lista as suas
 páginas de estado (abrir, editar, eliminar) com os anúncios sob elas;
-o editor abre na sua própria rota (`/settings/status/new`, `/settings/status/<id>`). A
+o editor abre na sua própria rota (`/status/new`, `/status/<id>`). A
 representação pública está em `/s/<address>`.
 
 | Campo | O que faz |
@@ -131,7 +131,7 @@ silenciosos.
 
 ## 3. Anunciar incidentes e manutenção {#3-announce-incidents-and-maintenance}
 
-Em **Settings → Status pages**, sob a lista de páginas, **Incidents and
+Em **Estado › Páginas**, sob a lista de páginas, **Incidents and
 maintenance** → **New announcement** (também ++ctrl+k++ → *Announce an
 incident*).
 

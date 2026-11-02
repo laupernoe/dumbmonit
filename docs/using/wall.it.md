@@ -96,7 +96,7 @@ cosa faccia DumbMonit. Per una tale TV, vedi
 1. **Crea un'app Spotify.** Apri la
    [Spotify Developer Dashboard](https://developer.spotify.com/dashboard), crea
    un'app (qualsiasi nome), spunta **Web API** e **Web Playback SDK**, e
-   aggiungi l'URI di redirect che **Settings → Wall music** mostra:
+   aggiungi l'URI di redirect che **Impostazioni › Schermo a parete › Musica per la parete** mostra:
     - DumbMonit servito su HTTPS: `https://<il tuo indirizzo>/api/music/spotify/callback`.
       Spotify torna direttamente a DumbMonit dopo che approvi.
     - DumbMonit servito su HTTP semplice: `http://127.0.0.1:8888/callback`.
@@ -105,7 +105,7 @@ cosa faccia DumbMonit. Per una tale TV, vedi
       l'approvazione, il tuo browser mostra una pagina di errore il cui
       indirizzo porta il codice — copialo e incollalo di nuovo in
       DumbMonit.
-2. **Collega.** In **Settings → Wall music**, incolla il **Client ID**
+2. **Collega.** In **Impostazioni › Schermo a parete › Musica per la parete**, incolla il **Client ID**
    dell'app (non c'è un secret: DumbMonit usa Authorization Code con
    PKCE) e scegli **Connect Spotify**, poi approva su Spotify **con
    l'account che usa il tuo telefono**.
@@ -118,7 +118,7 @@ cosa faccia DumbMonit. Per una tale TV, vedi
    e scegli **DumbMonit Wall**. Il suono esce dalla TV, e il wall mostra
    la copertina, il titolo e il progresso.
 
-**Settings → Wall music → Speaker** mostra se tutto funziona, senza
+**Impostazioni › Schermo a parete › Musica per la parete › Speaker** mostra se tutto funziona, senza
 andare alla TV: l'account, Premium, se Spotify elenca lo speaker tra i
 dispositivi dell'account in questo momento (e quali dispositivi
 elenca), e ogni wall che ha riportato nei quindici minuti precedenti —
@@ -128,7 +128,7 @@ suonava l'ultima volta); ogni wall pronto ha anche il proprio
 **Test sound**. Sul wall stesso, il pannello **Music** ha
 **Play here**, che sposta ciò che suona sull'account a questo display.
 
-**Il nome.** Rinomina lo speaker in **Settings → Wall music → Speaker**
+**Il nome.** Rinomina lo speaker in **Impostazioni › Schermo a parete › Musica per la parete › Speaker**
 ("Living room TV"); ogni wall raccoglie il nuovo nome entro secondi. Per
 nominare un solo wall, aggiungi `?speaker=Kitchen` al suo indirizzo — il
 display lo ricorda (`?speaker=` vuoto lo dimentica).
@@ -200,7 +200,7 @@ meglio.
 
 ### Un link inviato a ogni wall
 
-In **Settings → Wall music** (oppure il pannello proprio **Music** del
+In **Impostazioni › Schermo a parete › Musica per la parete** (oppure il pannello proprio **Music** del
 wall), incolla un link Spotify, Deezer o YouTube a una traccia, album,
 playlist, episodio o video e scegli **Play on the wall**. Ogni wall lo
 riproduce nel player embedded ufficiale del servizio; un link inviato

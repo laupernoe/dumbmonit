@@ -7,8 +7,9 @@ appearing out of nowhere after two hours.
 
 ## Where
 
-- **Alerts → Maintenance**: the list of windows, with *Active now*
-  or *Scheduled*, and the form to add one.
+- **Alerts › Now**: the windows, *Active now* or *Scheduled*, fold above the
+  list of alerts; **Schedule maintenance**, top right of the page, opens the
+  form to add one.
 - **Monitor page → Silence 1 h / Silence until…**: a quick one-off window for
   the whole monitor.
 - ++ctrl+k++ → *Schedule maintenance*.

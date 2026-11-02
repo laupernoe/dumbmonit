@@ -7,7 +7,7 @@ distância. Os relatórios reutilizam um **canal de notificação por email
 (SMTP)**, por isso configure um primeiro (ver
 [Canais de notificação](../notifications.md)).
 
-Abra **Settings > Reports** para os configurar. Tudo aqui é só para
+Abra **Estado › Relatórios** para os configurar. Tudo aqui é só para
 administradores, incluindo a leitura, porque a página lista os endereços dos
 destinatários.
 

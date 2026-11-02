@@ -90,7 +90,7 @@ such a TV, see [When the TV's browser cannot play Spotify](#when-the-tvs-browser
 1. **Create a Spotify app.** Open the
    [Spotify Developer Dashboard](https://developer.spotify.com/dashboard), create
    an app (any name), tick **Web API** and **Web Playback SDK**, and add the
-   redirect URI that **Settings → Wall music** shows:
+   redirect URI that **Settings › Wall display › Wall music** shows:
     - DumbMonit served over HTTPS: `https://<your address>/api/music/spotify/callback`.
       Spotify comes straight back to DumbMonit after you approve.
     - DumbMonit served over plain HTTP: `http://127.0.0.1:8888/callback`.
@@ -98,7 +98,7 @@ such a TV, see [When the TV's browser cannot play Spotify](#when-the-tvs-browser
       `localhost`), since 2025. Nothing answers at that address: after you
       approve, your browser shows an error page whose address carries the
       code — copy it and paste it back into DumbMonit.
-2. **Connect.** In **Settings → Wall music**, paste the app's **Client ID**
+2. **Connect.** In **Settings › Wall display › Wall music**, paste the app's **Client ID**
    (there is no secret: DumbMonit uses Authorization Code with PKCE) and choose
    **Connect Spotify**, then approve on Spotify **with the account your phone
    uses**.
@@ -110,7 +110,7 @@ such a TV, see [When the TV's browser cannot play Spotify](#when-the-tvs-browser
    **DumbMonit Wall**. The sound comes out of the TV, and the wall shows the
    cover, title and progress.
 
-**Settings → Wall music → Speaker** shows whether it all holds, without walking
+**Settings › Wall display › Wall music › Speaker** shows whether it all holds, without walking
 to the TV: the account, Premium, whether Spotify lists the speaker among the
 account's devices right now (and which devices it lists), and every wall that
 reported in the last fifteen minutes — its browser ("Chrome 130 on Linux"),
@@ -119,7 +119,7 @@ speaker (it resumes what played last); each ready wall has its own **Test
 sound** too. On the wall itself, the **Music** panel has **Play here**, which
 moves whatever plays on the account to this display.
 
-**The name.** Rename the speaker in **Settings → Wall music → Speaker** ("Living
+**The name.** Rename the speaker in **Settings › Wall display › Wall music › Speaker** ("Living
 room TV"); every wall picks the new name up within seconds. To name one wall
 alone, add `?speaker=Kitchen` to its address — the display remembers it
 (`?speaker=` forgets it).
@@ -181,7 +181,7 @@ machine, next to DumbMonit, does the job better.
 
 ### A link sent to every wall
 
-In **Settings → Wall music** (or the wall's own **Music** panel), paste a
+In **Settings › Wall display › Wall music** (or the wall's own **Music** panel), paste a
 Spotify, Deezer or YouTube link to a track, album, playlist, episode or video and
 choose **Play on the wall**. Every wall plays it in the service's official
 embedded player; a link sent while a wall is open starts by itself where the

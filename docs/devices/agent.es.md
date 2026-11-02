@@ -129,7 +129,7 @@ No hay ninguna cuenta que crear en la máquina: el token de inscripción
 es el único secreto.
 
 1. En DumbMonit, añade un monitor y elige **Servidor con el agente**. Elige cómo llega la máquina al servidor: **Directamente** o a través de un **relé** de un sitio remoto tras un cortafuegos (consulta [Supervisar un sitio remoto](../install/remote-site.md#5-install-agents-behind-the-relay)). Se muestra una vez un token de inscripción (dmon_…), con el comando de instalación listo para copiar para Linux/macOS, Windows y Docker.
-2. Ese token es la clave del agente para enviar sus mediciones; no hay ninguna cuenta que crear en la máquina. Por defecto es de un solo uso: inscribe esta máquina y nada más. Para una flota (un playbook, una imagen de máquina), marca *Varias máquinas con este comando* antes de crear el comando; un dominio Windows entero pasa por el [kit de Active Directory](agent-active-directory.md), ofrecido en la misma página. Un token perdido se revoca en Ajustes → Agentes.
+2. Ese token es la clave del agente para enviar sus mediciones; no hay ninguna cuenta que crear en la máquina. Por defecto es de un solo uso: inscribe esta máquina y nada más. Para una flota (un playbook, una imagen de máquina), marca *Varias máquinas con este comando* antes de crear el comando; un dominio Windows entero pasa por el [kit de Active Directory](agent-active-directory.md), ofrecido en la misma página. Un token perdido se revoca en Ajustes › Supervisión › Agentes.
 3. Ejecuta el comando de instalación en la máquina a supervisar, con privilegios elevados (sudo en Linux y macOS, un PowerShell como administrador en Windows).
 4. La página espera el primer envío (unos segundos) y luego te deja nombrar la máquina, archivarla en una carpeta y situarla en un sitio, al momento. En ese primer lote el servidor da al agente un secreto propio (`/etc/dumbmonit/agent-secret`, legible solo por él): desde entonces, esa máquina es la única que puede informar bajo este monitor.
 5. Docker: para ver los contenedores y permitir que DumbMonit los
@@ -374,8 +374,7 @@ incluido, en cada sistema.
 Ambos scripts son idempotentes: ejecutar de nuevo el comando de
 instalación, con el mismo token y URL, sustituye el binario, reescribe
 la configuración y reinicia el servicio. Ese es el procedimiento de
-actualización. Toma el comando del servidor actual (Settings →
-Agents): su `--sha256` debe coincidir con los binarios de la versión
+actualización. Toma el comando del servidor actual (Ajustes › Supervisión › Agentes): su `--sha256` debe coincidir con los binarios de la versión
 del servidor a la que actualizaste.
 
 El mismo comando migra una máquina que todavía ejecuta el agente
@@ -886,7 +885,7 @@ delante de DumbMonit, se registra y se reintenta conservando el secreto.
 - El agente lo envía como `Authorization: Bearer dmon_…` en `POST
   /api/ingest`. Nunca aparece en los registros del agente, ni siquiera
   truncado.
-- **Settings → Agents** lista los tokens con su prefijo, alcance,
+- **Ajustes › Supervisión › Agentes** lista los tokens con su prefijo, alcance,
   fecha de creación y último uso. **Revoke** detiene cada agente que
   usa ese token en su próximo envío; las máquinas entonces se vuelven
   *unreachable* tras tres períodos perdidos. Vuelve a ejecutar el
@@ -910,7 +909,7 @@ de que pase, que es lo que quieres para una ventana de instalación.
 Revocar es lo que corta a una flota.
 
 Un token que ya no puede inscribir — agotado, o pasado su plazo — se
-muestra como **Enrols no more** en Settings → Agents. Sus máquinas
+muestra como **Enrols no more** en Ajustes › Supervisión › Agentes. Sus máquinas
 siguen reportando; simplemente no puede dejar entrar a una nueva.
 
 ## Caídas y diagnóstico {#outages-and-diagnostics}

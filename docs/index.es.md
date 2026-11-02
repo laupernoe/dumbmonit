@@ -15,9 +15,12 @@ de mantenimiento son programadas.
 ![La página de resumen: la frase del parte, la lista «Needs you» y los pronósticos](assets/screenshots/overview-light.png){ loading=lazy }
 
 <div class="dm-links" markdown>
-<a href="install/docker/">Instalar<small>Docker Compose, primer inicio, copias de seguridad</small></a>
-<a href="install/first-device/">Añade tu primer monitor<small>SNMP, escaneo de red, qué ocurre después</small></a>
-<a href="alerting/">Alertas<small>Reglas integradas, silenciosas por diseño</small></a>
+<a href="install/">Empezar<small>Docker Compose, HTTPS, primer monitor, copias de seguridad</small></a>
+<a href="overview/">Resumen<small>El banner, las cifras, el modo pared</small></a>
+<a href="monitors/">Monitores<small>Lista, mapa, registros, seguridad e integraciones</small></a>
+<a href="alerting/">Alertas<small>Ahora, historial, reglas, automatización, guardias</small></a>
+<a href="status/">Estado<small>Páginas de estado públicas e informes</small></a>
+<a href="settings/">Ajustes<small>Cuenta, equipo y acceso, notificaciones, sistema</small></a>
 </div>
 
 ## Qué vigila {#what-it-watches}

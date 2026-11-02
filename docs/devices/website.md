@@ -184,7 +184,7 @@ sites of an unknown platform under `Websites/Other`. Sort them by hand with the
 
 ## Import a list of sites (CSV)
 
-From the **⋯** menu of the Monitors page or the add-monitor page, **Import
+In **Monitors › Add a monitor**, **Import
 websites (CSV)** takes a
 file or pasted text with a header row and up to 1000 rows:
 

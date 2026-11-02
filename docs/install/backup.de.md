@@ -32,7 +32,7 @@ Diagramme zurückwollen; das steht unten auf dieser Seite.
 
 ## Das verschlüsselte Bündel
 
-**Settings → Backup → Download the bundle.** Wählen Sie eine
+**Einstellungen › System › Sicherung › Download the bundle.** Wählen Sie eine
 Passphrase mit mindestens 16 Zeichen — drei Wörter reichen — und
 bestätigen Sie sie. Die herunterkommende Datei ist einfaches JSON mit
 einem verschlüsselten Body:
@@ -116,7 +116,7 @@ wurde.
    Administrator-Konto unter `/setup`, mit dem in seinen Logs
    ausgegebenen Setup-Code. Dieses Konto ist Ihres; die
    Wiederherstellung rührt es nicht an.
-2. **Settings → Backup → Restore a bundle.** Wählen Sie die Datei,
+2. **Einstellungen › System › Sicherung › Restore a bundle.** Wählen Sie die Datei,
    geben Sie die Passphrase ein, und drücken Sie **Check this
    backup**.
 3. Lesen Sie den Bericht. Er sagt, Abschnitt für Abschnitt, was
@@ -233,7 +233,7 @@ sind ein Problem. Die Zeitreihe existiert erst, sobald ein erstes
 Backup geschrieben wurde, daher wird eine Instanz mit ausgeschaltetem
 Zeitplan nie deshalb genervt.
 
-**Settings → Backup** zeigt dasselbe ohne MetricsQL: den letzten Lauf
+**Einstellungen › System › Sicherung** zeigt dasselbe ohne MetricsQL: den letzten Lauf
 und ob er gelang, die behaltenen Dateien und ihre Größe, und **Back
 up now**, um sofort eines zu schreiben.
 
@@ -288,7 +288,7 @@ Datenbank und das Secret sind das Setup, `vm/` ist nur die Historie.
 
 ## Was vor einem Upgrade zu tun ist
 
-1. **Settings → Backup → Back up now** — dreißig Sekunden, und es
+1. **Einstellungen › System › Sicherung › Back up now** — dreißig Sekunden, und es
    schließt das Secret ein.
 2. Laden Sie auch ein Bündel herunter, wenn das Upgrade groß ist,
    oder wenn Sie auf eine andere Maschine umziehen.

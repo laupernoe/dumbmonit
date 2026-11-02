@@ -140,7 +140,7 @@ Its data lives in `<data dir>/vm-long`. It runs the same VictoriaMetrics binary
 
 Optional and **off by default**: turn it on in **Settings → System**. The server
 then starts VictoriaLogs, sends its own log lines to it, and the admin-only
-**Logs** page searches them with LogsQL.
+**Monitors › Logs** tab searches them with LogsQL.
 
 | Variable | Default | Role |
 |---|---|---|

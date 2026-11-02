@@ -8,8 +8,7 @@ aufzutauchen.
 
 ## Wo
 
-- **Alerts → Maintenance**: die Liste der Fenster, mit *Active
-  now* oder *Scheduled*, und das Formular zum Anlegen eines neuen.
+- **Warnungen › Jetzt**: die Fenster, *Active now* oder *Scheduled*, klappen über der Alarmliste ein; **Schedule maintenance**, oben rechts auf der Seite, öffnet das Formular zum Anlegen eines neuen.
 - **Monitordialog → Silence 1 h / Silence until…**: ein schnelles,
   einmaliges Fenster für den gesamten Monitor.
 - ++ctrl+k++ → *Schedule maintenance*.

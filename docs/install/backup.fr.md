@@ -31,7 +31,7 @@ voulez aussi récupérer les graphiques ; c'est en bas de cette page.
 
 ## Le paquet chiffré
 
-**Réglages → Sauvegarde → Télécharger le paquet.** Choisissez une
+**Réglages › Système › Sauvegarde › Télécharger le paquet.** Choisissez une
 phrase de passe d'au moins 16 caractères — trois mots suffisent — et
 confirmez-la. Le fichier qui en résulte est du JSON simple avec un corps
 chiffré :
@@ -113,7 +113,7 @@ secrets rechiffrés sous votre phrase de passe précisément pour pouvoir
 1. Démarrez le nouveau conteneur et créez le premier compte
    administrateur à `/setup`, avec le code d'installation affiché dans
    ses logs. Ce compte est le vôtre ; la restauration n'y touchera pas.
-2. **Réglages → Sauvegarde → Restaurer un paquet.** Choisissez le
+2. **Réglages › Système › Sauvegarde › Restaurer un paquet.** Choisissez le
    fichier, saisissez la phrase de passe, et appuyez sur **Vérifier
    cette sauvegarde**.
 3. Lisez le rapport. Il dit, section par section, ce qui serait
@@ -227,7 +227,7 @@ problème. La série n'existe qu'une fois une première sauvegarde écrite,
 une instance avec le calendrier désactivé n'est donc jamais importunée
 pour ça.
 
-**Réglages → Sauvegarde** montre la même chose sans MetricsQL : la
+**Réglages › Système › Sauvegarde** montre la même chose sans MetricsQL : la
 dernière exécution et si elle a réussi, les fichiers gardés et leur
 taille, et **Sauvegarder maintenant** pour en écrire une immédiatement.
 
@@ -285,7 +285,7 @@ répertoires cohérents.
 
 ## Quoi faire avant une mise à jour
 
-1. **Réglages → Sauvegarde → Sauvegarder maintenant** — trente
+1. **Réglages › Système › Sauvegarde › Sauvegarder maintenant** — trente
    secondes, et ça inclut le secret.
 2. Téléchargez aussi un paquet si la mise à jour est importante, ou si
    vous déménagez vers une autre machine.

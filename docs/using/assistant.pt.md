@@ -22,7 +22,7 @@ código que a interface web.
 
 ## 1. Criar um token {#1-create-a-token}
 
-Settings → **API & assistants** (`/settings#assistant`). Nomeie o
+Definições › Sistema › **API e assistentes** (`/settings#assistant`). Nomeie o
 token com o assistente ou a máquina em que corre («Claude on my
 laptop»), depois escolha:
 
@@ -293,7 +293,7 @@ desconhecido — não é um erro de protocolo: responde normalmente com
   `info` com o nome do token e a ferramenta, nunca os argumentos;
   toda escrita através da API REST com o nome do token, o método, o
   caminho e o estado, nunca o corpo. Criar e revogar tokens está no
-  registo de auditoria (Settings → Security).
+  registo de auditoria (Definições › A minha conta › Conta e segurança).
 
 ## Resolução de problemas {#troubleshooting}
 

@@ -18,7 +18,7 @@ call the same code as the web UI.
 
 ## 1. Create a token
 
-Settings → **API & assistants** (`/settings#assistant`). Name the token after
+**Settings › System › API & assistants** (`/settings/system#assistant`). Name the token after
 the assistant or the machine it runs on ("Claude on my laptop"), then choose:
 
 | Setting | Choices |
@@ -264,7 +264,7 @@ can relay.
 - **Logs.** Every tool call is logged at `info` level with the token name and
   the tool, never the arguments; every write through the REST API with the
   token name, the method, the path and the status, never the body. Creating
-  and revoking tokens is in the audit log (Settings → Security).
+  and revoking tokens is in the audit log (**Settings › My account › Account & security**).
 
 ## Troubleshooting
 

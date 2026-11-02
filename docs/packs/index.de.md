@@ -42,7 +42,7 @@ mit seinen Fixtures und erwarteter Ausgabe:
 
 ## Ein Pack installieren
 
-In der Oberfläche, als Administrator: **Settings → Integration packs**.
+In der Oberfläche, als Administrator: **Einstellungen › Überwachung › Integrationspakete**.
 Fügen Sie das YAML des Pakets ein oder laden Sie sein `pack.yaml` hoch,
 dann **Install the pack**. Ein Pack, das die Prüfungen nicht besteht,
 wird mit der Liste der zu behebenden Punkte abgelehnt; eines, das
@@ -52,7 +52,7 @@ Installierte Arten erscheinen unter **Community packs**, wenn Sie ein
 Monitor hinzufügen, markiert als *Pack*.
 
 Über die HTTP-API brauchen Sie eine Administrator-Sitzung oder ein
-API-Token mit dem Scope `write` (Settings → **API & assistants**).
+API-Token mit dem Scope `write` (Einstellungen › System › **API und Assistenten**).
 
 ```bash
 # Install, or update to a newer version of the same pack

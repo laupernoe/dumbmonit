@@ -119,7 +119,7 @@ d’utilisateur. Chaque étape dit ce qui a échoué, par exemple
 
 ## Comptes
 
-Les comptes d’annuaire portent **LDAP** dans **Paramètres → Utilisateurs**. Ils
+Les comptes d’annuaire portent **LDAP** dans **Réglages › Équipe et accès › Utilisateurs**. Ils
 n’ont pas de mot de passe DumbMonit : il se change dans l’annuaire. Si un
 administrateur leur donne un mot de passe, ils deviennent des comptes locaux
 qui ne consultent plus l’annuaire.

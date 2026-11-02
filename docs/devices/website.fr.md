@@ -142,7 +142,7 @@ liste des surveillances.
 
 ## Importer une liste de sites (CSV)
 
-À partir de la liste des surveillances ou de la page d'ajout de surveillance, **Importer des sites web (CSV)** prend
+Dans **Surveillances › Ajouter une surveillance**, **Importer des sites web (CSV)** prend
 un fichier ou du texte collé avec une ligne d'en-tête et jusqu'à 1000 lignes :
 
 | Colonne | Requis | Sens |

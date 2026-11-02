@@ -7,7 +7,7 @@ distancia. Los informes reutilizan un **canal de notificación de correo
 (SMTP)**, así que configura uno primero (consulta
 [Canales de notificación](../notifications.md)).
 
-Abre **Settings > Reports** para configurarlos. Todo aquí es solo para
+Abre **Estado › Informes** para configurarlos. Todo aquí es solo para
 administradores, incluida la lectura, porque la página lista las
 direcciones de los destinatarios.
 

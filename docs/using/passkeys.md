@@ -28,7 +28,7 @@ offer them); the password is still there to sign in and add new ones.
 
 ## Add a passkey
 
-**Settings → Account & security → Passkeys → Add a passkey.** Give it a name
+**Settings › My account › Account & security › Passkeys › Add a passkey.** Give it a name
 (Laptop, Phone, YubiKey), confirm with your password, then follow the browser's
 prompt. Up to 20 passkeys per account: register one per device, and a security key
 as a spare.

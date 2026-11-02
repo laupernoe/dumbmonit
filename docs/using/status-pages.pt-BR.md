@@ -16,10 +16,10 @@ servidor — não na página, não em um badge, não em um e-mail.
 
 ## 1. Criar uma página {#1-create-a-page}
 
-**Configurações → Páginas de status** → **Nova página**. Essa página lista suas
+**Status › Páginas** → **Nova página**. Essa aba lista suas
 páginas de status (abrir, editar, excluir) com os anúncios abaixo
-delas; o editor abre em sua própria rota (`/settings/status/new`,
-`/settings/status/<id>`). A renderização pública está em `/s/<address>`.
+delas; o editor abre em sua própria rota (`/status/new`,
+`/status/<id>`). A renderização pública está em `/s/<address>`.
 
 | Campo | O que faz |
 | --- | --- |
@@ -131,7 +131,7 @@ adicionado ontem não está "fora do ar" pelos 89 dias anteriores a isso
 
 ## 3. Anunciar incidentes e manutenção {#3-announce-incidents-and-maintenance}
 
-Em **Configurações → Páginas de status**, sob a lista de páginas, **Incidentes e
+Em **Status › Páginas**, sob a lista de páginas, **Incidentes e
 manutenção** → **Novo anúncio** (também ++ctrl+k++ → *Anunciar um
 incidente*).
 

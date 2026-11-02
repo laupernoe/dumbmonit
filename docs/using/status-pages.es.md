@@ -17,10 +17,10 @@ salen del servidor — ni en la página, ni en un badge, ni en un correo.
 
 ## 1. Crear una página {#1-create-a-page}
 
-**Settings → Status pages** → **New page**. Esa página lista tus
+**Estado › Páginas** → **New page**. Esa página lista tus
 páginas de estado (abrir, editar, eliminar) con los anuncios bajo
-ellas; el editor se abre en su propia ruta (`/settings/status/new`,
-`/settings/status/<id>`). El renderizado público está en `/s/<address>`.
+ellas; el editor se abre en su propia ruta (`/status/new`,
+`/status/<id>`). El renderizado público está en `/s/<address>`.
 
 | Campo | Qué hace |
 | --- | --- |
@@ -133,7 +133,7 @@ caída de un día son sus franjas silenciosas.
 
 ## 3. Anunciar incidentes y mantenimiento {#3-announce-incidents-and-maintenance}
 
-En **Settings → Status pages**, bajo la lista de páginas, **Incidents and
+En **Estado › Páginas**, bajo la lista de páginas, **Incidents and
 maintenance** → **New announcement** (también ++ctrl+k++ → *Announce
 an incident*).
 

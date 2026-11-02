@@ -5,6 +5,8 @@ Webseite oder ein DNS-Name ist. Jeder Typ ist ein Collector auf dem Server; der 
 der Oberfläche jeden Typ (`GET /api/collectors`), sodass das Formular immer dem entspricht, was
 diese Version überwachen kann.
 
+In der App bietet **Monitor hinzufügen** diese Typen an. In dieser Dokumentation gruppiert das linke Menü sie nach Kategorien; die Tabelle unten listet alle auf, mit dem, was jeder braucht.
+
 | Typ | `kind` | Zugangsdaten | Typische Verwendung |
 |---|---|---|---|
 | [SNMP-Gerät](snmp.md) | `snmp` | Community oder SNMP v3 | Switch, Router, NAS, USV, Drucker |

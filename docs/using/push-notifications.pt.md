@@ -37,7 +37,7 @@ que alertas vão para lá com um canal **Web Push**
 2. Opcional: instale-o como app (barra de endereço → **Instalar**, ou o menu do
    navegador → **Adicionar ao ecrã principal**). As notificações funcionam de
    qualquer forma.
-3. **Definições → Notificações push → Ativar neste dispositivo**, e permita
+3. **Definições › A minha conta › Notificações push › Ativar neste dispositivo**, e permita
    notificações quando o navegador perguntar.
 4. **Envie um teste.** Uma *DumbMonit — notificação de teste* deve aparecer em
    poucos segundos.
@@ -50,7 +50,7 @@ posterior):
 1. Abra o DumbMonit no **Safari**.
 2. **Partilhar → Adicionar ao Ecrã Principal**, depois abra o DumbMonit **a
    partir do novo ícone**.
-3. Inicie sessão, depois **Definições → Notificações push → Ativar neste
+3. Inicie sessão, depois **Definições › A minha conta › Notificações push › Ativar neste
    dispositivo**, e permita notificações.
 4. **Envie um teste.**
 
@@ -58,7 +58,7 @@ No Safari sem instalar, a secção diz **Install first**.
 
 ## Escolher que alertas chegam {#choose-which-alerts-arrive}
 
-Em **Settings → Notifications & reports**, adicione um canal do tipo **Web Push**. Sem
+Em **Definições › Notificações**, adicione um canal do tipo **Web Push**. Sem
 definições, todos os dispositivos subscritos de todas as contas o recebem; liste
 nomes de conta em **Contas** para visar apenas algumas pessoas. Aplica-se a
 política habitual dos canais (gravidade mínima, horas de silêncio, filtro de

@@ -72,7 +72,7 @@ décisions par origine et la part non analysée de chaque source de log.
 
 Avec un identifiant de machine, une carte des menaces suit : les alertes des
 dernières 24 heures, colorées par pays. Les mêmes comptes alimentent la carte
-des menaces de la page Sécurité, à côté des blocages des pare-feu et des
+des menaces de **Surveillances › Sécurité**, à côté des blocages des pare-feu et des
 menaces de Cloudflare.
 
 ## Laisser DumbMonit lire les métriques de CrowdSec
@@ -97,7 +97,7 @@ menaces de Cloudflare.
     sudo cscli bouncers add dumbmonit
     ```
 
-5. Ou, pour la carte des menaces de la page Sécurité : créez un identifiant de machine et choisissez Identifiant de machine ci-dessous. Seul le pays de chaque alerte est gardé.
+5. Ou, pour la carte des menaces de **Surveillances › Sécurité** : créez un identifiant de machine et choisissez Identifiant de machine ci-dessous. Seul le pays de chaque alerte est gardé.
 
     ```
     sudo cscli machines add dumbmonit --password 'a-long-password'

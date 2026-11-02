@@ -63,7 +63,7 @@ Deux voies d'entrée, acceptées sur chaque route protégée :
   porter `X-Requested-With: DumbMonit` — la preuve anti-CSRF que l'UI
   ajoute automatiquement ; sans elle la requête est refusée avec `403`.
 - **Jeton d'API** — `Authorization: Bearer dmt_…`, pour les scripts,
-  tableaux de bord et assistants. Créé dans Réglages → **API & assistants**
+  tableaux de bord et assistants. Créé dans Réglages › Système › **API et assistants**
   (les mêmes jetons que le [serveur MCP](../using/assistant.md) utilise) et
   montré une fois. Aucun cookie n'est impliqué, aucun en-tête
   `X-Requested-With` n'est donc jamais nécessaire.
@@ -155,7 +155,7 @@ encore moins un plus puissant.
   journal du serveur avec le nom et l'id du jeton, la méthode, le chemin
   (sans la chaîne de requête) et le statut — jamais le jeton, jamais le
   corps. Créer et révoquer un jeton sont enregistrés dans le journal
-  d'audit (Réglages → Sécurité).
+  d'audit (Réglages › Mon compte › Compte et sécurité).
 
 ## Limites de débit {#rate-limits}
 

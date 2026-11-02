@@ -2,20 +2,21 @@
 
 ![La page Alertes : ce qui se passe maintenant, la maintenance, l'historique et les règles](../assets/screenshots/alerts-light.png){ loading=lazy }
 
-Tout sur les alertes sur une page, derrière quatre onglets. L'onglet est dans
-l'URL (`/alerts#rules`), une vue est donc partageable par lien. **Planifier
+Tout sur les alertes sur une page, derrière cinq onglets. L'onglet est dans
+l'URL (`/alerts?tab=rules`), une vue est donc partageable par lien. **Planifier
 une maintenance**, en haut à droite, ouvre le formulaire pour une fenêtre
 depuis n'importe quel onglet.
 
 | Onglet | Ce qu'il contient |
 |---|---|
-| **Maintenant** | La liste en direct des problèmes, une ligne chacun. Voir [La liste Maintenant](#the-now-list). Le badge sur l'onglet, et sur Alertes dans la barre du haut, est le compte de ce qui a encore besoin de vous. |
-| **Maintenance** | Fenêtres de maintenance, *Active maintenant* ou *Planifiée*, ponctuelle, hebdomadaire ou mensuelle, chacune avec la prochaine occurrence (`#scheduled`). Voir [Fenêtres de maintenance](../alerting/maintenance.md). |
+| **Maintenant** | La liste en direct des problèmes, une ligne chacun. Voir [La liste Maintenant](#the-now-list). Le badge sur l'onglet, et sur Alertes dans le menu de gauche, est le compte de ce qui a encore besoin de vous. Les fenêtres de maintenance, *Active maintenant* ou *Planifiée* (ponctuelle, hebdomadaire ou mensuelle, chacune avec sa prochaine occurrence), se replient au-dessus de la liste. Voir [Fenêtres de maintenance](../alerting/maintenance.md). |
 | **Historique** | Les 200 dernières transitions, chacune nommant la surveillance, la règle et ce qui s'est passé ; les résolues peuvent être effacées. |
 | **Règles** | Chaque règle avec sa gravité, une marque *Intégrée* et, si une surveillance l'ignore, *Ignorée sur N surveillances* ; activer, modifier en place, supprimer les vôtres, créer une règle de seuil. Voir [Règles](../alerting/rules.md). |
+| **Automatisation** | Procédures, actions de remédiation et politiques, et le journal de ce qui a tourné. Voir [Procédures et remédiation](../alerting/remediation.md). |
+| **Astreintes** | Plannings et politiques d'escalade. Voir [Astreintes](../alerting/oncall.md). |
 
 Les canaux de notification et la politique de notification se trouvent sous
-**Réglages → Notifications** (voir [Notifications](#notifications)).
+**Réglages › Notifications** (voir [Notifications](#notifications)).
 
 Le même modèle de vérité alimente le bulletin de la vue d'ensemble et cette
 page, les deux s'accordent donc toujours sur ce qui a besoin de vous.
@@ -103,9 +104,8 @@ tout.
 
 ## Notifications {#notifications}
 
-Les canaux et la politique vivent sous **Réglages → Notifications et
-rapports** (`/settings/notifications`), suivis des [Rapports](reports.md). Deux
-panneaux :
+Les canaux et la politique vivent sous **Réglages › Notifications**
+(`/settings/notifications`). Deux panneaux :
 
 **Canaux de notification.** La liste des canaux, chacun avec son type, *Activé* ou
 *Désactivé*, la dernière fois qu'il a envoyé quelque chose, et sa dernière

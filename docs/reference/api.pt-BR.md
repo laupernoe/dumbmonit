@@ -62,7 +62,7 @@ Duas formas de entrada, aceitas em toda rota protegida:
   `X-Requested-With: DumbMonit` — a prova anti-CSRF que a interface
   adiciona automaticamente; sem ela a requisição é recusada com `403`.
 - **Token de API** — `Authorization: Bearer dmt_…`, para scripts,
-  painéis e assistentes. Criado em Configurações → **API e assistentes**
+  painéis e assistentes. Criado em Configurações › Sistema › **API e assistentes**
   (os mesmos tokens que o [servidor MCP](../using/assistant.md) usa) e
   mostrado uma vez. Nenhum cookie está envolvido, então nenhum cabeçalho
   `X-Requested-With` é jamais necessário.
@@ -151,8 +151,7 @@ um mais poderoso.
 - **Registrado.** Toda escrita feita com um token é escrita no log do
   servidor com o nome e id do token, o método, o caminho (sem a string
   de consulta) e o status — nunca o token, nunca o corpo. Criar e
-  revogar um token são registrados no log de auditoria (Configurações →
-  Segurança).
+  revogar um token são registrados no log de auditoria (Configurações › Minha conta › Conta e segurança).
 
 ## Limites de taxa {#rate-limits}
 

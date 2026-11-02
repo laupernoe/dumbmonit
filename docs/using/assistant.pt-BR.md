@@ -20,7 +20,7 @@ DumbMonit, e as ferramentas chamam o mesmo código que a interface web.
 
 ## 1. Criar um token {#1-create-a-token}
 
-Configurações → **API e assistentes** (`/settings#assistant`). Nomeie o
+Configurações › Sistema › **API e assistentes** (`/settings#assistant`). Nomeie o
 token após o assistente ou a máquina em que roda ("Claude no meu
 laptop"), depois escolha:
 
@@ -285,7 +285,7 @@ desconhecido — não é um erro de protocolo: responde normalmente com
   com o nome do token e a ferramenta, nunca os argumentos; toda
   escrita através da API REST com o nome do token, o método, o
   caminho e o status, nunca o corpo. Criar e revogar tokens está no
-  log de auditoria (Configurações → Segurança).
+  log de auditoria (Configurações › Minha conta › Conta e segurança).
 
 ## Solução de problemas {#troubleshooting}
 

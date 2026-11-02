@@ -39,7 +39,7 @@ fixtures and expected output:
 
 ## Install a pack
 
-In the interface, as an administrator: **Settings → Integration packs**. Paste
+In the interface, as an administrator: **Settings › Monitoring › Integration packs**. Paste
 the pack's YAML or upload its `pack.yaml`, then **Install the pack**. A pack
 that does not pass the checks is refused with the list of what to fix; one
 that passes is saved with its notes, if any. The same page turns packs on and
@@ -47,7 +47,7 @@ off and uninstalls them. Installed types appear under **Community packs** when
 you add a monitor, marked *Pack*.
 
 Through the HTTP API, you need an administrator session or an API token with
-the `write` scope (Settings → **API & assistants**).
+the `write` scope (**Settings › System › API & assistants**).
 
 ```bash
 # Install, or update to a newer version of the same pack

@@ -19,7 +19,7 @@ sont ceux de l'interface et de l'[assistant](../using/assistant.md).
 
 ## 1. Créer un jeton en lecture seule
 
-**Réglages → Jetons d'API → Nouveau jeton**, portée **read**. Le jeton peut lire
+**Réglages › Système › API et assistants › Nouveau jeton**, portée **read**. Le jeton peut lire
 et rien d'autre (pas d'acquittement, pas de modification, pas de création d'un
 autre jeton). Copiez-le : il n'est affiché qu'une fois. Vous pouvez aussi le
 limiter à l'adresse réseau de votre tableau de bord et lui donner une date

@@ -36,7 +36,7 @@ Tre principi si applicano a ogni canale:
 
 ## Creazione e test di un canale
 
-1. Apri **Impostazioni → Notifiche e report → Aggiungi canale** (`/settings/notifications`).
+1. Apri **Impostazioni › Notifiche › Aggiungi canale** (`/settings/notifications`).
 2. Dagli un nome significativo ("Discord — famiglia", "SMS — on-call"). Questo è il nome che sceglierai in seguito nelle tue regole di avviso.
 3. Scegli il tipo di canale, quindi compila i campi descritti di seguito.
 4. Salva, quindi fai clic su **Invia test**.
@@ -481,7 +481,7 @@ Senza un'impostazione `level`, DumbMonit sceglie: `passive` per un avviso, `acti
 
 Notifiche native sui tuoi telefoni e computer, direttamente dal tuo DumbMonit, senza app da installare e nessun account di terze parti: il browser (installato come app o meno) riceve gli avvisi anche con ogni scheda chiusa.
 
-1. Su ogni telefono o computer, apri DumbMonit e vai a **Impostazioni → Notifiche push → Abilita su questo dispositivo**, quindi **Invia un test**. Su iPhone e iPad, aggiungi prima DumbMonit alla schermata Home. La guida passo dopo passo è in [Notifiche push (PWA)](using/push-notifications.md).
+1. Su ogni telefono o computer, apri DumbMonit e vai a **Impostazioni › Il mio account › Notifiche push › Abilita su questo dispositivo**, quindi **Invia un test**. Su iPhone e iPad, aggiungi prima DumbMonit alla schermata Home. La guida passo dopo passo è in [Notifiche push (PWA)](using/push-notifications.md).
 2. Crea un canale **Web Push** qui. Non ha segreti: i suoi destinatari sono i dispositivi iscritti nel passaggio 1.
 
 - **Impostazioni** — `users` (facoltativa; un account per riga, vuota: ogni dispositivo iscritto di ogni account), `urgency` (`high` per impostazione predefinita, `normal` o `low`), `ttl` (secondi che il servizio push mantiene il messaggio per un dispositivo spento, predefinito `86400`), `contact` (indirizzo facoltativo `mailto:` o `https:` dato ai servizi push; vuoto: `DUMBMONIT_PUBLIC_URL` quando è HTTPS, altrimenti la pagina del progetto)

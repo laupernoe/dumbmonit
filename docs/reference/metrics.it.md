@@ -125,7 +125,7 @@ si trovano fuori da `/api`, dove uno scraper le cerca:
 | `GET /prometheus/api/v1/…` | La metà in lettura dell'API Prometheus, inoltrata all'archivio: ciò che chiama una sorgente dati di Grafana. |
 
 Tutte e tre accettano `Authorization: Bearer dmt_…` con l'ambito **`read`** — un
-token creato in Impostazioni → *API e assistenti*, dello stesso tipo usato dal
+token creato in Impostazioni › Sistema › *API e assistenti*, dello stesso tipo usato dal
 [server MCP](../using/assistant.md). Non è coinvolto alcun cookie, quindi non
 serve l'header `X-Requested-With`; è accettato anche un cookie di sessione, così
 puoi aprirle da un browser con accesso effettuato. Un token è limitato a 120

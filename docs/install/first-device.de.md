@@ -147,7 +147,7 @@ Welche Art auch immer, das Formular hat:
   weiter. Nichts zu konfigurieren.
 - Um benachrichtigt zu werden, fügen Sie einen
   [Benachrichtigungskanal](../notifications.md) unter
-  **Settings → Notifications & reports** hinzu. Eingebaute Regeln benachrichtigen jeden
+  **Einstellungen › Benachrichtigungen** hinzu. Eingebaute Regeln benachrichtigen jeden
   aktivierten Kanal.
 
 !!! tip "Keine Daten nach einer Minute?"

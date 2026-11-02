@@ -66,7 +66,7 @@ Duas formas de entrar, aceites em toda rota protegida:
   anti-CSRF que a interface adiciona automaticamente; sem ela o
   pedido é recusado com `403`.
 - **Token de API** — `Authorization: Bearer dmt_…`, para scripts,
-  painéis e assistentes. Criado em Settings → **API & assistants**
+  painéis e assistentes. Criado em Definições › Sistema › **API e assistentes**
   (os mesmos tokens que o [servidor MCP](../using/assistant.md) usa)
   e mostrado uma vez. Nenhum cookie está envolvido, por isso nenhum
   cabeçalho `X-Requested-With` é alguma vez necessário.
@@ -159,7 +159,7 @@ um mais poderoso.
   registo do servidor com o nome e id do token, o método, o caminho
   (sem a cadeia de consulta) e o estado — nunca o token, nunca o
   corpo. Criar e revogar um token são registados no registo de
-  auditoria (Settings → Security).
+  auditoria (Definições › A minha conta › Conta e segurança).
 
 ## Limites de taxa {#rate-limits}
 

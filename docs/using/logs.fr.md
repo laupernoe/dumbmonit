@@ -2,12 +2,12 @@
 
 DumbMonit peut garder les lignes de journal de vos machines et équipements à
 côté de leurs métriques, les chercher et alerter sur des motifs. Tout arrive
-dans le VictoriaLogs embarqué et se cherche sur la page **Journaux**, réservée aux
+dans le VictoriaLogs embarqué et se cherche dans l'onglet **Surveillances › Journaux**, réservé aux
 administrateurs, avec [LogsQL](https://docs.victoriametrics.com/victorialogs/logsql/).
 
 !!! note "Activez d'abord le stockage des journaux"
-    **Réglages → Système → Stockage des journaux**. Tant qu'il est éteint, les
-    lignes reçues sont perdues (et comptées), et la page Journaux le dit.
+    **Réglages › Système › Journaux du serveur**. Tant qu'il est éteint, les
+    lignes reçues sont perdues (et comptées), et l'onglet Journaux le dit.
 
 ## Ce qui peut l'alimenter
 
@@ -60,7 +60,7 @@ et 5424 sont comprises, avec un cadrage TCP par lignes ou par comptage
 d'octets. L'émetteur est rattaché à l'équipement dont l'adresse est l'IP source
 (ou, à défaut, dont le nom est le nom d'hôte du message). Le port 514 peut être
 redirigé vers 5514 sur l'hôte ou le routeur. Variables : voir
-[Configuration](../reference/configuration.md#journaux-centralises-serveur-syslog-et-traps-snmp).
+[Configuration](../reference/configuration.md#journaux-centralisés--serveur-syslog-et-traps-snmp).
 
 ## Traps SNMP
 
@@ -74,10 +74,10 @@ connaissent l'OID.
 
 ## Recherche
 
-La page **Journaux** ajoute une **Source** (serveur, agents, syslog, traps SNMP,
+L'onglet **Journaux** ajoute une **Source** (serveur, agents, syslog, traps SNMP,
 toutes) et un filtre **Équipement** à la période, au niveau minimal et à la
-requête LogsQL. La page d'un équipement a un bouton **Journaux** qui ouvre la
-page déjà filtrée. Le bloc **Récepteurs** montre ce qui écoute et ce qui est
+requête LogsQL. La page d'un équipement a un bouton **Journaux** qui ouvre
+l'onglet déjà filtré. Le bloc **Récepteurs** montre ce qui écoute et ce qui est
 arrivé.
 
 ## Alerter sur un motif
@@ -88,8 +88,8 @@ La règle compte les lignes qui correspondent sur une fenêtre glissante (1 minu
 à 24 heures) et se déclenche quand le compte atteint votre seuil, **par
 équipement** (une alerte par `target`) ou globalement. C'est une règle d'alerte
 ordinaire : sévérité, durée de maintien, canaux, silences, suppression par
-dépendance, historique et sauvegardes s'appliquent, et elle se modifie sur la
-page **Alertes**.
+dépendance, historique et sauvegardes s'appliquent, et elle se modifie dans
+**Alertes › Règles**.
 
 Exemples (la partie requête) :
 

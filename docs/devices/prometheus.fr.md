@@ -85,4 +85,4 @@ le moniteur, sans notifier personne.
 Aucune règle n'est livrée, les métriques dépendant de l'exporter. Créez une règle
 de seuil sur n'importe quelle série, par exemple
 `100 - avg by (target) (rate(dumbmonit_node_cpu_seconds_total{mode="idle"}[5m])) * 100 > 90`
-(voir [Règles d'alerte](../alerting/rules.md#creating-a-threshold-rule)).
+(voir [Règles d'alerte](../alerting/rules.md#créer-une-règle-de-seuil)).

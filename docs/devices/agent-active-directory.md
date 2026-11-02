@@ -112,8 +112,7 @@ The enrolment token never appears in these logs.
   Domain Computers (or the `-SecurityGroup`), Domain Controllers and
   administrators.
 - **Stop new enrolments** (button in the wizard and on the token) closes the
-  token: servers already enrolled keep reporting. **Revoke** (Settings →
-  Agents) cuts off every agent that uses the token. Stop enrolments once the
+  token: servers already enrolled keep reporting. **Revoke** (Settings › Monitoring › Agents) cuts off every agent that uses the token. Stop enrolments once the
   fleet is deployed; revoke only to cut agents off.
 - Use HTTPS for the DumbMonit URL, since agents send their measurements over
   it.

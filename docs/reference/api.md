@@ -62,7 +62,7 @@ Two ways in, accepted on every protected route:
   the anti-CSRF proof the UI adds automatically; without it the request is
   refused with `403`.
 - **API token** — `Authorization: Bearer dmt_…`, for scripts, dashboards and
-  assistants. Created in Settings → **API & assistants** (the same tokens the
+  assistants. Created in **Settings › System › API & assistants** (the same tokens the
   [MCP server](../using/assistant.md) uses) and shown once. No cookie is
   involved, so no `X-Requested-With` header is ever needed.
 
@@ -145,7 +145,7 @@ can never mint another one — let alone a more powerful one.
 - **Logged.** Every write made with a token is written to the server log with
   the token's name and id, the method, the path (without query string) and the
   status — never the token, never the body. Creating and revoking a token are
-  recorded in the audit log (Settings → Security).
+  recorded in the audit log (**Settings › My account › Account & security**).
 
 ## Rate limits
 

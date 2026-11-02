@@ -7,7 +7,7 @@ täglich und monatlich sind einen Klick entfernt. Berichte nutzen einen
 **E-Mail-Benachrichtigungskanal (SMTP)** mit, richten Sie also zuerst
 einen ein (siehe [Benachrichtigungskanäle](../notifications.md)).
 
-Öffnen Sie **Settings > Reports**, um sie einzurichten. Alles hier ist nur
+Öffnen Sie **Status › Berichte**, um sie einzurichten. Alles hier ist nur
 für Administratoren, auch das Lesen, weil die Seite die Adressen der
 Empfänger aufführt.
 

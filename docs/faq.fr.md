@@ -2,7 +2,7 @@
 
 ## J'ai perdu le mot de passe {#i-lost-the-password}
 
-Demandez d'abord à un autre administrateur : dans Réglages → **Utilisateurs**,
+Demandez d'abord à un autre administrateur : dans Réglages › Équipe et accès › **Utilisateurs**,
 **Modifier** sur votre compte définit un nouveau mot de passe et le montre
 une fois, et **Réinitialiser 2FA** sur la même ligne efface un second
 facteur qui vous bloque. C'est la réponse du quotidien — une instance avec
@@ -120,7 +120,7 @@ reverse proxy avec TLS et réglez `DUMBMONIT_COOKIE_SECURE=1`.
 
 ## Y a-t-il un jeton d'API ?
 
-Oui. Réglages → **API & assistants** crée des jetons `dmt_…` avec une
+Oui. Réglages › Système › **API et assistants** crée des jetons `dmt_…` avec une
 portée `read` ou `write` ; envoyez-en un comme
 `Authorization: Bearer dmt_…` sur n'importe quelle route et aucun cookie ni
 en-tête CSRF n'est nécessaire. Le même jeton connecte un

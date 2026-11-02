@@ -127,7 +127,7 @@ stack. Três rotas ficam fora de `/api`, onde um coletor as procura:
 | `GET /prometheus/api/v1/…` | A metade de leitura da API Prometheus, retransmitida para o armazenamento: o que uma fonte de dados Grafana chama. |
 
 Todas as três levam `Authorization: Bearer dmt_…` com o escopo
-**`read`** — um token criado em Configurações → *API e assistentes*, o
+**`read`** — um token criado em Configurações › Sistema › *API e assistentes*, o
 mesmo tipo que o [servidor MCP](../using/assistant.md) usa. Nenhum
 cookie é envolvido, então nenhum cabeçalho `X-Requested-With` é
 necessário; um cookie de sessão também é aceito, então você pode abrir

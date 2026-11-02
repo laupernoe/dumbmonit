@@ -14,7 +14,7 @@ Veröffentlichungen wie `0.1.0-alpha.7` werden korrekt verglichen:
 stabilen Version wird nie eine Vorab-Veröffentlichung angeboten.
 
 Wenn eine neuere Version existiert, erscheint **Update available: vX**
-unten rechts auf jeder Seite und unter **Settings → About**, wo **How to
+unten rechts auf jeder Seite und unter **Einstellungen › System › Info**, wo **How to
 update** die folgenden Schritte öffnet und **See what's new** das Fenster
 *What's new* erneut öffnet. **Check now** prüft sofort erneut (höchstens
 einmal pro Minute).
@@ -27,7 +27,7 @@ einmal pro Minute).
 ### Die Prüfung ausschalten
 
 Für Air-Gapped-Netzwerke schalten Sie **Check for new versions** unter
-**Settings → About** (Administratoren) aus, oder setzen Sie die
+**Einstellungen › System › Info** (Administratoren) aus, oder setzen Sie die
 Umgebungsvariable, die über den Schalter gewinnt:
 
 ```yaml
@@ -40,7 +40,7 @@ Dieselbe Information steht Skripten und API-Tokens unter
 
 ## Aktualisieren
 
-1. **Sichern.** Laden Sie ein Backup unter **Settings → Backup** herunter,
+1. **Sichern.** Laden Sie ein Backup unter **Einstellungen › System › Sicherung** herunter,
    und behalten Sie eine Kopie von `/data/secret.key` (siehe
    [Backup und Wiederherstellung](backup.md)). Ohne diesen Schlüssel
    können gespeicherte Passwörter und Tokens nicht entschlüsselt werden.
@@ -53,7 +53,7 @@ Dieselbe Information steht Skripten und API-Tokens unter
 
     Ihre Daten liegen im `/data`-Volume und bleiben erhalten;
     Datenbankmigrationen laufen beim Start.
-3. **Seite neu laden.** **Settings → About** zeigt die neue Version und
+3. **Seite neu laden.** **Einstellungen › System › Info** zeigt die neue Version und
    *You are up to date*.
 
 Um eine Version festzupinnen, statt `:latest` zu folgen, ändern Sie den

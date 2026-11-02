@@ -13,7 +13,7 @@ mais novo que qualquer `0.1.0-alpha.N`. Rascunhos são ignorados, e uma
 instância em uma versão estável nunca recebe oferta de um pré-lançamento.
 
 Quando existe uma versão mais nova, **Atualização disponível: vX** aparece no
-canto inferior direito de toda página e em **Configurações → Sobre**, onde
+canto inferior direito de toda página e em **Configurações › Sistema › Sobre**, onde
 **Como atualizar** abre os passos abaixo e **Ver novidades** reabre a janela
 *O que há de novo*. **Verificar agora** checa de novo imediatamente (no máximo
 uma vez por minuto).
@@ -26,7 +26,7 @@ uma vez por minuto).
 ### Desativando a verificação {#turning-the-check-off}
 
 Para redes isoladas (air-gapped), desligue **Verificar novas versões** em
-**Configurações → Sobre** (administradores), ou defina a variável de
+**Configurações › Sistema › Sobre** (administradores), ou defina a variável de
 ambiente, que tem prioridade sobre o botão:
 
 ```yaml
@@ -39,7 +39,7 @@ A mesma informação está disponível para scripts e tokens de API em
 
 ## Atualizando {#updating}
 
-1. **Faça backup.** Baixe um backup em **Configurações → Backup**, e guarde
+1. **Faça backup.** Baixe um backup em **Configurações › Sistema › Backup**, e guarde
    uma cópia de `/data/secret.key` (veja [Backup e restauração](backup.md)).
    Sem essa chave, senhas e tokens armazenados não podem ser descriptografados.
 2. **Baixe e reinicie**, a partir da pasta que contém seu `docker-compose.yml`:
@@ -50,7 +50,7 @@ A mesma informação está disponível para scripts e tokens de API em
 
     Seus dados ficam no volume `/data` e são preservados; as migrações do
     banco de dados rodam ao iniciar.
-3. **Recarregue a página.** **Configurações → Sobre** mostra a nova versão e
+3. **Recarregue a página.** **Configurações › Sistema › Sobre** mostra a nova versão e
    *Você está atualizado*.
 
 Para fixar uma versão em vez de seguir `:latest`, mude a tag da imagem no

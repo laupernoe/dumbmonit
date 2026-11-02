@@ -5,6 +5,18 @@ réglé. Ce qui fait la différence à l'usage quotidien, c'est ce qui garde le
 bruit bas : suppression par dépendance, groupement par hôte, fenêtres de
 maintenance, et une référence qui apprend avant de parler.
 
+Dans l'application, ce sont les **Alertes** dans le menu de gauche (`g a`), avec cinq onglets. Le badge du menu compte ce qui a encore besoin de vous.
+
+| Onglet | Ce que c'est | À lire |
+|---|---|---|
+| **Maintenant** | Ce qui se déclenche, par gravité ou par surveillance ; acquitter, reporter, ignorer. Les fenêtres de maintenance se replient au-dessus de la liste | [Maintenant et Historique](../using/alerts.md), [Fenêtres de maintenance](maintenance.md) |
+| **Historique** | Ce qui s'est passé et quand, avec qui a agi | [Maintenant et Historique](../using/alerts.md) |
+| **Règles** | Chaque règle, son seuil et sa durée ; régler ou créer | [Règles](rules.md) |
+| **Automatisation** | Procédures, actions et journal de remédiation | [Automatisation et procédures](remediation.md) |
+| **Astreintes** | Plannings et politiques d'escalade | [Astreintes](oncall.md) |
+
+Qui est prévenu, et comment, se règle dans **Réglages › Notifications** : [Canaux de notification](../notifications.md) et [Politique de notification](notifications.md).
+
 ![La page Alertes : ce qui se passe maintenant, la maintenance, l'historique et les règles](../assets/screenshots/alerts-light.png){ loading=lazy }
 
 ## Gravités {#severities}

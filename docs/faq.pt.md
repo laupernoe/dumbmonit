@@ -2,7 +2,7 @@
 
 ## Perdi a senha {#i-lost-the-password}
 
-Peça primeiro a outro administrador: em Settings → **Users**, **Edit** na
+Peça primeiro a outro administrador: em Definições › Equipa e acesso › **Utilizadores**, **Edit** na
 sua conta define uma nova senha e mostra-a uma vez, e **Reset 2FA** na
 mesma linha limpa um segundo fator que o bloqueia. Essa é a resposta do
 dia a dia — uma instância com duas contas de administrador nunca precisa
@@ -123,7 +123,7 @@ inverso com TLS e defina `DUMBMONIT_COOKIE_SECURE=1`.
 
 ## Existe um token de API? {#is-there-an-api-token}
 
-Sim. Settings → **API & assistants** cria tokens `dmt_…` com um âmbito
+Sim. Definições › Sistema › **API e assistentes** cria tokens `dmt_…` com um âmbito
 `read` ou `write`; envie um como `Authorization: Bearer dmt_…` em
 qualquer rota e não é necessário nenhum cookie nem cabeçalho CSRF. O
 mesmo token liga um [assistente](using/assistant.md) via MCP. Os tokens

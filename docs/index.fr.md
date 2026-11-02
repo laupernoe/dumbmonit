@@ -15,9 +15,12 @@ de maintenance sont planifiées.
 ![La page de vue d'ensemble : la phrase du bulletin, la liste « Needs you » et les prévisions](assets/screenshots/overview-light.png){ loading=lazy }
 
 <div class="dm-links" markdown>
-<a href="install/docker/">Installer<small>Docker Compose, premier démarrage, sauvegardes</small></a>
-<a href="install/first-device/">Ajouter votre première surveillance<small>SNMP, scan réseau, la suite</small></a>
-<a href="alerting/">Alertes<small>Règles intégrées, silencieuses par construction</small></a>
+<a href="install/">Démarrer<small>Docker Compose, HTTPS, première surveillance, sauvegardes</small></a>
+<a href="overview/">Vue d’ensemble<small>Le bandeau, les chiffres, le mode mural</small></a>
+<a href="monitors/">Surveillances<small>Liste, carte, journaux, sécurité et les intégrations</small></a>
+<a href="alerting/">Alertes<small>Maintenant, historique, règles, automatisation, astreintes</small></a>
+<a href="status/">Statut<small>Pages de statut publiques et rapports</small></a>
+<a href="settings/">Réglages<small>Compte, équipe et accès, notifications, système</small></a>
 </div>
 
 ## Ce qu'il surveille {#what-it-watches}

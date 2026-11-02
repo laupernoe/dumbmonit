@@ -6,31 +6,26 @@ interface; there is only one now, and nothing was lost in the merge.
 
 ## The console
 
-- An **icon rail** on the left lists every destination, status pages and reports
-  included. At its foot sit the documentation, GitHub, your account (the round
-  button with your initials) and Settings. A phone gets a tab bar with the
-  essentials and **More**.
+- A **menu** on the left lists four destinations: Overview, Monitors, Alerts and
+  Status. Each has its own tabs (Monitors: List, Map, Logs, Security; Alerts: Now,
+  History, Rules, Automation, On-call; Status: Pages, Reports). At its foot sit
+  Settings, wall mode, the documentation, GitHub and your account (the round
+  button with your initials). A phone gets a tab bar with the essentials and
+  **More**.
 - The **header** shows where you are (instance name, page, monitor), a **LIVE**
   switch that pauses the console's own refreshes, the time range on the
-  overview, the command palette, **New monitor**, **wall mode** (the screen
-  icon) and the context panel toggle.
-- The **context panel** on the right, like an inspector, shows what needs
-  attention, the monitor selected in a table (with **Check now** and **Silence
-  1 h**), the nearest forecast and who gets told. Press `i` to show or hide it;
-  on narrower screens it opens as a drawer.
+  overview, the command palette and **New monitor**.
 - The **overview** opens on a thin night-sky banner whose one line says how
   things stand right now ("pve-02 is down. 3 guests held back, alert sent." or
-  "All 146 monitors up."). Below it: five figures (monitors up, availability
-  over 30 days, p95 response time, open alerts, mean time to resolve), the
-  **health river** (one strip per monitor, one cell per slot of the range, worst
-  monitors on top) and a **monitor table** sorted worst first. The table filters
-  by state, type and text, lets you add columns (address, folder) and remove
-  others, and is driven by the keyboard: `j` / `k` move, `Enter` selects, `o`
-  opens.
-- **Wall mode** is a black board for a screen in the room: the health river, the
-  five figures, open alerts and who is on call.
-- Shortcuts: `g o` overview, `g d` monitors, `g a` alerts, `g m` topology map,
-  `g x` security, `g l` logs. Press `?` for the full list.
+  "All 146 monitors up."). Below it: four figures (monitors up, availability
+  over 30 days, p95 response, open alerts), what needs attention beside the
+  **health river** (one strip per monitor, worst on top), and two charts. The
+  full list of monitors is the **List** tab of Monitors.
+- **Wall mode** is a board for a screen in the room: the verdict and the clock,
+  the problems, every monitor, the fleet figures, the health river, who is on
+  call and, once set up, the music.
+- Shortcuts: `g o` overview, `g d` monitors, `g a` alerts, `g s` status, `g m`
+  map, `g x` security, `g l` logs, `g n` new monitor. Press `?` for the full list.
 
 States are always written next to a shape (circle up, diamond degraded, square
 down), never shown by colour alone. Public status pages keep their own light and

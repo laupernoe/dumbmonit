@@ -2,19 +2,20 @@
 
 ![The Alerts page: what is happening now, maintenance, history and the rules](../assets/screenshots/alerts-light.png){ loading=lazy }
 
-Everything about alerting on one page, behind four tabs. The tab is in the
-URL (`/alerts#rules`), so a view is linkable. **Schedule maintenance**, top
+Everything about alerting on one page, behind five tabs. The tab is in the
+URL (`/alerts?tab=rules`), so a view is linkable. **Schedule maintenance**, top
 right, opens the form for a window from any tab.
 
 | Tab | What it holds |
 |---|---|
-| **Now** | The live list of problems, one line each. See [The Now list](#the-now-list). The badge on the tab, and on Alerts in the top bar, is the count of what still needs you. |
-| **Maintenance** | Maintenance windows, *Active now* or *Scheduled*, one-off, weekly or monthly, each with the next occurrence (`#scheduled`). See [Maintenance windows](../alerting/maintenance.md). |
+| **Now** | The live list of problems, one line each. See [The Now list](#the-now-list). The badge on the tab, and on Alerts in the left menu, is the count of what still needs you. The maintenance windows, *Active now* or *Scheduled* (one-off, weekly or monthly, each with its next occurrence), fold above the list. See [Maintenance windows](../alerting/maintenance.md). |
 | **History** | The last 200 transitions, each naming the monitor, the rule and what happened; resolved ones can be cleared. |
 | **Rules** | Every rule with its severity, a *Built-in* mark and, if any monitor ignores it, *Ignored on N monitors*; enable, edit inline, delete your own, create a threshold rule. See [Rules](../alerting/rules.md). |
+| **Automation** | Runbooks, remediation actions and policies, and the log of what ran. See [Runbooks and remediation](../alerting/remediation.md). |
+| **On-call** | Schedules and escalation policies. See [On-call](../alerting/oncall.md). |
 
 Notification channels and the notification policy are under
-**Settings → Notifications** (see [Notifications](#notifications)).
+**Settings › Notifications** (see [Notifications](#notifications)).
 
 The same truth model feeds the overview bulletin and this page, so the two
 always agree on what needs you.

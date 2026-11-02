@@ -44,7 +44,7 @@ Drei Prinzipien gelten für jeden Kanal:
 
 ## Einen Kanal erstellen und testen {#creating-and-testing-a-channel}
 
-1. Öffnen Sie **Einstellungen → Benachrichtigungen & Berichte → Kanal hinzufügen** (`/settings/notifications`).
+1. Öffnen Sie **Einstellungen › Benachrichtigungen › Kanal hinzufügen** (`/settings/notifications`).
 2. Geben Sie ihm einen aussagekräftigen Namen („Discord — Familie“, „SMS — Bereitschaft“).
    Diesen Namen wählen Sie später in Ihren Alarmregeln.
 3. Wählen Sie den Kanaltyp und füllen Sie dann die unten beschriebenen Felder aus.
@@ -582,8 +582,7 @@ Native Benachrichtigungen auf Ihren Smartphones und Computern, direkt von Ihrem 
 DumbMonit, ohne App-Installation und ohne Drittanbieter-Konto: Der Browser (als App installiert
 oder nicht) empfängt die Alarme auch bei geschlossenen Tabs.
 
-1. Öffnen Sie auf jedem Smartphone oder Computer DumbMonit und gehen Sie zu **Einstellungen →
-   Push-Benachrichtigungen → Auf diesem Gerät aktivieren**, dann **Test senden**. Auf iPhone und
+1. Öffnen Sie auf jedem Smartphone oder Computer DumbMonit und gehen Sie zu **Einstellungen › Mein Konto › Push-Benachrichtigungen › Auf diesem Gerät aktivieren**, dann **Test senden**. Auf iPhone und
    iPad fügen Sie DumbMonit zuerst zum Home-Bildschirm hinzu. Die Schritt-für-Schritt-Anleitung
    steht unter [Push-Benachrichtigungen (PWA)](using/push-notifications.md).
 2. Erstellen Sie hier einen Kanal **Web Push**. Er hat kein Geheimnis: Seine Empfänger sind die

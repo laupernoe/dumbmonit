@@ -106,6 +106,38 @@ input {
   box-shadow: none;
 }
 
+/* Tabs: the entries of the application's left menu, in one flat line under the header
+   (wide screens only; narrower ones use the drawer). */
+.md-tabs {
+  background-color: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+}
+
+.md-tabs__link {
+  opacity: 1;
+  color: var(--md-primary-bg-color--light);
+}
+
+.md-tabs__link:hover,
+.md-tabs__link:focus-visible {
+  color: var(--md-primary-bg-color);
+}
+
+.md-tabs__item--active .md-tabs__link {
+  color: var(--md-accent-fg-color);
+  font-weight: 600;
+}
+
+@media screen and (min-width: 76.25em) {
+  .md-header {
+    border-bottom-color: transparent;
+  }
+
+  .md-tabs {
+    border-bottom: 1px solid var(--dm-line);
+  }
+}
+
 .md-search__form {
   background-color: var(--md-code-bg-color);
   border: 1px solid var(--dm-line);
@@ -172,6 +204,13 @@ input {
 .md-typeset img[loading="lazy"] {
   border-radius: var(--dm-radius);
   border: 1px solid var(--dm-line);
+  box-shadow: none;
+}
+
+/* Back to top, quiet like the rest. */
+.md-top {
+  border: 1px solid var(--dm-line);
+  border-radius: var(--dm-radius);
   box-shadow: none;
 }
 

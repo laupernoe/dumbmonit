@@ -93,7 +93,7 @@ les sondes déléguées aux agents relais passent par le même canal.
 ## Par la passerelle d'un relais
 
 Sur un site derrière un pare-feu, les agents peuvent joindre le serveur à
-travers l'agent relais du site ([Surveiller un site distant](remote-site.fr.md#5-installer-des-agents-derriere-le-relais)).
+travers l'agent relais du site ([Surveiller un site distant](remote-site.fr.md#5-installer-des-agents-derrière-le-relais)).
 La conception garde la sécurité du canal direct :
 
 - **De bout en bout.** Le relais ne termine jamais le TLS de l'agent. Il
@@ -169,7 +169,7 @@ première empreinte est une confiance au premier usage : relancez la commande
 d'installation de DumbMonit (qui porte l'empreinte) sur les machines dont le
 réseau n'est pas de confiance.
 
-**Réglages → Agents** indique pour chaque agent s'il rapporte chiffré (avec
+**Réglages › Supervision › Agents** indique pour chaque agent s'il rapporte chiffré (avec
 l'échange de clés utilisé) ou par le canal en clair, et propose l'interrupteur
 **Exiger le canal chiffré**. Activé, le canal en clair refuse les agents ; une
 installation neuve démarre avec. `DUMBMONIT_AGENT_LEGACY_DAYS=N` ferme
@@ -200,7 +200,7 @@ mandataire HTTPS habituel.
 
 ## Rotation de l'autorité de certification
 
-Dans **Réglages → Agents → Canal des agents → Rotation de l'autorité de
+Dans **Réglages › Supervision › Agents › Canal des agents › Rotation de l'autorité de
 certification** :
 
 1. **Démarrer la rotation** crée une nouvelle autorité. Les agents apprennent

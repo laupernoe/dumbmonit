@@ -1,7 +1,7 @@
 # Mapa de topologia
 
-A página **Mapa** (botão **Mapa** na página de monitores, *Mapa* na paleta de
-comandos, `/map`) desenha toda a sua infraestrutura em uma imagem. Nada é
+A aba **Mapa** (**Monitores › Mapa**, `g m`, ou *Mapa* na paleta de
+comandos) desenha toda a sua infraestrutura em uma imagem. Nada é
 digitado à mão: cada vínculo vem do que o DumbMonit já sabe.
 
 ## De onde vêm os vínculos

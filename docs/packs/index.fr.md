@@ -50,7 +50,7 @@ les désinstalle. Les types installés apparaissent sous **Packs
 communautaires** quand vous ajoutez une surveillance, marqués *Pack*.
 
 Via l'API HTTP, il vous faut une session d'administrateur ou un jeton d'API
-avec la portée `write` (Réglages → **API & assistants**).
+avec la portée `write` (Réglages › Système › **API et assistants**).
 
 ```bash
 # Installer, ou mettre à jour vers une version plus récente du même pack

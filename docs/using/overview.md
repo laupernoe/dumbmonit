@@ -23,28 +23,34 @@ all three away. The choice is stored on the instance, so a second browser does
 not start the guide over. See
 [Add your first monitor](../install/first-device.md#the-three-first-steps).
 
-## The five figures and the health river {#the-figures}
+## The four figures {#the-figures}
 
-Under the banner, five figures: **Monitors up** (out of the total, with down and
-paused counts), **Availability 30 d**, **p95 response time**, **Open alerts**
-(critical and warning) and **MTTR 30 d** (mean time to resolve). The time range
-in the header drives the p95 and the river.
+Under the banner, four figures: **Monitors up** (out of the total, with the down
+and paused counts), **Availability 30 d**, **p95 response** and **Open alerts**
+(critical and warning). The time range in the header drives the p95 and the
+river.
 
-The **health river** is one strip per monitor, one cell per slot of the range,
-the worst monitors on top. A state is always written next to a shape (circle up,
-diamond degraded, square down), never shown by colour alone.
+## What needs attention {#what-needs-attention}
 
-## The monitor table {#the-monitor-table}
+The list beside the river holds only what is broken now, worst first, each row
+with its quick action: acknowledge or snooze an alert, or mute a monitor (the
+small cross). With nothing broken, the pigeon sleeps and the card says so. At
+its foot, the **week ahead** in one line: what expires in the next seven days.
+**See all** opens [Alerts](alerts.md).
 
-The table lists every monitor, worst first. It filters by state, type and text,
-lets you add columns (address, folder) and remove others, and is driven by the
-keyboard: ++j++ / ++k++ move, ++enter++ selects, ++o++ opens.
+## The health river {#the-health-river}
 
-The monitor you select feeds the **context panel** on the right, like an
-inspector: what needs attention (with the alert actions, see
-[Alerts page](alerts.md)), **Check now** and **Silence 1 h**, the nearest
-forecasts and who is on call. ++i++ shows or hides it; on a narrower screen it
-opens as a drawer. For a full list of monitors, see [Monitors page](devices.md).
+One strip per monitor, one cell per slot of the range, the worst monitors on
+top. The Overview shows the first eight; **See all monitors** opens the
+[List](devices.md) tab of Monitors. A state is always written next to a shape
+(circle up, diamond degraded, square down), never shown by colour alone. On a
+phone the river opens behind a tap.
+
+## Two charts {#charts}
+
+Further down: the **response time** of the whole fleet over the range (p95 and
+median, with the slowest monitors) and the **alerts of the last seven days**
+(fired and resolved).
 
 ## Wall mode {#wall-mode}
 
@@ -72,26 +78,29 @@ input, results in three groups.
 
 | Group | Entries |
 |---|---|
-| Pages | Overview, Monitors, Alerts, Notifications, Status pages, Settings, Wall mode, Documentation |
+| Pages | Overview, Monitors, Map, Alerts, Automation, Notifications, Metrics explorer, Security, Status pages, Reports, Logs, Settings, Wall mode, Documentation |
 | Actions | Add a monitor, Scan my network, Schedule maintenance, Add notification channel, New status page, Announce an incident |
 | Monitors | Every monitor, with its state LED; ++enter++ opens it |
 
 ## Navigation {#navigation}
 
-A slim **icon rail** on the left lists every destination: Overview, Monitors,
-Alerts (with the count of what needs you), Dashboards, Explore, the topology map,
-Security, Logs, Status pages, Reports and Settings. At its foot sit the
-documentation, GitHub and your account. The header shows where you are, the
-**LIVE** switch that pauses the console's own refreshes, the time range, the
-palette, **Wall mode** and **New monitor**. On a phone, the rail becomes a bottom
-tab bar with the essentials and **More**.
+A slim **menu** on the left lists four destinations: **Overview**, **Monitors**,
+**Alerts** (with the count of what needs you) and **Status**. At its foot sit
+**Settings**, **Wall mode**, the documentation, GitHub and your account. What
+used to be pages of their own are now tabs of these entries. The header shows
+where you are, the **LIVE** switch that pauses the console's own refreshes, the
+time range, the palette and **New monitor**. On a phone, the menu becomes a
+bottom tab bar with the essentials and **More**.
 
 - **Overview**: is everything fine, and what needs you.
-- **Monitors**: every source you monitor. See [Monitors page](devices.md).
-- **Alerts**: what is firing, maintenance windows, history and the rules.
-  See [Alerts page](alerts.md).
-- **Settings**: your account, users and single sign-on, tokens, notification
-  channels, appearance, about. See [Settings](settings.md).
+- **Monitors**: every source you monitor, in four tabs: **List**, **Map**,
+  **Logs** and **Security**. See [Monitors](../monitors/index.md).
+- **Alerts**: five tabs: **Now**, **History**, **Rules**, **Automation** and
+  **On-call**. See [Alerts page](alerts.md).
+- **Status**: **Pages** (public status pages) and **Reports**. See
+  [Status](../status/index.md).
+- **Settings**: your account, team and access, monitoring, notifications, the
+  wall and the system. See [Settings](../settings/index.md).
 
 The interface is dark, and nothing on it conveys status by colour alone: a
 marker always comes with a word (Reporting, Unreachable, Advisory, Warning,

@@ -18,7 +18,7 @@ altri monitor non mostrano nulla.
 ## Attivarlo
 
 Il punteggio è **disattivato per impostazione predefinita**. Un amministratore
-lo attiva in **Impostazioni → Account e sicurezza → Punteggio di sicurezza**.
+lo attiva in **Impostazioni › Monitoraggio › Punteggio di sicurezza**.
 Una volta attivo:
 
 - ogni monitor valutato riceve un piccolo **badge a forma di scudo** con la

@@ -152,7 +152,7 @@ un scraper les cherche :
 | `GET /prometheus/api/v1/…` | La moitié lecture de l'API Prometheus, relayée vers le magasin : ce qu'une source de données Grafana appelle. |
 
 Les trois prennent `Authorization: Bearer dmt_…` avec la portée
-**`read`** — un jeton créé dans Réglages → *API & assistants*, le même
+**`read`** — un jeton créé dans Réglages › Système › *API et assistants*, le même
 type que le [serveur MCP](../using/assistant.md) utilise. Aucun cookie
 n'est impliqué, aucun en-tête `X-Requested-With` n'est donc nécessaire ;
 un cookie de session est aussi accepté, vous pouvez donc ouvrir n'importe

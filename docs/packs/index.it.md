@@ -42,7 +42,7 @@ con le sue fixture e l'output atteso:
 
 ## Installare un pacchetto
 
-Nell'interfaccia, come amministratore: **Settings → Integration packs**.
+Nell'interfaccia, come amministratore: **Impostazioni › Monitoraggio › Pacchetti di integrazione**.
 Incolla il YAML del pacchetto o carica il suo `pack.yaml`, poi
 **Install the pack**. Un pacchetto che non supera i controlli viene
 rifiutato con l'elenco di cosa correggere; uno che passa viene salvato
@@ -52,7 +52,7 @@ pacchetti e li disinstalla. I tipi installati appaiono sotto
 *Pack*.
 
 Tramite l'API HTTP, hai bisogno di una sessione amministratore oppure di
-un token API con l'ambito `write` (Settings → **API & assistants**).
+un token API con l'ambito `write` (Impostazioni › Sistema › **API e assistenti**).
 
 ```bash
 # Installa, oppure aggiorna a una versione più recente dello stesso pacchetto

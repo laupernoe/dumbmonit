@@ -156,8 +156,7 @@ depuis le dépôt (`cargo build --release -p dumbmonit-cli`).
 | `targets list` | liste les moniteurs |
 | `silence create --name N --duration 2h [--target-id ID] [--match k=v] [--comment C]` | ouvre une fenêtre de maintenance qui commence maintenant |
 
-Le jeton doit être celui d’un administrateur, avec la portée `write` (Réglages →
-Jetons d’API). Toutes les commandes acceptent `--json` pour les scripts.
+Le jeton doit être celui d’un administrateur, avec la portée `write` (Réglages › Système › API et assistants). Toutes les commandes acceptent `--json` pour les scripts.
 
 ## Dossier surveillé
 

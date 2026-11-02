@@ -21,7 +21,7 @@ código que la interfaz web.
 
 ## 1. Crear un token {#1-create-a-token}
 
-Settings → **API & assistants** (`/settings#assistant`). Nombra el
+Ajustes › Sistema › **API y asistentes** (`/settings#assistant`). Nombra el
 token según el asistente o la máquina en la que se ejecuta («Claude on
 my laptop»), y luego elige:
 
@@ -291,7 +291,7 @@ transmitir.
   el nombre del token y la herramienta, nunca los argumentos; cada
   escritura a través de la API REST con el nombre del token, el
   método, la ruta y el estado, nunca el cuerpo. Crear y revocar tokens
-  está en el registro de auditoría (Settings → Security).
+  está en el registro de auditoría (Ajustes › Mi cuenta › Cuenta y seguridad).
 
 ## Solución de problemas {#troubleshooting}
 

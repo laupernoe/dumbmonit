@@ -36,7 +36,7 @@
 
 ## 创建和测试通道 {#creating-and-testing-a-channel}
 
-1. 打开**设置→通知与报告→添加通道** (`/settings/notifications`)。
+1. 打开**设置 › 通知 › 添加通道** (`/settings/notifications`)。
 2. 给它一个有意义的名称（"Discord——家人"、"SMS——待命"）。这是你稍后在你的警报规则中选择的名称。
 3. 选择通道类型，然后填写下面描述的字段。
 4. 保存，然后点击**发送测试**。
@@ -477,7 +477,7 @@ DumbMonit发送一个被包装的*自适应卡*，唯一格式这些流正确显
 
 本地通知在你的电话和计算机上，直接从你自己的DumbMonit，不有应用要安装且没第三方账户：浏览器（安装作应用或否则）接收警报即使有所有标签关闭。
 
-1. 在每部电话或计算机上，打开DumbMonit并去**设置→推送通知→在该设备启用**，然后**发送测试**。在iPhone和iPad上，首先添加DumbMonit到主屏幕。逐步指南在[推送通知（PWA）](using/push-notifications.md)。
+1. 在每部电话或计算机上，打开DumbMonit并去**设置 › 我的账户 › 推送通知 › 在该设备启用**，然后**发送测试**。在iPhone和iPad上，首先添加DumbMonit到主屏幕。逐步指南在[推送通知（PWA）](using/push-notifications.md)。
 2. 创建一个**Web推送**通道这里。它没有密钥：其接收者是在步骤1中订阅的设备。
 
 - **设置** — `users`（可选；每行一个账户，空：每个账户的每个订阅设备）、`urgency`（默认 `high`、`normal` 或 `low`）、`ttl`（秒推送服务为关闭的设备保留消息，默认 `86400`）、`contact`（可选 `mailto:` 或 `https:` 地址给推送服务；空：`DUMBMONIT_PUBLIC_URL` 当它是HTTPS，否则项目页面）

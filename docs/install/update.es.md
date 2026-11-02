@@ -14,7 +14,7 @@ cualquier `0.1.0-alpha.N`. Los borradores se ignoran, y a una instancia en
 una versión estable nunca se le ofrece una versión previa.
 
 Cuando existe una versión más reciente, aparece **Update available: vX**
-en la parte inferior derecha de cada página y en **Settings → About**, donde
+en la parte inferior derecha de cada página y en **Ajustes › Sistema › Acerca de**, donde
 **How to update** abre los pasos siguientes y **See what's new** reabre la
 ventana *What's new*. **Check now** vuelve a comprobarlo de inmediato (como
 máximo una vez por minuto).
@@ -27,7 +27,7 @@ máximo una vez por minuto).
 ### Desactivar la comprobación {#turning-the-check-off}
 
 Para redes aisladas (air-gapped), desactiva **Check for new versions** en
-**Settings → About** (administradores), o define la variable de entorno,
+**Ajustes › Sistema › Acerca de** (administradores), o define la variable de entorno,
 que prevalece sobre el interruptor:
 
 ```yaml
@@ -41,7 +41,7 @@ La misma información está disponible para scripts y tokens de API en
 ## Actualizar {#updating}
 
 1. **Haz una copia de seguridad.** Descarga una copia de seguridad desde
-   **Settings → Backup**, y guarda una copia de `/data/secret.key` (consulta
+   **Ajustes › Sistema › Copia de seguridad**, y guarda una copia de `/data/secret.key` (consulta
    [Copia de seguridad y restauración](backup.md)). Sin esa clave, las
    contraseñas y tokens guardados no se pueden descifrar.
 2. **Descarga y reinicia**, desde la carpeta que contiene tu
@@ -53,7 +53,7 @@ La misma información está disponible para scripts y tokens de API en
 
     Tus datos viven en el volumen `/data` y se conservan; las migraciones de
     base de datos se ejecutan al iniciar.
-3. **Recarga la página.** **Settings → About** muestra la nueva versión y
+3. **Recarga la página.** **Ajustes › Sistema › Acerca de** muestra la nueva versión y
    *You are up to date*.
 
 Para fijar una versión en lugar de seguir `:latest`, cambia la etiqueta de

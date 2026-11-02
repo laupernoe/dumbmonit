@@ -5,6 +5,18 @@ necesita ajustes. Lo que marca la diferencia en el uso diario es lo que
 mantiene bajo el ruido: supresión por dependencia, agrupación por host,
 ventanas de mantenimiento, y una referencia que aprende antes de hablar.
 
+En la aplicación son las **Alertas** en el menú izquierdo (`g a`), con cinco pestañas. La insignia del menú cuenta lo que aún necesita su atención.
+
+| Pestaña | Qué es | Leer |
+|---|---|---|
+| **Ahora** | Lo que se está disparando, por gravedad o por monitor; reconocer, posponer, ignorar. Las ventanas de mantenimiento se pliegan sobre la lista | [Ahora e Historial](../using/alerts.md), [Ventanas de mantenimiento](maintenance.md) |
+| **Historial** | Qué pasó y cuándo, y quién actuó | [Ahora e Historial](../using/alerts.md) |
+| **Reglas** | Cada regla, su umbral y su espera; ajustar o crear | [Reglas](rules.md) |
+| **Automatización** | Runbooks, acciones y el registro de remediación | [Automatización y runbooks](remediation.md) |
+| **Guardias** | Turnos y políticas de escalado | [Guardias](oncall.md) |
+
+A quién se avisa, y cómo, se configura en **Ajustes › Notificaciones**: [Canales de notificación](../notifications.md) y [Política de notificaciones](notifications.md).
+
 ![La página de alertas: qué ocurre ahora, el mantenimiento, el historial y las reglas](../assets/screenshots/alerts-light.png){ loading=lazy }
 
 ## Severidades {#severities}
@@ -189,6 +201,6 @@ nadie reciba spam. El camino completo de una alerta, en orden:
 11. **Enviar** — con un enlace «Open in DumbMonit» por monitor
     cuando se conoce una URL pública.
 
-Los pasos 6 a 10 se configuran en Settings → Notifications & reports → Notification
+Los pasos 6 a 10 se configuran en Ajustes › Notificaciones › Notification
 policy (global) y en cada canal (Delivery options). Consulta [Política
 de notificación](notifications.md).

@@ -64,7 +64,7 @@ una riga "Apply to all":
   suo arresto (al massimo una volta ogni dieci minuti);
 - **Auto-update in maintenance windows** — quando il registry ha un'immagine
   più recente per lo stesso tag, il container viene ricreato durante una
-  finestra di manutenzione pianificata (pagina Alerts → Maintenance) e
+  finestra di manutenzione pianificata (Avvisi › Adesso, finestre di manutenzione) e
   ripristinato se il suo healthcheck fallisce.
 
 Ogni interruttore salva per proprio conto. Dettagli e regole di sicurezza:

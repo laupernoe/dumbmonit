@@ -2,20 +2,21 @@
 
 ![La pagina Alerts: cosa succede ora, la manutenzione, la cronologia e le regole](../assets/screenshots/alerts-light.png){ loading=lazy }
 
-Tutto ciò che riguarda gli avvisi su una pagina, dietro quattro tab. Il tab
-è nell'URL (`/alerts#rules`), così una vista è collegabile tramite link.
+Tutto ciò che riguarda gli avvisi su una pagina, dietro cinque tab. Il tab
+è nell'URL (`/alerts?tab=rules`), così una vista è collegabile tramite link.
 **Schedule maintenance**, in alto a destra, apre il modulo per una
 finestra da qualsiasi tab.
 
 | Tab | Cosa contiene |
 |---|---|
-| **Now** | L'elenco live dei problemi, una riga ciascuno. Vedi [L'elenco Now](#the-now-list). Il badge sul tab, e su Alerts nella barra superiore, è il conteggio di ciò che richiede ancora attenzione. |
-| **Maintenance** | Finestre di manutenzione, *Active now* o *Scheduled*, puntuali, settimanali o mensili, ciascuna con la prossima occorrenza (`#scheduled`). Vedi [Finestre di manutenzione](../alerting/maintenance.md). |
-| **History** | Le ultime 200 transizioni, ciascuna che nomina il monitor, la regola e cosa è successo; quelle risolte possono essere pulite. |
-| **Rules** | Ogni regola con la sua severità, un marchio *Built-in* e, se un monitor la ignora, *Ignored on N devices*; abilita, modifica inline, elimina le tue, crea una regola di soglia. Vedi [Regole](../alerting/rules.md). |
+| **Adesso** | L'elenco live dei problemi, una riga ciascuno. Vedi [L'elenco Now](#the-now-list). Il badge sul tab e su Avvisi nel menu di sinistra è il conteggio di ciò che richiede ancora attenzione. Le finestre di manutenzione, *Active now* o *Scheduled* (puntuali, settimanali o mensili, ciascuna con la prossima occorrenza), si ripiegano sopra l'elenco. Vedi [Finestre di manutenzione](../alerting/maintenance.md). |
+| **Cronologia** | Le ultime 200 transizioni, ciascuna che nomina il monitor, la regola e cosa è successo; quelle risolte possono essere pulite. |
+| **Regole** | Ogni regola con la sua severità, un marchio *Built-in* e, se un monitor la ignora, *Ignored on N devices*; abilita, modifica inline, elimina le tue, crea una regola di soglia. Vedi [Regole](../alerting/rules.md). |
+| **Automazione** | Runbook, azioni di risoluzione e criteri, e il registro di ciò che è stato eseguito. Vedi [Runbook e risoluzione](../alerting/remediation.md). |
+| **Reperibilità** | Turni e criteri di escalation. Vedi [Reperibilità](../alerting/oncall.md). |
 
 I canali di notifica e la politica di notifica si trovano in
-**Impostazioni → Notifiche e report** (vedi [Notifications](#notifications)).
+**Impostazioni › Notifiche** (vedi [Notifications](#notifications)).
 
 Lo stesso modello di verità alimenta il bollettino di panoramica e questa
 pagina, così i due sono sempre d'accordo su cosa richiede attenzione.
@@ -83,7 +84,7 @@ Una regola ignorata, invece, non ha mai prodotto un avviso in primo luogo.
 
 ## Notifications {#notifications}
 
-I canali e la politica si trovano in **Impostazioni → Notifiche e report**
+I canali e la politica si trovano in **Impostazioni › Notifiche**
 (`/settings/notifications`), seguiti dai [Report](reports.md). Due
 pannelli:
 

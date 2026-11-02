@@ -2,7 +2,7 @@
 
 ## Ho perso la password {#i-lost-the-password}
 
-Chiedi prima a un altro amministratore: in Settings → **Users**, **Edit**
+Chiedi prima a un altro amministratore: in Impostazioni › Team e accesso › **Utenti**, **Edit**
 sul tuo account imposta una nuova password e la mostra una volta, e **Reset
 2FA** sulla stessa riga azzera un secondo fattore che ti blocca fuori.
 Questa è la risposta quotidiana — un'istanza con due account amministratore
@@ -122,7 +122,7 @@ imposta `DUMBMONIT_COOKIE_SECURE=1`.
 
 ## Esiste un token API?
 
-Sì. Settings → **API & assistants** crea token `dmt_…` con un ambito
+Sì. Impostazioni › Sistema › **API e assistenti** crea token `dmt_…` con un ambito
 `read` o `write`; invia uno come `Authorization: Bearer dmt_…` su qualsiasi
 rotta e nessun cookie o header CSRF è necessario. Lo stesso token collega
 un [assistente](using/assistant.md) tramite MCP. I token non gestiscono mai

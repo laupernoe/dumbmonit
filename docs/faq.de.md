@@ -2,7 +2,7 @@
 
 ## Ich habe das Passwort verloren {#i-lost-the-password}
 
-Fragen Sie zuerst einen anderen Administrator: In Settings → **Users**
+Fragen Sie zuerst einen anderen Administrator: In Einstellungen › Team & Zugang › **Benutzer**
 setzt **Edit** auf Ihrem Konto ein neues Passwort und zeigt es einmal,
 und **Reset 2FA** in derselben Zeile löscht einen zweiten Faktor, der
 Sie ausschließt. Das ist die alltägliche Antwort — eine Instanz mit
@@ -126,7 +126,7 @@ exponieren, nutzen Sie einen Reverse Proxy mit TLS und setzen Sie
 
 ## Gibt es ein API-Token?
 
-Ja. Settings → **API & assistants** erstellt `dmt_…`-Tokens mit einem
+Ja. Einstellungen › System › **API und Assistenten** erstellt `dmt_…`-Tokens mit einem
 Scope `read` oder `write`; senden Sie eines als
 `Authorization: Bearer dmt_…` auf jeder Route, und kein Cookie oder
 CSRF-Header wird benötigt. Dasselbe Token verbindet einen

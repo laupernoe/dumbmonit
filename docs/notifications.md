@@ -643,8 +643,8 @@ Native notifications on your phones and computers, straight from your own
 DumbMonit, with no app to install and no third-party account: the browser
 (installed as an app or not) receives the alerts even with every tab closed.
 
-1. On each phone or computer, open DumbMonit and go to **Settings → Push
-   notifications → Enable on this device**, then **Send a test**. On iPhone and
+1. On each phone or computer, open DumbMonit and go to **Settings › My account › Push
+   notifications › Enable on this device**, then **Send a test**. On iPhone and
    iPad, first add DumbMonit to the Home Screen. The step-by-step guide is in
    [Push notifications (PWA)](using/push-notifications.md).
 2. Create a **Web Push** channel here. It has no secret: its recipients are the

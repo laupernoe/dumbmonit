@@ -15,9 +15,12 @@ DumbMonit 像**天气预报**一样解读网络：首页用一句话说明
 ![概览页面：天气预报式的一句话、“Needs you”列表和预报](assets/screenshots/overview-light.png){ loading=lazy }
 
 <div class="dm-links" markdown>
-<a href="install/docker/">安装<small>Docker Compose、首次启动、备份</small></a>
-<a href="install/first-device/">添加第一个监控项<small>SNMP、网络扫描、接下来会发生什么</small></a>
-<a href="alerting/">告警<small>内置规则，天生安静</small></a>
+<a href="install/">开始使用<small>Docker Compose、HTTPS、第一个监控项、备份</small></a>
+<a href="overview/">概览<small>横幅、核心指标、墙屏模式</small></a>
+<a href="monitors/">监控项<small>列表、地图、日志、安全与各类集成</small></a>
+<a href="alerting/">告警<small>当前、历史、规则、自动化、值班</small></a>
+<a href="status/">状态<small>公开状态页与报告</small></a>
+<a href="settings/">设置<small>账户、团队与访问、通知、系统</small></a>
 </div>
 
 ## 监控对象 {#what-it-watches}

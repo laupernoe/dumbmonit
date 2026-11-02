@@ -18,7 +18,7 @@ Les autres surveillances n'affichent rien.
 ## L'activer
 
 Le score est **désactivé par défaut**. Un administrateur l'active dans
-**Paramètres → Compte et sécurité → Score de sécurité**. Une fois activé :
+**Réglages › Supervision › Score de sécurité**. Une fois activé :
 
 - chaque surveillance notée reçoit un petit **badge en forme de bouclier** avec sa
   lettre dans la liste des surveillances, et un badge **Security** avec le score
@@ -35,7 +35,7 @@ Le désactiver masque les badges, arrête le calcul périodique, et les séries
     **Security**. Une installation qui surveillait déjà une surveillance notée garde
     le score activé après la mise à niveau ; une nouvelle installation démarre
     avec le score désactivé. L'adresse `/security` ouvre désormais
-    [CVE et failles](cves.md).
+    l'onglet Sécurité de Surveillances ([CVE et failles](cves.md)).
 
 ## Comment le score est calculé
 

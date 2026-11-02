@@ -104,7 +104,7 @@ que o DumbMonit faça. Para tal TV, veja
       `localhost`), desde 2025. Nada responde nesse endereço: depois que
       você aprova, seu navegador mostra uma página de erro cujo endereço
       carrega o código — copie-o e cole-o de volta no DumbMonit.
-2. **Conecte.** Em **Configurações → Música da parede**, cole o **Client
+2. **Conecte.** Em **Configurações › Tela de parede › Música de parede**, cole o **Client
    ID** do app (não há segredo: o DumbMonit usa Authorization Code com
    PKCE) e escolha **Conectar Spotify**, depois aprove no Spotify **com a
    conta que seu celular usa**.
@@ -117,7 +117,7 @@ que o DumbMonit faça. Para tal TV, veja
    escolha **DumbMonit Wall**. O som sai da TV, e a parede mostra a capa,
    título e progresso.
 
-**Configurações → Música da parede → Alto-falante** mostra se tudo se
+**Configurações › Tela de parede › Música de parede › Alto-falante** mostra se tudo se
 cumpre, sem andar até a TV: a conta, Premium, se o Spotify lista o
 alto-falante entre os dispositivos da conta agora (e quais dispositivos
 lista), e toda parede que reportou nos últimos quinze minutos — seu
@@ -127,8 +127,7 @@ som** faz a conta tocar no alto-falante (ela retoma o que tocou por
 própria parede, o painel **Música** tem **Tocar aqui**, que move o que
 quer que toque na conta para esta tela.
 
-**O nome.** Renomeie o alto-falante em **Configurações → Música da parede
-→ Alto-falante** ("TV da sala"); toda parede pega o novo nome em
+**O nome.** Renomeie o alto-falante em **Configurações › Tela de parede › Música de parede › Alto-falante** ("TV da sala"); toda parede pega o novo nome em
 segundos. Para nomear apenas uma parede, adicione `?speaker=Cozinha` ao
 seu endereço — a tela se lembra disso (`?speaker=` o esquece).
 
@@ -197,7 +196,7 @@ máquina certa, ao lado do DumbMonit, faz o trabalho melhor.
 
 ### Um link enviado para toda parede {#a-link-sent-to-every-wall}
 
-Em **Configurações → Música da parede** (ou o próprio painel **Música** da
+Em **Configurações › Tela de parede › Música de parede** (ou o próprio painel **Música** da
 parede), cole um link do Spotify, Deezer ou YouTube para uma faixa, álbum,
 playlist, episódio ou vídeo e escolha **Tocar na parede**. Toda parede o
 toca no player embutido oficial do serviço; um link enviado enquanto uma

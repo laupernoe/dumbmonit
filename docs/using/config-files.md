@@ -154,8 +154,8 @@ repository (`cargo build --release -p dumbmonit-cli`).
 | `targets list` | lists the monitors |
 | `silence create --name N --duration 2h [--target-id ID] [--match k=v] [--comment C]` | opens a maintenance window starting now |
 
-The token must be an administrator's, with the `write` scope (Settings → API
-tokens). Every command takes `--json` for scripts.
+The token must be an administrator's, with the `write` scope (**Settings › System › API &
+assistants**). Every command takes `--json` for scripts.
 
 ## Watched folder
 

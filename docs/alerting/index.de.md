@@ -5,6 +5,18 @@ nachjustiert werden. Den Unterschied im Alltag macht, was den Lärm
 niedrig hält: Abhängigkeitsunterdrückung, Gruppierung nach Host,
 Wartungsfenster und eine Baseline, die lernt, bevor sie spricht.
 
+In der App sind es die **Warnungen** im linken Menü (`g a`), mit fünf Tabs. Das Badge am Menü zählt, was noch Ihre Aufmerksamkeit braucht.
+
+| Tab | Was es ist | Lesen |
+|---|---|---|
+| **Jetzt** | Was gerade auslöst, nach Schweregrad oder nach Monitor; bestätigen, zurückstellen, ignorieren. Die Wartungsfenster klappen über der Liste ein | [Jetzt und Verlauf](../using/alerts.md), [Wartungsfenster](maintenance.md) |
+| **Verlauf** | Was wann geschah, und wer gehandelt hat | [Jetzt und Verlauf](../using/alerts.md) |
+| **Regeln** | Jede Regel, ihr Schwellenwert und ihre Haltezeit; anpassen oder anlegen | [Regeln](rules.md) |
+| **Automatisierung** | Runbooks, Aktionen und das Protokoll der Behebung | [Automatisierung und Runbooks](remediation.md) |
+| **Bereitschaft** | Pläne und Eskalationsrichtlinien | [Bereitschaft](oncall.md) |
+
+Wer benachrichtigt wird, und wie, stellen Sie unter **Einstellungen › Benachrichtigungen** ein: [Benachrichtigungskanäle](../notifications.md) und [Benachrichtigungsrichtlinie](notifications.md).
+
 ![Die Alerts-Seite: was gerade passiert, Wartung, Historie und die Regeln](../assets/screenshots/alerts-light.png){ loading=lazy }
 
 ## Schweregrade {#severities}
@@ -148,7 +160,7 @@ Vorhersage.
 
 Eingebaute Regeln haben keinen zugewiesenen Kanal, was bedeutet **jeder
 aktivierte Kanal**. Eine selbst bearbeitete Regel kann bestimmte Kanäle
-benennen. Kanäle werden unter Settings → Notifications & reports konfiguriert; siehe
+benennen. Kanäle werden unter Einstellungen › Benachrichtigungen konfiguriert; siehe
 [Benachrichtigungskanäle](../notifications.md).
 
 ## Intelligente Benachrichtigungen {#smart-notifications}
@@ -194,6 +206,6 @@ Reihenfolge:
 11. **Senden** — mit einem „In DumbMonit öffnen“-Link pro Monitor, wenn eine
     öffentliche URL bekannt ist.
 
-Die Schritte 6 bis 10 werden unter Settings → Notifications & reports → Notification
+Die Schritte 6 bis 10 werden unter Einstellungen › Benachrichtigungen › Notification
 policy (global) und bei jedem Kanal (Delivery options) konfiguriert. Siehe
 [Benachrichtigungsrichtlinie](notifications.md).

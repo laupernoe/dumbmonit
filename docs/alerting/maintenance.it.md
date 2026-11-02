@@ -8,8 +8,7 @@ ore.
 
 ## Dove {#where}
 
-- **Alerts → Maintenance**: l'elenco delle finestre, con *Active
-  now* o *Scheduled*, e il modulo per aggiungerne una.
+- **Avvisi › Adesso**: le finestre, *Active now* o *Scheduled*, si ripiegano sopra l'elenco degli avvisi; **Schedule maintenance**, in alto a destra nella pagina, apre il modulo per aggiungerne una.
 - **Pagina del monitor → Silence 1 h / Silence until…**: una finestra
   puntuale rapida per l'intero monitor.
 - ++ctrl+k++ → *Schedule maintenance*.

@@ -7,34 +7,30 @@ qu'une, et rien ne s'est perdu dans la fusion.
 
 ## La console
 
-- Un **rail d'icônes** à gauche liste toutes les destinations, pages de statut et
-  rapports compris. À son pied : la documentation, GitHub, votre compte (le
-  bouton rond avec vos initiales) et les Réglages. Un téléphone a une barre
-  d'onglets avec l'essentiel et **Plus**.
+- Un **menu** à gauche liste quatre destinations : Vue d’ensemble,
+  Surveillances, Alertes et Statut. Chacune a ses onglets (Surveillances :
+  Liste, Carte, Journaux, Sécurité ; Alertes : Maintenant, Historique, Règles,
+  Automatisation, Astreintes ; Statut : Pages, Rapports). À son pied : Réglages,
+  mode mural, la documentation, GitHub et votre compte (le bouton rond avec vos
+  initiales). Un téléphone a une barre d'onglets avec l'essentiel et **Plus**.
 - L'**en-tête** indique où vous êtes (nom de l'instance, page, moniteur), un
   interrupteur **LIVE** qui met en pause les rafraîchissements de la console, la
-  période sur la vue d'ensemble, la palette de commandes, **Nouveau moniteur**,
-  le **mode mur** (l'icône d'écran) et le bouton du panneau de contexte.
-- Le **panneau de contexte** à droite, comme un inspecteur, montre ce qui
-  demande attention, le moniteur sélectionné dans un tableau (avec **Vérifier
-  maintenant** et **Silence 1 h**), la prévision la plus proche et qui est
-  prévenu. `i` l'affiche ou le masque ; sur un écran plus étroit, il s'ouvre en
-  tiroir.
+  période sur la vue d'ensemble, la palette de commandes et **Nouvelle
+  surveillance**.
 - La **vue d'ensemble** s'ouvre sur un fin bandeau de ciel nocturne dont
   l'unique ligne dit où en sont les choses (« pve-02 is down. 3 guests held
   back, alert sent. » ou « All 146 monitors up. », dans votre langue). En
-  dessous : cinq chiffres (moniteurs en service, disponibilité sur 30 jours,
-  temps de réponse p95, alertes ouvertes, temps moyen de résolution), la
-  **rivière de santé** (une bande par moniteur, une case par tranche de la
-  période, les pires en haut) et un **tableau des moniteurs** trié du pire au
-  meilleur. Le tableau filtre par état, type et texte, permet d'ajouter des
-  colonnes (adresse, dossier) et d'en retirer, et se pilote au clavier : `j` /
-  `k` pour se déplacer, `Entrée` pour sélectionner, `o` pour ouvrir.
-- Le **mode mur** est un tableau noir pour un écran dans la salle : la rivière
-  de santé, les cinq chiffres, les alertes ouvertes et qui est d'astreinte.
-- Raccourcis : `g o` vue d'ensemble, `g d` moniteurs, `g a` alertes, `g m`
-  carte de topologie, `g x` sécurité, `g l` journaux. `?` affiche la liste
-  complète.
+  dessous : quatre chiffres (surveillances en service, disponibilité sur 30
+  jours, temps de réponse p95, alertes ouvertes), ce qui demande attention à
+  côté de la **rivière de santé** (une bande par surveillance, les pires en
+  haut) et deux graphiques. La liste complète est l'onglet **Liste** de
+  Surveillances.
+- Le **mode mural** est un tableau pour un écran dans la salle : le verdict et
+  l'horloge, les problèmes, chaque surveillance, les chiffres du parc, la
+  rivière de santé, qui est d'astreinte et, une fois configurée, la musique.
+- Raccourcis : `g o` vue d'ensemble, `g d` surveillances, `g a` alertes, `g s`
+  statut, `g m` carte, `g x` sécurité, `g l` journaux, `g n` nouvelle
+  surveillance. `?` affiche la liste complète.
 
 Un état est toujours écrit à côté d'une forme (rond en service, losange
 dégradé, carré hors service), jamais montré par la seule couleur. Les pages de

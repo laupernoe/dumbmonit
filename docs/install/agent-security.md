@@ -158,7 +158,7 @@ This first fingerprint is trusted on first use: re-run the install command
 from DumbMonit (it carries the fingerprint) on machines whose network you do
 not trust.
 
-**Settings → Agents** shows, for each agent, whether it reports encrypted
+**Settings › Monitoring › Agents** shows, for each agent, whether it reports encrypted
 (with the key exchange used) or through the plain channel, and the switch
 **Require the encrypted channel**. Turned on, the plain channel refuses agents;
 new installations start with it on. `DUMBMONIT_AGENT_LEGACY_DAYS=N` closes the
@@ -187,7 +187,7 @@ works. The web port can stay behind your usual HTTPS reverse proxy.
 
 ## Rotating the certificate authority
 
-In **Settings → Agents → Agent channel → Certificate authority rotation**:
+In **Settings › Monitoring › Agents › Agent channel › Certificate authority rotation**:
 
 1. **Start rotation** creates a new authority. Agents learn its fingerprint
    over the encrypted channel at their next report; it signs nothing yet.

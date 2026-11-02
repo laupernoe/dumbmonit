@@ -31,7 +31,7 @@ recuperar las gráficas; eso está al final de esta página.
 
 ## El paquete cifrado {#the-encrypted-bundle}
 
-**Settings → Backup → Download the bundle.** Elige una frase de paso de
+**Ajustes › Sistema › Copia de seguridad › Download the bundle.** Elige una frase de paso de
 al menos 16 caracteres — tres palabras bastan — y confírmala. El archivo
 que se descarga es JSON plano con un cuerpo cifrado:
 
@@ -110,7 +110,7 @@ pueda restaurar en algún sitio que nunca ha visto `secret.key`.
 1. Inicia el contenedor nuevo y crea la primera cuenta de administrador
    en `/setup`, con el código de configuración impreso en sus logs.
    Esa cuenta es tuya; la restauración no la tocará.
-2. **Settings → Backup → Restore a bundle.** Elige el archivo, escribe
+2. **Ajustes › Sistema › Copia de seguridad › Restore a bundle.** Elige el archivo, escribe
    la frase de paso, y pulsa **Check this backup**.
 3. Lee el informe. Indica, sección por sección, qué se **crearía**, qué
    se **actualizaría** porque difiere de lo que ya hay, y qué ya es
@@ -225,7 +225,7 @@ problema. La serie solo existe una vez escrita una primera copia de
 seguridad, así que una instancia con la programación desactivada nunca
 recibe el aviso.
 
-**Settings → Backup** muestra lo mismo sin MetricsQL: la última
+**Ajustes › Sistema › Copia de seguridad** muestra lo mismo sin MetricsQL: la última
 ejecución y si tuvo éxito, los archivos conservados y su tamaño, y
 **Back up now** para escribir una de inmediato.
 
@@ -281,7 +281,7 @@ historial.
 
 ## Qué hacer antes de una actualización {#what-to-do-before-an-upgrade}
 
-1. **Settings → Backup → Back up now** — treinta segundos, e incluye el
+1. **Ajustes › Sistema › Copia de seguridad › Back up now** — treinta segundos, e incluye el
    secreto.
 2. Descarga también un paquete si la actualización es grande, o si te
    mudas a otra máquina.

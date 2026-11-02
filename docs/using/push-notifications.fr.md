@@ -39,7 +39,7 @@ quelles alertes y vont avec un canal **Web Push**
 2. Optionnel : installez-le comme une application (barre d'adresse →
    **Installer**, ou le menu du navigateur → **Ajouter à l'écran d'accueil**).
    Les notifications fonctionnent dans les deux cas.
-3. **Réglages → Notifications push → Activer sur cet appareil**, et autorisez
+3. **Réglages › Mon compte › Notifications push › Activer sur cet appareil**, et autorisez
    les notifications quand le navigateur le demande.
 4. **Envoyer un test.** Une notification *DumbMonit — notification de test*
    devrait apparaître en quelques secondes.
@@ -52,7 +52,7 @@ iPadOS 16.4 ou plus récent) :
 1. Ouvrez DumbMonit dans **Safari**.
 2. **Partager → Sur l'écran d'accueil**, puis ouvrez DumbMonit **depuis la
    nouvelle icône**.
-3. Connectez-vous, puis **Réglages → Notifications push → Activer sur cet
+3. Connectez-vous, puis **Réglages › Mon compte › Notifications push › Activer sur cet
    appareil**, et autorisez les notifications.
 4. **Envoyer un test.**
 

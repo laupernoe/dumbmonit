@@ -93,14 +93,14 @@ independentemente do que o DumbMonit faça. Para essa TV, ver
 
 #### Configurar {#set-it-up}
 
-1. **Crie uma app Spotify.** Abra o [Spotify Developer Dashboard](https://developer.spotify.com/dashboard), crie uma app (qualquer nome), marque **Web API** e **Web Playback SDK**, e adicione o URI de redirecionamento que **Settings → Wall music** mostra:
+1. **Crie uma app Spotify.** Abra o [Spotify Developer Dashboard](https://developer.spotify.com/dashboard), crie uma app (qualquer nome), marque **Web API** e **Web Playback SDK**, e adicione o URI de redirecionamento que **Definições › Ecrã de parede › Música da parede** mostra:
     - DumbMonit servido via HTTPS: `https://<o seu endereço>/api/music/spotify/callback`. O Spotify volta diretamente ao DumbMonit depois de aprovar.
     - DumbMonit servido via HTTP simples: `http://127.0.0.1:8888/callback`. O Spotify só aceita `http://` para um endereço loopback (e não `localhost`), desde 2025. Nada responde nesse endereço: depois de aprovar, o seu navegador mostra uma página de erro cujo endereço transporta o código — copie-o e cole-o de volta no DumbMonit.
-2. **Ligue.** Em **Settings → Wall music**, cole o **Client ID** da app (não há segredo: o DumbMonit usa Authorization Code com PKCE) e escolha **Connect Spotify**, depois aprove no Spotify **com a conta que o seu telefone usa**.
+2. **Ligue.** Em **Definições › Ecrã de parede › Música da parede**, cole o **Client ID** da app (não há segredo: o DumbMonit usa Authorization Code com PKCE) e escolha **Connect Spotify**, depois aprove no Spotify **com a conta que o seu telefone usa**.
 3. **Na TV**, abra o `/wall` do DumbMonit via HTTPS, com sessão iniciada (uma conta de leitor basta), e toque no ecrã ou pressione **OK** no controlo remoto uma vez: qualquer gesto desbloqueia o som. Um navegador iniciado com `--autoplay-policy=no-user-gesture-required` (um kiosk) não precisa de toque.
 4. **No seu telefone**, na app Spotify, toque no ícone de dispositivos e escolha **DumbMonit Wall**. O som sai da TV, e a parede mostra a capa, título e progresso.
 
-**Settings → Wall music → Speaker** mostra se tudo se verifica, sem ir
+**Definições › Ecrã de parede › Música da parede › Speaker** mostra se tudo se verifica, sem ir
 até à TV: a conta, Premium, se o Spotify lista o altifalante entre os
 dispositivos da conta agora mesmo (e que dispositivos lista), e toda
 parede que reportou nos últimos quinze minutos — o seu navegador
@@ -110,8 +110,7 @@ cada parede pronta também tem o seu próprio **Test sound**. Na própria
 parede, o painel **Music** tem **Play here**, que move o que estiver a
 tocar na conta para este ecrã.
 
-**O nome.** Renomeie o altifalante em **Settings → Wall music →
-Speaker** («Living room TV»); toda parede capta o novo nome dentro de
+**O nome.** Renomeie o altifalante em **Definições › Ecrã de parede › Música da parede › Speaker** («Living room TV»); toda parede capta o novo nome dentro de
 segundos. Para nomear uma única parede, adicione `?speaker=Kitchen` ao
 seu endereço — o ecrã lembra-se dele (`?speaker=` esquece-o).
 
@@ -182,7 +181,7 @@ DumbMonit, faz o trabalho melhor.
 
 ### Uma ligação enviada para toda parede {#a-link-sent-to-every-wall}
 
-Em **Settings → Wall music** (ou o próprio painel **Music** da
+Em **Definições › Ecrã de parede › Música da parede** (ou o próprio painel **Music** da
 parede), cole uma ligação Spotify, Deezer ou YouTube para uma faixa,
 álbum, lista de reprodução, episódio ou vídeo e escolha **Play on the
 wall**. Toda parede reproduz-a no leitor incorporado oficial do

@@ -1,6 +1,6 @@
 # World map
 
-The **World** view of the Map page (`/map?view=world`) shows your locations on a
+The **World** view of **Monitors › Map** (`/targets?tab=map&view=world`) shows your locations on a
 world map: one pin per location, with the state of the monitors it gathers.
 Beside the map, the same locations are listed worst first; click a pin or a row
 to see its monitors, each with its state and a link to its page.
@@ -21,7 +21,7 @@ Locations too close to tell apart at the current zoom are drawn as one **group p
 
 ## Locations
 
-Locations are set in **Settings → Monitoring → Locations** (administrators). A
+Locations are set in **Settings › Monitoring › Locations** (administrators). A
 location has a name, an optional address (free text, shown only) and a spot,
 chosen in one of three ways:
 

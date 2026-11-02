@@ -1,7 +1,7 @@
 # Carte de topologie
 
-La page **Carte** (**⋯ → Carte** sur la page Surveillances, ou *Carte* dans la
-palette de commandes, `/map`) dessine toute votre infrastructure en une image.
+L'onglet **Carte** (**Surveillances › Carte**, `g m`, ou *Carte* dans la
+palette de commandes) dessine toute votre infrastructure en une image.
 Rien n'y est saisi : chaque lien vient de ce que DumbMonit sait déjà, et un
 administrateur peut [corriger la carte](#corriger-la-carte) là où elle se trompe.
 

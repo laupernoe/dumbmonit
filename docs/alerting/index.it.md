@@ -6,6 +6,18 @@ quello che mantiene basso il rumore: soppressione per dipendenza,
 raggruppamento per host, finestre di manutenzione, e una baseline che
 apprende prima di parlare.
 
+Nell'app sono gli **Avvisi** nel menu di sinistra (`g a`), con cinque schede. Il badge del menu conta ciò che ha ancora bisogno di te.
+
+| Scheda | Cos'è | Leggi |
+|---|---|---|
+| **Adesso** | Cosa sta scattando, per gravità o per monitor; riconoscere, posticipare, ignorare. Le finestre di manutenzione si ripiegano sopra l'elenco | [Adesso e Cronologia](../using/alerts.md), [Finestre di manutenzione](maintenance.md) |
+| **Cronologia** | Cosa è successo e quando, e chi ha agito | [Adesso e Cronologia](../using/alerts.md) |
+| **Regole** | Ogni regola, la sua soglia e la sua attesa; regolare o creare | [Regole](rules.md) |
+| **Automazione** | Runbook, azioni e registro della risoluzione | [Automazione e runbook](remediation.md) |
+| **Reperibilità** | Turni e criteri di escalation | [Reperibilità](oncall.md) |
+
+Chi viene avvisato, e come, si imposta in **Impostazioni › Notifiche**: [Canali di notifica](../notifications.md) e [Criteri di notifica](notifications.md).
+
 ![La pagina Alerts: cosa succede ora, la manutenzione, la cronologia e le regole](../assets/screenshots/alerts-light.png){ loading=lazy }
 
 ## Severità {#severities}
@@ -146,7 +158,7 @@ PBS è una semplice soglia sulla previsione propria di PBS.
 
 Le regole integrate non hanno alcun canale collegato, il che significa
 **ogni canale abilitato**. Una regola che modifichi può nominare canali
-specifici. I canali vengono configurati in Settings → Notifications & reports; vedi
+specifici. I canali vengono configurati in Impostazioni › Notifiche; vedi
 [Canali di notifica](../notifications.md).
 
 ## Notifiche intelligenti {#smart-notifications}
@@ -191,6 +203,5 @@ ordine:
 11. **Inviare** — con un link "Open in DumbMonit" per monitor quando
     un URL pubblico è conosciuto.
 
-I passaggi 6 a 10 sono configurati in Settings → Notifications & reports →
-Notification policy (globale) e su ogni canale (Delivery options). Vedi
+I passaggi 6 a 10 sono configurati in Impostazioni › Notifiche › Notification policy (globale) e su ogni canale (Delivery options). Vedi
 [Politica di notifica](notifications.md).

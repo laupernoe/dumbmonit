@@ -2,20 +2,21 @@
 
 ![A página de alertas: o que está acontecendo agora, manutenção, histórico e as regras](../assets/screenshots/alerts-light.png){ loading=lazy }
 
-Tudo sobre alertas em uma página, por trás de quatro abas. A aba está na URL
-(`/alerts#rules`), então uma visão pode ser compartilhada por link.
+Tudo sobre alertas em uma página, por trás de cinco abas. A aba está na URL
+(`/alerts?tab=rules`), então uma visão pode ser compartilhada por link.
 **Programar manutenção**, no canto superior direito, abre o formulário para
 uma janela a partir de qualquer aba.
 
 | Aba | O que contém |
 |---|---|
-| **Agora** | A lista ativa de problemas, uma linha cada. Veja [A lista Agora](#the-now-list). O selo na aba, e em Alertas na barra superior, é a contagem do que ainda precisa de você. |
-| **Manutenção** | Janelas de manutenção, *Ativa agora* ou *Programada*, pontual, semanal ou mensal, cada uma com a próxima ocorrência (`#scheduled`). Veja [Janelas de manutenção](../alerting/maintenance.md). |
+| **Agora** | A lista em tempo real dos problemas, uma linha cada. Veja [A lista Agora](#the-now-list). O selo na aba e em Alertas no menu da esquerda é a contagem do que ainda precisa de você. As janelas de manutenção, *Active now* ou *Scheduled* (pontuais, semanais ou mensais, cada uma com a sua próxima ocorrência), se recolhem acima da lista. Veja [Janelas de manutenção](../alerting/maintenance.md). |
 | **Histórico** | As últimas 200 transições, cada uma nomeando o monitor, a regra e o que aconteceu; as resolvidas podem ser limpas. |
 | **Regras** | Toda regra com sua severidade, uma marca *Integrada* e, se algum monitor a ignora, *Ignorada em N monitores*; ativar, editar embutido, excluir as suas próprias, criar uma regra de limite. Veja [Regras](../alerting/rules.md). |
+| **Automação** | Runbooks, ações de remediação e políticas, e o registro do que rodou. Veja [Runbooks e remediação](../alerting/remediation.md). |
+| **Plantões** | Escalas e políticas de escalonamento. Veja [Plantões](../alerting/oncall.md). |
 
 Os canais de notificação e a política de notificação ficam em
-**Configurações → Notificações e relatórios** (veja
+**Configurações › Notificações** (veja
 [Notificações](#notifications)).
 
 O mesmo modelo de verdade alimenta o boletim da visão geral e esta página,
@@ -83,7 +84,7 @@ ignorada, por outro lado, nunca produziu um alerta em primeiro lugar.
 
 ## Notificações {#notifications}
 
-Canais e a política vivem em **Configurações → Notificações e relatórios**
+Canais e a política vivem em **Configurações › Notificações**
 (`/settings/notifications`), seguidos dos [Relatórios](reports.md). Dois
 painéis:
 

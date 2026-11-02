@@ -34,7 +34,7 @@ festlegen, welche Alarme dorthin gehen ([Benachrichtigungskanäle](../notificati
 1. Öffnen Sie DumbMonit in Chrome, Edge, Firefox oder Safari und melden Sie sich an.
 2. Optional: als App installieren (Adressleiste → **Installieren**, oder Browsermenü →
    **Zum Startbildschirm hinzufügen**). Benachrichtigungen funktionieren in beiden Fällen.
-3. **Einstellungen → Push-Benachrichtigungen → Auf diesem Gerät aktivieren** und
+3. **Einstellungen › Mein Konto › Push-Benachrichtigungen › Auf diesem Gerät aktivieren** und
    Benachrichtigungen erlauben, wenn der Browser fragt.
 4. **Test senden.** Eine *DumbMonit — Testbenachrichtigung* sollte innerhalb weniger Sekunden
    erscheinen.
@@ -46,7 +46,7 @@ Apple erlaubt Push nur für Websites, die zum Home-Bildschirm hinzugefügt wurde
 
 1. Öffnen Sie DumbMonit in **Safari**.
 2. **Teilen → Zum Home-Bildschirm**, dann öffnen Sie DumbMonit **über das neue Symbol**.
-3. Melden Sie sich an, dann **Einstellungen → Push-Benachrichtigungen → Auf diesem Gerät
+3. Melden Sie sich an, dann **Einstellungen › Mein Konto › Push-Benachrichtigungen › Auf diesem Gerät
    aktivieren** und Benachrichtigungen erlauben.
 4. **Test senden.**
 
@@ -54,7 +54,7 @@ In Safari ohne Installation zeigt der Abschnitt **Zuerst installieren**.
 
 ## Auswählen, welche Alarme ankommen {#choose-which-alerts-arrive}
 
-Fügen Sie unter **Einstellungen → Benachrichtigungen & Berichte** einen Kanal vom Typ **Web Push** hinzu. Ohne
+Fügen Sie unter **Einstellungen › Benachrichtigungen** einen Kanal vom Typ **Web Push** hinzu. Ohne
 Einstellung erhält ihn jedes abonnierte Gerät jedes Kontos; tragen Sie Kontonamen unter
 **Konten** ein, um nur bestimmte Personen anzusprechen. Es gilt die übliche Kanalrichtlinie
 (Mindestschweregrad, Ruhezeiten, Routing-Filter …), sodass Sie zum Beispiel ein Smartphone nur

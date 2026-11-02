@@ -2,8 +2,8 @@
 
 When an alert fires, DumbMonit can tell people what to do (**runbooks**) and,
 if you allow it, do part of it (**remediation actions**), by hand or
-automatically. Everything lives on the **Actions** page (in the top bar; on a
-phone, from the Alerts page).
+automatically. Everything lives in **Alerts › Automation**: runbooks, actions,
+policies and the log.
 
 Running things on machines is sensitive. The design below puts safety first:
 the catalogue is closed, the machine has the last word, automatic runs are
@@ -22,7 +22,7 @@ to one or more of:
 
 A runbook shows:
 
-- under the alert, when you unfold it on the Alerts page;
+- under the alert, when you unfold it in **Alerts › Now**;
 - on the device's page, under its alerts;
 - in notifications, as a link (`Runbook: <title>: https://…/runbooks/12`),
   when the public URL is set in the notification policy. The text itself is
@@ -98,7 +98,7 @@ the server refuses up front what the machine would refuse anyway.
 
 ## Running an action by hand
 
-Unfold an alert on the Alerts page: the actions that apply to its device are
+Unfold an alert in **Alerts › Now**: the actions that apply to its device are
 listed under **Remediation**. Click one, then confirm. Operators and
 administrators can do this. An operator always acts on the alert's device (or
 on the device an administrator fixed on the action); only administrators can
@@ -136,7 +136,7 @@ uses, disarms it.
 Every run is logged: who (account, or `policy:<id>`), what (action, kind,
 parameters without secrets), where (device, alert), when, and the result with
 its output (truncated to 4 KiB, end kept). The log shows under the alert, on
-the device's page and on the Actions page. It is kept 180 days and is not part
+the device's page and in **Alerts › Automation**. It is kept 180 days and is not part
 of backups.
 
 ## Security
