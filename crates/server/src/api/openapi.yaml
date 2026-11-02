@@ -2223,6 +2223,96 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/discovery/inventory/bulk:
+    post:
+      operationId: bulkNetscanDevices
+      tags: [Discovery]
+      summary: Add, ignore or restore several discovered devices at once
+      description: >-
+        `add` creates one monitor per device with the type the detection proposed
+        (a device with no detected type is an `error`; one whose type needs
+        credentials is created paused, outcome `pending_credentials`, tagged
+        `pending=credentials`). `ignore` takes the devices out of the review list for
+        good; `restore` puts them back. Each device is handled on its own: one failure
+        never cancels the others. At most 200 devices per call. Needs edit rights, like
+        creating a monitor.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action, device_ids]
+              properties:
+                action: { type: string, enum: [add, ignore, restore] }
+                device_ids:
+                  type: array
+                  maxItems: 200
+                  items: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: One result per device, in request order (repeated ids are handled once).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [results, added, pending_credentials, already_present, errors]
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      required: [device_id, outcome, target_id, message]
+                      properties:
+                        device_id: { type: integer, format: int64 }
+                        outcome: { type: string, enum: [added, pending_credentials, already_present, ignored, restored, error] }
+                        target_id: { type: [integer, "null"], format: int64 }
+                        message: { type: [string, "null"] }
+                  added: { type: integer }
+                  pending_credentials: { type: integer }
+                  already_present: { type: integer }
+                  errors: { type: integer }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/discovery/review:
+    get:
+      operationId: getNetscanReview
+      tags: [Discovery]
+      summary: Devices waiting for review
+      description: >-
+        Devices found by a scan that are neither monitored nor ignored, and whether
+        the latest batch of new devices has still to be announced (once per batch).
+      x-token-scope: read
+      responses:
+        "200":
+          description: The review queue.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [to_review, announce, batch_count, batch]
+                properties:
+                  to_review: { type: integer }
+                  announce: { type: boolean }
+                  batch_count: { type: integer }
+                  batch: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/discovery/review/seen:
+    post:
+      operationId: markNetscanReviewSeen
+      tags: [Discovery]
+      summary: Acknowledge the latest batch of new devices
+      x-token-scope: write
+      responses:
+        "204": { description: Acknowledged; the batch is not announced again. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/discovery/inventory/devices/{id}/known:
     parameters:
       - name: id
@@ -11749,7 +11839,7 @@ components:
           type: [integer, "null"]
           format: int64
           description: Relay agent that runs the scan; null or absent means the server itself.
-        interval_secs: { type: integer, minimum: 300, maximum: 2592000, default: 3600 }
+        interval_secs: { type: integer, minimum: 300, maximum: 2592000, default: 86400 }
         depth:
           type: string
           enum: [standard, extended]
@@ -11780,12 +11870,13 @@ components:
         unknown_ports: { type: integer, description: Unknown ports of known devices. }
     NetscanPort:
       type: object
-      required: [id, port, protocol, product, known, first_seen, last_seen]
+      required: [id, port, protocol, product, kind, known, first_seen, last_seen]
       properties:
         id: { type: integer, format: int64 }
         port: { type: integer }
         protocol: { type: string, enum: [tcp, udp] }
         product: { type: string }
+        kind: { type: [string, "null"], description: Monitor type the detection proposes for this service. }
         known: { type: boolean }
         first_seen: { type: string }
         last_seen: { type: string }

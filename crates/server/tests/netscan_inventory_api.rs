@@ -463,3 +463,159 @@ async fn ignorer_un_appareil_coupe_toutes_ses_alertes_et_connu_le_reprend() {
     let reply = app.post(&uri, json!({}), Some(&viewer)).await;
     assert_eq!(reply.status, StatusCode::FORBIDDEN);
 }
+
+/// Hôte avec un service dont la détection propose un type et un pré-remplissage.
+fn detected_host(ip: &str, mac: &str, kind: Option<&str>, address: &str) -> DiscoveredHost {
+    let mut svc = service(8080);
+    svc.kind = kind.map(str::to_string);
+    svc.prefill = kind.map(|_| json!({ "name": format!("Device {ip}"), "address": address }));
+    DiscoveredHost {
+        ip: ip.to_string(),
+        hostname: None,
+        mac: Some(mac.to_string()),
+        vendor: None,
+        services: vec![svc],
+    }
+}
+
+fn device_id(devices: &[Value], ip: &str) -> i64 {
+    find(devices, ip)["id"].as_i64().expect("id")
+}
+
+#[tokio::test]
+async fn l_ajout_en_bloc_rend_un_resultat_par_appareil_meme_mixte() {
+    let (app, pool) = setup().await;
+    let admin = app.admin_cookie().await;
+    let id = schedule(&app, &admin, "10.0.0.0/24").await;
+    // Inventaire de départ, puis trois appareils nouveaux.
+    let base = host("10.0.0.2", Some("aa:aa:aa:aa:aa:aa"), &[22]);
+    store::apply_scan(&pool, id, std::slice::from_ref(&base)).await.unwrap();
+    store::apply_scan(
+        &pool,
+        id,
+        &[
+            base,
+            detected_host("10.0.0.10", "00:00:00:00:00:10", Some("http"), "http://10.0.0.10:8080"),
+            detected_host("10.0.0.11", "00:00:00:00:00:11", Some("http"), "http://10.0.0.11:8080"),
+            // Rien de reconnu : une erreur claire, sans bloquer les autres.
+            detected_host("10.0.0.12", "00:00:00:00:00:12", None, ""),
+        ],
+    )
+    .await
+    .unwrap();
+    let inventory = app.get("/api/discovery/inventory", Some(&admin)).await;
+    let devices = inventory.body["devices"].as_array().unwrap().clone();
+    let (a, b, none) = (
+        device_id(&devices, "10.0.0.10"),
+        device_id(&devices, "10.0.0.11"),
+        device_id(&devices, "10.0.0.12"),
+    );
+
+    // Le deuxième est déjà surveillé avant l'appel.
+    let existing = json!({ "name": "Déjà là", "address": "http://10.0.0.11:8080", "kind": "http" });
+    let reply = app.post("/api/targets", existing, Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
+
+    let review = app.get("/api/discovery/review", Some(&admin)).await;
+    assert_eq!(review.body["to_review"], 2, "{}", review.body);
+
+    let body = json!({ "action": "add", "device_ids": [a, b, none, 9999, a] });
+    let reply = app.post("/api/discovery/inventory/bulk", body, Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    let results = reply.body["results"].as_array().unwrap();
+    // Le doublon `a` n'est traité qu'une fois.
+    assert_eq!(results.len(), 4, "{}", reply.body);
+    let outcome = |device: i64| {
+        results.iter().find(|r| r["device_id"] == device).unwrap()["outcome"].clone()
+    };
+    assert_eq!(outcome(a), "added");
+    assert_eq!(outcome(b), "already_present");
+    assert_eq!(outcome(none), "error");
+    assert_eq!(outcome(9999), "error");
+    assert_eq!(reply.body["added"], 1);
+    assert_eq!(reply.body["already_present"], 1);
+    assert_eq!(reply.body["errors"], 2);
+
+    // Le moniteur existe, et l'appareil ajouté a quitté la file.
+    let targets = app.get("/api/targets", Some(&admin)).await;
+    let created =
+        targets.body.as_array().unwrap().iter().any(|t| t["address"] == "http://10.0.0.10:8080");
+    assert!(created, "{}", targets.body);
+    let review = app.get("/api/discovery/review", Some(&admin)).await;
+    assert_eq!(review.body["to_review"], 1, "{}", review.body);
+
+    // Rejouer l'appel ne crée pas de doublon.
+    let body = json!({ "action": "add", "device_ids": [a] });
+    let again = app.post("/api/discovery/inventory/bulk", body, Some(&admin)).await;
+    assert_eq!(again.body["results"][0]["outcome"], "already_present", "{}", again.body);
+}
+
+#[tokio::test]
+async fn ignorer_en_bloc_sort_de_la_file_et_se_defait() {
+    let (app, pool) = setup().await;
+    let admin = app.admin_cookie().await;
+    let id = schedule(&app, &admin, "10.0.0.0/24").await;
+    let base = host("10.0.0.2", Some("aa:aa:aa:aa:aa:aa"), &[22]);
+    store::apply_scan(&pool, id, std::slice::from_ref(&base)).await.unwrap();
+    let next = [
+        base,
+        host("10.0.0.20", Some("00:00:00:00:00:20"), &[80]),
+        host("10.0.0.21", Some("00:00:00:00:00:21"), &[80]),
+    ];
+    let applied = store::apply_scan(&pool, id, &next).await.unwrap();
+    assert_eq!(applied.new_devices, 2);
+    store::open_batch(&pool, applied.new_devices).await.unwrap();
+
+    // Un seul avis pour tout le lot, et il ne revient pas une fois vu.
+    let review = app.get("/api/discovery/review", Some(&admin)).await;
+    assert_eq!(review.body["to_review"], 2);
+    assert_eq!(review.body["announce"], true);
+    assert_eq!(review.body["batch_count"], 2);
+    let reply = app.post("/api/discovery/review/seen", json!({}), Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::NO_CONTENT);
+    let review = app.get("/api/discovery/review", Some(&admin)).await;
+    assert_eq!(review.body["announce"], false);
+
+    let inventory = app.get("/api/discovery/inventory", Some(&admin)).await;
+    let devices = inventory.body["devices"].as_array().unwrap().clone();
+    let ids = [device_id(&devices, "10.0.0.20"), device_id(&devices, "10.0.0.21")];
+
+    let body = json!({ "action": "ignore", "device_ids": ids });
+    let reply = app.post("/api/discovery/inventory/bulk", body, Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert!(reply.body["results"].as_array().unwrap().iter().all(|r| r["outcome"] == "ignored"));
+    let review = app.get("/api/discovery/review", Some(&admin)).await;
+    assert_eq!(review.body["to_review"], 0);
+    assert!(store::unknown_items(&pool).await.unwrap().is_empty());
+
+    // Défaire : les deux reviennent dans la file.
+    let body = json!({ "action": "restore", "device_ids": ids });
+    let reply = app.post("/api/discovery/inventory/bulk", body, Some(&admin)).await;
+    assert!(reply.body["results"].as_array().unwrap().iter().all(|r| r["outcome"] == "restored"));
+    let review = app.get("/api/discovery/review", Some(&admin)).await;
+    assert_eq!(review.body["to_review"], 2);
+
+    // Un passage sans nouveauté n'ouvre aucun lot.
+    store::mark_batch_seen(&pool).await.unwrap();
+    store::open_batch(&pool, 0).await.unwrap();
+    assert!(!store::review_batch(&pool).await.unwrap().unseen);
+}
+
+#[tokio::test]
+async fn l_ajout_en_bloc_est_plafonne_et_reserve_aux_administrateurs() {
+    let (app, _pool) = setup().await;
+    let admin = app.admin_cookie().await;
+    let uri = "/api/discovery/inventory/bulk";
+    let too_many: Vec<i64> = (1..=201).collect();
+    let reply = app
+        .post(uri, json!({ "action": "ignore", "device_ids": too_many }), Some(&admin))
+        .await;
+    assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{}", reply.body);
+    let reply = app.post(uri, json!({ "action": "ignore", "device_ids": [] }), Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::BAD_REQUEST);
+
+    let viewer = app.viewer_cookie(&admin).await;
+    let body = json!({ "action": "ignore", "device_ids": [1] });
+    let reply = app.post(uri, body, Some(&viewer)).await;
+    assert_eq!(reply.status, StatusCode::FORBIDDEN);
+}

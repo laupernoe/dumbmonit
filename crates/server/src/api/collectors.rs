@@ -4948,6 +4948,14 @@ pub fn option_keys(kind: &str) -> Vec<String> {
         .unwrap_or_default()
 }
 
+/// Vrai si ce type compilé ne marche pas sans identifiants : il en déclare, et
+/// aucune de ses formes n'est « none ». Un type inconnu ou sans identifiants :
+/// faux (l'ajout en bloc le crée actif).
+pub fn needs_credential(kind: &str) -> bool {
+    compiled(kind)
+        .is_some_and(|v| !v.credential_types.is_empty() && !v.credential_types.contains(&"none"))
+}
+
 /// Description d'un type : celle des tables de ce fichier s'il y figure, sinon
 /// celle que fournit son collecteur (`Collector::description`, pour un type né à
 /// l'exécution), à défaut une description générique.

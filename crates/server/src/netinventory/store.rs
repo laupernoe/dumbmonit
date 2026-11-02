@@ -323,23 +323,29 @@ pub async fn apply_scan(pool: &SqlitePool, id: i64, hosts: &[DiscoveredHost]) ->
                 applied.new_ports += usize::from(!first_scan && !planned.is_new);
                 sqlx::query(sqlx::AssertSqlSafe(format!(
                     "INSERT INTO netscan_ports
-                         (device_id, port, protocol, product, known, first_seen, last_seen)
-                     VALUES (?, ?, ?, ?, ?, {NOW}, {NOW})
+                         (device_id, port, protocol, product, kind, prefill, known, first_seen,
+                          last_seen)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, {NOW}, {NOW})
                      ON CONFLICT (device_id, port, protocol) DO UPDATE SET last_seen = {NOW}"
                 )))
                 .bind(device_id)
                 .bind(i64::from(port.port))
                 .bind(&port.protocol)
                 .bind(&port.product)
+                .bind(&port.kind)
+                .bind(&port.prefill)
                 .bind(known_flag)
                 .execute(&mut *tx)
                 .await?;
             } else {
                 sqlx::query(sqlx::AssertSqlSafe(format!(
-                    "UPDATE netscan_ports SET last_seen = {NOW}, product = ?
+                    "UPDATE netscan_ports SET last_seen = {NOW}, product = ?,
+                         kind = COALESCE(?, kind), prefill = COALESCE(?, prefill)
                      WHERE device_id = ? AND port = ? AND protocol = ?"
                 )))
                 .bind(&port.product)
+                .bind(&port.kind)
+                .bind(&port.prefill)
                 .bind(device_id)
                 .bind(i64::from(port.port))
                 .bind(&port.protocol)
@@ -369,6 +375,11 @@ pub struct PortView {
     pub port: u16,
     pub protocol: String,
     pub product: String,
+    /// Type de moniteur proposé par la détection, quand elle en a reconnu un.
+    pub kind: Option<String>,
+    /// Champs de formulaire pré-remplis : pour l'ajout en bloc, pas pour l'API.
+    #[serde(skip)]
+    pub prefill: Option<String>,
     pub known: bool,
     pub first_seen: String,
     pub last_seen: String,
@@ -426,8 +437,8 @@ pub async fn inventory(pool: &SqlitePool, schedule_id: Option<i64>) -> Result<Ve
         });
     }
     let ports = sqlx::query(
-        "SELECT p.id, p.device_id, p.port, p.protocol, p.product, p.known, p.first_seen,
-                p.last_seen
+        "SELECT p.id, p.device_id, p.port, p.protocol, p.product, p.kind, p.prefill, p.known,
+                p.first_seen, p.last_seen
          FROM netscan_ports p JOIN netscan_devices d ON d.id = p.device_id
          WHERE (?1 IS NULL OR d.schedule_id = ?1)
          ORDER BY p.port, p.protocol",
@@ -443,6 +454,8 @@ pub async fn inventory(pool: &SqlitePool, schedule_id: Option<i64>) -> Result<Ve
             port: u16::try_from(row.try_get::<i64, _>("port")?).unwrap_or(0),
             protocol: row.try_get("protocol")?,
             product: row.try_get("product")?,
+            kind: row.try_get("kind")?,
+            prefill: row.try_get("prefill")?,
             known: row.try_get::<i64, _>("known")? != 0,
             first_seen: row.try_get("first_seen")?,
             last_seen: row.try_get("last_seen")?,
@@ -627,4 +640,89 @@ pub async fn unknown_items(pool: &SqlitePool) -> Result<Vec<Unknown>> {
         });
     }
     Ok(out)
+}
+
+/// Remet un appareil dans la file « à examiner » (défait un « ignorer » ou un
+/// « connu »). Il redevient inconnu : l'alerte d'appareil nouveau reprend.
+/// `false` : introuvable.
+pub async fn mark_device_review(pool: &SqlitePool, id: i64) -> Result<bool> {
+    let mut tx = pool.begin().await?;
+    let done = sqlx::query("UPDATE netscan_devices SET known = 0, ignored = 0 WHERE id = ?")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+    sqlx::query("UPDATE netscan_ports SET known = 0 WHERE device_id = ?")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+    tx.commit().await?;
+    Ok(done.rows_affected() > 0)
+}
+
+// ------------------------------------------------------- lots de nouveautés
+
+const KEY_BATCH: &str = "netscan_review_batch";
+const KEY_BATCH_COUNT: &str = "netscan_review_batch_count";
+const KEY_BATCH_SEEN: &str = "netscan_review_batch_seen";
+
+/// État de l'annonce des nouveautés.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize)]
+pub struct ReviewBatch {
+    /// Numéro du dernier lot annoncé (0 : aucun).
+    pub batch: i64,
+    /// Appareils nouveaux depuis le dernier lot vu.
+    pub count: i64,
+    /// L'administrateur n'a pas encore vu ce lot.
+    pub unseen: bool,
+}
+
+async fn setting_i64(pool: &SqlitePool, key: &str) -> Result<i64> {
+    let raw: Option<String> = sqlx::query_scalar("SELECT value FROM app_settings WHERE key = ?")
+        .bind(key)
+        .fetch_optional(pool)
+        .await
+        .with_context(|| format!("lecture du réglage {key}"))?;
+    Ok(raw.and_then(|v| v.parse().ok()).unwrap_or(0))
+}
+
+async fn put_setting_i64(pool: &SqlitePool, key: &str, value: i64) -> Result<()> {
+    sqlx::query(
+        "INSERT INTO app_settings (key, value) VALUES (?, ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+    )
+    .bind(key)
+    .bind(value.to_string())
+    .execute(pool)
+    .await
+    .with_context(|| format!("écriture du réglage {key}"))?;
+    Ok(())
+}
+
+/// Ouvre un lot de nouveautés : appelé une seule fois par balayage qui a trouvé
+/// des appareils nouveaux, jamais pour un appareil déjà signalé (un appareil
+/// n'est « nouveau » qu'à son entrée dans l'inventaire). Tant qu'un lot n'est
+/// pas vu, le suivant s'y ajoute : un seul avis, pas un par balayage.
+/// `count` à 0 : rien à annoncer.
+pub async fn open_batch(pool: &SqlitePool, count: usize) -> Result<()> {
+    if count == 0 {
+        return Ok(());
+    }
+    let previous = review_batch(pool).await?;
+    let added = i64::try_from(count).unwrap_or(i64::MAX);
+    let total = if previous.unseen { previous.count.saturating_add(added) } else { added };
+    put_setting_i64(pool, KEY_BATCH, previous.batch + 1).await?;
+    put_setting_i64(pool, KEY_BATCH_COUNT, total).await
+}
+
+pub async fn review_batch(pool: &SqlitePool) -> Result<ReviewBatch> {
+    let batch = setting_i64(pool, KEY_BATCH).await?;
+    let seen = setting_i64(pool, KEY_BATCH_SEEN).await?;
+    let count = setting_i64(pool, KEY_BATCH_COUNT).await?;
+    Ok(ReviewBatch { batch, count, unseen: batch > seen })
+}
+
+/// L'administrateur a vu le lot courant : l'avis ne revient pas.
+pub async fn mark_batch_seen(pool: &SqlitePool) -> Result<()> {
+    let batch = setting_i64(pool, KEY_BATCH).await?;
+    put_setting_i64(pool, KEY_BATCH_SEEN, batch).await
 }
