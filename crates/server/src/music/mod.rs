@@ -643,7 +643,13 @@ impl MusicHub {
     ) -> Result<(), MusicError> {
         for attempt in 0..2 {
             let token = self.access_token(pool, cipher).await?;
-            match spotify::set_playing(&self.0.http, &self.0.endpoints, &token.token, play).await? {
+            let (http, endpoints) = (&self.0.http, &self.0.endpoints);
+            let outcome = if play {
+                spotify::resume(http, endpoints, &token.token).await?
+            } else {
+                spotify::pause(http, endpoints, &token.token).await?
+            };
+            match outcome {
                 Authorized::Ok(()) => {
                     // La lecture en cours vient de changer : le prochain relevé
                     // demande à Spotify plutôt qu'au cache.
