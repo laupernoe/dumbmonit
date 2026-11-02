@@ -66,13 +66,12 @@ async fn the_kit_is_a_domain_fleet_token_and_a_script_that_carries_it() {
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;
 
-    let reply =
-        kit(
-            &app,
-            &admin,
-            json!({ "target_ou": "OU=Servers,DC=corp,DC=example,DC=com", "expires_in_days": 30 }),
-        )
-        .await;
+    let reply = kit(
+        &app,
+        &admin,
+        json!({ "target_ou": "OU=Servers,DC=corp,DC=example,DC=com", "expires_in_days": 30 }),
+    )
+    .await;
     assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
     let body = &reply.body;
     let secret = body["secret"].as_str().expect("secret");
@@ -187,7 +186,11 @@ async fn a_kit_cannot_be_created_already_expired_or_capped_at_nothing() {
     let empty = kit(&app, &admin, json!({ "max_uses": 0 })).await;
     assert_eq!(empty.status, StatusCode::BAD_REQUEST, "{}", empty.body);
     let tokens = app.get("/api/agent/tokens", Some(&admin)).await;
-    assert_eq!(tokens.body.as_array().map(Vec::len), Some(1), "seul le jeton sans expiration existe");
+    assert_eq!(
+        tokens.body.as_array().map(Vec::len),
+        Some(1),
+        "seul le jeton sans expiration existe"
+    );
 }
 
 #[tokio::test]
