@@ -35,8 +35,56 @@ const TASKS: &[(i64, &str, i64, &[&str])] = &[
 /// La tâche dont la dernière nuit a échoué : un portable resté éteint.
 const FAILED_TASK: i64 = 5;
 
+/// Les NAS du parc fictif : le premier est sain, les autres montrent chacun un
+/// état de la vue « Parc NAS ».
+#[derive(Clone, Copy, PartialEq)]
+pub enum Variant {
+    Healthy,
+    UpdateAvailable,
+    Degraded,
+    Down,
+}
+
+impl Variant {
+    /// Modèle et version de DSM annoncés.
+    fn identity(self) -> (&'static str, &'static str) {
+        match self {
+            Variant::Healthy => ("DS918+", "DSM 7.4.1-90080"),
+            Variant::UpdateAvailable => ("DS923+", "DSM 7.2.2-72806"),
+            Variant::Degraded => ("DS220+", "DSM 7.3.1-86003"),
+            Variant::Down => ("DS1621+", "DSM 7.2.1-69057"),
+        }
+    }
+}
+
 pub(super) fn router() -> Router {
-    Router::new().route("/webapi/entry.cgi", get(entry).post(entry))
+    router_variant(Variant::Healthy)
+}
+
+pub(super) fn router_variant(variant: Variant) -> Router {
+    if variant == Variant::Down {
+        // Injoignable : le DSM répond, mais en erreur, à chaque requête.
+        return Router::new().fallback(|| async { StatusCode::SERVICE_UNAVAILABLE });
+    }
+    Router::new().route(
+        "/webapi/entry.cgi",
+        get(move |q: RawQuery, b: String| entry(variant, q, b))
+            .post(move |q: RawQuery, b: String| entry(variant, q, b)),
+    )
+}
+
+/// Le stockage capturé, avec un volume et son groupe dégradés pour la variante
+/// qui le demande.
+fn storage(variant: Variant) -> Value {
+    let mut data = capture(STORAGE);
+    if variant == Variant::Degraded {
+        for key in ["volumes", "storagePools"] {
+            if let Some(first) = data[key].get_mut(0) {
+                first["status"] = json!("degraded");
+            }
+        }
+    }
+    data
 }
 
 fn ok(data: Value) -> Response {
@@ -66,7 +114,7 @@ fn params(query: Option<String>, body: &str) -> HashMap<String, String> {
     out
 }
 
-async fn entry(RawQuery(query): RawQuery, body: String) -> Response {
+async fn entry(variant: Variant, RawQuery(query): RawQuery, body: String) -> Response {
     let params = params(query, &body);
     let api = params.get("api").map(String::as_str).unwrap_or_default();
     let method = params.get("method").map(String::as_str).unwrap_or_default();
@@ -75,9 +123,19 @@ async fn entry(RawQuery(query): RawQuery, body: String) -> Response {
         ("SYNO.API.Info", "query") => ok(catalog()),
         ("SYNO.API.Auth", "login") => ok(json!({"sid": SID, "synotoken": TOKEN})),
         ("SYNO.API.Auth", "logout") => ok(json!({})),
-        ("SYNO.Core.System", "info") => ok(capture(&SYSTEM_INFO.replace(SERIAL.0, SERIAL.1))),
+        ("SYNO.Core.System", "info") => {
+            let (model, dsm) = variant.identity();
+            let info = SYSTEM_INFO
+                .replace(SERIAL.0, SERIAL.1)
+                .replace("\"DS918+\"", &format!("\"{model}\""))
+                .replace("DSM 7.4.1-90080", dsm);
+            ok(capture(&info))
+        }
         ("SYNO.Core.System.Utilization", "get") => ok(capture(UTILIZATION)),
-        ("SYNO.Storage.CGI.Storage", "load_info") => ok(capture(STORAGE)),
+        ("SYNO.Storage.CGI.Storage", "load_info") => ok(storage(variant)),
+        ("SYNO.Core.Upgrade.Server", "check") => {
+            ok(json!({"update": {"available": variant == Variant::UpdateAvailable}}))
+        }
         ("SYNO.ActiveBackup.Task", "list") => ok(json!({
             "tasks": TASKS.iter().map(|t| task(t.0)).collect::<Vec<_>>(),
             "total": TASKS.len()
@@ -124,6 +182,8 @@ fn catalog() -> Value {
         "SYNO.Core.System.Utilization": {"path": "entry.cgi", "minVersion": 1, "maxVersion": 1},
         "SYNO.Storage.CGI.Storage": {"path": "entry.cgi", "minVersion": 1, "maxVersion": 1},
     });
+    apis["SYNO.Core.Upgrade.Server"] =
+        json!({"path": "entry.cgi", "minVersion": 1, "maxVersion": 1});
     for api in ["SYNO.Core.ISCSI.LUN", "SYNO.Core.ISCSI.Target"] {
         apis[api] = json!({"path": "entry.cgi", "minVersion": 1, "maxVersion": 1});
     }
