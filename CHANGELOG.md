@@ -14,6 +14,11 @@ All notable changes to this project are documented here. The format follows
   read, shown or exported. Backups made before still restore everything else.
 ### Added
 
+- **Wall music is back** (Spotify Connect, a shared link, Settings › Wall display
+  › Wall music, `/api/music/*`, kept settings read again), with a small "Now
+  playing" dock on the wall and play / pause (`POST /api/music/spotify/playback`);
+  the security policy opens only Spotify's player, script and covers and the
+  three embedded players, never on status pages.
 - **Configuration changes after an update.** Some versions need a change in the
   `docker-compose.yml` that an update never makes for you (the first one: publish
   port `8443`, the encrypted agent channel, introduced in 0.14.0). The server now
