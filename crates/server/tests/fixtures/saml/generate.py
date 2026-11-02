@@ -33,7 +33,7 @@ DS = "http://www.w3.org/2000/09/xmldsig#"
 XS = "http://www.w3.org/2001/XMLSchema"
 XSI = "http://www.w3.org/2001/XMLSchema-instance"
 
-ACS = "http://localhost:8080/api/auth/saml/acs"
+ACS = "https://localhost:8080/api/auth/saml/acs"
 SP_ENTITY = "https://monit.example.test/saml"
 REQUEST_ID = "_dm-test-request-0001"
 
