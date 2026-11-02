@@ -21,6 +21,28 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '0.16.0',
+		date: '2026-11-03',
+		highlights: [
+			{
+				title: 'HTTPS only',
+				text: 'The web port no longer serves plain HTTP: a clear-text request is redirected. Install commands pin the server certificate, and new machines can wait for your approval before they enrol.'
+			},
+			{
+				title: 'NAS fleet and databases',
+				text: 'Two or more Synology NAS get a one-line-per-NAS view, with a DSM 7 package for the agent. Agents also detect PostgreSQL, MySQL, SQL Server and HFSQL and check that their backups are recent.'
+			},
+			{
+				title: 'Active Directory in one command',
+				text: 'Pick all servers, one OU or a group, copy one line, and every Windows server installs the agent right away, future ones included.'
+			},
+			{
+				title: 'Ports and discovery',
+				text: 'Settings > System lists the ports to open and what may face the Internet. Network discovery rescans on a schedule and lets you add several devices at once.'
+			}
+		]
+	},
+	{
 		version: '0.14.2',
 		date: '2026-10-28',
 		highlights: [
