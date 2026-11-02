@@ -32,6 +32,13 @@
 .PARAMETER IncludeDomainControllers
     Also link the group policy to the Domain Controllers OU.
 
+.PARAMETER AllServers
+    Link the group policy to the whole domain and restrict it, with a WMI filter, to
+    machines running Windows Server (domain controllers included). Every server that
+    joins the domain later gets the agent too, with nothing to maintain: no OU to pick,
+    no security group to fill. Workstations are left alone. Not combinable with
+    -SecurityGroup.
+
 .PARAMETER SecurityGroup
     Only computers in this security group apply the group policy.
 
@@ -63,6 +70,7 @@ param(
     [string]$TargetOU = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('__DM_TARGET_OU_B64__')),
     [switch]$IncludeDomainControllers = [bool]::Parse('__DM_INCLUDE_DCS__'),
     [string]$SecurityGroup = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('__DM_SECURITY_GROUP_B64__')),
+    [switch]$AllServers,
     [switch]$UseSysvol = [bool]::Parse('__DM_SYSVOL__'),
     [string]$GpoName = 'DumbMonit Agent',
     [switch]$Remove,
@@ -205,6 +213,12 @@ if ($Remove) {
 # --------------------------------------------------------- cibles des liens
 
 $links = New-Object System.Collections.Generic.List[string]
+if ($AllServers) {
+    if (-not [string]::IsNullOrWhiteSpace($SecurityGroup)) {
+        Stop-Deploy '-AllServers filters on Windows Server with a WMI filter: do not combine it with -SecurityGroup.'
+    }
+    $TargetOU = $ad.DistinguishedName
+}
 if ([string]::IsNullOrWhiteSpace($TargetOU)) {
     # L'OU des serveurs, s'il n'y en a qu'une : celle qui contient les
     # ordinateurs sous Windows Server, contrôleurs de domaine exclus.
@@ -246,7 +260,8 @@ if (-not [string]::IsNullOrWhiteSpace($SecurityGroup)) {
 Write-Step 'Plan'
 Write-Plan "Group policy:  $GpoName (immediate scheduled task, SYSTEM, at every policy refresh)"
 foreach ($link in $links) { Write-Plan "Linked to:     $link" }
-if ($groupSid) { Write-Plan "Applies to:    members of $SecurityGroup only" }
+if ($AllServers) { Write-Plan 'Applies to:    every Windows Server of the domain, present and future (WMI filter)' }
+elseif ($groupSid) { Write-Plan "Applies to:    members of $SecurityGroup only" }
 else { Write-Plan 'Applies to:    every computer in the linked OUs' }
 if ($AgentPort) { Write-Plan "DumbMonit:     $Url (encrypted agent channel: mTLS, TLS 1.3, agent to server, TCP $AgentPort)" }
 else { Write-Plan "DumbMonit:     $Url (agents report over this address)" }
@@ -428,6 +443,34 @@ if ($gpo) {
         }
     } elseif ($PSCmdlet.ShouldProcess($GpoName, 'Apply to every computer in the linked OUs')) {
         Set-GPPermission -Guid $gpo.Id -TargetName $authenticatedUsers -TargetType Group -PermissionLevel GpoApply -Replace | Out-Null
+    }
+
+    # ------------------------------------------------------------ filtre WMI
+
+    if ($AllServers -and $PSCmdlet.ShouldProcess($GpoName, 'Restrict to Windows Server machines (WMI filter)')) {
+        # ProductType : 1 poste de travail, 2 contrôleur de domaine, 3 serveur.
+        $filterName = 'DumbMonit - Windows Servers'
+        $query = 'SELECT * FROM Win32_OperatingSystem WHERE ProductType = "2" OR ProductType = "3"'
+        $somContainer = "CN=SOM,CN=WMIPolicy,CN=System,$($ad.DistinguishedName)"
+        $som = @(Get-ADObject -SearchBase $somContainer -LDAPFilter "(&(objectClass=msWMI-Som)(msWMI-Name=$filterName))" -Properties 'msWMI-ID') |
+            Select-Object -First 1
+        if ($som) {
+            $filterId = [string]$som.'msWMI-ID'
+        } else {
+            $filterId = '{' + [guid]::NewGuid().ToString().ToUpperInvariant() + '}'
+            $stamp = (Get-Date).ToUniversalTime().ToString('yyyyMMddHHmmss.ffffff') + '-000'
+            New-ADObject -Name $filterId -Type 'msWMI-Som' -Path $somContainer -OtherAttributes @{
+                'msWMI-Name'         = $filterName
+                'msWMI-Parm2'        = "1;3;10;$($query.Length);WQL;root\CIMv2;$query;"
+                'msWMI-Author'       = "$env:USERNAME@$($ad.DNSRoot)"
+                'msWMI-ID'           = $filterId
+                'instanceType'       = 4
+                'msWMI-ChangeDate'   = $stamp
+                'msWMI-CreationDate' = $stamp
+            }
+        }
+        Set-ADObject -Identity $gpo.Path -Replace @{ gPCWQLFilter = "[$($ad.DNSRoot);$filterId;0]" }
+        Write-Plan "WMI filter: $filterName (Windows Server only, future servers included)"
     }
 
     # ------------------------------------------------------------------ liens
