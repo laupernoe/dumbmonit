@@ -261,7 +261,9 @@ pub fn certificate_key_pin(cert: &[u8]) -> Option<String> {
 }
 
 /// Un élément DER : étiquette, contenu, élément entier, suite.
-fn der(input: &[u8]) -> Option<(u8, &[u8], &[u8], &[u8])> {
+type DerElement<'a> = (u8, &'a [u8], &'a [u8], &'a [u8]);
+
+fn der(input: &[u8]) -> Option<DerElement<'_>> {
     let (&tag, after) = input.split_first()?;
     let (&first, after) = after.split_first()?;
     let (len, after) = if first < 0x80 {
