@@ -207,7 +207,10 @@ impl Agent {
             client.pin_server(pin).context("pinning the server key")?;
         }
         let tls_path = crate::tls::beside(&config.secret_path);
-        let tls = initial_tls(&config, TlsState::load(&tls_path));
+        let mut tls = initial_tls(&config, TlsState::load(&tls_path));
+        if config.plain_server_url {
+            plain_url_channel(&config.server_url, tls.as_mut())?;
+        }
         if let Some(state) = &tls {
             client.set_pins(state.pins.clone());
             if let Some(identity) = state.identity() {
@@ -1153,6 +1156,31 @@ fn initial_tls(config: &Config, stored: Option<TlsState>) -> Option<TlsState> {
     }
 }
 
+/// `server_url` en clair hors boucle locale (agent installé avant le tout-
+/// HTTPS) : l'agent ne démarre que s'il a déjà un canal chiffré enrôlé
+/// (certificat client et URL `https://` rangés), et ne parle plus qu'à lui —
+/// ni jeton ni mesure ne partent en clair. Sinon, une erreur explicite plutôt
+/// qu'un repli sur le clair.
+fn plain_url_channel(server_url: &str, tls: Option<&mut TlsState>) -> Result<()> {
+    let Some(state) = tls.filter(|state| {
+        state.identity().is_some() && state.url.starts_with("https://")
+    }) else {
+        anyhow::bail!(
+            "the server URL '{server_url}' is plain http and no enrolled encrypted channel is \
+             stored: run the installer again with the https:// command shown by DumbMonit"
+        );
+    };
+    // Plus jamais l'ancien canal, même pour se réenrôler.
+    state.locked = true;
+    warn!(
+        server_url,
+        channel = %state.url,
+        "server_url is plain http; using the stored encrypted channel only, re-run the installer \
+         to switch to https"
+    );
+    Ok(())
+}
+
 /// Passerelle du relais en service.
 struct GatewayTask {
     addr: std::net::SocketAddr,
@@ -1211,6 +1239,7 @@ mod tests {
             tls_url: None,
             ca_pin: None,
             server_pin: None,
+            plain_server_url: false,
             log_level: tracing::Level::INFO,
             deprecated_env: Vec::new(),
         }
@@ -1550,6 +1579,63 @@ mod tests {
 
         assert!(matches!(agent.flush().await, FlushOutcome::Failed(_)));
         assert!(calls.all().is_empty(), "{:?}", calls.lines());
+    }
+
+    /// Canal chiffré rangé d'un agent enrôlé : un vrai certificat et sa clé.
+    fn enrolled_state(url: &str) -> TlsState {
+        use base64::Engine as _;
+        let engine = base64::engine::general_purpose::STANDARD;
+        let key = rcgen::KeyPair::generate_for(&rcgen::PKCS_ECDSA_P256_SHA256).unwrap();
+        let params = rcgen::CertificateParams::new(vec!["agent".to_string()]).unwrap();
+        let cert = params.self_signed(&key).unwrap();
+        let mut state = TlsState::new(url.into(), vec![PIN.to_string()]);
+        state.certificate = Some(engine.encode(cert.der()));
+        state.key = Some(engine.encode(key.serialize_der()));
+        state
+    }
+
+    /// Agent installé avant le tout-HTTPS : `server_url` en clair, hors boucle.
+    fn plain_config(dir: &tempfile::TempDir) -> Config {
+        let mut config = config();
+        config.server_url = "http://192.168.254.240:8443".into();
+        config.plain_server_url = true;
+        config.secret_path = dir.path().join("agent-secret");
+        config
+    }
+
+    #[test]
+    fn an_enrolled_agent_with_a_plain_url_keeps_running_on_its_encrypted_channel_only() {
+        let dir = tempfile::tempdir().unwrap();
+        let state = enrolled_state("https://192.168.254.240:8443");
+        state.save(&crate::tls::beside(&dir.path().join("agent-secret"))).unwrap();
+        let agent = Agent::new(plain_config(&dir)).expect("l'agent enrôlé redémarre");
+        assert!(agent.client.is_encrypted(), "le canal chiffré rangé, et lui seul");
+        assert!(agent.tls_only(), "jamais de repli sur l'ancien canal en clair");
+    }
+
+    #[test]
+    fn an_agent_never_enrolled_with_a_plain_url_is_refused() {
+        let dir = tempfile::tempdir().unwrap();
+        let refused = match Agent::new(plain_config(&dir)) {
+            Ok(_) => panic!("un jeton ne part jamais en clair"),
+            Err(error) => error.to_string(),
+        };
+        assert!(refused.contains("plain http"), "{refused}");
+    }
+
+    #[test]
+    fn an_enrolled_agent_without_a_usable_channel_does_not_fall_back_to_clear() {
+        // Enrôlé un jour (verrouillé), mais sans certificat rangé.
+        let dir = tempfile::tempdir().unwrap();
+        let mut state = TlsState::new("https://192.168.254.240:8443".into(), vec![PIN.to_string()]);
+        state.locked = true;
+        state.save(&crate::tls::beside(&dir.path().join("agent-secret"))).unwrap();
+        assert!(Agent::new(plain_config(&dir)).is_err(), "certificat absent");
+        // Un canal rangé qui ne serait pas en https ne vaut pas mieux.
+        let dir = tempfile::tempdir().unwrap();
+        let state = enrolled_state("http://192.168.254.240:8443");
+        state.save(&crate::tls::beside(&dir.path().join("agent-secret"))).unwrap();
+        assert!(Agent::new(plain_config(&dir)).is_err(), "canal rangé en clair");
     }
 
     #[test]
