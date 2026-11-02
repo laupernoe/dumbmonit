@@ -443,21 +443,31 @@ pub async fn transfer(
     }
 }
 
-/// Met en pause ou reprend la lecture du compte, là où elle a lieu
-/// (`PUT /v1/me/player/pause`, `PUT /v1/me/player/play` sans corps : reprendre
-/// ce qui jouait, sans rien choisir d'autre).
-pub async fn set_playing(
+/// Reprend la lecture du compte, là où elle a lieu (`PUT /v1/me/player/play`
+/// sans corps : reprendre ce qui jouait, sans rien choisir d'autre).
+pub async fn resume(
     http: &reqwest::Client,
     endpoints: &Endpoints,
     access_token: &str,
-    play: bool,
 ) -> Result<Authorized<()>, SpotifyError> {
-    // Deux URL fixes : rien de la requête du client n'entre dans l'adresse.
-    let url = if play {
-        format!("{}/v1/me/player/play", endpoints.api)
-    } else {
-        format!("{}/v1/me/player/pause", endpoints.api)
-    };
+    player_command(http, format!("{}/v1/me/player/play", endpoints.api), access_token).await
+}
+
+/// Met en pause la lecture du compte (`PUT /v1/me/player/pause`).
+pub async fn pause(
+    http: &reqwest::Client,
+    endpoints: &Endpoints,
+    access_token: &str,
+) -> Result<Authorized<()>, SpotifyError> {
+    player_command(http, format!("{}/v1/me/player/pause", endpoints.api), access_token).await
+}
+
+/// Envoie une commande de lecture sans corps à une adresse fixe de l'API.
+async fn player_command(
+    http: &reqwest::Client,
+    url: String,
+    access_token: &str,
+) -> Result<Authorized<()>, SpotifyError> {
     let response = http
         .put(url)
         .bearer_auth(access_token)
