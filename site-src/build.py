@@ -26,10 +26,12 @@ The locale list is the one of web/messages/ and of mkdocs.yml (docs).
 """
 import html
 import json
+import os
 import posixpath
 import re
 import shutil
 import sys
+import urllib.request
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -446,6 +448,46 @@ RM_STATUS = {
 }
 
 
+REPO = "laupernoe/dumbmonit"
+_VOTES = {}
+
+
+def issue_votes(n):
+    """The number of 👍 on GitHub issue #n, or None. Never raises: a network error, a rate limit
+    or an odd answer just means "no counter". Cached: each issue is asked once per build."""
+    if n in _VOTES:
+        return _VOTES[n]
+    count = None
+    try:
+        req = urllib.request.Request(
+            f"https://api.github.com/repos/{REPO}/issues/{int(n)}",
+            headers={"Accept": "application/vnd.github+json", "User-Agent": "dumbmonit-site-build"},
+        )
+        token = os.environ.get("GITHUB_TOKEN")
+        if token:
+            req.add_header("Authorization", f"Bearer {token}")
+        with urllib.request.urlopen(req, timeout=10) as r:
+            count = int(json.load(r)["reactions"]["+1"])
+    except Exception as e:  # noqa: BLE001  (the build must never break on this)
+        print(f"roadmap: no vote count for issue #{n} ({type(e).__name__})")
+    _VOTES[n] = count
+    return count
+
+
+def votes_html(t, it):
+    """Counter (when known) and a link to vote, for a roadmap entry that has an issue."""
+    if not it.get("issue"):
+        return ""
+    n = it["issue"]
+    count = issue_votes(n)
+    counter = ""
+    if count is not None:
+        label = esc(t["rm_votes_aria"].replace("{n}", str(count)))
+        counter = f'<span class="rm-votes tnum" role="img" aria-label="{label}">\U0001F44D {count}</span>'
+    link = f'<a class="rm-vote" href="https://github.com/{REPO}/issues/{int(n)}">{esc(t["rm_votes_vote"])}</a>'
+    return f'<span class="rm-vote-box">{counter}{link}</span>'
+
+
 def render_roadmap(ctx, roadmap):
     """The roadmap page body: one block per section of site-src/data/roadmap.json."""
     t, code = ctx["t"], ctx["code"]
@@ -455,6 +497,25 @@ def render_roadmap(ctx, roadmap):
         f'<span class="plate {RM_STATUS[st][1]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" '
         f'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{RM_STATUS[st][2]}</svg>{esc(t[RM_STATUS[st][0]])}</span>'
     )
+    li_of = lambda it: (
+        f'\t\t\t<li>{plate_of(it["status"])}<span class="rm-text">'
+        + (f'<strong class="rm-ver tnum">{esc(it["version"])}</strong> ' if it.get("version") else "")
+        + f'{esc(pick(it["text"]))}</span>{votes_html(t, it)}</li>'
+    )
+    # "Most requested": entries not delivered yet whose issue has at least one 👍, best first.
+    voted = [
+        (issue_votes(it["issue"]), it)
+        for sec in roadmap["sections"] if "items" in sec
+        for it in sec["items"] if it.get("issue") and it["status"] != "delivered"
+    ]
+    voted = sorted(((c, it) for c, it in voted if c), key=lambda x: -x[0])
+    if voted:
+        out.append(
+            '\t<section class="rm-sec" id="top" aria-labelledby="top-h">\n'
+            f'\t\t<div class="rm-head"><h2 id="top-h">{esc(t["rm_votes_top"])}</h2>'
+            f'<p class="muted">{esc(t["rm_votes_top_note"])}</p></div>\n'
+            '\t\t<ul class="rm-list">\n' + "\n".join(li_of(it) for _, it in voted) + "\n\t\t</ul>\n\t</section>"
+        )
     for sec in roadmap["sections"]:
         sid = esc(sec["id"])
         head = f'<h2 id="{sid}-h">{esc(pick(sec["title"]))}</h2>'
@@ -477,10 +538,7 @@ def render_roadmap(ctx, roadmap):
                 f'\t\t<div class="rm-head">{head}</div>\n' + "\n".join(groups) + "\n\t</section>"
             )
             continue
-        items = []
-        for it in sec["items"]:
-            ver = f'<strong class="rm-ver tnum">{esc(it["version"])}</strong> ' if it.get("version") else ""
-            items.append(f'\t\t\t<li>{plate_of(it["status"])}<span class="rm-text">{ver}{esc(pick(it["text"]))}</span></li>')
+        items = [li_of(it) for it in sec["items"]]
         out.append(
             f'\t<section class="rm-sec" id="{sid}" aria-labelledby="{sid}-h">\n'
             f'\t\t<div class="rm-head">{head}</div>\n'

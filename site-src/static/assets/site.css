@@ -2284,6 +2284,27 @@ details > summary {
 		align-items: start;
 	}
 }
+.rm-vote-box {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 14px;
+	grid-column: 1 / -1;
+}
+@media (min-width: 700px) {
+	.rm-vote-box {
+		grid-column: 2;
+	}
+}
+.rm-votes {
+	font-weight: 600;
+}
+.rm-vote {
+	display: inline-flex;
+	align-items: center;
+	min-height: 40px;
+	text-decoration: underline;
+}
 .rm-ver {
 	font-family: var(--font-code);
 	font-size: 0.8125rem;

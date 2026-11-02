@@ -34,6 +34,9 @@ on:
       - "hooks/**"
       - ".github/workflows/site.yml"
   workflow_dispatch:
+  # Daily rebuild: refreshes the 👍 counters of the roadmap (read from GitHub issues).
+  schedule:
+    - cron: "17 4 * * *"
 
 # Read-only by default; the deploy job asks for the Pages scopes.
 permissions:
@@ -69,6 +72,8 @@ jobs:
           cache: pip
           cache-dependency-path: docs/requirements.txt
       - name: Build the pages
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: python3 site-src/build.py
       - name: Install MkDocs
         run: pip install -r docs/requirements.txt

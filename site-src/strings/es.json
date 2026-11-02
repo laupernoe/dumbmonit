@@ -323,5 +323,9 @@
  "badge_beta": "Beta",
  "badge_agent": "Vía agente",
  "fam_more_name": "Más integraciones",
- "fam_more_blurb": "Los últimos tipos de monitor, aún sin familia."
+ "fam_more_blurb": "Los últimos tipos de monitor, aún sin familia.",
+ "rm_votes_top": "Más solicitadas",
+ "rm_votes_top_note": "Ordenadas por 👍 en GitHub, actualizadas a diario.",
+ "rm_votes_aria": "{n} votos",
+ "rm_votes_vote": "Votar en GitHub"
 }
