@@ -292,8 +292,10 @@ export async function queryRange(
 		const series = await request<MetricSeries[]>('/metrics/query_range', {
 			query: {
 				query: params.query,
-				start: Math.round(params.start),
-				end: Math.round(params.end),
+				// Whole seconds: two views asking for "the last hour" in the same
+				// second send the same URL, and share one request (see `flight.ts`).
+				start: Math.floor(params.start / 1000) * 1000,
+				end: Math.floor(params.end / 1000) * 1000,
 				step: Math.max(1, Math.round(params.step))
 			},
 			signal,
@@ -337,17 +339,6 @@ export async function listAlerts(signal?: AbortSignal): Promise<Alert[]> {
 	} catch (cause) {
 		if (cause instanceof ApiError && cause.missing) return [];
 		throw cause;
-	}
-}
-
-/** True if the alerts route is already served by the backend. */
-export async function alertsAvailable(signal?: AbortSignal): Promise<boolean> {
-	try {
-		await request<Alert[]>('/alerts', { signal, anticipated: true });
-		return true;
-	} catch (cause) {
-		if (cause instanceof ApiError && cause.missing) return false;
-		return true;
 	}
 }
 
@@ -571,12 +562,13 @@ export async function getAuthStatus(signal?: AbortSignal): Promise<AuthState> {
 			ldap: { enabled: Boolean(status?.ldap?.enabled) },
 			saml: { enabled: Boolean(status?.saml?.enabled), label: status?.saml?.label || 'SAML' },
 			passkeys: Boolean(status?.passkeys),
-			demo: Boolean(status?.demo)
+			demo: Boolean(status?.demo),
+			https: status?.https ?? null
 		};
 	} catch (cause) {
 		if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
 		if (cause instanceof ApiError && cause.missing) {
-			return { available: false, configured: false, authenticated: true, user: null, oidc: NO_OIDC, ldap: { enabled: false }, saml: { enabled: false, label: 'SAML' }, passkeys: false, demo: false };
+			return { available: false, configured: false, authenticated: true, user: null, oidc: NO_OIDC, ldap: { enabled: false }, saml: { enabled: false, label: 'SAML' }, passkeys: false, demo: false, https: null };
 		}
 		throw cause;
 	}
@@ -989,12 +981,6 @@ export function unsubscribeFromStatus(slug: string, token: string): Promise<{ st
 	return request(`/public/status/${encodeURIComponent(slug)}/unsubscribe`, { method: 'POST', query: { token } });
 }
 
-/** Public: base URL of a page's badges (append `badge.svg`, `uptime.svg?days=30`, `response.svg`). */
-export function statusBadgeBase(slug: string, componentKey?: string): string {
-	const base = `/api/public/status/${encodeURIComponent(slug)}`;
-	return componentKey ? `${base}/components/${encodeURIComponent(componentKey)}` : base;
-}
-
 /**
  * Public document of a status page: no session, no cookie needed for a public
  * page. A private page answers 401 (`ApiError.access` says what it wants),
@@ -1042,14 +1028,6 @@ export function getOnboarding(signal?: AbortSignal): Promise<OnboardingState> {
 /** Dismisses a step, or the whole guide. Returns the state the server kept. */
 export function updateOnboarding(patch: OnboardingPatch): Promise<OnboardingState> {
 	return request<OnboardingState>('/onboarding', { method: 'PUT', body: patch });
-}
-
-/**
- * Team rights of the current account. Older servers do not send `access`:
- * the account is then treated as unrestricted. Never throws (but an abort).
- */
-export async function getMyAccess(signal?: AbortSignal): Promise<AccessInfo | null> {
-	return (await getMyRights(signal)).access;
 }
 
 /**

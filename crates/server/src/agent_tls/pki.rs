@@ -102,7 +102,7 @@ fn authority_params(name: &str) -> CertificateParams {
     params
 }
 
-fn distinguished_name(common_name: &str) -> DistinguishedName {
+pub(crate) fn distinguished_name(common_name: &str) -> DistinguishedName {
     let mut name = DistinguishedName::new();
     name.push(DnType::OrganizationName, "DumbMonit");
     name.push(DnType::CommonName, common_name);
@@ -110,7 +110,7 @@ fn distinguished_name(common_name: &str) -> DistinguishedName {
 }
 
 /// Numéro de série aléatoire de 128 bits, positif et non nul.
-fn serial() -> SerialNumber {
+pub(crate) fn serial() -> SerialNumber {
     let mut bytes: [u8; 16] = rand::random();
     bytes[0] &= 0x7f;
     bytes[0] |= 0x01;
@@ -119,7 +119,7 @@ fn serial() -> SerialNumber {
 
 /// Fixe la validité, d'hier (dérive d'horloge) à `days` jours d'ici, et rend
 /// l'échéance en millisecondes.
-fn set_validity(params: &mut CertificateParams, days: u64) -> i64 {
+pub(crate) fn set_validity(params: &mut CertificateParams, days: u64) -> i64 {
     let today = Utc::now().date_naive();
     let from = today.checked_sub_days(Days::new(1)).unwrap_or(today);
     let until = today.checked_add_days(Days::new(days)).unwrap_or(today);

@@ -23,6 +23,7 @@
 		listCollectors,
 		probeTarget,
 		queryInstant,
+		queryRange,
 		updateTarget,
 		type Alert,
 		type AlertRule,
@@ -60,7 +61,8 @@
 		type UptimeSummary
 	} from '#lib/metrics.js';
 	import Chart, { type Serie } from '#lib/components/Chart.svelte';
-	import { eventsFromHistory, thresholdsFor } from '#lib/chart-context.js';
+	import { eventsFromHistory, eventsFromRestarts, thresholdsFor } from '#lib/chart-context.js';
+	import { CONTAINER_RESTART_METRIC, UPTIME_METRIC, restartEvents, type RestartEvent } from '#lib/restart-events.js';
 	import Readout from '#lib/components/Readout.svelte';
 	import Figure from '#lib/components/devices/Figure.svelte';
 	import Segmented from '#lib/components/devices/Segmented.svelte';
@@ -115,7 +117,7 @@
 		confetti,
 		type Tone
 	} from '#lib/ui/index.js';
-	import { Activity, ArrowUpRight, ChevronDown, EllipsisVertical, ExternalLink, Pencil, ScrollText, Search, ServerOff } from 'lucide-svelte';
+	import { Activity, ArrowUpRight, ChevronDown, EllipsisVertical, ExternalLink, Pencil, PowerOff, ScrollText, Search, ServerOff } from 'lucide-svelte';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 
 	const id = $derived(Number(page.params.id));
@@ -336,7 +338,10 @@
 	// Context laid over this page's charts: rule thresholds and alert transitions.
 	let chartRules = $state.raw<AlertRule[]>([]);
 	let chartHistory = $state.raw<AlertHistoryEntry[]>([]);
-	const chartEvents = $derived(eventsFromHistory(chartHistory, chartRules, id));
+	let chartRestarts = $state.raw<RestartEvent[]>([]);
+	const chartEvents = $derived(
+		[...eventsFromHistory(chartHistory, chartRules, id), ...eventsFromRestarts(chartRestarts)].sort((a, b) => a.at - b.at)
+	);
 	/** One cursor for every chart of this device page. */
 	const syncKey = $derived(`target-${id}`);
 	const thresholdsOf = (metric: string, unit: string, scale = 1) =>
@@ -346,7 +351,7 @@
 	const previousOf = (metric: string) => async (window: { start: number; end: number }) => {
 		const key = `${id}|${Math.floor(window.start / 300)}|${Math.floor(window.end / 300)}`;
 		if (previousCache?.key !== key) {
-			const groups = loadDeviceMetricsWindow(id, window);
+			const groups = loadDeviceMetricsWindow(id, window, undefined, rated);
 			groups.catch(() => {
 				if (previousCache?.groups === groups) previousCache = null;
 			});
@@ -369,6 +374,31 @@
 			if (rules) chartRules = rules;
 			if (history) chartHistory = history;
 		});
+		return () => controller.abort();
+	});
+	// Restart markers: agent reboots and Docker container restarts, read from the stored series.
+	$effect(() => {
+		const targetId = id;
+		const seconds = rangeSeconds;
+		const controller = new AbortController();
+		const end = Date.now() / 1000;
+		void queryRange(
+			{
+				query: `{__name__=~"${UPTIME_METRIC}|${CONTAINER_RESTART_METRIC}", target="${targetId}"}`,
+				start: end - seconds,
+				end,
+				// A restart must show between two samples: never coarser than a few minutes.
+				step: Math.min(300, Math.max(30, Math.round(seconds / 600)))
+			},
+			controller.signal
+		)
+			.then((found) => {
+				if (controller.signal.aborted || targetId !== id) return;
+				chartRestarts = restartEvents(found);
+			})
+			.catch(() => {
+				// Decoration only: the charts stand without it.
+			});
 		return () => controller.abort();
 	});
 	/** Bell in the header: this monitor's active alerts, counted like the list does. */
@@ -398,6 +428,13 @@
 
 	/** False once the monitor is switched off: nothing to probe, nothing collected. */
 	const monitorOn = $derived(target?.enabled ?? true);
+	/** Switched off: nothing is collected, so the live panels (and a measurements block with nothing in it) give way to one notice. */
+	const idle = $derived(target !== null && !target.enabled);
+	const noMeasurements = $derived(
+		service
+			? !loadingUptime && responseTimes.length === 0 && availability === null
+			: !loadingMetrics && groups.length === 0
+	);
 	let enabledDraft = $state(true);
 	let savingEnabled = $state(false);
 	let enabledError = $state<unknown>(null);
@@ -752,7 +789,7 @@
 							<Pencil class="size-4" aria-hidden="true" />
 							{m.devices_target_edit()}
 						</Button>
-						<Button variant="secondary" href={`/logs?target=${target.id}`}>
+						<Button variant="secondary" href={`/targets?tab=logs&target=${target.id}`}>
 							<ScrollText class="size-4" aria-hidden="true" />
 							{m.devices_target_logs()}
 						</Button>
@@ -778,7 +815,7 @@
 									<Pencil class="size-4" aria-hidden="true" />
 									{m.devices_target_edit()}
 								</Button>
-								<Button variant="ghost" href={`/logs?target=${id}`} class="justify-start">
+								<Button variant="ghost" href={`/targets?tab=logs&target=${id}`} class="justify-start">
 									<ScrollText class="size-4" aria-hidden="true" />
 									{m.devices_target_logs()}
 								</Button>
@@ -833,16 +870,24 @@
 		{/if}
 	</section>
 
+	{#if idle}
+		<!-- One line instead of a stack of empty panels. -->
+		<div class="mt-6 flex items-center gap-3 rounded-[var(--radius-card)] border border-dashed border-line bg-surface px-4 py-3" role="status">
+			<PowerOff class="size-5 shrink-0 text-ink-3" aria-hidden="true" />
+			<p class="min-w-0 text-sm text-ink-2">{m.devices_target_disabled_empty()}</p>
+		</div>
+	{/if}
+
 	{#if securityShown && securityOpen}
 		<SecurityReport report={securityShown} onclose={() => (securityOpen = false)} />
 	{/if}
 
-	{#if target.multisite}
+	{#if target.multisite && !idle}
 		<ProbeLocationsCard targetId={target.id} {refreshKey} />
 	{/if}
 
 	<!-- What makes a machine slow, at a glance (agent hosts only) -->
-	{#if target.kind === 'agent'}
+	{#if target.kind === 'agent' && !idle}
 		{#key target.id}
 			<MachineHealthCard {target} {refreshKey} />
 		{/key}
@@ -855,7 +900,7 @@
 
 	<!-- Containers at a glance, with the fleet-wide policies; the list itself sits with the metrics.
 	     Docker is a device of its own under the machine whose agent found it. -->
-	{#if isDockerDevice(target)}
+	{#if isDockerDevice(target) && !idle}
 		<DockerStrip {target} />
 	{/if}
 
@@ -879,7 +924,7 @@
 	{/key}
 
 	<!-- What this kind of device has to show beyond charts (guests, backup calendar, disks…) -->
-	{#if hasKindPanel(target.kind)}
+	{#if hasKindPanel(target.kind) && !idle}
 		<section class="mt-6" aria-label={m.devices_target_details()}>
 			{#if kindPanelComponent && kindPanelLoadedFor === target.kind}
 				{@const Panel = kindPanelComponent}
@@ -891,7 +936,7 @@
 	{/if}
 
 	<!-- Instruments: a website-change watcher already says everything in its own panel -->
-	{#if target.kind !== 'webchange'}
+	{#if target.kind !== 'webchange' && !(idle && noMeasurements)}
 	<section class="mt-8" aria-labelledby="device-metrics">
 		<div class="mb-4 flex min-w-0 flex-wrap items-center justify-between gap-3">
 			<h2 id="device-metrics" class="text-base font-semibold tracking-tight text-ink">

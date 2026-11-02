@@ -1,10 +1,14 @@
 /**
- * The destinations of the shell, in one list: every entry on the icon rail,
- * the `phone` ones as tabs on phones (the rest under "More"). A new page is
- * one line here.
+ * The destinations of the shell: five, the same on the rail and on the
+ * phone's tab bar (the rail sets the `foot` ones apart, in its bottom group;
+ * the tab bar keeps the order below). What used to be a page of its own now
+ * lives in a tab of one of them (Map, Logs, Security under Monitors;
+ * automation under Alerts; reports under Status); Explore and Clients are
+ * reached from the command palette and the client picker. A new destination
+ * is one line here.
  */
 import type { Icon as LucideIcon } from 'lucide-svelte';
-import { BellRing, Building2, Compass, FileText, Gauge, Globe, LayoutGrid, Network, ScrollText, Server, Settings2, ShieldAlert, Tv, Wrench } from 'lucide-svelte';
+import { Activity, Bell, Building2, Globe, House, Settings } from 'lucide-svelte';
 import { m } from '#lib/paraglide/messages.js';
 import { auth } from '#lib/stores/auth.svelte.js';
 
@@ -14,36 +18,32 @@ export interface NavEntry {
 	icon: typeof LucideIcon;
 	/** Matched exactly (`/`) rather than as a prefix. */
 	exact?: boolean;
-	/** One of the tabs of the phone bar; otherwise under "More". */
-	phone?: boolean;
+	/** Other paths that belong to this destination (old pages now in its tabs). */
+	also?: string[];
 	/** Needs the admin role (the server enforces it too). */
 	admin?: boolean;
 	/** Carries the active alert count. */
 	badge?: boolean;
-	/** Shown at the foot of the rail rather than in the list. */
-	foot?: boolean;
 	/** Hidden from accounts limited by their teams or clients (the server refuses the page's API). */
 	unscoped?: boolean;
 	/** Only in MSP mode, for an MSP administrator or a client member. */
 	msp?: boolean;
+	/** `data-tour` anchor of the demo's guided tour. */
+	tour?: string;
+	/** On the rail: in the bottom group, above wall mode, the docs and the account, not in the main list. */
+	foot?: boolean;
 }
 
 export const NAV: NavEntry[] = [
-	{ href: '/', label: () => m.misc_nav_overview(), icon: Gauge, exact: true, phone: true, unscoped: true },
-	{ href: '/targets', label: () => m.misc_nav_devices(), icon: Server, phone: true },
-	{ href: '/alerts', label: () => m.misc_nav_alerts(), icon: BellRing, phone: true, badge: true },
-	{ href: '/dashboards', label: () => m.misc_nav_dashboards(), icon: LayoutGrid },
-	{ href: '/explore', label: () => m.explore_title(), icon: Compass },
-	{ href: '/map', label: () => m.topology_title(), icon: Network },
-	{ href: '/security', label: () => m.misc_nav_security(), icon: ShieldAlert },
-	{ href: '/logs', label: () => m.logsearch_title(), icon: ScrollText, admin: true },
-	{ href: '/actions', label: () => m.remediation_page_title(), icon: Wrench, unscoped: true },
-	{ href: '/clients', label: () => m.msp_nav_clients(), icon: Building2, msp: true },
-	{ href: '/status', label: () => m.misc_palette_status_pages(), icon: Globe },
-	{ href: '/reports', label: () => m.reports_page_title(), icon: FileText, admin: true },
-	{ href: '/wall', label: () => m.misc_nav_wall(), icon: Tv, unscoped: true },
-	{ href: '/settings', label: () => m.misc_nav_settings(), icon: Settings2, phone: true, foot: true }
+	{ href: '/', label: () => m.misc_nav_overview(), icon: House, exact: true, unscoped: true },
+	{ href: '/targets', label: () => m.misc_nav_devices(), icon: Activity, also: ['/map', '/logs', '/security'], tour: 'nav-devices' },
+	{ href: '/alerts', label: () => m.misc_nav_alerts(), icon: Bell, badge: true, also: ['/actions', '/runbooks'], tour: 'nav-alerts' },
+	{ href: '/status', label: () => m.shell_nav_status(), icon: Globe, also: ['/reports'] },
+	{ href: '/settings', label: () => m.misc_nav_settings(), icon: Settings, tour: 'nav-settings', foot: true }
 ];
+
+/** The MSP clients page, off the rail: reached from the client picker and the palette. */
+export const CLIENTS_ENTRY: NavEntry = { href: '/clients', label: () => m.msp_nav_clients(), icon: Building2, msp: true };
 
 /** Whether this account gets the entry: role, team or client limits, MSP mode. */
 export function visible(entry: NavEntry): boolean {
@@ -53,7 +53,16 @@ export function visible(entry: NavEntry): boolean {
 	return true;
 }
 
+function under(base: string, pathname: string): boolean {
+	return pathname === base || pathname.startsWith(`${base}/`);
+}
+
 export function isActive(entry: NavEntry, pathname: string): boolean {
 	if (entry.exact) return pathname === entry.href;
-	return pathname === entry.href || pathname.startsWith(`${entry.href}/`);
+	return under(entry.href, pathname) || (entry.also ?? []).some((base) => under(base, pathname));
+}
+
+/** Where the logo and "home" lead: the Overview, or Monitors for an account limited by its teams. */
+export function homeHref(): string {
+	return auth.scoped ? '/targets' : '/';
 }

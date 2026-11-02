@@ -3,9 +3,8 @@
  * The API speaks Unix seconds because PBS does; the rest of the interface
  * speaks server date strings, hence these local variants.
  */
-import type { PbsDayState, PbsTaskKind } from '#lib/api/index.js';
+import type { PbsTaskKind } from '#lib/api/index.js';
 import { formatDateTime } from '#lib/format.js';
-import type { Tone } from '#lib/ui/index.js';
 import { m } from '#lib/paraglide/messages.js';
 export { formatAge, formatBytes } from '../docker/api';
 
@@ -73,14 +72,6 @@ export function jobKindLabel(kind: string): string {
 			return kind;
 	}
 }
-
-export const DAY_TONE: Record<PbsDayState, Tone> = {
-	ok: 'signal',
-	verify_failed: 'advisory',
-	failed: 'warning',
-	running: 'info',
-	none: 'ghost'
-};
 
 /** "vm/100" or "nextcloud (vm/100)". */
 export function groupTitle(group: { name: string | null; backup_type: string; backup_id: string }): string {

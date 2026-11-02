@@ -34,7 +34,7 @@
 
 <svelte:head><title>{runbook?.title ?? m.remediation_runbooks_title()} · DumbMonit</title></svelte:head>
 
-<a href="/actions#runbooks" class="mb-2 inline-flex min-h-10 items-center text-sm text-ink-2 hover:text-ink hover:underline">← {m.remediation_runbooks_back()}</a>
+<a href="/alerts?tab=automation&view=runbooks" class="mb-2 inline-flex min-h-10 items-center text-sm text-ink-2 hover:text-ink hover:underline">← {m.remediation_runbooks_back()}</a>
 
 {#if error}
 	<ErrorNotice {error} />

@@ -7,14 +7,19 @@
 	 * The page hands over the first 200 entries and refreshes them; "Load more"
 	 * fetches a longer window here and merges it, so older lines stay while the
 	 * newest keep arriving. Filters and the CSV export work on what is shown.
+	 * The list is paged (50 lines a page): a busy week is a few screens, not
+	 * thousands of pixels. `?monitor=<id>` opens it filtered to one monitor
+	 * (the monitor page's "Full history" link).
 	 */
+	import { untrack } from 'svelte';
+	import { page } from '$app/state';
 	import type { AlertHistoryEntry, AlertPhase, AlertRule, AlertSeverity, Target } from '#lib/api/index.js';
 	import { dismissAlertHistoryEntry, dismissResolvedAlertHistory, listAlertHistory } from '#lib/api/index.js';
 	import type { Tone } from '#lib/ui/index.js';
-	import { Button, Confirm, EmptyState, Plate, Toggle } from '#lib/ui/index.js';
+	import { Button, Confirm, EmptyState, Plate, Toggle, reducedMotion } from '#lib/ui/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import Segmented from '#lib/components/devices/Segmented.svelte';
-	import { History, Download, X } from 'lucide-svelte';
+	import { History, Download, X, ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import { formatDateTime, parseServerDate } from '#lib/format.js';
 	import { formatAlertValue, severityTone, severityWord } from './helpers';
 	import { m } from '#lib/paraglide/messages.js';
@@ -29,6 +34,8 @@
 	let { entries, targets, rules }: Props = $props();
 
 	const PAGE = 200;
+	/** Lines per page of the list. */
+	const PAGE_SIZE = 50;
 
 	const PHASE_TONE: Record<AlertPhase, Tone> = {
 		ok: 'signal',
@@ -155,7 +162,7 @@
 		{ id: 'critical', label: m.alerts_severity_warning() }
 	]);
 
-	let deviceFilter = $state('all');
+	let deviceFilter = $state(untrack(() => page.url.searchParams.get('monitor') ?? 'all'));
 	let severityFilter = $state<SeverityFilter>('all');
 	let onlyNotified = $state(false);
 	function clearFilters() {
@@ -163,6 +170,12 @@
 		severityFilter = 'all';
 		onlyNotified = false;
 	}
+	// A page index is meaningless once the filters change: start over.
+	let pageIndex = $state(0);
+	$effect(() => {
+		void [deviceFilter, severityFilter, onlyNotified, showCleared];
+		pageIndex = 0;
+	});
 
 	/** Devices that appear in the log, so the select offers only useful choices. */
 	const deviceOptions = $derived.by(() => {
@@ -186,7 +199,16 @@
 		})
 	);
 
-	/** Resolved, not yet cleared — what "Clear all resolved" would sweep. */
+	function goToPage(index: number) {
+		pageIndex = index;
+		const top = document.getElementById('history-top');
+		if (top) top.scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' });
+	}
+	const pageCount = $derived(Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)));
+	const current = $derived(Math.min(pageIndex, pageCount - 1));
+	const visible = $derived(filtered.slice(current * PAGE_SIZE, (current + 1) * PAGE_SIZE));
+
+	/** Resolved, not yet hidden — what "Hide resolved" would sweep. */
 	const resolvedCount = $derived(
 		all.filter((entry) => entry.to_phase === 'resolved' && !entry.dismissed && !clearedIds.has(entry.id))
 			.length
@@ -221,7 +243,7 @@
 
 	const groups = $derived.by(() => {
 		const out: { key: string; label: string; entries: AlertHistoryEntry[] }[] = [];
-		for (const entry of filtered) {
+		for (const entry of visible) {
 			const date = parseServerDate(entry.at) ?? new Date(0);
 			const key = dayKey(date);
 			const last = out[out.length - 1];
@@ -275,11 +297,11 @@
 		icon={History}
 		title={m.alerts_history_empty_title()}
 		description={m.alerts_history_empty_description()}
-		secondary={{ label: m.alerts_history_empty_action(), href: '/alerts#rules' }}
+		secondary={{ label: m.alerts_history_empty_action(), href: '/alerts?tab=rules' }}
 	/>
 {:else}
 	<!-- Filter row -->
-	<div class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-3">
+	<div id="history-top" class="mb-4 flex scroll-mt-20 flex-wrap items-center gap-x-4 gap-y-3">
 		<div class="w-full sm:w-56">
 			<label class="sr-only" for="history-device">{m.alerts_history_device()}</label>
 			<select id="history-device" class="input !min-h-10 py-0 text-[0.8125rem] sm:!min-h-8" bind:value={deviceFilter}>
@@ -408,6 +430,22 @@
 				</section>
 			{/each}
 		</div>
+	{/if}
+
+	{#if pageCount > 1}
+		<nav class="mt-5 flex items-center justify-between gap-3" aria-label={m.alerts_history_pages()}>
+			<Button size="sm" variant="secondary" disabled={current === 0} onclick={() => goToPage(current - 1)}>
+				<ChevronLeft class="size-4" aria-hidden="true" />
+				{m.alerts_history_prev()}
+			</Button>
+			<span class="tnum text-[0.8125rem] text-ink-2" aria-live="polite">
+				{m.alerts_history_range({ start: current * PAGE_SIZE + 1, end: current * PAGE_SIZE + visible.length, total: filtered.length })}
+			</span>
+			<Button size="sm" variant="secondary" disabled={current >= pageCount - 1} onclick={() => goToPage(current + 1)}>
+				{m.alerts_history_next()}
+				<ChevronRight class="size-4" aria-hidden="true" />
+			</Button>
+		</nav>
 	{/if}
 
 	<div class="mt-5 flex flex-wrap items-center gap-3">

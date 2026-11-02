@@ -75,6 +75,7 @@ pub mod snmp;
 pub(crate) mod socket;
 pub mod sonicwall;
 pub mod sophos;
+pub mod switch_ports;
 pub mod synology;
 pub mod tailscale;
 pub mod traefik;

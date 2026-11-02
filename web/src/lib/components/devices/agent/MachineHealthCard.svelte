@@ -8,7 +8,7 @@
 	 * figures with a short explanation.
 	 *
 	 * Reads the stored measurements only; renders nothing until the agent has
-	 * reported, and every figure the agent cannot provide (Windows has no PSI)
+	 * reported, and every figure the agent cannot provide (Windows has no PSI nor inodes: it shows its own queue counters instead)
 	 * simply stays out.
 	 */
 	import { m } from '#lib/paraglide/messages.js';
@@ -47,7 +47,7 @@
 		const end = Date.now();
 		void Promise.all([
 			queryInstant(
-				`{__name__=~"dumbmonit_(cpu_usage_percent|memory_used_percent|filesystem_used_percent|filesystem_inodes_used_percent|agent_process_cpu_percent|agent_process_memory_bytes|agent_pressure_(some|full)_percent|agent_clock_offset_seconds|agent_clock_synchronized)", target="${id}"}`,
+				`{__name__=~"dumbmonit_(cpu_usage_percent|memory_used_percent|filesystem_used_percent|filesystem_inodes_used_percent|agent_process_cpu_percent|agent_process_memory_bytes|agent_pressure_(some|full)_percent|agent_clock_offset_seconds|agent_clock_synchronized|agent_windows_(processor_queue_length|memory_pages_per_second|disk_queue_length))", target="${id}"}`,
 				controller.signal
 			),
 			queryRange(
@@ -197,6 +197,19 @@
 	);
 	const pressureTone = (some: number | null): Tone => (some === null ? 'ghost' : some >= 25 ? 'warning' : some >= 5 ? 'advisory' : 'signal');
 
+	// Windows has no PSI: three performance counters approximate it (queues, not shares of time).
+	const winLoad = $derived(
+		[
+			{ key: 'cpu', family: 'agent_windows_processor_queue_length', steps: [2, 10], text: (v: string) => m.devices_machine_winload_cpu({ value: v }) },
+			{ key: 'mem', family: 'agent_windows_memory_pages_per_second', steps: [1000, 5000], text: (v: string) => m.devices_machine_winload_mem({ value: v }) },
+			{ key: 'io', family: 'agent_windows_disk_queue_length', steps: [2, 8], text: (v: string) => m.devices_machine_winload_io({ value: v }) }
+		]
+			.map((c) => ({ ...c, value: last(one(c.family)) }))
+			.filter((c): c is typeof c & { value: number } => c.value !== null)
+	);
+	const winTone = (value: number, steps: number[]): Tone => (value >= steps[1] ? 'warning' : value >= steps[0] ? 'advisory' : 'signal');
+	const winFormat = (v: number) => (v >= 10 ? String(Math.round(v)) : v.toFixed(1));
+
 	const inodeWorst = $derived.by(() => {
 		let worst: { mount: string; value: number } | null = null;
 		for (const s of all('filesystem_inodes_used_percent')) {
@@ -226,7 +239,7 @@
 	}
 
 	const hasAny = $derived(cpu !== null || ram !== null || disk !== null);
-	const hasSecond = $derived(pressure.length > 0 || oomKills !== null || inodeWorst !== null || clockSync !== null);
+	const hasSecond = $derived(pressure.length > 0 || winLoad.length > 0 || oomKills !== null || inodeWorst !== null || clockSync !== null);
 </script>
 
 {#if loaded && hasAny}
@@ -350,6 +363,21 @@
 											<span class="tnum text-ink-2">· {m.devices_machine_psi_full({ value: pct(p.full) })}</span>
 										{/if}
 										<Plate tone={pressureTone(p.some)} size="sm" label={toneLabels[pressureTone(p.some)]} />
+									</span>
+								{/each}
+							</dd>
+						</div>
+					{/if}
+					{#if winLoad.length > 0}
+						<div class="min-w-0 sm:col-span-2">
+							<dt class="text-sm font-medium text-ink">{m.devices_machine_winload_title()}</dt>
+							<dd class="mt-1 text-sm text-ink-2">{m.devices_machine_winload_hint()}</dd>
+							<dd class="mt-2 flex flex-wrap gap-2">
+								{#each winLoad as c (c.key)}
+									{@const tone = winTone(c.value, c.steps)}
+									<span class="inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-card)] border border-line px-3 text-sm text-ink">
+										<span class="tnum">{c.text(winFormat(c.value))}</span>
+										<Plate {tone} size="sm" label={toneLabels[tone]} />
 									</span>
 								{/each}
 							</dd>

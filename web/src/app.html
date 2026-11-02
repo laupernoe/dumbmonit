@@ -22,24 +22,38 @@
 		<title>DumbMonit</title>
 		<script>
 			// Applied before first paint so the theme never flashes. The app is one
-			// dark console (`obsidian`); only public status pages (`/s/…`, or a
-			// status page's own domain) keep their light and dark versions.
+			// console (`obsidian`), deep black unless Settings › Appearance chose
+			// light or the system's (`dumbmonit-console-theme`, see
+			// src/lib/stores/theme-choice.ts); the wall stays dark. Public status
+			// pages (`/s/…`, or a status page's own domain) keep their light and
+			// dark versions.
 			var statusPage =
 				location.pathname.indexOf('/s/') === 0 ||
 				!!document.querySelector('meta[name="dumbmonit-status-page"]');
 			var dark = !statusPage;
 			if (!statusPage) document.documentElement.classList.add('obsidian');
 			try {
-				const choice =
-					localStorage.getItem('dumbmonit-theme') ?? localStorage.getItem('ezymonit-theme');
-				if (statusPage)
+				if (statusPage) {
+					const choice =
+						localStorage.getItem('dumbmonit-theme') ?? localStorage.getItem('ezymonit-theme');
 					dark =
 						choice === 'dark' ||
 						(choice !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+				} else if (location.pathname !== '/wall' && location.pathname.indexOf('/wall/') !== 0) {
+					const pick = localStorage.getItem('dumbmonit-console-theme');
+					dark =
+						pick !== 'light' &&
+						(pick !== 'auto' || window.matchMedia('(prefers-color-scheme: dark)').matches);
+					if (!dark) document.documentElement.classList.add('console-light');
+				}
 			} catch (e) {
-				/* localStorage unavailable: the status page follows its default. */
+				/* localStorage unavailable: each look follows its default. */
 			}
 			if (dark) document.documentElement.classList.add('dark');
+			if (!dark && !statusPage) {
+				var tint = document.querySelector('meta[name="theme-color"]');
+				if (tint) tint.setAttribute('content', '#f6f6f7');
+			}
 			// iOS standalone: translucent bars always draw a white clock, which
 			// vanishes on the light canvas. Light theme: dark text (`default`).
 			var bar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');

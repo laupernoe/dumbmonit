@@ -11,9 +11,12 @@
 //! pas une seule connexion ne part vers une adresse, même fictive.
 
 use std::f64::consts::TAU;
+use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
-use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target};
+use dumbmonit_proto::{
+    Collector, Fingerprint, KindDescription, Measures, MetricKind, ProbeError, Sample, Target,
+};
 
 /// Machines déclarées injoignables en permanence : un commutateur et le point
 /// d'accès qui en dépend, pour montrer la suppression des alertes en cascade.
@@ -35,7 +38,7 @@ pub fn seed(name: &str) -> u64 {
 }
 
 /// Bruit déterministe dans [0, 1) pour une graine et un créneau.
-fn noise(seed: u64, bucket: i64) -> f64 {
+pub fn noise(seed: u64, bucket: i64) -> f64 {
     // splitmix64 : court, et suffisant pour du bruit visuel.
     let mut z = seed.wrapping_add((bucket as u64).wrapping_mul(0x9e37_79b9_7f4a_7c15));
     z = (z ^ (z >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
@@ -58,11 +61,47 @@ pub fn activity(seed: u64, ts_ms: i64) -> f64 {
     (0.15 + 0.6 * daily + weekend + 0.2 * jitter).clamp(0.0, 1.0)
 }
 
-fn gauge(metric: &str, value: f64, ts_ms: i64) -> Sample {
+/// Heure pleine du démarrage du processus : l'origine des tendances relatives
+/// (remplissage des disques, échéances qui se rapprochent). Fixée une fois, elle
+/// rend les mesures en direct et l'historique rétroactif cohérents entre eux, et
+/// deux démarrages racontent la même histoire à quelques heures près.
+pub fn anchor_ms() -> i64 {
+    static ANCHOR: OnceLock<i64> = OnceLock::new();
+    *ANCHOR.get_or_init(|| chrono::Utc::now().timestamp_millis().div_euclid(3_600_000) * 3_600_000)
+}
+
+/// Jours écoulés depuis [`anchor_ms`] (négatif dans le passé).
+pub fn days_since_anchor(ts_ms: i64) -> f64 {
+    (ts_ms - anchor_ms()) as f64 / 86_400_000.0
+}
+
+/// Valeur d'un compteur cumulatif dont le débit moyen est `rate` (unités par
+/// seconde) : l'**intégrale exacte** d'un débit qui ondule — un cycle quotidien et
+/// un cycle de 45 minutes, toujours positif. `rate()` retrouve donc le débit
+/// voulu à chaque instant, sans compteur qui recule ni pic parasite, et
+/// l'historique et le direct se raccordent sans état conservé.
+pub fn cumulative(seed: u64, rate: f64, ts_ms: i64) -> f64 {
+    let t = ((ts_ms - COUNTER_EPOCH_MS).max(0) / 1000) as f64;
+    let (w1, w2) = (TAU / 86_400.0, TAU / 2_700.0);
+    let phi1 = (seed % 628) as f64 / 100.0;
+    let phi2 = ((seed >> 12) % 628) as f64 / 100.0;
+    let daily = 0.3 * (phi1.cos() - (w1 * t + phi1).cos()) / w1;
+    let quick = 0.15 * (phi2.cos() - (w2 * t + phi2).cos()) / w2;
+    rate * (0.6 * t + daily + quick)
+}
+
+/// Temps de réponse plausible d'un équipement interrogé par son API : quelques
+/// dizaines de millisecondes qui suivent l'activité de la journée.
+pub fn device_latency(name: &str, ts_ms: i64) -> f64 {
+    let seed = seed(name);
+    0.025 + (seed % 9) as f64 * 0.006 + 0.09 * activity(seed, ts_ms).powi(2)
+}
+
+pub fn gauge(metric: &str, value: f64, ts_ms: i64) -> Sample {
     Sample::new(metric, value, MetricKind::Gauge, ts_ms)
 }
 
-fn counter(metric: &str, value: f64, ts_ms: i64) -> Sample {
+pub fn counter(metric: &str, value: f64, ts_ms: i64) -> Sample {
     Sample::new(metric, value, MetricKind::Counter, ts_ms)
 }
 
@@ -84,7 +123,56 @@ impl Collector for SyntheticProbe {
     }
 
     async fn probe(&self, target: &Target) -> Result<Vec<Sample>, ProbeError> {
-        probe_samples(self.kind, &target.name, chrono::Utc::now().timestamp_millis())
+        let now = chrono::Utc::now().timestamp_millis();
+        match super::extras::samples(self.kind, &target.name, now) {
+            Some(samples) => Ok(samples),
+            None => probe_samples(self.kind, &target.name, now),
+        }
+    }
+}
+
+/// Un vrai collecteur (équipement simulé) auquel la démonstration ajoute un temps
+/// de réponse : sans lui, les colonnes « Latency » et « p95 » de la console
+/// resteraient vides pour tout ce qui n'est pas une sonde de disponibilité.
+pub struct Timed {
+    inner: Arc<dyn Collector>,
+}
+
+impl Timed {
+    pub fn new(inner: Arc<dyn Collector>) -> Self {
+        Self { inner }
+    }
+}
+
+#[async_trait]
+impl Collector for Timed {
+    fn kind(&self) -> &str {
+        self.inner.kind()
+    }
+
+    fn description(&self) -> Option<KindDescription> {
+        self.inner.description()
+    }
+
+    fn measures(&self, kind: &str) -> Option<Measures> {
+        self.inner.measures(kind)
+    }
+
+    fn fingerprints(&self) -> Vec<Fingerprint> {
+        self.inner.fingerprints()
+    }
+
+    async fn probe(&self, target: &Target) -> Result<Vec<Sample>, ProbeError> {
+        let mut samples = self.inner.probe(target).await?;
+        if !samples.iter().any(|s| s.metric == "probe_duration_seconds") {
+            let now = chrono::Utc::now().timestamp_millis();
+            samples.push(gauge("probe_duration_seconds", device_latency(&target.name, now), now));
+        }
+        Ok(samples)
+    }
+
+    async fn discover(&self, target: &Target) -> Result<Option<String>, ProbeError> {
+        self.inner.discover(target).await
     }
 }
 
@@ -147,6 +235,15 @@ pub fn probe_samples(kind: &str, name: &str, ts_ms: i64) -> Result<Vec<Sample>, 
             labelled(gauge("probe_tls_handshake_seconds", 0.011 + 0.02 * load, ts_ms));
             labelled(gauge("probe_duration_seconds", 0.015 + 0.025 * load, ts_ms));
         }
+        "dns" => {
+            // Le résolveur de la maison (Unbound sur le pare-feu) : quelques
+            // millisecondes, davantage quand la réponse n'est pas en cache.
+            let cold = noise(seed, ts_ms.div_euclid(300_000)) > 0.85;
+            let lookup = 0.002 + 0.006 * load + if cold { 0.035 } else { 0.0 };
+            labelled(gauge("probe_dns_lookup_seconds", lookup, ts_ms));
+            labelled(gauge("probe_dns_answer_records", 1.0 + (seed % 2) as f64, ts_ms));
+            labelled(gauge("probe_duration_seconds", lookup + 0.0005, ts_ms));
+        }
         _ => {
             let rtt = 0.0004 + 0.0015 * load + (seed % 5) as f64 * 0.0002;
             labelled(gauge("probe_icmp_packets_sent", 3.0, ts_ms));
@@ -175,6 +272,24 @@ const CONTAINERS: &[(&str, &str, bool)] = &[
     ("paperless-worker", "ghcr.io/paperless-ngx/paperless-ngx:2.18", false),
 ];
 
+/// Remplissage du volume de données au démarrage, croissance par jour (fraction
+/// de la capacité) et durée d'un cycle avant nettoyage, en jours.
+const DATA_BASE: f64 = 0.865;
+const DATA_GROWTH_PER_DAY: f64 = 0.0115;
+const DATA_CYCLE_DAYS: f64 = 8.0;
+
+/// Part occupée du volume de données à l'instant `ts_ms`. Dans le passé, la
+/// droite se prolonge sans rupture (30 jours d'historique) ; à partir du
+/// démarrage, un nettoyage ramène le volume à son niveau de départ tous les
+/// [`DATA_CYCLE_DAYS`] jours.
+pub fn data_fraction(ts_ms: i64) -> f64 {
+    let days = days_since_anchor(ts_ms);
+    let in_cycle = if days < 0.0 { days } else { days.rem_euclid(DATA_CYCLE_DAYS) };
+    // Une ondulation d'une journée (les sauvegardes de la nuit) sur la tendance.
+    let wave = 0.0012 * (TAU * days).sin();
+    (DATA_BASE + DATA_GROWTH_PER_DAY * in_cycle + wave).clamp(0.0, 0.995)
+}
+
 const MEMORY_TOTAL: f64 = 32.0 * 1024.0 * 1024.0 * 1024.0;
 const DATA_TOTAL: f64 = 1_800.0 * 1_000_000_000.0;
 const ROOT_TOTAL: f64 = 120.0 * 1_000_000_000.0;
@@ -182,11 +297,14 @@ const ROOT_TOTAL: f64 = 120.0 * 1_000_000_000.0;
 /// repartent jamais de zéro d'un redémarrage à l'autre.
 const COUNTER_EPOCH_MS: i64 = 1_767_225_600_000; // 2026-01-01T00:00:00Z
 
+/// Poids du trafic de chaque conteneur, dans l'ordre de [`CONTAINERS`] : le
+/// proxy et le serveur de médias en transportent le plus.
+const CONTAINER_WEIGHTS: [f64; 6] = [4.0, 2.5, 1.5, 0.4, 6.0, 0.2];
+
 /// Ce que l'agent de [`AGENT_HOST`] enverrait à l'instant `ts_ms`.
 pub fn agent_samples(ts_ms: i64) -> Vec<Sample> {
-    let seed = seed(AGENT_HOST);
-    let load = activity(seed, ts_ms);
-    let elapsed_s = ((ts_ms - COUNTER_EPOCH_MS).max(0) / 1000) as f64;
+    let host_seed = seed(AGENT_HOST);
+    let load = activity(host_seed, ts_ms);
     let mut samples = vec![
         gauge("cpu_usage_percent", 6.0 + 58.0 * load, ts_ms),
         gauge("cpu_count", 8.0, ts_ms),
@@ -211,15 +329,16 @@ pub fn agent_samples(ts_ms: i64) -> Vec<Sample> {
         gauge("container_series_skipped", 0.0, ts_ms),
     ];
     for core in 0..8 {
-        let core_load = activity(seed.wrapping_add(core), ts_ms);
+        let core_load = activity(host_seed.wrapping_add(core), ts_ms);
         samples.push(
             gauge("cpu_core_usage_percent", 4.0 + 62.0 * core_load, ts_ms)
                 .with_label("core", core.to_string()),
         );
     }
-    // Le volume de données grossit lentement et régulièrement (≈ 2 Go par jour) :
-    // de quoi nourrir la prévision de remplissage sans jamais la faire hurler.
-    let data_used = DATA_TOTAL * 0.71 + 2.0e9 * (elapsed_s / 86_400.0 % 90.0);
+    // Le volume de données se remplit d'environ 1 point par jour (≈ 20 Go) et se
+    // fait nettoyer tous les huit jours : de quoi nourrir la prévision de
+    // remplissage (« plein dans ≈ 12 jours » au démarrage) sans jamais le saturer.
+    let data_used = DATA_TOTAL * data_fraction(ts_ms);
     for (mount, device, fstype, total, used) in [
         ("/", "/dev/nvme0n1p2", "ext4", ROOT_TOTAL, ROOT_TOTAL * 0.38),
         ("/srv/data", "/dev/md0", "xfs", DATA_TOTAL, data_used),
@@ -238,26 +357,40 @@ pub fn agent_samples(ts_ms: i64) -> Vec<Sample> {
             );
         }
     }
-    // Compteurs : intégrale d'un débit moyen, pour que `rate()` retombe sur une
-    // courbe plausible sans avoir à conserver d'état.
+    // Compteurs : intégrale exacte d'un débit qui ondule (voir [`cumulative`]).
     for (ifname, rx, tx) in [("eth0", 3.2e6, 1.1e6), ("docker0", 4.0e5, 6.0e5)] {
         for (metric, rate) in [("if_octets_in", rx), ("if_octets_out", tx)] {
+            let seed = seed(&format!("{ifname}{metric}"));
             samples.push(
-                counter(metric, rate * elapsed_s * (0.6 + 0.4 * load), ts_ms)
-                    .with_label("ifname", ifname),
+                counter(metric, cumulative(seed, rate, ts_ms), ts_ms).with_label("ifname", ifname),
             );
         }
-        for (metric, value) in [
-            ("if_packets_in", rx / 900.0 * elapsed_s),
-            ("if_packets_out", tx / 900.0 * elapsed_s),
-            ("if_errors_in", 0.0),
-            ("if_errors_out", 0.0),
-        ] {
-            samples.push(counter(metric, value, ts_ms).with_label("ifname", ifname));
+        for (metric, rate) in [("if_packets_in", rx / 900.0), ("if_packets_out", tx / 900.0)] {
+            let seed = seed(&format!("{ifname}{metric}"));
+            samples.push(
+                counter(metric, cumulative(seed, rate, ts_ms), ts_ms).with_label("ifname", ifname),
+            );
+        }
+        for metric in ["if_errors_in", "if_errors_out"] {
+            samples.push(counter(metric, 0.0, ts_ms).with_label("ifname", ifname));
         }
     }
     for (metric, rate) in [("disk_read_bytes", 2.1e6), ("disk_written_bytes", 3.4e6)] {
-        samples.push(counter(metric, rate * elapsed_s, ts_ms).with_label("device", "nvme0n1"));
+        let seed = seed(&format!("nvme0n1{metric}"));
+        samples.push(
+            counter(metric, cumulative(seed, rate, ts_ms), ts_ms).with_label("device", "nvme0n1"),
+        );
+    }
+    // Espace pris par Docker : les images grossissent avec les mises à jour.
+    let growth = 1.0 + 0.02 * days_since_anchor(ts_ms).rem_euclid(8.0);
+    for (metric, gib) in [
+        ("container_df_images_bytes", 18.4 * growth),
+        ("container_df_containers_bytes", 2.1),
+        ("container_df_volumes_bytes", 96.0 * growth),
+        ("container_df_build_cache_bytes", 4.2),
+        ("container_df_reclaimable_bytes", 11.5 * growth),
+    ] {
+        samples.push(gauge(metric, gib * 1_073_741_824.0, ts_ms));
     }
     for (index, (name, image, running)) in CONTAINERS.iter().enumerate() {
         let labelled =
@@ -283,14 +416,287 @@ pub fn agent_samples(ts_ms: i64) -> Vec<Sample> {
                 memory / 1_073_741_824.0 * 100.0,
                 ts_ms,
             )));
+            let pids = 8.0 + 14.0 * index as f64 + 6.0 * wave;
+            samples.push(labelled(gauge("container_pids", pids, ts_ms)));
+            // Compteurs par conteneur : réseau et disque, chacun son rythme.
+            let weight = CONTAINER_WEIGHTS[index % CONTAINER_WEIGHTS.len()];
+            for (metric, rate) in [
+                ("container_net_rx_bytes", 420_000.0 * weight),
+                ("container_net_tx_bytes", 260_000.0 * weight),
+                ("container_block_read_bytes", 90_000.0 * weight),
+                ("container_block_write_bytes", 150_000.0 * weight),
+            ] {
+                let seed = seed(&format!("{name}{metric}"));
+                samples.push(labelled(counter(metric, cumulative(seed, rate, ts_ms), ts_ms)));
+            }
         }
+        // 1 = une mise à jour de l'image existe, 0 = à jour, -1 = inconnu (arrêté).
+        let update = match (*running, *name) {
+            (false, _) => -1.0,
+            (true, "nextcloud" | "jellyfin") => 1.0,
+            (true, _) => 0.0,
+        };
+        samples.push(labelled(gauge("container_update_available", update, ts_ms)));
         samples.push(labelled(gauge(
             "container_image_age_seconds",
             (12 + 5 * index as i64) as f64 * 86_400.0,
             ts_ms,
         )));
     }
+    samples.extend(machine_health(
+        host_seed,
+        ts_ms,
+        &[
+            ("jellyfin", 18.0, 1.4e9),
+            ("dockerd", 4.0, 2.1e8),
+            ("postgres", 6.5, 6.8e8),
+            ("php-fpm", 9.0, 4.2e8),
+            ("python3", 3.0, 3.5e8),
+            ("traefik", 1.5, 9.0e7),
+        ],
+    ));
+    // Pression (PSI) et inodes : Linux seulement.
+    let pressure = [("cpu", 3.0, None), ("memory", 0.4, Some(0.1)), ("io", 1.8, Some(0.6))];
+    for (resource, some, full) in pressure {
+        samples.push(
+            gauge("agent_pressure_some_percent", some * (0.4 + 1.2 * load), ts_ms)
+                .with_label("resource", resource),
+        );
+        if let Some(full) = full {
+            samples.push(
+                gauge("agent_pressure_full_percent", full * (0.4 + 1.2 * load), ts_ms)
+                    .with_label("resource", resource),
+            );
+        }
+    }
+    for (mount, device, fstype, percent) in
+        [("/", "/dev/nvme0n1p2", "ext4", 21.0), ("/srv/data", "/dev/md0", "xfs", 4.0)]
+    {
+        for (metric, value) in
+            [("filesystem_inodes_total", 7_864_320.0), ("filesystem_inodes_used_percent", percent)]
+        {
+            samples.push(
+                gauge(metric, value, ts_ms)
+                    .with_label("mountpoint", mount)
+                    .with_label("device", device)
+                    .with_label("fstype", fstype),
+            );
+        }
+    }
+    samples.push(counter("agent_oom_kills_total", 1.0, ts_ms));
     samples
+}
+
+/// Carte « santé de la machine », commune à Linux et Windows : processus les
+/// plus gourmands (nom, part de processeur, mémoire résidente), horloge.
+fn machine_health(host_seed: u64, ts_ms: i64, processes: &[(&str, f64, f64)]) -> Vec<Sample> {
+    let load = activity(host_seed, ts_ms);
+    let mut out = Vec::new();
+    for (index, (name, cpu, rss)) in processes.iter().enumerate() {
+        let own = activity(host_seed.wrapping_add(100 + index as u64), ts_ms);
+        out.push(
+            gauge("agent_process_cpu_percent", cpu * (0.3 + 1.4 * own), ts_ms)
+                .with_label("process", *name),
+        );
+        out.push(
+            gauge("agent_process_memory_bytes", rss * (0.9 + 0.2 * load), ts_ms)
+                .with_label("process", *name),
+        );
+    }
+    // Quelques millisecondes d'écart, synchronisé (chrony, w32time).
+    let offset = 0.0008 + 0.004 * (noise(host_seed, ts_ms.div_euclid(600_000)) - 0.5);
+    out.push(gauge("agent_clock_offset_seconds", offset, ts_ms));
+    out.push(gauge("agent_clock_synchronized", 1.0, ts_ms));
+    out
+}
+
+/// Machines équipées de l'agent dans le parc fictif : la machine Docker de la
+/// maison, le contrôleur de domaine Windows du client PME, et le relais posé
+/// dans son bureau.
+pub struct AgentHost {
+    pub hostname: &'static str,
+    pub os: &'static str,
+    pub os_version: &'static str,
+    pub kernel: &'static str,
+    pub machine_id: &'static str,
+    /// Relais : interroge les équipements du site (`via_agent`).
+    pub relay: bool,
+    pub site: Option<&'static str>,
+    /// Port de la passerelle des agents du site, sur un relais.
+    pub gateway: Option<u16>,
+    pub samples: fn(i64) -> Vec<Sample>,
+}
+
+/// Contrôleur de domaine Windows du client PME.
+pub const WINDOWS_HOST: &str = "srv-dc01.muller.home.arpa";
+/// Relais du bureau du client PME.
+pub const RELAY_HOST: &str = "relay-geneva.muller.home.arpa";
+/// Site du bureau, tel que les agents le déclarent.
+pub const OFFICE_SITE: &str = "Geneva office";
+
+pub const AGENT_HOSTS: &[AgentHost] = &[
+    AgentHost {
+        hostname: AGENT_HOST,
+        os: "linux",
+        os_version: "Debian GNU/Linux 13 (trixie)",
+        kernel: "6.12.48-amd64",
+        machine_id: "demo-docker01",
+        relay: false,
+        site: None,
+        gateway: None,
+        samples: agent_samples,
+    },
+    AgentHost {
+        hostname: WINDOWS_HOST,
+        os: "windows",
+        os_version: "Windows Server 2025 Standard",
+        kernel: "10.0.26100.32995",
+        machine_id: "demo-srv-dc01",
+        relay: false,
+        site: Some(OFFICE_SITE),
+        gateway: None,
+        samples: windows_samples,
+    },
+    AgentHost {
+        hostname: RELAY_HOST,
+        os: "linux",
+        os_version: "Debian GNU/Linux 13 (trixie)",
+        kernel: "6.12.48-arm64",
+        machine_id: "demo-relay-geneva",
+        relay: true,
+        site: Some(OFFICE_SITE),
+        gateway: Some(8443),
+        samples: relay_samples,
+    },
+];
+
+/// L'hôte d'agent nommé `name`, s'il est du parc fictif.
+pub fn agent_host(name: &str) -> Option<&'static AgentHost> {
+    AGENT_HOSTS.iter().find(|host| host.hostname == name)
+}
+
+/// Processeur, mémoire, disques et réseau d'une machine : la base commune.
+#[allow(clippy::too_many_arguments)]
+fn host_basics(
+    name: &str,
+    ts_ms: i64,
+    cores: u32,
+    memory_gib: f64,
+    disks: &[(&str, &str, &str, f64, f64)],
+    nic: &str,
+    rx: f64,
+    tx: f64,
+) -> Vec<Sample> {
+    let host_seed = seed(name);
+    let load = activity(host_seed, ts_ms);
+    let memory = memory_gib * 1_073_741_824.0;
+    let used = 0.38 + 0.22 * load;
+    let mut out = vec![
+        gauge("cpu_usage_percent", 3.0 + 41.0 * load, ts_ms),
+        gauge("cpu_count", f64::from(cores), ts_ms),
+        gauge("memory_total_bytes", memory, ts_ms),
+        gauge("memory_used_bytes", memory * used, ts_ms),
+        gauge("memory_available_bytes", memory * (1.0 - used), ts_ms),
+        gauge("memory_used_percent", 100.0 * used, ts_ms),
+        gauge("uptime_seconds", (ts_ms.rem_euclid(23 * 86_400_000) / 1000) as f64, ts_ms),
+        gauge("process_count", 140.0 + 40.0 * load, ts_ms),
+    ];
+    for core in 0..cores {
+        let core_load = activity(host_seed.wrapping_add(u64::from(core)), ts_ms);
+        out.push(
+            gauge("cpu_core_usage_percent", 2.0 + 48.0 * core_load, ts_ms)
+                .with_label("core", core.to_string()),
+        );
+    }
+    for (mount, device, fstype, total_gb, fraction) in disks {
+        let total = total_gb * 1_000_000_000.0;
+        let used = total * fraction;
+        for (metric, value) in [
+            ("filesystem_total_bytes", total),
+            ("filesystem_used_bytes", used),
+            ("filesystem_free_bytes", total - used),
+            ("filesystem_used_percent", 100.0 * fraction),
+        ] {
+            out.push(
+                gauge(metric, value, ts_ms)
+                    .with_label("mountpoint", *mount)
+                    .with_label("device", *device)
+                    .with_label("fstype", *fstype),
+            );
+        }
+    }
+    for (metric, rate) in [("if_octets_in", rx), ("if_octets_out", tx)] {
+        let seed = seed(&format!("{name}{nic}{metric}"));
+        out.push(counter(metric, cumulative(seed, rate, ts_ms), ts_ms).with_label("ifname", nic));
+    }
+    for metric in ["if_errors_in", "if_errors_out"] {
+        out.push(counter(metric, 0.0, ts_ms).with_label("ifname", nic));
+    }
+    out
+}
+
+/// Ce que l'agent du contrôleur de domaine Windows enverrait à `ts_ms`.
+pub fn windows_samples(ts_ms: i64) -> Vec<Sample> {
+    let host_seed = seed(WINDOWS_HOST);
+    let load = activity(host_seed, ts_ms);
+    let mut out = host_basics(
+        WINDOWS_HOST,
+        ts_ms,
+        4,
+        16.0,
+        &[("C:\\", "C:", "NTFS", 128.0, 0.47), ("D:\\", "D:", "NTFS", 512.0, 0.63)],
+        "Ethernet0",
+        8.0e5,
+        2.4e6,
+    );
+    for (service, up) in [
+        ("NTDS", true),
+        ("DNS", true),
+        ("Netlogon", true),
+        ("W32Time", true),
+        ("DFSR", true),
+        ("Spooler", false),
+    ] {
+        out.push(
+            gauge("service_up", f64::from(u8::from(up)), ts_ms).with_label("service", service),
+        );
+    }
+    out.push(gauge("agent_windows_processor_queue_length", 0.5 + 2.5 * load, ts_ms));
+    out.push(gauge("agent_windows_memory_pages_per_second", 40.0 + 380.0 * load, ts_ms));
+    out.push(gauge("agent_windows_disk_queue_length", 0.1 + 0.9 * load, ts_ms));
+    out.extend(machine_health(
+        host_seed,
+        ts_ms,
+        &[
+            ("lsass.exe", 3.5, 1.9e8),
+            ("dns.exe", 1.2, 1.4e8),
+            ("svchost.exe", 2.8, 2.6e8),
+            ("MsMpEng.exe", 4.5, 3.1e8),
+            ("dfsrs.exe", 0.8, 9.0e7),
+            ("dumbmonit-agent.exe", 0.3, 2.4e7),
+        ],
+    ));
+    out
+}
+
+/// Ce que le relais du bureau (un petit boîtier ARM) enverrait à `ts_ms`.
+pub fn relay_samples(ts_ms: i64) -> Vec<Sample> {
+    let mut out = host_basics(
+        RELAY_HOST,
+        ts_ms,
+        4,
+        4.0,
+        &[("/", "/dev/mmcblk0p2", "ext4", 32.0, 0.29)],
+        "eth0",
+        1.5e5,
+        2.2e5,
+    );
+    out.extend(machine_health(
+        seed(RELAY_HOST),
+        ts_ms,
+        &[("dumbmonit-agent", 2.0, 4.8e7), ("systemd-journald", 0.2, 2.2e7), ("sshd", 0.1, 8.0e6)],
+    ));
+    out
 }
 
 #[cfg(test)]
@@ -323,5 +729,83 @@ mod tests {
         let tls = probe_samples("tls", EXPIRING_CERT_HOST, 1_790_000_000_000).unwrap();
         let days = tls.iter().find(|s| s.metric == "probe_ssl_cert_expiry_days").unwrap();
         assert!(days.value < 14.0, "l'alerte d'échéance doit se déclencher");
+    }
+
+    #[test]
+    fn un_compteur_cumulatif_ne_recule_jamais_et_rend_son_debit() {
+        let start = 1_790_000_000_000;
+        let rate = 2.0e6;
+        let mut last = 0.0;
+        for step in 0..600 {
+            let value = cumulative(42, rate, start + step * 300_000);
+            assert!(value >= last, "recul à l'étape {step}");
+            last = value;
+        }
+        // Sur une journée entière, le débit moyen est 0,6 fois le débit nominal.
+        let day = cumulative(42, rate, start + 86_400_000) - cumulative(42, rate, start);
+        let mean = day / 86_400.0 / rate;
+        assert!((mean - 0.6).abs() < 0.02, "{mean}");
+        // Et sur cinq minutes, il reste dans la plage de l'onde (0,15 à 1,05).
+        for step in 0..300 {
+            let at = start + step * 300_000;
+            let gained = cumulative(7, rate, at + 300_000) - cumulative(7, rate, at);
+            let local = gained / 300.0 / rate;
+            assert!((0.14..=1.06).contains(&local), "{local}");
+        }
+    }
+
+    #[test]
+    fn le_volume_de_donnees_se_remplit_et_annonce_son_echeance() {
+        let day = 86_400_000;
+        let now = anchor_ms();
+        // Dans le passé, une droite : 1,15 point par jour (à l'ondulation près).
+        let before = data_fraction(now - 7 * day);
+        let after = data_fraction(now);
+        let per_day = (after - before) / 7.0;
+        assert!((per_day - DATA_GROWTH_PER_DAY).abs() < 0.002, "{per_day}");
+        // Au démarrage il reste une dizaine de jours : sous le seuil des 30 jours
+        // de la règle livrée, et sans être déjà plein.
+        let days_to_full = (1.0 - after) / per_day;
+        assert!((8.0..16.0).contains(&days_to_full), "{days_to_full}");
+        // Un nettoyage ramène le volume au niveau de départ, sans le dépasser.
+        for step in 0..400 {
+            let fraction = data_fraction(now + step * 3_600_000);
+            assert!((0.5..0.995).contains(&fraction), "{fraction}");
+        }
+        assert!(data_fraction(now + 9 * day) < data_fraction(now + 7 * day));
+    }
+
+    #[test]
+    fn l_agent_publie_des_compteurs_par_conteneur() {
+        let samples = agent_samples(anchor_ms());
+        for metric in [
+            "container_net_rx_bytes",
+            "container_net_tx_bytes",
+            "container_block_read_bytes",
+            "container_block_write_bytes",
+        ] {
+            let running = CONTAINERS.iter().filter(|(_, _, up)| *up).count();
+            let found: Vec<_> = samples.iter().filter(|s| s.metric == metric).collect();
+            assert_eq!(found.len(), running, "{metric}");
+            assert!(found.iter().all(|s| s.kind == MetricKind::Counter && s.value > 0.0));
+        }
+        assert!(samples.iter().any(|s| s.metric == "container_df_volumes_bytes"));
+        // Le volume de données est celui de la prévision.
+        let used = samples
+            .iter()
+            .find(|s| {
+                s.metric == "filesystem_used_percent"
+                    && s.labels.get("mountpoint").is_some_and(|m| m == "/srv/data")
+            })
+            .unwrap();
+        assert!((used.value - 100.0 * data_fraction(anchor_ms())).abs() < 1e-6);
+    }
+
+    #[test]
+    fn un_equipement_simule_a_un_temps_de_reponse() {
+        for step in 0..200 {
+            let latency = device_latency("pve.home.arpa", 1_790_000_000_000 + step * 300_000);
+            assert!((0.02..0.3).contains(&latency), "{latency}");
+        }
     }
 }

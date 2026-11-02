@@ -3,7 +3,199 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## Unreleased
+## 0.15.0 — 2026-11-02
+
+### Removed
+
+- **Custom dashboards.** The Dashboards page, its API (`/api/dashboards`,
+  templates and previews), the dashboard section of backups and the demo's two
+  sample dashboards are gone; the metrics explorer stays, without its "Add to a
+  dashboard" action. Existing dashboards stay in the database but are no longer
+  read, shown or exported. Backups made before still restore everything else.
+
+### Added
+
+- **Wall music is back** (Spotify Connect, a shared link, Settings › Wall display
+  › Wall music, `/api/music/*`, kept settings read again), with a small "Now
+  playing" dock on the wall and play / pause (`POST /api/music/spotify/playback`);
+  the security policy opens only Spotify's player, script and covers and the
+  three embedded players, never on status pages.
+- **Configuration changes after an update.** Some versions need a change in the
+  `docker-compose.yml` that an update never makes for you (the first one: publish
+  port `8443`, the encrypted agent channel, introduced in 0.14.0). The server now
+  keeps a catalogue of these changes per version, with the explanation, the
+  block to copy and, when it can, an automatic check (does the agent port answer
+  from the server?). The first time an administrator opens DumbMonit after an
+  update that leaves changes pending, a window lists them. **Done** closes a
+  change (checking again first), **I'll do it later** leaves a reminder in the
+  corner of every page until it is dismissed, and a closed change never comes
+  back for its version. A change a check finds missing is listed even for an
+  instance updated long ago. The full list is in **Settings → About**; closed
+  changes are part of the backup. New routes `GET /api/upgrade-notes`,
+  `POST /api/upgrade-notes/close` and `POST /api/upgrade-notes/announce`
+  (administrator session).
+
+- **Machine health on Windows.** The agent now fills the machine health card on
+  Windows too: top processes by CPU and memory, processor queue length, memory
+  pages per second and disk queue length (`agent_windows_*`, shown among the
+  current values), and the clock offset and synchronisation read from
+  `w32tm /query /status /verbose` (same `agent_clock_*` series as on Linux).
+- **Switch panel for Omada and Aruba Central.** Switches managed by an Omada
+  controller or by Aruba Central show their ports (state, speed, PoE) in the
+  switch panel, like SNMP switches.
+- **ENTITY-SENSOR-MIB sensors in SNMP profiles.** A new `entity-sensors` profile
+  reads temperatures, voltages, currents, fan speeds and power from ENTITY-SENSOR-MIB, with
+  the scale and precision each sensor reports.
+- **Restart markers on device charts.** Host reboots (uptime going back) and
+  container restarts are marked on the charts of the device page.
+- **Expiries in deadlines.** OVH services report their expiry date and are listed
+  in deadlines; the Veeam support contract has an expiry rule and a deadline.
+- **Region map.** Azure and Infomaniak resources carry a region label and are
+  placed on the region map.
+- **Hyper Backup in the backup matrix.** Synology Hyper Backup tasks appear in the
+  backup history and matrix.
+
+### Security
+
+- **HTTPS on the web port itself.** Port 8080 now speaks HTTP and HTTPS at once
+  (told apart by the first byte), so nothing new needs publishing. TLS 1.3 and
+  TLS 1.2 with ECDHE + AEAD suites only, hybrid post-quantum key exchange
+  (X25519MLKEM768) first. Bring your own certificate with
+  `DUMBMONIT_TLS_CERT` / `DUMBMONIT_TLS_KEY` (re-read when the files change or on
+  `SIGHUP`), or use the self-signed one created at first start (its key stored
+  encrypted, its fingerprint in the log and in Settings › System › HTTPS and
+  encryption). `DUMBMONIT_TLS=off` restores plain HTTP only.
+- **Redirect to HTTPS on new installations.** A browser opening the interface
+  over plain HTTP, straight to the server, is sent to HTTPS on the same address
+  and port. Upgraded instances keep plain HTTP until an administrator turns the
+  redirect on (or `DUMBMONIT_HTTPS_REDIRECT`); a banner says when a session
+  travels in clear. The API, install scripts, agent downloads, metrics, status
+  pages, the loopback and anything behind a reverse proxy (`X-Forwarded-*`) are
+  never redirected.
+- **Stricter headers and cookies.** HSTS on HTTPS responses;
+  `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy`,
+  `Permissions-Policy`, `X-Permitted-Cross-Domain-Policies`,
+  `Origin-Agent-Cluster`, and `Cache-Control: no-store` on API answers. The
+  session cookie is `SameSite=Strict`, and over HTTPS `__Host-dumbmonit_session`
+  with `Secure`.
+- **What still travels in clear, listed.** Settings › System › HTTPS and
+  encryption lists every connection in clear or without certificate checks:
+  external VictoriaMetrics, OIDC, LDAP, SAML, monitors (`insecure_tls`, SNMP
+  v1/v2c or v3 without privacy, credentials to `http://`), notification
+  channels (plain SMTP, `http://` URLs), log destinations, agents still allowed
+  on the plain channel, unsigned agent updates.
+- The SAML sign-in URL must now be `https://` (loopback excepted).
+- Password hashes use explicit OWASP Argon2id parameters (19 MiB, 2 passes).
+- A restored backup no longer brings back a status page website link that the
+  API would refuse.
+
+### Agents
+
+- **The add-an-agent screen checks the encrypted channel first.** The server
+  dials its own agent port at the address the install command carries; when it
+  is not published, filtered or leads elsewhere, the screen shows the exact
+  `ports:` line (`"<public port>:<listen port>"`) and the firewall commands
+  instead of a command that would fail. Through a relay, it waits until the
+  relay's gateway listens and reminds which port to open on the relay. The
+  install scripts print the same diagnosis instead of a bare "server
+  unreachable".
+- Over self-signed HTTPS, the Linux/macOS install command pins the server's
+  public key (`curl --pinnedpubkey`), and the script downloads over HTTPS
+  checked by it (`--pinned-key=`).
+- **Updates blocked by unsigned builds are said up front.** Settings › Agents ›
+  Agent updates shows *Updates blocked: unsigned builds* and how to unblock;
+  agents show *Blocked: unsigned build* instead of a refusal after the fact.
+  `scripts/agent-signing-key.sh` creates the Ed25519 signing key (see
+  docs/development/agent-signing.md).
+
+### Changed
+
+- **Left menu.** It stays in place while the page scrolls; hovering the logo
+  turns it into the expand button (the collapse button sits next to the name
+  once open), Ctrl+B (⌘B on a Mac) toggles it. Settings moved to the bottom
+  with Wall mode, Docs and GitHub; wall mode is no longer in the top bar. The
+  logo and the app icons have a night-sky background instead of plain black.
+- **Needs attention.** "Silence 1 h" became a small cross that mutes the monitor
+  for 1 h, 8 h, 24 h or until a date you pick, with **Unmute** on the row.
+- **First-run guide.** The step list no longer runs over the form, and the
+  pigeon says a word at each step (and on the add-a-monitor page).
+
+- **Section tabs.** One tab strip (in the address as `?tab=`, keyboard, sticky on
+  phones) now groups the secondary pages. Monitors: List, Map, Logs and Security;
+  Alerts: Now, History, Rules, Automation (log, runbooks, actions, policies) and
+  On-call, with the maintenance windows folded under Now; Status: Pages and
+  Reports. The old `/map`, `/logs`, `/security`, `/actions` and `/reports` pages
+  forward to their tab, and `/alerts#scheduled`, `#oncall`, `#history`, `#rules`
+  still land on the right one.
+- **Calmer screens.** A monitor's page shows five alert lines and a link to the
+  full history (Alerts › History is paged, fifty lines at a time, and opens
+  filtered to that monitor). A disabled monitor shows one notice instead of
+  empty panels. The twenty-odd switches of a monitor type sit in one compact
+  panel, and long option lists get three sub-headings.
+- **Words.** "Monitor" everywhere for the watched thing, "Snooze" for a quick
+  pause, "Maintenance" for a planned window, "Hide resolved" instead of "Clear all
+  resolved".
+- **Faster first load.** The interface loads the messages of the language in use
+  instead of the nine (about 4 MB of JavaScript less), identical reads started at
+  the same moment share one request, and the overview's figures are no longer
+  fetched three times on arrival.
+- **The wall is a picture again.** `/wall` opens on Paris by default (the
+  rooftop, the Eiffel Tower, the pigeons: Gaston holding a sign with the number
+  of problems, Mimi and her croissant, Jules on the lamp post) instead of a
+  black board. The sky follows the real hour; the weather follows the network
+  (clear, clouds, rain, then a thunderstorm in a real outage). The verdict,
+  the clock and the date are huge, the problems come as tiles, then every
+  monitor as a small tile; the five fleet figures and the health river move to
+  a quiet strip along the foot of the screen. Night (default) and Day themes;
+  New York, Tokyo and Dubai stay night scenes. The default city and theme are
+  set in Settings › Wall display (remembered per browser), overridden by `?city=`
+  and `?theme=` and by the Backdrop and Theme buttons on the wall; `none` is
+  still a choice. The scenes are loaded on demand, still on a phone or in a
+  hidden tab, and a still picture under reduced motion.
+- **Status pages show their scene by default.** A page whose scene list is empty
+  now draws Paris unless Simple mode is on.
+- **A complete public demo.** The demo (`DUMBMONIT_DEMO=1`) now fills every
+  page but log search. Two clients in MSP mode: the homelab, now with UniFi, Kopia,
+  DNS checks and an iSCSI LUN on the Synology NAS, and a small architecture
+  office in Geneva with a Windows domain controller (machine health card),
+  Veeam Backup & Replication 13, an Omada network, Microsoft 365 and Entra ID,
+  polled through a relay agent placed in the office. The Linux agent reports
+  the full machine health card (top processes, pressure, inodes, clock). The
+  seed also fills teams and folders, accounts, on-call rotas and escalation
+  policies, silences, runbooks, scheduled reports, more
+  notification channels (never used), sites on the world map with the relay
+  link, known vulnerabilities (never downloaded in the demo), four status
+  pages, one per night scene, with an ongoing incident and a planned
+  maintenance. The backfilled history of backup jobs runs once a day, so the
+  backup matrix reads one run per day. The wall shows the night city closest to
+  the viewer by default in the demo. Log search stays off: the demo has no log
+  store.
+
+- **A fuller demo.** The demo estate now carries 30 days of history (last week
+  at five-minute resolution) and shows what the recent releases added: charts
+  on every monitor, latency and p95 columns filled, 30-day availability below
+  100 % for monitors that are down, a storage forecast ("full in about N
+  days", shown in the console's Forecast panel), a core switch with ports and
+  weathermap traffic, a threat map fed by made-up CrowdSec and Cloudflare
+  counts, domain and licence deadlines, a backup matrix with a few failed
+  nights, a new device found by the network scan, and two status pages with
+  Paris and Tokyo night scenes. Everything is computed in memory from a fixed
+  seed.
+- **Terraform provider.** Built with Go 1.27.3 and up-to-date dependencies
+  (gRPC, `golang.org/x/net`, `x/text`, `x/sys`), which closes the open advisories
+  on them; a new workflow builds, vets and scans it with `govulncheck`.
+- **arm64 images for stable releases.** Each stable release also gets
+  linux/arm64 server and agent images, built on a native ARM runner; pre-releases
+  and `:edge` stay amd64 only.
+
+### Fixed
+
+- A monitor page no longer fails with "Could not load the metrics — rated is not
+  defined" for the kinds that chart counters as rates.
+
+- **Agent self-update.** The trial run of a freshly downloaded agent
+  (`--version`) is tried again when Linux briefly reports the file as busy
+  (ETXTBSY), instead of failing the update.
 
 ## 0.14.2 — 2026-10-28
 

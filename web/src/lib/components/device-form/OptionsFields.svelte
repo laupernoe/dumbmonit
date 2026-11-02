@@ -8,6 +8,10 @@
 	 * its own default. Two list-shaped inputs are drawn generically from the
 	 * description: `checklist` (tick boxes from `items`) and `rows` (lines
 	 * with the `columns` the server names, stored as JSON).
+	 *
+	 * Switches are the bulk of a long list (a hypervisor has twenty): they are
+	 * pulled together into one compact panel, two columns on a wide screen,
+	 * under the fields that need typing.
 	 */
 	import { Plus, X } from 'lucide-svelte';
 	import type { CollectorOption } from '#lib/api/index.js';
@@ -37,10 +41,11 @@
 
 	/** Text inputs get the full row: they often hold lists or long values. */
 	function span(option: CollectorOption): string {
-		return option.input === 'text' || option.input === 'boolean' || option.input === 'checklist' || option.input === 'rows'
-			? 'sm:col-span-2'
-			: '';
+		return option.input === 'text' || option.input === 'checklist' || option.input === 'rows' ? 'sm:col-span-2' : '';
 	}
+
+	const switches = $derived(options.filter((option) => option.input === 'boolean'));
+	const fields = $derived(options.filter((option) => option.input !== 'boolean'));
 
 	// --- checklist -------------------------------------------------------------
 	function ticked(option: CollectorOption): string[] {
@@ -82,15 +87,12 @@
 	const rowMessages = $derived({ invalid: m.deviceform_options_rows_invalid(), duplicate: m.deviceform_options_rows_duplicate() });
 </script>
 
+{#if fields.length > 0}
 <div class="grid gap-4 sm:grid-cols-2">
-	{#each options as option (option.key)}
+	{#each fields as option (option.key)}
 		{@const id = `option-${option.key}`}
 		<div class={span(option)}>
-			{#if option.input === 'boolean'}
-				<Field label={option.label} for={id} help={option.help} inline>
-					<Toggle {id} checked={checked(option)} onchange={(value) => set(option.key, value ? 'true' : 'false')} />
-				</Field>
-			{:else if option.input === 'checklist'}
+			{#if option.input === 'checklist'}
 				{@const on = ticked(option)}
 				<fieldset class="grid gap-2" aria-describedby={option.help ? `${id}-help` : undefined}>
 					<legend class="mb-1 flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-1">
@@ -249,3 +251,24 @@
 		</div>
 	{/each}
 </div>
+{/if}
+
+{#if switches.length > 0}
+	<!-- One thin line between rows, drawn by the gap over the line-coloured backdrop. -->
+	<ul
+		class={`grid gap-px overflow-hidden rounded-lg border border-line bg-line ${switches.length > 1 ? 'md:grid-cols-2' : ''} ${fields.length > 0 ? 'mt-4' : ''}`}
+		role="list"
+	>
+		{#each switches as option (option.key)}
+			{@const id = `option-${option.key}`}
+			<li class="bg-surface px-3 py-2">
+				<Field label={option.label} for={id} help={option.help} inline>
+					<Toggle {id} checked={checked(option)} onchange={(value) => set(option.key, value ? 'true' : 'false')} />
+				</Field>
+			</li>
+		{/each}
+		{#if switches.length > 1 && switches.length % 2 === 1}
+			<li class="hidden bg-surface md:block" aria-hidden="true"></li>
+		{/if}
+	</ul>
+{/if}

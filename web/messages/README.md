@@ -2,7 +2,10 @@
 
 `{locale}.json` (en is the base) are the only message files read (`messages/*.json`, not recursive).
 Translators edit `<locale>.json` and send a pull request (see CONTRIBUTING.md).
-Compiled by Paraglide into `m.<key>()`.
+Compiled by Paraglide into `m.<key>()` (one module per language, `locale-modules`).
+At runtime `src/lib/i18n/messages.ts` stands in for Paraglide's `m` (alias in `vite.config.ts`)
+and loads only the language in use. A new language needs a loader line in that file
+(`tests/i18n-lookup.test.mjs` checks it).
 
 ## Workflow
 

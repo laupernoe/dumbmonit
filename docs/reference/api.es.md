@@ -618,6 +618,7 @@ que no se acepta ningún token (solo sesión).
 | `GET` | `/api/music/spotify/token` | none | Un token de acceso de Spotify de corta duración para el reproductor del muro. Solo sesión. |
 | `GET`, `PUT` | `/api/music/speaker` | read, write | El altavoz de Spotify del muro tal como lo muestra Settings; renombrarlo (admin). |
 | `POST` | `/api/music/speaker/report`, `/play` | none | Un muro reporta el estado de su altavoz; reproduce la cuenta en él. Solo sesión. |
+| `POST` | `/api/music/spotify/playback` | none | Pausa o reanuda la cuenta desde el muro, dondequiera que suene. Solo sesión. |
 
 ## Alertas {#alerts}
 

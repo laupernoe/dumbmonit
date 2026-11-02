@@ -166,6 +166,9 @@ pub use websocket::WebsocketCollector;
 pub use smtp::options::DEFAULT_HELO as SMTP_DEFAULT_HELO;
 /// Requête exécutée par défaut par les sondes de base de données.
 pub use sql::options::DEFAULT_QUERY as SQL_DEFAULT_QUERY;
+// Lecture d'un certificat X.509 (dates, sujet, émetteur), pour le serveur qui
+// présente le sien en HTTPS.
+pub use tls::cert::{CertInfo, parse_der as parse_certificate};
 
 #[cfg(test)]
 mod tests {

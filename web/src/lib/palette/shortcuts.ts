@@ -20,9 +20,9 @@ export const SHORTCUTS: Shortcut[] = [
 	{ id: 'devices', keys: 'g d', href: '/targets' },
 	{ id: 'alerts', keys: 'g a', href: '/alerts' },
 	{ id: 'status', keys: 'g s', href: '/status' },
-	{ id: 'map', keys: 'g m', href: '/map' },
-	{ id: 'security', keys: 'g x', href: '/security' },
-	{ id: 'logs', keys: 'g l', href: '/logs', admin: true },
+	{ id: 'map', keys: 'g m', href: '/targets?tab=map' },
+	{ id: 'security', keys: 'g x', href: '/targets?tab=security' },
+	{ id: 'logs', keys: 'g l', href: '/targets?tab=logs', admin: true },
 	{ id: 'add', keys: 'g n', href: '/targets/new', admin: true },
 	{ id: 'help', keys: '?' }
 ];
@@ -33,9 +33,9 @@ export const ENTRY_SHORTCUT: Record<string, string> = {
 	'page:/targets': 'g d',
 	'page:/alerts': 'g a',
 	'page:/status': 'g s',
-	'page:/map': 'g m',
-	'page:/security': 'g x',
-	'page:/logs': 'g l',
+	'page:/targets?tab=map': 'g m',
+	'page:/targets?tab=security': 'g x',
+	'page:/targets?tab=logs': 'g l',
 	'action:add': 'g n',
 	'action:shortcuts': '?'
 };

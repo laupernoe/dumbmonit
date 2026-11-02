@@ -6,7 +6,9 @@
 	import { BookOpen } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getHealth, type ComponentHealth, type Health } from '#lib/api/index.js';
-	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { Button, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { upgradeNotes } from '#lib/stores/upgradenotes.svelte.js';
 	import { whatsNew } from '#lib/stores/whatsnew.svelte.js';
 	import { releaseFor } from '#lib/whatsnew/releases.js';
 	import UpdateNotice from '#lib/components/settings/UpdateNotice.svelte';
@@ -35,6 +37,13 @@
 			controller.abort();
 			clearInterval(timer);
 		};
+	});
+
+	// The configuration changes an update asked for (administrators): the list
+	// itself is the window mounted by the root layout.
+	const upgradeNotesShown = $derived(auth.user?.role === 'admin' && !auth.demo);
+	$effect(() => {
+		if (upgradeNotesShown) upgradeNotes.load({ quiet: true }).catch(() => {});
 	});
 
 	const COMPONENTS: { key: 'database' | 'victoria'; name: () => string; role: () => string }[] = [
@@ -78,6 +87,23 @@
 	{/if}
 
 	<UpdateNotice onSeeWhatsNew={() => whatsNew.reopen()} />
+
+	{#if upgradeNotesShown && upgradeNotes.overview}
+		<div class="mt-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-line pt-4 text-sm" data-testid="upgrade-notes-link">
+			<div class="min-w-0 flex-1 basis-64">
+				<h3 class="font-semibold text-ink">{m.upgrade_about_title()}</h3>
+				<p class="mt-0.5 text-ink-2">{m.upgrade_about_text()}</p>
+			</div>
+			<div class="flex flex-wrap items-center gap-3">
+				{#if upgradeNotes.pending > 0}
+					<Plate tone="warning" label={m.upgrade_about_pending({ count: upgradeNotes.pending })} />
+				{:else}
+					<Plate tone="ghost" label={m.upgrade_about_none()} />
+				{/if}
+				<Button variant="secondary" size="sm" onclick={() => upgradeNotes.show('all')}>{m.upgrade_about_open()}</Button>
+			</div>
+		</div>
+	{/if}
 
 	<div class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-4 text-sm">
 		<a href="https://dumbmonit.readthedocs.io/en/latest/" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 font-medium text-signal-ink hover:underline">

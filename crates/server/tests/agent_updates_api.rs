@@ -30,9 +30,16 @@ struct Fleet {
 
 /// Instance qui livre un binaire Linux signé, un administrateur et un jeton.
 async fn fleet() -> Fleet {
+    fleet_with(true).await
+}
+
+/// La même, avec un binaire signé ou non (build sans clé de signature).
+async fn fleet_with(signed: bool) -> Fleet {
     let agents = tempfile::tempdir().expect("répertoire des agents");
     std::fs::write(agents.path().join(FILE), BINARY).unwrap();
-    std::fs::write(agents.path().join(format!("{FILE}.sig")), [7u8; 64]).unwrap();
+    if signed {
+        std::fs::write(agents.path().join(format!("{FILE}.sig")), [7u8; 64]).unwrap();
+    }
     let dir = agents.path().to_path_buf();
     let app = common::setup_with(move |config| config.agent_dir = dir).await;
     app.create_admin().await;
@@ -271,4 +278,27 @@ async fn the_update_settings_are_for_administrators_in_a_session() {
     assert_eq!(reply.status, StatusCode::FORBIDDEN, "{}", reply.body);
     let reply = fleet.app.get("/api/agent/updates", None).await;
     assert_eq!(reply.status, StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn an_unsigned_build_blocks_the_updates_and_the_view_says_so() {
+    // Un build fait sans clé de signature : le binaire livré n'a pas de `.sig`.
+    let fleet = fleet_with(false).await;
+    let (secret, target) = enrolled(&fleet).await;
+    let reply = push(&fleet, Some(&secret), running(&"a".repeat(64))).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert!(reply.body.get("agent_update").is_none(), "rien n'est proposé : {}", reply.body);
+
+    let view = fleet.app.get("/api/agent/updates", Some(&fleet.admin)).await;
+    assert_eq!(view.status, StatusCode::OK, "{}", view.body);
+    assert_eq!(view.body["blocked_unsigned"], true);
+    assert_eq!(agent_status(&view, target)["status"], "unsigned");
+
+    // Accepter les builds non signés (développement) débloque.
+    let reply = fleet
+        .app
+        .put("/api/agent/updates", json!({ "allow_unsigned": true }), Some(&fleet.admin))
+        .await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(reply.body["blocked_unsigned"], false);
 }

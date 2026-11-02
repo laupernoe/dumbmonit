@@ -13,6 +13,7 @@ use crate::crypto::Cipher;
 use crate::multisite::MultiSite;
 use crate::storage::Storage;
 use crate::tsdb::{SampleSink, Victoria};
+use crate::web_tls::WebTls;
 
 /// État partagé par tous les gestionnaires HTTP et par le planificateur.
 #[derive(Clone)]
@@ -24,6 +25,7 @@ pub struct AppState(
     Arc<AgentTls>,
     Arc<MultiSite>,
     Arc<Storage>,
+    Arc<WebTls>,
 );
 
 pub struct Inner {
@@ -45,6 +47,7 @@ impl AppState {
             Arc::new(AgentTls::new()),
             Arc::new(MultiSite::new()),
             Arc::new(Storage::default()),
+            Arc::new(WebTls::new()),
         )
     }
 
@@ -84,6 +87,13 @@ impl AppState {
     /// tests n'ont aucun processus.
     pub fn storage(&self) -> &Storage {
         &self.6
+    }
+
+    /// HTTPS du port de l'interface : configuration TLS, certificat en
+    /// service, redirection (voir [`crate::web_tls`]). Vide dans les tests :
+    /// seul `main` charge un certificat.
+    pub fn web_tls(&self) -> &Arc<WebTls> {
+        &self.7
     }
 }
 

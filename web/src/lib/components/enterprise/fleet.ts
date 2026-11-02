@@ -100,6 +100,34 @@ export async function loadLatency(rangeSeconds: number, signal?: AbortSignal): P
 	return out;
 }
 
+export interface FleetLatencyTrend {
+	/** p95 of every probe's p95 per step, in milliseconds: `[seconds, ms]` points. */
+	p95: [number, number][];
+	/** Median of every probe's median per step, in milliseconds. */
+	median: [number, number][];
+}
+
+/**
+ * Response time across the fleet over the range, about 120 points: the p95
+ * (how slow the slow ones get) and the median (how the fleet usually does),
+ * both read the way the p95 figure is, one quantile per probe then across.
+ */
+export async function loadFleetLatency(rangeSeconds: number, signal?: AbortSignal): Promise<FleetLatencyTrend> {
+	const step = Math.max(60, Math.round(rangeSeconds / 120));
+	const end = Date.now();
+	const start = end - rangeSeconds * 1000;
+	const across = (q: number) =>
+		`quantile(${q}, quantile_over_time(${q}, dumbmonit_probe_duration_seconds[${step}s])) * 1000`;
+	const [p95, median] = await Promise.all([
+		queryRange({ query: across(0.95), start, end, step }, signal),
+		queryRange({ query: across(0.5), start, end, step }, signal)
+	]);
+	return {
+		p95: p95[0] ? numbers(p95[0]) : [],
+		median: median[0] ? numbers(median[0]) : []
+	};
+}
+
 export interface FleetFigures {
 	/** p95 response time per monitor over the range, in milliseconds. */
 	p95: Map<TargetId, number>;

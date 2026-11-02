@@ -585,6 +585,7 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 | `GET` | `/api/music/spotify/token` | none | Краткоживущий токен доступа Spotify для плеера экрана. Только сессия. |
 | `GET`, `PUT` | `/api/music/speaker` | read, write | Колонка Spotify экрана в том виде, как её показывает Settings; переименовать её (admin). |
 | `POST` | `/api/music/speaker/report`, `/play` | none | Экран сообщает состояние своей колонки; воспроизвести на ней учётную запись. Только сессия. |
+| `POST` | `/api/music/spotify/playback` | none | Поставить на паузу или возобновить учётную запись с экрана, где бы она ни играла. Только сессия. |
 
 ## Оповещения
 

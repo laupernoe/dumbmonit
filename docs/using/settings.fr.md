@@ -14,7 +14,7 @@ Réglages contient ce qui est administratif : l'instance elle-même, votre compt
 | Mur | `/settings/wall` | Mode mural : ce qu'il montre, et comment l'ouvrir ([Mode mur](wall.md)) |
 | Système | `/settings/system` | Sauvegarde, Fichiers de configuration, DumbMonit lui-même, Données et rétention, Journaux, API et assistants, À propos |
 
-Chaque section garde son ancre : `/settings#agents` redirige vers `/settings/monitoring#agents`. Les anciens liens (`/alerts#notifications`) redirigent aussi vers le nouvel emplacement. Les pages de statut et les rapports ne sont plus dans les Réglages : ils ont leur propre page, **Pages de statut** (`/status`) et **Rapports** (`/reports`) ; `/settings/status` et `/settings/reports` y redirigent. La musique, les actualités et les widgets du mur ont disparu : leurs anciens liens (`#music`, `#news`, `#widgets`) ouvrent l'onglet Mur.
+Chaque section garde son ancre : `/settings#agents` redirige vers `/settings/monitoring#agents`. Les anciens liens (`/alerts#notifications`) redirigent aussi vers le nouvel emplacement. Les pages de statut et les rapports ne sont plus dans les Réglages : ils ont leur propre page, **Pages de statut** (`/status`) et **Rapports** (`/reports`) ; `/settings/status` et `/settings/reports` y redirigent. Les actualités et les widgets du mur ont disparu : leurs anciens liens (`#news`, `#widgets`) ouvrent l'onglet Mur, où se trouve **Musique murale** (`#music`).
 
 ## Apparence {#appearance}
 
@@ -26,9 +26,13 @@ publiques gardent leurs thèmes clair et sombre.
 
 **Ouvrir le mode mural** : le tableau de la console, en plein écran, pour un
 moniteur dans la pièce. ++esc++ le quitte, et la palette de commandes l'ouvre
-depuis n'importe où. Le mur n'a plus de musique, d'actualités ni de widgets ;
-une ville de nuit peut, au choix, s'afficher derrière son verdict. Voir
-[Mode mur](wall.md).
+depuis n'importe où. Le mur n'a plus d'actualités ni de widgets ; une ville de
+nuit peut, au choix, s'afficher derrière son verdict. Voir [Mode mur](wall.md).
+
+**Musique murale** : reliez un compte Spotify (le mur devient un haut-parleur
+Spotify Connect et montre ce qui joue, avec lecture / pause), ou envoyez un lien
+Spotify, Deezer ou YouTube à tous les murs. Voir [Musique sur le
+mur](wall.md#music-on-the-wall).
 
 ## Compte et sécurité
 

@@ -1283,6 +1283,74 @@ export interface AuthStatus {
 	passkeys?: boolean;
 	/** Public demo mode: sign in with demo / demo; every change answers 403 `{ demo: true }`. */
 	demo: boolean;
+	/** HTTPS on the web port, for the "session in clear" banner. */
+	https?: HttpsStatus;
+}
+
+/** `AuthStatus.https`: nothing secret, the fingerprint is what every client receives. */
+export interface HttpsStatus {
+	/** The web port also serves HTTPS. */
+	available: boolean;
+	/** This request came over HTTPS (direct, or through a trusted proxy). */
+	secure: boolean;
+	fingerprint_sha256: string | null;
+	/** The certificate is self-signed: browsers warn once. */
+	self_signed: boolean;
+}
+
+// --- HTTPS and cleartext report (Settings → Security) -----------------------
+// Mirrors `GET/PUT /api/security/https` (crates/server/src/api/https.rs).
+
+export interface HttpsCertificate {
+	source: 'provided' | 'self_signed';
+	/** SHA-256 of the certificate, as browsers show it (AB:CD:…). */
+	fingerprint_sha256: string;
+	/** `sha256//…`, the public-key pin of `curl --pinnedpubkey` (self-signed only). */
+	public_key_pin: string | null;
+	subject: string;
+	issuer: string;
+	not_after: string | null;
+	names: string[];
+}
+
+/** One place where data still travels in clear, or without certificate checks. */
+export interface HttpsFinding {
+	area: 'web' | 'storage' | 'notifications' | 'monitors' | 'logs' | 'sign_in' | 'agents' | 'backups' | string;
+	code: string;
+	severity: 'warning' | 'info';
+	/** Name or address of the item; never a secret. */
+	subject: string;
+	link: string | null;
+}
+
+export interface HttpsView {
+	enabled: boolean;
+	available: boolean;
+	certificate: HttpsCertificate | null;
+	error: string | null;
+	redirect: boolean;
+	/** Forced by DUMBMONIT_HTTPS_REDIRECT: the setting cannot be changed here. */
+	redirect_forced: boolean | null;
+	request_https: boolean;
+	request_tls: boolean;
+	trusted_proxies: number;
+	hsts: string;
+	findings: HttpsFinding[];
+}
+
+/** `POST /api/agent/tls/check`: is the encrypted agent channel reachable where agents will dial? */
+export type AgentChannelOutcome = 'ok' | 'dns' | 'refused' | 'timeout' | 'tls' | 'foreign';
+export interface AgentChannelCheck {
+	enabled: boolean;
+	url: string | null;
+	host: string | null;
+	/** Port agents dial (DUMBMONIT_AGENT_PUBLIC_PORT, else the listen port). */
+	port: number | null;
+	/** Port inside the container (DUMBMONIT_AGENT_LISTEN). */
+	listen_port: number | null;
+	/** Absent through a relay (the server cannot see the site's network) or when the channel is off. */
+	outcome: AgentChannelOutcome | null;
+	relay: { relay_id: number; relay_name: string; host: string; port: number; listening: boolean } | null;
 }
 
 export interface CreateUserPayload {
@@ -1460,6 +1528,8 @@ export interface AuthState {
 	passkeys: boolean;
 	/** Public demo mode (read-only, fictional data). */
 	demo: boolean;
+	/** HTTPS on the web port; `null` for a server that does not say. */
+	https: HttpsStatus | null;
 }
 
 /** A passkey (WebAuthn credential) of the current account. Mirrors `auth::passkeys::PasskeyView`. */
@@ -5051,6 +5121,54 @@ export interface UpdateInfo {
 	error: string | null;
 }
 
+// --- Configuration changes after an update ----------------------------------
+
+/** Where a change stands for this instance (`Status` in `crates/server/src/upgrade_notes.rs`). */
+export type UpgradeNoteStatus = 'pending' | 'closed' | 'clear';
+
+/** Verdict of an automatic check: the change is in place, missing, or cannot be told from here. */
+export type UpgradeDetectionState = 'ok' | 'missing' | 'unknown';
+
+export interface UpgradeDetection {
+	state: UpgradeDetectionState;
+	/** Why, in a sentence (server text). */
+	detail: string;
+}
+
+/** One change a version asks for. Mirrors `NoteView` in `crates/server/src/upgrade_notes.rs`. */
+export interface UpgradeNote {
+	id: string;
+	/** Version that introduced it. */
+	version: string;
+	title: string;
+	/** What changed and why (server text). */
+	summary: string;
+	/** `docker-compose.yml` block to copy. */
+	compose: string;
+	/** Command to run afterwards. */
+	apply: string | null;
+	docs_url: string | null;
+	status: UpgradeNoteStatus;
+	/** Automatic check, for a change that has one and is not closed. */
+	detection: UpgradeDetection | null;
+	/** Server timestamp (UTC without suffix). */
+	closed_at: string | null;
+}
+
+/** `GET /api/upgrade-notes`: mirrors `Overview` in `crates/server/src/upgrade_notes.rs`. */
+export interface UpgradeNotes {
+	/** Running version. */
+	current: string;
+	/** Version the instance came from. */
+	upgraded_from: string | null;
+	/** The window should open by itself (changes pending, not yet shown for this version). */
+	announce: boolean;
+	/** Changes to apply. */
+	pending: number;
+	/** Every known change: pending first, then closed, then the rest. */
+	notes: UpgradeNote[];
+}
+
 // --- Bulk import of websites (crates/server/src/api/targets_import.rs) -------
 
 export type TargetImportStatus = 'ok' | 'created' | 'skipped' | 'error';
@@ -5725,7 +5843,6 @@ export type ClientKind =
 	| 'rule'
 	| 'silence'
 	| 'report'
-	| 'dashboard'
 	| 'schedule'
 	| 'escalation_policy'
 	| 'runbook'
@@ -5744,7 +5861,6 @@ export type ClientAssignments = Partial<
 		| 'rules'
 		| 'silences'
 		| 'reports'
-		| 'dashboards'
 		| 'oncall_schedules'
 		| 'oncall_policies'
 		| 'runbooks'
@@ -6230,7 +6346,9 @@ export type AgentUpdateStatus =
 	| 'read_only'
 	| 'disabled_locally'
 	| 'unsupported'
-	| 'no_binary';
+	| 'no_binary'
+	/** The shipped build has no signature and unsigned builds are not accepted. */
+	| 'unsigned';
 export interface AgentUpdateOutcome {
 	outcome: 'succeeded' | 'failed' | 'rolled_back' | 'refused';
 	version: string | null;
@@ -6258,6 +6376,8 @@ export interface AgentUpdates {
 	settings: AgentUpdateSettings;
 	version: string;
 	build: string | null;
+	/** Updates are blocked: a shipped build is unsigned and unsigned builds are not accepted. */
+	blocked_unsigned: boolean;
 	binaries: { platform: string; sha256: string; signed: boolean }[];
 	rollout: { canaries: number; canaries_updated: number; open: boolean; reason: string | null };
 	agents: AgentUpdateAgent[];
@@ -6404,138 +6524,8 @@ export interface LogInputs {
 	dropped: number;
 }
 
-// --- Dashboards and metrics explorer ----------------------------------------
-// Mirrors `crates/server/src/api/dashboards.rs` and `metrics.rs` (catalog).
-
-export type DashboardId = number;
-
-export type WidgetKind = 'chart' | 'stat' | 'group' | 'alerts' | 'text';
-
-export interface ChartConfig {
-	query: string;
-	unit: string;
-}
-
-export interface StatConfig {
-	query: string;
-	unit: string;
-	warn?: number;
-	crit?: number;
-	/** `above`: bad when the value is high; `below`: bad when it is low. */
-	direction: 'above' | 'below';
-}
-
-export interface GroupConfig {
-	/** Folder (`group_name`) of the monitors; empty: monitors without a folder. */
-	folder: string;
-}
-
-export interface AlertsConfig {
-	limit: number;
-}
-
-export interface TextConfig {
-	markdown: string;
-}
-
-export interface DashboardWidget {
-	/** Letters, digits, `-` and `_`; unique inside the dashboard. */
-	id: string;
-	type: WidgetKind;
-	title: string;
-	/** Column (0-11), row, width (1-12 columns) and height (rows) on the grid. */
-	x: number;
-	y: number;
-	w: number;
-	h: number;
-	/** Shape depends on `type`; see the `*Config` interfaces. */
-	config: Record<string, unknown>;
-}
-
-export interface Dashboard {
-	id: DashboardId;
-	name: string;
-	shared: boolean;
-	/** Owning account; `null` when a token made it. */
-	owner: string | null;
-	can_edit: boolean;
-	range_secs: number;
-	/** 0: no automatic refresh. */
-	refresh_secs: number;
-	widgets: DashboardWidget[];
-	created_at: string;
-	updated_at: string;
-}
-
-export interface DashboardPayload {
-	name: string;
-	shared: boolean;
-	range_secs: number;
-	refresh_secs: number;
-	widgets: DashboardWidget[];
-}
-
-export interface DashboardTemplateName {
-	id: number;
-	name: string;
-}
-
-export interface DashboardTemplateKind {
-	kind: string;
-	count: number;
-}
-
-export interface DashboardTemplate {
-	id: string;
-	/** English, as served (like the collector catalogue). */
-	title: string;
-	description: string;
-	/** A lucide icon name; unknown names fall back to a default icon. */
-	icon: string;
-	/** Device types it reads; empty: every type. */
-	requires: string[];
-	/** A series a device must publish to count (Docker containers). */
-	needs_metric: string | null;
-	/** Types it reads that the account has, most numerous first. */
-	present_kinds: DashboardTemplateKind[];
-	/** Active devices that could feed it. */
-	target_count: number;
-	widget_count: number;
-	available: boolean;
-	/** Why it cannot be used (English); null when it can. */
-	reason: string | null;
-}
-
-export interface DashboardTemplateList {
-	filters: {
-		folders: string[];
-		sites: DashboardTemplateName[];
-		/** Empty unless multi-client mode is on. */
-		clients: DashboardTemplateName[];
-	};
-	templates: DashboardTemplate[];
-}
-
-/** What the template filter can narrow by; every field is optional. */
-export interface DashboardTemplateFilter {
-	kind?: string;
-	folder?: string;
-	site?: number;
-	client?: number;
-}
-
-export interface DashboardTemplatePreview {
-	id: string;
-	/** Suggested dashboard name. */
-	name: string;
-	range_secs: number;
-	refresh_secs: number;
-	matched_count: number;
-	matched: { id: number; name: string; kind: string }[];
-	/** More than 300 devices matched: the queries carry the first 300. */
-	truncated: boolean;
-	widgets: DashboardWidget[];
-}
+// --- Metrics explorer -----------------------------------------------------
+// Mirrors `crates/server/src/api/metrics.rs` (catalog).
 
 export interface CatalogLabel {
 	name: string;

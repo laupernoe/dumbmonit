@@ -4,12 +4,16 @@
 	 * The DumbMonit pigeon: round, slate-blue, googly eyes, orange beak and feet,
 	 * a green chest patch. Drawn as geometry so it stays crisp at 16px and 400px.
 	 * `mood` moves the pupils: "watch" looks at you, "dizzy" crosses them,
-	 * "happy" looks inward. The pupils glide between moods (transform only), and
-	 * the eyelids blink every few seconds — still under reduced motion.
+	 * "happy" looks inward, "alert" shrinks them to pinpricks (something is
+	 * down) and "sleep" closes both eyes with a couple of z's (all good). The
+	 * pupils and lids glide between moods (transform only), and the eyelids
+	 * blink every few seconds — still under reduced motion.
 	 */
 	interface Props {
 		class?: string;
-		mood?: 'watch' | 'dizzy' | 'happy';
+		mood?: 'watch' | 'dizzy' | 'happy' | 'alert' | 'sleep';
+		/** Accessible name, when the pigeon says something (a status); the generic name otherwise. */
+		label?: string;
 		/** The occasional blink; off for a pigeon that must stay perfectly still. */
 		blink?: boolean;
 		/**
@@ -25,7 +29,8 @@
 		mood = 'watch',
 		blink = true,
 		startled = false,
-		flap = false
+		flap = false,
+		label
 	}: Props = $props();
 
 	/** Pupil rest positions: "watch". Moods move them by an offset. */
@@ -42,7 +47,7 @@
 	const shiftR = $derived(`translate(${pupils.r[0] - R[0]}px, ${pupils.r[1] - R[1]}px)`);
 </script>
 
-<svg viewBox="0 0 280 320" class={`mascot-svg ${blink ? 'mascot-blink' : ''} ${startled ? 'mascot-startled' : ''} ${flap ? 'mascot-flap' : ''} ${className}`} role="img" aria-label={m.misc2_mascot_aria()}>
+<svg viewBox="0 0 280 320" class={`mascot-svg ${blink ? 'mascot-blink' : ''} ${startled || mood === 'alert' ? 'mascot-startled' : ''} ${mood === 'sleep' ? 'mascot-sleep' : ''} ${flap ? 'mascot-flap' : ''} ${className}`} role="img" aria-label={label ?? m.misc2_mascot_aria()}>
 	<!-- feet -->
 	<path d="M96 266h30v20c0 8-6 14-14 14H86c-7 0-11-6-9-12 3-11 10-22 19-22zM184 266h-30v20c0 8 6 14 14 14h26c7 0 11-6 9-12-3-11-10-22-19-22z" fill="#e97b3a" stroke="#1e2640" stroke-width="12" stroke-linejoin="round" />
 	<!-- body -->
@@ -66,6 +71,11 @@
 	<!-- eyelids: body-coloured, folded away above each eye until a blink -->
 	<circle cx="96" cy="118" r="52" class="lid" fill="#6f83a3" stroke="#1e2640" stroke-width="12" />
 	<circle cx="184" cy="120" r="42" class="lid lid--right" fill="#6f83a3" stroke="#1e2640" stroke-width="12" />
+	<!-- asleep: the lids' crease and two z's drifting off the head -->
+	<g class="asleep" fill="none" stroke-linecap="round" stroke-linejoin="round">
+		<path d="M64 128q32 22 64 0M158 128q26 18 52 0" stroke="#1e2640" stroke-width="10" />
+		<path d="M214 30h24l-24 26h24M246 4h15l-15 16h15" stroke="#6f83a3" stroke-width="8" />
+	</g>
 	<!-- beak -->
 	<path d="M114 150c8-10 44-10 52 0l-26 46z" fill="#e97b3a" stroke="#1e2640" stroke-width="10" stroke-linejoin="round" />
 	<path d="M120 152c6-6 34-6 40 0" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" />
@@ -88,6 +98,20 @@
 		transform-box: fill-box;
 		transform-origin: top;
 		transform: scaleY(0);
+		transition: transform 240ms cubic-bezier(0.2, 0, 0, 1);
+	}
+	/* Asleep: both lids down and held there, the crease and the z's showing. */
+	.asleep {
+		opacity: 0;
+		transition: opacity 240ms cubic-bezier(0.2, 0, 0, 1);
+	}
+	.mascot-sleep .asleep {
+		opacity: 1;
+	}
+	.mascot-sleep .lid,
+	.mascot-sleep.mascot-blink .lid {
+		transform: scaleY(1);
+		animation: none;
 	}
 	/* Flap: each wing pivots about where it meets the body, mirrored. */
 	.wing {
@@ -147,6 +171,10 @@
 			transition: none;
 		}
 		.pupil circle {
+			transition: none;
+		}
+		.lid,
+		.asleep {
 			transition: none;
 		}
 		.wing {

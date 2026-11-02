@@ -16,8 +16,6 @@ mod channels;
 pub(crate) mod clients;
 mod collectors;
 mod cves;
-mod dashboard_templates;
-pub mod dashboards;
 mod deadlines;
 pub(crate) mod discovery;
 mod error;
@@ -25,6 +23,7 @@ mod forecasts;
 mod geocode;
 mod gitops;
 mod health;
+mod https;
 mod ical;
 mod ingest;
 mod instance;
@@ -39,6 +38,7 @@ mod luns;
 mod mcp;
 mod metrics;
 mod monitor_imports;
+mod music;
 mod netconfig;
 mod netinventory;
 mod notify_policy;
@@ -88,6 +88,7 @@ mod topology_traffic;
 mod totp;
 mod truenas;
 mod update;
+mod upgrade_notes;
 mod users;
 mod webchange;
 mod webpush;
@@ -133,6 +134,12 @@ pub fn agent_routes(state: &AppState) -> Router<AppState> {
 }
 
 pub fn router(state: AppState) -> Router {
+    router_with(state, crate::music::MusicHub::official())
+}
+
+/// Le même routeur, avec l'état de la musique du mur fourni par l'appelant —
+/// les tests y branchent un faux Spotify.
+pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router {
     let auth_state = AuthState::from_env(&state.config);
 
     // Tout ce qui touche à l'instance — lecture comprise : la liste des
@@ -242,6 +249,8 @@ pub fn router(state: AppState) -> Router {
         .route("/agent/install", get(ingest::install_params))
         // Canal chiffré des agents : état, exigence de mTLS, rotation de l'autorité.
         .merge(agent_tls::routes())
+        // HTTPS de l'interface, redirection et relevé de ce qui passe en clair.
+        .merge(https::routes())
         // Mise à jour automatique des agents : réglages, état, « Update now ».
         .merge(agent_updates::routes())
         .route("/tokens", get(tokens::list).post(tokens::create))
@@ -266,8 +275,6 @@ pub fn router(state: AppState) -> Router {
         .merge(topology_edits::routes())
         // Emplacements et carte du monde (`locations.rs`).
         .merge(locations::routes())
-        // Tableaux de bord personnalisés (`dashboards.rs`).
-        .merge(dashboards::routes())
         // Tableau des invités d'un hyperviseur Proxmox VE (`proxmox.rs`).
         .merge(proxmox::routes())
         // Fonctionnalités facultatives sautées faute de droit (`skipped_features.rs`).
@@ -329,6 +336,8 @@ pub fn router(state: AppState) -> Router {
         .merge(netconfig::routes())
         // Santé et référencement d'un site : dernière lecture et changements (`website.rs`).
         .merge(website::routes())
+        // Musique du mode mur : Spotify Connect et lien partagé (`music.rs`).
+        .merge(music::routes())
         // Note de sécurité par équipement et vue du parc (`security.rs`).
         .merge(security::routes())
         // Carte des menaces par pays, toutes sources réunies (`threats.rs`).
@@ -341,6 +350,8 @@ pub fn router(state: AppState) -> Router {
         .merge(integrations::routes())
         // Mise à jour guidée : dernière version publiée (`update.rs`).
         .merge(update::routes())
+        // Changements de configuration à faire après une mise à jour (`upgrade_notes.rs`).
+        .merge(upgrade_notes::routes())
         // Équipes et droits par dossier (`teams.rs`).
         .merge(teams::routes())
         // Procédures, actions de remédiation, politiques et journal (`remediation.rs`).
@@ -417,6 +428,11 @@ pub fn router(state: AppState) -> Router {
         // Heartbeats : l'URL secrète qu'un cron ou un script appelle (`push.rs`).
         // Ouverte par nécessité — une crontab n'a ni session ni en-tête anti-CSRF.
         .merge(push::public_routes())
+        // Retour de Spotify après l'approbation : une navigation venue de
+        // Spotify, sans session (cookie `SameSite=Strict`) ; elle ne fait que
+        // rendre le code à la page des réglages, qui termine sous sa session
+        // (`music.rs`).
+        .merge(music::public_routes())
         // Provisionnement SCIM 2.0 (Entra ID, Okta) : hors session, sous le jeton
         // dédié du fournisseur, vérifié par sa propre garde (`scim.rs`).
         .merge(scim::routes(&state));
@@ -457,6 +473,9 @@ pub fn router(state: AppState) -> Router {
         // couche qui dépose `AuthState`, dont il lit les mandataires de confiance.
         .layer(middleware::from_fn(crate::auth::cookie::secure_when_https))
         .layer(Extension(auth_state))
+        // État en mémoire de la musique du mur (autorisations en cours, jeton
+        // d'accès, lecture en cours, rapports des murs) : voir `crate::music`.
+        .layer(Extension(music_hub))
         // Mode démonstration : toute écriture refusée ici, avant l'authentification
         // et avant tout gestionnaire — une seule porte, pas une vérification par route.
         .layer(middleware::from_fn_with_state(state.clone(), crate::demo::guard))
@@ -469,6 +488,9 @@ pub fn router(state: AppState) -> Router {
         ))
         // `X-DumbMonit-Api-Version` sur toute réponse de `/api`.
         .layer(middleware::from_fn(openapi::version_header))
+        // Navigations en clair renvoyées vers HTTPS (`web_tls`). Sous la garde
+        // des domaines de page de statut, qui ne sont jamais redirigés.
+        .layer(middleware::from_fn_with_state(state.clone(), crate::web_tls::redirect))
         // Domaine public d'une page de statut : sur ce nom d'hôte, la page et
         // rien d'autre (`status_host.rs`). Sous les en-têtes de sécurité, pour
         // que ses refus les portent aussi.
@@ -486,6 +508,10 @@ pub fn router(state: AppState) -> Router {
                 path = %loggable_path(request.uri().path()),
             )
         }))
+        // La plus externe : l'adresse du client et le chiffrement de la
+        // connexion, que tout le reste lit (`ConnectInfo`, `Transport`), et HSTS
+        // sur toute réponse servie en HTTPS.
+        .layer(middleware::from_fn_with_state(state.clone(), crate::web_tls::transport))
         .with_state(state)
 }
 
@@ -550,8 +576,9 @@ fn loggable_path(path: &str) -> std::borrow::Cow<'_, str> {
 ///   risque résiduel est l'exfiltration par feuille de style injectée, qui
 ///   suppose déjà une injection HTML.
 /// - `img-src` : les icônes de l'interface sont des `data:` SVG produits par le
-///   build (les flèches de `<select>`, par exemple). L'interface y ajoute, si
-///   un fond en ligne est choisi, l'origine des tuiles de la carte du monde.
+///   build (les flèches de `<select>`, par exemple). L'interface y ajoute les
+///   pochettes de Spotify ([`CSP_MUSIC_IMG_SRC`]) et, si un fond en ligne est
+///   choisi, l'origine des tuiles de la carte du monde.
 /// - `manifest-src` : le manifeste web de l'interface (installation sur un
 ///   téléphone), sans quoi `default-src 'none'` le refuse à chaque page.
 /// - `font-src`, `connect-src` : `'self'` et rien d'autre. Aucune police
@@ -569,6 +596,56 @@ const CSP_BASE: &str = "default-src 'none'; \
 
 /// Images : celles du build (`data:` compris), partout.
 const CSP_IMG_SRC: &str = "img-src 'self' data:";
+
+/// Ce que le mode mur fait venir d'ailleurs pour la musique (`crate::music`),
+/// réservé à l'interface : une page de statut publique n'encadre rien et ne
+/// charge aucun script tiers.
+///
+/// - `frame-src` : les trois lecteurs intégrés que le mur sait construire
+///   (`web/src/lib/wall/music.ts`, liste `EMBED_ORIGINS`), plus l'iframe de
+///   lecture du Web Playback SDK de Spotify (`sdk.scdn.co/embedded/…`), qui
+///   porte le son et les DRM. Des origines `https`, sans joker ni domaine
+///   parent : l'interface reconstruit chaque adresse à partir d'un identifiant
+///   validé, et la politique garantit qu'aucune autre origine ne peut être
+///   encadrée, même si ce contrôle était contourné.
+/// - `script-src` : le script du SDK, et lui seul — le chemin complet, pas
+///   l'origine. Il ne fait aucune requête depuis la page : il crée l'iframe
+///   ci-dessus et lui parle par `postMessage`.
+/// - `img-src` : les pochettes, servies par le CDN d'images de Spotify (le
+///   serveur écarte toute autre adresse avant de la transmettre).
+///
+/// Rien en `connect-src` ni en `media-src` : c'est le serveur qui parle à l'API
+/// Spotify, et l'audio est joué dans l'iframe du SDK, sous sa propre politique.
+const CSP_MUSIC_FRAME_SRC: &str = "https://open.spotify.com https://widget.deezer.com \
+     https://www.youtube-nocookie.com https://sdk.scdn.co";
+const CSP_MUSIC_SCRIPT_SRC: &str = "https://sdk.scdn.co/spotify-player.js";
+const CSP_MUSIC_IMG_SRC: &str = "https://i.scdn.co";
+
+/// Fonctions du navigateur : celles dont l'interface se sert (plein écran et
+/// écran allumé du mode mur, clés d'accès), pour elle seule ; toutes les
+/// autres refusées, y compris à une page qui l'encadrerait.
+const PERMISSIONS_POLICY: &str = "accelerometer=(), autoplay=(), browsing-topics=(), camera=(), \
+     display-capture=(), encrypted-media=(), geolocation=(), gyroscope=(), hid=(), \
+     magnetometer=(), microphone=(), midi=(), payment=(), serial=(), usb=(), \
+     xr-spatial-tracking=(), fullscreen=(self), screen-wake-lock=(self), \
+     publickey-credentials-get=(self), publickey-credentials-create=(self)";
+
+/// La même, pour l'interface : la musique du mur y reçoit la lecture
+/// automatique et les médias protégés (DRM), pour la page elle-même (le mur
+/// vérifie que le navigateur sait jouer Spotify) et pour les seules origines
+/// de [`CSP_MUSIC_FRAME_SRC`] — sans quoi l'iframe du SDK, qui porte le son, et
+/// les lecteurs intégrés resteraient muets, quel que soit leur attribut
+/// `allow`. Tout le reste est identique à [`PERMISSIONS_POLICY`].
+const PERMISSIONS_POLICY_UI: &str = "accelerometer=(), \
+     autoplay=(self \"https://open.spotify.com\" \"https://widget.deezer.com\" \
+     \"https://www.youtube-nocookie.com\" \"https://sdk.scdn.co\"), \
+     browsing-topics=(), camera=(), display-capture=(), \
+     encrypted-media=(self \"https://open.spotify.com\" \"https://widget.deezer.com\" \
+     \"https://www.youtube-nocookie.com\" \"https://sdk.scdn.co\"), \
+     geolocation=(), gyroscope=(), hid=(), magnetometer=(), microphone=(), midi=(), \
+     payment=(), serial=(), usb=(), xr-spatial-tracking=(), fullscreen=(self), \
+     screen-wake-lock=(self), publickey-credentials-get=(self), \
+     publickey-credentials-create=(self)";
 
 /// Chemins qu'une page tierce peut encadrer : une page de statut
 /// (`/s/<slug>`) et sa vue compacte (`/s/<slug>/embed`), rien d'autre — ni les
@@ -594,6 +671,8 @@ fn is_embeddable(path: &str) -> bool {
 async fn security_headers(mut request: Request, next: Next) -> Response {
     let path_embeddable = is_embeddable(request.uri().path());
     let root = request.uri().path() == "/";
+    let api_path = request.uri().path().starts_with("/api/");
+    let public_path = request.uri().path().starts_with("/api/public/");
     // Un nonce par réponse : 128 bits d'aléa, inutilisables une seconde fois.
     let nonce = hex::encode(rand::random::<[u8; 16]>());
     request.extensions_mut().insert(spa::Nonce(nonce.clone()));
@@ -609,6 +688,24 @@ async fn security_headers(mut request: Request, next: Next) -> Response {
     let headers = response.headers_mut();
     headers.insert("x-content-type-options", HeaderValue::from_static("nosniff"));
     headers.insert("referrer-policy", HeaderValue::from_static("same-origin"));
+    // Isolation : aucune fenêtre ouverte depuis une autre origine ne garde de
+    // référence vers l'interface, et ses réponses ne se lisent pas depuis une
+    // page tierce — sauf ce qui est fait pour l'être (pages de statut, leurs
+    // badges et leur vue compacte).
+    headers.insert("cross-origin-opener-policy", HeaderValue::from_static("same-origin"));
+    let shared = embeddable || public_path || status_host;
+    headers.insert(
+        "cross-origin-resource-policy",
+        HeaderValue::from_static(if shared { "cross-origin" } else { "same-origin" }),
+    );
+    headers.insert("permissions-policy", HeaderValue::from_static(PERMISSIONS_POLICY));
+    headers.insert("x-permitted-cross-domain-policies", HeaderValue::from_static("none"));
+    headers.insert("origin-agent-cluster", HeaderValue::from_static("?1"));
+    // Les réponses de l'API ne vont dans aucun cache (jetons créés, secrets
+    // montrés une fois), sauf celles qui disent elles-mêmes le contraire.
+    if api_path && !headers.contains_key(header::CACHE_CONTROL) {
+        headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    }
     let policy = match embeddable {
         // Une page de statut est faite pour être intégrée dans l'intranet de
         // quelqu'un : lui interdire d'être encadrée la rendrait inutile.
@@ -622,13 +719,17 @@ async fn security_headers(mut request: Request, next: Next) -> Response {
         }
         false => {
             headers.insert("x-frame-options", HeaderValue::from_static("DENY"));
+            // La musique du mur : lecture automatique et DRM pour ses lecteurs.
+            headers.insert("permissions-policy", HeaderValue::from_static(PERMISSIONS_POLICY_UI));
             // Les tuiles de la carte du monde, quand un fond en ligne est
             // choisi : une seule origine, validée à l'enregistrement.
             let tiles = locations::tile_origin().map(|o| format!(" {o}")).unwrap_or_default();
-            // Rien n'est encadré et aucun script tiers n'est chargé : sans
-            // `frame-src`, `default-src 'none'` refuse toute iframe.
+            // Les lecteurs de musique du mur, le script du SDK de Spotify et
+            // les pochettes : rien d'autre n'est encadré ni chargé d'ailleurs.
             format!(
-                "{CSP_BASE}; {CSP_IMG_SRC}{tiles}; script-src 'self' 'nonce-{nonce}'; \
+                "{CSP_BASE}; {CSP_IMG_SRC} {CSP_MUSIC_IMG_SRC}{tiles}; \
+                 frame-src {CSP_MUSIC_FRAME_SRC}; \
+                 script-src 'self' 'nonce-{nonce}' {CSP_MUSIC_SCRIPT_SRC}; \
                  frame-ancestors 'none'"
             )
         }
@@ -661,10 +762,55 @@ mod tests {
     }
 
     #[test]
-    fn nothing_is_framed_and_no_third_party_script_is_loaded() {
-        assert!(!CSP_BASE.contains("frame-src"), "aucune iframe, nulle part");
+    fn music_opens_exactly_the_players_the_sdk_and_the_covers() {
+        let frames: Vec<&str> = CSP_MUSIC_FRAME_SRC.split_whitespace().collect();
+        assert_eq!(
+            frames,
+            [
+                "https://open.spotify.com",
+                "https://widget.deezer.com",
+                "https://www.youtube-nocookie.com",
+                "https://sdk.scdn.co"
+            ]
+        );
+        // Un seul script tiers, désigné par son chemin complet.
+        assert_eq!(CSP_MUSIC_SCRIPT_SRC, "https://sdk.scdn.co/spotify-player.js");
+        assert_eq!(CSP_MUSIC_IMG_SRC, "https://i.scdn.co");
+        for source in [CSP_MUSIC_FRAME_SRC, CSP_MUSIC_SCRIPT_SRC, CSP_MUSIC_IMG_SRC] {
+            assert!(!source.contains('*'), "aucun joker : {source}");
+            assert!(!source.contains("http:"), "https seulement : {source}");
+        }
+        assert!(!CSP_BASE.contains("frame-src"), "hors de l'interface, rien n'est encadré");
         assert!(!CSP_BASE.contains("img-src"), "chaque réponse choisit ses images");
         assert!(!CSP_BASE.contains("scdn") && !CSP_IMG_SRC.contains("scdn"));
+    }
+
+    /// Les directives d'une politique de fonctions, dans l'ordre.
+    fn directives(policy: &str) -> Vec<&str> {
+        policy.split(", ").collect()
+    }
+
+    #[test]
+    fn only_the_interface_lends_autoplay_and_drm_and_only_to_the_music_players() {
+        let base = directives(PERMISSIONS_POLICY);
+        let ui = directives(PERMISSIONS_POLICY_UI);
+        assert!(base.contains(&"autoplay=()") && base.contains(&"encrypted-media=()"));
+        // Les mêmes directives, dans le même ordre ; seules les deux de la
+        // musique diffèrent, et n'ouvrent que les origines encadrées.
+        assert_eq!(base.len(), ui.len(), "{PERMISSIONS_POLICY_UI}");
+        let players: Vec<String> =
+            CSP_MUSIC_FRAME_SRC.split_whitespace().map(|origin| format!("\"{origin}\"")).collect();
+        let lent = format!("(self {})", players.join(" "));
+        for (shared, lending) in base.iter().zip(&ui) {
+            match shared.split_once('=') {
+                Some((feature @ ("autoplay" | "encrypted-media"), _)) => {
+                    assert_eq!(*lending, format!("{feature}={lent}"));
+                }
+                _ => assert_eq!(shared, lending),
+            }
+        }
+        assert!(!PERMISSIONS_POLICY_UI.contains('*'));
+        assert!(HeaderValue::from_str(PERMISSIONS_POLICY_UI).is_ok());
     }
 
     #[test]
@@ -680,6 +826,16 @@ mod tests {
         assert!(!is_embeddable("/status/3"));
         assert!(!is_embeddable("/api/public/status/home-lab"));
         assert!(!is_embeddable("/s/"));
+    }
+
+    #[test]
+    fn the_browser_features_the_interface_does_not_use_are_denied() {
+        for denied in ["camera=()", "microphone=()", "geolocation=()", "payment=()", "usb=()"] {
+            assert!(PERMISSIONS_POLICY.contains(denied), "{denied}");
+        }
+        assert!(PERMISSIONS_POLICY.contains("publickey-credentials-get=(self)"));
+        assert!(!PERMISSIONS_POLICY.contains('*'));
+        assert!(HeaderValue::from_str(PERMISSIONS_POLICY).is_ok());
     }
 
     #[test]

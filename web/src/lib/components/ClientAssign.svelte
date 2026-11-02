@@ -27,7 +27,6 @@
 		rule: 'rules',
 		silence: 'silences',
 		report: 'reports',
-		dashboard: 'dashboards',
 		schedule: 'oncall_schedules',
 		escalation_policy: 'oncall_policies',
 		runbook: 'runbooks',
