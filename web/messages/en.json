@@ -920,8 +920,6 @@
 	"console_panel_oncall": "On call",
 	"console_panel_oncall_unknown": "Someone",
 	"console_panel_oncall_until": "{schedule}, until {time}",
-	"console_panel_silence": "Silence 1 h",
-	"console_panel_silenced": "Silenced for one hour.",
 	"console_paused": "PAUSED",
 	"console_range": "Time range",
 	"console_river_empty": "No measurements in this range yet.",

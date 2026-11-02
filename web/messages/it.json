@@ -920,8 +920,6 @@
 	"console_panel_oncall": "Reperibilità",
 	"console_panel_oncall_unknown": "Qualcuno",
 	"console_panel_oncall_until": "{schedule}, fino a {time}",
-	"console_panel_silence": "Silenzia 1 h",
-	"console_panel_silenced": "Silenziato per un'ora.",
 	"console_paused": "IN PAUSA",
 	"console_range": "Intervallo di tempo",
 	"console_river_empty": "Ancora nessuna misura in questo intervallo.",

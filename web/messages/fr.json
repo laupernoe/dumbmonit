@@ -920,8 +920,6 @@
 	"console_panel_oncall": "Astreinte",
 	"console_panel_oncall_unknown": "Quelqu'un",
 	"console_panel_oncall_until": "{schedule}, jusqu'à {time}",
-	"console_panel_silence": "Silence 1 h",
-	"console_panel_silenced": "Mis en silence pour une heure.",
 	"console_paused": "EN PAUSE",
 	"console_range": "Période",
 	"console_river_empty": "Aucune mesure sur cette période pour l'instant.",

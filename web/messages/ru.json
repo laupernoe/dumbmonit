@@ -940,8 +940,6 @@
 	"console_panel_oncall": "Дежурство",
 	"console_panel_oncall_unknown": "Кто-то",
 	"console_panel_oncall_until": "{schedule}, до {time}",
-	"console_panel_silence": "Тишина на 1 ч",
-	"console_panel_silenced": "Оповещения отключены на час.",
 	"console_paused": "ПАУЗА",
 	"console_range": "Период",
 	"console_river_empty": "За этот период измерений пока нет.",

@@ -920,8 +920,6 @@
 	"console_panel_oncall": "Prevenção",
 	"console_panel_oncall_unknown": "Alguém",
 	"console_panel_oncall_until": "{schedule}, até {time}",
-	"console_panel_silence": "Silenciar 1 h",
-	"console_panel_silenced": "Silenciado durante uma hora.",
 	"console_paused": "EM PAUSA",
 	"console_range": "Intervalo de tempo",
 	"console_river_empty": "Ainda não há medições neste intervalo.",

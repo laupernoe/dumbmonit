@@ -889,8 +889,6 @@
 	"console_panel_oncall": "值班",
 	"console_panel_oncall_unknown": "某人",
 	"console_panel_oncall_until": "{schedule}，至 {time}",
-	"console_panel_silence": "静默 1 小时",
-	"console_panel_silenced": "已静默一小时。",
 	"console_paused": "已暂停",
 	"console_range": "时间范围",
 	"console_river_empty": "此时间范围内暂无测量数据。",
