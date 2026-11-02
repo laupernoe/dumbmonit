@@ -55,7 +55,8 @@ Each server then installs the agent and **enrols under its fully qualified name*
     only. To see what would be done without changing anything, add `-WhatIf`.
 5. Without any targeting parameter, the script asks what to cover (all servers,
    one OU, or one group), prints the plan, and asks one confirmation:
-   `Continue? (Y/n)` (Enter means yes). `-Yes` skips the questions.
+   `Continue? (Y/n)` and `Refresh all servers now? (Y/n)` (Enter means yes).
+   `-Yes` skips the questions.
 6. Wait for the servers (next section), then delete the script.
 
 The script is idempotent: running it again updates the GPO in place.
@@ -99,17 +100,25 @@ Pitfalls:
 
 ## 5. Install quickly, and check
 
-Servers install at their next policy refresh, within 90 minutes. To go faster
-from the domain controller, for all servers at once:
+By default the script does not make you wait for the 90-minute policy refresh.
+Once the GPO is deployed it refreshes every targeted server right away (all
+Windows Servers of the domain, those of the OU and its children, or the members
+of the security group; disabled computers are skipped):
 
-```powershell
-Get-ADComputer -Filter 'OperatingSystem -like "*Server*"' |
-    ForEach-Object { Invoke-Command -ComputerName $_.DnsHostName -ScriptBlock {
-        klist -li 0x3e7 purge | Out-Null; gpupdate /force } }
-```
+1. on each server, `klist -li 0x3e7 purge` then `gpupdate /target:computer /force`,
+   through WinRM (16 servers at a time, short timeouts); where WinRM fails, it
+   falls back to `Invoke-GPUpdate -Force` (remote scheduled task);
+2. a table lists each machine, the method (`WinRM`, `GPUpdate` or `unreachable`)
+   and the result. An unreachable server picks the policy up within 90 minutes,
+   or run `gpupdate /force` on it;
+3. the script then waits up to 3 minutes (polling every 15 seconds, Ctrl+C to
+   stop) and shows live how many reachable servers already run the agent
+   (`X/N`). Servers that are not there yet never make the script fail.
 
-(`Invoke-GPUpdate -Computer srv01 -Force` also works, without the `klist` step,
-if remote scheduled tasks are allowed.) Or run `gpupdate /force` on one server.
+In the interactive menu the recap asks `Refresh all servers now? (Y/n)` (Enter
+means yes); `-Yes` answers yes. Use `-NoRefresh` to skip all of this (automation:
+servers then install within 90 minutes) and `-NoVerify` to refresh without
+waiting for the agents. Nothing is refreshed with `-WhatIf` or `-Remove`.
 
 To check:
 
@@ -132,7 +141,9 @@ the command line.
 | `-SecurityGroup` | Security filtering: only computers in this group apply the GPO. Also restricts who can read the SYSVOL kit. |
 | `-UseSysvol` | Also copy the agent binary to SYSVOL, for servers that cannot download it from DumbMonit. They still need to reach the server to send their measurements. |
 | `-GpoName` | Name of the GPO. Default `DumbMonit Agent`. |
-| `-Yes` | Do not ask anything. |
+| `-Yes` | Do not ask anything (servers are refreshed now). |
+| `-NoRefresh` | Do not refresh the servers after deploying (they install within 90 minutes); also skips the verification. For automation. |
+| `-NoVerify` | Refresh the servers but do not wait up to 3 minutes to see the agents appear. |
 | `-UninstallAgents` | Switch the GPO to uninstalling the agent from the servers it applies to. |
 | `-Remove` | Delete the GPO, its links and the SYSVOL kit. Installed agents keep running. |
 | `-WhatIf` | Show what would be done, change nothing. |
