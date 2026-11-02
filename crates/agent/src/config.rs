@@ -85,6 +85,7 @@ struct FileConfig {
     token: Option<String>,
     tls_url: Option<String>,
     ca_pin: Option<String>,
+    server_pin: Option<String>,
     interval_secs: Option<u64>,
     hostname: Option<String>,
     services: Option<Vec<String>>,
@@ -236,6 +237,10 @@ pub struct Config {
     /// Empreinte SHA-256 de l'autorité du serveur. Posée, l'agent ne parle
     /// qu'au canal chiffré et ne reconnaît que ce serveur.
     pub ca_pin: Option<String>,
+    /// Clé publique épinglée (`sha256//…`) du certificat autosigné du port de
+    /// l'interface, que la commande d'installation a vérifiée : l'ancien
+    /// canal ne reconnaît alors que ce serveur.
+    pub server_pin: Option<String>,
     pub interval: Duration,
     /// Nom d'hôte annoncé au serveur. `None` : celui que le système déclare.
     pub hostname: Option<String>,
@@ -320,6 +325,7 @@ impl fmt::Debug for Config {
             .field("token", &"<redacted>")
             .field("tls_url", &self.tls_url)
             .field("ca_pin", &self.ca_pin)
+            .field("server_pin", &self.server_pin)
             .field("interval", &self.interval)
             .field("hostname", &self.hostname)
             .field("services", &self.services)
@@ -443,8 +449,11 @@ impl Config {
         if server_url.is_empty() {
             bail!("the server URL is required (key 'server_url' or variable DUMBMONIT_AGENT_URL)");
         }
-        if !server_url.starts_with("http://") && !server_url.starts_with("https://") {
-            bail!("the server URL must start with http:// or https:// (got '{server_url}')");
+        if !server_url.starts_with("https://") && !is_loopback_http(&server_url) {
+            bail!(
+                "the server URL must start with https:// (got '{server_url}'): DumbMonit only \
+                 serves HTTPS"
+            );
         }
 
         let token = env.get("DUMBMONIT_AGENT_TOKEN").or(file.token).unwrap_or_default();
@@ -472,6 +481,19 @@ impl Config {
                         "ca_pin: a SHA-256 fingerprint (64 hex digits) is expected, got '{raw}'"
                     )
                 })?)
+            }
+            _ => None,
+        };
+
+        let server_pin = match env.get("DUMBMONIT_AGENT_SERVER_PIN").or(file.server_pin) {
+            Some(raw) if !raw.trim().is_empty() => {
+                let pin = raw.trim().to_string();
+                if !crate::tls::is_key_pin(&pin) {
+                    bail!(
+                        "server_pin: a public key pin (sha256//<base64>) is expected, got '{raw}'"
+                    );
+                }
+                Some(pin)
             }
             _ => None,
         };
@@ -802,6 +824,7 @@ impl Config {
             token,
             tls_url,
             ca_pin,
+            server_pin,
             interval: Duration::from_secs(interval_secs),
             hostname: env
                 .get("DUMBMONIT_AGENT_HOSTNAME")
@@ -1202,6 +1225,19 @@ fn parse_level(raw: &str) -> Result<tracing::Level> {
     }
 }
 
+/// `http://` vers la boucle locale seulement (serveur de test, tunnel SSH) :
+/// rien n'y traverse le réseau.
+fn is_loopback_http(url: &str) -> bool {
+    let Some(rest) = url.strip_prefix("http://") else { return false };
+    let authority = rest.split('/').next().unwrap_or_default();
+    let host = match authority.strip_prefix('[') {
+        Some(inner) => inner.split(']').next().unwrap_or_default(),
+        None => authority.split(':').next().unwrap_or_default(),
+    };
+    host.eq_ignore_ascii_case("localhost")
+        || host.parse::<std::net::IpAddr>().is_ok_and(|ip| ip.is_loopback())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1211,13 +1247,43 @@ mod tests {
     }
 
     #[test]
+    fn the_server_is_reached_over_https_or_the_loopback_only() {
+        assert!(is_loopback_http("http://127.0.0.1:8080"));
+        assert!(is_loopback_http("http://localhost:8080/x"));
+        assert!(is_loopback_http("http://[::1]:8080"));
+        assert!(!is_loopback_http("http://192.168.1.5:8080"));
+        assert!(!is_loopback_http("http://127.0.0.1.evil.example"));
+        assert!(!is_loopback_http("https://127.0.0.1"));
+        let plain = FileConfig {
+            server_url: Some("http://serveur:8080".into()),
+            token: Some("dmon_x".into()),
+            ..FileConfig::default()
+        };
+        assert!(Config::merge(plain, env(&[])).is_err(), "jamais le jeton en clair sur le réseau");
+        let pinned = FileConfig {
+            server_url: Some("https://serveur:8080".into()),
+            token: Some("dmon_x".into()),
+            server_pin: Some(format!("sha256//{}=", "A".repeat(43))),
+            ..FileConfig::default()
+        };
+        assert!(Config::merge(pinned, env(&[])).unwrap().server_pin.is_some());
+        let bad = FileConfig {
+            server_url: Some("https://serveur:8080".into()),
+            token: Some("dmon_x".into()),
+            server_pin: Some("sha256//AAAA".into()),
+            ..FileConfig::default()
+        };
+        assert!(Config::merge(bad, env(&[])).is_err());
+    }
+
+    #[test]
     fn the_old_variable_names_are_still_read_and_reported() {
         let config = Config::merge(
             FileConfig::default(),
-            env(&[("EZYMONIT_AGENT_URL", "http://old:8080"), ("DUMBMONIT_AGENT_TOKEN", "dmon_x")]),
+            env(&[("EZYMONIT_AGENT_URL", "https://old:8080"), ("DUMBMONIT_AGENT_TOKEN", "dmon_x")]),
         )
         .expect("configuration");
-        assert_eq!(config.server_url, "http://old:8080");
+        assert_eq!(config.server_url, "https://old:8080");
         assert_eq!(
             config.deprecated_env,
             vec![("EZYMONIT_AGENT_URL".to_string(), "DUMBMONIT_AGENT_URL".to_string())]
@@ -1226,7 +1292,7 @@ mod tests {
 
     fn file_with_url_and_token() -> FileConfig {
         FileConfig {
-            server_url: Some("http://serveur:8080/".into()),
+            server_url: Some("https://serveur:8080/".into()),
             token: Some("dmon_abc".into()),
             ..FileConfig::default()
         }
@@ -1305,7 +1371,7 @@ mod tests {
         let config = Config::merge(file_with_url_and_token(), env(&[])).expect("configuration");
         // La barre oblique finale est retirée : sans cela l'URL construite
         // contiendrait un double séparateur et le serveur répondrait 404.
-        assert_eq!(config.server_url, "http://serveur:8080");
+        assert_eq!(config.server_url, "https://serveur:8080");
         assert_eq!(config.interval, Duration::from_secs(DEFAULT_INTERVAL_SECS));
         assert!(config.docker, "la découverte Docker est active par défaut");
         assert!(config.docker_update_check);
@@ -1333,7 +1399,7 @@ cpu_per_core: true
 docker_max_containers: 20
 "#;
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
@@ -1357,7 +1423,7 @@ docker_max_containers: 20
     fn collection_scope_follows_the_environment() {
         let yaml = "interfaces_ignore: ^veth\ncpu_per_core: true\n";
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
@@ -1383,7 +1449,7 @@ docker_max_containers: 20
     fn an_empty_list_disables_a_filter() {
         let yaml = "interfaces_ignore: []\nmounts_ignore: []\n";
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
@@ -1408,7 +1474,7 @@ docker_max_containers: 20
 
         let yaml = "mounts_ignore:\n  - '[unclosed'\n";
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
@@ -1450,7 +1516,7 @@ docker_max_containers: 20
     fn plakar_klosets_are_read_from_the_file_or_the_environment() {
         let yaml = "plakar_klosets:\n  - /srv/backups/main\n  - ' '\nplakar_bin: /opt/plakar\nplakar_home: /root\nplakar_interval_secs: 120\n";
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
@@ -1472,7 +1538,7 @@ docker_max_containers: 20
     #[test]
     fn plakar_can_be_switched_off_from_the_file_or_the_environment() {
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str("plakar: false\n").expect("YAML valide")
         };
@@ -1498,7 +1564,7 @@ docker_max_containers: 20
         let yaml = "libvirt_bin: /usr/bin/virsh\nlibvirt_uri: qemu+ssh://kvm/system\n\
                     libvirt_interval_secs: 30\n";
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
@@ -1541,7 +1607,7 @@ docker_max_containers: 20
         let yaml = "sensors: false\nsmart_bin: /usr/local/sbin/smartctl\n\
                     smart_interval_secs: 900\nzfs_bin: /sbin/zpool\nzfs_interval_secs: 60\n";
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
@@ -1609,7 +1675,7 @@ docker_max_containers: 20
         assert!(Config::merge(no_url, env(&[])).is_err());
 
         let no_token =
-            FileConfig { server_url: Some("http://s:8080".into()), ..FileConfig::default() };
+            FileConfig { server_url: Some("https://s:8080".into()), ..FileConfig::default() };
         assert!(Config::merge(no_token, env(&[])).is_err());
     }
 
@@ -1658,7 +1724,7 @@ docker_max_containers: 20
     #[test]
     fn the_yaml_file_is_parsed_as_expected() {
         let yaml = r#"
-server_url: http://serveur:8080
+server_url: https://serveur:8080
 token: dmon_secret
 interval_secs: 15
 services:
@@ -1720,7 +1786,7 @@ system_health:
     fn the_long_spelling_of_the_updates_interval_is_accepted() {
         let yaml = "system_health:\n  updates_interval_seconds: 1800\n";
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
@@ -1738,7 +1804,7 @@ system_health:
 
     fn from_yaml(yaml: &str) -> FileConfig {
         FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         }
@@ -1826,7 +1892,7 @@ mdaemon: true
     #[test]
     fn restic_and_borg_repositories_come_from_the_file() {
         let yaml = r#"
-server_url: http://serveur:8080
+server_url: https://serveur:8080
 token: dmon_abc
 wireguard_peer_names:
   "zonmO992nrIL4FgJ3B/wccmu/SBkoX2kDhSYr8KpgRU=": laptop
@@ -1870,17 +1936,17 @@ backup_repos_interval_secs: 900
     #[test]
     fn a_repository_entry_must_be_complete_and_unique() {
         let missing: FileConfig = dumbmonit_collectors::yaml::from_str(
-            "server_url: http://s\ntoken: t\nrestic_repos:\n  - name: nas\n",
+            "server_url: https://s\ntoken: t\nrestic_repos:\n  - name: nas\n",
         )
         .expect("yaml");
         assert!(Config::merge(missing, env(&[])).is_err());
         let twice: FileConfig = dumbmonit_collectors::yaml::from_str(
-            "server_url: http://s\ntoken: t\nborg_repos:\n  - {name: a, repository: /r1}\n  - {name: a, repository: /r2}\n",
+            "server_url: https://s\ntoken: t\nborg_repos:\n  - {name: a, repository: /r1}\n  - {name: a, repository: /r2}\n",
         )
         .expect("yaml");
         assert!(Config::merge(twice, env(&[])).is_err());
         let too_fast: FileConfig = dumbmonit_collectors::yaml::from_str(
-            "server_url: http://s\ntoken: t\nbackup_repos_interval_secs: 5\n",
+            "server_url: https://s\ntoken: t\nbackup_repos_interval_secs: 5\n",
         )
         .expect("yaml");
         assert!(Config::merge(too_fast, env(&[])).is_err());
@@ -1906,7 +1972,7 @@ backup_repos_interval_secs: 900
 
     fn with_yaml(yaml: &str) -> FileConfig {
         FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         }

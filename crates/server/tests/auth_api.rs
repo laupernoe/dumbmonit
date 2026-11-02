@@ -151,8 +151,9 @@ async fn a_valid_password_opens_a_session_and_a_wrong_one_does_not() {
     assert!(cookie.contains("SameSite=Strict"), "{cookie}");
     assert!(cookie.contains("Path=/"), "{cookie}");
     assert!(cookie.contains("Max-Age=2592000"), "{cookie}");
-    // `Secure` n'est posé que si on le demande : le produit vit en HTTP sur un LAN.
-    assert!(!cookie.contains("Secure"), "{cookie}");
+    // Le port ne sert que HTTPS : `Secure` et le préfixe `__Host-`, toujours.
+    assert!(cookie.contains("; Secure"), "{cookie}");
+    assert!(cookie.starts_with("__Host-dumbmonit_session="), "{cookie}");
 }
 
 #[tokio::test]
@@ -184,7 +185,7 @@ async fn a_forged_cookie_is_worthless() {
     // Même identifiant de session, jeton inventé : la comparaison de l'empreinte
     // doit échouer.
     let id = real.split_once('=').unwrap().1.split_once('.').unwrap().0.to_string();
-    let forged = format!("dumbmonit_session={id}.{}", "0".repeat(64));
+    let forged = format!("__Host-dumbmonit_session={id}.{}", "0".repeat(64));
     assert_eq!(app.get("/api/targets", Some(&forged)).await.status, StatusCode::UNAUTHORIZED);
     assert_eq!(app.get("/api/targets", Some(&real)).await.status, StatusCode::OK);
 }
@@ -740,7 +741,7 @@ async fn a_legacy_instance_password_becomes_the_admin_account() {
     assert_eq!(users.body[0]["role"], json!("admin"));
 
     // La session ouverte avant la migration appartient désormais à ce compte.
-    let legacy = "dumbmonit_session=legacy.secret-de-session";
+    let legacy = "__Host-dumbmonit_session=legacy.secret-de-session";
     let status = app.get("/api/auth/status", Some(legacy)).await;
     assert_eq!(status.body["authenticated"], json!(true), "{}", status.body);
     assert_eq!(status.body["user"]["username"], json!("admin"));

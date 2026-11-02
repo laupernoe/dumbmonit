@@ -244,7 +244,7 @@
 			: m.devices_docker_why_unknown()
 	);
 	// The token is not known here: the placeholder points at Settings → Agents.
-	const origin = typeof window === 'undefined' ? 'http://server:8080' : window.location.origin;
+	const origin = typeof window === 'undefined' ? 'https://server:8080' : window.location.origin;
 	// The installer refuses a download without its checksum: carry the ones this server ships.
 	let sha256Argument = $state<string | null>(null);
 	$effect(() => {
