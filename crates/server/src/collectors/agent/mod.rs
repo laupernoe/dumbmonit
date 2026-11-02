@@ -26,6 +26,7 @@ pub mod modules;
 pub mod policy;
 mod receive;
 pub mod selfupdate;
+pub mod sentinel;
 mod store;
 mod token;
 

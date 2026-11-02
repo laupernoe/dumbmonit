@@ -6714,3 +6714,34 @@ export interface Deadline {
 	/** Negative once expired. */
 	days_left: number;
 }
+
+// --- Sentinel mode of an agent (`/api/targets/{id}/agent/sentinel`) ------------
+
+/** The notification channel; sent to the server, never read back. */
+export type SentinelChannel =
+	| { kind: 'webhook'; url: string }
+	| { kind: 'ntfy'; server: string; topic: string };
+
+export interface AgentSentinelInput {
+	enabled: boolean;
+	/** Plain `https://` addresses, 5 at most. */
+	urls: string[];
+	/** 15 to 3600. */
+	interval_secs: number;
+	/** Consecutive failures of one address before alerting, 1 to 20. */
+	threshold: number;
+	/** Omitted: the stored channel is kept. */
+	channel?: SentinelChannel;
+	/** Removes the stored channel. */
+	clear_channel?: boolean;
+}
+
+export interface AgentSentinel {
+	enabled: boolean;
+	urls: string[];
+	interval_secs: number;
+	threshold: number;
+	/** A channel is stored; its content never comes back. */
+	has_secret: boolean;
+	channel_kind: 'webhook' | 'ntfy' | null;
+}

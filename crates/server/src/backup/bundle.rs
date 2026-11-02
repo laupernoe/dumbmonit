@@ -139,6 +139,10 @@ pub struct Bundle {
     pub api_tokens: Vec<BundleApiToken>,
     #[serde(default)]
     pub push_monitors: Vec<BundlePushMonitor>,
+    /// Mode sentinelle des agents (migration 0230), canal de notification
+    /// compris : sans lui, la sentinelle restaurée n'aurait plus personne à prévenir.
+    #[serde(default)]
+    pub agent_sentinels: Vec<BundleSentinel>,
     /// Paquets d'intégration, avec leur YAML : un équipement de type `pack.x`
     /// restauré sans son paquet ne serait plus interrogé.
     #[serde(default)]
@@ -231,6 +235,7 @@ impl Bundle {
             ("agent_tokens".to_string(), self.agent_tokens.len()),
             ("api_tokens".to_string(), self.api_tokens.len()),
             ("push_monitors".to_string(), self.push_monitors.len()),
+            ("agent_sentinels".to_string(), self.agent_sentinels.len()),
             ("packs".to_string(), self.packs.len()),
             ("locations".to_string(), self.locations.len()),
             ("teams".to_string(), self.teams.len()),
@@ -840,6 +845,21 @@ impl std::fmt::Debug for BundleNetconfigVersion {
             .field("bytes", &self.content.len())
             .finish()
     }
+}
+
+/// Réglage sentinelle d'un agent. Le canal part en clair dans la charge utile,
+/// que la phrase de passe chiffre tout entière.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleSentinel {
+    pub agent: String,
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub urls: Vec<String>,
+    pub interval_secs: u64,
+    pub threshold: u32,
+    #[serde(default)]
+    pub channel: Option<dumbmonit_proto::SentinelChannel>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

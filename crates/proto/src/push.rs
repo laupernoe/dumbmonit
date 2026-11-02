@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::logs::LogsSetting;
 use crate::selfupdate::{AgentUpdateOffer, SelfUpdateInfo};
+use crate::sentinel::SentinelSetting;
 use crate::{EventLogReport, EventLogRule, Sample};
 
 /// Version du dialogue de poussée.
@@ -364,6 +365,11 @@ pub struct PushAck {
     /// `None` chez un serveur antérieur : l'agent ne collecte alors rien.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub logs: Option<LogsSetting>,
+    /// Mode sentinelle de cette machine, avec son canal de notification. Posé
+    /// seulement sur le canal chiffré, et seulement pour la machine désignée.
+    /// `None` chez un serveur antérieur : l'agent ne surveille alors rien.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sentinel: Option<SentinelSetting>,
 }
 
 /// Mode relais tel que l'interface le règle pour une machine.
@@ -507,6 +513,7 @@ mod tests {
             event_rules: None,
             agent_update: None,
             logs: None,
+            sentinel: None,
         };
         let json = serde_json::to_string(&issued).expect("sérialisation");
         assert!(json.contains(AGENT_SECRET_PREFIX));
@@ -569,6 +576,7 @@ mod tests {
             }]),
             agent_update: None,
             logs: Some(LogsSetting { enabled: true, ..LogsSetting::default() }),
+            sentinel: None,
         };
         let decoded: PushAck =
             serde_json::from_str(&serde_json::to_string(&ack).unwrap()).expect("désérialisation");
