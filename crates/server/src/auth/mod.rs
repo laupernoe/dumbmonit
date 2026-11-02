@@ -291,4 +291,3 @@ impl AuthError {
 }
 
 pub type AuthResult<T> = Result<T, AuthError>;
-

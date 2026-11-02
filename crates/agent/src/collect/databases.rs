@@ -190,8 +190,22 @@ pub struct Detected {
 /// Mots qui désignent un service annexe d'un moteur, pas le moteur : agent,
 /// routeur, exporteur de métriques, lanceur…
 const SIDE_SERVICE_WORDS: &[&str] = &[
-    "exporter", "router", "setup", "agent", "launcher", "browser", "writer", "olap", "integration",
-    "reporting", "analysis", "fdhost", "telemetry", "vss", "pgbouncer", "pgadmin",
+    "exporter",
+    "router",
+    "setup",
+    "agent",
+    "launcher",
+    "browser",
+    "writer",
+    "olap",
+    "integration",
+    "reporting",
+    "analysis",
+    "fdhost",
+    "telemetry",
+    "vss",
+    "pgbouncer",
+    "pgadmin",
 ];
 
 /// Ce qu'un nom de service dit du moteur : `(moteur, instance, version)`.
@@ -433,9 +447,8 @@ pub fn detect(facts: &Facts) -> Vec<Detected> {
             continue;
         };
         let key = instance.to_ascii_lowercase();
-        if let Some(existing) = found
-            .iter_mut()
-            .find(|d| d.engine == engine && d.instance.to_ascii_lowercase() == key)
+        if let Some(existing) =
+            found.iter_mut().find(|d| d.engine == engine && d.instance.to_ascii_lowercase() == key)
         {
             existing.running |= service.running;
             continue;
@@ -461,9 +474,10 @@ pub fn detect(facts: &Facts) -> Vec<Detected> {
 
     // Registre SQL Server : version, édition, port, dossier de sauvegarde.
     for sql in &facts.sql_instances {
-        if let Some(d) = found.iter_mut().find(|d| {
-            d.engine == Engine::Sqlserver && d.instance.eq_ignore_ascii_case(&sql.name)
-        }) {
+        if let Some(d) = found
+            .iter_mut()
+            .find(|d| d.engine == Engine::Sqlserver && d.instance.eq_ignore_ascii_case(&sql.name))
+        {
             d.version = match (&sql.version, &sql.edition) {
                 (Some(v), Some(e)) => Some(format!("{v} ({e})")),
                 (Some(v), None) => Some(v.clone()),
@@ -523,7 +537,8 @@ pub fn backup_patterns(
     config: &DatabasesConfig,
     windows: bool,
 ) -> (Vec<String>, u64, bool) {
-    let declared: Vec<&BackupRule> = config.backups.iter().filter(|r| r.engine == db.engine).collect();
+    let declared: Vec<&BackupRule> =
+        config.backups.iter().filter(|r| r.engine == db.engine).collect();
     if !declared.is_empty() {
         let paths = declared.iter().flat_map(|r| r.paths.iter().cloned()).collect();
         let age = declared.iter().map(|r| r.max_age_hours).min().unwrap_or(DEFAULT_MAX_AGE_HOURS);
@@ -762,14 +777,16 @@ where
         .map(|db| {
             let (patterns, max_age_hours, declared) = backup_patterns(&db, config, windows);
             let found = if patterns.is_empty() { None } else { lookup(&patterns) };
-            let backup = judge(now_ms, found.as_ref().map(|f| f.modified_ms), max_age_hours, declared)
-                .map(|(age_secs, overdue)| BackupStat {
-                    modified_ms: found.as_ref().map(|f| f.modified_ms),
-                    size_bytes: found.as_ref().and_then(|f| f.size_bytes),
-                    age_secs,
-                    max_age_hours,
-                    overdue,
-                });
+            let backup =
+                judge(now_ms, found.as_ref().map(|f| f.modified_ms), max_age_hours, declared).map(
+                    |(age_secs, overdue)| BackupStat {
+                        modified_ms: found.as_ref().map(|f| f.modified_ms),
+                        size_bytes: found.as_ref().and_then(|f| f.size_bytes),
+                        age_secs,
+                        max_age_hours,
+                        overdue,
+                    },
+                );
             DatabaseStat { db, backup }
         })
         .collect();
@@ -794,13 +811,20 @@ pub fn samples(report: &DatabasesReport, now_ms: i64) -> Vec<Sample> {
             samples.push(gauge("agent_database_info", 1.0).with_label("version", version));
         }
         if let Some(backup) = &stat.backup {
-            samples.push(gauge("agent_database_backup_overdue", f64::from(u8::from(backup.overdue))));
-            samples.push(gauge("agent_database_backup_max_age_seconds", (backup.max_age_hours * 3600) as f64));
+            samples
+                .push(gauge("agent_database_backup_overdue", f64::from(u8::from(backup.overdue))));
+            samples.push(gauge(
+                "agent_database_backup_max_age_seconds",
+                (backup.max_age_hours * 3600) as f64,
+            ));
             if let Some(age) = backup.age_secs {
                 samples.push(gauge("agent_database_backup_age_seconds", age as f64));
             }
             if let Some(ms) = backup.modified_ms {
-                samples.push(gauge("agent_database_backup_last_timestamp_seconds", (ms / 1000) as f64));
+                samples.push(gauge(
+                    "agent_database_backup_last_timestamp_seconds",
+                    (ms / 1000) as f64,
+                ));
             }
             if let Some(size) = backup.size_bytes {
                 samples.push(gauge("agent_database_backup_size_bytes", size as f64));
@@ -832,8 +856,18 @@ async fn gather_facts() -> Option<Facts> {
             _ => String::new(),
         }
     }
-    let units = systemctl(&["list-units", "--type=service", "--all", "--plain", "--no-legend", "--no-pager"]).await;
-    let files = systemctl(&["list-unit-files", "--type=service", "--plain", "--no-legend", "--no-pager"]).await;
+    let units = systemctl(&[
+        "list-units",
+        "--type=service",
+        "--all",
+        "--plain",
+        "--no-legend",
+        "--no-pager",
+    ])
+    .await;
+    let files =
+        systemctl(&["list-unit-files", "--type=service", "--plain", "--no-legend", "--no-pager"])
+            .await;
 
     let mut services = parse_systemctl_units(&units);
     for name in parse_systemctl_unit_files(&files) {
@@ -886,7 +920,14 @@ Get-NetTCPConnection -State Listen | Select-Object -ExpandProperty LocalPort -Un
 async fn gather_facts() -> Option<Facts> {
     let mut command = tokio::process::Command::new("powershell.exe");
     command
-        .args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", FACTS_SCRIPT])
+        .args([
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            FACTS_SCRIPT,
+        ])
         .stdin(std::process::Stdio::null())
         .kill_on_drop(true)
         .creation_flags(0x0800_0000);
@@ -938,7 +979,13 @@ impl DatabasesProbe {
         if !config.enabled {
             debug!("database detection disabled by the configuration");
         }
-        Self { config: config.clone(), last: None, refreshed_at: None, task: None, announced: false }
+        Self {
+            config: config.clone(),
+            last: None,
+            refreshed_at: None,
+            task: None,
+            announced: false,
+        }
     }
 
     /// Un cycle. `None` : aucune base sur cette machine, ou première lecture pas
@@ -990,7 +1037,10 @@ mod tests {
     #[test]
     fn sql_server_service_names() {
         assert_eq!(classify("MSSQLSERVER"), Some((Engine::Sqlserver, "MSSQLSERVER".into(), None)));
-        assert_eq!(classify("MSSQL$SQLEXPRESS"), Some((Engine::Sqlserver, "SQLEXPRESS".into(), None)));
+        assert_eq!(
+            classify("MSSQL$SQLEXPRESS"),
+            Some((Engine::Sqlserver, "SQLEXPRESS".into(), None))
+        );
         assert_eq!(classify("MSSQL$PROD01"), Some((Engine::Sqlserver, "PROD01".into(), None)));
         assert_eq!(classify("SQLEXPRESS"), Some((Engine::Sqlserver, "SQLEXPRESS".into(), None)));
         assert_eq!(
@@ -1058,7 +1108,10 @@ mod tests {
             classify_service("HFSQLCS28", "HFSQL Control Center 28").map(|c| c.0),
             Some(Engine::Hfsql)
         );
-        assert_eq!(classify_service("pcs_svc", "PC SOFT HFSQL Server").map(|c| c.0), Some(Engine::Hfsql));
+        assert_eq!(
+            classify_service("pcs_svc", "PC SOFT HFSQL Server").map(|c| c.0),
+            Some(Engine::Hfsql)
+        );
         assert_eq!(classify("sshd.service"), None);
     }
 
@@ -1079,7 +1132,8 @@ not a unit line
         assert_eq!(services[2].name, "mariadb.service");
         assert!(!services[2].running);
 
-        let files = "mongod.service enabled enabled\nsnapd.service masked enabled\nfoo.timer enabled\n";
+        let files =
+            "mongod.service enabled enabled\nsnapd.service masked enabled\nfoo.timer enabled\n";
         assert_eq!(parse_systemctl_unit_files(files), vec!["mongod.service".to_string()]);
     }
 
@@ -1213,8 +1267,14 @@ garbage
             vec!["/var/opt/mssql/data/*.bak", "/var/opt/mssql/data/*.trn"]
         );
         assert!(default_patterns(&db(Engine::Sqlserver), true).is_empty());
-        assert!(default_patterns(&db(Engine::Postgresql), false).contains(&"/var/backups/postgresql/*".to_string()));
-        assert!(default_patterns(&db(Engine::Mysql), false).contains(&"/var/backups/*.sql.gz".to_string()));
+        assert!(
+            default_patterns(&db(Engine::Postgresql), false)
+                .contains(&"/var/backups/postgresql/*".to_string())
+        );
+        assert!(
+            default_patterns(&db(Engine::Mysql), false)
+                .contains(&"/var/backups/*.sql.gz".to_string())
+        );
         let hf = Detected { exe_dir: Some("C:\\PC SOFT\\HFSQL".into()), ..db(Engine::Hfsql) };
         assert_eq!(default_patterns(&hf, true)[0], "C:\\PC SOFT\\HFSQL\\Backup\\*");
     }
@@ -1223,8 +1283,16 @@ garbage
     fn declared_paths_replace_the_defaults_and_the_strictest_age_wins() {
         let config = DatabasesConfig {
             backups: vec![
-                BackupRule { engine: Engine::Postgresql, paths: vec!["/srv/dump/*.dump".into()], max_age_hours: 48 },
-                BackupRule { engine: Engine::Postgresql, paths: vec!["/srv/wal/*".into()], max_age_hours: 24 },
+                BackupRule {
+                    engine: Engine::Postgresql,
+                    paths: vec!["/srv/dump/*.dump".into()],
+                    max_age_hours: 48,
+                },
+                BackupRule {
+                    engine: Engine::Postgresql,
+                    paths: vec!["/srv/wal/*".into()],
+                    max_age_hours: 24,
+                },
             ],
             ..DatabasesConfig::default()
         };
@@ -1258,21 +1326,26 @@ garbage
     fn report_uses_the_lookup_and_emits_metrics() {
         let now = 2_000_000_000_000;
         let facts = Facts {
-            services: vec![svc("postgresql@16-main.service", "", true), svc("mongod.service", "", true)],
+            services: vec![
+                svc("postgresql@16-main.service", "", true),
+                svc("mongod.service", "", true),
+            ],
             ..Facts::default()
         };
-        let report = build_report(detect(&facts), &DatabasesConfig::default(), false, now, |patterns| {
-            patterns.iter().any(|p| p.contains("postgresql")).then(|| FoundBackup {
-                modified_ms: now - 2 * 3_600_000,
-                size_bytes: Some(1234),
-            })
-        });
+        let report =
+            build_report(detect(&facts), &DatabasesConfig::default(), false, now, |patterns| {
+                patterns.iter().any(|p| p.contains("postgresql")).then(|| FoundBackup {
+                    modified_ms: now - 2 * 3_600_000,
+                    size_bytes: Some(1234),
+                })
+            });
         assert_eq!(report.databases.len(), 2);
         let pg = report.databases.iter().find(|d| d.db.engine == Engine::Postgresql).expect("pg");
         let backup = pg.backup.as_ref().expect("backup");
         assert_eq!(backup.age_secs, Some(7200));
         assert!(!backup.overdue);
-        let mongo = report.databases.iter().find(|d| d.db.engine == Engine::Mongodb).expect("mongo");
+        let mongo =
+            report.databases.iter().find(|d| d.db.engine == Engine::Mongodb).expect("mongo");
         assert!(mongo.backup.is_none(), "emplacement usuel vide : pas de série overdue");
 
         let samples = samples(&report, now);
@@ -1307,11 +1380,22 @@ garbage
     fn patterns_are_split_by_platform() {
         assert_eq!(
             split_pattern("D:\\Backups\\SQL\\*.bak", true),
-            ("D:/".to_string(), vec!["Backups".to_string(), "SQL".to_string(), "*.bak".to_string()])
+            (
+                "D:/".to_string(),
+                vec!["Backups".to_string(), "SQL".to_string(), "*.bak".to_string()]
+            )
         );
         assert_eq!(
             split_pattern("/var/backups/postgresql/*", false),
-            ("/".to_string(), vec!["var".to_string(), "backups".to_string(), "postgresql".to_string(), "*".to_string()])
+            (
+                "/".to_string(),
+                vec![
+                    "var".to_string(),
+                    "backups".to_string(),
+                    "postgresql".to_string(),
+                    "*".to_string()
+                ]
+            )
         );
         assert_eq!(split_pattern("\\\\srv\\share\\*.bak", true).0, "//");
     }
@@ -1326,7 +1410,12 @@ garbage
         std::fs::write(&new, b"12345").expect("write");
         std::fs::write(dir.path().join("ignored.txt"), b"x").expect("write");
         let past = SystemTime::now() - Duration::from_secs(10 * 3600);
-        std::fs::File::options().write(true).open(&old).expect("open").set_modified(past).expect("mtime");
+        std::fs::File::options()
+            .write(true)
+            .open(&old)
+            .expect("open")
+            .set_modified(past)
+            .expect("mtime");
         let pattern = format!("{}/*.bak", dir.path().display());
         let found = newest_match(&[pattern], false).expect("found");
         assert_eq!(found.size_bytes, Some(5));

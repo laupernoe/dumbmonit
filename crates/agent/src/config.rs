@@ -823,11 +823,8 @@ impl Config {
             )?),
         };
 
-        let databases = Self::merge_databases(
-            file.databases.unwrap_or_default(),
-            &env,
-            wanted("databases"),
-        )?;
+        let databases =
+            Self::merge_databases(file.databases.unwrap_or_default(), &env, wanted("databases"))?;
 
         let perf_counters = Self::merge_perf_counters(
             file.perf_counters,
@@ -1034,10 +1031,7 @@ impl Config {
                 bail!("databases.backups.{key}: at least one path is needed");
             }
             if paths.len() > databases::MAX_PATHS_PER_ENGINE {
-                bail!(
-                    "databases.backups.{key}: at most {} paths",
-                    databases::MAX_PATHS_PER_ENGINE
-                );
+                bail!("databases.backups.{key}: at most {} paths", databases::MAX_PATHS_PER_ENGINE);
             }
             let max_age_hours = entry.max_age_hours.unwrap_or(databases::DEFAULT_MAX_AGE_HOURS);
             if max_age_hours == 0 {

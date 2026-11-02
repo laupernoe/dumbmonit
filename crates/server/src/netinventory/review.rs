@@ -42,8 +42,7 @@ pub fn classify(device: &DeviceView, monitored: &HashSet<String>) -> Review {
         return Review::Ignored;
     }
     let by_ip = monitored.contains(&device.ip.to_lowercase());
-    let by_name =
-        device.hostname.as_deref().is_some_and(|h| monitored.contains(&h.to_lowercase()));
+    let by_name = device.hostname.as_deref().is_some_and(|h| monitored.contains(&h.to_lowercase()));
     if by_ip || by_name {
         return Review::Monitored;
     }

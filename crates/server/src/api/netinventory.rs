@@ -24,8 +24,8 @@ use axum::http::StatusCode;
 use dumbmonit_proto::{ScanDepth, TargetId};
 use serde::{Deserialize, Serialize};
 
-use crate::api::{ApiError, ApiResult};
 use crate::api::targets::{self, TargetPayload};
+use crate::api::{ApiError, ApiResult};
 use crate::auth::middleware::AdminIdentity;
 use crate::auth::teams::{Access, TeamAccess};
 use crate::netinventory::review::{self, ItemResult, MAX_BULK, Outcome};
@@ -351,10 +351,7 @@ pub async fn review_state(
 }
 
 /// `POST /api/discovery/review/seen`
-pub async fn review_seen(
-    _: AdminIdentity,
-    State(state): State<AppState>,
-) -> ApiResult<StatusCode> {
+pub async fn review_seen(_: AdminIdentity, State(state): State<AppState>) -> ApiResult<StatusCode> {
     store::mark_batch_seen(&state.pool).await?;
     Ok(StatusCode::NO_CONTENT)
 }
