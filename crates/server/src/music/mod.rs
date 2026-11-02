@@ -465,9 +465,9 @@ impl MusicHub {
         }))
     }
 
-    /// Les adresses officielles, sauf surcharge par l'environnement.
-    pub fn from_env() -> Self {
-        Self::new(Endpoints::from_env())
+    /// Le hub de service, sur les adresses officielles de Spotify.
+    pub fn official() -> Self {
+        Self::new(Endpoints::official())
     }
 
     /// Commence une autorisation pour ce compte DumbMonit ; rend l'adresse où

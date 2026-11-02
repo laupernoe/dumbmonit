@@ -83,9 +83,9 @@ pub const REFRESH_TOKEN_DAYS: i64 = 182;
 /// Seule origine d'image que l'interface affiche (CSP `img-src`).
 pub const COVER_ORIGIN: &str = "https://i.scdn.co";
 
-/// Adresses de Spotify. Remplaçables pour éprouver le parcours complet contre
-/// un faux serveur (`DUMBMONIT_SPOTIFY_ACCOUNTS_URL`,
-/// `DUMBMONIT_SPOTIFY_API_URL`) ; aucune raison d'y toucher en production.
+/// Adresses de Spotify : les officielles en service ; les tests passent les
+/// leurs (faux serveur) à `MusicHub::new`. Aucune surcharge par
+/// l'environnement : les jetons ne partent jamais ailleurs que chez Spotify.
 #[derive(Debug, Clone)]
 pub struct Endpoints {
     pub accounts: String,
@@ -97,17 +97,6 @@ impl Endpoints {
         Self {
             accounts: "https://accounts.spotify.com".into(),
             api: "https://api.spotify.com".into(),
-        }
-    }
-
-    pub fn from_env() -> Self {
-        let official = Self::official();
-        let var = |key: &str| {
-            crate::config::env_var(key).map(|url| url.trim().trim_end_matches('/').to_string())
-        };
-        Self {
-            accounts: var("DUMBMONIT_SPOTIFY_ACCOUNTS_URL").unwrap_or(official.accounts),
-            api: var("DUMBMONIT_SPOTIFY_API_URL").unwrap_or(official.api),
         }
     }
 }

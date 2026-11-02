@@ -134,7 +134,7 @@ pub fn agent_routes(state: &AppState) -> Router<AppState> {
 }
 
 pub fn router(state: AppState) -> Router {
-    router_with(state, crate::music::MusicHub::from_env())
+    router_with(state, crate::music::MusicHub::official())
 }
 
 /// Le même routeur, avec l'état de la musique du mur fourni par l'appelant —
