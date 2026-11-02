@@ -47,6 +47,18 @@ LANGUAGES = {
            "Эта страница ещё не переведена: показана английская версия."),
     "zh-cn": ("zh-Hans", "zh", "简体中文", "此页面尚未翻译，以下为英文版本。"),
 }
+# Label of the "copy the page as Markdown" button and its confirmation, per RTD code.
+COPY_MD = {
+    "en": ("Copy as Markdown", "Copied"),
+    "fr": ("Copier en Markdown", "Copié"),
+    "de": ("Als Markdown kopieren", "Kopiert"),
+    "es": ("Copiar como Markdown", "Copiado"),
+    "it": ("Copia come Markdown", "Copiato"),
+    "pt": ("Copiar como Markdown", "Copiado"),
+    "pt-br": ("Copiar como Markdown", "Copiado"),
+    "ru": ("Копировать как Markdown", "Скопировано"),
+    "zh-cn": ("复制为 Markdown", "已复制"),
+}
 RTD_HOST = "https://dumbmonit.readthedocs.io"
 SITE = "https://dumbmonit.app/"
 REPO = "https://github.com/laupernoe/dumbmonit"
@@ -140,6 +152,7 @@ def on_config(config):
     config.extra["site"] = _site_nav(code, docs_home)
     # The logo goes back to the website, like the site's own header.
     config.extra["homepage"] = config.extra["site"]["home"]
+    config.extra["copy_md"] = dict(zip(("label", "done"), COPY_MD[code]))
 
     if suffix:
         data = yaml.safe_load((Path(__file__).parent / "nav_translations.yml").read_text())
