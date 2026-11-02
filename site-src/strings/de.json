@@ -323,5 +323,9 @@
  "badge_beta": "Beta",
  "badge_agent": "Über den Agent",
  "fam_more_name": "Weitere Integrationen",
- "fam_more_blurb": "Die neuesten Monitortypen, noch keiner Familie zugeordnet."
+ "fam_more_blurb": "Die neuesten Monitortypen, noch keiner Familie zugeordnet.",
+ "rm_votes_top": "Am häufigsten gewünscht",
+ "rm_votes_top_note": "Sortiert nach 👍 auf GitHub, täglich aktualisiert.",
+ "rm_votes_aria": "{n} Stimmen",
+ "rm_votes_vote": "Auf GitHub abstimmen"
 }
