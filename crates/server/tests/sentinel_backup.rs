@@ -37,6 +37,10 @@ async fn la_sentinelle_est_sauvegardee_et_restauree() {
         Input {
             enabled: true,
             urls: vec!["https://dumbmonit.example.org/api/health".into()],
+            pins: std::collections::BTreeMap::from([(
+                "https://dumbmonit.example.org/api/health".to_string(),
+                "AB".repeat(32),
+            )]),
             interval_secs: 30,
             threshold: 4,
             channel: Some(SentinelChannel::Webhook { url: HOOK.into() }),
@@ -72,6 +76,7 @@ async fn la_sentinelle_est_sauvegardee_et_restauree() {
     assert_eq!(restored.threshold, 4);
     assert_eq!(restored.interval_secs, 30);
     assert_eq!(restored.urls, vec!["https://dumbmonit.example.org/api/health".to_string()]);
+    assert_eq!(restored.pins.values().next(), Some(&"ab".repeat(32)));
     assert_eq!(restored.channel, Some(SentinelChannel::Webhook { url: HOOK.into() }));
 
     let again = restore(&pool, &cipher, &lot, true).await.expect("seconde restauration");

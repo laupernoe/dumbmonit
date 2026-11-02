@@ -40,13 +40,18 @@ The agent never accepts a connection. It probes outward and notifies outward.
 
 ### Which addresses
 
-The probe uses the same TLS client as the agent's own channel: the agent's
-client certificate, and the server's certificate authority pinned. So the
-addresses to watch are the ones served by that same authority, in practice the
-**agent port** of your server (for example
-`https://dumbmonit.example.org:8443/`) and, if you expose one, the relay
-gateway of another site, which carries the same end-to-end channel. Any answer
-below 500 from that port proves the server is up, whatever the path.
+- An address on **the same host as your server** (typically the agent port,
+  for example `https://dumbmonit.example.org:8443/`) is probed with the agent's
+  own channel: its client certificate, and the server's certificate authority
+  pinned.
+- Any **other** address, such as an independent instance or an exposed gateway
+  on another machine, is checked against the system's trusted root
+  certificates. Verification is never turned off, only `https://` is accepted,
+  and redirects are never followed. To require one exact certificate, write a
+  space and its SHA-256 fingerprint after the address; a different certificate
+  counts as a failure.
+
+Any answer below 500 proves the service is up, whatever the path.
 
 ## The channel is a secret
 
@@ -59,15 +64,16 @@ the saved channel** to delete it.
 
 The channel is sent to **the designated agent only**, and **only over the
 encrypted agent channel**. An agent still on the older plain channel receives
-the addresses but not the channel, and does not start. It receives nothing
-else: none of the server's other secrets.
+the addresses but not the channel, and does not start: the panel says so. It
+receives nothing else: none of the server's other secrets.
 
 ## Limits of this first version
 
 - One channel, no escalation, no schedule.
-- The agent learns its setting from the server. If the agent restarts while the
-  server is down, it cannot start the sentinel until the server is back. An
-  agent that was already running keeps watching through the outage.
+- The agent keeps its setting on disk (`sentinel.json` next to its secret
+  file, readable by its owner only, notification channel included), so the
+  sentinel starts again by itself after a restart even while the server is
+  down. Turning the sentinel off in the interface deletes the file.
 - If the sentinel machine itself loses its network, every address fails, but
   the notification cannot leave either. Place the sentinel on a machine that
   does not depend on the same link as the server.

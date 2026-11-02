@@ -2090,10 +2090,17 @@ async fn restore_agent_sentinels(
         let threshold = entry.threshold.clamp(1, dumbmonit_proto::SENTINEL_MAX_THRESHOLD);
         // Sans adresse ni canal, une sentinelle ne peut pas être active.
         let enabled = entry.enabled && !urls.is_empty() && entry.channel.is_some();
+        let pins: std::collections::BTreeMap<&String, String> = entry
+            .pins
+            .iter()
+            .filter(|(url, _)| urls.contains(url))
+            .filter_map(|(url, raw)| Some((url, dumbmonit_proto::normalize_pin(raw)?)))
+            .collect();
         let urls_json = serde_json::to_string(&urls)?;
+        let pins_json = serde_json::to_string(&pins)?;
 
         let existing = sqlx::query(
-            "SELECT enabled, urls, interval_secs, threshold, channel_enc \
+            "SELECT enabled, urls, pins, interval_secs, threshold, channel_enc \
              FROM agent_sentinel WHERE target_id = ?",
         )
         .bind(target_id)
@@ -2115,6 +2122,7 @@ async fn restore_agent_sentinels(
             if same_channel
                 && (row.try_get::<i64, _>("enabled")? != 0) == enabled
                 && row.try_get::<String, _>("urls")? == urls_json
+                && row.try_get::<String, _>("pins")? == pins_json
                 && row.try_get::<i64, _>("interval_secs")? == interval as i64
                 && row.try_get::<i64, _>("threshold")? == i64::from(threshold)
             {
@@ -2129,16 +2137,18 @@ async fn restore_agent_sentinels(
         };
         let outcome = sqlx::query(
             "INSERT INTO agent_sentinel \
-                 (target_id, enabled, urls, interval_secs, threshold, channel_enc) \
-             VALUES (?, ?, ?, ?, ?, ?) \
+                 (target_id, enabled, urls, pins, interval_secs, threshold, channel_enc) \
+             VALUES (?, ?, ?, ?, ?, ?, ?) \
              ON CONFLICT(target_id) DO UPDATE SET enabled = excluded.enabled, \
-                 urls = excluded.urls, interval_secs = excluded.interval_secs, \
+                 urls = excluded.urls, pins = excluded.pins, \
+                 interval_secs = excluded.interval_secs, \
                  threshold = excluded.threshold, channel_enc = excluded.channel_enc, \
                  updated_at = datetime('now')",
         )
         .bind(target_id)
         .bind(i64::from(enabled))
         .bind(&urls_json)
+        .bind(&pins_json)
         .bind(interval as i64)
         .bind(i64::from(threshold))
         .bind(encrypted)

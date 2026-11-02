@@ -856,6 +856,8 @@ pub struct BundleSentinel {
     pub enabled: bool,
     #[serde(default)]
     pub urls: Vec<String>,
+    #[serde(default)]
+    pub pins: std::collections::BTreeMap<String, String>,
     pub interval_secs: u64,
     pub threshold: u32,
     #[serde(default)]

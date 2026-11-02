@@ -1028,6 +1028,7 @@ async fn agent_sentinels(
             agent,
             enabled: stored.enabled,
             urls: stored.urls,
+            pins: stored.pins,
             interval_secs: stored.interval_secs,
             threshold: stored.threshold,
             channel: stored.channel,

@@ -7,6 +7,7 @@
 //! uniquement sur le canal chiffré : il porte le seul secret que la sentinelle
 //! ait à connaître, celui de son canal de notification.
 
+use std::collections::BTreeMap;
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
@@ -55,6 +56,11 @@ pub struct SentinelSetting {
     /// Adresses HTTPS à sonder (le serveur principal, la passerelle exposée).
     #[serde(default)]
     pub urls: Vec<String>,
+    /// Empreinte SHA-256 (hex) attendue du certificat feuille, par adresse, pour
+    /// une instance indépendante. Facultative : la chaîne est de toute façon
+    /// validée par les racines du système, jamais désactivée.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub pins: BTreeMap<String, String>,
     /// Période entre deux sondages, en secondes.
     #[serde(default)]
     pub interval_secs: u64,
@@ -84,6 +90,15 @@ pub fn https_authority(url: &str) -> Option<&str> {
     Some(authority)
 }
 
+/// Empreinte de certificat normalisée (64 chiffres hexadécimaux en minuscules),
+/// ou `None`. Les `:` et espaces d'une empreinte copiée d'un navigateur sont
+/// tolérés.
+pub fn normalize_pin(raw: &str) -> Option<String> {
+    let hex: String = raw.chars().filter(|c| *c != ':' && !c.is_whitespace()).collect();
+    (hex.len() == 64 && hex.chars().all(|c| c.is_ascii_hexdigit()))
+        .then(|| hex.to_ascii_lowercase())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -100,6 +115,16 @@ mod tests {
     }
 
     #[test]
+    fn a_pin_is_normalised_or_refused() {
+        let hex = "AB".repeat(32);
+        assert_eq!(normalize_pin(&hex), Some("ab".repeat(32)));
+        let colons = vec!["AB"; 32].join(":");
+        assert_eq!(normalize_pin(&colons), Some("ab".repeat(32)));
+        assert_eq!(normalize_pin("abcd"), None);
+        assert_eq!(normalize_pin(&"zz".repeat(32)), None);
+    }
+
+    #[test]
     fn the_channel_secret_never_reaches_a_debug_output() {
         let channel = SentinelChannel::Webhook { url: "https://hooks.example.org/s3cret".into() };
         assert!(!format!("{channel:?}").contains("s3cret"));
@@ -112,6 +137,7 @@ mod tests {
         let setting = SentinelSetting {
             enabled: true,
             urls: vec!["https://a.example.org".into()],
+            pins: BTreeMap::from([("https://a.example.org".to_string(), "ab".repeat(32))]),
             interval_secs: 60,
             threshold: 3,
             channel: Some(SentinelChannel::Ntfy {

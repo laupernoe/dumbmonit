@@ -33,10 +33,14 @@
 	let saved = $state(false);
 	let error = $state<unknown>(null);
 
+	/** One address per line, followed by its certificate fingerprint when it has one. */
+	const asLines = (value: AgentSentinel) =>
+		value.urls.map((url) => (value.pins[url] ? `${url} ${value.pins[url]}` : url)).join('\n');
+
 	function adopt(value: AgentSentinel) {
 		current = value;
 		enabled = value.enabled;
-		urls = value.urls.join('\n');
+		urls = asLines(value);
 		interval = value.interval_secs;
 		threshold = value.threshold;
 		kind = value.channel_kind ?? 'webhook';
@@ -68,10 +72,22 @@
 		return ntfyTopic.trim() ? { kind: 'ntfy', server: ntfyServer.trim(), topic: ntfyTopic.trim() } : undefined;
 	}
 
+	/** Splits the lines into addresses and their optional fingerprints. */
+	function parsed(): { urls: string[]; pins: Record<string, string> } {
+		const list: string[] = [];
+		const pins: Record<string, string> = {};
+		for (const line of lines(urls)) {
+			const [url, ...rest] = line.split(/\s+/);
+			list.push(url);
+			if (rest.length) pins[url] = rest.join('');
+		}
+		return { urls: list, pins };
+	}
+
 	const dirty = $derived(
 		current !== null &&
 			(enabled !== current.enabled ||
-				JSON.stringify(lines(urls)) !== JSON.stringify(current.urls) ||
+				urls !== asLines(current) ||
 				interval !== current.interval_secs ||
 				threshold !== current.threshold ||
 				clear ||
@@ -85,9 +101,11 @@
 		saved = false;
 		error = null;
 		try {
+			const { urls: list, pins } = parsed();
 			const body: AgentSentinelInput = {
 				enabled,
-				urls: lines(urls),
+				urls: list,
+				pins,
 				interval_secs: Number(interval),
 				threshold: Number(threshold)
 			};
@@ -112,6 +130,10 @@
 			<Plate tone={current?.enabled ? 'signal' : 'ghost'} label={current?.enabled ? m.agentsentinel_on() : m.agentsentinel_off()} />
 		{/snippet}
 
+		{#if !current.encrypted}
+			<p class="mb-4 rounded-md border border-warning-ink/40 p-3 text-sm text-warning-ink" role="alert">{m.agentsentinel_not_tls()}</p>
+		{/if}
+
 		<form class="grid gap-4" onsubmit={save}>
 			<div class="flex items-start gap-3">
 				<Toggle id="agent-sentinel-switch" bind:checked={enabled} label={m.agentsentinel_switch()} disabled={saving} />
@@ -129,11 +151,12 @@
 						rows="3"
 						spellcheck="false"
 						autocomplete="off"
-						placeholder="https://dumbmonit.example.org:8443/api/health"
+						placeholder="https://dumbmonit.example.org:8443/api/health\nhttps://gateway.example.org/  3f2a…(SHA-256)"
 						disabled={saving}
 						bind:value={urls}
 					></textarea>
 				</Field>
+				<p class="text-sm text-ink-2">{m.agentsentinel_pin_help()}</p>
 				<div class="grid gap-4 sm:grid-cols-2">
 					<Field label={m.agentsentinel_interval()} for="agent-sentinel-interval">
 						<input id="agent-sentinel-interval" class="input tnum" type="number" min="15" max="3600" bind:value={interval} disabled={saving} />

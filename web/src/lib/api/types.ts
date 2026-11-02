@@ -6726,6 +6726,8 @@ export interface AgentSentinelInput {
 	enabled: boolean;
 	/** Plain `https://` addresses, 5 at most. */
 	urls: string[];
+	/** Optional SHA-256 fingerprint (hex) of the certificate expected for an address. */
+	pins?: Record<string, string>;
 	/** 15 to 3600. */
 	interval_secs: number;
 	/** Consecutive failures of one address before alerting, 1 to 20. */
@@ -6739,8 +6741,11 @@ export interface AgentSentinelInput {
 export interface AgentSentinel {
 	enabled: boolean;
 	urls: string[];
+	pins: Record<string, string>;
 	interval_secs: number;
 	threshold: number;
+	/** The agent's last report came over the encrypted channel: required to be a sentinel. */
+	encrypted: boolean;
 	/** A channel is stored; its content never comes back. */
 	has_secret: boolean;
 	channel_kind: 'webhook' | 'ntfy' | null;
