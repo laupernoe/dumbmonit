@@ -372,7 +372,8 @@ mod tests {
         let gateway = find(&view, "relay_gateway");
         assert_eq!(gateway.subject.as_deref(), Some("Branch office"));
         assert!(!gateway.on_this_host);
-        assert_eq!(view.compose.matches("8443").count(), 1);
+        // Seul le port des agents (8443:8443) figure dans le bloc, pas la passerelle.
+        assert_eq!(view.compose.matches("\"8443:8443\"").count(), 1);
     }
 
     #[test]

@@ -7148,7 +7148,7 @@ paths:
       summary: Sentinel mode of an agent
       description: The notification channel is a secret and never comes back, only `has_secret` and `channel_kind`.
       security: [{ cookieAuth: [] }]
-      x-token-scope: none
+      x-token-scope: read
       responses:
         "200":
           description: The setting.
@@ -7164,7 +7164,7 @@ paths:
       summary: Make an agent a sentinel, and choose what it watches
       description: The agent watches the addresses from where it stands and notifies by itself, without the server, when they stop answering. Omitting `channel` keeps the stored one; `clear_channel` removes it. The channel only reaches the agent over the encrypted agent channel.
       security: [{ cookieAuth: [] }]
-      x-token-scope: none
+      x-token-scope: write
       requestBody:
         required: true
         content:
