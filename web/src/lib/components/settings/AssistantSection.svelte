@@ -76,15 +76,12 @@
 	async function create(event: SubmitEvent) {
 		event.preventDefault();
 		createError = null;
-		if (!name.trim()) {
-			nameError = m.settings_assistant_name_required();
-			return;
-		}
 		nameError = null;
 		creating = true;
 		try {
 			created = await createApiToken({
-				name: name.trim(),
+				// Blank: the server generates a generic dated name.
+				...(name.trim() ? { name: name.trim() } : {}),
 				scope,
 				expires_in_days: expiry === 'never' ? null : Number(expiry),
 				allowed_networks: parseNetworks(networks)
@@ -220,7 +217,7 @@
 
 		<!-- Create -->
 		<form class="mt-5 grid gap-4 sm:grid-cols-2" onsubmit={create} novalidate>
-			<Field label={m.settings_assistant_new_token()} for="api-token-name" error={nameError} help={m.settings_assistant_new_token_help()}>
+			<Field label={m.settings_assistant_new_token()} for="api-token-name" error={nameError} help={m.settings_assistant_name_help()}>
 				<input
 					id="api-token-name"
 					type="text"
