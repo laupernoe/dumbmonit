@@ -157,7 +157,7 @@ disks, services, containers, backups): they connect to the relay's
 *How does the machine reach this server?* choose **Through &lt;relay&gt;
 (site)**. Give the address the site reaches the relay at (an IP or a local
 name). The commands shown — Linux/macOS, Windows, Docker — then point at the
-relay's gateway (`--url=http://192.168.10.5:8443 --tls-url=https://192.168.10.5:8443`)
+relay's gateway (`--url=https://192.168.10.5:8443 --tls-url=https://192.168.10.5:8443`)
 and still carry the fingerprint of the **server's** certificate authority.
 The flow then waits for the first connection and lets you name the machine,
 file it in a folder and place it at a site, without leaving the page. From a

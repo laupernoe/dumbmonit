@@ -108,8 +108,8 @@ reports `victoria.embedded: false` once the switch is done.
 
 No. It reaches out to monitors and to notification services; nothing calls
 back, except agents, which need to reach the server's URL. Keep it on your
-LAN or behind a VPN; if you expose it, use a reverse proxy with TLS and set
-`DUMBMONIT_COOKIE_SECURE=1`.
+LAN or behind a VPN; if you expose it, use a reverse proxy with a public certificate that talks HTTPS to DumbMonit
+([HTTPS and encryption](install/https.md)).
 
 ## Is there an API token?
 

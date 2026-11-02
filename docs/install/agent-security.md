@@ -111,7 +111,8 @@ The design keeps the security of the direct channel:
   `/download/<agent file>`, fetched from the server over the relay's channel;
   the install command carries the SHA-256 of each binary and the script refuses
   any other. Anything else (`CONNECT`, SOCKS, other paths) is closed or answered
-  `404`.
+  `404`, and a plain `http://` request is refused: nothing is served in clear
+  on the site's network.
 - **Bounded.** The gateway holds at most 64 connections (`gateway_max_connections`),
   4 MiB/s per tunnel and direction (`gateway_rate_kib`), closes a connection
   that says nothing within 10 seconds and a tunnel idle for 15 minutes. The
@@ -162,6 +163,9 @@ stays valid.
 
 ### Enrolment approval
 
+Tokens are listed by an opaque identifier such as `tok_k3m7q2x9ab`, never by
+their secret (which is shown once, when the token is created).
+
 In **Settings > Agents > Enrolment approval**, choose what happens to a new
 machine, separately for fleet tokens and single-use tokens:
 
@@ -173,8 +177,8 @@ machine, separately for fleet tokens and single-use tokens:
 
 Defaults on a new installation: **Require approval** for fleet tokens,
 **Accept automatically** for single-use tokens (the administrator created that
-token for that machine). An instance that already had enrolment tokens before
-this version keeps accepting automatically; change it when you are ready.
+token for that machine). An instance that already had enrolment tokens when the setting appeared
+keeps accepting automatically; change it when you are ready.
 
 A waiting machine appears under **Waiting for approval** with its host name, the
 source IP address of its request, the identifier of the token it used (never the
@@ -212,7 +216,7 @@ service (its idle delay starts again). Revoking stays possible at any time.
 Machines already enrolled with a sleeping token keep reporting. On upgrade, the
 idle delay of existing tokens starts from the upgrade.
 
-These settings are part of the backup. A backup made before this version restores
+These settings are part of the backup. A backup made before the setting existed restores
 the automatic acceptance its instance had.
 
 ## Existing agents and the transition

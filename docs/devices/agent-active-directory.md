@@ -228,6 +228,17 @@ With *all servers* the default is *Never expires*, because servers added to the
 domain later must still be able to enrol; otherwise the default is 30 days.
 Machines already enrolled keep reporting after the token expires.
 
+Two more safeguards apply to a fleet token (see
+[Protecting enrolment](../install/agent-security.md#protecting-enrolment)):
+
+- **Approval.** By default a new machine enrolling with a fleet token waits for
+  an administrator in **Settings → Agents**. For a domain rollout, choose
+  *Accept automatically if the host belongs to the AD domain of the token,
+  otherwise ask*: your servers enrol at once, anything else waits.
+- **Sleep.** A fleet token that enrolled no machine for 30 days goes to sleep and
+  refuses new enrolments. Press **Reactivate** in **Settings → Agents** when you
+  add servers later. Machines already enrolled are not affected.
+
 A token that never expires keeps its safeguards: it only enrols machines **of
 your domain**, it is reusable up to the optional maximum number of servers, and
 you can revoke it at any time in **Settings, Agents**. Keep the script like a

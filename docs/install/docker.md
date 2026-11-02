@@ -171,7 +171,6 @@ you need under `environment:` of the service, as shown in
 | `DUMBMONIT_AGENT_DIR` | `/agents` | Agent binaries served under `/download/…`. |
 | `DUMBMONIT_RESET_PASSWORD` | *(empty)* | Set to `1` to clear the password and every session at startup. |
 | `DUMBMONIT_SETUP_CODE` | *(generated)* | Setup code asked by `/setup` while no admin exists. Unset, a random one is printed in the logs at each start. |
-| `DUMBMONIT_COOKIE_SECURE` | *(off)* | Set to `1` behind a TLS reverse proxy to mark the session cookie `Secure`. |
 | `DUMBMONIT_TLS_CERT` / `DUMBMONIT_TLS_KEY` | *(self-signed)* | PEM certificate chain and key to serve; re-read when they change. See [HTTPS and encryption](https.md). |
 | `DUMBMONIT_ALERT_INTERVAL_SECS` | `30` | Alert evaluation period (never below 10). |
 | `DUMBMONIT_ALERT_HISTORY_DAYS` | 90 days | Retention of alert history. See the [configuration reference](../reference/configuration.md) for a caveat about its unit. |
@@ -249,7 +248,7 @@ What the server handles on its own at the first start:
 - `EZYMONIT_*` variables are still read as a fallback, with one startup warning
   per variable (`EZYMONIT_X is deprecated, use DUMBMONIT_X`).
 - `/data/ezymonit.db` is renamed to `dumbmonit.db`.
-- Agent tokens `ezym_…` keep working; new ones are `dmon_…`. Agents keep
+- Agent tokens `ezym_…` keep working; new enrolment secrets start with `dmon_`. Agents keep
   pushing; re-run the install command on each machine when convenient, it
   [migrates the old service in place](../devices/agent.md#upgrade).
 - The session cookie changed name: everyone logs in again once. The browser's
@@ -382,8 +381,7 @@ polls the API, so any reverse proxy works without special configuration.
 Forward the scheme (`X-Forwarded-Proto`, sent by default by Caddy and Traefik)
 and declare the proxy in `DUMBMONIT_TRUSTED_PROXIES`: a request that carries
 forwarded headers is never redirected by DumbMonit itself, and from a
-trusted proxy `X-Forwarded-Proto: https` makes the session cookie `Secure` and
-turns HSTS on.
+trusted proxy `X-Forwarded-Proto: https` turns HSTS on.
 
 === "Caddy"
 
@@ -416,10 +414,9 @@ turns HSTS on.
     }
     ```
 
-When the proxy terminates TLS and is declared in `DUMBMONIT_TRUSTED_PROXIES`,
-the cookie becomes `Secure` by itself. `DUMBMONIT_COOKIE_SECURE: "1"` forces it
-for a proxy you cannot declare. Do not set it unless every browser reaches DumbMonit over HTTPS: the
-browser would never send the cookie back and login would be impossible.
+The session cookie is always `Secure` (`__Host-dumbmonit_session`), so the
+browser must reach DumbMonit over HTTPS: directly, or through a proxy that
+terminates TLS. There is no switch for it.
 
 !!! note "Agents behind a proxy"
     The install command shown when you create an agent token uses the URL your
