@@ -734,7 +734,7 @@ fn describe(path: &Path) -> Option<FoundBackup> {
     let meta = std::fs::metadata(path).ok()?;
     let modified = meta.modified().ok()?;
     let modified_ms = modified.duration_since(UNIX_EPOCH).ok()?.as_millis() as i64;
-    Some(FoundBackup { modified_ms, size_bytes: meta.is_file().then(|| meta.len()) })
+    Some(FoundBackup { modified_ms, size_bytes: meta.is_file().then_some(meta.len()) })
 }
 
 // ------------------------------------------------------------------- rapport
