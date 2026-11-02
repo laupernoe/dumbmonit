@@ -227,16 +227,20 @@
 			</p>
 		</main>
 	{:else}
-		{#if auth.demo}
-			<DemoBanner />
-		{/if}
-		{#if !onWall}
-			<CleartextBanner />
-		{/if}
+		{#snippet banners()}
+			{#if auth.demo}
+				<DemoBanner />
+			{/if}
+			{#if !onWall}
+				<CleartextBanner />
+			{/if}
+		{/snippet}
 		{#if onWelcome}
+			{@render banners()}
 			{@render children()}
 		{:else}
-			<EnterpriseShell>{@render children()}</EnterpriseShell>
+			<!-- Banners go in the page column: above the shell they would push the rail's foot off screen. -->
+			<EnterpriseShell banner={banners}>{@render children()}</EnterpriseShell>
 		{/if}
 		{#if CommandPalette && !onWall}
 			<CommandPalette />
