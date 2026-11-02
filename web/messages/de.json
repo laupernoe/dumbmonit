@@ -920,8 +920,6 @@
 	"console_panel_oncall": "Bereitschaft",
 	"console_panel_oncall_unknown": "Jemand",
 	"console_panel_oncall_until": "{schedule}, bis {time}",
-	"console_panel_silence": "1 Std. stumm",
-	"console_panel_silenced": "Für eine Stunde stummgeschaltet.",
 	"console_paused": "PAUSIERT",
 	"console_range": "Zeitraum",
 	"console_river_empty": "Noch keine Messwerte in diesem Zeitraum.",
