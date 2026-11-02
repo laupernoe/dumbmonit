@@ -93,7 +93,12 @@ impl Principal {
 #[derive(Clone)]
 pub struct CurrentPrincipal(pub Principal);
 
-/// Écritures que chacun peut faire sans être admin : sur son propre compte.
+/// Écritures que chacun peut faire sans être admin : sur son propre compte, et
+/// les gestes d'un écran mural, qui tourne volontiers sous un compte lecteur —
+/// rapporter l'état de son enceinte Spotify, faire jouer le compte Spotify
+/// dessus (« Play here »), mettre en pause et reprendre. Ces gestes n'ouvrent
+/// rien de neuf : le mur d'un lecteur reçoit déjà un jeton d'accès Spotify qui
+/// les permet (`/music/spotify/token`). Ces routes refusent les jetons d'API.
 const SELF_SERVICE: &[&str] = &[
     "/auth/logout",
     "/auth/password",
@@ -102,6 +107,9 @@ const SELF_SERVICE: &[&str] = &[
     "/auth/totp/verify",
     "/auth/passkeys/register/begin",
     "/auth/passkeys/register/finish",
+    "/music/speaker/report",
+    "/music/speaker/play",
+    "/music/spotify/playback",
 ];
 
 /// Écritures ouvertes au rôle `operator`, en plus de [`SELF_SERVICE`] : le
@@ -153,6 +161,8 @@ pub const TOKEN_DENIED: &[&str] = &[
     "/agent/tls",
     "/agent/updates",
     "/account",
+    // HTTPS de l'interface : couper la redirection se fait en session.
+    "/security/https",
     // Agir sur une machine (remédiation) reste un geste fait dans l'interface.
     "/remediation",
 ];
@@ -167,7 +177,7 @@ const TOKEN_DENIED_MESSAGE: &str = "API tokens cannot manage accounts, sessions,
 /// l'accord CORS de ce serveur — qui ne l'accorde à personne. Sa présence prouve
 /// donc que la requête vient de notre propre origine, ou d'un script qui a le
 /// jeton de session sous la main : c'est la protection contre le CSRF, en
-/// complément de `SameSite=Lax` sur le cookie.
+/// complément de `SameSite=Strict` sur le cookie.
 pub const CSRF_HEADER: &str = "x-requested-with";
 pub const CSRF_VALUE: &str = "DumbMonit";
 
@@ -387,7 +397,6 @@ fn is_self_service(path: &str) -> bool {
         || is_own_push_device(path)
         || is_own_oncall_profile(path)
         || is_own_passkey(path)
-        || is_dashboard_route(path)
 }
 
 /// Contacts, heures calmes et lien de calendrier d'astreinte : chacun gère les
@@ -401,16 +410,6 @@ fn is_own_oncall_profile(path: &str) -> bool {
             .strip_prefix("/account/contacts/")
             .is_some_and(|rest| digits(rest) || rest.strip_suffix("/test").is_some_and(digits)),
     }
-}
-
-/// Tableaux de bord : chacun crée, modifie et supprime *les siens*. Les
-/// gestionnaires (`api::dashboards`) réservent les tableaux partagés aux
-/// administrateurs et cachent les tableaux personnels d'autrui.
-fn is_dashboard_route(path: &str) -> bool {
-    path == "/dashboards"
-        || path
-            .strip_prefix("/dashboards/")
-            .is_some_and(|id| !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit()))
 }
 
 /// Clés d'accès : chacun renomme et retire *les siennes* (`api::passkeys` filtre
@@ -578,11 +577,11 @@ mod tests {
         assert!(is_self_service("/auth/passkeys/register/finish"));
         assert!(is_self_service("/api/auth/passkeys/3"));
         assert!(!is_self_service("/auth/passkeys/"));
-        assert!(is_self_service("/api/dashboards"));
-        assert!(is_self_service("/dashboards/12"));
-        assert!(!is_self_service("/dashboards/12/../../users"));
-        assert!(!is_self_service("/dashboards/"));
         assert!(!is_self_service("/auth/passkeys/3/../../users"));
+        assert!(is_self_service("/api/music/speaker/report"));
+        assert!(is_self_service("/music/spotify/playback"));
+        assert!(!is_self_service("/music/spotify/authorize"));
+        assert!(!is_self_service("/music/link"));
     }
 
     #[test]

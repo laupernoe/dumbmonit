@@ -37,14 +37,15 @@ export const SECTION_TAB: Record<string, SettingsTab> = {
 	'notifications-policy': 'notifications',
 	'quiet-hours': 'notifications',
 	wall: 'wall',
-	// Former anchors of the wall's music, news and widgets.
 	music: 'wall',
+	// Former anchors of the wall's news and widgets.
 	news: 'wall',
 	widgets: 'wall',
 	backup: 'system',
 	'config-files': 'system',
 	'self-monitoring': 'system',
 	logs: 'system',
+	https: 'system',
 	storage: 'system',
 	assistant: 'system',
 	about: 'system'
@@ -59,8 +60,8 @@ export const MOVED: Record<string, string> = {
 	status: '/status',
 	'status-pages': '/status',
 	incidents: '/status#incidents',
-	reports: '/reports',
-	'reports-sla': '/reports#reports-sla'
+	reports: '/status?tab=reports',
+	'reports-sla': '/status?tab=reports#reports-sla'
 };
 
 export function isTab(value: string | undefined): value is SettingsTab {
@@ -123,10 +124,12 @@ export function searchIndex(): SearchEntry[] {
 		entry('notifications-channels', m.notifications_channels_title(), m.settings_search_kw_notifications()),
 		entry('notifications-policy', m.notifications_policy_title(), m.settings_search_kw_policy()),
 		entry('wall', m.settings_appearance_wall_title(), m.settings_search_kw_wall()),
+		entry('music', m.settings_music_title(), m.settings_search_kw_music()),
 		entry('backup', m['settings.section.backup'](), m.settings_search_kw_backup()),
 		entry('config-files', m.settings_config_title(), m.settings_config_search_kw()),
 		entry('self-monitoring', m.settings_selfmon_title(), m.settings_search_kw_selfmon()),
 		entry('logs', m.settings_logs_title(), m.settings_logs_search_kw()),
+		entry('https', m.settings_https_title(), m.settings_https_search_kw()),
 		entry('storage', m.storage_title(), m.storage_search_kw()),
 		entry('assistant', m['settings.section.assistant'](), m.settings_search_kw_assistant()),
 		entry('about', m['settings.section.about'](), m.settings_search_kw_about())

@@ -92,7 +92,7 @@
 	<Panel title={m.agentlogs_title()}>
 		{#snippet aside()}
 			<Plate tone={current?.enabled ? 'signal' : 'ghost'} label={current?.enabled ? m.agentlogs_on() : m.logsearch_inputs_off()} />
-			<Button variant="ghost" size="sm" href={`/logs?target=${target.id}&source=agent`}>
+			<Button variant="ghost" size="sm" href={`/targets?tab=logs&target=${target.id}&source=agent`}>
 				<ScrollText class="size-4" aria-hidden="true" />
 				{m.agentlogs_view()}
 			</Button>

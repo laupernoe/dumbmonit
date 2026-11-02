@@ -28,6 +28,7 @@
 	import AdDeployWizard from '#lib/components/settings/AdDeployWizard.svelte';
 	import AgentChecksums from './AgentChecksums.svelte';
 	import AgentChannelNote from './AgentChannelNote.svelte';
+	import AgentChannelCheck from './AgentChannelCheck.svelte';
 	import AgentModules from './AgentModules.svelte';
 	import { withModules, type AgentModule } from './agent-modules.js';
 	import { dockerRun, installOptions } from './agent-enroll.js';
@@ -298,6 +299,8 @@
 			{/if}
 		{/if}
 
+		<!-- The channel must answer where the command sends machines before the command shows. -->
+		<AgentChannelCheck baseUrl={origin} relayId={throughRelay && chosenRelay ? chosenRelay.id : null} relayHost={relayHost.trim() || null}>
 		<AgentModules bind:modules />
 
 		<div role="radiogroup" aria-label={m.deviceform_agentflow_platform_aria()} class="flex flex-wrap gap-2">
@@ -330,11 +333,12 @@
 		{/if}
 
 		<div class="grid gap-1.5">
-			<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_token()} <span class="font-normal text-ink-2">— {token.name}</span></p>
-			<CopyBlock value={token.secret} label={m.deviceform_enroll_copy_token()} secret />
+			<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_token()} <span class="font-normal text-ink-2">— {token?.name}</span></p>
+			<CopyBlock value={token?.secret ?? ''} label={m.deviceform_enroll_copy_token()} secret />
 		</div>
 		<AgentChannelNote />
 		<AgentChecksums />
+		</AgentChannelCheck>
 
 		{#if relay}
 			<p class="text-sm leading-relaxed text-ink-2">

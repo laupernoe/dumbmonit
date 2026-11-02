@@ -140,8 +140,10 @@ impl SamlConfig {
         if self.idp_entity_id.chars().count() > 1024 || self.sp_entity_id.chars().count() > 1024 {
             return Err("An entity ID must be 1024 characters or fewer.".into());
         }
-        if !self.idp_sso_url.is_empty() && !is_http_url(&self.idp_sso_url) {
-            return Err("The identity provider sign-in URL must be an absolute http(s) URL.".into());
+        if !self.idp_sso_url.is_empty() && !is_secure_url(&self.idp_sso_url) {
+            return Err("The identity provider sign-in URL must be an absolute https:// URL: \
+                        over http, the sign-in at the provider would travel in clear."
+                .into());
         }
         if self.button_label.chars().count() > 64 {
             return Err("The button label must be 64 characters or fewer.".into());
@@ -178,10 +180,22 @@ impl SamlConfig {
     }
 }
 
-/// Une URL absolue `http(s)://hôte…`.
-fn is_http_url(value: &str) -> bool {
-    reqwest::Url::parse(value)
-        .is_ok_and(|url| matches!(url.scheme(), "http" | "https") && url.host_str().is_some())
+/// Une URL absolue `https://hôte…` ; `http://` n'est admis que vers la boucle
+/// locale (fournisseur de test sur la même machine).
+fn is_secure_url(value: &str) -> bool {
+    reqwest::Url::parse(value).is_ok_and(|url| {
+        let Some(host) = url.host_str().map(|host| host.trim_matches(['[', ']'])) else {
+            return false;
+        };
+        match url.scheme() {
+            "https" => !host.is_empty(),
+            "http" => {
+                host.eq_ignore_ascii_case("localhost")
+                    || host.parse::<std::net::IpAddr>().is_ok_and(|ip| ip.is_loopback())
+            }
+            _ => false,
+        }
+    })
 }
 
 /// Le DER d'un certificat donné en PEM (ou en base64 nu, comme dans les

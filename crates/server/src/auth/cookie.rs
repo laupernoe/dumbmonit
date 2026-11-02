@@ -11,6 +11,12 @@ use crate::auth::session::SessionToken;
 /// autre service hébergé sur le même domaine.
 pub const NAME: &str = "dumbmonit_session";
 
+/// Nom du cookie en HTTPS. Le préfixe `__Host-` oblige le navigateur à ne
+/// l'accepter que `Secure`, sur `Path=/` et sans `Domain` : un autre service du
+/// même domaine (ou un sous-domaine en clair) ne peut ni le poser ni
+/// l'écraser.
+pub const HOST_NAME: &str = "__Host-dumbmonit_session";
+
 /// Trente jours, en accord avec la durée de vie de la session en base. Le
 /// navigateur oublie le cookie au moment même où le serveur oublie la session.
 const MAX_AGE_SECS: i64 = 30 * 24 * 60 * 60;
@@ -18,12 +24,15 @@ const MAX_AGE_SECS: i64 = 30 * 24 * 60 * 60;
 /// Construit l'en-tête `Set-Cookie` d'une session ouverte.
 ///
 /// `HttpOnly` met le jeton hors de portée de tout JavaScript, donc d'une éventuelle
-/// injection dans l'interface. `SameSite=Lax` suffit contre le CSRF ici : les
-/// écritures de l'API sont toutes en POST/PUT/DELETE, et `Lax` n'envoie le cookie
-/// en requête tierce que sur des navigations GET.
+/// injection dans l'interface. `SameSite=Strict` : le cookie ne part sur aucune
+/// requête née ailleurs, pas même une navigation GET depuis un lien tiers.
+/// L'interface est une application monopage — la page elle-même se charge sans
+/// session, et ce sont ses propres appels à `/api` qui portent le cookie — si
+/// bien que rien ne casse, retour d'une connexion OIDC ou SAML compris : la
+/// réponse du fournisseur pose le cookie, l'interface s'en sert ensuite.
 pub fn set(token: &SessionToken, secure: bool) -> HeaderValue {
     let mut value = format!(
-        "{NAME}={}; Path=/; HttpOnly; SameSite=Lax; Max-Age={MAX_AGE_SECS}",
+        "{NAME}={}; Path=/; HttpOnly; SameSite=Strict; Max-Age={MAX_AGE_SECS}",
         token.cookie_value()
     );
     if secure {
@@ -37,7 +46,7 @@ pub fn set(token: &SessionToken, secure: bool) -> HeaderValue {
 /// Les attributs doivent être identiques à ceux de la pose, sans quoi certains
 /// navigateurs conservent le cookie d'origine à côté de celui qui l'annule.
 pub fn clear(secure: bool) -> HeaderValue {
-    let mut value = format!("{NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0");
+    let mut value = format!("{NAME}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0");
     if secure {
         value.push_str("; Secure");
     }
@@ -58,6 +67,9 @@ pub fn clear(secure: bool) -> HeaderValue {
 /// - un en-tête `Origin` en `https://`, que le navigateur pose lui-même sur le
 ///   `POST` de connexion. Le falsifier ne sert à rien : il ne ferait que durcir
 ///   le cookie de celui qui le falsifie.
+///
+/// En HTTPS, le cookie de session prend en plus le préfixe `__Host-`
+/// ([`HOST_NAME`]), et l'ancien nom est effacé dans la même réponse.
 pub async fn secure_when_https(
     request: axum::extract::Request,
     next: axum::middleware::Next,
@@ -66,16 +78,28 @@ pub async fn secure_when_https(
     let mut response = next.run(request).await;
     if https {
         let headers = response.headers_mut();
-        let upgraded: Vec<HeaderValue> = headers
-            .get_all(header::SET_COOKIE)
-            .iter()
-            .map(|value| match value.to_str() {
-                Ok(text) if !text.to_ascii_lowercase().contains("; secure") => {
-                    HeaderValue::from_str(&format!("{text}; Secure")).unwrap_or(value.clone())
-                }
-                _ => value.clone(),
-            })
-            .collect();
+        let mut upgraded: Vec<HeaderValue> = Vec::new();
+        for value in headers.get_all(header::SET_COOKIE) {
+            let Ok(text) = value.to_str() else {
+                upgraded.push(value.clone());
+                continue;
+            };
+            let (text, session) = match text.strip_prefix(&format!("{NAME}=")) {
+                Some(rest) => (format!("{HOST_NAME}={rest}"), true),
+                None => (text.to_string(), false),
+            };
+            let text = match text.to_ascii_lowercase().contains("; secure") {
+                true => text,
+                false => format!("{text}; Secure"),
+            };
+            upgraded.push(HeaderValue::from_str(&text).unwrap_or(value.clone()));
+            if session {
+                // Le cookie posé en clair avant le passage en HTTPS disparaît.
+                upgraded.push(HeaderValue::from_static(
+                    "dumbmonit_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0",
+                ));
+            }
+        }
         if !upgraded.is_empty() {
             headers.remove(header::SET_COOKIE);
             for value in upgraded {
@@ -87,6 +111,11 @@ pub async fn secure_when_https(
 }
 
 fn request_is_https(request: &axum::extract::Request) -> bool {
+    // Connexion chiffrée jusqu'ici, ou mandataire de confiance qui le dit
+    // (établi par `web_tls::transport`).
+    if request.extensions().get::<crate::web_tls::Transport>().is_some_and(|t| t.https) {
+        return true;
+    }
     let headers = request.headers();
     let text = |name: &str| headers.get(name).and_then(|value| value.to_str().ok());
     if text("origin").is_some_and(|origin| origin.trim().starts_with("https://")) {
@@ -113,13 +142,17 @@ fn header_value(value: String) -> HeaderValue {
     HeaderValue::from_str(&value).expect("en-tête Set-Cookie en ASCII")
 }
 
-/// Extrait le jeton de session de l'en-tête `Cookie`, s'il s'y trouve.
+/// Extrait le jeton de session de l'en-tête `Cookie`, s'il s'y trouve : le
+/// cookie `__Host-` d'abord, l'ancien nom (session ouverte en HTTP) sinon.
 pub fn extract(headers: &HeaderMap) -> Option<SessionToken> {
     let raw = headers.get(header::COOKIE)?.to_str().ok()?;
-    raw.split(';')
-        .filter_map(|pair| pair.split_once('='))
-        .find(|(name, _)| name.trim() == NAME)
-        .and_then(|(_, value)| SessionToken::parse(value.trim()))
+    let find = |wanted: &str| {
+        raw.split(';')
+            .filter_map(|pair| pair.split_once('='))
+            .find(|(name, _)| name.trim() == wanted)
+            .and_then(|(_, value)| SessionToken::parse(value.trim()))
+    };
+    find(HOST_NAME).or_else(|| find(NAME))
 }
 
 #[cfg(test)]
@@ -153,7 +186,7 @@ mod tests {
 
         let posed = set(&token, false).to_str().unwrap().to_string();
         assert!(posed.contains("HttpOnly"), "{posed}");
-        assert!(posed.contains("SameSite=Lax"), "{posed}");
+        assert!(posed.contains("SameSite=Strict"), "{posed}");
         assert!(posed.contains("Path=/"), "{posed}");
         assert!(posed.contains("Max-Age=2592000"), "{posed}");
         // Sans TLS déclaré, pas de `Secure` : le produit vit en HTTP sur un LAN.
@@ -161,5 +194,14 @@ mod tests {
 
         assert!(set(&token, true).to_str().unwrap().contains("; Secure"));
         assert!(clear(false).to_str().unwrap().contains("Max-Age=0"));
+    }
+
+    #[test]
+    fn the_host_prefixed_cookie_wins_over_the_plain_one() {
+        let headers =
+            headers_with_cookie("dumbmonit_session=old.one; __Host-dumbmonit_session=new.one");
+        assert_eq!(extract(&headers).unwrap().cookie_value(), "new.one");
+        let headers = headers_with_cookie("__Host-dumbmonit_session=new.one");
+        assert_eq!(extract(&headers).unwrap().cookie_value(), "new.one");
     }
 }

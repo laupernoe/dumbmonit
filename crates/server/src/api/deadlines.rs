@@ -54,7 +54,6 @@ struct Family {
 }
 
 /// Les familles d'échéances que les collecteurs produisent aujourd'hui.
-/// OVH n'en publie pas encore (à faire : `serviceInfos.expiration`).
 const FAMILIES: &[Family] = &[
     Family { metric: "domain_expiry_days", unit: Unit::Days, kind: "domain", what: &[] },
     Family {
@@ -118,6 +117,12 @@ const FAMILIES: &[Family] = &[
         what: &["product"],
     },
     Family {
+        metric: "ovh_service_expiry_seconds",
+        unit: Unit::Seconds,
+        kind: "product",
+        what: &["service"],
+    },
+    Family {
         metric: "tailscale_device_key_expiry_seconds",
         unit: Unit::Seconds,
         kind: "key",
@@ -143,6 +148,12 @@ const FAMILIES: &[Family] = &[
     },
     Family {
         metric: "veeam_license_expiry_seconds",
+        unit: Unit::Seconds,
+        kind: "license",
+        what: &[],
+    },
+    Family {
+        metric: "veeam_support_expiry_seconds",
         unit: Unit::Seconds,
         kind: "license",
         what: &[],
@@ -378,6 +389,23 @@ mod tests {
         let out = build(&last, &at, &targets(), NOW, 366.0);
         assert_eq!(out.len(), 1);
         assert_eq!(out[0].what, "a.example");
+    }
+
+    #[test]
+    fn les_services_ovh_sont_des_echeances() {
+        let last = vec![series(
+            "ovh_service_expiry_seconds",
+            2,
+            &[("service", "vps-aaa111.vps.ovh.net"), ("family", "vps")],
+            5.0 * DAY,
+        )];
+        let metric = last[0].metric.clone();
+        let at = vec![InstantSeries { metric, value: (NOW, NOW.to_string()) }];
+        let out = build(&last, &at, &targets(), NOW, 366.0);
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].kind, "product");
+        assert_eq!(out[0].what, "vps-aaa111.vps.ovh.net");
+        assert!((out[0].days_left - 5.0).abs() < 0.01);
     }
 
     #[test]

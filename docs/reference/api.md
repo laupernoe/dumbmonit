@@ -346,6 +346,7 @@ them, and a proxy default without the nonce leaves a blank page.
 |---|---|---|---|
 | `GET` | `/api/health` | public | Server version and the state of its dependencies. Always `200`: a failing component is in the body. |
 | `GET` | `/api/update` | session or token | Running version, latest release, `update_available`; the server asks GitHub once a day at most. `POST /api/update/check` looks now, `PUT /api/update/settings` turns the check on or off. See [Update](../install/update.md). |
+| `GET` | `/api/upgrade-notes` | admin session | Configuration changes a release asks for in your `docker-compose.yml`, with the block to copy and where this instance stands. `POST /api/upgrade-notes/close` closes some for good, `POST /api/upgrade-notes/announce` records that the window was shown. See [Update](../install/update.md#configuration-changes-after-an-update). |
 
 ```json
 {"status":"ok","version":"0.1.0","database":{"ok":true},"victoria":{"ok":true,"embedded":true}}
@@ -593,6 +594,7 @@ response shapes. *read* and *write* are the token scope needed; *none* means no 
 | `GET` | `/api/music/spotify/token` | none | A short-lived Spotify access token for the wall's player. Session only. |
 | `GET`, `PUT` | `/api/music/speaker` | read, write | The wall's Spotify speaker as Settings shows it; rename it (admin). |
 | `POST` | `/api/music/speaker/report`, `/play` | none | A wall reports its speaker's state; play the account on it. Session only. |
+| `POST` | `/api/music/spotify/playback` | none | Pause or resume the account from the wall, wherever it plays. Session only. |
 
 ## Alerts
 

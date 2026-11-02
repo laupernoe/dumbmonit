@@ -298,14 +298,15 @@ export function silenceScope(silence: Silence, targets: Map<number, Target>): st
 }
 
 /**
- * Payload for a one-hour "quick silence" on a device, starting now.
+ * Payload for a "quick silence" on a device, starting now: one hour by
+ * default, or until `endsAt` (the Overview's mute menu: 8 h, 24 h, a date).
  *
- * Used from the device page: the whole device should stop shouting for an
- * hour, not just one alert.
+ * Used from the device page and the Overview: the whole device should stop
+ * shouting for a while, not just one alert.
  */
-export function quickSilencePayload(target: Target) {
+export function quickSilencePayload(target: Target, endsAt?: Date) {
 	const now = new Date();
-	const end = new Date(now.getTime() + 3600_000);
+	const end = endsAt ?? new Date(now.getTime() + 3600_000);
 	return {
 		name: m.alerts_quick_silence_name({ name: target.name }),
 		target_id: target.id,
@@ -315,6 +316,13 @@ export function quickSilencePayload(target: Target) {
 			ends_at: end.toISOString()
 		}
 	};
+}
+
+/** A `datetime-local` input value for `offsetMs` from now (one hour by default), in local time. */
+export function datetimeLocalIn(offsetMs = 3600_000): string {
+	const d = new Date(Date.now() + offsetMs);
+	const pad = (n: number) => String(n).padStart(2, '0');
+	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 // Per-alert snooze (`SNOOZE_DURATIONS`, `snoozePayload`, `coveringSilence`) lives

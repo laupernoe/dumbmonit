@@ -50,7 +50,7 @@ opens as a drawer. For a full list of monitors, see [Monitors page](devices.md).
 
 `/wall` shows a board for a monitor in the room: the verdict, the clock, the five
 figures, the health river, the open alerts and who is on call. Open it with the
-**Wall mode** icon in the top bar or the command palette; ++esc++ or **Exit**
+**Wall mode** icon at the bottom of the left menu or the command palette; ++esc++ or **Exit**
 returns to the console. See [Wall mode](wall.md).
 
 ## Install it on a phone {#install-it-on-a-phone}

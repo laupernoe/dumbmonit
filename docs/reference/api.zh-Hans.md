@@ -435,6 +435,7 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 | `GET` | `/api/music/spotify/token` | none | 供墙面播放器使用的短期 Spotify 访问令牌。仅会话。 |
 | `GET`、`PUT` | `/api/music/speaker` | read、write | 设置中显示的墙面 Spotify 扬声器；重命名它（管理员）。 |
 | `POST` | `/api/music/speaker/report`、`/play` | none | 墙面报告其扬声器的状态；在其上播放该账户。仅会话。 |
+| `POST` | `/api/music/spotify/playback` | none | 从墙面暂停或继续该账户的播放，无论在哪里播放。仅会话。 |
 
 ## 告警 {#alerts}
 

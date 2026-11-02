@@ -11,8 +11,8 @@
 	 * ones (building up and back) are one toggle away. Consecutive identical
 	 * transitions of one rule fold into one row — "fired on 7 containers" —
 	 * with the labels when the matching active alert still carries them. The
-	 * folded list itself opens on its 5 most recent rows; "Show all" (the
-	 * same toggle idiom) reveals the rest, up to `SHOWN`.
+	 * folded list shows its 5 most recent rows; "Full history" opens Alerts ›
+	 * History filtered to this monitor for the rest.
 	 *
 	 * The history route has no per-device filter, so a generous window is read
 	 * and filtered here; the rules are read for their names and units.
@@ -90,10 +90,9 @@
 		}
 	}
 
-	const SHOWN = 20;
 	const WINDOW = 400;
-	/** Rows shown before "Show all" is pressed — a busy device should not open on 20+ of them. */
-	const DEFAULT_SHOWN = 5;
+	/** Rows shown here: a busy monitor should not open on 20+ of them. */
+	const SHOWN = 5;
 
 	const PHASE_WORD: Record<AlertPhase, string> = {
 		get ok() {
@@ -115,8 +114,6 @@
 	let loading = $state(true);
 	let error = $state<unknown>(null);
 	let showQuiet = $state(false);
-	/** The history list collapses to its most recent rows until this is flipped. */
-	let showAll = $state(false);
 
 	/**
 	 * Active alerts of one rule fold into one row ("Container stopped ×9"):
@@ -262,8 +259,7 @@
 
 	const quietCount = $derived(history.length - history.filter(isLoud).length);
 
-	/** The rows actually rendered: the 5 most recent until "Show all" is pressed. */
-	const visibleRows = $derived(showAll ? rows : rows.slice(0, DEFAULT_SHOWN));
+	const visibleRows = $derived(rows);
 
 	function toneOf(fold: Fold): Tone {
 		if (fold.to_phase === 'firing') return severityTone(fold.severity);
@@ -461,18 +457,16 @@
 		{/each}
 	</ol>
 	<div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-ink-2">
-		{#if rows.length > DEFAULT_SHOWN}
-			<Button size="sm" variant="ghost" onclick={() => (showAll = !showAll)} aria-pressed={showAll}>
-				{showAll ? m.devices_timeline_show_fewer() : m.devices_timeline_show_all({ count: rows.length - DEFAULT_SHOWN })}
-			</Button>
+		{#if rows.length > 0}
+			<!-- Five rows here; the whole story, filtered to this monitor, is one click away. -->
+			<a href={`/alerts?tab=history&monitor=${targetId}`} class="inline-flex min-h-10 items-center rounded-lg px-2 font-semibold text-ink hover:bg-surface-2 hover:underline">
+				{m.devices_timeline_full_history()}
+			</a>
 		{/if}
 		{#if quietCount > 0}
 			<Button size="sm" variant="ghost" onclick={() => (showQuiet = !showQuiet)} aria-pressed={showQuiet}>
 				{showQuiet ? m.devices_timeline_hide_quiet() : m.devices_timeline_show_quiet({ count: quietCount })}
 			</Button>
-		{/if}
-		{#if rows.length === SHOWN || history.length >= WINDOW}
-			<span>{m.devices_timeline_last_rows({ count: SHOWN })} <a href="/alerts#history" class="text-ink hover:underline">{m.devices_timeline_full_history()}</a></span>
 		{/if}
 	</div>
 {/if}

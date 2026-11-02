@@ -26,9 +26,15 @@ async fn chaque_equipement_du_parc_fictif_se_collecte() {
         Arc::new(collectors::TruenasCollector::new()),
         Arc::new(collectors::OpnsenseCollector::new()),
         Arc::new(collectors::RedfishCollector::new()),
+        Arc::new(collectors::UnifiCollector::new()),
+        Arc::new(collectors::KopiaCollector::new()),
+        Arc::new(collectors::VeeamCollector::new()),
+        Arc::new(collectors::OmadaCollector::new()),
+        Arc::new(dumbmonit_collectors::M365Collector::new()),
+        Arc::new(dumbmonit_collectors::EntraCollector::new()),
     ];
 
-    assert_eq!(estate.devices.len(), 6);
+    assert_eq!(estate.devices.len(), estate::KINDS.len());
     let mut problems = Vec::new();
     for (index, device) in estate.devices.iter().enumerate() {
         assert!(device.address.ends_with(".home.arpa"), "{}", device.address);
@@ -72,7 +78,9 @@ async fn chaque_equipement_du_parc_fictif_se_collecte() {
             .map(|s| (s.metric.clone(), s.value))
             .collect();
         eprintln!("{} : {} échantillons, erreurs {errors:?}", device.key, samples.len());
-        if samples.len() <= 20 {
+        // Les lectures de Microsoft Graph sont des comptes : moins de séries.
+        let minimum = if matches!(device.kind, "m365" | "entra") { 5 } else { 20 };
+        if samples.len() <= minimum {
             problems.push(format!("{} : {} échantillons", device.key, samples.len()));
         }
         if !errors.is_empty() {
@@ -100,7 +108,19 @@ async fn chaque_equipement_du_parc_fictif_se_collecte() {
                     "les invités portent leurs noms du parc"
                 );
             }
-            "nas" => assert_eq!(value(&samples, "abb_tasks"), Some(3.0)),
+            "nas" => {
+                assert_eq!(value(&samples, "abb_tasks"), Some(3.0));
+                assert!(
+                    samples.iter().any(|s| s.metric.contains("lun")),
+                    "le LUN iSCSI du NAS est lu"
+                );
+            }
+            "unifi" => assert_eq!(value(&samples, "unifi_clients"), Some(31.0)),
+            "kopia" => assert_eq!(value(&samples, "kopia_repo_connected"), Some(1.0)),
+            "veeam" => assert!(value(&samples, "veeam_jobs_failed").is_some()),
+            "omada" => assert!(samples.iter().any(|s| s.metric == "omada_port_up")),
+            "m365" => assert!(value(&samples, "m365_services_degraded").is_some()),
+            "entra" => assert!(samples.iter().any(|s| s.metric.starts_with("entra_"))),
             _ => {}
         }
     }

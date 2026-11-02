@@ -15,6 +15,18 @@ metrics:
   - { name: arubacentral_devices_poor_health, label: "Devices poor health" }
   - { name: arubacentral_device_uptime_seconds, label: "Device uptime", unit: "s" }
   - { name: arubacentral_device_info, label: "Device", kind: info }
+  - { name: arubacentral_port_enabled, label: "Port enabled", unit: "bool" }
+  - { name: arubacentral_port_up, label: "Port link up", unit: "bool" }
+  - { name: arubacentral_port_speed_bps, label: "Port speed", unit: "bit/s" }
+  - { name: arubacentral_port_full_duplex, label: "Port full duplex", unit: "bool" }
+  - { name: arubacentral_port_uplink, label: "Port uplink", unit: "bool" }
+  - { name: arubacentral_port_poe_enabled, label: "Port PoE enabled", unit: "bool" }
+  - { name: arubacentral_port_poe_watts, label: "Port PoE power", unit: "W" }
+  - { name: arubacentral_port_rx_bytes_total, label: "Port traffic in", unit: "B", kind: counter }
+  - { name: arubacentral_port_tx_bytes_total, label: "Port traffic out", unit: "B", kind: counter }
+  - { name: arubacentral_port_rx_errors_total, label: "Port errors in", better: "lower", kind: counter }
+  - { name: arubacentral_port_tx_errors_total, label: "Port errors out", better: "lower", kind: counter }
+  - { name: arubacentral_port_neighbor_info, label: "Port neighbour", kind: info }
 views:
   - view: stat
     title: "Current values"

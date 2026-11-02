@@ -56,7 +56,7 @@ foothold on the monitored network.
 | Class (OWASP Top 10 theme) | Measures |
 |---|---|
 | Broken access control | One authentication middleware; roles; a fresh instance refuses everything except setup, login, health and auth status. |
-| Cryptographic failures | AES-256-GCM at rest, key kept outside the database; Argon2 password hashes; the built-in server speaks plain HTTP, so a TLS reverse proxy is documented. |
+| Cryptographic failures | AES-256-GCM at rest, key kept outside the database; Argon2id password hashes (OWASP parameters); HTTPS on the web port itself (TLS 1.3/1.2 AEAD, X25519MLKEM768, HSTS, `__Host-` `Secure` `SameSite=Strict` session cookie); the agent channel is TLS 1.3 with client certificates; every connection still in clear is listed in the settings ([HTTPS and encryption](../install/https.md)). |
 | Injection | SQL goes through `sqlx` with bound parameters; the VictoriaMetrics proxy only forwards read queries (`tsdb/mod.rs`, `proxy_read`); parsers are unit tested. |
 | Insecure design | The threat model above; secrets never round-trip; a single-purpose instance. |
 | Security misconfiguration | Hardened Compose files, loopback-only VictoriaMetrics, operator hardening notes in the security policy. |
@@ -116,7 +116,8 @@ design argument and the evidence behind each claim.
 
 ## Known limits
 
-- The built-in server speaks plain HTTP; put TLS in front of it.
+- The web port still answers plain HTTP next to HTTPS, for reverse proxies, scripts and agents of older versions; page visits are redirected to HTTPS on new installations only, and an upgraded instance shows a banner until an administrator turns the redirect on.
+- The self-signed certificate is not trusted by browsers: the first visit asks to compare its fingerprint. Provide a certificate for a warning-free setup.
 - Monitor options are stored unencrypted. Put secrets in credential fields.
 - The embedded VictoriaMetrics has no authentication.
 - DumbMonit is before 1.0; routes and fields can still change.

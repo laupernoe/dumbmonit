@@ -13,7 +13,8 @@ use dumbmonit_proto::{AgentIdentity, Credential, PUSH_PROTOCOL_VERSION, PushBatc
 use sqlx::SqlitePool;
 
 use super::estate::DemoDevice;
-use super::synthetic::{self, AGENT_HOST, FLAKY_HOST};
+use super::extras;
+use super::synthetic::{self, AGENT_HOST, AgentHost, FLAKY_HOST};
 use super::{DEMO_PASSWORD, DEMO_USERNAME};
 use crate::auth::password;
 use crate::auth::users::{self, NewUser, Role};
@@ -25,6 +26,9 @@ use crate::db::targets::TargetInput;
 use crate::tsdb::SampleSink;
 
 /// Sonde synthétique : (nom, type, adresse, parent désigné par son nom).
+///
+/// Les types de [`extras`] (commutateur, CrowdSec, Cloudflare, licence) sont
+/// simulés en mémoire ; leurs domaines sont ajoutés à part, plus bas.
 const CHECKS: &[(&str, &str, &str, Option<&str>)] = &[
     ("nextcloud.home.arpa", "http", "https://nextcloud.home.arpa/status.php", None),
     ("home-assistant.home.arpa", "http", "https://home-assistant.home.arpa/", None),
@@ -34,16 +38,27 @@ const CHECKS: &[(&str, &str, &str, Option<&str>)] = &[
     ("printer.home.arpa", "ping", "printer.home.arpa", None),
     ("switch-attic.home.arpa", "ping", "switch-attic.home.arpa", None),
     ("ap-attic.home.arpa", "ping", "ap-attic.home.arpa", Some("switch-attic.home.arpa")),
+    (extras::SWITCH_HOST, "snmp", "switch-core.home.arpa", None),
+    (extras::CROWDSEC_HOST, "crowdsec", "http://crowdsec.home.arpa:8080", None),
+    (extras::CLOUDFLARE_HOST, "cloudflare", "api.cloudflare.com", None),
+    ("nextcloud.home.arpa (DNS)", "dns", "nextcloud.home.arpa", None),
+    ("dupont.ch (DNS)", "dns", "dupont.ch", None),
 ];
+
+/// Une machine à agent du parc fictif, enregistrée.
+pub struct SeededAgent {
+    pub host: &'static AgentHost,
+    pub id: TargetId,
+    /// Jeton d'enregistrement, en clair : il ne quitte pas le processus.
+    pub token: String,
+    /// Secret de liaison remis à l'agent à son premier lot : sans lui, le
+    /// serveur refuserait les lots suivants, comme pour une vraie machine.
+    pub secret: Option<String>,
+}
 
 /// Ce que la suite du démarrage doit connaître du parc.
 pub struct Seeded {
-    /// Jeton d'enregistrement de l'agent simulé, en clair : il ne quitte pas le
-    /// processus.
-    pub agent_token: String,
-    /// Secret de liaison remis à l'agent simulé à son premier lot : sans lui, le
-    /// serveur refuserait les lots suivants, comme pour une vraie machine.
-    pub agent_secret: Option<String>,
+    pub agents: Vec<SeededAgent>,
     pub targets: Vec<(TargetId, String, String)>,
 }
 
@@ -53,6 +68,9 @@ pub async fn run(
     sink: &SampleSink,
     devices: &[DemoDevice],
 ) -> Result<Seeded> {
+    // L'origine des tendances relatives (remplissage, échéances) est posée avant
+    // toute mesure, en direct comme dans l'historique.
+    synthetic::anchor_ms();
     let hash = password::hash(DEMO_PASSWORD.to_string()).await?;
     users::insert(
         pool,
@@ -95,36 +113,35 @@ pub async fn run(
         let parent_id = parent
             .and_then(|parent| targets.iter().find(|(_, name, _)| name == parent))
             .map(|(id, _, _)| *id);
-        let input = TargetInput {
-            name: name.to_string(),
-            address: address.to_string(),
-            kind: kind.to_string(),
-            profile_id: None,
-            parent_id,
-            via_agent: None,
-            interval: Duration::from_secs(60),
-            enabled: true,
-            tags: BTreeMap::new(),
-            credential: Some(Credential::None),
-            group_name: String::new(),
-        };
-        let id = db::targets::create(pool, cipher, &input).await?;
+        let id = add_check(pool, cipher, name, kind, address, parent_id, 60).await?;
         targets.push((id, name.to_string(), kind.to_string()));
     }
+    // Les noms de domaine surveillés : une consultation RDAP par heure.
+    for (domain, _, _) in extras::DOMAINS {
+        let id = add_check(pool, cipher, domain, "domain", domain, None, 3600).await?;
+        targets.push((id, domain.to_string(), "domain".to_string()));
+    }
 
-    // L'agent s'enregistre lui-même au premier lot, comme sur une vraie machine.
-    let (_, agent_token) = agent::create_token(
-        pool,
-        "docker01 (demo)",
-        TokenPolicy { max_uses: None, expires_in_days: None },
-    )
-    .await?;
-    let (agent_id, agent_secret) = push_agent_batch(pool, cipher, sink, &agent_token, None).await?;
-    targets.push((agent_id, AGENT_HOST.to_string(), "agent".to_string()));
+    // Chaque agent s'enregistre lui-même au premier lot, comme sur une vraie
+    // machine : la machine Docker, le contrôleur de domaine, le relais.
+    let mut agents = Vec::new();
+    for host in synthetic::AGENT_HOSTS {
+        let label = format!("{} (demo)", host.hostname.split('.').next().unwrap_or(host.hostname));
+        let policy = TokenPolicy { max_uses: None, expires_in_days: None };
+        let (_, token) = agent::create_token(pool, &label, policy).await?;
+        let (id, secret) = push_agent_batch(pool, cipher, sink, host, &token, None).await?;
+        targets.push((id, host.hostname.to_string(), "agent".to_string()));
+        agents.push(SeededAgent { host, id, token, secret });
+    }
+    let agent_id = agents.first().map(|agent| agent.id).context("demo agent")?;
+    // Clients, comptes, astreinte, sondes du bureau par le relais… : avant les
+    // pages de statut, qui en montrent certaines.
+    super::workspace::run(pool, cipher, &mut targets).await.context("demo workspace")?;
 
     seed_notifications(pool).await?;
-    seed_status_page(pool, &targets).await?;
+    seed_status_pages(pool, &targets).await?;
     seed_alert_history(pool, &targets).await?;
+    seed_network_inventory(pool, agent_id).await?;
     // Un emplacement, le site principal : la carte du monde et la carte en
     // direct du pare-feu ont de quoi se dessiner.
     sqlx::query(
@@ -134,7 +151,33 @@ pub async fn run(
     .execute(pool)
     .await?;
 
-    Ok(Seeded { agent_token, agent_secret, targets })
+    Ok(Seeded { agents, targets })
+}
+
+/// Crée une sonde synthétique : aucun identifiant, aucune connexion sortante.
+async fn add_check(
+    pool: &SqlitePool,
+    cipher: &Cipher,
+    name: &str,
+    kind: &str,
+    address: &str,
+    parent_id: Option<TargetId>,
+    interval_secs: u64,
+) -> Result<TargetId> {
+    let input = TargetInput {
+        name: name.to_string(),
+        address: address.to_string(),
+        kind: kind.to_string(),
+        profile_id: None,
+        parent_id,
+        via_agent: None,
+        interval: Duration::from_secs(interval_secs),
+        enabled: true,
+        tags: BTreeMap::new(),
+        credential: Some(Credential::None),
+        group_name: String::new(),
+    };
+    db::targets::create(pool, cipher, &input).await
 }
 
 /// Un lot de l'agent simulé, par le vrai chemin d'ingestion. Rend la cible et
@@ -143,34 +186,36 @@ pub async fn push_agent_batch(
     pool: &SqlitePool,
     cipher: &Cipher,
     sink: &SampleSink,
+    host: &AgentHost,
     token: &str,
     secret: Option<&str>,
 ) -> Result<(TargetId, Option<String>)> {
     let now = Utc::now().timestamp_millis();
+    let arch = if host.kernel.ends_with("arm64") { "aarch64" } else { "x86_64" };
     let identity = AgentIdentity {
-        hostname: AGENT_HOST.to_string(),
-        os: "linux".to_string(),
-        os_version: Some("Debian GNU/Linux 13 (trixie)".to_string()),
-        kernel_version: Some("6.12.48-amd64".to_string()),
-        arch: Some("x86_64".to_string()),
+        hostname: host.hostname.to_string(),
+        os: host.os.to_string(),
+        os_version: Some(host.os_version.to_string()),
+        kernel_version: Some(host.kernel.to_string()),
+        arch: Some(arch.to_string()),
         agent_version: env!("CARGO_PKG_VERSION").to_string(),
-        commands_enabled: Some(false),
-        relay: false,
-        site: None,
-        relay_control: false,
-        relay_local: false,
-        machine_id: Some("demo-docker01".to_string()),
+        commands_enabled: Some(host.relay),
+        relay: host.relay,
+        site: host.site.map(str::to_string),
+        relay_control: host.relay,
+        relay_local: host.relay,
+        machine_id: Some(host.machine_id.to_string()),
         tags: BTreeMap::new(),
         binding_supported: true,
         self_update: None,
-        relay_gateway: None,
+        relay_gateway: host.gateway,
         remediation: None,
     };
     let batch = PushBatch {
         protocol: PUSH_PROTOCOL_VERSION,
         identity,
         sent_at_ms: now,
-        samples: synthetic::agent_samples(now),
+        samples: (host.samples)(now),
         inventory: None,
         event_log: None,
         declared_monitors: None,
@@ -210,65 +255,144 @@ async fn seed_notifications(pool: &SqlitePool) -> Result<()> {
     Ok(())
 }
 
-async fn seed_status_page(pool: &SqlitePool, targets: &[(TargetId, String, String)]) -> Result<()> {
-    let page = db::status_pages::create_page(
-        pool,
-        &StatusPageInput {
-            slug: "home".to_string(),
-            title: "Home services".to_string(),
-            description: "What the family can check before asking whether the internet is down."
-                .to_string(),
-            published: true,
-            theme: "auto".to_string(),
-            show_uptime_days: 30,
-            accent: "default".to_string(),
-            scenes: String::new(),
-            scene_rotation: "visit".to_string(),
-            simple: false,
-            show_calendar: false,
-            show_latency: false,
-            footer_text: "Fictional data — DumbMonit live demo.".to_string(),
-            homepage_url: String::new(),
-            subscribe_channel_id: None,
-            link_origin: String::new(),
-            // La démonstration n'a pas de domaine à elle : la page reste sous `/s/home`.
-            domain: None,
-            seo: Default::default(),
-            groups: None,
-            group_labels: None,
-        },
-    )
-    .await?;
+/// Réglages d'une page de statut de la démonstration.
+struct PageSpec {
+    slug: &'static str,
+    title: &'static str,
+    description: &'static str,
+    /// Scène de nuit de la bannière (`paris`, `tokyo`…).
+    scene: &'static str,
+    /// Éléments : (cible par nom, libellé, groupe).
+    items: &'static [(&'static str, &'static str, &'static str)],
+    /// Types d'équipements simulés ajoutés : (type, libellé, groupe).
+    kinds: &'static [(&'static str, &'static str, &'static str)],
+}
 
+const PAGES: &[PageSpec] = &[
+    PageSpec {
+        slug: "home",
+        title: "Home services",
+        description: "What the family can check before asking whether the internet is down.",
+        scene: "paris",
+        items: &[
+            ("nextcloud.home.arpa", "Nextcloud", "Apps"),
+            ("home-assistant.home.arpa", "Home Assistant", "Apps"),
+            (FLAKY_HOST, "Jellyfin", "Apps"),
+            ("printer.home.arpa", "Printer", "Network"),
+        ],
+        kinds: &[
+            ("synology", "File storage", "Infrastructure"),
+            ("proxmox", "Virtual machines", "Infrastructure"),
+        ],
+    },
+    PageSpec {
+        slug: "lab",
+        title: "Lab and media",
+        description: "The servers behind the media library and the nightly backups.",
+        scene: "tokyo",
+        items: &[
+            (FLAKY_HOST, "Media server", "Media"),
+            (AGENT_HOST, "Docker host", "Hosts"),
+            (extras::SWITCH_HOST, "Core switch", "Network"),
+        ],
+        kinds: &[("truenas", "Media storage", "Media"), ("pbs", "Backups", "Hosts")],
+    },
+    PageSpec {
+        slug: "photos",
+        title: "Dupont photos",
+        description: "The family photo site and the mailboxes behind dupont.ch.",
+        scene: "newyork",
+        items: &[
+            ("nextcloud.home.arpa (TLS)", "Photo sharing", "Web"),
+            ("dupont.ch (DNS)", "dupont.ch name servers", "Web"),
+            (extras::CLOUDFLARE_HOST, "Cloudflare edge", "Web"),
+        ],
+        kinds: &[("kopia", "Offsite photo backup", "Backups")],
+    },
+    PageSpec {
+        slug: "muller",
+        title: "Muller Architectes — IT status",
+        description: "Office network, file server, backups and Microsoft 365 for the Geneva team.",
+        scene: "dubai",
+        items: &[
+            ("intranet.muller.home.arpa", "Intranet", "Office"),
+            ("nas.muller.home.arpa", "File server", "Office"),
+            ("printer.muller.home.arpa", "Printer", "Office"),
+            (super::synthetic::WINDOWS_HOST, "Sign-in (Active Directory)", "Office"),
+        ],
+        kinds: &[
+            ("omada", "Wi-Fi and network", "Office"),
+            ("veeam", "Nightly backups", "Backups"),
+            ("m365", "Microsoft 365", "Cloud"),
+        ],
+    },
+];
+
+async fn seed_status_pages(
+    pool: &SqlitePool,
+    targets: &[(TargetId, String, String)],
+) -> Result<()> {
     let find = |name: &str| targets.iter().find(|(_, n, _)| n == name).map(|(id, _, _)| *id);
-    let mut items = Vec::new();
-    for (name, label, group) in [
-        ("nextcloud.home.arpa", "Nextcloud", "Apps"),
-        ("home-assistant.home.arpa", "Home Assistant", "Apps"),
-        (FLAKY_HOST, "Jellyfin", "Apps"),
-        ("printer.home.arpa", "Printer", "Network"),
-    ] {
-        if let Some(target_id) = find(name) {
-            items.push(PageItemInput {
-                target_id,
-                label: label.to_string(),
-                group_name: group.to_string(),
-            });
+    let mut first = None;
+    for spec in PAGES {
+        let page = db::status_pages::create_page(
+            pool,
+            &StatusPageInput {
+                slug: spec.slug.to_string(),
+                title: spec.title.to_string(),
+                description: spec.description.to_string(),
+                published: true,
+                theme: "auto".to_string(),
+                show_uptime_days: 30,
+                accent: "default".to_string(),
+                // Une scène de nuit par page : Paris, Tokyo, New York, Dubaï.
+                scenes: spec.scene.to_string(),
+                scene_rotation: "visit".to_string(),
+                simple: false,
+                show_calendar: true,
+                show_latency: true,
+                footer_text: "Fictional data — DumbMonit live demo.".to_string(),
+                homepage_url: String::new(),
+                subscribe_channel_id: None,
+                link_origin: String::new(),
+                // La démonstration n'a pas de domaine à elle : les pages restent sous
+                // `/s/<slug>`.
+                domain: None,
+                seo: Default::default(),
+                groups: None,
+                group_labels: None,
+            },
+        )
+        .await?;
+        if first.is_none() {
+            first = Some(page);
         }
-    }
-    // Les équipements simulés ([`super::estate`]) : le NAS et l'hyperviseur.
-    for (kind, label) in [("synology", "File storage"), ("proxmox", "Virtual machines")] {
-        if let Some((target_id, _, _)) = targets.iter().find(|(_, _, k)| k == kind) {
-            items.push(PageItemInput {
-                target_id: *target_id,
-                label: label.to_string(),
-                group_name: "Infrastructure".to_string(),
-            });
-        }
-    }
-    db::status_pages::set_items(pool, page, &items).await?;
 
-    // Une maintenance passée, close : l'historique de la page n'est pas vide.
+        let mut items = Vec::new();
+        for (name, label, group) in spec.items {
+            if let Some(target_id) = find(name) {
+                items.push(PageItemInput {
+                    target_id,
+                    label: label.to_string(),
+                    group_name: group.to_string(),
+                });
+            }
+        }
+        // Les équipements simulés ([`super::estate`]) : le NAS, l'hyperviseur…
+        for (kind, label, group) in spec.kinds {
+            if let Some((target_id, _, _)) = targets.iter().find(|(_, _, k)| k == kind) {
+                items.push(PageItemInput {
+                    target_id: *target_id,
+                    label: label.to_string(),
+                    group_name: group.to_string(),
+                });
+            }
+        }
+        db::status_pages::set_items(pool, page, &items).await?;
+    }
+
+    // Une maintenance passée, close : l'historique de la première page n'est pas vide.
+    let Some(page) = first else { return Ok(()) };
     let day = hour_floor(Utc::now()) - chrono::Duration::days(4);
     let start = day.with_hour(6).unwrap_or(day);
     let incident = db::status_pages::create_incident(
@@ -292,6 +416,150 @@ async fn seed_status_page(pool: &SqlitePool, targets: &[(TargetId, String, Strin
         true,
     )
     .await?;
+
+    // Un incident en cours sur la page du bureau, la dégradation d'Exchange
+    // Online que remonte Microsoft 365, et sa maintenance planifiée.
+    let office: Option<i64> =
+        sqlx::query_scalar("SELECT id FROM status_pages WHERE slug = 'muller'")
+            .fetch_optional(pool)
+            .await?;
+    if let Some(office) = office {
+        sqlx::query(
+            "UPDATE status_pages SET client_id = (SELECT id FROM clients WHERE name = ?)
+             WHERE id = ?",
+        )
+        .bind(super::workspace::OFFICE_CLIENT)
+        .bind(office)
+        .execute(pool)
+        .await?;
+        let started = hour_floor(Utc::now()) - chrono::Duration::hours(2);
+        let incident = db::status_pages::create_incident(
+            pool,
+            &IncidentInput {
+                page_id: Some(office),
+                title: "Delays on incoming email".to_string(),
+                kind: "incident".to_string(),
+                status: "monitoring".to_string(),
+                severity: "minor".to_string(),
+                starts_at: stamp(started),
+                ends_at: None,
+            },
+        )
+        .await?;
+        db::status_pages::add_update(
+            pool,
+            incident,
+            "monitoring",
+            "Microsoft reports a degradation of Exchange Online in Europe; mail arrives with \
+             up to 20 minutes of delay. Nothing to do on your side.",
+            true,
+        )
+        .await?;
+        let window = hour_floor(Utc::now()) + chrono::Duration::days(3);
+        let window = window.with_hour(18).unwrap_or(window);
+        db::status_pages::create_incident(
+            pool,
+            &IncidentInput {
+                page_id: Some(office),
+                title: "Firewall and switch firmware update".to_string(),
+                kind: "maintenance".to_string(),
+                status: "scheduled".to_string(),
+                severity: "minor".to_string(),
+                starts_at: stamp(window),
+                ends_at: Some(stamp(window + chrono::Duration::minutes(45))),
+            },
+        )
+        .await?;
+    }
+    Ok(())
+}
+
+/// L'inventaire du réseau de la maison : un balayage planifié qui a déjà tourné,
+/// des appareils connus, un port inattendu sur l'imprimante et un appareil
+/// nouveau, apparu depuis quelques heures. Les listes sont écrites telles quelles :
+/// le balayage ne repartira pas avant une semaine, et il ne sortirait de toute
+/// façon pas du processus.
+async fn seed_network_inventory(pool: &SqlitePool, agent: TargetId) -> Result<()> {
+    /// (adresse MAC, IP, nom, fabricant, connu, ports : (numéro, produit, connu)).
+    type Host = (&'static str, &'static str, &'static str, &'static str, bool, &'static [Port]);
+    type Port = (u16, &'static str, bool);
+    #[rustfmt::skip]
+    const HOSTS: &[Host] = &[
+        ("00:0d:b9:5e:11:a4", "192.168.1.1", "fw.home.arpa", "PC Engines GmbH", true,
+            &[(22, "OpenSSH 9.9", true), (443, "nginx", true)]),
+        ("a4:bf:01:2c:77:10", "192.168.1.10", "pve.home.arpa", "Intel Corporate", true,
+            &[(22, "OpenSSH 9.2", true), (8006, "Proxmox VE", true)]),
+        ("00:11:32:aa:20:01", "192.168.1.20", "nas.home.arpa", "Synology Incorporated", true,
+            &[(445, "Samba smbd", true), (5000, "Synology DSM", true)]),
+        ("ac:1f:6b:03:21:ee", "192.168.1.21", "truenas.home.arpa", "Super Micro Computer", true,
+            &[(443, "nginx", true)]),
+        ("d8:bb:c1:44:30:0f", "192.168.1.30", "docker01.home.arpa", "Micro-Star INTL", true,
+            &[(22, "OpenSSH 9.2", true), (443, "Traefik", true)]),
+        ("00:1b:a9:6c:40:12", "192.168.1.40", "printer.home.arpa", "Brother Industries", true,
+            &[(80, "Brother HTTP", true), (631, "CUPS", true), (9100, "JetDirect", false)]),
+        ("f0:9f:c2:91:50:77", "192.168.1.50", "ap-livingroom", "Ubiquiti Networks", true, &[]),
+        ("9c:8e:cd:15:61:2a", "192.168.1.61", "cam-hall", "Amcrest Industries", true,
+            &[(554, "RTSP", true)]),
+        ("f4:12:fa:3e:9d:b1", "192.168.1.87", "", "Espressif Inc.", false,
+            &[(80, "lwIP httpd", false)]),
+    ];
+    let at = |ago: chrono::Duration| (Utc::now() - ago).format("%Y-%m-%dT%H:%M:%S").to_string();
+
+    let schedule: i64 = sqlx::query_scalar(
+        "INSERT INTO netscan_schedules
+             (name, cidr, agent_id, interval_secs, depth, enabled, initialized, last_run_at,
+              last_status)
+         VALUES ('Home LAN', '192.168.1.0/24', ?, 604800, 'standard', 1, 1, ?, 'done')
+         RETURNING id",
+    )
+    .bind(agent)
+    .bind(at(chrono::Duration::minutes(8)))
+    .fetch_one(pool)
+    .await
+    .context("demo netscan schedule")?;
+
+    for (mac, ip, hostname, vendor, known, ports) in HOSTS {
+        // Les appareils connus sont là depuis le premier balayage, il y a deux
+        // semaines ; l'intrus, depuis trois heures.
+        let first_seen =
+            at(if *known { chrono::Duration::days(14) } else { chrono::Duration::hours(3) });
+        let device: i64 = sqlx::query_scalar(
+            "INSERT INTO netscan_devices
+                 (schedule_id, ident, mac, ip, hostname, vendor, known, first_seen, last_seen)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
+        )
+        .bind(schedule)
+        .bind(format!("mac:{mac}"))
+        .bind(*mac)
+        .bind(*ip)
+        .bind(Some(*hostname).filter(|name| !name.is_empty()))
+        .bind(*vendor)
+        .bind(i64::from(*known))
+        .bind(&first_seen)
+        .bind(at(chrono::Duration::minutes(8)))
+        .fetch_one(pool)
+        .await
+        .context("demo netscan device")?;
+        for (port, product, port_known) in *ports {
+            // Un port inattendu sur un appareil connu est apparu hier soir.
+            let port_seen =
+                if *port_known { first_seen.clone() } else { at(chrono::Duration::hours(14)) };
+            sqlx::query(
+                "INSERT INTO netscan_ports
+                     (device_id, port, protocol, product, known, first_seen, last_seen)
+                 VALUES (?, ?, 'tcp', ?, ?, ?, ?)",
+            )
+            .bind(device)
+            .bind(i64::from(*port))
+            .bind(*product)
+            .bind(i64::from(*port_known))
+            .bind(port_seen)
+            .bind(at(chrono::Duration::minutes(8)))
+            .execute(pool)
+            .await
+            .context("demo netscan port")?;
+        }
+    }
     Ok(())
 }
 

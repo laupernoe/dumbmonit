@@ -77,6 +77,26 @@ function Stop-Sur($message) {
     exit 1
 }
 
+# Le canal chiffré des agents répond-il ? Une simple connexion TCP, bornée à
+# cinq secondes : « refused » (port non publié, rien n'écoute), « timeout »
+# (pare-feu qui jette les paquets), « ok » sinon.
+function Test-CanalAgents {
+    $canal = $TlsUrl
+    if (-not $canal) { $canal = "https://$(([Uri]$Url).Host):8443" }
+    $cible = [Uri]$canal
+    $client = New-Object System.Net.Sockets.TcpClient
+    try {
+        $tentative = $client.BeginConnect($cible.Host, $cible.Port, $null, $null)
+        if (-not $tentative.AsyncWaitHandle.WaitOne(5000)) { return @('timeout', $cible) }
+        $client.EndConnect($tentative)
+        return @('ok', $cible)
+    } catch {
+        return @('refused', $cible)
+    } finally {
+        $client.Close()
+    }
+}
+
 # Arrête et retire le service et le dossier d'installation de l'ancien agent.
 # Ne touche pas à sa configuration. Silencieux quand rien d'ancien n'est
 # présent ; renvoie $true si quelque chose a été retiré.
@@ -330,6 +350,24 @@ Write-Etape "Configuration written to $ConfigPath"
 Write-Etape "Checking the connection to $Url"
 & $ExePath --config="$ConfigPath" --once
 if ($LASTEXITCODE -ne 0) {
+    $etat, $cible = Test-CanalAgents
+    $port = $cible.Port
+    if ($etat -eq 'refused') {
+        Write-Host @"
+The encrypted agent channel $($cible.Host):$port refuses the connection: port $port is
+not published or not open on the server.
+- Docker: add "$($port):8443" under ports: in docker-compose.yml, then run 'docker compose up -d'.
+- Firewall of the server host: 'firewall-cmd --add-port=$port/tcp --permanent' then
+  'firewall-cmd --reload', 'ufw allow $port/tcp', or on Windows:
+  New-NetFirewallRule -DisplayName 'DumbMonit agents' -Direction Inbound -Protocol TCP -LocalPort $port -Action Allow
+"@ -ForegroundColor Red
+    } elseif ($etat -eq 'timeout') {
+        Write-Host @"
+No answer from the encrypted agent channel $($cible.Host):$port (timeout): a firewall drops
+the traffic, or the address is wrong. Open TCP port $port towards the server, and publish it
+in Docker ("$($port):8443").
+"@ -ForegroundColor Red
+    }
     Stop-Sur @"
 The agent could not reach the server — check the URL and the token.
 The configuration is in place: fix $ConfigPath, then run

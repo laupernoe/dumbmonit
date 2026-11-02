@@ -96,7 +96,26 @@ async fn a_binary_that_does_not_report_the_announced_version_is_not_installed() 
     assert_eq!(std::fs::read_to_string(&exe).unwrap(), OLD_BINARY);
     let last = updater.info().last.expect("échec rapporté");
     assert_eq!(last.outcome, SelfUpdateOutcome::Failed);
-    assert!(last.reason.unwrap().contains("9.9.8"));
+    let reason = last.reason.unwrap_or_default();
+    assert!(reason.contains("9.9.8"), "{reason}");
+}
+
+#[cfg(target_os = "linux")]
+#[tokio::test]
+async fn a_binary_still_open_for_writing_is_tried_again_rather_than_refused() {
+    // Tant qu'un descripteur en écriture reste ouvert, Linux refuse l'exécution
+    // (ETXTBSY) : c'est ce que laisse un `fork` concurrent pendant `stage`.
+    // L'essai `--version` attend qu'il se referme au lieu d'échouer.
+    let dir = tempfile::tempdir().unwrap();
+    let binary = dir.path().join("dumbmonit-agent.new");
+    stage(&binary, NEW_BINARY.as_bytes()).unwrap();
+    let writer = std::fs::OpenOptions::new().write(true).open(&binary).unwrap();
+    let release = tokio::spawn(async move {
+        tokio::time::sleep(Duration::from_millis(200)).await;
+        drop(writer);
+    });
+    assert_eq!(preflight(&binary, "9.9.9").await, Ok(()));
+    release.await.unwrap();
 }
 
 #[tokio::test]

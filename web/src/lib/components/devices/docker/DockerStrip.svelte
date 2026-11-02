@@ -153,7 +153,7 @@
 				{/if}
 				<p class="text-sm text-ink-2">
 					{m.devices_docker_window_note()}
-					<a href="/alerts#scheduled" class="text-ink underline decoration-line-strong underline-offset-2 hover:text-signal-ink">{m.devices_docker_window_link()}</a>.
+					<a href="/alerts?maintenance=1" class="text-ink underline decoration-line-strong underline-offset-2 hover:text-signal-ink">{m.devices_docker_window_link()}</a>.
 					{m.devices_docker_update_how()}
 				</p>
 

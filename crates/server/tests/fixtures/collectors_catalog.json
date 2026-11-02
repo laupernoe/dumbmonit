@@ -1328,6 +1328,25 @@
         "name": "mdaemon_queue_messages",
         "label": "MDaemon queue",
         "kind": "gauge"
+      },
+      {
+        "name": "agent_windows_processor_queue_length",
+        "label": "Processor queue length",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "agent_windows_memory_pages_per_second",
+        "label": "Memory pages per second",
+        "unit": "/s",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "agent_windows_disk_queue_length",
+        "label": "Disk queue length",
+        "kind": "gauge",
+        "better": "lower"
       }
     ],
     "views": [
@@ -1361,6 +1380,9 @@
           "hyperv_vms_health_critical",
           "hyperv_host_cpu_percent",
           "mdaemon_queue_messages",
+          "agent_windows_processor_queue_length",
+          "agent_windows_memory_pages_per_second",
+          "agent_windows_disk_queue_length",
           "agent_firewall_active",
           "agent_ssh_root_login",
           "agent_buffered_samples",
@@ -1886,6 +1908,77 @@
       {
         "name": "arubacentral_device_info",
         "label": "Device",
+        "kind": "info"
+      },
+      {
+        "name": "arubacentral_port_enabled",
+        "label": "Port enabled",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "arubacentral_port_up",
+        "label": "Port link up",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "arubacentral_port_speed_bps",
+        "label": "Port speed",
+        "unit": "bit/s",
+        "kind": "gauge"
+      },
+      {
+        "name": "arubacentral_port_full_duplex",
+        "label": "Port full duplex",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "arubacentral_port_uplink",
+        "label": "Port uplink",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "arubacentral_port_poe_enabled",
+        "label": "Port PoE enabled",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "arubacentral_port_poe_watts",
+        "label": "Port PoE power",
+        "unit": "W",
+        "kind": "gauge"
+      },
+      {
+        "name": "arubacentral_port_rx_bytes_total",
+        "label": "Port traffic in",
+        "unit": "B",
+        "kind": "counter"
+      },
+      {
+        "name": "arubacentral_port_tx_bytes_total",
+        "label": "Port traffic out",
+        "unit": "B",
+        "kind": "counter"
+      },
+      {
+        "name": "arubacentral_port_rx_errors_total",
+        "label": "Port errors in",
+        "kind": "counter",
+        "better": "lower"
+      },
+      {
+        "name": "arubacentral_port_tx_errors_total",
+        "label": "Port errors out",
+        "kind": "counter",
+        "better": "lower"
+      },
+      {
+        "name": "arubacentral_port_neighbor_info",
+        "label": "Port neighbour",
         "kind": "info"
       }
     ],
@@ -2535,6 +2628,17 @@
       {
         "name": "azure_resource_unhealthy",
         "label": "Resource unhealthy",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "azure_location_resources",
+        "label": "Resources per region",
+        "kind": "gauge"
+      },
+      {
+        "name": "azure_location_unhealthy",
+        "label": "Unhealthy per region",
         "kind": "gauge",
         "better": "lower"
       }
@@ -8241,6 +8345,17 @@
         "group": ""
       },
       {
+        "key": "region",
+        "label": "Data center",
+        "help": "Optional. Where the products are hosted (geneva, dc3-a, dc4-a, dc5, winterthur), shown on the region map. The product API does not tell.",
+        "placeholder": "geneva",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
         "key": "request_timeout_seconds",
         "label": "Timeout per request (seconds)",
         "help": "Time allowed for each call, from 1 to 120.",
@@ -8300,6 +8415,11 @@
         "name": "infomaniak_product_operation_in_progress",
         "label": "Product operation in progress",
         "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "infomaniak_region_products",
+        "label": "Products per region",
         "kind": "gauge"
       }
     ],
@@ -15437,6 +15557,77 @@
         "unit": "bool",
         "kind": "gauge",
         "better": "higher"
+      },
+      {
+        "name": "omada_port_enabled",
+        "label": "Port enabled",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "omada_port_up",
+        "label": "Port link up",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "omada_port_speed_bps",
+        "label": "Port speed",
+        "unit": "bit/s",
+        "kind": "gauge"
+      },
+      {
+        "name": "omada_port_full_duplex",
+        "label": "Port full duplex",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "omada_port_uplink",
+        "label": "Port uplink",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "omada_port_poe_enabled",
+        "label": "Port PoE enabled",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "omada_port_poe_watts",
+        "label": "Port PoE power",
+        "unit": "W",
+        "kind": "gauge"
+      },
+      {
+        "name": "omada_port_rx_bytes_total",
+        "label": "Port traffic in",
+        "unit": "B",
+        "kind": "counter"
+      },
+      {
+        "name": "omada_port_tx_bytes_total",
+        "label": "Port traffic out",
+        "unit": "B",
+        "kind": "counter"
+      },
+      {
+        "name": "omada_port_rx_errors_total",
+        "label": "Port errors in",
+        "kind": "counter",
+        "better": "lower"
+      },
+      {
+        "name": "omada_port_tx_errors_total",
+        "label": "Port errors out",
+        "kind": "counter",
+        "better": "lower"
+      },
+      {
+        "name": "omada_port_neighbor_info",
+        "label": "Port neighbour",
+        "kind": "info"
       }
     ],
     "views": [
@@ -16773,6 +16964,12 @@
       {
         "name": "ovh_figure",
         "label": "Figure",
+        "kind": "gauge"
+      },
+      {
+        "name": "ovh_service_expiry_seconds",
+        "label": "Service expiry",
+        "unit": "s",
         "kind": "gauge"
       }
     ],
@@ -26187,6 +26384,41 @@
         "kind": "gauge"
       },
       {
+        "name": "sensor_temperature_celsius",
+        "label": "Temperature",
+        "unit": "°C",
+        "kind": "gauge",
+        "entity": "sensor"
+      },
+      {
+        "name": "sensor_fan_rpm",
+        "label": "Fan speed",
+        "unit": "rpm",
+        "kind": "gauge",
+        "entity": "sensor"
+      },
+      {
+        "name": "sensor_voltage_volts",
+        "label": "Voltage",
+        "unit": "V",
+        "kind": "gauge",
+        "entity": "sensor"
+      },
+      {
+        "name": "sensor_current_amperes",
+        "label": "Current",
+        "unit": "A",
+        "kind": "gauge",
+        "entity": "sensor"
+      },
+      {
+        "name": "sensor_power_watts",
+        "label": "Power",
+        "unit": "W",
+        "kind": "gauge",
+        "entity": "sensor"
+      },
+      {
         "name": "zyxel_cpu_5min_percent",
         "label": "CPU load (5 min)",
         "unit": "%",
@@ -26460,6 +26692,22 @@
         "metrics": [
           "ups_output_load_percent"
         ]
+      },
+      {
+        "view": "timeseries",
+        "title": "Temperatures",
+        "metrics": [
+          "sensor_temperature_celsius"
+        ],
+        "group_by": "sensor"
+      },
+      {
+        "view": "timeseries",
+        "title": "Fans",
+        "metrics": [
+          "sensor_fan_rpm"
+        ],
+        "group_by": "sensor"
       },
       {
         "view": "timeseries",

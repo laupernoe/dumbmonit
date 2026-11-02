@@ -212,6 +212,15 @@ pub struct Metric {
     /// multipliant un nombre de blocs par la taille d'un bloc.
     #[serde(default)]
     pub multiply_by: Option<ObjectId>,
+    /// Colonne d'échelle d'ENTITY-SENSOR-MIB (`entPhySensorScale`) au même index :
+    /// son énumération (milli, unités, kilo…) donne une puissance de dix par
+    /// laquelle la valeur est multipliée. Voir [`entity_sensor_factor`].
+    #[serde(default)]
+    pub entity_scale: Option<ObjectId>,
+    /// Colonne de précision d'ENTITY-SENSOR-MIB (`entPhySensorPrecision`) au même
+    /// index : p > 0 chiffres après la virgule, la valeur est divisée par 10^p.
+    #[serde(default)]
+    pub entity_precision: Option<ObjectId>,
     /// Filtre propre à cette métrique ; à défaut, celui du profil s'applique.
     #[serde(default)]
     pub filters: Option<Filters>,
@@ -233,6 +242,27 @@ pub struct Metric {
     /// un graphique, d'un profil à l'autre.
     #[serde(default)]
     pub view_title: Option<String>,
+}
+
+/// Facteur de mise à l'échelle d'un capteur ENTITY-SENSOR-MIB (RFC 3433) :
+/// `10^exposant(entPhySensorScale) / 10^max(entPhySensorPrecision, 0)`.
+///
+/// L'échelle est une énumération : yocto(1) = 10⁻²⁴ … milli(8) = 10⁻³,
+/// units(9) = 1, kilo(10) = 10³, mega(11), giga(12), tera(13) = 10¹²,
+/// exa(14) = 10¹⁸, peta(15) = 10¹⁵, zetta(16), yotta(17) = 10²⁴. Une précision
+/// négative signifie que la valeur est arrondie à gauche de la virgule : elle
+/// ne décale rien. `None` si l'échelle est hors énumération.
+pub fn entity_sensor_factor(scale: f64, precision: f64) -> Option<f64> {
+    let exponent = match scale as i64 {
+        n @ 1..=13 => 3 * (n as i32 - 9),
+        14 => 18,
+        15 => 15,
+        16 => 21,
+        17 => 24,
+        _ => return None,
+    };
+    let decimals = (precision as i32).clamp(0, 9);
+    Some(10f64.powi(exponent - decimals))
 }
 
 /// Un profil de collecte, tel qu'écrit dans `profiles/`.
@@ -554,6 +584,7 @@ const EMBEDDED: &[(&str, &str)] = &[
     ("ups.yaml", include_str!("../../../../profiles/ups.yaml")),
     ("printer.yaml", include_str!("../../../../profiles/printer.yaml")),
     ("ethernet-switch.yaml", include_str!("../../../../profiles/ethernet-switch.yaml")),
+    ("entity-sensors.yaml", include_str!("../../../../profiles/entity-sensors.yaml")),
     ("zyxel.yaml", include_str!("../../../../profiles/zyxel.yaml")),
     ("watchguard.yaml", include_str!("../../../../profiles/watchguard.yaml")),
     ("stormshield.yaml", include_str!("../../../../profiles/stormshield.yaml")),

@@ -125,6 +125,11 @@
 		return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 	}
 
+	/** Axes and labels speak the interface face (Geist), never the status pages' display face. */
+	function uiFont(): string {
+		return cssVar('--font-ui') || 'system-ui, sans-serif';
+	}
+
 	/** Readable on both themes; the first colour is always the signal teal. */
 	function palette(): string[] {
 		if (colorTokens && colorTokens.length > 0) return colorTokens.map((name) => cssVar(`--c-${name}`));
@@ -243,7 +248,7 @@
 		const { ctx } = u;
 		const ratio = devicePixelRatio || 1;
 		const { left, top, width: bw, height: bh } = u.bbox;
-		const font = `${Math.round(11 * ratio)}px ${cssVar('--font-sans') || 'system-ui, sans-serif'}`;
+		const font = `${Math.round(11 * ratio)}px ${uiFont()}`;
 		ctx.save();
 		ctx.beginPath();
 		ctx.rect(left, top, bw, bh);
@@ -298,7 +303,7 @@
 		const label = cssVar('--c-ink-3');
 		const colors = palette();
 		if (compact) colors[0] = cssVar(`--c-${tone === 'ghost' ? 'ink-3' : tone}`);
-		const font = `11px ${cssVar('--font-sans') || 'system-ui, sans-serif'}`;
+		const font = `11px ${uiFont()}`;
 
 		return {
 			width: Math.max(w, 120),

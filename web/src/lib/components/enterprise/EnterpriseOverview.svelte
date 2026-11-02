@@ -1,33 +1,34 @@
 <script lang="ts">
 	/**
-	 * Overview: the night-sky banner with its one line of status, a band of
-	 * five figures, the health river, and the dense monitor table that feeds
-	 * the context panel on the right. A fresh instance gets the first-run guide
-	 * (administrators) or a way in instead of empty tables.
+	 * Overview: the night-sky banner with its pigeon and one line of status,
+	 * four figures, then what needs attention (only what is broken, with its
+	 * quick action, and the week ahead) beside the health river, then two
+	 * charts worth reading — the fleet's response time over the range, the
+	 * alerts of the last seven days. The whole fleet lives on Monitors. A fresh
+	 * instance gets the first-run guide (administrators) or a way in instead.
 	 *
 	 * Monitors, probes and alerts come from the app-wide store (polled every
-	 * 30 s); the river, latencies, p95 and availability from the fleet store
-	 * (one set of queries, refreshed every minute while LIVE is on).
+	 * 30 s); the river, p95, availability and the alert history from the fleet
+	 * store (one set of queries, refreshed every minute while LIVE is on).
 	 */
 	import { untrack } from 'svelte';
 	import { getOnboarding, listCollectors, type OnboardingState } from '#lib/api/index.js';
 	import { countAlertsByTarget, countsAsProblem } from '#lib/alerts-attention.js';
-	import { formatDuration } from '#lib/format.js';
-	import { kindLabel } from '#lib/kind-label.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { consoleState } from '#lib/stores/console.svelte.js';
-	import { Button, EmptyState, ErrorNotice, calmMotion } from '#lib/ui/index.js';
+	import { Button, EmptyState, ErrorNotice, PHONE_QUERY, calmMotion } from '#lib/ui/index.js';
 	import FirstRun from '#lib/components/overview/FirstRun.svelte';
+	import NeedsAttention from '#lib/components/overview/NeedsAttention.svelte';
+	import FleetLatency from '#lib/components/overview/FleetLatency.svelte';
+	import AlertTrend from '#lib/components/overview/AlertTrend.svelte';
 	import { bannerLine, type BannerLine } from './banner.js';
 	import StatusBanner from './StatusBanner.svelte';
 	import { fleetStore } from './fleet.svelte.js';
-	import { RIVER_SLOTS, mean, meanTimeToResolve } from './fleet.js';
+	import { mean } from './fleet.js';
 	import HealthRiver from './HealthRiver.svelte';
-	import MonitorTable, { type MonitorRow } from './MonitorTable.svelte';
-	import Sparkline from './Sparkline.svelte';
-	import { STATUS_RANK, consoleStatus } from './status.js';
+	import { STATUS_RANK, consoleStatus, type ConsoleStatus } from './status.js';
 
 	// One subscription for the life of the view; the range is followed separately.
 	$effect(() => untrack(() => fleetStore.start()));
@@ -39,72 +40,31 @@
 
 	const alertCounts = $derived(countAlertsByTarget(alertsStore.alerts));
 
-	const rows = $derived<MonitorRow[]>(
+	const monitors = $derived<{ id: number; name: string; status: ConsoleStatus }[]>(
 		alertsStore.targets.map((target) => ({
-			target,
-			status: consoleStatus(target, alertsStore.probes.get(target.id), alertCounts.get(target.id)),
-			kind: kindLabel(target.kind),
-			latency: fleetStore.latency.get(target.id) ?? [],
-			p95: fleetStore.figures.p95.get(target.id) ?? null,
-			uptime: fleetStore.figures.uptime30.get(target.id) ?? null
+			id: target.id,
+			name: target.name,
+			status: consoleStatus(target, alertsStore.probes.get(target.id), alertCounts.get(target.id))
 		}))
 	);
 
 	const riverRows = $derived(
-		[...rows]
-			.filter((row) => fleetStore.river.has(row.target.id))
-			.sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status] || a.target.name.localeCompare(b.target.name))
-			.map((row) => ({ id: row.target.id, name: row.target.name, cells: fleetStore.river.get(row.target.id) ?? [] }))
+		monitors
+			.filter((row) => fleetStore.river.has(row.id))
+			.sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status] || a.name.localeCompare(b.name))
+			.map((row) => ({ id: row.id, name: row.name, cells: fleetStore.river.get(row.id) ?? [] }))
 	);
 
-	// --- The five figures ------------------------------------------------------
-	const total = $derived(rows.filter((r) => r.status !== 'paused').length);
-	const up = $derived(rows.filter((r) => r.status === 'up' || r.status === 'degraded').length);
-	const down = $derived(rows.filter((r) => r.status === 'down').length);
-	const paused = $derived(rows.filter((r) => r.status === 'paused').length);
-
-	/** Per slot of the river: how many monitors were up, and the share of healthy cells. */
-	const upTrend = $derived.by(() => {
-		const counts: number[] = [];
-		for (let i = 0; i < RIVER_SLOTS; i += 1) {
-			let n = 0;
-			for (const cells of fleetStore.river.values()) if (cells[i] === 'up') n += 1;
-			counts.push(n);
-		}
-		return fleetStore.river.size > 0 ? counts : [];
-	});
-	const healthTrend = $derived.by(() => {
-		const shares: number[] = [];
-		for (let i = 0; i < RIVER_SLOTS; i += 1) {
-			let measured = 0;
-			let healthy = 0;
-			for (const cells of fleetStore.river.values()) {
-				if (cells[i] === 'none') continue;
-				measured += 1;
-				if (cells[i] === 'up') healthy += 1;
-			}
-			if (measured > 0) shares.push(healthy / measured);
-		}
-		return shares;
-	});
-	const latencyTrend = $derived.by(() => {
-		const series = [...fleetStore.latency.values()];
-		const length = Math.max(0, ...series.map((s) => s.length));
-		const out: number[] = [];
-		for (let i = 0; i < length; i += 1) {
-			const value = mean(series.map((s) => s[i]).filter((v) => v !== undefined));
-			if (value !== null) out.push(value);
-		}
-		return out;
-	});
-
+	// --- The four figures (MTTR lives in Status › Reports) -----------------------
+	const total = $derived(monitors.filter((r) => r.status !== 'paused').length);
+	const up = $derived(monitors.filter((r) => r.status === 'up' || r.status === 'degraded').length);
+	const down = $derived(monitors.filter((r) => r.status === 'down').length);
+	const paused = $derived(monitors.filter((r) => r.status === 'paused').length);
 	const availability = $derived(mean(fleetStore.figures.uptime30.values()));
 	const firing = $derived(alertsStore.alerts.filter(countsAsProblem));
 	const critical = $derived(firing.filter((a) => a.severity === 'critical').length);
-	const mttr = $derived(meanTimeToResolve(fleetStore.history));
-	const resolved = $derived(fleetStore.history.filter((e) => e.to_phase === 'resolved').length);
 
-	type Kpi = { id: string; label: string; value: string; unit: string; note: string; noteTone: string; spark: number[]; stroke: string };
+	type Kpi = { id: string; label: string; value: string; unit: string; note: string; noteTone: string };
 	const kpis = $derived<Kpi[]>([
 		{
 			id: 'up',
@@ -112,19 +72,15 @@
 			value: String(up),
 			unit: m.console_kpi_up_unit({ total }),
 			note: m.console_kpi_up_note({ down, paused }),
-			noteTone: down > 0 ? 'text-warning-ink' : 'text-ink-2',
-			spark: upTrend,
-			stroke: 'stroke-signal'
+			noteTone: down > 0 ? 'text-warning-ink' : 'text-ink-2'
 		},
 		{
 			id: 'availability',
 			label: m.console_kpi_availability(),
-			value: availability === null ? '—' : availability >= 99.9995 ? '100' : availability.toFixed(3),
+			value: availability === null ? '—' : availability >= 99.9995 ? '100' : availability.toFixed(2),
 			unit: availability === null ? '' : '%',
 			note: availability === null ? m.console_kpi_none() : m.console_kpi_availability_note({ count: fleetStore.figures.uptime30.size }),
-			noteTone: 'text-ink-2',
-			spark: healthTrend,
-			stroke: 'stroke-signal'
+			noteTone: 'text-ink-2'
 		},
 		{
 			id: 'p95',
@@ -132,9 +88,7 @@
 			value: fleetStore.figures.fleetP95 === null ? '—' : String(Math.round(fleetStore.figures.fleetP95)),
 			unit: fleetStore.figures.fleetP95 === null ? '' : 'ms',
 			note: m.console_kpi_p95_note({ range: consoleState.range }),
-			noteTone: 'text-ink-2',
-			spark: latencyTrend,
-			stroke: 'stroke-info'
+			noteTone: 'text-ink-2'
 		},
 		{
 			id: 'alerts',
@@ -142,19 +96,7 @@
 			value: String(firing.length),
 			unit: '',
 			note: m.console_kpi_alerts_note({ critical, warning: firing.length - critical }),
-			noteTone: critical > 0 ? 'text-warning-ink' : firing.length > 0 ? 'text-advisory-ink' : 'text-ink-2',
-			spark: [],
-			stroke: 'stroke-warning'
-		},
-		{
-			id: 'mttr',
-			label: m.console_kpi_mttr(),
-			value: mttr === null ? '—' : formatDuration(mttr),
-			unit: '',
-			note: mttr === null ? m.console_kpi_none() : m.console_kpi_mttr_note({ count: resolved }),
-			noteTone: 'text-ink-2',
-			spark: [],
-			stroke: 'stroke-info'
+			noteTone: critical > 0 ? 'text-warning-ink' : firing.length > 0 ? 'text-advisory-ink' : 'text-ink-2'
 		}
 	]);
 
@@ -191,12 +133,23 @@
 
 	/** Nothing read yet: the line waits rather than say "nothing to watch". */
 	const reading = $derived(alertsStore.loading && alertsStore.targets.length === 0);
-	const banner = $derived(
-		reading
-			? { headline: '', sub: '' }
-			: words(bannerLine(rows.map((row) => ({ id: row.target.id, name: row.target.name, status: row.status })), alertsStore.alerts))
+	const line = $derived(bannerLine(monitors, alertsStore.alerts));
+	const banner = $derived(reading ? { headline: '', sub: '' } : words(line));
+	const mood = $derived<'sleep' | 'watch' | 'alert'>(
+		line.kind === 'down' ? 'alert' : line.kind === 'attention' || line.kind === 'waiting' ? 'watch' : 'sleep'
 	);
 	const noMonitors = $derived(!reading && alertsStore.available && alertsStore.targets.length === 0);
+
+	// --- Phones: the river behind a tap ------------------------------------------
+	let phone = $state(false);
+	let riverOpen = $state(false);
+	$effect(() => {
+		const query = window.matchMedia(PHONE_QUERY);
+		phone = query.matches;
+		const onChange = (event: MediaQueryListEvent) => (phone = event.matches);
+		query.addEventListener('change', onChange);
+		return () => query.removeEventListener('change', onChange);
+	});
 
 	// --- First run -----------------------------------------------------------------
 	// The three-step guide, as the server keeps it. Decided once per visit and
@@ -235,10 +188,10 @@
 	const animate = !calmMotion();
 </script>
 
-<div class="flex min-h-0 flex-1 flex-col gap-3.5">
+<div class="flex min-h-0 flex-1 flex-col gap-4">
 	<h1 class="sr-only">{m.misc_nav_overview()}</h1>
 
-	<StatusBanner headline={banner.headline} sub={banner.sub} />
+	<StatusBanner headline={banner.headline} sub={banner.sub} {mood} />
 
 	{#if showGuide && onboarding}
 		<!-- The guide replaces the console until it is done: one thing to do at a time. -->
@@ -264,18 +217,17 @@
 			{/snippet}
 		</EmptyState>
 	{:else}
-		<div class="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3 xl:grid-cols-5">
+		<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
 			{#each kpis as kpi, i (kpi.id)}
-				<div class={`min-w-0 bg-surface px-4 py-3.5 ${animate ? 'rise-in' : ''} ${i === 4 ? 'max-sm:col-span-2' : ''}`} style={`--rise-delay: ${i * 50}ms`}>
-					<div class="truncate text-xs text-ink-2">{kpi.label}</div>
-					<div class="mt-1.5 flex items-end gap-2.5">
-						<span class="font-mono text-2xl font-medium tracking-[-0.03em] text-ink tabular-nums">{kpi.value}</span>
-						{#if kpi.unit}<span class="pb-1 text-xs text-ink-2">{kpi.unit}</span>{/if}
-						{#if kpi.spark.length > 1}
-							<Sparkline values={kpi.spark} width={84} height={26} stroke={kpi.stroke} draw={animate} class="ml-auto max-sm:hidden" />
-						{/if}
-					</div>
-					<div class={`mt-1 truncate text-xs ${kpi.noteTone}`}>{kpi.note}</div>
+				<div class={`min-w-0 rounded-xl border border-line bg-surface px-4 py-3.5 sm:px-[18px] sm:py-4 ${animate ? 'rise-in' : ''}`} style={`--rise-delay: ${i * 40}ms`}>
+					<p class="m-0 truncate text-sm font-medium text-ink-2">{kpi.label}</p>
+					<p class="m-0 mt-2 flex items-baseline gap-1.5">
+						{#key kpi.value}
+							<span class="state-in font-mono text-2xl leading-none font-medium tracking-[-0.03em] text-ink tabular-nums sm:text-[2rem]">{kpi.value}</span>
+						{/key}
+						{#if kpi.unit}<span class="truncate text-sm text-ink-3 sm:text-base">{kpi.unit}</span>{/if}
+					</p>
+					<p class={`m-0 mt-2 truncate text-xs font-medium ${kpi.noteTone}`}>{kpi.note}</p>
 				</div>
 			{/each}
 		</div>
@@ -284,8 +236,32 @@
 			<ErrorNotice error={fleetStore.error} />
 		{/if}
 
-		<HealthRiver rows={riverRows} />
+		<div class="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+			<NeedsAttention />
+			<div class="flex min-w-0 flex-col gap-2">
+				{#if phone}
+					<button
+						type="button"
+						class="flex min-h-11 items-center justify-between rounded-xl border border-line bg-surface px-4 text-sm font-semibold text-ink"
+						aria-expanded={riverOpen}
+						aria-controls="overview-river"
+						onclick={() => (riverOpen = !riverOpen)}
+					>
+						{m.console_river_title()}
+						<span class="text-xs font-medium text-ink-2">{riverOpen ? m.overview_river_hide() : m.overview_river_show()}</span>
+					</button>
+				{/if}
+				{#if !phone || riverOpen}
+					<div id="overview-river" class="min-w-0 flex-1 [&>section]:h-full">
+						<HealthRiver rows={riverRows} limit={8} moreHref="/targets" scan={false} />
+					</div>
+				{/if}
+			</div>
+		</div>
 
-		<MonitorTable {rows} />
+		<div class="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+			<FleetLatency />
+			<AlertTrend />
+		</div>
 	{/if}
 </div>

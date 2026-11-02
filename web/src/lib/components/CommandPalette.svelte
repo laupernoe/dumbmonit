@@ -11,14 +11,17 @@
 	import { goto } from '$app/navigation';
 	import { tick } from 'svelte';
 	import type { Icon as LucideIcon } from 'lucide-svelte';
-	import { LayoutGrid, Compass,
+	import {
+		Activity,
+		Bell,
+		Building2,
+		Compass,
+		House,
 		Search,
-		Gauge,
 		Server,
 		BellRing,
 		FileText,
 		Globe,
-		Settings2,
 		Tv,
 		BookOpen,
 		ShieldCheck,
@@ -38,7 +41,8 @@
 		Keyboard,
 		LogOut,
 		Settings,
-		ScrollText
+		ScrollText,
+		Wrench
 	} from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { listTargets, type Target, type TargetId } from '#lib/api/index.js';
@@ -51,6 +55,7 @@
 	import { searchIndex } from '#lib/components/settings/tabs.js';
 	import { Led } from '#lib/ui/index.js';
 	import { kindIcon } from '#lib/components/device-form/kinds.js';
+	import { CLIENTS_ENTRY, visible } from '#lib/components/shell/nav.js';
 
 	type Group = 'recent' | 'pages' | 'actions' | 'devices';
 	const GROUP_LABEL: Record<Group, () => string> = {
@@ -73,6 +78,8 @@
 		href?: string;
 		/** Admin-only action: left out for other roles. */
 		admin?: boolean;
+		/** Left out for accounts limited by their teams or clients (the server refuses the page's API). */
+		unscoped?: boolean;
 		/** Device entries carry a state LED instead of an icon. */
 		led?: { tone: 'signal' | 'advisory' | 'warning' | 'ghost'; label: string };
 		run: () => void;
@@ -93,20 +100,23 @@
 	// A function: labels follow the active language when the palette opens.
 	// Search keywords stay in English on purpose (they are matched, not shown).
 	const staticEntries = (): Entry[] => ([
-		{ id: 'page:/', group: 'pages', label: m.misc_nav_overview(), keywords: 'home bulletin sky', icon: Gauge, href: '/', run: go('/') },
-		{ id: 'page:/targets', group: 'pages', label: m.misc_nav_devices(), keywords: 'rack targets hosts', icon: Server, href: '/targets', run: go('/targets') },
-		{ id: 'page:/map', group: 'pages', label: m.topology_title(), detail: m.topology_palette_detail(), keywords: 'map topology graph diagram network tree print export pdf', icon: Network, href: '/map', run: go('/map') },
-		{ id: 'page:/alerts', group: 'pages', label: m.misc_nav_alerts(), keywords: 'needs you warnings advisories', icon: BellRing, href: '/alerts', run: go('/alerts') },
+		{ id: 'page:/', group: 'pages', unscoped: true, label: m.misc_nav_overview(), keywords: 'home bulletin sky', icon: House, href: '/', run: go('/') },
+		{ id: 'page:/targets', group: 'pages', label: m.misc_nav_devices(), keywords: 'rack targets hosts', icon: Activity, href: '/targets', run: go('/targets') },
+		{ id: 'page:/targets?tab=map', group: 'pages', label: m.topology_title(), detail: m.topology_palette_detail(), keywords: 'map topology graph diagram network tree print export pdf', icon: Network, href: '/targets?tab=map', run: go('/targets?tab=map') },
+		{ id: 'page:/alerts', group: 'pages', label: m.misc_nav_alerts(), keywords: 'needs you warnings advisories', icon: Bell, href: '/alerts', run: go('/alerts') },
+		{ id: 'page:/alerts?tab=automation', group: 'pages', unscoped: true, label: m.remediation_page_title(), keywords: 'actions automation remediation runbooks policies scripts restart fix', icon: Wrench, href: '/alerts?tab=automation', run: go('/alerts?tab=automation') },
 		{ id: 'page:/settings/notifications#notifications-channels', group: 'pages', label: m.misc_palette_notifications(), detail: m.misc_palette_notifications_detail(), keywords: 'channels policy quiet hours alerts', icon: BellRing, href: '/settings/notifications#notifications-channels', run: go('/settings/notifications#notifications-channels') },
-		{ id: 'page:/dashboards', group: 'pages', label: m.misc_nav_dashboards(), detail: m.dash_palette_detail(), keywords: 'dashboards widgets grid charts graphs custom panels', icon: LayoutGrid, href: '/dashboards', run: go('/dashboards') },
 		{ id: 'page:/explore', group: 'pages', label: m.explore_title(), detail: m.explore_palette_detail(), keywords: 'metrics explorer promql metricsql query victoriametrics labels', icon: Compass, href: '/explore', run: go('/explore') },
-		{ id: 'page:/security', group: 'pages', label: m.misc_palette_security(), detail: m.misc_palette_security_detail(), keywords: 'security cve vulnerabilities kev nvd osv exploit patch', icon: ShieldAlert, href: '/security', run: go('/security') },
+		{ id: 'page:/targets?tab=security', group: 'pages', label: m.misc_palette_security(), detail: m.misc_palette_security_detail(), keywords: 'security cve vulnerabilities kev nvd osv exploit patch', icon: ShieldAlert, href: '/targets?tab=security', run: go('/targets?tab=security') },
 		{ id: 'page:/settings#security-score', group: 'pages', label: m.misc_palette_security_score(), detail: m.misc_palette_security_score_detail(), keywords: 'security score grade pingcastle secure score checks audit', icon: ShieldCheck, href: '/settings/monitoring#security-score', run: go('/settings/monitoring#security-score') },
 		{ id: 'page:/status', group: 'pages', label: m.misc_palette_status_pages(), detail: m.misc_palette_status_detail(), keywords: 'public incidents maintenance announcements uptime', icon: Globe, href: '/status', run: go('/status') },
-		{ id: 'page:/reports', group: 'pages', admin: true, label: m.reports_page_title(), detail: m.reports_palette_detail(), keywords: 'reports sla availability export pdf csv scheduled email history', icon: FileText, href: '/reports', run: go('/reports') },
-		{ id: 'page:/logs', group: 'pages', admin: true, label: m.logsearch_title(), keywords: 'logs search logsql victorialogs errors', icon: ScrollText, href: '/logs', run: go('/logs') },
-		{ id: 'page:/settings', group: 'pages', label: m.misc_nav_settings(), keywords: 'preferences account language password users sso agents tokens assistant appearance backup about', icon: Settings2, href: '/settings', run: go('/settings') },
-		{ id: 'page:/wall', group: 'pages', label: m.misc_nav_wall(), detail: m.misc_palette_wall_detail(), keywords: 'kiosk tv screen', icon: Tv, href: '/wall', run: go('/wall') },
+		{ id: 'page:/status?tab=reports', group: 'pages', admin: true, label: m.reports_page_title(), detail: m.reports_palette_detail(), keywords: 'reports sla availability export pdf csv scheduled email history', icon: FileText, href: '/status?tab=reports', run: go('/status?tab=reports') },
+		{ id: 'page:/targets?tab=logs', group: 'pages', admin: true, label: m.logsearch_title(), keywords: 'logs search logsql victorialogs errors', icon: ScrollText, href: '/targets?tab=logs', run: go('/targets?tab=logs') },
+		...(visible(CLIENTS_ENTRY)
+			? [{ id: 'page:/clients', group: 'pages' as Group, label: m.msp_nav_clients(), keywords: 'msp clients customers tenants', icon: Building2, href: '/clients', run: go('/clients') }]
+			: []),
+		{ id: 'page:/settings', group: 'pages', label: m.misc_nav_settings(), keywords: 'preferences account language password users sso agents tokens assistant appearance theme backup about', icon: Settings, href: '/settings', run: go('/settings') },
+		{ id: 'page:/wall', group: 'pages', unscoped: true, label: m.misc_nav_wall(), detail: m.misc_palette_wall_detail(), keywords: 'kiosk tv screen', icon: Tv, href: '/wall', run: go('/wall') },
 		{ id: 'page:docs', group: 'pages', label: m.misc_palette_documentation(), keywords: 'docs help manual notifications channels', icon: BookOpen, run: () => window.open('https://dumbmonit.readthedocs.io/en/latest/', '_blank', 'noopener') },
 		{ id: 'action:add', group: 'actions', admin: true, label: m.misc_palette_add_device(), keywords: 'new target create host', icon: Plus, run: go('/targets/new') },
 		{ id: 'action:scan', group: 'actions', admin: true, label: m.misc_palette_scan(), keywords: 'discover cidr snmp', icon: Radar, run: go('/targets/new?scan=1') },
@@ -126,7 +136,7 @@
 		...(auth.canSignOut
 			? [{ id: 'action:logout', group: 'actions' as Group, label: m.misc_nav_sign_out(), keywords: 'logout log out sign off disconnect', icon: LogOut, run: () => void auth.logout() }]
 			: [])
-	] as Entry[]).filter((entry) => !entry.admin || auth.isAdmin);
+	] as Entry[]).filter((entry) => (!entry.admin || auth.isAdmin) && (!entry.unscoped || !auth.scoped));
 
 	// Settings sections a role can see, from the same index as the settings search
 	// (Team only on a protected instance for admins, reports and news for admins).

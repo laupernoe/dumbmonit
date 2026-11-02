@@ -1,11 +1,13 @@
 /**
- * The wall's optional backdrop: one of the four night cities of the status
- * pages (Paris, New York, Tokyo, Dubai) as a band behind the verdict and the
- * clock, or none (the default). `auto` picks the closest city from the
- * browser's time zone. Remembered per browser; a `?city=` on a shared link
- * overrides it for that display without saving. Retired backdrops fold onto
- * a kept one (Zermatt and the Matterhorn onto Dubai, as on the status pages),
- * so an old saved choice or link still lands somewhere.
+ * The wall's world: the whole screen is a city (Paris, New York, Tokyo or
+ * Dubai) under a sky that follows the real hour, with the weather of the
+ * network. Paris is the default; `auto` picks the closest city from the
+ * browser's time zone (Paris when nothing fits) and `none` is an explicit
+ * choice of a plain board. Remembered per browser, set in Settings or from the
+ * wall's own "Backdrop" control; a `?city=` on a shared link overrides it for
+ * that display without saving. Retired backdrops fold onto a kept one
+ * (Zermatt and the Matterhorn onto Dubai, as on the status pages), so an old
+ * saved choice or link still lands somewhere.
  *
  * Pure module (no Svelte): also loaded by `tests/wall-scene.test.mjs`.
  */
@@ -28,6 +30,17 @@ const LEGACY_CITIES: Record<string, WallCity> = {
 
 const STORAGE_KEY = 'dumbmonit-wall-city';
 
+/** What a display shows until someone chooses otherwise. */
+export const DEFAULT_WALL_SCENE: WallSceneChoice = 'paris';
+
+/** Cities drawn by day as well as by night (the others are night scenes only). */
+const DAY_CITIES: readonly WallCity[] = ['paris'];
+
+/** True when the city has a daylight version (Paris); the others stay at night. */
+export function cityHasDay(city: WallCity | null): boolean {
+	return city !== null && DAY_CITIES.includes(city);
+}
+
 /** A saved or linked value as a choice, or null when it names nothing known. */
 export function toWallSceneChoice(value: string | null): WallSceneChoice | null {
 	if (value === null) return null;
@@ -36,18 +49,19 @@ export function toWallSceneChoice(value: string | null): WallSceneChoice | null 
 	return LEGACY_CITIES[value] ?? null;
 }
 
-export function readWallScene(): WallSceneChoice {
+/** The saved choice; `fallback` (Paris) when nothing is saved. */
+export function readWallScene(fallback: WallSceneChoice = DEFAULT_WALL_SCENE): WallSceneChoice {
 	try {
-		return toWallSceneChoice(localStorage.getItem(STORAGE_KEY)) ?? 'none';
+		return toWallSceneChoice(localStorage.getItem(STORAGE_KEY)) ?? fallback;
 	} catch {
-		return 'none';
+		return fallback;
 	}
 }
 
+/** Remembers a choice, `none` included: a plain board is a choice, not the absence of one. */
 export function writeWallScene(choice: WallSceneChoice): void {
 	try {
-		if (choice === 'none') localStorage.removeItem(STORAGE_KEY);
-		else localStorage.setItem(STORAGE_KEY, choice);
+		localStorage.setItem(STORAGE_KEY, choice);
 	} catch {
 		// Not remembered: it applies until the page reloads.
 	}

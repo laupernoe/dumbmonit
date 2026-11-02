@@ -30,6 +30,7 @@ use crate::auth::clients;
 use crate::auth::middleware::{AdminIdentity, Authenticated};
 use crate::collectors::agent;
 use crate::state::AppState;
+use crate::web_tls::Transport;
 
 /// Refus d'un lot dont l'identité n'est pas celle du certificat client.
 pub const CERT_OF_ANOTHER_MACHINE: &str =
@@ -403,6 +404,7 @@ pub async fn create_token(
     State(state): State<AppState>,
     Authenticated(me): Authenticated,
     ClientIp(ip): ClientIp,
+    transport: Option<Extension<Transport>>,
     Json(payload): Json<TokenPayload>,
 ) -> ApiResult<(StatusCode, Json<CreatedToken>)> {
     let name = payload.name.trim().to_string();
@@ -448,7 +450,8 @@ pub async fn create_token(
         record.relay_site = site;
     }
     audit::record(&state.pool, Some(&me.username), "agent_token.created", Some(&name), ip).await;
-    let params = install_parameters_via(&state, payload.base_url.as_deref(), route).await;
+    let pin = self_signed_pin(&state, transport.map(|t| t.0), payload.base_url.as_deref());
+    let params = install_parameters_with(&state, payload.base_url.as_deref(), route, pin).await;
 
     let mut token = TokenView::from(record);
     token.client_id = client;
@@ -486,6 +489,13 @@ pub struct InstallParams {
     /// Relais par lequel passent ces commandes, s'il y en a un : `base_url` et
     /// `agent_url` sont alors ceux de sa passerelle.
     pub via_relay: Option<RelayRoute>,
+    /// Clé publique épinglée (`sha256//…`) du certificat HTTPS autosigné,
+    /// quand l'interface est jointe en HTTPS direct : la commande Unix
+    /// télécharge alors script et binaire en HTTPS vérifié par cette clé
+    /// (`curl --pinnedpubkey`). PowerShell ne sait pas vérifier un certificat
+    /// autosigné par sa clé : la commande Windows reste en HTTP sur le même
+    /// port, le binaire étant de toute façon vérifié par son empreinte.
+    pub https_pin: Option<String>,
 }
 
 /// Passage par un agent relais : sa passerelle, telle que les machines du site
@@ -575,7 +585,8 @@ impl InstallParams {
 
     /// Commande Unix complète pour ce jeton.
     pub fn linux_command(&self, token: &str) -> String {
-        let mut command = install_linux(&self.base_url, token, &self.pairs(false));
+        let mut command =
+            install_linux(&self.base_url, token, &self.pairs(false), self.https_pin.as_deref());
         if let (Some(url), Some(pin)) = (&self.agent_url, &self.ca_pin) {
             command.push_str(&format!(" --tls-url={url} --ca-pin={pin}"));
         }
@@ -584,7 +595,11 @@ impl InstallParams {
 
     /// Commande PowerShell complète pour ce jeton.
     pub fn windows_command(&self, token: &str) -> String {
-        let mut command = install_windows(&self.base_url, token, &self.pairs(true));
+        let base = match &self.https_pin {
+            Some(_) => self.base_url.replacen("https://", "http://", 1),
+            None => self.base_url.clone(),
+        };
+        let mut command = install_windows(&base, token, &self.pairs(true));
         if let (Some(url), Some(pin)) = (&self.agent_url, &self.ca_pin) {
             command.push_str(&format!(" -TlsUrl {url} -CaPin {pin}"));
         }
@@ -601,6 +616,35 @@ pub async fn install_parameters_via(
     state: &AppState,
     base_url: Option<&str>,
     route: Option<RelayRoute>,
+) -> InstallParams {
+    install_parameters_with(state, base_url, route, None).await
+}
+
+/// Clé à épingler dans la commande Unix : l'interface est jointe en HTTPS
+/// direct, avec le certificat autosigné, et l'URL de base est en `https://`.
+pub fn self_signed_pin(
+    state: &AppState,
+    transport: Option<Transport>,
+    base_url: Option<&str>,
+) -> Option<String> {
+    if !transport?.tls || !base_url?.trim().starts_with("https://") {
+        return None;
+    }
+    let summary = state.web_tls().summary()?;
+    match summary.source {
+        crate::web_tls::Source::SelfSigned => summary.public_key_pin,
+        crate::web_tls::Source::Provided => None,
+    }
+}
+
+/// [`install_parameters_via`], avec la clé HTTPS à épingler s'il y en a une
+/// (jamais à travers un relais : sa passerelle parle HTTP sur le réseau du
+/// site, le binaire y est vérifié par son empreinte).
+pub async fn install_parameters_with(
+    state: &AppState,
+    base_url: Option<&str>,
+    route: Option<RelayRoute>,
+    https_pin: Option<String>,
 ) -> InstallParams {
     let base_url = match &route {
         Some(route) => format!("http://{}:{}", route.host, route.port),
@@ -628,6 +672,7 @@ pub async fn install_parameters_via(
         checksums,
         linux_template: String::new(),
         windows_template: String::new(),
+        https_pin: https_pin.filter(|_| route.is_none()),
         via_relay: route,
     };
     params.linux_template = params.linux_command(TOKEN_PLACEHOLDER);
@@ -653,13 +698,15 @@ pub struct InstallQuery {
 /// binaires. Ouverte à toute session et aux jetons `read`.
 pub async fn install_params(
     State(state): State<AppState>,
+    transport: Option<Extension<Transport>>,
     Query(query): Query<InstallQuery>,
 ) -> ApiResult<Json<InstallParams>> {
     let route = match query.relay_id {
         Some(relay) => Some(relay_route(&state, relay, query.relay_host.as_deref(), None).await?),
         None => None,
     };
-    Ok(Json(install_parameters_via(&state, query.base_url.as_deref(), route).await))
+    let pin = self_signed_pin(&state, transport.map(|t| t.0), query.base_url.as_deref());
+    Ok(Json(install_parameters_with(&state, query.base_url.as_deref(), route, pin).await))
 }
 
 /// `GET /api/agent/tokens/{id}/machines` : machines enrôlées par ce jeton, la
@@ -702,9 +749,24 @@ fn normalise_base_url(provided: Option<&str>, bind: std::net::SocketAddr) -> Str
 /// Commande d'installation Unix. Elle porte l'empreinte de chaque binaire Unix
 /// que l'image livre (`--sha256=linux-x86_64:…,…`) : le script refuse un
 /// téléchargement qui n'y correspond pas, ou pour lequel elle manque.
-fn install_linux(base_url: &str, token: &str, checksums: &[(String, String)]) -> String {
-    let mut command =
-        format!("curl -sSL {base_url}/install.sh | sh -s -- --token={token} --url={base_url}");
+fn install_linux(
+    base_url: &str,
+    token: &str,
+    checksums: &[(String, String)],
+    https_pin: Option<&str>,
+) -> String {
+    let mut command = match https_pin {
+        // `-k` lève la vérification par une autorité, que le certificat
+        // autosigné ne peut pas passer ; `--pinnedpubkey` la remplace par la
+        // clé attendue, et le script fait de même pour le binaire.
+        Some(pin) => format!(
+            "curl -sSL -k --pinnedpubkey {pin} {base_url}/install.sh | sh -s -- \
+             --token={token} --url={base_url} --pinned-key={pin}"
+        ),
+        None => {
+            format!("curl -sSL {base_url}/install.sh | sh -s -- --token={token} --url={base_url}")
+        }
+    };
     let unix: Vec<String> = checksums
         .iter()
         .filter(|(platform, _)| !platform.starts_with("windows-"))
@@ -798,7 +860,7 @@ mod tests {
     #[test]
     fn the_install_command_is_the_one_promised_in_the_documentation() {
         assert_eq!(
-            install_linux("http://serveur:8080", "dmon_abc", &[]),
+            install_linux("http://serveur:8080", "dmon_abc", &[], None),
             "curl -sSL http://serveur:8080/install.sh | sh -s -- --token=dmon_abc --url=http://serveur:8080"
         );
         assert!(install_windows("http://serveur:8080", "dmon_abc", &[]).contains("install.ps1"));
@@ -815,6 +877,7 @@ mod tests {
             linux_template: String::new(),
             windows_template: String::new(),
             via_relay: None,
+            https_pin: None,
         };
         let linux = params.linux_command("dmon_abc");
         assert!(linux.ends_with(&format!(" --tls-url=https://s:8443 --ca-pin={pin}")), "{linux}");
@@ -825,13 +888,41 @@ mod tests {
     }
 
     #[test]
+    fn over_self_signed_https_the_unix_command_pins_the_server_key() {
+        let pin = "sha256//AAAA";
+        let params = InstallParams {
+            base_url: "https://nas.lan:8080".into(),
+            agent_url: None,
+            ca_pin: None,
+            checksums: Vec::new(),
+            linux_template: String::new(),
+            windows_template: String::new(),
+            via_relay: None,
+            https_pin: Some(pin.into()),
+        };
+        let linux = params.linux_command("dmon_abc");
+        assert!(
+            linux.starts_with(
+                "curl -sSL -k --pinnedpubkey sha256//AAAA https://nas.lan:8080/install.sh | sh -s"
+            ),
+            "{linux}"
+        );
+        assert!(linux.contains(" --pinned-key=sha256//AAAA"), "{linux}");
+        assert!(linux.contains(" --url=https://nas.lan:8080"), "{linux}");
+        // PowerShell ne sait pas épingler une clé : même port, en HTTP.
+        let windows = params.windows_command("dmon_abc");
+        assert!(windows.contains("irm http://nas.lan:8080/install.ps1"), "{windows}");
+        assert!(!windows.contains("pinnedpubkey"));
+    }
+
+    #[test]
     fn the_install_commands_carry_the_checksums_of_their_platforms() {
         let checksums = vec![
             ("linux-x86_64".to_string(), "a".repeat(64)),
             ("linux-aarch64".to_string(), "b".repeat(64)),
             ("windows-x86_64".to_string(), "c".repeat(64)),
         ];
-        let linux = install_linux("http://s:8080", "dmon_abc", &checksums);
+        let linux = install_linux("http://s:8080", "dmon_abc", &checksums, None);
         assert!(
             linux.ends_with(&format!(
                 " --sha256=linux-x86_64:{},linux-aarch64:{}",

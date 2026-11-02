@@ -1,0 +1,126 @@
+# Capteurs d'ENTITY-SENSOR-MIB (RFC 3433) : températures, ventilateurs,
+# tensions, courants et puissances que lisent la plupart des commutateurs et
+# routeurs qui ne publient pas de MIB propriétaire.
+#
+# entPhySensorValue ne se lit qu'avec l'échelle (entPhySensorScale, une
+# énumération de puissances de dix : milli = 8, unités = 9, kilo = 10…) et la
+# précision (entPhySensorPrecision, nombre de décimales) du même capteur :
+# `entity_scale` et `entity_precision` désignent ces colonnes et le moteur
+# combine les deux (valeur × 10^échelle ÷ 10^précision). Un capteur dont l'une
+# des colonnes manque n'émet rien, plutôt qu'une mesure dans une unité inconnue.
+#
+# Colonnes (entPhySensorEntry, 1.3.6.1.2.1.99.1.1.1) : .1 type, .2 échelle,
+# .3 précision, .4 valeur, .5 état (1 = ok, 2 = indisponible, 3 = hors service).
+# Types retenus : 3 voltsAC, 4 voltsDC, 5 amperes, 6 watts, 8 celsius, 10 rpm.
+# Le nom du capteur vient d'entPhysicalName (ENTITY-MIB, même index), à défaut
+# d'entPhysicalDescr.
+#
+# À vérifier sur du matériel réel : la lecture de la précision négative (la
+# valeur est alors prise telle quelle).
+id: entity-sensors
+name: Hardware sensors (ENTITY-SENSOR-MIB)
+
+metrics:
+  - name: sensor_temperature_celsius
+    oid: 1.3.6.1.2.1.99.1.1.1.4
+    kind: gauge
+    label: "Temperature"
+    unit: "°C"
+    entity: "sensor"
+    view: "timeseries"
+    view_title: "Temperatures"
+    walk: true
+    entity_scale: 1.3.6.1.2.1.99.1.1.1.2
+    entity_precision: 1.3.6.1.2.1.99.1.1.1.3
+    labels:
+      sensor: 1.3.6.1.2.1.47.1.1.1.1.7
+      descr: 1.3.6.1.2.1.47.1.1.1.1.2
+    filters:
+      max_rows: 64
+      keep_only_when_oid_equals:
+        - oid: 1.3.6.1.2.1.99.1.1.1.1
+          values: [8]
+        - oid: 1.3.6.1.2.1.99.1.1.1.5
+          values: [1]
+
+  - name: sensor_fan_rpm
+    oid: 1.3.6.1.2.1.99.1.1.1.4
+    kind: gauge
+    label: "Fan speed"
+    unit: "rpm"
+    entity: "sensor"
+    view: "timeseries"
+    view_title: "Fans"
+    walk: true
+    entity_scale: 1.3.6.1.2.1.99.1.1.1.2
+    entity_precision: 1.3.6.1.2.1.99.1.1.1.3
+    labels:
+      sensor: 1.3.6.1.2.1.47.1.1.1.1.7
+      descr: 1.3.6.1.2.1.47.1.1.1.1.2
+    filters:
+      max_rows: 64
+      keep_only_when_oid_equals:
+        - oid: 1.3.6.1.2.1.99.1.1.1.1
+          values: [10]
+        - oid: 1.3.6.1.2.1.99.1.1.1.5
+          values: [1]
+
+  - name: sensor_voltage_volts
+    oid: 1.3.6.1.2.1.99.1.1.1.4
+    kind: gauge
+    label: "Voltage"
+    unit: "V"
+    entity: "sensor"
+    walk: true
+    entity_scale: 1.3.6.1.2.1.99.1.1.1.2
+    entity_precision: 1.3.6.1.2.1.99.1.1.1.3
+    labels:
+      sensor: 1.3.6.1.2.1.47.1.1.1.1.7
+      descr: 1.3.6.1.2.1.47.1.1.1.1.2
+    filters:
+      max_rows: 64
+      keep_only_when_oid_equals:
+        - oid: 1.3.6.1.2.1.99.1.1.1.1
+          values: [3, 4]
+        - oid: 1.3.6.1.2.1.99.1.1.1.5
+          values: [1]
+
+  - name: sensor_current_amperes
+    oid: 1.3.6.1.2.1.99.1.1.1.4
+    kind: gauge
+    label: "Current"
+    unit: "A"
+    entity: "sensor"
+    walk: true
+    entity_scale: 1.3.6.1.2.1.99.1.1.1.2
+    entity_precision: 1.3.6.1.2.1.99.1.1.1.3
+    labels:
+      sensor: 1.3.6.1.2.1.47.1.1.1.1.7
+      descr: 1.3.6.1.2.1.47.1.1.1.1.2
+    filters:
+      max_rows: 64
+      keep_only_when_oid_equals:
+        - oid: 1.3.6.1.2.1.99.1.1.1.1
+          values: [5]
+        - oid: 1.3.6.1.2.1.99.1.1.1.5
+          values: [1]
+
+  - name: sensor_power_watts
+    oid: 1.3.6.1.2.1.99.1.1.1.4
+    kind: gauge
+    label: "Power"
+    unit: "W"
+    entity: "sensor"
+    walk: true
+    entity_scale: 1.3.6.1.2.1.99.1.1.1.2
+    entity_precision: 1.3.6.1.2.1.99.1.1.1.3
+    labels:
+      sensor: 1.3.6.1.2.1.47.1.1.1.1.7
+      descr: 1.3.6.1.2.1.47.1.1.1.1.2
+    filters:
+      max_rows: 64
+      keep_only_when_oid_equals:
+        - oid: 1.3.6.1.2.1.99.1.1.1.1
+          values: [6]
+        - oid: 1.3.6.1.2.1.99.1.1.1.5
+          values: [1]

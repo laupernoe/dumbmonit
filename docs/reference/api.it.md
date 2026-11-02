@@ -579,6 +579,7 @@ che nessun token è accettato (solo sessione).
 | `GET` | `/api/music/spotify/token` | none | Un token di accesso Spotify di breve durata per il player del wall. Solo sessione. |
 | `GET`, `PUT` | `/api/music/speaker` | read, write | L'altoparlante Spotify del wall come lo mostrano le Impostazioni; lo rinomina (admin). |
 | `POST` | `/api/music/speaker/report`, `/play` | none | Un wall riporta lo stato del suo altoparlante; vi riproduce l'account. Solo sessione. |
+| `POST` | `/api/music/spotify/playback` | none | Mette in pausa o riprende l'account dal wall, ovunque suoni. Solo sessione. |
 
 ## Avvisi
 

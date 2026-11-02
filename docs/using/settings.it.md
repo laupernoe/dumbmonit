@@ -14,7 +14,7 @@ Le Impostazioni raccolgono ciò che è amministrativo: l'istanza stessa, il tuo 
 | Schermo a parete | `/settings/wall` | Modalità parete: cosa mostra e come aprirla ([Modalità parete](wall.md)) |
 | Sistema | `/settings/system` | Backup, File di configurazione, DumbMonit stesso, Dati e conservazione, Log, API e assistenti, Informazioni |
 
-Ogni sezione mantiene la propria ancora: `/settings#agents` reindirizza a `/settings/monitoring#agents`. Anche i vecchi link (`/alerts#notifications`) reindirizzano alla nuova posizione. Le pagine di stato e i report non sono più nelle Impostazioni: hanno pagine proprie, **Pagine di stato** (`/status`) e **Report** (`/reports`); `/settings/status` e `/settings/reports` reindirizzano lì. Musica, notizie e widget della parete non ci sono più: i loro vecchi link (`#music`, `#news`, `#widgets`) aprono la scheda Schermo a parete.
+Ogni sezione mantiene la propria ancora: `/settings#agents` reindirizza a `/settings/monitoring#agents`. Anche i vecchi link (`/alerts#notifications`) reindirizzano alla nuova posizione. Le pagine di stato e i report non sono più nelle Impostazioni: hanno pagine proprie, **Pagine di stato** (`/status`) e **Report** (`/reports`); `/settings/status` e `/settings/reports` reindirizzano lì. Notizie e widget della parete non ci sono più: i loro vecchi link (`#news`, `#widgets`) aprono la scheda Schermo a parete, dove si trova **Musica per la parete** (`#music`).
 
 ## Aspetto {#appearance}
 
@@ -26,8 +26,13 @@ mantengono i loro temi chiaro e scuro.
 
 **Apri la modalità parete**: il quadro della console, a schermo intero, per un
 monitor nella stanza. ++esc++ la chiude, e la palette dei comandi la apre da
-ovunque. La parete non ha più musica, notizie né widget; se vuoi, una città di
-notte può stare dietro al suo verdetto. Vedi [Modalità parete](wall.md).
+ovunque. La parete non ha più notizie né widget; se vuoi, una città di notte può
+stare dietro al suo verdetto. Vedi [Modalità parete](wall.md).
+
+**Musica per la parete**: collega un account Spotify (la parete diventa uno
+speaker Spotify Connect e mostra cosa suona, con riproduci / pausa), oppure
+invia un link Spotify, Deezer o YouTube a tutte le pareti. Vedi [Musica sul
+wall](wall.md#music-on-the-wall).
 
 ## Account e sicurezza
 
