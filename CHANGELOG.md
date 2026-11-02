@@ -3,7 +3,7 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## Unreleased
+## 0.15.0 — 2026-11-02
 
 ### Removed
 
@@ -12,6 +12,7 @@ All notable changes to this project are documented here. The format follows
   sample dashboards are gone; the metrics explorer stays, without its "Add to a
   dashboard" action. Existing dashboards stay in the database but are no longer
   read, shown or exported. Backups made before still restore everything else.
+
 ### Added
 
 - **Wall music is back** (Spotify Connect, a shared link, Settings › Wall display
@@ -33,6 +34,27 @@ All notable changes to this project are documented here. The format follows
   changes are part of the backup. New routes `GET /api/upgrade-notes`,
   `POST /api/upgrade-notes/close` and `POST /api/upgrade-notes/announce`
   (administrator session).
+
+- **Machine health on Windows.** The agent now fills the machine health card on
+  Windows too: top processes by CPU and memory, processor queue length, memory
+  pages per second and disk queue length (`agent_windows_*`, shown among the
+  current values), and the clock offset and synchronisation read from
+  `w32tm /query /status /verbose` (same `agent_clock_*` series as on Linux).
+- **Switch panel for Omada and Aruba Central.** Switches managed by an Omada
+  controller or by Aruba Central show their ports (state, speed, PoE) in the
+  switch panel, like SNMP switches.
+- **ENTITY-SENSOR-MIB sensors in SNMP profiles.** A new `entity-sensors` profile
+  reads temperatures, voltages, currents, fan speeds and power from ENTITY-SENSOR-MIB, with
+  the scale and precision each sensor reports.
+- **Restart markers on device charts.** Host reboots (uptime going back) and
+  container restarts are marked on the charts of the device page.
+- **Expiries in deadlines.** OVH services report their expiry date and are listed
+  in deadlines; the Veeam support contract has an expiry rule and a deadline.
+- **Region map.** Azure and Infomaniak resources carry a region label and are
+  placed on the region map.
+- **Hyper Backup in the backup matrix.** Synology Hyper Backup tasks appear in the
+  backup history and matrix.
+
 ### Security
 
 - **HTTPS on the web port itself.** Port 8080 now speaks HTTP and HTTPS at once
@@ -88,6 +110,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Left menu.** It stays in place while the page scrolls; hovering the logo
+  turns it into the expand button (the collapse button sits next to the name
+  once open), ++ctrl+b++ / ++cmd+b++ toggles it. Settings moved to the bottom
+  with Wall mode, Docs and GitHub; wall mode is no longer in the top bar. The
+  logo and the app icons have a night-sky background instead of plain black.
+- **Needs attention.** "Silence 1 h" became a small cross that mutes the monitor
+  for 1 h, 8 h, 24 h or until a date you pick, with **Unmute** on the row.
+- **First-run guide.** The step list no longer runs over the form, and the
+  pigeon says a word at each step (and on the add-a-monitor page).
+
 - **Section tabs.** One tab strip (in the address as `?tab=`, keyboard, sticky on
   phones) now groups the secondary pages. Monitors: List, Map, Logs and Security;
   Alerts: Now, History, Rules, Automation (log, runbooks, actions, policies) and
@@ -139,37 +171,6 @@ All notable changes to this project are documented here. The format follows
   the viewer by default in the demo. Log search stays off: the demo has no log
   store.
 
-### Fixed
-
-- A monitor page no longer fails with "Could not load the metrics — rated is not
-  defined" for the kinds that chart counters as rates.
-
-## 0.14.3 — 2026-10-28
-
-### Added
-
-- **Machine health on Windows.** The agent now fills the machine health card on
-  Windows too: top processes by CPU and memory, processor queue length, memory
-  pages per second and disk queue length (`agent_windows_*`, shown among the
-  current values), and the clock offset and synchronisation read from
-  `w32tm /query /status /verbose` (same `agent_clock_*` series as on Linux).
-- **Switch panel for Omada and Aruba Central.** Switches managed by an Omada
-  controller or by Aruba Central show their ports (state, speed, PoE) in the
-  switch panel, like SNMP switches.
-- **ENTITY-SENSOR-MIB sensors in SNMP profiles.** A new `entity-sensors` profile
-  reads temperatures, voltages, currents, fan speeds and power from ENTITY-SENSOR-MIB, with
-  the scale and precision each sensor reports.
-- **Restart markers on device charts.** Host reboots (uptime going back) and
-  container restarts are marked on the charts of the device page.
-- **Expiries in deadlines.** OVH services report their expiry date and are listed
-  in deadlines; the Veeam support contract has an expiry rule and a deadline.
-- **Region map.** Azure and Infomaniak resources carry a region label and are
-  placed on the region map.
-- **Hyper Backup in the backup matrix.** Synology Hyper Backup tasks appear in the
-  backup history and matrix.
-
-### Changed
-
 - **A fuller demo.** The demo estate now carries 30 days of history (last week
   at five-minute resolution) and shows what the recent releases added: charts
   on every monitor, latency and p95 columns filled, 30-day availability below
@@ -188,6 +189,9 @@ All notable changes to this project are documented here. The format follows
   and `:edge` stay amd64 only.
 
 ### Fixed
+
+- A monitor page no longer fails with "Could not load the metrics — rated is not
+  defined" for the kinds that chart counters as rates.
 
 - **Agent self-update.** The trial run of a freshly downloaded agent
   (`--version`) is tried again when Linux briefly reports the file as busy
