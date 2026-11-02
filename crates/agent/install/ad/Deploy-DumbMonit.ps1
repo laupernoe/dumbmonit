@@ -22,6 +22,10 @@
 
     It is idempotent: running it again updates the group policy in place.
 
+    By default, once the policy is deployed the script refreshes every targeted server right
+    away (WinRM, or Invoke-GPUpdate as a fallback), so nobody waits for the 90-minute policy
+    refresh, then watches the agent appear for up to 3 minutes. See -NoRefresh and -NoVerify.
+
     What it does:
       1. copies a small installation kit to SYSVOL (\\<domain>\SYSVOL\<domain>\DumbMonit),
          readable only by domain computers (or by -SecurityGroup) and administrators;
@@ -56,7 +60,15 @@
     Only computers in this security group apply the group policy.
 
 .PARAMETER Yes
-    Do not ask anything: use the parameters as given (and the defaults of this kit).
+    Do not ask anything: use the parameters as given (and the defaults of this kit),
+    which includes refreshing all the servers now.
+
+.PARAMETER NoRefresh
+    Do not refresh the servers after deploying: they pick the policy up at their next
+    refresh (within 90 minutes). Skips the verification too. Meant for automation.
+
+.PARAMETER NoVerify
+    Refresh the servers, but do not wait (up to 3 minutes) to see the agent appear on them.
 
 .PARAMETER UseSysvol
     Also copy the agent binary to SYSVOL, for servers that cannot reach the
@@ -84,6 +96,14 @@
     Every Windows Server of the domain, present and future, without any question.
 
 .EXAMPLE
+    .\Deploy-DumbMonit.ps1 -AllServers -Yes -NoRefresh
+    Deploys the policy only; servers pick it up within 90 minutes (automation).
+
+.EXAMPLE
+    .\Deploy-DumbMonit.ps1 -AllServers -Yes -NoVerify
+    Deploys and refreshes all servers now, without waiting to see the agents arrive.
+
+.EXAMPLE
     .\Deploy-DumbMonit.ps1 -SecurityGroup "DumbMonit Servers"
 
 .EXAMPLE
@@ -102,7 +122,9 @@ param(
     [string]$GpoName = 'DumbMonit Agent',
     [switch]$Remove,
     [switch]$UninstallAgents,
-    [switch]$Yes
+    [switch]$Yes,
+    [switch]$NoRefresh,
+    [switch]$NoVerify
 )
 
 $ErrorActionPreference = 'Stop'
@@ -184,6 +206,115 @@ function Get-ServerComputers {
 
 # Conteneur ou OU parent d'un objet (« CN=SRV1,OU=Servers,DC=… » -> « OU=Servers,DC=… »).
 function Get-ParentDn([string]$Dn) { return ($Dn -replace '^CN=(\\,|[^,])+,', '') }
+
+# Machines visées par la stratégie, selon le périmètre choisi : Windows Server du domaine
+# (-AllServers), de l'OU (enfants compris), membres du groupe de sécurité (imbriqués compris),
+# plus les contrôleurs de domaine si demandés. Les machines désactivées sont écartées.
+function Get-RefreshTargets {
+    $props = @('OperatingSystem', 'DNSHostName', 'Enabled')
+    $found = New-Object System.Collections.Generic.List[object]
+    if ($groupSid) {
+        $groupDn = (Get-ADGroup -Identity $SecurityGroup).DistinguishedName
+        foreach ($c in @(Get-ADComputer -LDAPFilter "(memberOf:1.2.840.113556.1.4.1941:=$groupDn)" -Properties $props)) { $found.Add($c) }
+    } elseif ($AllServers) {
+        foreach ($c in @(Get-ADComputer -Filter 'OperatingSystem -like "*Server*"' -Properties $props)) { $found.Add($c) }
+    } elseif (-not [string]::IsNullOrWhiteSpace($TargetOU)) {
+        foreach ($c in @(Get-ADComputer -Filter 'OperatingSystem -like "*Server*"' -SearchBase $TargetOU -SearchScope Subtree -Properties $props)) { $found.Add($c) }
+    }
+    if ($IncludeDomainControllers) {
+        foreach ($c in @(Get-ADComputer -Filter * -SearchBase $ad.DomainControllersContainer -SearchScope Subtree -Properties $props)) { $found.Add($c) }
+    }
+    $names = @{}
+    foreach ($c in $found) {
+        if ($c.Enabled -eq $false) { continue }
+        $n = if ($c.DNSHostName) { [string]$c.DNSHostName } else { [string]$c.Name }
+        if ($n) { $names[$n.ToLowerInvariant()] = $n }
+    }
+    return @($names.Values | Sort-Object)
+}
+
+# Rafraîchit la stratégie de chaque machine sans attendre les 90 minutes : WinRM d'abord,
+# en parallèle limité, puis Invoke-GPUpdate pour celles où WinRM échoue. Aucune erreur par
+# machine n'arrête le script. Renvoie une ligne par machine (Machine, Method, Result).
+function Invoke-ServerRefresh([string[]]$Computers) {
+    $rows = @{}
+    try {
+        $opt = New-PSSessionOption -OpenTimeout 8000 -OperationTimeout 60000
+        $job = Invoke-Command -ComputerName $Computers -SessionOption $opt -ThrottleLimit 16 -AsJob -ScriptBlock {
+            $null = & klist.exe -li 0x3e7 purge 2>&1
+            $null = & gpupdate.exe /target:computer /force 2>&1
+            [pscustomobject]@{ Code = $LASTEXITCODE }
+        }
+        $started = Get-Date
+        $total = $Computers.Count
+        while (@($job.ChildJobs | Where-Object { $_.State -in 'Running', 'NotStarted' }).Count -gt 0) {
+            if (((Get-Date) - $started).TotalSeconds -gt 300) { Stop-Job -Job $job -ErrorAction SilentlyContinue; break }
+            $done = @($job.ChildJobs | Where-Object { $_.State -notin 'Running', 'NotStarted' }).Count
+            Write-Progress -Activity 'Refreshing the servers' -Status "$done/$total answered (WinRM)" -PercentComplete ([int](100 * $done / [Math]::Max($total, 1)))
+            Start-Sleep -Seconds 2
+        }
+        Write-Progress -Activity 'Refreshing the servers' -Completed
+        foreach ($child in $job.ChildJobs) {
+            try {
+                if ($child.State -ne 'Completed') { continue }
+                $out = @(Receive-Job -Job $child -ErrorAction Stop)
+                $code = if ($out.Count -gt 0) { $out[-1].Code } else { 1 }
+                $rows[([string]$child.Location).ToLowerInvariant()] = [pscustomobject]@{
+                    Machine = [string]$child.Location; Method = 'WinRM'
+                    Result  = $(if ($code -eq 0) { 'policy refreshed' } else { "gpupdate exit code $code" })
+                }
+            } catch { }
+        }
+        Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+    } catch {
+        Write-Plan "WinRM refresh failed: $($_.Exception.Message)"
+    }
+
+    # Repli : tâche planifiée distante du module GroupPolicy (RPC/DCOM).
+    $left = @($Computers | Where-Object { -not $rows.ContainsKey($_.ToLowerInvariant()) })
+    $i = 0
+    foreach ($name in $left) {
+        $i++
+        Write-Progress -Activity 'Refreshing the servers' -Status "GPUpdate fallback ${i}/$($left.Count): $name" -PercentComplete ([int](100 * $i / [Math]::Max($left.Count, 1)))
+        $row = [pscustomobject]@{ Machine = $name; Method = 'unreachable'; Result = 'no answer' }
+        try {
+            $up = $false
+            try { $up = [bool](Test-Connection -ComputerName $name -Count 1 -Quiet -ErrorAction Stop) } catch { $up = $false }
+            if ($up) {
+                Invoke-GPUpdate -Computer $name -Target Computer -Force -RandomDelayInMinutes 0 -ErrorAction Stop | Out-Null
+                $row = [pscustomobject]@{ Machine = $name; Method = 'GPUpdate'; Result = 'refresh requested' }
+            }
+        } catch {
+            $row = [pscustomobject]@{ Machine = $name; Method = 'unreachable'; Result = 'error' }
+        }
+        $rows[$name.ToLowerInvariant()] = $row
+    }
+    Write-Progress -Activity 'Refreshing the servers' -Completed
+    return @($Computers | ForEach-Object { $rows[$_.ToLowerInvariant()] })
+}
+
+# L'agent est-il installé (service « DumbMonitAgent », créé par l'installateur) ? Une seule
+# passe sur les machines données ; WinRM, sc.exe (RPC) pour celles du repli GPUpdate.
+function Get-AgentInstalled([object[]]$Rows) {
+    $present = New-Object System.Collections.Generic.List[string]
+    $winrm = @($Rows | Where-Object { $_.Method -eq 'WinRM' } | ForEach-Object { $_.Machine })
+    if ($winrm.Count -gt 0) {
+        try {
+            $opt = New-PSSessionOption -OpenTimeout 8000 -OperationTimeout 30000
+            $res = @(Invoke-Command -ComputerName $winrm -SessionOption $opt -ThrottleLimit 16 -ErrorAction SilentlyContinue -ScriptBlock {
+                [pscustomobject]@{ Present = [bool](Get-Service -Name 'DumbMonitAgent' -ErrorAction SilentlyContinue) }
+            })
+            foreach ($r in $res) { if ($r.Present) { $present.Add([string]$r.PSComputerName) } }
+        } catch { }
+    }
+    foreach ($row in @($Rows | Where-Object { $_.Method -eq 'GPUpdate' })) {
+        try {
+            $null = & sc.exe "\\$($row.Machine)" query DumbMonitAgent 2>&1
+            if ($LASTEXITCODE -eq 0) { $present.Add($row.Machine) }
+        } catch { }
+    }
+    return @($present)
+}
 
 Write-Host ''
 Write-Host "DumbMonit - Active Directory deployment for $Domain" -ForegroundColor White
@@ -379,6 +510,14 @@ if ($canAsk -and -not $WhatIfPreference) {
         Write-Host 'Cancelled. Nothing was changed.' -ForegroundColor Yellow
         exit 0
     }
+    Write-Host ''
+}
+
+# Rafraîchissement immédiat : oui par défaut (-Yes, ou Entrée), jamais en -WhatIf.
+$doRefresh = -not $NoRefresh -and -not $WhatIfPreference
+if ($doRefresh -and $canAsk) {
+    $answer = (Read-Host 'Refresh all servers now? (Y/n)').Trim()
+    if ($answer -and $answer -notmatch '^(y|yes|o|oui)$') { $doRefresh = $false }
     Write-Host ''
 }
 
@@ -597,12 +736,70 @@ if ($gpo) {
 }
 
 Write-Host ''
+$refreshRows = @()
+$agentsSeen = 0
+if ($doRefresh) {
+    Write-Step 'Refreshing the servers now'
+    $targets = @()
+    try { $targets = @(Get-RefreshTargets) }
+    catch { Write-Host "Could not list the target servers: $($_.Exception.Message)" -ForegroundColor Yellow }
+    if ($targets.Count -eq 0) {
+        Write-Plan 'No enabled server found to refresh.'
+    } else {
+        Write-Plan "$($targets.Count) server(s) targeted"
+        try { $refreshRows = @(Invoke-ServerRefresh $targets) }
+        catch { Write-Host "The refresh stopped early: $($_.Exception.Message)" -ForegroundColor Yellow }
+        $refreshRows = @($refreshRows | Where-Object { $_ })
+        Write-Host ''
+        ($refreshRows | Format-Table Machine, Method, Result -AutoSize | Out-String).TrimEnd() | Write-Host
+        Write-Host ''
+        $unreachable = @($refreshRows | Where-Object { $_.Method -eq 'unreachable' })
+        if ($unreachable.Count -gt 0) {
+            Write-Host "$($unreachable.Count) server(s) could not be reached: each will pick the policy up within 90 minutes, or run gpupdate /force on it." -ForegroundColor Yellow
+        }
+
+        # Vérification facultative et bornée : 3 minutes au plus, toutes les 15 secondes.
+        $reachable = @($refreshRows | Where-Object { $_.Method -ne 'unreachable' })
+        if (-not $NoVerify -and -not $UninstallAgents -and $reachable.Count -gt 0) {
+            Write-Step 'Waiting for the agents (up to 3 minutes, Ctrl+C to stop waiting)'
+            $deadline = (Get-Date).AddMinutes(3)
+            $seen = @{}
+            $last = -1
+            try {
+                while ($true) {
+                    $todo = @($reachable | Where-Object { -not $seen.ContainsKey($_.Machine.ToLowerInvariant()) })
+                    foreach ($name in @(Get-AgentInstalled $todo)) { $seen[$name.ToLowerInvariant()] = $true }
+                    if ($seen.Count -ne $last) {
+                        Write-Plan "Agent installed on $($seen.Count)/$($reachable.Count) server(s)"
+                        $last = $seen.Count
+                    }
+                    if ($seen.Count -ge $reachable.Count -or (Get-Date) -ge $deadline) { break }
+                    Start-Sleep -Seconds 15
+                }
+            } catch {
+                Write-Plan "Verification stopped: $($_.Exception.Message)"
+            }
+            $agentsSeen = $seen.Count
+            if ($agentsSeen -lt $reachable.Count) {
+                Write-Host "$($reachable.Count - $agentsSeen) server(s) have not installed it yet: it can take a few more minutes. Check the Application event log (source DumbMonit) on them." -ForegroundColor Yellow
+            }
+        }
+    }
+    Write-Host ''
+}
+
 if ($WhatIfPreference) {
     Write-Host 'Nothing was changed (-WhatIf). Run the script again without -WhatIf to deploy.' -ForegroundColor Yellow
 } else {
     Write-Host 'Done.' -ForegroundColor Green
-    Write-Host 'Servers install the agent at their next policy refresh (within 90 minutes),'
-    Write-Host 'or right away with: gpupdate /force   (on a server)'
+    if (-not $doRefresh) {
+        Write-Host 'Servers install the agent at their next policy refresh (within 90 minutes),'
+        Write-Host 'or right away with: gpupdate /force   (on a server)'
+    } elseif ($refreshRows.Count -gt 0) {
+        $ok = @($refreshRows | Where-Object { $_.Method -ne 'unreachable' }).Count
+        Write-Host "Policy refreshed on $ok/$($refreshRows.Count) server(s); the others pick it up within 90 minutes."
+        if ($agentsSeen -gt 0) { Write-Host "The agent is already installed on $agentsSeen server(s); they appear in DumbMonit within a minute." }
+    }
     Write-Host 'Each server logs what it did in the Application event log, source "DumbMonit".'
     Write-Host 'Watch them arrive in DumbMonit, then delete this script: it holds the enrollment token.'
 }
