@@ -141,6 +141,13 @@ impl PushClient {
         self.channel().encrypted
     }
 
+    /// Client HTTP du canal courant, avec son certificat client et l'autorité du
+    /// serveur épinglée : celui de la sentinelle, pour sonder le serveur dans
+    /// les mêmes conditions que les lots de mesures.
+    pub fn probe_http(&self) -> reqwest::Client {
+        self.channel().http.clone()
+    }
+
     /// Empreintes épinglées en ce moment.
     pub fn pins(&self) -> Vec<String> {
         self.pins.read().map(|pins| pins.clone()).unwrap_or_default()

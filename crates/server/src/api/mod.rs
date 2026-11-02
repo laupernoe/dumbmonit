@@ -4,6 +4,7 @@ pub(crate) mod agent_commands;
 mod agent_events;
 pub(crate) mod agent_files;
 mod agent_logs;
+mod agent_sentinel;
 mod agent_tls;
 mod agent_updates;
 mod alert_actions;
@@ -261,6 +262,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(agent_events::routes())
         // Collecte de journaux d'une machine et état des entrées (`agent_logs.rs`).
         .merge(agent_logs::ui_routes())
+        // Mode sentinelle d'une machine : réglage, canal secret (`agent_sentinel.rs`).
+        .merge(agent_sentinel::routes())
         // Panneau Synology : vue d'ensemble et appareils Active Backup (`synology.rs`).
         .merge(synology::routes())
         // Prévisions de remplissage d'un équipement (`forecasts.rs`).

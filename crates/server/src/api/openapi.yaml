@@ -6954,6 +6954,48 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/agent/sentinel:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getAgentSentinel
+      tags: [Agents]
+      summary: Sentinel mode of an agent
+      description: The notification channel is a secret and never comes back, only `has_secret` and `channel_kind`.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The setting.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentSentinel" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: setAgentSentinel
+      tags: [Agents]
+      summary: Make an agent a sentinel, and choose what it watches
+      description: The agent watches the addresses from where it stands and notifies by itself, without the server, when they stop answering. Omitting `channel` keeps the stored one; `clear_channel` removes it. The channel only reaches the agent over the encrypted agent channel.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentSentinelInput" }
+      responses:
+        "200":
+          description: The setting after the change.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentSentinel" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/system/storage:
     get:
       operationId: getStorage
@@ -14057,6 +14099,42 @@ components:
               origin: { type: [string, "null"], description: "Unit, file, channel or sender address." }
               target_name: { type: [string, "null"], description: Device the sender is attached to. }
               fields: { type: object, additionalProperties: { type: string } }
+    SentinelChannel:
+      oneOf:
+        - type: object
+          required: [kind, url]
+          properties:
+            kind: { type: string, enum: [webhook] }
+            url: { type: string, description: "Plain `https://` address; receives a JSON POST." }
+        - type: object
+          required: [kind, server, topic]
+          properties:
+            kind: { type: string, enum: [ntfy] }
+            server: { type: string, description: "Plain `https://` address of the ntfy server." }
+            topic: { type: string, description: "1 to 64 letters, digits, dashes or underscores." }
+    AgentSentinelInput:
+      type: object
+      required: [enabled, interval_secs, threshold]
+      properties:
+        enabled: { type: boolean }
+        urls:
+          type: array
+          maxItems: 5
+          items: { type: string, description: "Plain `https://` address; any HTTP answer below 500 counts as alive." }
+        interval_secs: { type: integer, minimum: 15, maximum: 3600 }
+        threshold: { type: integer, minimum: 1, maximum: 20, description: Consecutive failures of an address before the alert. }
+        channel: { $ref: "#/components/schemas/SentinelChannel" }
+        clear_channel: { type: boolean, default: false }
+    AgentSentinel:
+      type: object
+      required: [enabled, urls, interval_secs, threshold, has_secret, channel_kind]
+      properties:
+        enabled: { type: boolean }
+        urls: { type: array, items: { type: string } }
+        interval_secs: { type: integer }
+        threshold: { type: integer }
+        has_secret: { type: boolean, description: A notification channel is stored. }
+        channel_kind: { type: [string, "null"], enum: [webhook, ntfy, null] }
     AgentLogsSetting:
       type: object
       properties:

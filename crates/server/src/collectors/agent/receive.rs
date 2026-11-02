@@ -227,6 +227,8 @@ pub async fn ingest(
         agent_update: None,
         // La collecte de journaux réglée dans l'interface (désactivée par défaut).
         logs: Some(super::logs::setting(pool, target.id).await?),
+        // Posée par la route, qui sait si le canal est chiffré : `api/ingest.rs`.
+        sentinel: None,
     })
 }
 

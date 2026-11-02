@@ -38,6 +38,7 @@ use crate::config::{Config, MIN_INTERVAL_SECS};
 use crate::logs::LogRunner;
 use crate::relay::RelayRunner;
 use crate::selfupdate::{AfterStop, SelfUpdater};
+use crate::sentinel::SentinelRunner;
 use crate::shutdown::Shutdown;
 use crate::tls::TlsState;
 
@@ -146,6 +147,11 @@ pub struct Agent {
     /// de réception portait (`None` : serveur antérieur, rien n'est collecté).
     logs: LogRunner,
     server_logs: Option<dumbmonit_proto::LogsSetting>,
+    /// Mode sentinelle : la tâche de surveillance du serveur, et le réglage que
+    /// le dernier accusé de réception portait. Elle survit à une panne du
+    /// serveur — c'est son rôle —, mais pas à un redémarrage de l'agent.
+    sentinel: SentinelRunner,
+    server_sentinel: Option<dumbmonit_proto::SentinelSetting>,
     /// Période courante : celle de la configuration, jusqu'à ce que le serveur en
     /// demande une autre dans son accusé de réception.
     interval: Duration,
@@ -224,6 +230,7 @@ impl Agent {
             &config.docker_socket,
         )
         .with_actions(config.actions.clone());
+        let sentinel = SentinelRunner::new(client.clone(), identity.hostname.clone());
         let logs = LogRunner::new(
             client.clone(),
             identity.key(),
@@ -262,6 +269,8 @@ impl Agent {
             gateway_failed: None,
             logs,
             server_logs: None,
+            sentinel,
+            server_sentinel: None,
             binding,
             binding_refused: false,
             disabled_modules: BTreeSet::new(),
@@ -487,6 +496,7 @@ impl Agent {
                             self.sync_relay(&shutdown);
                             self.sync_gateway(&shutdown).await;
                             self.logs.apply(self.server_logs.clone(), &shutdown);
+                            self.sentinel.apply(self.server_sentinel.clone(), &shutdown);
                             if self.apply_update().await {
                                 break;
                             }
@@ -726,6 +736,11 @@ impl Agent {
                     self.eventlog.set_rules(rules);
                 }
                 self.server_logs = ack.logs;
+                // `None` : serveur antérieur. Un serveur qui répond sans réglage
+                // ne retire rien à une sentinelle déjà en marche.
+                if ack.sentinel.is_some() {
+                    self.server_sentinel = ack.sentinel;
+                }
                 // Nouveau binaire à l'essai : ce lot accepté le confirme.
                 if self.updater.confirm() {
                     self.identity.self_update = Some(self.updater.info());
