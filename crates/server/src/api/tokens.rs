@@ -32,6 +32,8 @@ pub struct CreatedToken {
 
 #[derive(Debug, Deserialize)]
 pub struct TokenPayload {
+    /// Facultatif : absent ou vide, un nom générique daté (UTC) est généré.
+    #[serde(default)]
     pub name: String,
     /// `read` par défaut : c'est le choix sûr, et celui que l'interface présélectionne.
     #[serde(default)]
@@ -53,16 +55,23 @@ pub async fn list(
     Ok(Json(token::list(&state.pool).await?))
 }
 
+/// Nom fourni (nettoyé) ou, à défaut, un nom générique daté.
+fn api_token_name(provided: &str, today: chrono::NaiveDate) -> String {
+    let provided = provided.trim();
+    if provided.is_empty() {
+        format!("API token · {}", today.format("%Y-%m-%d"))
+    } else {
+        provided.to_string()
+    }
+}
+
 pub async fn create(
     State(state): State<AppState>,
     Authenticated(me): Authenticated,
     ClientIp(ip): ClientIp,
     Json(payload): Json<TokenPayload>,
 ) -> ApiResult<(StatusCode, Json<CreatedToken>)> {
-    let name = payload.name.trim().to_string();
-    if name.is_empty() {
-        return Err(ApiError::BadRequest("Token name is required.".into()));
-    }
+    let name = api_token_name(&payload.name, chrono::Utc::now().date_naive());
     if name.chars().count() > MAX_NAME_LEN {
         return Err(ApiError::BadRequest(format!(
             "Token name is limited to {MAX_NAME_LEN} characters."
@@ -117,5 +126,18 @@ pub async fn revoke(
         Ok(StatusCode::NO_CONTENT)
     } else {
         Err(ApiError::NotFound(format!("Token {id} not found or already revoked.")))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn api_token_name_is_generated_when_blank_and_kept_otherwise() {
+        let day = chrono::NaiveDate::from_ymd_opt(2026, 11, 2).unwrap();
+        assert_eq!(api_token_name("", day), "API token · 2026-11-02");
+        assert_eq!(api_token_name("  ", day), "API token · 2026-11-02");
+        assert_eq!(api_token_name(" laptop ", day), "laptop");
     }
 }

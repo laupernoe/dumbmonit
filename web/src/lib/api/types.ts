@@ -1677,7 +1677,8 @@ export interface AgentToken {
 
 /** Body of `POST /api/agent/tokens`. Omitting everything gives a single-use token. */
 export interface AgentTokenPayload {
-	name: string;
+	/** Optional: left out or blank, the server generates a generic dated name. */
+	name?: string;
 	base_url: string;
 	/** Reusable for a fleet. Left out, the token enrols exactly one machine. */
 	reusable?: boolean;
