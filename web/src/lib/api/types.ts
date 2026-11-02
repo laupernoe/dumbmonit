@@ -1338,6 +1338,33 @@ export interface HttpsView {
 	findings: HttpsFinding[];
 }
 
+/** `GET /api/security/ports`: the ports to open, computed from the real configuration. */
+export type PortExposure = 'lan' | 'wan_conditional' | 'never';
+export type PortStatus = 'listening' | 'off' | 'local';
+export interface PortEntry {
+	/** Stable id (`web`, `agents`, `syslog_udp`, `syslog_tcp`, `traps`, `*_store`, `relay_gateway`); an unknown one is shown as is. */
+	id: string;
+	/** Port the process listens on (inside the container, or on the relay machine). */
+	port: number;
+	/** Port to open on the host (the published one). */
+	host_port: number;
+	protocol: 'tcp' | 'udp';
+	exposure: PortExposure;
+	status: PortStatus;
+	bind: string;
+	/** Relay name for a relay gateway. */
+	subject: string | null;
+	/** False: the port is on another machine (a relay). */
+	on_this_host: boolean;
+}
+export interface PortsView {
+	ports: PortEntry[];
+	/** `ports:` block for docker-compose. */
+	compose: string;
+	/** `ufw allow` rules with a network to replace. */
+	ufw: string;
+}
+
 /** `POST /api/agent/tls/check`: is the encrypted agent channel reachable where agents will dial? */
 export type AgentChannelOutcome = 'ok' | 'dns' | 'refused' | 'timeout' | 'tls' | 'foreign';
 export interface AgentChannelCheck {
