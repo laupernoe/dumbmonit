@@ -6,7 +6,7 @@
  "k012": "[[svg2]]MIT, no paid edition",
  "k014": "One container watches servers, network gear, NAS, hypervisors, cloud services and websites. Useful alert rules are on from the start, and they stay quiet until something needs you.",
  "k015": "Copy",
- "k016": "Then open <code>http://localhost:8080</code> and create the first account. Image for amd64 and arm64: <code>ghcr.io/laupernoe/dumbmonit</code>.",
+ "k016": "Then open <code>https://localhost:8080</code> (your browser warns once about the self-signed certificate) and create the first account. Image for amd64 and arm64: <code>ghcr.io/laupernoe/dumbmonit</code>.",
  "k017": "[[svg3]]Try the live demo",
  "k018": "[[svg4]]View on GitHub",
  "k021": "<strong>DumbMonit is before 1.0</strong> (@@VERSION@@ is the current release). It runs every day on its author's network, but the HTTP API and the database schema can still change between minor versions; the changelog says how to upgrade. Some integrations have only met test instances. Try it, and <a href=\"https://github.com/laupernoe/dumbmonit/issues\">tell us what breaks</a>.",

@@ -169,7 +169,7 @@ With an API token that has the `write` scope:
 
 ```bash
 curl -H 'Authorization: Bearer dmt_…' -H 'Content-Type: application/yaml' \
-  --data-binary @shelly-plug/pack.yaml http://localhost:8080/api/packs
+  --data-binary @shelly-plug/pack.yaml https://localhost:8080/api/packs
 ```
 
 Open **Monitors → Add monitor**: *Shelly plug (Gen2+)* is in the list. Add your

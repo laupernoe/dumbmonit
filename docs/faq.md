@@ -55,7 +55,7 @@ the `sysctls:` lines are still there, then `docker compose up -d`. See
   and restart `dumbmonit-agent`.
 - The URL in the install command is the one your browser used to reach the UI.
   From the monitored machine, that URL must reach the server: `curl
-  http://server:8080/api/health` from there tells you.
+  https://server:8080/api/health` from there tells you.
 - Behind a reverse proxy, `/api/ingest` must be forwarded and bodies of up to
   16 MB allowed (`client_max_body_size 16m` in nginx).
 - `journalctl -u dumbmonit-agent -f` shows every rejected push. The token
