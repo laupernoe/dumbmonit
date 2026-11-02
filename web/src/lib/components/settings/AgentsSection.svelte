@@ -11,7 +11,7 @@
 	 */
 	import { Cpu, OctagonX, Plus } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
-	import { closeAgentToken, listAgentTokens, revokeAgentToken, type AgentToken } from '#lib/api/index.js';
+	import { closeAgentToken, listAgentTokens, listTokenMachines, revokeAgentToken, type AgentToken, type TokenMachine } from '#lib/api/index.js';
 	import { formatDateTime, formatRelative } from '#lib/format.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, Confirm, Disclosure, EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
@@ -42,6 +42,22 @@
 	let loading = $state(true);
 	let error = $state<unknown>(null);
 
+	/** The machine a single-machine token enrolled, by token id: what the token is linked to. */
+	let machines = $state<Record<number, TokenMachine>>({});
+
+	async function loadMachines(list: AgentToken[], signal?: AbortSignal) {
+		for (const token of list) {
+			// A fleet token shows its count; only a token that enrolled exactly one machine names it.
+			if (token.uses !== 1 || machines[token.id]) continue;
+			try {
+				const found = await listTokenMachines(token.id, signal);
+				if (found.length > 0) machines[token.id] = found[0];
+			} catch {
+				// The link is a convenience: the token row stands without it.
+			}
+		}
+	}
+
 	async function load(signal?: AbortSignal) {
 		// The enrolment token list is admin-only on the server.
 		if (!auth.isAdmin) {
@@ -54,6 +70,7 @@
 		try {
 			const list = await listAgentTokens(signal);
 			tokens = Array.isArray(list) ? list : [];
+			void loadMachines(tokens, signal);
 		} catch (cause) {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
 			error = cause;
@@ -194,6 +211,15 @@
 											· <time class="tnum" title={formatDateTime(token.revoked_at)}>{m.settings_agents_revoked_at({ when: formatRelative(token.revoked_at) })}</time>
 										{/if}
 									</p>
+									{#if token.max_uses === 1 || token.uses === 1}
+										<p class="mt-1 text-sm text-ink-2">
+											{#if machines[token.id]}
+												{m.settings_agents_used_by_lead()} <a class="font-semibold text-ink underline-offset-2 hover:underline" href={`/targets/${machines[token.id].id}`}>{machines[token.id].name}</a>
+											{:else if token.uses === 0}
+												{m.settings_agents_not_used_yet()}
+											{/if}
+										</p>
+									{/if}
 									{#if !revoked && spent(token)}
 										<p class="mt-1 text-sm text-ink-2">
 											{m.settings_agents_spent_note()}
