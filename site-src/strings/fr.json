@@ -325,5 +325,9 @@
  "badge_beta": "Bêta",
  "badge_agent": "Via l'agent",
  "fam_more_name": "Autres intégrations",
- "fam_more_blurb": "Les derniers types de surveillance, pas encore rangés dans une famille."
+ "fam_more_blurb": "Les derniers types de surveillance, pas encore rangés dans une famille.",
+ "rm_votes_top": "Les plus demandées",
+ "rm_votes_top_note": "Classé selon les 👍 sur GitHub, mis à jour chaque jour.",
+ "rm_votes_aria": "{n} votes",
+ "rm_votes_vote": "Voter sur GitHub"
 }
