@@ -323,5 +323,9 @@
  "badge_beta": "测试版",
  "badge_agent": "通过代理",
  "fam_more_name": "更多集成",
- "fam_more_blurb": "最新的监控类型，尚未归入分类。"
+ "fam_more_blurb": "最新的监控类型，尚未归入分类。",
+ "rm_votes_top": "呼声最高",
+ "rm_votes_top_note": "按 GitHub 上的 👍 排序，每日更新。",
+ "rm_votes_aria": "{n} 票",
+ "rm_votes_vote": "在 GitHub 上投票"
 }

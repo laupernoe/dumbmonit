@@ -28,6 +28,20 @@
       "zh-Hans": "Omada 与 Aruba 端口；SNMP 传感器；Hyper Backup；OVH 到期；Windows 机器健康；arm64 镜像；更丰富的演示",
       "pt-BR": "portas Omada e Aruba; sensores SNMP; Hyper Backup; vencimentos da OVH; saúde da máquina no Windows; imagens arm64; demonstração mais completa"
      }
+    },
+    {
+     "status": "progress",
+     "text": {
+      "fr": "Paquet Synology DSM 7 pour l'agent et une vue de parc de NAS",
+      "en": "Synology DSM 7 package for the agent and a NAS fleet view",
+      "de": "Synology-DSM-7-Paket für den Agent und eine Flottenansicht für NAS",
+      "es": "Paquete de Synology DSM 7 para el agente y una vista de flota de NAS",
+      "it": "Pacchetto Synology DSM 7 per l'agent e una vista della flotta di NAS",
+      "pt": "Pacote Synology DSM 7 para o agente e uma vista de frota de NAS",
+      "ru": "Пакет Synology DSM 7 для агента и сводный вид парка NAS",
+      "zh-Hans": "适用于 Synology DSM 7 的代理软件包与 NAS 集群视图",
+      "pt-BR": "Pacote Synology DSM 7 para o agente e uma visão de frota de NAS"
+     }
     }
    ]
   },
@@ -101,6 +115,20 @@
       "ru": "Нативное мобильное приложение с критическими оповещениями, если пользователи попросят",
       "zh-Hans": "带关键告警的原生移动应用，如果用户有需求",
       "pt-BR": "App móvel nativo com alertas críticos, se os usuários pedirem"
+     }
+    },
+    {
+     "status": "idea",
+     "text": {
+      "fr": "Passerelle exposée : une toute petite instance DumbMonit sur une VM ou un réseau séparé, seule joignable depuis Internet (pages de statut publiques, agents distants), pour qu'une compromission n'atteigne pas le serveur principal",
+      "en": "Exposed gateway: a tiny DumbMonit instance on a separate VM or network that is the only thing reachable from the Internet (public status pages, remote agents), so a compromise cannot reach the main server",
+      "de": "Exponiertes Gateway: eine winzige DumbMonit-Instanz auf einer separaten VM oder in einem separaten Netz, die als Einziges aus dem Internet erreichbar ist (öffentliche Statusseiten, Remote-Agents), sodass eine Kompromittierung den Hauptserver nicht erreicht",
+      "es": "Pasarela expuesta: una instancia mínima de DumbMonit en una VM o red separada, lo único accesible desde Internet (páginas de estado públicas, agentes remotos), para que un ataque no alcance el servidor principal",
+      "it": "Gateway esposto: una minuscola istanza DumbMonit su una VM o rete separata, l'unica raggiungibile da Internet (pagine di stato pubbliche, agent remoti), così una compromissione non può raggiungere il server principale",
+      "pt": "Gateway exposto: uma instância mínima do DumbMonit numa VM ou rede separada, a única acessível a partir da Internet (páginas de estado públicas, agentes remotos), para que um comprometimento não chegue ao servidor principal",
+      "ru": "Выделенный шлюз: крошечный экземпляр DumbMonit на отдельной ВМ или в отдельной сети, единственный доступный из Интернета (публичные страницы статуса, удалённые агенты), чтобы взлом не добрался до основного сервера",
+      "zh-Hans": "对外网关：部署在独立虚拟机或独立网络中的极小 DumbMonit 实例，是唯一可从互联网访问的部分（公开状态页、远程代理），即使被攻破也无法触及主服务器",
+      "pt-BR": "Gateway exposto: uma instância mínima do DumbMonit em uma VM ou rede separada, a única acessível pela Internet (páginas de status públicas, agentes remotos), para que um comprometimento não alcance o servidor principal"
      }
     }
    ]

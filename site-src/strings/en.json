@@ -330,5 +330,9 @@
  "badge_beta": "Beta",
  "badge_agent": "Via agent",
  "fam_more_name": "More integrations",
- "fam_more_blurb": "The latest monitor types, not yet sorted into a family."
+ "fam_more_blurb": "The latest monitor types, not yet sorted into a family.",
+ "rm_votes_top": "Most requested",
+ "rm_votes_top_note": "Ranked by 👍 on GitHub, refreshed daily.",
+ "rm_votes_aria": "{n} votes",
+ "rm_votes_vote": "Vote on GitHub"
 }
