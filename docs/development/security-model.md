@@ -116,7 +116,7 @@ design argument and the evidence behind each claim.
 
 ## Known limits
 
-- The web port still answers plain HTTP next to HTTPS, for reverse proxies, scripts and agents of older versions; page visits are redirected to HTTPS on new installations only, and an upgraded instance shows a banner until an administrator turns the redirect on.
+- The web port only serves HTTPS; a plain HTTP request gets a `308` redirect to the same host and port, nothing else. Reverse proxies must connect over HTTPS.
 - The self-signed certificate is not trusted by browsers: the first visit asks to compare its fingerprint. Provide a certificate for a warning-free setup.
 - Monitor options are stored unencrypted. Put secrets in credential fields.
 - The embedded VictoriaMetrics has no authentication.

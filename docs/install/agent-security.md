@@ -143,10 +143,12 @@ Not protected against:
 - someone with administrator rights on the agent machine (they can read its
   key, as they can read anything else there);
 - someone with access to both the server's `/data` and its instance key;
-- the very first install over plain HTTP: the install script and the binary
-  come from the web port. Serve the web interface over HTTPS (or check the
-  SHA-256 shown next to the command) if the network between you and the server
-  is not trusted. The agent channel itself is pinned from the first request.
+- the very first download: the install script and the binary come from the web
+  port, over HTTPS. The command shown in the interface carries the fingerprint
+  of the server's certificate and pins it, so the download is verified even
+  with the self-signed certificate (a reverse proxy with a public certificate is
+  verified the usual way). The agent channel itself is pinned from the first
+  request.
 
 ## Existing agents and the transition
 
@@ -183,7 +185,8 @@ the agent's own pinned channel, with its token, binding secret and machine key.
 Do not put a TLS-terminating reverse proxy in front of the agent port: the
 client certificate would stop at the proxy. A TCP pass-through (HAProxy `mode
 tcp`, nginx `stream`, Traefik TCP router with TLS passthrough, port forwarding)
-works. The web port can stay behind your usual HTTPS reverse proxy.
+works. The web port can stay behind your usual reverse proxy, which connects to
+it over HTTPS.
 
 ## Rotating the certificate authority
 

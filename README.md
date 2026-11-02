@@ -33,7 +33,7 @@ curl -fsSLO https://raw.githubusercontent.com/laupernoe/dumbmonit/main/docker-co
 docker compose up -d
 ```
 
-1. Open http://localhost:8080.
+1. Open https://localhost:8080 (the browser warns once about the self-signed certificate: accept it, or see [HTTPS](docs/install/https.md)) and create the first account.
 2. Create the first admin account with the one-time code printed by `docker compose logs dumbmonit`.
 3. Add a monitor, connect a notification channel, send a test message.
 
