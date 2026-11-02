@@ -34,7 +34,7 @@ async fn chaque_equipement_du_parc_fictif_se_collecte() {
         Arc::new(dumbmonit_collectors::EntraCollector::new()),
     ];
 
-    assert_eq!(estate.devices.len(), estate::KINDS.len());
+    assert_eq!(estate.devices.len(), estate::KINDS.len() + estate::EXTRA_NAS.len());
     let mut problems = Vec::new();
     for (index, device) in estate.devices.iter().enumerate() {
         assert!(device.address.ends_with(".home.arpa"), "{}", device.address);
@@ -60,6 +60,12 @@ async fn chaque_equipement_du_parc_fictif_se_collecte() {
             group_name: String::new(),
             position: 0,
         };
+        // Le NAS injoignable doit échouer : c'est son état de démonstration.
+        if device.key == "nas-offsite" {
+            let reply = tokio::time::timeout(Duration::from_secs(30), collector.probe(&target));
+            assert!(matches!(reply.await, Ok(Err(_))), "le NAS hors ligne doit échouer");
+            continue;
+        }
         let samples =
             match tokio::time::timeout(Duration::from_secs(30), collector.probe(&target)).await {
                 Ok(Ok(samples)) => samples,
@@ -115,6 +121,8 @@ async fn chaque_equipement_du_parc_fictif_se_collecte() {
                     "le LUN iSCSI du NAS est lu"
                 );
             }
+            "nas-archive" => assert_eq!(value(&samples, "synology_storage_health"), Some(2.0)),
+            "nas-office" => assert_eq!(value(&samples, "synology_update_available"), Some(1.0)),
             "unifi" => assert_eq!(value(&samples, "unifi_clients"), Some(31.0)),
             "kopia" => assert_eq!(value(&samples, "kopia_repo_connected"), Some(1.0)),
             "veeam" => assert!(value(&samples, "veeam_jobs_failed").is_some()),
