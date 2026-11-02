@@ -37,6 +37,7 @@
 	import { NO_DEFAULTS, defaultsParams, type SiteDefaults } from '#lib/components/device-form/add-by-site.js';
 	import SetupNotice from '#lib/components/device-form/SetupNotice.svelte';
 	import KindIcon from '#lib/components/KindIcon.svelte';
+	import WizardPigeon from '#lib/components/wizard/WizardPigeon.svelte';
 	import { AGENT_KIND, SNMP_KIND, agentFeature, kindIcon, type ImportChoice } from '#lib/components/device-form/kinds.js';
 
 	let kumaImport = $state<ImportKuma | null>(null);
@@ -268,6 +269,16 @@
 						: m.deviceform_new_desc_form()
 	);
 
+	/** What the pigeon says, by view: the choice, the form (the agent has no interval), the scan. */
+	const pigeonSays = $derived(
+		view === 'picker'
+			? m.deviceform_new_pigeon_picker()
+			: view === 'scan'
+				? m.deviceform_new_pigeon_scan()
+				: selected?.kind === AGENT_KIND
+					? m.deviceform_new_pigeon_agent()
+					: m.deviceform_new_pigeon_form()
+	);
 </script>
 
 <!-- Esc inside the open guide puts it away. -->
@@ -324,7 +335,12 @@
 	</ol>
 </nav>
 
-<PageHeader title={m.deviceform_new_add()} {description} />
+<PageHeader title={m.deviceform_new_add()} {description}>
+	{#snippet actions()}
+		<!-- Beside the title on a wide screen only: on a phone the form comes first. -->
+		<WizardPigeon class="w-72 max-lg:hidden" message={pigeonSays} mood="watch" />
+	{/snippet}
+</PageHeader>
 
 <!-- Opened from the "Import" category of the picker. -->
 {#if auth.isAdmin}
