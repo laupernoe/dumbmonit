@@ -14,7 +14,7 @@ Die Einstellungen enthalten das Administrative: die Instanz selbst, Ihr Konto, w
 | Wandanzeige | `/settings/wall` | Wandmodus: was er zeigt und wie man ihn öffnet ([Wandmodus](wall.md)) |
 | System | `/settings/system` | Sicherung, Konfigurationsdateien, DumbMonit selbst, Daten und Aufbewahrung, Logs, API und Assistenten, Info |
 
-Jeder Abschnitt behält seinen Anker: `/settings#agents` leitet an `/settings/monitoring#agents` weiter. Die alten Links (`/alerts#notifications`) leiten ebenfalls an die neue Stelle weiter. Statusseiten und Berichte sind nicht mehr in den Einstellungen: Sie haben eigene Seiten, **Statusseiten** (`/status`) und **Berichte** (`/reports`); `/settings/status` und `/settings/reports` leiten dorthin weiter. Musik, Nachrichten und Widgets der Wand gibt es nicht mehr: Ihre alten Links (`#music`, `#news`, `#widgets`) öffnen den Tab Wandanzeige.
+Jeder Abschnitt behält seinen Anker: `/settings#agents` leitet an `/settings/monitoring#agents` weiter. Die alten Links (`/alerts#notifications`) leiten ebenfalls an die neue Stelle weiter. Statusseiten und Berichte sind nicht mehr in den Einstellungen: Sie haben eigene Seiten, **Statusseiten** (`/status`) und **Berichte** (`/reports`); `/settings/status` und `/settings/reports` leiten dorthin weiter. Nachrichten und Widgets der Wand gibt es nicht mehr: Ihre alten Links (`#news`, `#widgets`) öffnen den Tab Wandanzeige, in dem **Wandmusik** (`#music`) liegt.
 
 ## Darstellung {#appearance}
 
@@ -26,8 +26,13 @@ Statusseiten behalten ihr helles und dunkles Theme.
 
 **Wandmodus öffnen**: die Übersicht der Konsole im Vollbild, für einen Monitor
 im Raum. ++esc++ verlässt ihn, die Befehlspalette öffnet ihn von überall. Die
-Wand hat keine Musik, keine Nachrichten und keine Widgets mehr; auf Wunsch
-steht eine nächtliche Stadt hinter ihrem Urteil. Siehe [Wandmodus](wall.md).
+Wand hat keine Nachrichten und keine Widgets mehr; auf Wunsch steht eine
+nächtliche Stadt hinter ihrem Urteil. Siehe [Wandmodus](wall.md).
+
+**Wandmusik**: Verbinden Sie ein Spotify-Konto (die Wand wird zum
+Spotify-Connect-Lautsprecher und zeigt, was läuft, mit Wiedergabe / Pause), oder
+senden Sie einen Spotify-, Deezer- oder YouTube-Link an alle Wände. Siehe [Musik
+an der Wand](wall.md#music-on-the-wall).
 
 ## Konto & Sicherheit {#account-security}
 

@@ -1,7 +1,7 @@
 //! Le reste du produit, rempli pour la démonstration : ce qui ne vient pas
 //! d'une mesure mais d'un réglage ou d'un travail d'équipe — clients (mode
 //! MSP), équipes et dossiers, comptes et astreinte, silences, consignes,
-//! tableaux de bord, rapports planifiés, sites sur la carte, canaux de
+//! rapports planifiés, sites sur la carte, canaux de
 //! notification (jamais utilisés : les envois sont coupés), failles connues.
 //!
 //! Deux clients :
@@ -160,7 +160,6 @@ pub async fn run(
     seed_silences(pool, targets.as_slice()).await?;
     seed_oncall(pool, &people, &channels, office).await?;
     seed_runbooks(pool, office).await?;
-    seed_dashboards(pool).await?;
     seed_reports(pool, &channels, office).await?;
     seed_vulnerabilities(pool, targets.as_slice()).await?;
     if let Some(docker) = find(targets.as_slice(), AGENT_HOST) {
@@ -530,50 +529,6 @@ async fn seed_runbooks(pool: &SqlitePool, office: i64) -> Result<()> {
                 .execute(pool)
                 .await?;
         }
-    }
-    Ok(())
-}
-
-/// Deux tableaux de bord : celui du salon, partagé, et un tableau réseau.
-async fn seed_dashboards(pool: &SqlitePool) -> Result<()> {
-    let homelab = r#"[
- {"id":"w1","type":"stat","title":"Docker host CPU","x":0,"y":0,"w":3,"h":2,"config":{"query":"dumbmonit_cpu_usage_percent{host=\"docker01.home.arpa\"}","unit":"%","warn":70,"crit":90,"direction":"above"}},
- {"id":"w2","type":"stat","title":"Data volume","x":3,"y":0,"w":3,"h":2,"config":{"query":"dumbmonit_filesystem_used_percent{mountpoint=\"/srv/data\"}","unit":"%","warn":85,"crit":95,"direction":"above"}},
- {"id":"w3","type":"stat","title":"Wi-Fi clients","x":6,"y":0,"w":3,"h":2,"config":{"query":"sum(dumbmonit_unifi_clients)","unit":"","direction":"above"}},
- {"id":"w4","type":"alerts","title":"Active alerts","x":9,"y":0,"w":3,"h":4,"config":{"limit":8}},
- {"id":"w5","type":"chart","title":"Web response time","x":0,"y":2,"w":9,"h":4,"config":{"query":"dumbmonit_probe_http_first_byte_seconds","unit":"s"}},
- {"id":"w6","type":"chart","title":"Internet uplink (switch-core Gi1)","x":0,"y":6,"w":6,"h":4,"config":{"query":"rate(dumbmonit_if_octets_in{ifname=\"Gi1\"}[5m]) * 8","unit":"bps"}},
- {"id":"w7","type":"chart","title":"Container memory","x":6,"y":6,"w":6,"h":4,"config":{"query":"dumbmonit_container_memory_bytes","unit":"B"}},
- {"id":"w8","type":"group","title":"Apps","x":0,"y":10,"w":6,"h":3,"config":{"folder":"Apps"}},
- {"id":"w9","type":"text","title":"Notes","x":6,"y":10,"w":6,"h":3,"config":{"markdown":"**Maintenance**: NAS scrub every Sunday 02:00-05:00.\nPhotos backup to PBS every night at 03:00."}}
-]"#;
-    let network = r#"[
- {"id":"n1","type":"chart","title":"Switch ports in","x":0,"y":0,"w":6,"h":4,"config":{"query":"rate(dumbmonit_if_octets_in{host=\"switch-core.home.arpa\"}[5m]) * 8","unit":"bps"}},
- {"id":"n2","type":"chart","title":"Switch ports out","x":6,"y":0,"w":6,"h":4,"config":{"query":"rate(dumbmonit_if_octets_out{host=\"switch-core.home.arpa\"}[5m]) * 8","unit":"bps"}},
- {"id":"n3","type":"stat","title":"PoE used","x":0,"y":4,"w":4,"h":2,"config":{"query":"dumbmonit_poe_power_consumed_watts","unit":"W","warn":90,"crit":110,"direction":"above"}},
- {"id":"n4","type":"chart","title":"Ping round trip","x":4,"y":4,"w":8,"h":4,"config":{"query":"dumbmonit_probe_icmp_rtt_seconds","unit":"s"}},
- {"id":"n5","type":"group","title":"Network","x":0,"y":8,"w":12,"h":3,"config":{"folder":"Network"}}
-]"#;
-    for (name, shared, range, widgets) in
-        [("Living room", 1, 86_400, homelab), ("Network", 0, 21_600, network)]
-    {
-        // Relus et validés comme ceux de l'API : un tableau mal formé ferait
-        // échouer le démarrage ici plutôt que dans l'interface.
-        let parsed: Vec<crate::api::dashboards::Widget> =
-            serde_json::from_str(widgets).context("demo dashboard widgets")?;
-        let cleaned = crate::api::dashboards::clean_widgets(parsed)
-            .map_err(|_| anyhow::anyhow!("demo dashboard {name}: invalid widgets"))?;
-        sqlx::query(
-            "INSERT INTO dashboards (name, shared, owner_id, range_secs, refresh_secs, widgets)
-             VALUES (?, ?, 1, ?, 30, ?)",
-        )
-        .bind(name)
-        .bind(shared)
-        .bind(range)
-        .bind(serde_json::to_string(&cleaned)?)
-        .execute(pool)
-        .await
-        .context("demo dashboard")?;
     }
     Ok(())
 }

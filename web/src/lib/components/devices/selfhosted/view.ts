@@ -58,8 +58,6 @@ export const TITLES: Record<string, string> = {
 	forgejo: 'Forgejo / Gitea'
 };
 
-export const SELFHOSTED_KINDS = Object.keys(TITLES);
-
 interface Point {
 	labels: Record<string, string>;
 	value: number;

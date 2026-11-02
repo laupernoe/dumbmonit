@@ -171,6 +171,9 @@ Tout passe par des variables d'environnement ; aucune n'est obligatoire.
 | `DUMBMONIT_RESET_PASSWORD` | *(vide)* | Définir à `1` pour effacer le mot de passe et toutes les sessions au démarrage. |
 | `DUMBMONIT_SETUP_CODE` | *(généré)* | Code d'installation demandé par `/setup` tant qu'aucun admin n'existe. Non défini, un code aléatoire est affiché dans les journaux à chaque démarrage. |
 | `DUMBMONIT_COOKIE_SECURE` | *(désactivé)* | Définir à `1` derrière un reverse proxy TLS pour marquer le cookie de session `Secure`. |
+| `DUMBMONIT_TLS` | `on` | HTTPS sur le port de l'interface, à côté du HTTP. `off` ne sert que du HTTP en clair. Voir [HTTPS and encryption](https.md). |
+| `DUMBMONIT_TLS_CERT` / `DUMBMONIT_TLS_KEY` | *(autosigné)* | Chaîne de certificats et clé PEM servies en HTTPS ; relues quand elles changent. |
+| `DUMBMONIT_HTTPS_REDIRECT` | *(réglage)* | `on`/`off` impose la redirection des visites HTTP vers HTTPS (active par défaut sur une installation neuve). |
 | `DUMBMONIT_ALERT_INTERVAL_SECS` | `30` | Période d'évaluation des alertes (jamais en dessous de 10). |
 | `DUMBMONIT_ALERT_HISTORY_DAYS` | 90 jours | Rétention de l'historique des alertes. Voir la [référence de configuration](../reference/configuration.md) pour une réserve sur son unité. |
 | `DUMBMONIT_BACKUP_ENABLED` | activé | Sauvegardes locales planifiées de la base dans `/data/backups/`. `DUMBMONIT_BACKUP_DIR`, `_INTERVAL_HOURS` (24) et `_KEEP` (7) les ajustent ; voir [Sauvegarde et restauration](backup.md). |
@@ -374,9 +377,15 @@ Si l'encart reste après le redémarrage, vérifiez `docker compose logs browser
 
 ## Reverse proxy {#reverse-proxy}
 
-L'interface et l'API sont servies sur un seul port en HTTP simple. Aucun WebSocket n'est utilisé :
-l'interface interroge l'API périodiquement, donc n'importe quel reverse proxy fonctionne sans configuration
-particulière.
+L'interface et l'API sont servies sur un seul port, qui parle à la fois HTTP et HTTPS (voir
+[HTTPS and encryption](https.md)). Un proxy qui termine le TLS peut continuer à parler HTTP au
+conteneur. Aucun WebSocket n'est utilisé : l'interface interroge l'API périodiquement, donc
+n'importe quel reverse proxy fonctionne sans configuration particulière.
+
+Transmettez le schéma (`X-Forwarded-Proto`, envoyé d'office par Caddy et Traefik) et déclarez le
+proxy dans `DUMBMONIT_TRUSTED_PROXIES` : une requête qui porte des en-têtes transmis n'est jamais
+redirigée vers HTTPS par DumbMonit lui-même, et depuis un proxy de confiance
+`X-Forwarded-Proto: https` rend le cookie de session `Secure` et active HSTS.
 
 === "Caddy"
 

@@ -57,7 +57,7 @@ ces secrets et donnerait un point d'appui dans le réseau supervisé.
 | Classe (thème OWASP Top 10) | Mesures |
 |---|---|
 | Contrôle d'accès défaillant | Un seul intergiciel d'authentification ; rôles ; une instance neuve refuse tout sauf installation, connexion, santé et état d'authentification. |
-| Défaillances cryptographiques | AES-256-GCM au repos, clé hors de la base ; mots de passe hachés avec Argon2 ; le serveur intégré parle en HTTP clair, d'où un reverse proxy TLS documenté. |
+| Défaillances cryptographiques | AES-256-GCM au repos, clé hors de la base ; mots de passe hachés avec Argon2id (paramètres OWASP) ; HTTPS sur le port de l'interface lui-même (TLS 1.3/1.2 AEAD, X25519MLKEM768, HSTS, cookie de session `__Host-` `Secure` `SameSite=Strict`) ; canal des agents en TLS 1.3 avec certificats clients ; chaque connexion encore en clair est listée dans les réglages ([HTTPS and encryption](../install/https.md)). |
 | Injection | SQL via `sqlx` avec paramètres liés ; le proxy VictoriaMetrics ne transmet que des requêtes en lecture (`tsdb/mod.rs`, `proxy_read`) ; analyseurs testés unitairement. |
 | Conception non sécurisée | Le modèle de menaces ci-dessus ; aucun secret ne revient ; instance à usage unique. |
 | Mauvaise configuration | Fichiers Compose durcis, VictoriaMetrics en boucle locale, notes de durcissement dans la politique de sécurité. |
@@ -82,7 +82,8 @@ l'argument de conception sûre et les preuves de chaque affirmation.
 
 ## Limites connues
 
-- Le serveur intégré parle en HTTP clair ; placez du TLS devant.
+- Le port de l'interface répond encore en HTTP clair à côté du HTTPS, pour les reverse proxies, les scripts et les agents d'anciennes versions ; les visites de pages sont redirigées vers HTTPS sur les installations neuves seulement, et une instance mise à jour affiche une bannière tant qu'un administrateur n'active pas la redirection.
+- Le certificat autosigné n'est pas reconnu des navigateurs : la première visite demande de comparer son empreinte. Fournissez un certificat pour une installation sans avertissement.
 - Les options de surveillance sont stockées en clair. Mettez les secrets dans les
   champs d'identifiants.
 - Le VictoriaMetrics embarqué n'a pas d'authentification.

@@ -76,6 +76,7 @@ nav:
   - Home: index.md
   - Install:
       - Docker: install/docker.md
+      - HTTPS and encryption: install/https.md
       - Add your first monitor: install/first-device.md
       - Monitor a remote site: install/remote-site.md
       - Agent channel security: install/agent-security.md
@@ -204,13 +205,13 @@ nav:
       - Interface and setup wizard: using/product-modes.md
       - Overview page: using/overview.md
       - Network discovery: using/discovery.md
-      - Wall mode: using/wall.md
+      - Wall mode and music: using/wall.md
       - Monitors page: using/devices.md
       - Monitors from Docker labels: using/docker-labels.md
       - Import from other tools: using/imports.md
       - Topology map: using/topology.md
       - World map: using/world-map.md
-      - Dashboards and metrics explorer: using/dashboards.md
+      - Metrics explorer: using/dashboards.md
       - Security score: using/security-score.md
       - CVE & vulnerabilities: using/cves.md
       - Alerts page: using/alerts.md

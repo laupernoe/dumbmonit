@@ -433,6 +433,9 @@ pub const SCOPED_ROUTES: &[(&str, &str, RouteRule)] = &[
     // Son propre compte.
     ("*", "/auth/**", RouteRule::Open),
     ("*", "/webpush/**", RouteRule::Open),
+    // La musique du mur : aucune donnée d'équipement (les écritures restent
+    // aux administrateurs, sauf les gestes du mur, voir `SELF_SERVICE`).
+    ("*", "/music/**", RouteRule::Open),
     // Catalogues, sans donnée d'équipement.
     ("GET", "/collectors", RouteRule::Open),
     ("GET", "/notify/kinds", RouteRule::Open),
@@ -445,13 +448,6 @@ pub const SCOPED_ROUTES: &[(&str, &str, RouteRule)] = &[
     ("GET", "/metrics/query", RouteRule::Open),
     ("GET", "/metrics/query_range", RouteRule::Open),
     ("GET", "/metrics/catalog", RouteRule::Open),
-    // Tableaux de bord : leur définition ne porte aucune donnée d'équipement, et
-    // leurs widgets passent par les requêtes et la liste d'alertes filtrées
-    // ci-dessus. Le gestionnaire réserve les tableaux partagés aux administrateurs.
-    ("*", "/dashboards", RouteRule::Open),
-    ("*", "/dashboards/*", RouteRule::Open),
-    // Aperçu d'un modèle : le gestionnaire ne lit que les équipements visibles.
-    ("GET", "/dashboards/templates/*/preview", RouteRule::Open),
     ("GET", "/alerts", RouteRule::Open),
     ("GET", "/alerts/history", RouteRule::Open),
     ("GET", "/alerts/rules", RouteRule::Open),

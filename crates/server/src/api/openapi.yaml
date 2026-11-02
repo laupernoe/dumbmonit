@@ -130,8 +130,6 @@ tags:
     description: The first-run guide.
   - name: Metrics
     description: MetricsQL queries proxied to VictoriaMetrics.
-  - name: Dashboards
-    description: Custom dashboards (a grid of widgets) and the metrics catalogue behind the explorer.
   - name: Alerts
     description: Active alerts, history and acknowledgements.
   - name: Rules
@@ -189,6 +187,11 @@ tags:
     description: Health of DumbMonit itself and the outgoing heartbeat.
   - name: Assistants
     description: The built-in Model Context Protocol (MCP) server.
+  - name: Wall music
+    description: >-
+      Music on the wall display: what plays on the connected Spotify account,
+      the link every wall plays, and connecting Spotify (Authorization Code +
+      PKCE). Refresh tokens never leave the server.
   - name: Prometheus compatibility
     description: Read access for an existing Prometheus or Grafana, outside `/api`.
   - name: OpenTelemetry
@@ -315,6 +318,84 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/upgrade-notes:
+    get:
+      operationId: getUpgradeNotes
+      tags: [Health]
+      summary: Configuration changes an update asks for (admin only)
+      description: >-
+        Some versions need a change outside the image, in the `docker-compose.yml` the
+        user owns (a published port, an environment variable). Every known change is listed
+        with its explanation, the block to copy and its `status`: `pending` when the instance
+        went through the version that introduced it, or when the automatic `detection` finds
+        it still missing; `closed` once an administrator closed it; `clear` otherwise.
+        `announce` is true when the window should open by itself: changes are pending and it
+        has not been shown for this version. Detections that probe the network are kept for a
+        minute; `fresh=true` runs them again. Session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      parameters:
+        - name: fresh
+          in: query
+          required: false
+          schema: { type: boolean, default: false }
+          description: Run the automatic detections again instead of using the one-minute memory.
+      responses:
+        "200":
+          description: The changes and where the instance stands.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UpgradeNotes" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/upgrade-notes/close:
+    post:
+      operationId: closeUpgradeNotes
+      tags: [Health]
+      summary: Close configuration changes (admin only)
+      description: >-
+        A closed change never comes back for its version, and the reminder in the interface
+        goes away once none is left. With no `ids`, every change that is pending is closed.
+        Recorded in the audit log. Session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items: { type: string }
+                  description: Identifiers of the changes to close; empty or absent closes all pending ones.
+      responses:
+        "200":
+          description: The changes after closing.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UpgradeNotes" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/upgrade-notes/announce:
+    post:
+      operationId: announceUpgradeNotes
+      tags: [Health]
+      summary: Record that the changes window was shown (admin only)
+      description: >-
+        Stops `announce` from being true again for the running version; the changes stay
+        pending until they are closed. Session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Recorded. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/openapi.json:
     get:
       operationId: getOpenApi
@@ -392,7 +473,7 @@ paths:
           description: Signed in; the session cookie is set.
           headers:
             Set-Cookie:
-              description: "`dumbmonit_session`, HttpOnly, SameSite=Lax."
+              description: "`dumbmonit_session` (`__Host-dumbmonit_session` over HTTPS, then also `Secure`), HttpOnly, SameSite=Strict."
               schema: { type: string }
         "200":
           description: Two-factor authentication required.
@@ -419,7 +500,7 @@ paths:
           description: Signed in; the session cookie is set.
           headers:
             Set-Cookie:
-              description: "`dumbmonit_session`, HttpOnly, SameSite=Lax."
+              description: "`dumbmonit_session` (`__Host-dumbmonit_session` over HTTPS, then also `Secure`), HttpOnly, SameSite=Strict."
               schema: { type: string }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
@@ -530,7 +611,7 @@ paths:
           description: Signed in; the session cookie is set.
           headers:
             Set-Cookie:
-              description: "`dumbmonit_session`, HttpOnly, SameSite=Lax."
+              description: "`dumbmonit_session` (`__Host-dumbmonit_session` over HTTPS, then also `Secure`), HttpOnly, SameSite=Strict."
               schema: { type: string }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
@@ -5044,6 +5125,57 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/agent/tls/check:
+    post:
+      operationId: checkAgentChannel
+      tags: [Agents]
+      summary: Can machines reach the encrypted agent channel?
+      description: >-
+        The server dials its own agent channel at the address the install
+        command will carry (from `base_url`), completes the TLS 1.3 handshake
+        and checks that the certificate chain is its own. Through a relay
+        (`relay_id`), nothing is dialled: the answer says whether the relay
+        reports that its gateway listens. Nothing secret is sent.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                base_url: { type: string, description: "Address machines reach the web interface at." }
+                relay_id: { type: integer }
+                relay_host: { type: [string, "null"] }
+      responses:
+        "200":
+          description: What answered.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enabled: { type: boolean }
+                  url: { type: [string, "null"] }
+                  host: { type: [string, "null"] }
+                  port: { type: [integer, "null"], description: "Port agents dial (DUMBMONIT_AGENT_PUBLIC_PORT, else the listen port)." }
+                  listen_port: { type: [integer, "null"], description: "Listen port inside the container." }
+                  outcome:
+                    type: [string, "null"]
+                    enum: [ok, dns, refused, timeout, tls, foreign, null]
+                  relay:
+                    type: [object, "null"]
+                    properties:
+                      relay_id: { type: integer }
+                      relay_name: { type: string }
+                      host: { type: string }
+                      port: { type: integer }
+                      listening: { type: boolean }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/agent/updates:
     get:
       operationId: getAgentUpdates
@@ -5415,7 +5547,7 @@ paths:
   /api/metrics/catalog:
     get:
       operationId: getMetricsCatalog
-      tags: [Dashboards]
+      tags: [Metrics]
       summary: Live `dumbmonit_*` metrics and their labels
       description: |
         The metrics written during the last hour, with how many series each has and a few
@@ -5430,169 +5562,6 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "502": { $ref: "#/components/responses/BadGateway" }
-
-  /api/dashboards:
-    get:
-      operationId: listDashboards
-      tags: [Dashboards]
-      summary: Shared dashboards and the caller's own
-      description: A token sees the shared dashboards only.
-      x-token-scope: read
-      responses:
-        "200":
-          description: Dashboards, shared first, then by name.
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/Dashboard" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-    post:
-      operationId: createDashboard
-      tags: [Dashboards]
-      summary: Create a dashboard
-      description: |
-        Any account may create personal dashboards (`shared: false`, owned by the caller;
-        tokens cannot). Shared dashboards are created by administrators or `write` tokens.
-        Names are unique among shared dashboards and per owner.
-      x-token-scope: write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/DashboardInput" }
-      responses:
-        "201":
-          description: The dashboard.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Dashboard" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "409": { $ref: "#/components/responses/Conflict" }
-
-  /api/dashboards/templates:
-    get:
-      operationId: listDashboardTemplates
-      tags: [Dashboards]
-      summary: Ready-made dashboard templates
-      description: |
-        The templates (built into the server), and for each one the device types it reads, how
-        many of the caller's devices could feed it, and whether it can be used. The filters are
-        built from the devices the caller can see: folders (parents included), locations that
-        hold a device, and clients (multi-client mode only). A template with no device to feed
-        it has `available: false` and a `reason`.
-      x-token-scope: read
-      responses:
-        "200":
-          description: The templates and the filters on offer.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/DashboardTemplateList" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-
-  /api/dashboards/templates/{id}/preview:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema: { type: string }
-        description: Template id, from the list.
-      - name: kind
-        in: query
-        schema: { type: string }
-        description: Keep one device type (must be one the template reads).
-      - name: folder
-        in: query
-        schema: { type: string }
-        description: Keep one folder and its sub-folders.
-      - name: site
-        in: query
-        schema: { type: integer, format: int64 }
-        description: Keep the devices placed at this location.
-      - name: client
-        in: query
-        schema: { type: integer, format: int64 }
-        description: Keep one client's devices (multi-client mode).
-    get:
-      operationId: previewDashboardTemplate
-      tags: [Dashboards]
-      summary: The dashboard a template gives for a filter
-      description: |
-        Fills the template with the caller's active devices that pass the filter: each widget's
-        query selects those devices by id (`target=~"1|2"`), only the types it reads, and a widget
-        with no such device is left out. The result is a snapshot, ready to show and to send as is
-        to `POST /api/dashboards`. Nothing is written.
-      x-token-scope: read
-      responses:
-        "200":
-          description: The suggested dashboard.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/DashboardTemplatePreview" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-
-  /api/dashboards/{id}:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema: { type: integer, format: int64 }
-    get:
-      operationId: getDashboard
-      tags: [Dashboards]
-      summary: One dashboard
-      description: Another account's personal dashboard answers 404.
-      x-token-scope: read
-      responses:
-        "200":
-          description: The dashboard.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Dashboard" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-    put:
-      operationId: updateDashboard
-      tags: [Dashboards]
-      summary: Replace a dashboard
-      description: |
-        The owner changes a personal dashboard; administrators change shared ones and are the
-        only ones who can turn sharing on or off.
-      x-token-scope: write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/DashboardInput" }
-      responses:
-        "200":
-          description: The dashboard.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Dashboard" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-    delete:
-      operationId: deleteDashboard
-      tags: [Dashboards]
-      summary: Delete a dashboard
-      x-token-scope: write
-      responses:
-        "204": { description: Deleted. }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
 
   /api/locations:
     get:
@@ -8348,6 +8317,73 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/security/https:
+    get:
+      operationId: getHttps
+      tags: [Security]
+      summary: HTTPS of the web port and what still travels in clear (admin only)
+      description: >-
+        The certificate served on the web port (provided or self-signed, its
+        SHA-256 fingerprint), the redirect of plain-HTTP page visits, whether
+        this request came over HTTPS, and every connection the server makes or
+        accepts in clear or without certificate checks. Session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: HTTPS state and the cleartext report.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HttpsView" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: setHttpsRedirect
+      tags: [Security]
+      summary: Send plain-HTTP page visits to HTTPS (admin only)
+      description: >-
+        Recorded in the security log. 409 when `DUMBMONIT_HTTPS_REDIRECT` forces
+        the value, 400 when HTTPS is not available. Session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [redirect]
+              properties:
+                redirect: { type: boolean }
+      responses:
+        "200":
+          description: The new state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HttpsView" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/security/https/certificate.pem:
+    get:
+      operationId: getHttpsCertificate
+      tags: [Security]
+      summary: The certificate served on the web port, in PEM (admin only)
+      description: To trust it on a workstation, or compare it. Session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: PEM certificate.
+          content:
+            application/x-pem-file:
+              schema: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/security/summary:
     get:
       operationId: getSecuritySummary
@@ -8895,6 +8931,330 @@ paths:
         "429": { $ref: "#/components/responses/TooManyRequests" }
         "502": { description: VictoriaLogs did not answer. }
         "503": { description: Log storage is not enabled. }
+
+  # ---------------------------------------------------------- wall music
+  /api/music/now:
+    get:
+      operationId: getWallMusic
+      tags: [Wall music]
+      summary: What the walls play
+      description: >-
+        What plays on the connected Spotify account, wherever it plays (read
+        from Spotify at most every few seconds, shared by every caller), and
+        the link the walls play. Walls poll it every five seconds.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Spotify playback and the shared link.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WallMusic" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/music/link:
+    put:
+      operationId: playOnWall
+      tags: [Wall music]
+      summary: Every wall plays this Spotify, Deezer or YouTube link
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [link]
+              properties:
+                link: { type: string, maxLength: 500 }
+      responses:
+        "200":
+          description: The link now on the walls.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WallLink" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      operationId: stopWallLink
+      tags: [Wall music]
+      summary: The walls stop the embedded player
+      x-token-scope: write
+      responses:
+        "204": { description: Stopped. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/music/spotify:
+    get:
+      operationId: getSpotifyAccount
+      tags: [Wall music]
+      summary: The connected Spotify account, never a token
+      x-token-scope: read
+      responses:
+        "200":
+          description: Connection state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SpotifyAccount" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      operationId: disconnectSpotify
+      tags: [Wall music]
+      summary: Disconnect Spotify and forget its tokens
+      x-token-scope: write
+      responses:
+        "204": { description: Disconnected. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/music/spotify/authorize:
+    post:
+      operationId: startSpotifyConnection
+      tags: [Wall music]
+      summary: Start connecting Spotify
+      description: >-
+        Administrator session only. Returns Spotify's approval URL (PKCE, valid
+        ten minutes, once). `redirect_uri` is `http://127.0.0.1:8888/callback`
+        or `https://<origin of the page>/api/music/spotify/callback`.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [client_id, redirect_uri]
+              properties:
+                client_id: { type: string }
+                redirect_uri: { type: string }
+      responses:
+        "200":
+          description: Where to send the browser.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [authorize_url, redirect_uri, expires_in]
+                properties:
+                  authorize_url: { type: string }
+                  redirect_uri: { type: string }
+                  expires_in: { type: integer }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/music/spotify/complete:
+    post:
+      operationId: completeSpotifyConnection
+      tags: [Wall music]
+      summary: Finish a loopback connection with the address the browser landed on
+      description: Administrator session only, the one that started the connection.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url: { type: string }
+      responses:
+        "200":
+          description: The connected account.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SpotifyAccount" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/music/spotify/token:
+    get:
+      operationId: getSpotifyToken
+      tags: [Wall music]
+      summary: A short-lived Spotify access token for the wall's player
+      description: >-
+        Browser sessions only (any role): the wall's Web Playback SDK needs it.
+        API tokens are refused.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The access token (never cached).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [access_token, expires_in]
+                properties:
+                  access_token: { type: string }
+                  expires_in: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /api/music/spotify/playback:
+    post:
+      operationId: setWallPlayback
+      tags: [Wall music]
+      summary: Pause or resume what plays on the Spotify account
+      description: >-
+        Browser sessions only (any role, like "Play here": the wall already
+        holds a token that can do this). Pauses or resumes the account's
+        playback wherever it plays. `can_control` in `GET /api/music/now` says
+        whether the caller may.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [playing]
+              properties:
+                playing: { type: boolean, description: "true: resume; false: pause." }
+      responses:
+        "200":
+          description: Spotify did it.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [playing]
+                properties:
+                  playing: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "502":
+          description: Spotify refused (no active device, no Premium) or did not answer.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /api/music/speaker:
+    get:
+      operationId: getWallSpeaker
+      tags: [Wall music]
+      summary: The wall's Spotify speaker, as Settings shows it
+      description: >-
+        The speaker name, the connected account, whether it has Premium (when
+        Spotify or a wall said so), the account's Spotify Connect devices right
+        now, whether the speaker is among them, and what each wall reported in
+        the last fifteen minutes (browser, phase, problem).
+      x-token-scope: read
+      responses:
+        "200":
+          description: The speaker's state (never cached).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WallSpeaker" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: setWallSpeakerName
+      tags: [Wall music]
+      summary: Rename the speaker every wall announces (admin)
+      description: >-
+        `null` or an empty name goes back to "DumbMonit Wall". Walls pick the
+        new name up within a few seconds.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: [string, "null"], maxLength: 64 }
+      responses:
+        "200":
+          description: The name now in use.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [speaker_name]
+                properties:
+                  speaker_name: { type: string }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/music/speaker/report:
+    post:
+      operationId: reportWallSpeaker
+      tags: [Wall music]
+      summary: A wall reports its speaker's state
+      description: >-
+        Browser sessions only: sent by the wall every minute and on every
+        change. The reply says whether Spotify lists the wall's device
+        (`null` when it cannot be checked).
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [display, name, phase]
+              properties:
+                display: { type: string, description: "Random id kept by the wall's browser (8–64 letters, digits, dashes)." }
+                name: { type: string }
+                phase: { type: string, enum: [off, unsupported, starting, ready, error] }
+                activated: { type: boolean }
+                device_id: { type: [string, "null"] }
+                problem: { type: [string, "null"] }
+                browser: { type: [string, "null"] }
+                premium: { type: [boolean, "null"] }
+      responses:
+        "200":
+          description: Whether Spotify lists this wall.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [listed]
+                properties:
+                  listed: { type: [boolean, "null"] }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/music/speaker/play:
+    post:
+      operationId: playOnWallSpeaker
+      tags: [Wall music]
+      summary: Play the account on the wall's speaker
+      description: >-
+        Browser sessions only (any role: the wall already holds a token that
+        can do this). Transfers the account's playback to `device_id`, or to
+        the device named like the speaker, and resumes it — "Play here" on the
+        wall, "Test sound" in Settings.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                device_id: { type: [string, "null"] }
+      responses:
+        "200":
+          description: Spotify now plays there.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [device_id, speaker_name]
+                properties:
+                  device_id: { type: string }
+                  speaker_name: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
 
   # ---------------------------------------------------------- on-call
   /api/oncall/people:
@@ -10286,6 +10646,42 @@ components:
         enabled: { type: boolean, description: The check is active. }
         locked_by_env: { type: boolean, description: Turned off by DUMBMONIT_UPDATE_CHECK=off; the setting cannot override it. }
         error: { type: [string, "null"], description: Why the last check failed. }
+    UpgradeNotes:
+      type: object
+      required: [current, announce, pending, notes]
+      properties:
+        current: { type: string, description: Running version. }
+        upgraded_from: { type: [string, "null"], description: "Version the instance came from: the changes introduced after it apply." }
+        announce: { type: boolean, description: The window should open by itself. }
+        pending: { type: integer, description: Number of changes to apply. }
+        notes:
+          type: array
+          description: Every known change, pending first, then closed, then the rest.
+          items: { $ref: "#/components/schemas/UpgradeNote" }
+    UpgradeNote:
+      type: object
+      required: [id, version, title, summary, compose, status]
+      properties:
+        id: { type: string, description: Stable identifier. }
+        version: { type: string, description: Version that introduced the change. }
+        title: { type: string }
+        summary: { type: string, description: What changed and why. }
+        compose: { type: string, description: "`docker-compose.yml` block to copy." }
+        apply: { type: [string, "null"], description: Command to run afterwards. }
+        docs_url: { type: [string, "null"] }
+        status: { type: string, enum: [pending, closed, clear] }
+        detection:
+          description: Automatic check, for changes that have one and are not closed.
+          oneOf:
+            - type: "null"
+            - $ref: "#/components/schemas/UpgradeDetection"
+        closed_at: { type: [string, "null"], description: "UTC without suffix." }
+    UpgradeDetection:
+      type: object
+      required: [state, detail]
+      properties:
+        state: { type: string, enum: [ok, missing, unknown] }
+        detail: { type: string }
     ComponentHealth:
       type: object
       required: [ok]
@@ -10454,7 +10850,7 @@ components:
         paused: { type: integer }
     ClientKind:
       type: string
-      enum: [target, status_page, agent_token, channel, rule, silence, report, dashboard, schedule, escalation_policy, runbook, remediation_action]
+      enum: [target, status_page, agent_token, channel, rule, silence, report, schedule, escalation_policy, runbook, remediation_action]
     ClientAssign:
       type: object
       required: [kind, ids]
@@ -10502,6 +10898,46 @@ components:
             label: { type: string, description: Button label. }
         passkeys: { type: boolean, description: "At least one passkey is registered: the sign-in screen offers to use one." }
         demo: { type: boolean }
+        https:
+          type: object
+          description: HTTPS of the web port, for the "session in clear" banner. Nothing secret.
+          properties:
+            available: { type: boolean, description: The web port also serves HTTPS. }
+            secure: { type: boolean, description: This request came over HTTPS (direct, or through a trusted proxy). }
+            fingerprint_sha256: { type: [string, "null"], description: SHA-256 of the served certificate, as browsers show it. }
+            self_signed: { type: boolean }
+    HttpsView:
+      type: object
+      properties:
+        enabled: { type: boolean, description: "`DUMBMONIT_TLS`: the web port also serves HTTPS." }
+        available: { type: boolean, description: A certificate is loaded and served. }
+        certificate:
+          type: [object, "null"]
+          properties:
+            source: { type: string, enum: [provided, self_signed] }
+            fingerprint_sha256: { type: string }
+            public_key_pin: { type: [string, "null"], description: "`sha256//…`, the pin of `curl --pinnedpubkey` (self-signed only)." }
+            subject: { type: string }
+            issuer: { type: string }
+            not_after: { type: [string, "null"] }
+            names: { type: array, items: { type: string } }
+        error: { type: [string, "null"], description: Last reload error of a provided certificate. }
+        redirect: { type: boolean }
+        redirect_forced: { type: [boolean, "null"], description: "Set by `DUMBMONIT_HTTPS_REDIRECT`." }
+        request_https: { type: boolean }
+        request_tls: { type: boolean }
+        trusted_proxies: { type: integer }
+        hsts: { type: string }
+        findings:
+          type: array
+          items:
+            type: object
+            properties:
+              area: { type: string, examples: [notifications] }
+              code: { type: string, examples: [smtp_plain] }
+              severity: { type: string, enum: [warning, info] }
+              subject: { type: string, description: Name or address of the item; never a secret. }
+              link: { type: [string, "null"] }
     SetupRequest:
       type: object
       required: [setup_code, password]
@@ -10860,6 +11296,12 @@ components:
               sha256: { type: string }
         linux_template: { type: string, description: "Unix install command; replace `{TOKEN}`." }
         windows_template: { type: string, description: "PowerShell install command; replace `{TOKEN}`." }
+        https_pin:
+          type: [string, "null"]
+          description: >-
+            Public-key pin (`sha256//…`) of the self-signed HTTPS certificate, when the
+            interface is reached over direct HTTPS: the Unix command then downloads over
+            HTTPS checked by it (`curl --pinnedpubkey`, `--pinned-key=`).
         via_relay:
           oneOf:
             - type: "null"
@@ -10927,6 +11369,7 @@ components:
         settings: { $ref: "#/components/schemas/AgentUpdateSettings" }
         version: { type: string, description: Version of this server and of the agent binaries it ships. }
         build: { type: [string, "null"], description: Commit of this build. }
+        blocked_unsigned: { type: boolean, description: "Updates are held: a shipped build is unsigned and unsigned builds are not accepted." }
         binaries:
           type: array
           items:
@@ -10961,7 +11404,7 @@ components:
               requested: { type: boolean, description: Update now was asked and has not been answered yet. }
               status:
                 type: string
-                enum: [up_to_date, pending, updating, failed, refused, disabled, manual, waiting_window, waiting_canary, newer, legacy, container, read_only, disabled_locally, unsupported, no_binary]
+                enum: [up_to_date, pending, updating, failed, refused, disabled, manual, waiting_window, waiting_canary, newer, legacy, container, read_only, disabled_locally, unsupported, no_binary, unsigned]
               reason: { type: [string, "null"] }
               last:
                 type: [object, "null"]
@@ -12663,121 +13106,6 @@ components:
         gateway_port: { type: [integer, "null"], description: Port the relay reports its gateway listening on. }
         gateway_host: { type: [string, "null"], description: Address the site reaches the relay at. }
         client_id: { type: [integer, "null"], format: int64, description: Client of the agent; a relay only carries machines of its own client. }
-    DashboardWidget:
-      type: object
-      required: [id, type, x, y, w, h]
-      properties:
-        id: { type: string, maxLength: 40, description: "Letters, digits, '-' and '_'; unique in the dashboard." }
-        type: { type: string, enum: [chart, stat, group, alerts, text] }
-        title: { type: string, maxLength: 80 }
-        x: { type: integer, minimum: 0, maximum: 11, description: Column on the 12-column grid. }
-        y: { type: integer, minimum: 0 }
-        w: { type: integer, minimum: 1, maximum: 12 }
-        h: { type: integer, minimum: 1, maximum: 24 }
-        config:
-          type: object
-          description: |
-            By type. `chart`: `query`, `unit`. `stat`: `query`, `unit`, `warn`, `crit`,
-            `direction` (`above` or `below`). `group`: `folder` (empty: devices without a
-            folder). `alerts`: `limit` (1 to 50). `text`: `markdown`. Other keys are dropped.
-          additionalProperties: true
-    DashboardInput:
-      type: object
-      required: [name]
-      properties:
-        name: { type: string, maxLength: 80 }
-        shared: { type: boolean, default: false }
-        range_secs: { type: integer, minimum: 60, maximum: 34560000, default: 3600 }
-        refresh_secs: { type: integer, description: "0 (off) or 5 to 3600.", default: 30 }
-        widgets:
-          type: array
-          maxItems: 60
-          items: { $ref: "#/components/schemas/DashboardWidget" }
-    Dashboard:
-      allOf:
-        - $ref: "#/components/schemas/DashboardInput"
-        - type: object
-          required: [id, can_edit, owner, created_at, updated_at, widgets, range_secs, refresh_secs, shared]
-          properties:
-            id: { type: integer, format: int64 }
-            owner: { type: [string, "null"], description: Account that owns it; null when made by a token. }
-            can_edit: { type: boolean, description: The caller may change or delete it. }
-            created_at: { type: string }
-            updated_at: { type: string }
-    DashboardTemplateList:
-      type: object
-      required: [filters, templates]
-      properties:
-        filters:
-          type: object
-          required: [folders, sites, clients]
-          properties:
-            folders: { type: array, items: { type: string } }
-            sites:
-              type: array
-              items: { $ref: "#/components/schemas/DashboardTemplateName" }
-            clients:
-              type: array
-              description: Empty unless multi-client mode is on.
-              items: { $ref: "#/components/schemas/DashboardTemplateName" }
-        templates:
-          type: array
-          items: { $ref: "#/components/schemas/DashboardTemplate" }
-    DashboardTemplateName:
-      type: object
-      required: [id, name]
-      properties:
-        id: { type: integer, format: int64 }
-        name: { type: string }
-    DashboardTemplate:
-      type: object
-      required: [id, title, description, icon, requires, needs_metric, present_kinds, target_count, widget_count, available, reason]
-      properties:
-        id: { type: string }
-        title: { type: string }
-        description: { type: string }
-        icon: { type: string, description: A lucide icon name; unknown names fall back to a default icon. }
-        requires:
-          type: array
-          description: Device types the template reads; empty means every type.
-          items: { type: string }
-        needs_metric: { type: [string, "null"], description: A series a device must publish to count (for example Docker containers). }
-        present_kinds:
-          type: array
-          description: Types among the ones it reads that the caller has, most numerous first.
-          items:
-            type: object
-            required: [kind, count]
-            properties:
-              kind: { type: string }
-              count: { type: integer }
-        target_count: { type: integer, description: Active devices that could feed it. }
-        widget_count: { type: integer }
-        available: { type: boolean }
-        reason: { type: [string, "null"], description: Why it cannot be used; null when available. }
-    DashboardTemplatePreview:
-      type: object
-      required: [id, name, range_secs, refresh_secs, matched_count, matched, truncated, widgets]
-      properties:
-        id: { type: string }
-        name: { type: string, description: A suggested dashboard name. }
-        range_secs: { type: integer }
-        refresh_secs: { type: integer }
-        matched_count: { type: integer, description: Devices that fill the template. }
-        matched:
-          type: array
-          description: The first devices that fill the template.
-          items:
-            type: object
-            required: [id, name, kind]
-            properties:
-              id: { type: integer, format: int64 }
-              name: { type: string }
-              kind: { type: string }
-        truncated: { type: boolean, description: More than 300 devices matched; the queries carry the first 300 only. }
-        widgets:
-          type: array
-          items: { $ref: "#/components/schemas/DashboardWidget" }
     MetricsCatalog:
       type: object
       required: [metrics, truncated]
@@ -14761,6 +15089,104 @@ components:
         country_code: { type: string }
         latitude: { type: number }
         longitude: { type: number }
+    NowPlaying:
+      type: object
+      required: [playing, kind, title, artists, duration_ms, progress_ms]
+      properties:
+        playing: { type: boolean }
+        kind: { type: string, description: "`track`, `episode`, `ad` or `unknown`." }
+        title: { type: string }
+        artists: { type: array, items: { type: string } }
+        album: { type: [string, "null"] }
+        cover_url: { type: [string, "null"], description: Always on https://i.scdn.co. }
+        duration_ms: { type: integer }
+        progress_ms: { type: integer }
+        device_name: { type: [string, "null"] }
+        device_type: { type: [string, "null"] }
+    WallLink:
+      type: object
+      required: [link, set_by, set_at]
+      properties:
+        link: { type: string }
+        set_by: { type: string }
+        set_at: { type: string, description: UTC, without suffix. }
+    WallMusic:
+      type: object
+      required: [spotify, speaker_name, can_control]
+      properties:
+        spotify:
+          type: object
+          required: [status]
+          properties:
+            status: { type: string, enum: [off, connected, expired] }
+            now_playing:
+              oneOf:
+                - { $ref: "#/components/schemas/NowPlaying" }
+                - { type: "null" }
+            error: { type: [string, "null"] }
+        link:
+          oneOf:
+            - { $ref: "#/components/schemas/WallLink" }
+            - { type: "null" }
+        speaker_name: { type: string }
+        can_control:
+          type: boolean
+          description: >-
+            The caller may pause and resume from the wall: a browser session,
+            and a connected account that granted playback control.
+    WallSpeaker:
+      type: object
+      required: [speaker_name, status, devices, listed, walls]
+      properties:
+        speaker_name: { type: string }
+        status: { type: string, enum: [off, connected, expired] }
+        account_name: { type: [string, "null"] }
+        premium: { type: [boolean, "null"], description: "null: unknown." }
+        devices:
+          type: array
+          items:
+            type: object
+            required: [name, type, is_active, is_restricted]
+            properties:
+              id: { type: [string, "null"] }
+              name: { type: string }
+              type: { type: string }
+              is_active: { type: boolean }
+              is_restricted: { type: boolean }
+              volume_percent: { type: [integer, "null"] }
+        listed: { type: boolean, description: "Spotify lists the speaker among the account's devices." }
+        walls:
+          type: array
+          items:
+            type: object
+            required: [display, name, phase, activated, seen_at]
+            properties:
+              display: { type: string }
+              name: { type: string }
+              phase: { type: string }
+              activated: { type: boolean }
+              device_id: { type: [string, "null"] }
+              problem: { type: [string, "null"] }
+              browser: { type: [string, "null"] }
+              premium: { type: [boolean, "null"] }
+              listed: { type: [boolean, "null"] }
+              seen_at: { type: string, description: "UTC, no suffix." }
+        error: { type: [string, "null"] }
+    SpotifyAccount:
+      type: object
+      required: [status, missing_scopes, speaker_name, scopes, loopback_redirect_uri, callback_path]
+      properties:
+        status: { type: string, enum: [off, connected, expired] }
+        client_id: { type: [string, "null"] }
+        account_name: { type: [string, "null"] }
+        connected_at: { type: [string, "null"] }
+        reconnect_by: { type: [string, "null"], description: Spotify ends a connection six months after approval. }
+        missing_scopes: { type: array, items: { type: string } }
+        last_error: { type: [string, "null"] }
+        speaker_name: { type: string }
+        scopes: { type: array, items: { type: string } }
+        loopback_redirect_uri: { type: string }
+        callback_path: { type: string }
     OnCallPerson:
       type: object
       properties:

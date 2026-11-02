@@ -54,7 +54,7 @@ Schublade. Die vollständige Liste steht auf der [Monitors-Seite](devices.md).
 
 `/wall` zeigt eine Tafel für einen Monitor im Raum: das Urteil, die Uhr, die fünf
 Kennzahlen, den Health River, die offenen Alarme und wer Bereitschaft hat. Öffnen
-Sie sie mit dem Symbol **Wall mode** in der oberen Leiste oder über die
+Sie sie mit dem Symbol **Wall mode** unten im linken Menü oder über die
 Befehlspalette; ++esc++ oder **Exit** führt zurück zur Konsole. Siehe
 [Wall-Modus](wall.md).
 

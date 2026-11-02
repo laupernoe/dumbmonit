@@ -44,7 +44,6 @@ Mode activé :
 | Règles d'alerte | Un client, ou l'instance |
 | Maintenances | Un client, ou l'instance (une maintenance sur un équipement suit cet équipement) |
 | Rapports planifiés | Un client, ou l'instance |
-| Tableaux de bord partagés | Un client, ou l'instance (un tableau personnel reste à son propriétaire) |
 | Plannings et politiques d'escalade d'astreinte | Un client, ou l'instance |
 | Procédures (runbooks) | Un client, ou l'instance |
 | Actions de remédiation | Un client, ou l'instance (une action liée à un équipement suit cet équipement) |
@@ -63,13 +62,10 @@ parler de tous les clients, une règle de l'instance surveille tous les
 - les **procédures et actions** d'un client n'apparaissent que sous ses
   alertes et ses équipements, et l'action d'un client ne s'exécute jamais sur
   l'équipement d'un autre, ni à la main ni par une politique automatique ;
-- le **tableau de bord partagé** d'un client n'est montré qu'à ses membres.
-  Les tableaux de l'instance ne sont pas montrés aux membres : leurs widgets
-  pourraient nommer d'autres clients.
 
 Un objet créé pendant qu'un client est choisi dans l'en-tête appartient à ce
 client. Pour déplacer un objet existant, utilisez le menu de client à côté de
-lui (pages de statut, canaux, rapports, tableaux partagés, plannings et
+lui (pages de statut, canaux, rapports, plannings et
 politiques d'astreinte, procédures, actions) ou le champ **Client** d'un
 équipement. Règles d'alerte et maintenances se déplacent par l'API
 (`PUT /api/clients/assign`).
@@ -141,14 +137,14 @@ alertes, maintenance sur ses équipements, carte, pages de statut,
 vulnérabilités, logos et rapports de ses clients — et refuse tout le reste
 (réglages, journaux, sauvegardes, jetons, point d'accès de l'assistant, séries
 brutes, recherche dans les journaux, procédures et remédiation, astreinte,
-fichiers de configuration, abonnés des pages de statut). Ses tableaux partagés
-et l'explorateur de métriques restent ouverts, filtrés à ses équipements.
+fichiers de configuration, abonnés des pages de statut). L'explorateur de
+métriques reste ouvert, filtré à ses équipements.
 Chaque liste est filtrée côté serveur ; un équipement d'un autre client
 répond *introuvable*, comme s'il n'existait pas. Les jetons d'API d'un membre
 héritent des mêmes limites.
 
 Quand l'administrateur MSP choisit un client dans l'en-tête, les listes suivent
-ce client : tableaux de bord, plannings et politiques d'astreinte, procédures,
+ce client : plannings et politiques d'astreinte, procédures,
 actions et leur journal, et la recherche dans les journaux, qui ne montre alors
 que les lignes des équipements de ce client (les journaux de DumbMonit lui-même
 n'appartiennent à aucun client). Les fichiers de configuration (export, plan et

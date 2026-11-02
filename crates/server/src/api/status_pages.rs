@@ -483,7 +483,7 @@ fn validate_scenes(scenes: Vec<String>) -> ApiResult<String> {
 
 /// Lien vers le site de l'organisation : vide, ou une URL http(s) absolue sans
 /// identifiants. Tout autre schéma (`javascript:`, `data:`) est refusé.
-fn validate_homepage(raw: &str) -> ApiResult<String> {
+pub(crate) fn validate_homepage(raw: &str) -> ApiResult<String> {
     if raw.is_empty() {
         return Ok(String::new());
     }

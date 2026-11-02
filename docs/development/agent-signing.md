@@ -5,7 +5,28 @@ server, and only run a new binary whose Ed25519 signature verifies against a
 release public key compiled into the agent. This page is for maintainers: how
 the key is created, where it lives, and what the release workflow does with it.
 
+## Until the key exists
+
+Without the key, release builds are unsigned and agents refuse every update.
+**Settings › Monitoring › Agents › Agent updates** then says *Updates blocked:
+unsigned builds* and holds the offers (status *Blocked: unsigned build*) instead
+of letting each agent refuse them. Agents can still be updated by running the
+install command again, or, for development only, by turning on *Accept
+unsigned builds*.
+
 ## Create the key
+
+On a trusted machine, outside the repository:
+
+```sh
+scripts/agent-signing-key.sh            # writes ~/.dumbmonit-agent-signing/
+```
+
+The script creates the Ed25519 key with OpenSSL (private key `0600` in a `0700`
+folder), checks the pair with a test signature made exactly as `release.yml`
+makes it, prints the public PEM block and the `gh secret set` command, and
+touches nothing else: neither the repository nor any GitHub secret. It refuses
+to overwrite an existing key. By hand, the same key is:
 
 ```sh
 openssl genpkey -algorithm ed25519 -out agent-signing.pem

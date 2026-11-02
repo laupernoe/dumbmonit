@@ -223,7 +223,7 @@
 		<div class="grid gap-8">
 			<p class="text-sm text-ink-2">
 				{m.logsearch_section_hint()}
-				<a href="/logs" class="inline-flex min-h-10 items-center font-semibold text-signal-ink hover:underline">{m.logsearch_section_link()}</a>
+				<a href="/targets?tab=logs" class="inline-flex min-h-10 items-center font-semibold text-signal-ink hover:underline">{m.logsearch_section_link()}</a>
 			</p>
 			<!-- Local storage -->
 			<Disclosure title={m.settings_logs_storage_title()}>

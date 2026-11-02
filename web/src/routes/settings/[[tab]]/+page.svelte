@@ -32,6 +32,7 @@
 		type SettingsTab
 	} from '#lib/components/settings/tabs.js';
 	import SecuritySection from '#lib/components/settings/SecuritySection.svelte';
+	import HttpsSection from '#lib/components/settings/HttpsSection.svelte';
 	import SecurityScoreSection from '#lib/components/settings/SecurityScoreSection.svelte';
 	import LocationsSection from '#lib/components/settings/LocationsSection.svelte';
 	import UsersSection from '#lib/components/settings/UsersSection.svelte';
@@ -52,6 +53,7 @@
 	import PacksSection from '#lib/components/settings/PacksSection.svelte';
 	import AboutSection from '#lib/components/settings/AboutSection.svelte';
 	import WallModeSection from '#lib/components/settings/WallModeSection.svelte';
+	import MusicSection from '#lib/components/settings/MusicSection.svelte';
 	import PushSection from '#lib/components/settings/PushSection.svelte';
 	import OnCallContactsSection from '#lib/components/settings/OnCallContactsSection.svelte';
 	import OnCallHoursSection from '#lib/components/settings/OnCallHoursSection.svelte';
@@ -83,7 +85,7 @@
 	);
 	const asked = $derived(page.params.tab);
 	// Status pages and reports have their own pages now.
-	const MOVED_TABS: Record<string, string> = { status: '/status', reports: '/reports' };
+	const MOVED_TABS: Record<string, string> = { status: '/status', reports: '/status?tab=reports' };
 	const tab = $derived<SettingsTab>(isTab(asked) && tabs.includes(asked) ? asked : DEFAULT_TAB);
 
 	/** The sections of each tab, top to bottom. */
@@ -93,8 +95,8 @@
 		team: [UsersSection, TeamsSection, ...(auth.isAdmin ? [ClientsSection] : []), SsoSection, SamlSection, ScimSection, LdapSection],
 		monitoring: [AgentsSection, PacksSection, SecurityScoreSection, ...(auth.isAdmin ? [LocationsSection] : [])],
 		notifications: [ChannelsSection, NotificationPolicySection],
-		wall: [WallModeSection],
-		system: [BackupSection, ...(auth.isAdmin ? [ConfigFilesSection] : []), SelfMonitoringSection, ...(auth.isAdmin ? [StorageSection, LogsSection] : []), AssistantSection, AboutSection]
+		wall: [WallModeSection, MusicSection],
+		system: [BackupSection, ...(auth.isAdmin ? [ConfigFilesSection] : []), SelfMonitoringSection, ...(auth.isAdmin ? [HttpsSection, StorageSection, LogsSection] : []), AssistantSection, AboutSection]
 	});
 
 	const sections = $derived(SECTIONS[tab]);

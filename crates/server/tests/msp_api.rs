@@ -947,7 +947,7 @@ async fn a_backup_carries_clients_and_what_belongs_to_them() {
 }
 
 // ---------------------------------------------------------------------------
-// Surfaces du lot 4 : tableaux de bord, explorateur, journaux, procédures et
+// Surfaces du lot 4 : explorateur, journaux, procédures et
 // actions, configuration réseau, astreintes, GitOps, abonnés, SCIM.
 // ---------------------------------------------------------------------------
 
@@ -1048,71 +1048,6 @@ async fn lot4_routes_outside_the_closed_list_are_refused_to_client_members() {
     // SCIM ne s'ouvre jamais avec une session.
     let reply = lab.app.get("/api/scim/v2/Users", Some(&cookie)).await;
     assert_ne!(reply.status, StatusCode::OK, "{}", reply.body);
-}
-
-#[tokio::test]
-async fn shared_dashboards_belong_to_a_client() {
-    let lab = lab().await;
-    let (alice, cookie) = create_user(&lab.app, &lab.admin, "alice", "viewer").await;
-    join(&lab, lab.acme, alice).await;
-    let board = |name: &str| json!({ "name": name, "shared": true, "range_secs": 3600, "refresh_secs": 30, "widgets": [] });
-    let create = |name: &'static str, view: Option<i64>| {
-        let body = board(name);
-        let app = &lab.app;
-        let admin = lab.admin.clone();
-        async move {
-            let reply = send(app, "POST", "/api/dashboards", body, &admin, view).await;
-            assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
-            reply.body["id"].as_i64().unwrap()
-        }
-    };
-    let acme_board = create("Acme board", Some(lab.acme)).await;
-    let beta_board = create("Beta board", Some(lab.beta)).await;
-    let _instance_board = create("Instance board", None).await;
-
-    // Le membre d'Acme : le tableau de son client, rien de Beta ni de l'instance.
-    let reply = lab.app.get("/api/dashboards", Some(&cookie)).await;
-    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
-    assert_eq!(names(&reply.body, "name"), vec!["Acme board"]);
-    let reply = lab.app.get(&format!("/api/dashboards/{beta_board}"), Some(&cookie)).await;
-    assert_eq!(reply.status, StatusCode::NOT_FOUND, "{}", reply.body);
-    let reply = lab.app.get(&format!("/api/dashboards/{acme_board}"), Some(&cookie)).await;
-    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
-
-    // L'administrateur, vue Acme : Acme et l'instance ; sans vue : tout.
-    let reply = get_with_view(&lab.app, "/api/dashboards", &lab.admin, lab.acme).await;
-    assert_eq!(names(&reply.body, "name"), vec!["Acme board", "Instance board"]);
-    let reply = lab.app.get("/api/dashboards", Some(&lab.admin)).await;
-    assert_eq!(names(&reply.body, "name"), vec!["Acme board", "Beta board", "Instance board"]);
-
-    // Ranger un tableau dans un client passe par l'administrateur MSP ; un
-    // tableau personnel reste à son propriétaire.
-    let reply = send(
-        &lab.app,
-        "PUT",
-        "/api/clients/assign",
-        json!({ "kind": "dashboard", "ids": [beta_board], "client_id": lab.acme }),
-        &lab.admin,
-        None,
-    )
-    .await;
-    assert_eq!(reply.status, StatusCode::NO_CONTENT, "{}", reply.body);
-    let reply = lab.app.get(&format!("/api/dashboards/{beta_board}"), Some(&cookie)).await;
-    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
-    let mine = json!({ "name": "Mine", "shared": false, "range_secs": 3600, "refresh_secs": 30, "widgets": [] });
-    let reply = send(&lab.app, "POST", "/api/dashboards", mine, &cookie, None).await;
-    assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
-    let personal = reply.body["id"].as_i64().unwrap();
-    let reply = send(
-        &lab.app,
-        "PUT",
-        "/api/clients/assign",
-        json!({ "kind": "dashboard", "ids": [personal], "client_id": lab.beta }),
-        &lab.admin,
-        None,
-    )
-    .await;
-    assert_eq!(reply.status, StatusCode::CONFLICT, "{}", reply.body);
 }
 
 #[tokio::test]
@@ -1291,15 +1226,14 @@ async fn scim_groups_drive_client_membership() {
     assert_eq!(member(lab.pool.clone(), lab.acme).await, 0);
 }
 
-/// Les emplacements (ajout par site, filtres des modèles de tableaux de bord)
-/// ne montrent à un membre de client que ceux où il a un équipement.
+/// Les emplacements (ajout par site) ne montrent à un membre de client que ceux
+/// où il a un équipement.
 #[tokio::test]
-async fn locations_and_template_sites_stay_within_the_client() {
+async fn locations_stay_within_the_client() {
     let lab = lab().await;
     let (alice, cookie) = create_user(&lab.app, &lab.admin, "alice", "operator").await;
     join(&lab, lab.acme, alice).await;
 
-    let mut sites = Vec::new();
     for (name, target) in [("Acme HQ", lab.a1), ("Beta Vault", lab.b1)] {
         let body = json!({ "name": name, "latitude": 46.5, "longitude": 6.6 });
         let reply = lab.app.post("/api/locations", body, Some(&lab.admin)).await;
@@ -1308,7 +1242,6 @@ async fn locations_and_template_sites_stay_within_the_client() {
         let body = json!({ "location_id": id, "target_ids": [target] });
         let reply = lab.app.post("/api/locations/assign", body, Some(&lab.admin)).await;
         assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
-        sites.push(id);
     }
 
     // L'administrateur voit les deux.
@@ -1321,19 +1254,6 @@ async fn locations_and_template_sites_stay_within_the_client() {
     assert_eq!(names, vec!["Acme HQ".to_string()], "{}", reply.body);
     let text = reply.body.to_string();
     assert!(!text.contains("Beta Vault") && !text.contains(&format!("\"target_id\":{}", lab.b1)));
-
-    let reply = lab.app.get("/api/dashboards/templates", Some(&cookie)).await;
-    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
-    let text = reply.body["filters"].to_string();
-    assert!(text.contains("Acme HQ") && !text.contains("Beta Vault"), "{text}");
-
-    // Un site d'un autre client demandé à la main : ni son nom ni ses équipements.
-    let uri = format!("/api/dashboards/templates/homelab-overview/preview?site={}", sites[1]);
-    let reply = lab.app.get(&uri, Some(&cookie)).await;
-    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
-    let text = reply.body.to_string();
-    assert!(!text.contains("Beta Vault") && !text.contains(SECRET_NAME), "{text}");
-    assert_eq!(reply.body["matched_count"], 0, "{text}");
 
     // Les relais (agents de tous les clients) restent hors de la liste fermée.
     let reply = lab.app.get("/api/relays", Some(&cookie)).await;

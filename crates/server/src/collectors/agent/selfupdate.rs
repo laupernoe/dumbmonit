@@ -213,6 +213,12 @@ pub fn evaluate(
     if !requested && !host.enabled(settings) {
         return Verdict::hold("disabled", None);
     }
+    // Build sans signature : l'agent le refuserait. Rien n'est proposé, et
+    // l'interface dit pourquoi (« mises à jour bloquées : builds non signés »)
+    // plutôt que de montrer un refus après coup.
+    if binary.signature.is_none() && !settings.allow_unsigned {
+        return Verdict::hold("unsigned", None);
+    }
     let downgrade = dumbmonit_proto::is_older(server_version, &host.agent_version);
     let allow_downgrade = requested && host.allow_downgrade;
     if downgrade && !allow_downgrade {
@@ -755,6 +761,9 @@ pub struct Overview {
     pub settings: Settings,
     pub version: &'static str,
     pub build: Option<&'static str>,
+    /// Mises à jour bloquées : au moins un binaire livré n'est pas signé et
+    /// les builds non signés ne sont pas acceptés.
+    pub blocked_unsigned: bool,
     pub binaries: Vec<BinaryView>,
     pub rollout: RolloutView,
     pub agents: Vec<AgentView>,
@@ -795,6 +804,8 @@ pub async fn overview(state: &AppState) -> Result<Overview> {
         });
     }
     Ok(Overview {
+        blocked_unsigned: !settings.allow_unsigned
+            && binaries.values().any(|binary| binary.signature.is_none()),
         rollout: RolloutView {
             canaries: canaries.len(),
             canaries_updated: canaries.iter().filter(|canary| canary.up_to_date).count(),
@@ -975,6 +986,21 @@ mod tests {
         // Un échec réel, lui, attend une demande explicite.
         let failed = HostState { outcome: failure("failed", NOW - 100), ..host() };
         assert_eq!(decide(&changed, &failed, &Gate::Open).status, "failed");
+    }
+
+    #[test]
+    fn an_unsigned_build_is_held_and_says_so_unless_unsigned_builds_are_accepted() {
+        let unsigned = ShippedBinary { signature: None, ..binary() };
+        let held =
+            evaluate(&Settings::default(), &host(), Some(&unsigned), "0.14.0", &Gate::Open, NOW);
+        assert_eq!((held.status, held.offer), ("unsigned", false));
+        // Même un « Update now » : l'agent le refuserait.
+        let asked = HostState { requested_ms: Some(NOW), ..host() };
+        let held =
+            evaluate(&Settings::default(), &asked, Some(&unsigned), "0.14.0", &Gate::Open, NOW);
+        assert_eq!(held.status, "unsigned");
+        let accepted = Settings { allow_unsigned: true, ..Settings::default() };
+        assert!(evaluate(&accepted, &host(), Some(&unsigned), "0.14.0", &Gate::Open, NOW).offer);
     }
 
     #[test]

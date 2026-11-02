@@ -6,7 +6,28 @@ pour une clé publique de release compilée dans l'agent. Cette page s'adresse a
 mainteneurs : création de la clé, où elle vit, et ce que le workflow de release
 en fait.
 
+## Tant que la clé n'existe pas
+
+Sans clé, les builds publiés ne sont pas signés et les agents refusent toute mise
+à jour. **Réglages › Surveillance › Agents › Mises à jour des agents** affiche
+alors *Mises à jour bloquées : builds non signés* et retient les propositions
+(état *Bloquée : build non signé*) au lieu de laisser chaque agent les refuser.
+Les agents restent mis à jour en relançant la commande d'installation, ou, en
+développement seulement, en activant *Accepter les builds non signés*.
+
 ## Créer la clé
+
+Sur une machine de confiance, hors du dépôt :
+
+```sh
+scripts/agent-signing-key.sh            # écrit ~/.dumbmonit-agent-signing/
+```
+
+Le script crée la clé Ed25519 avec OpenSSL (clé privée en `0600` dans un dossier
+`0700`), vérifie la paire par une signature d'essai faite exactement comme
+`release.yml` la fait, affiche le bloc PEM public et la commande
+`gh secret set`, et ne touche à rien d'autre : ni au dépôt, ni à aucun secret
+GitHub. Il refuse d'écraser une clé existante. À la main, la même clé :
 
 ```sh
 openssl genpkey -algorithm ed25519 -out agent-signing.pem

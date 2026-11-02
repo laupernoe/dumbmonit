@@ -13,9 +13,11 @@
 	import VersionTag from '#lib/components/VersionTag.svelte';
 	import Logo from '#lib/components/Logo.svelte';
 	import DemoBanner from '#lib/components/demo/DemoBanner.svelte';
+	import CleartextBanner from '#lib/components/security/CleartextBanner.svelte';
 	import DemoNotice from '#lib/components/demo/DemoNotice.svelte';
 	import Tour from '#lib/components/demo/Tour.svelte';
 	import WhatsNew from '#lib/components/WhatsNew.svelte';
+	import UpgradeNotes from '#lib/components/UpgradeNotes.svelte';
 	import DismissToast from '#lib/components/alerts/DismissToast.svelte';
 	import { demo } from '#lib/stores/demo.svelte.js';
 	import { calmMotion } from '#lib/ui/index.js';
@@ -77,8 +79,9 @@
 		return () => window.removeEventListener('keydown', onKeydown);
 	});
 
-	// The system theme can flip during a session (public status pages only:
-	// the console is always dark). Applied again on every navigation.
+	// The system theme can flip during a session (a status page in automatic
+	// mode, or the console set to "System"). Applied again on every navigation:
+	// the wall and the status pages have looks of their own.
 	$effect(() => theme.watchSystem());
 	$effect(() => {
 		theme.apply();
@@ -108,6 +111,8 @@
 	});
 
 	const publicPath = $derived(isPublicRoute(page.url.pathname));
+	// The branch below that renders `EnterpriseShell`.
+	const inShell = $derived(!statusHost && !publicPath && auth.canUseApi && !onWelcome);
 
 	// Three situations: fresh instance, no session, valid session.
 	$effect(() => {
@@ -155,18 +160,25 @@
 	});
 
 	// Page changes cross-fade through the View Transitions API: the bars stay,
-	// the page underneath leaves in 120 ms and the next one rises in. Only
-	// between pages — a step inside a page (`?kind=`, `#section`) swaps at once —
-	// and never under reduced motion or where the API is missing.
+	// the page underneath leaves in 120 ms and the next one rises in. A new tab
+	// of the same page (`?tab=`) only cross-fades, shorter; any other step
+	// inside a page (`?kind=`, `#section`) swaps at once. Never under reduced
+	// motion or where the API is missing.
 	onNavigate((navigation) => {
 		if (typeof document === 'undefined' || !('startViewTransition' in document)) return;
 		if (!navigation.from || !navigation.to) return;
-		if (navigation.from.url.pathname === navigation.to.url.pathname) return;
+		const samePage = navigation.from.url.pathname === navigation.to.url.pathname;
+		const tabChange =
+			samePage && navigation.from.url.searchParams.get('tab') !== navigation.to.url.searchParams.get('tab');
+		if (samePage && !tabChange) return;
 		// Wall mode covers the bars with its own overlay: a captured bar would
 		// float above it for the length of the fade.
 		if ([navigation.from, navigation.to].some((end) => end.url.pathname.startsWith('/wall'))) return;
 		// Phones swap pages at once: a full-screen snapshot cross-fade costs more than it shows.
 		if (calmMotion()) return;
+		const root = document.documentElement;
+		if (tabChange) root.dataset.vt = 'tab';
+		else delete root.dataset.vt;
 		return new Promise<void>((resolve) => {
 			const transition = document.startViewTransition(async () => {
 				resolve();
@@ -175,7 +187,9 @@
 			});
 			// A transition skipped by the next click rejects these: nothing to report.
 			transition.ready.catch(() => {});
-			transition.finished.catch(() => {});
+			transition.finished.catch(() => {}).finally(() => {
+				if (tabChange) delete root.dataset.vt;
+			});
 		});
 	});
 
@@ -200,6 +214,10 @@
 			{@render children()}
 		{/if}
 	{:else if publicPath}
+		{#if !page.url.pathname.startsWith('/s/')}
+			<!-- Sign-in and first setup: a password is about to be typed. -->
+			<CleartextBanner />
+		{/if}
 		{@render children()}
 	{:else if !auth.canUseApi}
 		<main class="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-16">
@@ -209,13 +227,20 @@
 			</p>
 		</main>
 	{:else}
-		{#if auth.demo}
-			<DemoBanner />
-		{/if}
+		{#snippet banners()}
+			{#if auth.demo}
+				<DemoBanner />
+			{/if}
+			{#if !onWall}
+				<CleartextBanner />
+			{/if}
+		{/snippet}
 		{#if onWelcome}
+			{@render banners()}
 			{@render children()}
 		{:else}
-			<EnterpriseShell>{@render children()}</EnterpriseShell>
+			<!-- Banners go in the page column: above the shell they would push the rail's foot off screen. -->
+			<EnterpriseShell banner={banners}>{@render children()}</EnterpriseShell>
 		{/if}
 		{#if CommandPalette && !onWall}
 			<CommandPalette />
@@ -229,6 +254,7 @@
 		{#if !onWall}
 			{#if !auth.demo}
 				<WhatsNew />
+				<UpgradeNotes />
 			{/if}
 		{/if}
 		{#if auth.demo}
@@ -238,7 +264,8 @@
 	{#if auth.demo}
 		<DemoNotice />
 	{/if}
-	{#if !onWall && !statusHost && !page.url.pathname.startsWith('/status')}
+	<!-- Inside the shell the tag sits in the page column (see EnterpriseShell): under the shell it would shorten the rail's sticky course. -->
+	{#if !onWall && !statusHost && !page.url.pathname.startsWith('/status') && !inShell}
 		<VersionTag />
 	{/if}
 </div>
