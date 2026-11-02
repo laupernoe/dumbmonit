@@ -117,6 +117,31 @@ the NAS.
 | Synology temperature high | advisory | A disk is above 55 °C, or DSM raised its temperature warning, for 15 minutes. |
 | Synology memory high | advisory | Memory usage above 95 % for 15 minutes. |
 
+## The NAS fleet view {#nas-fleet}
+
+With two or more Synology monitors, the [Monitors page](../using/devices.md#nas-fleet)
+shows a one-line banner above the list, for example **3 NAS, 1 healthy**, with
+one light for the worst of them. Click **View fleet** to swap the list for one
+row per NAS; **Back to list** brings the list back.
+
+Each row gives the name, the model, the DSM version, a level (a light, an icon
+and a word, never colour alone) and one sentence saying why. Click a row to open
+the NAS's own page. The worst problem decides, in this order:
+
+| Level | Sentence | When |
+|---|---|---|
+| Critical | No answer from this NAS. | The monitor is unreachable. |
+| Critical | A volume or storage pool is degraded. | `storage_health` is critical (2). |
+| Attention | The monitor is misconfigured: open it to fix the settings. | The last probe failed on credentials or options. |
+| Attention | A disk or a volume needs attention. | `storage_health` is attention (1). |
+| Attention | A DSM update is available. | `update_available` is 1. |
+| Healthy | Volumes and disks all report normal. | None of the above. |
+| Unknown | No reading yet. | The monitor is waiting or disabled. |
+
+The view reads what the probe already stored and refreshes every 30 seconds;
+it never queries the NAS. A reading that DSM did not give leaves its cell empty.
+Only Synology DSM monitors count: other NAS brands are not part of this view.
+
 ## Active Backup for Business
 
 Active Backup for Business (ABB) backs up PCs, physical servers, virtual

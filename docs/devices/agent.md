@@ -3,7 +3,7 @@
 A small binary installed on the machine to monitor. It measures CPU, memory,
 disks, network, services and containers — and, where the machine exposes them,
 temperatures, disk health, ZFS pools and KVM virtual machines — then
-**pushes** its readings to the DumbMonit server over HTTP.
+**pushes** its readings to the DumbMonit server over HTTPS, on an encrypted channel of its own (see [Agent channel security](../install/agent-security.md)).
 
 ## Network ports to open
 
@@ -11,7 +11,8 @@ From the agent to the DumbMonit server:
 
 | Port | Protocol | Purpose |
 |---|---|---|
-| 8080 | TCP | Readings and commands (default port, 443 behind a TLS proxy) |
+| 8443 | TCP (TLS 1.3, client certificate) | Readings and commands: the encrypted agent channel |
+| 8080 | TCP (HTTPS) | Install script and agent download, only at install and update time (443 behind a reverse proxy) |
 
 The direction is deliberate: the agent calls the server, never the other way
 round. It crosses NAT and home firewalls, and requires opening **no port** on
@@ -173,6 +174,14 @@ Two things are worth reading before you roll this out to more than one machine:
 [Binding](#binding-one-machine-one-agent), which is what makes a monitor really
 belong to one agent installation, and [Single use or fleet](#single-use-or-fleet),
 which is the choice you make when you create a token.
+
+!!! note "The command DumbMonit shows"
+    The commands below are the short form, for a server whose certificate your
+    machines trust (a reverse proxy with a public certificate). When the server
+    uses its own self-signed certificate, the command shown in the interface adds
+    the pin of that certificate (`--pinned-key=sha256//…`, `-PinnedKey` on
+    Windows) and the SHA-256 of each binary: the download is checked without
+    any authority. Always copy the command from DumbMonit.
 
 === "Linux (systemd or OpenRC)"
 
@@ -357,6 +366,9 @@ on every system.
 | `--interval=N` | `-Interval` | Sampling period in seconds (default 30). |
 | `--services=a,b,c` | `-Services @('a','b')` | Services whose state is reported, named as the host system names them: systemd units on Linux, launchd labels (`com.apple.sshd`) on macOS, rc.d names on FreeBSD, Windows services. |
 | `--tags=key=value,…` | `-Tags @{key='value'}` | Tags, copied as `tag_<key>` on every series. |
+| `--pinned-key=sha256//…` | `-PinnedKey` | Public key of the server's self-signed certificate. The download of the script and of the binary is accepted from that key only, and the agent keeps it. Included in the command DumbMonit shows when the server uses its own certificate. |
+| `--tls-url=URL` | `-TlsUrl` | Address of the encrypted agent channel (default: the host of `--url`, port 8443). |
+| `--ca-pin=SHA256` | `-CaPin` | Fingerprint of the server's certificate authority: the agent then only talks to that server, never in clear. |
 | `--hostname=NAME` | `-HostName` | Name announced to the server (default: the machine's). |
 | `--modules=a,b` | `-Modules a,b` | Optional modules to run — see [Choosing the modules](#choosing-the-modules). Without it, every module detects itself; `none` keeps system metrics only. The install command shown by DumbMonit adds it when you tick modules. |
 | `--plakar-klosets=a,b` | | Plakar klosets to read (`@name` or a path); default: every kloset found. |
@@ -1038,10 +1050,10 @@ DumbMonit, is logged and retried with the secret kept.
 - Tokens are created when adding a monitor of type agent (single use, or
   reusable for several machines) and by the Active Directory kit. The server keeps only a fingerprint: the clear token is shown once, in
   the creation response, with the two install commands.
-- The agent sends it as `Authorization: Bearer dmon_…` on `POST /api/ingest`.
+- The agent sends it as `Authorization: Bearer dmon_…` on `POST /api/ingest`, over the encrypted agent channel.
   It never appears in the agent's logs, not even truncated.
-- **Settings → Agents** lists tokens with their prefix, scope, creation date and
-  last use. **Revoke** stops every agent that uses that token at its next push;
+- **Settings → Agents** lists tokens by their opaque identifier (`tok_…`, never
+  the secret), scope, creation date and last use. **Revoke** stops every agent that uses that token at its next push;
   the machines then become *unreachable* after three missed periods. Re-run the
   installer with a new token to re-enrol them.
 - Machines are separate monitors: revoking a token does not delete them.
@@ -1055,6 +1067,10 @@ default that happens to you:
 |---|---|---|
 | **Single use** (the default) | Exactly one machine. | One install. An install command lives on in shell history, in a ticket, in a chat log; a single-use one is worth nothing once used. |
 | **Reusable for a fleet** | As many machines as you allow — a number, or no limit. | A playbook, a machine image, a batch of installs. |
+
+A new machine enrolling with a fleet token can wait for an administrator's
+approval, and a fleet token that enrolled nothing for 30 days goes to sleep: see
+[Protecting enrolment](../install/agent-security.md#protecting-enrolment).
 
 Both can carry a deadline in days. A deadline only stops *enrolments*: machines
 already enrolled keep reporting after it passes, which is what you want for an

@@ -65,8 +65,8 @@ Host network mode:
 
 - is **Linux only**. On Docker Desktop (macOS, Windows) the container still runs
   inside a VM, so there is no shared segment and no MAC.
-- exposes the web UI directly on the host's port 8080 (there is no port
-  mapping in host mode). The embedded metrics database stays bound to the
+- exposes the web UI (HTTPS) directly on the host's port 8080 and the agent
+  channel on 8443 (there is no port mapping in host mode). The embedded metrics database stays bound to the
   loopback and is not reachable from the LAN.
 
 ## Scheduled scans and inventory
