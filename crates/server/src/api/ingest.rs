@@ -234,6 +234,17 @@ pub async fn receive(
                     tracing::warn!(error = %format!("{error:#}"), "agent update offer skipped");
                 }
             }
+            // Mode sentinelle : le réglage et son canal secret ne partent que
+            // vers la machine désignée, et que sur le canal chiffré.
+            match agent::sentinel::load(&state.pool, &state.cipher, target_id).await {
+                Ok(Some(stored)) => {
+                    ack.sentinel = Some(agent::sentinel::for_agent(stored, cert.is_some()));
+                }
+                Ok(None) => {}
+                Err(error) => {
+                    tracing::warn!(error = %format!("{error:#}"), "sentinel setting skipped");
+                }
+            }
             if REFUSALS.clear(&who) {
                 tracing::info!(client = who, "agent reports accepted again");
             }

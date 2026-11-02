@@ -83,6 +83,7 @@ nav:
       - Agent channel security: install/agent-security.md
       - Backup and restore: install/backup.md
       - Watching DumbMonit itself: install/self-monitoring.md
+      - Sentinel mode: install/sentinel.md
       - Server logs: install/logs.md
       - Update: install/update.md
       - Verify a release: install/verify.md
