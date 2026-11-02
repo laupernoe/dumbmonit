@@ -268,7 +268,9 @@ if ($PSCmdlet.ShouldProcess($kitDir, 'Create the installation kit')) {
     $acl = New-Object System.Security.AccessControl.DirectorySecurity
     $acl.SetAccessRuleProtection($true, $false)
     $full = @('S-1-5-18', 'S-1-5-32-544', $domainAdmins)
-    $readers = if ($groupSid) { @($groupSid) } else { @("$($ad.DomainSID.Value)-515") }
+    # @( ) autour du if : une liste d'un seul élément serait sinon réduite à un texte, et le
+    # `+=` suivant collerait deux SID bout à bout.
+    $readers = @(if ($groupSid) { $groupSid } else { "$($ad.DomainSID.Value)-515" })
     # Les contrôleurs de domaine ne sont pas des « Domain Computers ».
     $readers += "$($ad.DomainSID.Value)-516"
     foreach ($sid in $full) {
