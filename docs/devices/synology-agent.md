@@ -15,11 +15,15 @@ opens no port on the NAS. It runs under a dedicated package user, not as root.
    DumbMonit releases.
 3. In DSM, open **Package Center**, click **Manual Install**, and select the file.
    DSM warns that the publisher is unknown: the package is not signed yet.
-4. In the wizard, enter the server URL (for example `http://192.168.1.10:8080`)
-   and paste the token.
+4. In the wizard, enter the server URL (HTTPS only, for example
+   `https://192.168.1.10:8080`), paste the token, and paste the server
+   certificate fingerprint (pin, `sha256//...`) shown in **Settings > System >
+   HTTPS**. The pin can only be left empty if the server has a certificate from
+   a trusted authority; with the default self-signed certificate the
+   installation fails until you paste it.
 5. Finish. The NAS appears in DumbMonit within a minute. If the server is
-   unreachable or the token refused, the installation stops with a message:
-   fix the address or create a new token and retry.
+   unreachable, the pin does not match or the token is refused, the installation stops with a message:
+   fix the address or the pin, or create a new token and retry.
 
 The agent still verifies its own updates against the DumbMonit signing key.
 
