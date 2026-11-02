@@ -55,10 +55,10 @@ avec la portée `write` (Réglages → **API & assistants**).
 ```bash
 # Installer, ou mettre à jour vers une version plus récente du même pack
 curl -H 'Authorization: Bearer dmt_…' -H 'Content-Type: application/yaml' \
-  --data-binary @packs/shelly-plug/pack.yaml http://localhost:8080/api/packs
+  --data-binary @packs/shelly-plug/pack.yaml https://localhost:8080/api/packs
 
 # Lister ce qui est installé
-curl -H 'Authorization: Bearer dmt_…' http://localhost:8080/api/packs
+curl -H 'Authorization: Bearer dmt_…' https://localhost:8080/api/packs
 ```
 
 La réponse dit ce qui s'est passé (`created`, `updated` ou `unchanged`), les

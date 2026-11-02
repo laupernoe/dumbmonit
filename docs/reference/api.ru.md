@@ -39,7 +39,7 @@ GET /api/openapi.json
 # Browse it, and try calls with your token, in Swagger UI
 docker run --rm -p 8081:8080 \
   -e SWAGGER_JSON_URL=http://monit.lan:8080/api/openapi.json swaggerapi/swagger-ui
-# then open http://localhost:8081 and paste "dmt_…" under Authorize → bearerAuth
+# then open https://localhost:8081 and paste "dmt_…" under Authorize → bearerAuth
 
 # Generate a client library (here Python)
 docker run --rm -v "$PWD:/local" openapitools/openapi-generator-cli generate \
@@ -526,7 +526,7 @@ passphrase}` с `des`, `aes128`, `aes192` или `aes256`, необязател�
 | `GET` | `/api/metrics/query_range?query=…&start=…&end=…&step=…` | Запрос диапазона. `start` и `end` — **миллисекунды** с начала эпохи; `step` в секундах и увеличивается так, чтобы ряд никогда не превышал 2000 точек. |
 
 ```bash
-curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
+curl -b cookies.txt -G https://localhost:8080/api/metrics/query \
   --data-urlencode 'query=avg by (target, host) (dumbmonit_cpu_usage_percent)'
 ```
 
@@ -813,7 +813,7 @@ Bearer-токенам для изменений нужна область `write
 | Метод | Маршрут | Auth | Назначение |
 |---|---|---|---|
 | `GET` | `/api/agent/tokens` | session only | Все токены: `id`, `name`, `prefix`, `created_at`, `last_used_at`, `revoked_at`, `max_uses` (`null` для токена флота), `uses`, `expires_at`. |
-| `POST` | `/api/agent/tokens` | admin, session only | `{"name": "Home fleet", "base_url": "http://server:8080", "reusable": false, "max_uses": null, "expires_in_days": null}`. `201` с полями токена плюс `secret` (показывается один раз), `install_linux` и `install_windows`. `base_url` — URL, которым будут пользоваться агенты; по умолчанию — адрес прослушивания. Без `reusable` токен **одноразовый**: он регистрирует одну машину и не более. С ним `max_uses` ограничивает число регистраций (`null`: без ограничений). `expires_in_days` прекращает *регистрации* через указанное число дней; уже зарегистрированные машины продолжают отправлять данные. `400` для значения меньше 1. |
+| `POST` | `/api/agent/tokens` | admin, session only | `{"name": "Home fleet", "base_url": "https://server:8080", "reusable": false, "max_uses": null, "expires_in_days": null}`. `201` с полями токена плюс `secret` (показывается один раз), `install_linux` и `install_windows`. `base_url` — URL, которым будут пользоваться агенты; по умолчанию — адрес прослушивания. Без `reusable` токен **одноразовый**: он регистрирует одну машину и не более. С ним `max_uses` ограничивает число регистраций (`null`: без ограничений). `expires_in_days` прекращает *регистрации* через указанное число дней; уже зарегистрированные машины продолжают отправлять данные. `400` для значения меньше 1. |
 | `DELETE` | `/api/agent/tokens/{id}` | admin, session only | Отзыв. `204`; `404`, если токен неизвестен или уже отозван. |
 | `POST` | `/api/ingest` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | Принимает пакет образцов от агента (тела до 16 МБ). Не предназначен для ручного вызова. Заголовок несёт секрет привязки машины; агент, у которого его нет, опускает его — так он и запрашивает секрет. Ответ добавляет `agent_secret` (секрет, возвращается ровно один раз, когда машина привязана) и `bound`. `403`, когда машина привязана к другой установке агента или когда токен больше не может регистрировать — сообщение говорит, что именно и что делать. |
 | `GET` | `/api/agent/relay?wait=N` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | Опросы, делегированные релейному агенту (`relay: true`). Удерживается до `wait` секунд (максимум 25), когда ничего не ожидает. Каждый элемент — команда вида `probe`, чьи `args` содержат цель, её расшифрованные учётные данные, `timeout_secs` и `discover`. Никогда не записывается на диск. |
@@ -828,8 +828,8 @@ Bearer-токенам для изменений нужна область `write
   "id": 1, "name": "Home fleet", "prefix": "dmon_ab12",
   "created_at": "2026-09-15 13:00:00", "last_used_at": null, "revoked_at": null,
   "secret": "dmon_…",
-  "install_linux": "curl -sSL http://server:8080/install.sh | sh -s -- --token=dmon_… --url=http://server:8080",
-  "install_windows": "& ([scriptblock]::Create((irm http://server:8080/install.ps1))) -Token dmon_… -Url http://server:8080"
+  "install_linux": "curl -sSL https://server:8080/install.sh | sh -s -- --token=dmon_… --url=https://server:8080",
+  "install_windows": "& ([scriptblock]::Create((irm https://server:8080/install.ps1))) -Token dmon_… -Url https://server:8080"
 }
 ```
 
