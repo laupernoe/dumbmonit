@@ -9396,5 +9396,10 @@
 	"devices_agent_help_restart": "Reiniciar o agente",
 	"devices_agent_help_logs": "Últimos registos",
 	"deviceform_enroll_compose_title": "Ou com Docker Compose (docker-compose.yml)",
-	"deviceform_enroll_copy_compose": "Copiar o ficheiro Compose"
+	"deviceform_enroll_copy_compose": "Copiar o ficheiro Compose",
+	"devices_agent_remove_title": "Remover também o agente?",
+	"devices_agent_remove_text": "Eliminar o monitor não desinstala o agente: continua a funcionar na máquina e pede novamente a inscrição. Execute primeiro isto na máquina e depois elimine o monitor.",
+	"devices_agent_remove_docker": "Se o agente corre como contentor Docker, use antes o segundo comando.",
+	"devices_agent_remove_delete": "Eliminar o monitor",
+	"devices_agent_remove_cancel": "Cancelar"
 }

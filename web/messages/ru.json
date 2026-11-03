@@ -9582,5 +9582,10 @@
 	"devices_agent_help_restart": "Перезапустить агента",
 	"devices_agent_help_logs": "Последние журналы",
 	"deviceform_enroll_compose_title": "Или через Docker Compose (docker-compose.yml)",
-	"deviceform_enroll_copy_compose": "Скопировать файл Compose"
+	"deviceform_enroll_copy_compose": "Скопировать файл Compose",
+	"devices_agent_remove_title": "Удалить и агента?",
+	"devices_agent_remove_text": "Удаление монитора не удаляет агента: он продолжает работать на машине и снова просит регистрацию. Сначала выполните это на машине, затем удалите монитор.",
+	"devices_agent_remove_docker": "Если агент работает как контейнер Docker, используйте вторую команду.",
+	"devices_agent_remove_delete": "Удалить монитор",
+	"devices_agent_remove_cancel": "Отмена"
 }
