@@ -151,6 +151,31 @@ as "—" on the monitor page's table. The device named in the alert is the guest
 name from the snapshot notes when PVE wrote one, otherwise `type/id`, same as
 the backup calendar.
 
+### Deeper checks
+
+* **Datastore availability.** A datastore that cannot be opened (unplugged
+  disk, path not mounted, read-only file system) refuses every backup. It is
+  reported as soon as it is unavailable, except for a removable datastore that
+  is simply unmounted, which has its own rule.
+* **Maintenance mode.** `datastore_maintenance` (the `mode` label says which).
+  The mode is lifted by hand: a `read-only` or `offline` left on after a
+  migration makes the following nights' backups fail. It is reported after 24
+  hours.
+* **Root file system.** `node_rootfs_percent`: PBS writes its logs, task
+  archives and indexes there, and no task starts once it is full, whatever
+  room the datastores have.
+* **Silent scheduled jobs.** A sync or prune job that is enabled, has a
+  schedule and has not run for eight days. A job that stops running does not
+  fail, so the "last run failed" rules never see it. Verification jobs are left
+  out, since they are often monthly.
+* **Subscription.** `node_subscription_active` and `node_subscription_info`
+  (status, level, renewal date), read from `/nodes/localhost/subscription`
+  (`Sys.Audit`, with the `updates` option). `notfound` raises nothing.
+
+Added built-in rules: PBS datastore unavailable, PBS datastore left in
+maintenance mode, PBS root file system almost full (90%), PBS scheduled job not
+running, PBS subscription expired.
+
 Built-in rules that apply: Monitor unreachable, PBS datastore almost full, PBS
 datastore filling up, PBS backup too old (per backup group: no new snapshot
 for two days — edit the rule's threshold for a longer window), PBS backup
