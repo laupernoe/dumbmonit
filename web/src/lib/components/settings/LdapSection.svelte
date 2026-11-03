@@ -20,7 +20,7 @@
 		type LdapTestStep
 	} from '#lib/api/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, Confirm, Disclosure, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
+	import { Button, Confirm, Disclosure, DocLink, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
 	import UnsavedBadge from './UnsavedBadge.svelte';
 	import { useDirtyTracker } from '#lib/settings/unsaved.svelte.js';
@@ -362,7 +362,7 @@
 				<Field label={m.settings_ldap_viewer_groups()} for="ldap-viewer-groups">
 					<textarea id="ldap-viewer-groups" class="input min-h-20 font-mono text-[0.8125rem]" rows="3" bind:value={form.viewer_groups} placeholder="CN=IT Staff,OU=Groups,DC=corp,DC=example" spellcheck="false" autocomplete="off" disabled={saving}></textarea>
 				</Field>
-				<p class="text-sm text-ink-2 sm:col-span-2">{m.settings_ldap_groups_help()}</p>
+				<DocLink page="using/ldap/" class="sm:col-span-2" />
 			</div>
 			</Disclosure>
 

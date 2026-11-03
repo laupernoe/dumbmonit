@@ -132,7 +132,6 @@
 
 	<div class="grid gap-2">
 		<p class="text-sm font-semibold text-ink">{m.settings_teams_rights()}</p>
-		<p class="text-sm text-ink-2">{m.settings_teams_rights_help()}</p>
 		<GrantMatrix {folders} bind:grants disabled={saving} name={`team-${team?.id ?? 'new'}`} />
 	</div>
 
