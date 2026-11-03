@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { kindLabel as kindLabelOf } from '#lib/kind-label.js';
 	import { m } from '#lib/paraglide/messages.js';
-	import { tagChip } from '#lib/tag-chip.js';
 	/**
 	 * Device detail: one large faceplate band, the alert timeline of this device, then
 	 * the instruments — availability for a service; for a device, the essentials
@@ -117,7 +116,7 @@
 		confetti,
 		type Tone
 	} from '#lib/ui/index.js';
-	import { Activity, ArrowUpRight, ChevronDown, EllipsisVertical, ExternalLink, Pencil, PowerOff, ScrollText, Search, ServerOff } from 'lucide-svelte';
+	import { Activity, ArrowUpRight, ChevronDown, EllipsisVertical, ExternalLink, Loader2, PowerOff, ScrollText, Search, ServerOff, Settings } from 'lucide-svelte';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 
 	const id = $derived(Number(page.params.id));
@@ -172,28 +171,23 @@
 	const collector = $derived(collectors.find((c) => c.kind === target?.kind) ?? null);
 	const kindLabel = $derived(target ? kindLabelOf(target.kind, collector?.label) : '');
 
-
-	const tags = $derived(Object.entries(target?.tags ?? {}));
-
 	/**
 	 * An agent's address is its opaque host id; the machine's own name and OS
 	 * come from the `dumbmonit_agent_os_info` labels, read once per device.
 	 */
 	let osInfo = $state<Record<string, string> | null>(null);
 	const hostname = $derived(osInfo?.host || osInfo?.hostname || null);
-	const osLine = $derived.by(() => {
-		if (!osInfo) return null;
-		const system = osInfo.system || osInfo.os || 'Linux';
-		const distro =
-			osInfo.pretty_name || [osInfo.name, osInfo.version_id].filter(Boolean).join(' ') || null;
-		const arch = osInfo.arch || osInfo.machine || null;
-		return [system, distro, arch].filter(Boolean).join(' · ');
+	/**
+	 * What the line shows after the type: the machine's name for an agent (its
+	 * address is an opaque id), the address for anything else.
+	 */
+	const identity = $derived.by(() => {
+		if (!target) return '';
+		return target.kind === 'agent' ? (hostname ?? '') : target.address;
 	});
-	/** "13a2a55c…" for an opaque id; a hostname or IP stays whole. */
-	const shortAddress = $derived.by(() => {
-		const address = target?.address ?? '';
-		return target?.kind === 'agent' && /^[0-9a-f]{16,}$/i.test(address) ? `${address.slice(0, 8)}…` : address;
-	});
+
+	const ICON_BUTTON =
+		'flex size-10 items-center justify-center rounded-lg border border-line text-ink-2 hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal disabled:cursor-not-allowed disabled:opacity-50';
 
 	// --- Security score (opt-in in Settings) ---------------------------------
 	// A badge in the header when the score is on and this kind is rated; the
@@ -693,19 +687,18 @@
 				<Led {tone} {blink} size="lg" class="mt-2.5" label={STATE_LABEL[stateNow]} />
 				<div class="min-w-0 flex-1">
 					<h1 id="device-name" class="display text-3xl break-words text-ink max-sm:text-2xl sm:text-4xl">{target.name}</h1>
-					<div class="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-ink-2">
+					<!-- Quiet identity line: what it is, where it answers, how often, behind whom. -->
+					<div class="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-ink-2">
 						<span class="inline-flex items-center gap-1.5">
-							<KindIcon kind={target.kind} class="size-4 text-ink-2" />
+							<KindIcon kind={target.kind} class="size-4 text-ink-3" />
 							<span class="label-tape">{kindLabel}</span>
 						</span>
-						{#if hostname}
+						{#if identity}
 							<span class="text-ink-3" aria-hidden="true">·</span>
-							<span class="break-all font-semibold text-ink">{hostname}</span>
+							<span class="tnum break-all" title={target.address}>{identity}</span>
 						{/if}
 						<span class="text-ink-3" aria-hidden="true">·</span>
-						<span class="tnum break-all" title={target.address}>{shortAddress}</span>
-						<span class="text-ink-3" aria-hidden="true">·</span>
-						<span class="tnum">{m.devices_target_every({ interval: formatDuration(target.interval_secs) })}</span>
+						<span class="tnum text-ink-3">{m.devices_target_every({ interval: formatDuration(target.interval_secs) })}</span>
 						{#if target.parent_id !== null}
 							<span class="text-ink-3" aria-hidden="true">·</span>
 							<a href={`/targets/${target.parent_id}`} class="inline-flex items-center gap-1 hover:text-ink hover:underline">
@@ -725,17 +718,6 @@
 							</a>
 						{/if}
 					</div>
-					{#if osLine}
-						<p class="mt-1 text-sm text-ink-2">{osLine}</p>
-					{/if}
-					{#if tags.length > 0}
-						<div class="mt-2 flex flex-wrap gap-1.5">
-							{#each tags as [key, value] (key)}
-								{@const chip = tagChip(key, value)}
-								<Plate tone="ghost" bare label={chip.label} title={chip.title} class="max-w-full" />
-							{/each}
-						</div>
-					{/if}
 					<div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
 						<Plate {tone} label={STATE_LABEL[stateNow]} size="md" pulse={blink} />
 						{#if certificate}
@@ -768,38 +750,37 @@
 				</div>
 			</div>
 
-			<div class="flex min-w-0 max-w-full flex-wrap items-center gap-2 max-sm:[&_a]:h-auto max-sm:[&_a]:min-h-10 max-sm:[&_a]:whitespace-normal max-sm:[&_a]:py-1.5 lg:shrink-0 lg:justify-end">
+			<!-- Icon-only actions (name in aria-label/title), one 40px row that fits a phone. -->
+			<div class="flex min-w-0 max-w-full flex-wrap items-center gap-2 lg:shrink-0 lg:justify-end">
 				{#if target.enabled}
-					<Button variant="secondary" onclick={probe} loading={probing}>
-						<Activity class="size-4" aria-hidden="true" />
-						{m.devices_target_probe_now()}
-					</Button>
+					<button type="button" class={ICON_BUTTON} onclick={probe} disabled={probing} aria-busy={probing} aria-label={m.devices_target_probe_now()} title={m.devices_target_probe_now()}>
+						{#if probing}
+							<Loader2 class="size-4 animate-spin" aria-hidden="true" />
+						{:else}
+							<Activity class="size-4" aria-hidden="true" />
+						{/if}
+					</button>
 				{:else if auth.isAdmin}
 					<Button variant="primary" onclick={() => void setEnabled(true)} loading={savingEnabled}>
 						{m.devices_target_enable()}
 					</Button>
 				{/if}
 				{#if auth.isAdmin}
-					<!-- Phones keep one button and the menu: silence and edit move into it. -->
-					<div class="hidden sm:contents">
-						{#if target.enabled}
-							<SilenceControl {target} {refreshKey} />
-						{/if}
-						<Button variant="secondary" href={`/targets/${target.id}/edit`}>
-							<Pencil class="size-4" aria-hidden="true" />
-							{m.devices_target_edit()}
-						</Button>
-						<Button variant="secondary" href={`/targets?tab=logs&target=${target.id}`}>
-							<ScrollText class="size-4" aria-hidden="true" />
-							{m.devices_target_logs()}
-						</Button>
-					</div>
+					{#if target.enabled}
+						<SilenceControl {target} {refreshKey} />
+					{/if}
+					<a href={`/targets?tab=logs&target=${target.id}`} class={ICON_BUTTON} aria-label={m.devices_target_logs()} title={m.devices_target_logs()}>
+						<ScrollText class="size-4" aria-hidden="true" />
+					</a>
+					<a href={`/targets/${target.id}/edit`} class={ICON_BUTTON} aria-label={m.devices_target_settings()} title={m.devices_target_settings()}>
+						<Settings class="size-4" aria-hidden="true" />
+					</a>
 					<!-- Rare and heavier actions: switching the monitor off, deleting it. -->
 					<Menu label={m.devices_target_more_actions()} align={actionsAtEnd ? 'right' : 'left'}>
 						{#snippet trigger({ toggle, open })}
 							<button
 								type="button"
-								class="flex size-10 items-center justify-center rounded-lg border border-line text-ink-2 hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
+								class={ICON_BUTTON}
 								onclick={toggle}
 								aria-haspopup="menu"
 								aria-expanded={open}
@@ -810,17 +791,6 @@
 							</button>
 						{/snippet}
 						{#snippet children()}
-							<div class="mb-1 flex flex-col items-stretch gap-1 border-b border-line pb-1.5 sm:hidden">
-								<Button variant="ghost" href={`/targets/${id}/edit`} class="justify-start">
-									<Pencil class="size-4" aria-hidden="true" />
-									{m.devices_target_edit()}
-								</Button>
-								<Button variant="ghost" href={`/targets?tab=logs&target=${id}`} class="justify-start">
-									<ScrollText class="size-4" aria-hidden="true" />
-									{m.devices_target_logs()}
-								</Button>
-								{#if target?.enabled}<SilenceControl {target} {refreshKey} />{/if}
-							</div>
 							<div class="flex min-h-10 items-center gap-2 rounded-lg px-2 py-1.5">
 								<Toggle id="device-enabled" bind:checked={enabledDraft} disabled={savingEnabled} onchange={(v) => void setEnabled(v)} />
 								<label for="device-enabled" class="text-sm font-semibold text-ink">{m.devices_target_enabled()}</label>
@@ -925,7 +895,7 @@
 
 	<!-- What this kind of device has to show beyond charts (guests, backup calendar, disks…) -->
 	{#if hasKindPanel(target.kind) && !idle}
-		<section class="mt-6" aria-label={m.devices_target_details()}>
+		<section class="mt-6 flex flex-col gap-6" aria-label={m.devices_target_details()}>
 			{#if kindPanelComponent && kindPanelLoadedFor === target.kind}
 				{@const Panel = kindPanelComponent}
 				<Panel {target} />
