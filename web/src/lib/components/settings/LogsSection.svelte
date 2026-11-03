@@ -404,7 +404,7 @@
 				{/if}
 
 				{#if destinations.length === 0 && !formOpen}
-					<div class="mt-4"><EmptyState title={m.settings_logs_dest_empty()} /></div>
+					<div class="mt-4"><EmptyState compact title={m.settings_logs_dest_empty()} /></div>
 				{:else if destinations.length > 0}
 					<ul class="mt-4 grid gap-3" role="list">
 						{#each destinations as destination (destination.id)}
