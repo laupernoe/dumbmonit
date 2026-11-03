@@ -29,6 +29,12 @@ metrics:
   - { name: adguard_update_available, label: "Update available", unit: "bool", better: "higher" }
   - { name: adguard_update_check_enabled, label: "Update check enabled", unit: "bool" }
   - { name: adguard_version_info, label: "Version", kind: info }
+  - { name: adguard_tls_valid, label: "Encrypted DNS certificate valid", unit: "bool" }
+  - { name: adguard_tls_expiry_seconds, label: "Encrypted DNS certificate expires in", unit: "s" }
+  - { name: adguard_dhcp_enabled, label: "DHCP server", unit: "bool" }
+  - { name: adguard_dhcp_leases, label: "DHCP leases" }
+  - { name: adguard_dhcp_static_leases, label: "DHCP static leases" }
+  - { name: adguard_dhcp_pool_used_percent, label: "DHCP pool used", unit: "%", min: 0, max: 100 }
   - { name: adguard_scrape_errors, label: "Scrape errors", better: "lower" }
 views:
   - view: stat
@@ -45,6 +51,9 @@ views:
       - adguard_filter_rules
       - adguard_filter_oldest_update_age_seconds
       - adguard_filter_update_age_seconds
+      - adguard_tls_expiry_seconds
+      - adguard_dhcp_leases
+      - adguard_dhcp_pool_used_percent
       - adguard_version_info
   - view: timeseries
     title: "DNS latency"

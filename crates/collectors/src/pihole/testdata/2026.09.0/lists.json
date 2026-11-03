@@ -1,0 +1,65 @@
+{
+  "lists": [
+    {
+      "address": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
+      "comment": "Migrated from /etc/pihole/adlists.list",
+      "groups": [0],
+      "enabled": true,
+      "id": 1,
+      "date_added": 1790751400,
+      "date_modified": 1790751400,
+      "type": "block",
+      "date_updated": 1790751549,
+      "number": 74761,
+      "invalid_domains": 2,
+      "abp_entries": 0,
+      "status": 1
+    },
+    {
+      "address": "https://example.org/lists/tracking.txt",
+      "comment": "Dead mirror",
+      "groups": [0],
+      "enabled": true,
+      "id": 2,
+      "date_added": 1790751400,
+      "date_modified": 1790751400,
+      "type": "block",
+      "date_updated": 1789000000,
+      "number": 1200,
+      "invalid_domains": 0,
+      "abp_entries": 0,
+      "status": 3
+    },
+    {
+      "address": "https://example.org/lists/never.txt",
+      "comment": "Never reachable",
+      "groups": [0],
+      "enabled": true,
+      "id": 3,
+      "date_added": 1790751400,
+      "date_modified": 1790751400,
+      "type": "block",
+      "date_updated": null,
+      "number": 0,
+      "invalid_domains": 0,
+      "abp_entries": 0,
+      "status": 4
+    },
+    {
+      "address": "https://example.org/lists/disabled.txt",
+      "comment": "Switched off",
+      "groups": [0],
+      "enabled": false,
+      "id": 4,
+      "date_added": 1790751400,
+      "date_modified": 1790751400,
+      "type": "block",
+      "date_updated": null,
+      "number": 0,
+      "invalid_domains": 0,
+      "abp_entries": 0,
+      "status": 4
+    }
+  ],
+  "took": 0.0003
+}

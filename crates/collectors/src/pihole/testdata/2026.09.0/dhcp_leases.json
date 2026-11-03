@@ -1,0 +1,7 @@
+{
+  "leases": [
+    { "expires": 1790840000, "name": "laptop", "hwaddr": "aa:bb:cc:00:11:22", "ip": "192.168.1.50", "clientid": "01:aa:bb:cc:00:11:22" },
+    { "expires": 1790841000, "name": "*", "hwaddr": "aa:bb:cc:00:11:33", "ip": "192.168.1.51", "clientid": "*" }
+  ],
+  "took": 0.0001
+}
