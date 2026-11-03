@@ -12,7 +12,7 @@
 	import { addPasskey, deletePasskey, listPasskeys, passkeysSupported, renamePasskey } from '#lib/api/passkeys.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { formatDateTime } from '#lib/format.js';
-	import { Button, Confirm, ErrorNotice, Field, Plate, Skeleton } from '#lib/ui/index.js';
+	import { Button, Confirm, DocLink, ErrorNotice, Field, Plate, Skeleton } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 
@@ -118,7 +118,7 @@
 		<div class="flex flex-wrap items-start justify-between gap-3">
 			<div>
 				<p class="text-sm font-semibold text-ink">{m.settings_passkeys_title()}</p>
-				<p class="mt-0.5 max-w-prose text-[0.8125rem] text-ink-2 max-sm:hidden">{m.settings_passkeys_intro()}</p>
+				<DocLink page="using/passkeys/" />
 			</div>
 			{#if supported}
 				<Button size="sm" variant="secondary" disabled={adding} onclick={startAdd}>

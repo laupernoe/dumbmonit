@@ -110,6 +110,33 @@ sous [Appareils clients](../alerting/rules.md#client-devices) :
 | `last_seen_timestamp_seconds` | Dernière connexion, comme `/rest/user` la rapporte | `device`, `type` (`Wired`, `Wireless` ou `Unknown`), `os` (vide), `user` (vide), `kind` |
 | `stale_seconds` | Positif une fois qu'un client suivi a dépassé `device_stale_days` (3 par défaut) sans se connecter ; alimente la règle [Appareil client périmé](../alerting/rules.md#client-devices) | `device`, `type`, `os`, `user`, `kind`, `signal` (toujours `connection` : UniFi n'a pas de sauvegarde à rapporter) |
 
+## Aller plus loin
+
+En plus de l'état des équipements, du WAN et des clients ci-dessus, DumbMonit lit, avec un compte local ou une clé d'API que l'API classique accepte :
+
+- **Santé des équipements** : score de satisfaction, température et indicateur de surchauffe de chaque équipement en ligne.
+- **PoE** : le budget PoE de chaque commutateur et ce que ses ports consomment.
+- **Wi-Fi** : occupation du canal et nombre de clients de chaque radio (2,4, 5 et 6 GHz), nombre de clients Wi-Fi et combien ont un signal plus faible que -75 dBm.
+- **Test de débit de la passerelle** : débit descendant, montant et latence du dernier test.
+
+Rien n'envoie de commande ; si l'API classique refuse un appel, les séries correspondantes manquent simplement et la surveillance n'est pas en erreur.
+
+## Alertes par défaut
+
+| Alerte | Se déclenche quand |
+|---|---|
+| UniFi device offline | Un équipement adopté est hors ligne, isolé ou en échec d'adoption depuis 5 minutes |
+| UniFi Internet down / WAN link down | La passerelle n'a plus Internet, ou un lien WAN est tombé |
+| UniFi subsystem in error | Le Wi-Fi, le LAN ou le VPN signale une erreur depuis 10 minutes |
+| UniFi device overheating | Un équipement signale une surchauffe depuis 5 minutes |
+| UniFi PoE budget nearly used | Un commutateur consomme plus de 90 % de son budget PoE depuis 15 minutes |
+| UniFi Wi-Fi channel saturated | Le canal d'une radio est occupé plus de 80 % du temps depuis 30 minutes |
+| UniFi Wi-Fi clients with a weak signal | Plus de 40 % d'au moins cinq clients Wi-Fi sont sous -75 dBm depuis une heure (information) |
+| UniFi port errors | Un port journalise plus de 100 erreurs en 15 minutes |
+| Mise à jour, équipement à adopter, alarmes, CPU de la passerelle | Comme avant |
+
+Toutes les règles se modifient ou se désactivent dans Alertes.
+
 ## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la

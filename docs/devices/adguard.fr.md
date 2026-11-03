@@ -55,6 +55,10 @@ fenêtre, et sont stockés tels quels.
 | `filter_oldest_update_age_seconds` | âge de la plus ancienne mise à jour parmi les listes activées | |
 | `filters_never_updated` | listes activées jamais téléchargées | |
 | `filter_update_interval_hours` | à quelle fréquence les listes sont mises à jour ; 0 désactive les mises à jour | |
+| `tls_valid` | 1 quand le certificat et la clé privée du DNS chiffré (DoH, DoT, DoQ) se chargent et vont ensemble ; absent tant que le chiffrement est éteint. La chaîne n'est pas jugée : un certificat autosigné convient | |
+| `tls_expiry_seconds` | temps restant avant l'expiration de ce certificat ; négatif une fois expiré | |
+| `dhcp_enabled`, `dhcp_leases`, `dhcp_static_leases` | le serveur DHCP d'AdGuard Home, quand il est activé : baux dynamiques et fixes | |
+| `dhcp_pool_used_percent` | baux dynamiques rapportés à la taille de la plage IPv4 | |
 | `update_check_enabled` | 0 quand AdGuard Home tourne avec sa vérification de version désactivée | |
 | `update_available` | 1 quand la dernière vérification de version a annoncé une version plus récente ; absent quand la vérification est désactivée | `latest` |
 | `scrape_errors` | appels secondaires qui ont échoué à la dernière vérification | |
@@ -77,7 +81,10 @@ désactiver cela.
 Les [règles intégrées](../alerting/rules.md#adguard-home) qui s'appliquent :
 protection AdGuard Home désactivée, DNS AdGuard Home ne tourne pas, serveur
 amont AdGuard Home en échec, listes de filtres AdGuard Home obsolètes, mise
-à jour AdGuard Home disponible, plus Surveillance inaccessible.
+à jour AdGuard Home disponible, AdGuard Home lent à répondre, amont
+AdGuard Home lent, certificat AdGuard Home invalide, certificat AdGuard Home
+bientôt expiré, plage DHCP d'AdGuard Home presque pleine, AdGuard Home ne
+reçoit aucune requête, plus Surveillance inaccessible.
 
 ## La page de la surveillance
 
@@ -152,5 +159,6 @@ de requête (5 s) et le test amont (activé).
 | `GET /control/status` | en fonctionnement, protection, version : le seul appel dont l'échec fait échouer la vérification |
 | `GET /control/stats`, `GET /control/stats/config` | requêtes, blocages, réponses amont, fenêtre de statistiques |
 | `GET /control/filtering/status` | listes de filtres |
+| `GET /control/tls/status`, `GET /control/dhcp/status` | validité et expiration du certificat, baux DHCP ; facultatifs, un refus n'est pas une erreur |
 | `POST /control/version.json` avec `{"recheck_now": false}` | le résultat de la dernière vérification de version, comme l'interface web la lit à chaque chargement de page ; ne force jamais une nouvelle vérification |
 | `GET /control/dns_info`, puis `POST /control/test_upstream_dns` une fois par serveur amont | les serveurs amont configurés et les serveurs d'amorçage, puis le test amont ; ne change aucun réglage |

@@ -75,14 +75,12 @@ pub struct LocationRow {
     pub latitude: f64,
     pub longitude: f64,
     pub site: String,
-    pub main_site: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Member {
     pub target_id: TargetId,
-    /// `assigned` (affectation explicite), `site` (le site de la cible) ou
-    /// `main` (aucun site distant, emplacement du site principal).
+    /// `assigned` (affectation explicite) ou `site` (le site de la cible).
     pub source: &'static str,
 }
 
@@ -95,7 +93,6 @@ pub struct LocationView {
     pub longitude: f64,
     /// Site de la topologie dont l'emplacement tient lieu ; vide : aucun.
     pub site: String,
-    pub main_site: bool,
     pub members: Vec<Member>,
 }
 
@@ -111,7 +108,7 @@ pub struct LocationsView {
 
 pub async fn load(pool: &SqlitePool) -> ApiResult<Vec<LocationRow>> {
     let rows = sqlx::query(
-        "SELECT id, name, address, latitude, longitude, site, main_site FROM locations
+        "SELECT id, name, address, latitude, longitude, site FROM locations
          ORDER BY name COLLATE NOCASE, id",
     )
     .fetch_all(pool)
@@ -126,7 +123,6 @@ pub async fn load(pool: &SqlitePool) -> ApiResult<Vec<LocationRow>> {
                 latitude: row.try_get("latitude")?,
                 longitude: row.try_get("longitude")?,
                 site: row.try_get("site")?,
-                main_site: row.try_get::<i64, _>("main_site")? != 0,
             })
         })
         .collect::<Result<Vec<_>, sqlx::Error>>()
@@ -162,12 +158,12 @@ pub async fn location_of(pool: &SqlitePool, id: TargetId) -> anyhow::Result<Opti
 pub struct Placement {
     pub target_id: TargetId,
     pub assigned: Option<LocationId>,
-    /// Site distant déduit par la topologie ; `None` : site principal.
+    /// Site distant déduit par la topologie ; `None` : aucun site.
     pub site: Option<String>,
 }
 
-/// Répartit les cibles entre les emplacements : affectation, puis site, puis
-/// site principal. Rend les membres de chaque emplacement et les cibles
+/// Répartit les cibles entre les emplacements : affectation, puis site. Une
+/// cible sans affectation ni site reste sans emplacement. Rend les membres de chaque emplacement et les cibles
 /// restées sans emplacement, dans l'ordre reçu.
 pub fn resolve(
     locations: &[LocationRow],
@@ -182,7 +178,6 @@ pub fn resolve(
             by_site.entry(site).or_insert(location.id);
         }
     }
-    let main = locations.iter().find(|l| l.main_site).map(|l| l.id);
     let mut members: HashMap<LocationId, Vec<Member>> = HashMap::new();
     let mut unplaced = Vec::new();
     for target in targets {
@@ -190,7 +185,7 @@ pub fn resolve(
             Some(id) => Some((id, "assigned")),
             None => match &target.site {
                 Some(site) => by_site.get(&site.trim().to_lowercase()).map(|id| (*id, "site")),
-                None => main.map(|id| (id, "main")),
+                None => None,
             },
         };
         match found {
@@ -203,8 +198,7 @@ pub fn resolve(
     (members, unplaced)
 }
 
-/// L'emplacement où se trouve une cible (affectation, site ou site
-/// principal), s'il y en a un : la carte en direct d'un pare-feu y ancre ses arcs.
+/// L'emplacement où se trouve une cible (affectation ou site), s'il y en a un : la carte en direct d'un pare-feu y ancre ses arcs.
 pub async fn location_for(state: &AppState, id: TargetId) -> ApiResult<Option<LocationRow>> {
     let locations = load(&state.pool).await?;
     if locations.is_empty() {
@@ -262,7 +256,6 @@ async fn list(
             latitude: l.latitude,
             longitude: l.longitude,
             site: l.site,
-            main_site: l.main_site,
         })
         .collect();
     Ok(Json(LocationsView { locations, sites: known_sites, unplaced }))
@@ -279,7 +272,9 @@ pub struct LocationPayload {
     pub longitude: f64,
     #[serde(default)]
     pub site: String,
+    /// Ancien champ, ignoré : il n'y a plus de site principal.
     #[serde(default)]
+    #[allow(dead_code)]
     pub main_site: bool,
 }
 
@@ -290,7 +285,6 @@ struct LocationInput {
     latitude: f64,
     longitude: f64,
     site: String,
-    main_site: bool,
 }
 
 fn validate(payload: LocationPayload) -> ApiResult<LocationInput> {
@@ -329,7 +323,6 @@ fn validate(payload: LocationPayload) -> ApiResult<LocationInput> {
         latitude: round(payload.latitude),
         longitude: round(payload.longitude),
         site,
-        main_site: payload.main_site,
     })
 }
 
@@ -341,33 +334,25 @@ fn name_conflict(error: sqlx::Error) -> ApiError {
     }
 }
 
-/// Écrit l'emplacement (nouveau si `id` est `None`) ; un seul site principal :
-/// le marquer retire la marque des autres, dans la même transaction.
+/// Écrit l'emplacement (nouveau si `id` est `None`). La colonne `main_site`
+/// reste en base, inerte : plus rien ne la lit ni ne l'écrit.
 async fn save(
     pool: &SqlitePool,
     id: Option<LocationId>,
     input: &LocationInput,
 ) -> ApiResult<LocationId> {
     let mut tx = pool.begin().await.map_err(anyhow::Error::from)?;
-    if input.main_site {
-        sqlx::query("UPDATE locations SET main_site = 0 WHERE main_site = 1 AND id IS NOT ?")
-            .bind(id)
-            .execute(&mut *tx)
-            .await
-            .map_err(anyhow::Error::from)?;
-    }
     let id = match id {
         Some(id) => {
             let done = sqlx::query(
                 "UPDATE locations SET name = ?, address = ?, latitude = ?, longitude = ?,
-                     site = ?, main_site = ? WHERE id = ?",
+                     site = ? WHERE id = ?",
             )
             .bind(&input.name)
             .bind(&input.address)
             .bind(input.latitude)
             .bind(input.longitude)
             .bind(&input.site)
-            .bind(input.main_site)
             .bind(id)
             .execute(&mut *tx)
             .await
@@ -378,15 +363,14 @@ async fn save(
             id
         }
         None => sqlx::query_scalar::<_, LocationId>(
-            "INSERT INTO locations (name, address, latitude, longitude, site, main_site)
-             VALUES (?, ?, ?, ?, ?, ?) RETURNING id",
+            "INSERT INTO locations (name, address, latitude, longitude, site)
+             VALUES (?, ?, ?, ?, ?) RETURNING id",
         )
         .bind(&input.name)
         .bind(&input.address)
         .bind(input.latitude)
         .bind(input.longitude)
         .bind(&input.site)
-        .bind(input.main_site)
         .fetch_one(&mut *tx)
         .await
         .map_err(name_conflict)?,
@@ -408,7 +392,6 @@ async fn view(pool: &SqlitePool, id: LocationId) -> ApiResult<LocationView> {
         latitude: row.latitude,
         longitude: row.longitude,
         site: row.site,
-        main_site: row.main_site,
         members: Vec::new(),
     })
 }
@@ -663,7 +646,7 @@ async fn put_basemap(
 mod tests {
     use super::*;
 
-    fn location(id: LocationId, name: &str, site: &str, main: bool) -> LocationRow {
+    fn location(id: LocationId, name: &str, site: &str) -> LocationRow {
         LocationRow {
             id,
             name: name.into(),
@@ -671,7 +654,6 @@ mod tests {
             latitude: 46.5,
             longitude: 6.6,
             site: site.into(),
-            main_site: main,
         }
     }
 
@@ -680,9 +662,8 @@ mod tests {
     }
 
     #[test]
-    fn affectation_puis_site_puis_site_principal() {
-        let locations =
-            [location(1, "Siège", "", true), location(2, "Annexe", "annexe-relais", false)];
+    fn affectation_puis_site_sinon_rien() {
+        let locations = [location(1, "Siège", ""), location(2, "Annexe", "annexe-relais")];
         let targets = [
             placed(10, None, None),
             placed(11, None, Some("Annexe-Relais")),
@@ -691,14 +672,7 @@ mod tests {
             placed(14, Some(99), None),
         ];
         let (members, unplaced) = resolve(&locations, &targets);
-        assert_eq!(
-            members[&1],
-            vec![
-                Member { target_id: 10, source: "main" },
-                Member { target_id: 14, source: "main" }
-            ],
-            "une affectation vers un emplacement disparu retombe sur le site"
-        );
+        assert!(!members.contains_key(&1), "aucun site par défaut");
         assert_eq!(
             members[&2],
             vec![
@@ -706,15 +680,11 @@ mod tests {
                 Member { target_id: 12, source: "assigned" }
             ]
         );
-        assert_eq!(unplaced, vec![13], "un site sans emplacement reste à placer");
-    }
-
-    #[test]
-    fn sans_site_principal_rien_nest_place_par_defaut() {
-        let (members, unplaced) =
-            resolve(&[location(1, "Annexe", "annexe", false)], &[placed(1, None, None)]);
-        assert!(members.is_empty());
-        assert_eq!(unplaced, vec![1]);
+        assert_eq!(
+            unplaced,
+            vec![10, 13, 14],
+            "sans affectation ni site connu, une cible reste sans site"
+        );
     }
 
     #[test]

@@ -19,7 +19,7 @@
 		type UnassignedAccess,
 		type User
 	} from '#lib/api/index.js';
-	import { Button, Confirm, EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { Button, Confirm, DocLink, EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import TeamEditor from './TeamEditor.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 
@@ -181,7 +181,7 @@
 				</ul>
 			{/if}
 
-			<p class="text-sm text-ink-2">{m.settings_teams_ceiling_note()}</p>
+			<DocLink page="using/teams/" />
 		</div>
 	{/if}
 </Panel>

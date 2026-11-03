@@ -2316,7 +2316,7 @@ async fn restore_locations(
             continue;
         }
         let existing = sqlx::query(
-            "SELECT id, address, latitude, longitude, site, main_site FROM locations
+            "SELECT id, address, latitude, longitude, site FROM locations
              WHERE name = ? COLLATE NOCASE",
         )
         .bind(name)
@@ -2328,31 +2328,22 @@ async fn restore_locations(
             && row.try_get::<f64, _>("latitude")? == entry.latitude
             && row.try_get::<f64, _>("longitude")? == entry.longitude
             && row.try_get::<String, _>("site")? == entry.site
-            && (row.try_get::<i64, _>("main_site")? != 0) == entry.main_site
         {
             report.skipped += 1;
             continue;
         }
-        if entry.main_site {
-            sqlx::query("UPDATE locations SET main_site = 0 WHERE name != ? COLLATE NOCASE")
-                .bind(name)
-                .execute(&mut **tx)
-                .await
-                .context("site principal")?;
-        }
         let result = sqlx::query(
-            "INSERT INTO locations (name, address, latitude, longitude, site, main_site)
-             VALUES (?, ?, ?, ?, ?, ?)
+            "INSERT INTO locations (name, address, latitude, longitude, site)
+             VALUES (?, ?, ?, ?, ?)
              ON CONFLICT(name) DO UPDATE SET address = excluded.address,
                  latitude = excluded.latitude, longitude = excluded.longitude,
-                 site = excluded.site, main_site = excluded.main_site",
+                 site = excluded.site",
         )
         .bind(name)
         .bind(&entry.address)
         .bind(entry.latitude)
         .bind(entry.longitude)
         .bind(&entry.site)
-        .bind(entry.main_site)
         .execute(&mut **tx)
         .await;
         match result {

@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { m } from '#lib/paraglide/messages.js';
 	/** Download and install steps of the DSM 7 agent package, above the token enrolment. */
-	import { BookOpen, Download } from 'lucide-svelte';
+	import { Download } from 'lucide-svelte';
 	import { getHealth } from '#lib/api/index.js';
-	import { SPK_ARCHES, SPK_DOCS, spkUrl } from './synology-package.js';
+	import { DocLink } from '#lib/ui/index.js';
+	import { SPK_ARCHES, spkUrl } from './synology-package.js';
 
 	let version = $state<string | null>(null);
 	$effect(() => {
@@ -30,14 +31,5 @@
 			{/each}
 		</div>
 	{/if}
-	<ol class="grid list-decimal gap-1 pl-5 text-sm leading-relaxed text-ink-2">
-		<li>{m.deviceform_synology_step_download()}</li>
-		<li>{m.deviceform_synology_step_manual()}</li>
-		<li>{m.deviceform_synology_step_wizard()}</li>
-		<li>{m.deviceform_synology_step_finish()}</li>
-	</ol>
-	<a href={SPK_DOCS} target="_blank" rel="noopener" class="inline-flex min-h-10 items-center gap-1.5 justify-self-start text-sm font-semibold text-signal-ink hover:underline">
-		<BookOpen class="size-4" aria-hidden="true" />
-		{m.deviceform_synology_docs()}
-	</a>
+	<DocLink page="devices/synology-agent/" />
 </div>

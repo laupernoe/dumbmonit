@@ -193,6 +193,39 @@ pub struct Utilization {
     pub memory: Option<MemoryUsage>,
     #[serde(default)]
     pub network: Vec<NetworkUsage>,
+    /// Activité des disques : occupation (pourcentage de temps occupé) et débits.
+    #[serde(default)]
+    pub disk: Option<DiskUsage>,
+}
+
+/// Bloc `disk` de l'utilisation : une entrée par disque, et un total.
+#[derive(Debug, Default, Deserialize)]
+pub struct DiskUsage {
+    #[serde(default)]
+    pub disk: Vec<DiskIo>,
+}
+
+/// Activité d'un disque. `utilization` est la part du temps passée à servir des
+/// requêtes (comme `%util` d'iostat) ; les débits et les accès sont instantanés,
+/// par seconde.
+#[derive(Debug, Default, Deserialize)]
+pub struct DiskIo {
+    /// Nom du périphérique, `sda`, `nvme0n1`.
+    #[serde(default)]
+    pub device: Option<String>,
+    /// Nom affiché par DSM : « Drive 1 », « Cache device 1 ».
+    #[serde(default)]
+    pub display_name: Option<String>,
+    #[serde(default)]
+    pub utilization: Option<Num>,
+    #[serde(default)]
+    pub read_byte: Option<Num>,
+    #[serde(default)]
+    pub write_byte: Option<Num>,
+    #[serde(default)]
+    pub read_access: Option<Num>,
+    #[serde(default)]
+    pub write_access: Option<Num>,
 }
 
 /// Les trois charges se cumulent pour donner l'occupation totale du processeur.
@@ -285,6 +318,30 @@ pub struct Pool {
     pub disk_failure_number: Option<Num>,
     #[serde(default)]
     pub size: Option<VolumeSize>,
+    /// Opération en cours (reconstruction, resynchronisation, vérification des
+    /// données) : étape et avancement.
+    #[serde(default)]
+    pub progress: Option<TaskProgress>,
+    /// Fin de la dernière vérification des données, en secondes Unix ; 0 si
+    /// jamais faite.
+    #[serde(default)]
+    pub last_done_time: Option<Num>,
+    /// Une vérification périodique des données est planifiée.
+    #[serde(default)]
+    pub is_scheduled: Option<Num>,
+    /// Taux de réussite d'un cache SSD, en pourcentage.
+    #[serde(default)]
+    pub hit_rate: Option<Num>,
+}
+
+/// Avancement d'une opération de stockage. `percent` vaut `-1` (en chaîne) quand
+/// rien ne tourne ; `step` vaut alors `none`.
+#[derive(Debug, Default, Deserialize)]
+pub struct TaskProgress {
+    #[serde(default)]
+    pub percent: Option<Num>,
+    #[serde(default)]
+    pub step: Option<String>,
 }
 
 /// Bloc `env` de `load_info` : le contexte que le NAS applique à son stockage.
@@ -307,6 +364,9 @@ pub struct StorageEnvStatus {
     pub system_crashed: Option<Num>,
     #[serde(default)]
     pub system_need_repair: Option<Num>,
+    /// Une reconstruction du système (partition DSM) est en cours.
+    #[serde(default)]
+    pub system_rebuilding: Option<Num>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -334,6 +394,20 @@ pub struct Volume {
     pub device_type: Option<String>,
     #[serde(default)]
     pub size: Option<VolumeSize>,
+    /// Faux quand le volume est passé en lecture seule (erreurs du système de
+    /// fichiers, volume dégradé) : plus rien ne peut y écrire.
+    #[serde(default)]
+    pub is_writable: Option<Num>,
+    /// Volume chiffré non monté : ses partages sont indisponibles.
+    #[serde(default)]
+    pub is_locked: Option<Num>,
+    /// Plus d'inodes libres : on ne peut plus créer de fichier, même avec de la
+    /// place.
+    #[serde(default)]
+    pub is_inode_full: Option<Num>,
+    /// Opération en cours sur le volume (vérification du système de fichiers…).
+    #[serde(default)]
+    pub progress: Option<TaskProgress>,
 }
 
 /// Tailles en octets, renvoyées en chaînes : elles dépassent la précision entière

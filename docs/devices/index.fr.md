@@ -6,6 +6,29 @@ sur le serveur ; le serveur décrit chaque type à l'interface
 (`GET /api/collectors`), si bien que le formulaire correspond toujours à ce
 que cette version peut surveiller.
 
+## Ajouter un appareil : quel type ?
+
+Partez de ce que vous avez sous les yeux, puis ouvrez la page du type. Chaque
+page liste ce qu'il faut préparer, ce qu'il faut saisir et quoi faire en cas
+d'échec.
+
+| Vous voulez surveiller | Choisissez | Page |
+|---|---|---|
+| Une machine Linux, macOS, FreeBSD ou Windows, ou Docker | **Serveur avec l'agent** | [Agent](agent.md) |
+| Une machine sur un autre site derrière un pare-feu | Agent avec un relais | [Surveiller un site distant](../install/remote-site.md) |
+| Un NAS Synology | **Synology DSM** : paquet ou API | [Agent Synology](synology-agent.md), [Synology DSM](synology.md) |
+| Un commutateur, routeur, imprimante, onduleur ou tout appareil SNMP | **Appareil SNMP** | [SNMP](snmp.md) |
+| Un hyperviseur | Proxmox VE, VMware vSphere, XCP-ng, Nutanix | [Proxmox VE](proxmox.md), [vSphere](vsphere.md), [XCP-ng](xcpng.md), [Nutanix](nutanix.md) |
+| Un pare-feu | OPNsense, pfSense, FortiGate… | [OPNsense](opnsense.md), [pfSense](pfsense.md), [FortiGate](fortigate.md) |
+| Un site web, un port, un nom DNS, un certificat, un hôte | Services | [Services](services.md) |
+| Une tâche qui doit se manifester (sauvegarde, cron) | Heartbeat | [Heartbeat](push.md) |
+| Une liste d'appareils d'un réseau | Scanner mon réseau | [Ajouter votre première surveillance](../install/first-device.md) |
+| Des surveillances d'un autre outil | Import | [Import](../using/imports.md) |
+
+Les étapes sont toujours les mêmes : **Ajouter une surveillance**, choisir un
+site (ou **Aucun site**), choisir le type, remplir le formulaire, **Ajouter la
+surveillance**. Voir [Ajouter votre première surveillance](../install/first-device.md).
+
 | Type | `kind` | Identifiant | Usage typique |
 |---|---|---|---|
 | [Appareil SNMP](snmp.md) | `snmp` | communauté ou SNMP v3 | Commutateur, routeur, NAS, onduleur, imprimante |

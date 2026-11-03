@@ -112,7 +112,7 @@
 		confirming = true;
 	}
 
-	async function apply() {
+	async function apply(): Promise<boolean> {
 		saving = true;
 		saveError = null;
 		try {
@@ -120,9 +120,11 @@
 			fill(result);
 			restarted = result.restarted;
 			confirming = false;
+			return true;
 		} catch (cause) {
 			saveError = cause;
 			confirming = false;
+			return false;
 		} finally {
 			saving = false;
 		}
@@ -287,7 +289,7 @@
 						<p class="text-sm text-ink">{m.storage_confirm_lowering()}</p>
 					{/if}
 					<div class="flex flex-wrap gap-3">
-						<Button variant="primary" loading={saving} onclick={() => void apply()}>{m.storage_confirm_apply()}</Button>
+						<Button variant="primary" loading={saving} onclick={() => apply()}>{m.storage_confirm_apply()}</Button>
 						<Button variant="ghost" disabled={saving} onclick={() => (confirming = false)}>{m.storage_confirm_cancel()}</Button>
 					</div>
 				</div>

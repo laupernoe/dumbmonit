@@ -25,7 +25,7 @@
 	import { listRelays } from '#lib/api/relay.js';
 	import type { DiscoveryDepth, NetscanDevice, NetscanRunStatus, NetscanSchedule, RelayAgent } from '#lib/api/types.js';
 	import { formatRelative } from '#lib/format.js';
-	import { Button, Confirm, EmptyState, ErrorNotice, Field, Plate, Toggle, type Tone } from '#lib/ui/index.js';
+	import { Button, Confirm, DocLink, EmptyState, ErrorNotice, Field, Plate, Toggle, type Tone } from '#lib/ui/index.js';
 	import NetscanGrid from './NetscanGrid.svelte';
 	import ReviewQueue from './ReviewQueue.svelte';
 	import { defaultSubnet, usableSubnets } from './test-connection';
@@ -174,7 +174,7 @@
 </script>
 
 <div class="grid gap-6">
-	<p class="text-sm leading-relaxed text-ink-2">{m.discovery_inventory_intro()}</p>
+	<DocLink page="using/discovery/" />
 
 	{#if unavailable}
 		<EmptyState title={m.deviceform_discovery_unavailable_title()} description={m.deviceform_discovery_unavailable_desc()} />
@@ -278,7 +278,7 @@
 							{/each}
 						</select>
 					</Field>
-					<Field label={m.discovery_inventory_interval_label()} for="inv-interval" help={m.discovery_inventory_interval_help()}>
+					<Field label={m.discovery_inventory_interval_label()} for="inv-interval">
 						<select id="inv-interval" class="input" bind:value={intervalSecs}>
 							{#each INTERVALS as secs (secs)}
 								<option value={secs}>{every(secs)}</option>
@@ -307,7 +307,6 @@
 					</Button>
 				</div>
 			</form>
-			<p class="text-[0.8125rem] text-ink-2">{m.discovery_inventory_alerts_hint()}</p>
 		</section>
 
 		{#if gridSchedule}

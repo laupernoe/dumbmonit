@@ -175,6 +175,7 @@ d'API qui n'appartient à aucun de vos propres comptes. Ce groupe exact a
 - **VPN: WireGuard: Status** — Tunnels WireGuard
 - **Status: OpenVPN** — Tunnels OpenVPN
 - **Status: IPsec** — Tunnels IPsec
+- **System: Trust: Certificates** — Expiration des certificats
 - **Diagnostics: Logs: Firewall: Live View** — Uniquement pour l'option carte du pare-feu en direct
 
 !!! warning
@@ -221,6 +222,23 @@ sur certaines des nouvelles. DumbMonit demande d'abord l'orthographe
 actuelle et se replie sur l'autre en cas de `403`, le même groupe
 fonctionne donc des deux côtés du renommage.
 
+## Certificats et alertes par défaut
+
+La date d'expiration des certificats que le pare-feu garde (interface d'administration, portail captif, VPN) est lue dans System: Trust: Certificates. Les certificats que OPNsense marque comme inutilisés sont ignorés. L'option est sautée sans bruit si le compte n'a pas le droit.
+
+| Alerte | Se déclenche quand |
+|---|---|
+| OPNsense certificate expiring / expired | Un certificat expire dans moins de 14 jours / a expiré |
+| OPNsense disk almost full | Le disque est plein à plus de 90 % depuis 15 minutes |
+| OPNsense CPU high | Le processeur dépasse 90 % depuis 15 minutes |
+| OPNsense swap in use | Plus de la moitié du swap est utilisée depuis une heure |
+| OPNsense packet filter disabled | pf est désactivé depuis 5 minutes |
+| OPNsense interface errors | Une interface journalise plus de 100 erreurs en 15 minutes |
+| OPNsense update mirror unreachable | Le pare-feu ne joint plus son miroir de mises à jour depuis 12 heures (information) |
+| Passerelle, perte, latence, table d'états, tunnel VPN, services, CARP, mises à jour | Comme avant |
+
+Toutes les règles se modifient ou se désactivent dans Alertes.
+
 ## Options
 
 | Clé | Libellé | Défaut | Aide |
@@ -239,6 +257,7 @@ fonctionne donc des deux côtés du renommage.
 | `carp` | Surveiller CARP | `true` | Lit les adresses virtuelles d'une paire haute disponibilité, et le mode maintenance persistant. |
 | `firmware` | Surveiller les mises à jour | `true` | Lit le résultat de la dernière vérification de mise à jour du pare-feu et si un redémarrage est en attente. |
 | `temperature` | Lire les capteurs de température | `true` | Lit les capteurs CPU et carte que le pare-feu expose. |
+| `certificates` | Surveiller les certificats | `true` | Lit la date d'expiration des certificats en service. |
 | `live_map` | Carte en direct du pare-feu | `false` | Montre d'où viennent, par pays, les connexions que vos règles bloquent ou laissent passer. Demande `Diagnostics: Logs: Firewall: Live View`. |
 
 ## Carte en direct
@@ -271,8 +290,7 @@ ports les plus fréquents.
   Emplacements → Géolocalisation IP** : plus rien n'est téléchargé, et les pays
   apparaissent comme inconnus.
 - **Les arcs ont besoin d'un emplacement.** Placez le pare-feu sur la
-  [carte du monde](../using/world-map.md) (à la main, par son site, ou avec le
-  site principal) ; sans emplacement, les disques sont tout de même dessinés.
+  [carte du monde](../using/world-map.md) (à la main ou par son site) ; sans emplacement, les disques sont tout de même dessinés.
 - **Animation.** Quand le système demande de *réduire les animations*, les arcs
   qui filent sont omis ; les disques et les arcs fixes des pays les plus actifs
   restent.

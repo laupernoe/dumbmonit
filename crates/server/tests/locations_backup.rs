@@ -22,8 +22,8 @@ async fn les_emplacements_et_les_affectations_sont_restaures() {
     let source_dir = tempfile::tempdir().unwrap();
     let (source, cipher) = instance(&source_dir).await;
     sqlx::query(
-        "INSERT INTO locations (name, address, latitude, longitude, site, main_site)
-         VALUES ('Siège', 'Lausanne', 46.52, 6.63, '', 1), ('Annexe', '', 48.85, 2.35, 'annexe', 0)",
+        "INSERT INTO locations (name, address, latitude, longitude, site)
+         VALUES ('Siège', 'Lausanne', 46.52, 6.63, ''), ('Annexe', '', 48.85, 2.35, 'annexe')",
     )
     .execute(&source)
     .await
@@ -52,11 +52,6 @@ async fn les_emplacements_et_les_affectations_sont_restaures() {
     .await
     .unwrap();
     assert_eq!(placed.as_deref(), Some("Annexe"));
-    let main: String = sqlx::query_scalar("SELECT name FROM locations WHERE main_site = 1")
-        .fetch_one(&pool)
-        .await
-        .unwrap();
-    assert_eq!(main, "Siège");
 
     let again = restore(&pool, &cipher, &lot, true).await.expect("seconde restauration");
     assert_eq!(counts(&again, "locations"), (0, 0, 2), "rien ne bouge : {again:#?}");

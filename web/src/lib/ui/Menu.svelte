@@ -119,7 +119,7 @@
 			popover="manual"
 			role="menu"
 			aria-label={label}
-			class="fixed inset-auto z-30 m-0 min-w-48 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[var(--radius-card)] border border-line bg-surface-2 p-1.5 text-left text-ink shadow-float"
+			class="motion-pop fixed inset-auto z-30 m-0 min-w-48 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[var(--radius-card)] border border-line bg-surface-2 p-1.5 text-left text-ink shadow-float"
 		>
 			{@render children({ close })}
 		</div>

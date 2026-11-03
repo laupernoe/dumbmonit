@@ -8,8 +8,8 @@
 use dumbmonit_proto::{MetricKind, Sample};
 
 use super::model::{
-    CpuUsage, Disk, MemoryUsage, Num, Pool, RemainLife, StorageEnv, StorageInfo, SystemInfo,
-    Utilization, Volume,
+    CpuUsage, Disk, DiskIo, MemoryUsage, Num, Pool, RemainLife, StorageEnv, StorageInfo,
+    SystemInfo, TaskProgress, Utilization, Volume,
 };
 
 /// Préfixe commun à toutes les métriques de l'intégration.
@@ -195,7 +195,53 @@ pub fn utilization_samples(usage: &Utilization, ts_ms: i64) -> Vec<Sample> {
         }
     }
 
+    if let Some(disks) = &usage.disk {
+        for disk in &disks.disk {
+            samples.extend(disk_io_samples(disk, ts_ms));
+        }
+    }
+
     samples
+}
+
+/// Activité d'un disque : occupation, débits, accès par seconde. `utilization` est
+/// un pourcentage de temps occupé, qui reste à 100 % pendant une vérification des
+/// données ou une reconstruction : c'est une mesure, pas une alerte.
+fn disk_io_samples(disk: &DiskIo, ts_ms: i64) -> Vec<Sample> {
+    let Some(device) = disk.device.clone() else { return Vec::new() };
+    let name = match clean(&disk.display_name) {
+        libelle if libelle.is_empty() => device.clone(),
+        libelle => libelle,
+    };
+    let mut samples = Vec::new();
+    for (metric, value) in [
+        ("disk_busy_percent", disk.utilization.map(|n| Num(n.0.clamp(0.0, 100.0)))),
+        ("disk_read_bytes_per_second", disk.read_byte),
+        ("disk_write_bytes_per_second", disk.write_byte),
+        ("disk_read_iops", disk.read_access),
+        ("disk_write_iops", disk.write_access),
+    ] {
+        if let Some(value) = value {
+            samples.push(
+                gauge(metric, value.0, ts_ms)
+                    .with_label("device", device.clone())
+                    .with_label("name", name.clone()),
+            );
+        }
+    }
+    samples
+}
+
+/// Avancement d'une opération de stockage, seulement quand il y en a une : DSM
+/// donne `-1` (en chaîne) et l'étape `none` au repos.
+fn progress_sample(metric: &str, progress: Option<&TaskProgress>, ts_ms: i64) -> Option<Sample> {
+    let progress = progress?;
+    let percent = progress.percent?.0;
+    let step = progress.step.as_deref().map(str::trim).unwrap_or_default();
+    if !(0.0..=100.0).contains(&percent) || step.is_empty() || step == "none" {
+        return None;
+    }
+    Some(gauge(metric, percent, ts_ms).with_label("step", step))
 }
 
 fn cpu_samples(cpu: &CpuUsage, ts_ms: i64) -> Vec<Sample> {
@@ -307,6 +353,24 @@ pub fn volume_samples(volumes: &[Volume], ts_ms: i64) -> Vec<Sample> {
         let status = volume.status.clone().unwrap_or_else(|| "unknown".to_string());
         push(gauge("volume_status", severity(&status), ts_ms).with_label("status", status));
 
+        // Publiés même à zéro : leur passage à 1 est l'événement. Un champ absent
+        // (ancien DSM) ne produit rien plutôt qu'un faux « tout va bien ».
+        for (metric, value, inverted) in [
+            ("volume_read_only", volume.is_writable, true),
+            ("volume_locked", volume.is_locked, false),
+            ("volume_inode_full", volume.is_inode_full, false),
+        ] {
+            if value.is_some() {
+                let raised = Num::flag(value) != inverted;
+                push(gauge(metric, if raised { 1.0 } else { 0.0 }, ts_ms));
+            }
+        }
+        if let Some(sample) =
+            progress_sample("volume_task_progress_percent", volume.progress.as_ref(), ts_ms)
+        {
+            push(sample);
+        }
+
         let Some(size) = &volume.size else { continue };
         if let Some(total) = size.total {
             push(gauge("volume_total_bytes", total.0, ts_ms));
@@ -357,6 +421,31 @@ pub fn pool_samples(pools: &[Pool], famille: &str, ts_ms: i64) -> Vec<Sample> {
         );
         if let Some(failed) = pool.disk_failure_number {
             push(gauge(&format!("{famille}_failed_disks"), failed.0, ts_ms));
+        }
+        if let Some(sample) = progress_sample(
+            &format!("{famille}_task_progress_percent"),
+            pool.progress.as_ref(),
+            ts_ms,
+        ) {
+            push(sample);
+        }
+        // Vérification des données : seul le groupe de stockage en a une, et
+        // `last_done_time` vaut 0 tant qu'aucune n'a eu lieu (pas d'ancienneté à
+        // inventer).
+        if famille == "pool" {
+            if pool.is_scheduled.is_some() {
+                let scheduled = if Num::flag(pool.is_scheduled) { 1.0 } else { 0.0 };
+                push(gauge("pool_scrub_scheduled", scheduled, ts_ms));
+            }
+            if let Some(done) = pool.last_done_time.filter(|done| done.0 > 0.0) {
+                let age = (ts_ms as f64 / 1000.0 - done.0).max(0.0);
+                push(gauge("pool_scrub_age_seconds", age, ts_ms));
+            }
+        }
+        if let Some(rate) = pool.hit_rate.filter(|rate| (0.0..=100.0).contains(&rate.0))
+            && famille == "ssd_cache"
+        {
+            push(gauge("ssd_cache_hit_rate_percent", rate.0, ts_ms));
         }
 
         let Some(size) = &pool.size else { continue };
@@ -458,6 +547,9 @@ pub fn env_samples(env: &StorageEnv, ts_ms: i64) -> Vec<Sample> {
     if let Some(status) = &env.status {
         samples.push(gauge("system_crashed", flag_value(status.system_crashed), ts_ms));
         samples.push(gauge("system_need_repair", flag_value(status.system_need_repair), ts_ms));
+        if status.system_rebuilding.is_some() {
+            samples.push(gauge("system_rebuilding", flag_value(status.system_rebuilding), ts_ms));
+        }
     }
 
     // DSM exprime ces seuils en fraction d'espace **libre** : 0,2 veut dire
