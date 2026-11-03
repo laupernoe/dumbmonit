@@ -100,6 +100,7 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { dismissals } from '#lib/stores/dismissals.svelte.js';
 	import DockerPanel from '#lib/components/devices/docker/DockerPanel.svelte';
+	import AgentRemoveNotice from '#lib/components/devices/agent/AgentRemoveNotice.svelte';
 	import DockerStrip from '#lib/components/devices/docker/DockerStrip.svelte';
 	import { isDockerDevice } from '#lib/components/devices/agent/services.js';
 	import TargetDeadlines from '#lib/components/deadlines/TargetDeadlines.svelte';
@@ -440,6 +441,8 @@
 	let enabledError = $state<unknown>(null);
 
 	let deleting = $state(false);
+	/** An agent's monitor asks first whether to take the agent off the machine. */
+	let askAgentRemoval = $state(false);
 	let deleteError = $state<unknown>(null);
 
 	/** Everything the server needs to keep the target as is. The credential is omitted: the server keeps it. */
@@ -825,7 +828,11 @@
 								<Toggle id="device-enabled" bind:checked={enabledDraft} disabled={savingEnabled} onchange={(v) => void setEnabled(v)} />
 								<label for="device-enabled" class="text-sm font-semibold text-ink">{m.devices_target_enabled()}</label>
 							</div>
-							<Confirm size="md" class="mt-1 w-full justify-start" confirmLabel={m.devices_target_delete_confirm()} onconfirm={remove} loading={deleting}>{m.devices_target_delete()}</Confirm>
+							{#if target?.kind === 'agent'}
+								<Button variant="ghost" class="mt-1 w-full justify-start" onclick={() => (askAgentRemoval = true)}>{m.devices_target_delete()}</Button>
+							{:else}
+								<Confirm size="md" class="mt-1 w-full justify-start" confirmLabel={m.devices_target_delete_confirm()} onconfirm={remove} loading={deleting}>{m.devices_target_delete()}</Confirm>
+							{/if}
 						{/snippet}
 					</Menu>
 				{:else}
@@ -855,6 +862,9 @@
 		{/if}
 		{#if target?.managed}
 			<ManagedNotice {target} canRelease={auth.isAdmin} onreleased={() => void loadTarget()} class="mt-4" />
+		{/if}
+		{#if askAgentRemoval && target}
+			<AgentRemoveNotice {target} {deleting} ondelete={remove} oncancel={() => (askAgentRemoval = false)} />
 		{/if}
 		{#if deleteError}
 			<ErrorNotice error={deleteError} title={m.devices_target_err_delete()} class="mt-4" />

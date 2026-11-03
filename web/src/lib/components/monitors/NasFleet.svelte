@@ -8,12 +8,13 @@
 	 * collector already stores; a missing one leaves its cell empty.
 	 */
 	import { onMount } from 'svelte';
-	import { ChevronRight, CircleCheck, CircleHelp, CircleX, TriangleAlert } from 'lucide-svelte';
+	import { ChevronRight, CircleCheck, CircleHelp, CircleX, Package, TriangleAlert } from 'lucide-svelte';
 	import { queryInstant, type MetricSeries, type Target, type TargetId } from '#lib/api/index.js';
 	import { displayState } from '#lib/format.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { Led } from '#lib/ui/index.js';
+	import { SPK_FLOW_HREF } from '#lib/components/device-form/synology-package.js';
 	import {
 		nasVerdict,
 		summarizeFleet,
@@ -172,4 +173,11 @@
 			</li>
 		{/each}
 	</ul>
+	<a
+		href={SPK_FLOW_HREF}
+		class="mt-2 inline-flex min-h-10 items-center gap-1.5 rounded text-[0.8125rem] font-semibold text-signal-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
+	>
+		<Package class="size-4" aria-hidden="true" />
+		{m.nas_fleet_add_package()}
+	</a>
 {/if}

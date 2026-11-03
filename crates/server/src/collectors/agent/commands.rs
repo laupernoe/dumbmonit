@@ -91,7 +91,9 @@ pub fn container_name(args: &serde_json::Value) -> Option<&str> {
 ///
 /// Refuse le doublon : deux redémarrages du même conteneur en attente n'en
 /// feraient qu'un de plus que nécessaire, et un « mise à jour » cliqué deux
-/// fois ne doit pas remplacer deux fois le conteneur.
+/// fois ne doit pas remplacer deux fois le conteneur. Une commande qui ne vise
+/// aucun conteneur (la désinstallation de l'agent) n'existe qu'une fois par
+/// machine tant qu'elle n'est pas close.
 pub async fn enqueue(
     pool: &SqlitePool,
     target_id: TargetId,
@@ -99,10 +101,15 @@ pub async fn enqueue(
     args: &serde_json::Value,
     requested_by: &str,
 ) -> Result<CommandRecord, CommandError> {
-    let name = container_name(args).unwrap_or_default();
-    if has_pending(pool, target_id, kind, name).await? {
+    let name = container_name(args);
+    let pending = match name {
+        Some(name) => has_pending(pool, target_id, kind, name).await?,
+        None => has_pending_kind(pool, target_id, kind).await?,
+    };
+    if pending {
+        let subject = name.map(|name| format!(" for '{name}'")).unwrap_or_default();
         return Err(CommandError::Conflict(format!(
-            "A '{kind}' command for '{name}' is already queued or running."
+            "A '{kind}' command{subject} is already queued or running."
         )));
     }
     let row = sqlx::query(
@@ -137,6 +144,22 @@ pub async fn has_pending(
     .bind(target_id)
     .bind(kind)
     .bind(name)
+    .fetch_optional(pool)
+    .await
+    .context("checking pending commands")?;
+    Ok(row.is_some())
+}
+
+/// Vrai si une commande de ce type attend ou s'exécute pour cette machine,
+/// quels que soient ses arguments.
+pub async fn has_pending_kind(pool: &SqlitePool, target_id: TargetId, kind: &str) -> Result<bool> {
+    let row = sqlx::query(
+        "SELECT 1 FROM agent_commands
+         WHERE target_id = ? AND kind = ? AND status IN ('queued', 'running')
+         LIMIT 1",
+    )
+    .bind(target_id)
+    .bind(kind)
     .fetch_optional(pool)
     .await
     .context("checking pending commands")?;
@@ -557,7 +580,9 @@ pub fn parse_ts(text: &str) -> Option<DateTime<Utc>> {
 mod tests {
     use std::collections::BTreeMap;
 
-    use dumbmonit_proto::{AgentIdentity, CMD_CONTAINER_RESTART, CMD_CONTAINER_UPDATE};
+    use dumbmonit_proto::{
+        AgentIdentity, CMD_AGENT_UNINSTALL, CMD_CONTAINER_RESTART, CMD_CONTAINER_UPDATE,
+    };
 
     use super::*;
     use crate::collectors::agent::store;
@@ -667,6 +692,37 @@ mod tests {
         enqueue(&bench.pool, bench.target_id, CMD_CONTAINER_UPDATE, &restart("web"), "ui")
             .await
             .expect("autre type");
+    }
+
+    #[tokio::test]
+    async fn a_second_uninstall_is_refused_while_the_first_is_pending() {
+        let bench = bench("id-nas").await;
+        let args = serde_json::json!({ "nonce": "00112233445566778899aabbccddeeff" });
+        let first = enqueue(&bench.pool, bench.target_id, CMD_AGENT_UNINSTALL, &args, "admin")
+            .await
+            .expect("première");
+        assert!(has_pending_kind(&bench.pool, bench.target_id, CMD_AGENT_UNINSTALL).await.unwrap());
+
+        // D'autres arguments n'y changent rien : une désinstallation par machine.
+        let other = serde_json::json!({ "nonce": "ffeeddccbbaa99887766554433221100" });
+        match enqueue(&bench.pool, bench.target_id, CMD_AGENT_UNINSTALL, &other, "admin").await {
+            Err(CommandError::Conflict(why)) => assert!(!why.contains("for ''"), "{why}"),
+            other => panic!("doublon accepté : {other:?}"),
+        }
+        // Un redémarrage de conteneur n'est pas concerné.
+        enqueue(&bench.pool, bench.target_id, CMD_CONTAINER_RESTART, &restart("web"), "ui")
+            .await
+            .expect("autre type");
+
+        // Close, elle libère la file.
+        let failed = CommandReport { status: CommandStatus::Failed, result: "refused".into() };
+        assert!(report(&bench.pool, bench.target_id, first.id, &failed).await.unwrap());
+        assert!(
+            !has_pending_kind(&bench.pool, bench.target_id, CMD_AGENT_UNINSTALL).await.unwrap()
+        );
+        enqueue(&bench.pool, bench.target_id, CMD_AGENT_UNINSTALL, &other, "admin")
+            .await
+            .expect("file libérée");
     }
 
     /// Vieillit une commande à la main, en minutes.

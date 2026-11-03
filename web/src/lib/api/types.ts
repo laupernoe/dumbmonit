@@ -1907,6 +1907,25 @@ export interface RebindWindow {
 }
 
 /**
+ * A command queued for an agent (`CommandView` in `api/agent_commands.rs`):
+ * container actions, remediation, `agent.uninstall`, or a kind this build does
+ * not know. `cancelled`: pulled back before the agent took it; `expired`: no
+ * agent came for it within ten minutes.
+ */
+export interface AgentCommandView {
+	id: number;
+	target_id: TargetId;
+	kind: string;
+	args: Record<string, unknown>;
+	status: 'queued' | 'running' | 'done' | 'failed' | 'cancelled' | 'expired';
+	requested_by: string | null;
+	created_at: string;
+	started_at: string | null;
+	finished_at: string | null;
+	result: string | null;
+}
+
+/**
  * A service the agent can detect on its machine (`GET /api/targets/{id}/agent/modules`).
  * Each found one is its own `agent_service` device under the machine, with
  * `profile_id` set to the module id.

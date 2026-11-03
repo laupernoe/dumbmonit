@@ -3,6 +3,17 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- **Remove an agent from the UI.** Deleting the monitor of a machine whose agent is
+  online and accepts commands offers to remove the agent automatically: it stops
+  and removes its service, binary and configuration (as `--uninstall` does), then
+  the monitor is deleted. Administrator session only, recorded in the audit log
+  (`POST /api/targets/{id}/agent/uninstall`). An agent in a container, or not
+  installed by the install scripts, refuses; the manual commands stay available.
+
 ## 0.16.0 — 2026-11-03
 
 ### Added
