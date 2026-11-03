@@ -136,7 +136,7 @@
 
 			{#if data.teams.length === 0}
 				{#if editing === null}
-					<EmptyState icon={UsersRound} title={m.settings_teams_empty_title()} description={m.settings_teams_empty_body()}>
+					<EmptyState compact icon={UsersRound} title={m.settings_teams_empty_title()} description={m.settings_teams_empty_body()}>
 						{#snippet action()}
 							<Button variant="primary" onclick={() => (editing = 'new')}>{m.settings_teams_add()}</Button>
 						{/snippet}
