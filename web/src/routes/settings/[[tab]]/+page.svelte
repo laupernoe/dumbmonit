@@ -56,8 +56,6 @@
 	import WallModeSection from '#lib/components/settings/WallModeSection.svelte';
 	import MusicSection from '#lib/components/settings/MusicSection.svelte';
 	import PushSection from '#lib/components/settings/PushSection.svelte';
-	import OnCallContactsSection from '#lib/components/settings/OnCallContactsSection.svelte';
-	import OnCallHoursSection from '#lib/components/settings/OnCallHoursSection.svelte';
 	import ChannelsSection from '#lib/components/notifications/ChannelsSection.svelte';
 	import NotificationPolicySection from '#lib/components/notifications/NotificationPolicySection.svelte';
 
@@ -88,7 +86,7 @@
 
 	/** The sections of each tab, top to bottom. */
 	const SECTIONS = $derived<Record<SettingsTab, Component[]>>({
-		account: [AppearanceSection, SecuritySection, PushSection, OnCallContactsSection, OnCallHoursSection],
+		account: [AppearanceSection, SecuritySection, PushSection],
 		team: [UsersSection, TeamsSection, ...(auth.isAdmin ? [ClientsSection] : []), SsoSection, SamlSection, ScimSection, LdapSection],
 		monitoring: [AgentsSection, PacksSection, SecurityScoreSection, ...(auth.isAdmin ? [LocationsSection] : [])],
 		notifications: [ChannelsSection, NotificationPolicySection],

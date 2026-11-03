@@ -18,6 +18,7 @@ use crate::client::{PushClient, PushError};
 use crate::collect::backup_repos::BackupReposProbe;
 use crate::collect::databases::DatabasesProbe;
 use crate::collect::docker::DockerProbe;
+use crate::collect::dsm::DsmProbe;
 use crate::collect::eventlog::{self, PlatformProbe as EventLogProbe};
 use crate::collect::inventory::{self, PendingInventory};
 use crate::collect::ipsec::IpsecProbe;
@@ -113,6 +114,8 @@ pub struct Agent {
     zfs: ZfsProbe,
     /// Domaines KVM et pools libvirt. Muet sans `virsh` ni domaine.
     libvirt: LibvirtProbe,
+    /// Synology DSM : grappes, volumes, disques, paquets. Muet hors DSM.
+    dsm: DsmProbe,
     /// Dernier inventaire logiciel relevé, en attente d'être joint à un lot. Vidé
     /// quand le serveur l'a accepté.
     inventory: PendingInventory,
@@ -270,6 +273,7 @@ impl Agent {
             smart: SmartProbe::new(&config.smart),
             zfs: ZfsProbe::new(&config.zfs),
             libvirt: LibvirtProbe::new(&config.libvirt),
+            dsm: DsmProbe::default(),
             inventory: PendingInventory::default(),
             inventory_task: None,
             declared: None,
@@ -350,6 +354,7 @@ impl Agent {
         if self.wants("libvirt") {
             snapshot.libvirt = self.libvirt.read().await;
         }
+        snapshot.dsm = self.dsm.read().await;
         self.sync_inventory();
         snapshot.perf_counters = self.perf_counters.read();
         snapshot.mail_server = self.mail_server.read().await;

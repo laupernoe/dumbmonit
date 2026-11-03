@@ -108,7 +108,7 @@
 
 {#if !fleet.loading && !fleet.error && total > 0}
 	<section
-		class="rise-in mt-4 rounded-[var(--radius-card)] border border-line bg-surface px-4 py-3 shadow-lift sm:px-5"
+		class="rise-in mt-6 rounded-[var(--radius-card)] border border-line bg-surface px-4 py-3 shadow-lift sm:px-5"
 		aria-label="Docker"
 		style="--rise-delay: 60ms"
 	>
