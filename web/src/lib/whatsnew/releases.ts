@@ -21,6 +21,28 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '0.17.0',
+		date: '2026-11-04',
+		highlights: [
+			{
+				title: 'Cleaner monitor pages',
+				text: 'Icon-only actions, a gear for the settings, and the agent settings moved into them. Settings are down to six tabs.'
+			},
+			{
+				title: 'Synology, deeper',
+				text: 'The DSM 7 package reads RAID, volumes, disks, packages and the UPS, and alerts when something degrades. Choose the package or the credentials when you add a NAS.'
+			},
+			{
+				title: 'More alert rules',
+				text: 'Fifteen integrations go deeper, from Proxmox and TrueNAS to UniFi, Pi-hole, Home Assistant, Immich and PostgreSQL.'
+			},
+			{
+				title: 'Documentation on the website',
+				text: 'Every screen links to its page on dumbmonit.app/docs, rewritten step by step. Sites and the map no longer have a default site.'
+			}
+		]
+	},
+	{
 		version: '0.16.0',
 		date: '2026-11-03',
 		highlights: [
