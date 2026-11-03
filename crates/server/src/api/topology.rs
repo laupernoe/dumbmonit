@@ -1469,7 +1469,11 @@ mod tests {
             (Some("Crissier".into()), Some("location")),
             "orthographe du site connu"
         );
-        assert_eq!(site("t3"), (Some("Siège".into()), Some("location")), "un emplacement sans site");
+        assert_eq!(
+            site("t3"),
+            (Some("Siège".into()), Some("location")),
+            "un emplacement sans site"
+        );
         assert_eq!(site("t4"), (Some("Crissier".into()), Some("location")), "le service suit");
         assert_eq!(site("g2:v9").0.as_deref(), Some("Crissier"), "l'invité aussi");
         assert_eq!(site("t5"), (None, None));

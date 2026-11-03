@@ -444,12 +444,11 @@ async fn topology_rules(
 }
 
 async fn locations(pool: &SqlitePool) -> Result<Vec<BundleLocation>> {
-    let rows = sqlx::query(
-        "SELECT name, address, latitude, longitude, site FROM locations ORDER BY id",
-    )
-    .fetch_all(pool)
-    .await
-    .context("lecture des emplacements")?;
+    let rows =
+        sqlx::query("SELECT name, address, latitude, longitude, site FROM locations ORDER BY id")
+            .fetch_all(pool)
+            .await
+            .context("lecture des emplacements")?;
     rows.iter()
         .map(|row| {
             Ok(BundleLocation {

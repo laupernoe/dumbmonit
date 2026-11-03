@@ -13,20 +13,20 @@ use crate::alerting::model::{
 
 mod adguard;
 mod cloud;
-mod pbs;
-mod pve;
-mod truenas;
-mod opnsense;
-mod tailscale;
-mod unifi;
 mod homeassistant;
-mod pihole;
 mod immich;
 mod jellyfin;
-mod plex;
 mod nextcloud;
+mod opnsense;
+mod pbs;
+mod pihole;
+mod plex;
 mod postgres;
+mod pve;
 mod synology;
+mod tailscale;
+mod truenas;
+mod unifi;
 
 /// Taux d'occupation processeur, toutes sources confondues.
 ///

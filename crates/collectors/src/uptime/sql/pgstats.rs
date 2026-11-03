@@ -573,10 +573,8 @@ mod tests {
             },
         ];
         let samples = database_samples(&databases, 0);
-        let wrap: Vec<_> = samples
-            .iter()
-            .filter(|s| s.metric == "postgres_database_wraparound_percent")
-            .collect();
+        let wrap: Vec<_> =
+            samples.iter().filter(|s| s.metric == "postgres_database_wraparound_percent").collect();
         assert_eq!(wrap.len(), 2);
         assert_eq!(wrap[0].labels["database"], "nextcloud");
         assert!((wrap[0].value - 50.0).abs() < 1e-9);
@@ -658,12 +656,8 @@ mod tests {
 
     #[test]
     fn larchivage_en_echec_est_signale_et_lage_est_optionnel() {
-        let archiver = Archiver {
-            failed: 3.0,
-            archived: 1200.0,
-            last_archived_age: -1.0,
-            failing: true,
-        };
+        let archiver =
+            Archiver { failed: 3.0, archived: 1200.0, last_archived_age: -1.0, failing: true };
         let samples = archiver_samples(&archiver, 0);
         assert_eq!(value(&samples, "postgres_archiver_failing"), Some(1.0));
         assert!(value(&samples, "postgres_archiver_last_archived_age_seconds").is_none());
