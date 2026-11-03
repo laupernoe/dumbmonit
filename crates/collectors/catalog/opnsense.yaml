@@ -63,6 +63,7 @@ metrics:
   - { name: opnsense_firmware_upgrade_available, label: "Firmware upgrade available", unit: "bool", better: "higher" }
   - { name: opnsense_firmware_reboot_required, label: "Firmware reboot required", unit: "bool" }
   - { name: opnsense_firmware_connection_ok, label: "Firmware connection ok", unit: "bool" }
+  - { name: opnsense_certificate_expiry_seconds, label: "Certificate expiry", unit: "s", better: "higher" }
   - { name: opnsense_unbound_running, label: "Unbound running", unit: "bool" }
   - { name: opnsense_unbound_queries, label: "Unbound queries", kind: counter }
   - { name: opnsense_unbound_cache_hit_percent, label: "Unbound cache hit", unit: "%", min: 0, max: 100 }
@@ -107,6 +108,7 @@ views:
       - opnsense_unbound_running
       - opnsense_unbound_cache_hit_percent
       - opnsense_unbound_blocklist_size
+      - opnsense_certificate_expiry_seconds
   - view: timeseries
     title: "CPU and memory"
     metrics: [opnsense_cpu_percent, opnsense_memory_used_percent]
