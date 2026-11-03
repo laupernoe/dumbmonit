@@ -351,6 +351,11 @@ Surveillance inaccessible.
 | File Immich en pause | Une file de tâches est en pause depuis un jour (`dumbmonit_immich_queue_paused`). | > 0 | 24 h | Info (`info`) | 7 j |
 | Stockage Immich presque plein | Le disque qui contient la bibliothèque est plein à plus de 90 % (`dumbmonit_immich_storage_used_percent`) ; se résout sous 88 %. | > 90 % | 30 min | Avis (`warning`) | 24 h |
 | Mise à jour Immich disponible | La vérification de version d'Immich connaît une release plus récente (`dumbmonit_immich_update_available`). | > 0 | 1 h | Info (`info`) | 7 j |
+| Tâches Immich en échec | Une file autre que l'apprentissage automatique garde 25 tâches en échec ou plus (`dumbmonit_immich_queue_failed`). La notification nomme la file. | ≥ 25 | 30 min | Avis (`warning`) | 24 h |
+| Apprentissage automatique Immich en échec | Les files de recherche intelligente, de visages, de doublons et de reconnaissance de texte gardent 10 tâches en échec ou plus : le conteneur d'apprentissage automatique est probablement arrêté (`dumbmonit_immich_queue_failed`). | ≥ 10 | 30 min | Avis (`warning`) | 24 h |
+| Immich en mode maintenance | Immich reste en mode maintenance (`dumbmonit_immich_maintenance_mode`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Quota d'un utilisateur Immich presque plein | Un compte avec quota en a utilisé plus de 90 % (`dumbmonit_immich_user_quota_used_percent`) ; se résout sous 85 %. | > 90 % | 1 h | Avis (`warning`) | 24 h |
+| Sauvegarde de base Immich périmée | La sauvegarde de base la plus récente date de plus de trois jours (`dumbmonit_immich_db_backup_last_age_seconds`) ; demande `databaseBackup.list`. | > 3 j | 1 h | Avis (`warning`) | 24 h |
 | File d'attente de tâches Paperless arrêtée | Redis ou Celery en erreur (`max by (target) (dumbmonit_paperless_component_status{component=~"redis\|celery"})` : 2 est une erreur) : rien de nouveau n'est importé. | ≥ 2 | 5 min | Avertissement (`critical`) | 1 h |
 | Erreur d'index ou de contrôle de cohérence Paperless | L'index de recherche, le classificateur ou le contrôle de cohérence (fichiers manquants ou altérés) rapporte une erreur (`dumbmonit_paperless_component_status{component=~"index\|classifier\|sanity_check"}`). | ≥ 2 | 30 min | Avis (`warning`) | 24 h |
 | Migrations Paperless en attente | Migrations de base de données restant à appliquer (`dumbmonit_paperless_unapplied_migrations`). | > 0 | 30 min | Avis (`warning`) | 24 h |
@@ -360,7 +365,16 @@ Surveillance inaccessible.
 | Échec d'une tâche planifiée Jellyfin | Une tâche planifiée (un scan de bibliothèque, un nettoyage) a échoué ou a été interrompue à sa dernière exécution (`dumbmonit_jellyfin_scheduled_tasks_failed`). | > 0 | 10 min | Avis (`warning`) | 24 h |
 | Extension Jellyfin cassée | Une extension n'a pas pu se charger ou ne supporte pas cette version (`dumbmonit_jellyfin_plugins_broken`). | > 0 | 15 min | Avis (`warning`) | 24 h |
 | Redémarrage Jellyfin en attente | Jellyfin attend un redémarrage depuis un jour après l'installation ou la mise à jour d'une extension (`dumbmonit_jellyfin_pending_restart`). | > 0 | 24 h | Info (`info`) | 7 j |
+| Scan de bibliothèque Jellyfin en retard | Le scan de bibliothèque planifié n'a pas terminé depuis trois jours (`dumbmonit_jellyfin_library_scan_age_seconds`, seulement tant que le scan a un déclencheur périodique). | > 3 j | 30 min | Avis (`warning`) | 24 h |
+| Stockage Jellyfin presque plein | Un disque utilisé par Jellyfin (bibliothèque, données, cache, transcodages) est plein à plus de 90 % (`dumbmonit_jellyfin_storage_used_percent`) ; se résout sous 88 %. | > 90 % | 30 min | Avis (`warning`) | 24 h |
+| Transcodage Jellyfin lourd sur processeur | Trois flux ou plus transcodés sans accélération matérielle (`dumbmonit_jellyfin_transcodes_software`). | ≥ 3 | 15 min | Info (`info`) | 12 h |
+| Connexions Jellyfin refusées | Dix connexions refusées ou plus dans la dernière heure (`dumbmonit_jellyfin_failed_logins_recent`). | ≥ 10 | 5 min | Avis (`warning`) | 6 h |
 | Mise à jour Plex disponible | La vérification de mise à jour de Plex a trouvé une release plus récente (`dumbmonit_plex_update_available`). | > 0 | 1 h | Info (`info`) | 7 j |
+| Transcodeur Plex trop lent | Le transcodage vidéo le plus lent en cours de lecture tourne sous le temps réel (`dumbmonit_plex_transcode_speed_min`) : la lecture va se mettre en mémoire tampon. | < 0,95 | 10 min | Avis (`warning`) | 6 h |
+| Erreur de transcodage Plex | Une session de transcodage signale une erreur (`dumbmonit_plex_transcode_errors`). | > 0 | 5 min | Avis (`warning`) | 12 h |
+| Accès distant Plex en échec | Plex signale l'échec de son accès distant (mappage de port) (`dumbmonit_plex_remote_access_failed`). | > 0 | 30 min | Avis (`warning`) | 24 h |
+| Plex déconnecté de plex.tv | Un serveur revendiqué a perdu sa connexion à plex.tv (`dumbmonit_plex_signin_ok`). | < 1 | 1 h | Avis (`warning`) | 24 h |
+| Sauvegarde de base Plex désactivée | La tâche de maintenance « Backup database » est désactivée (`dumbmonit_plex_database_backup_enabled`) ; ignorez-la si une autre sauvegarde couvre la base. | < 1 | 24 h | Info (`info`) | 30 j |
 
 ### Forges auto-hébergées {#self-hosted-forges}
 

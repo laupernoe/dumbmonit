@@ -9,6 +9,13 @@ metrics:
   - { name: plex_transcodes_hardware, label: "Transcodes hardware" }
   - { name: plex_transcoder_active_video_sessions, label: "Transcoder active video sessions" }
   - { name: plex_streams_remote, label: "Streams remote" }
+  - { name: plex_stream_remote_bandwidth_bits_per_second, label: "Remote stream bandwidth", unit: "bit/s" }
+  - { name: plex_streaming_users, label: "Viewers" }
+  - { name: plex_transcode_errors, label: "Transcode errors", better: "lower" }
+  - { name: plex_transcode_speed_min, label: "Slowest transcode speed", unit: "ratio", better: "higher" }
+  - { name: plex_remote_access_failed, label: "Remote access failed", unit: "bool", better: "lower" }
+  - { name: plex_signin_ok, label: "Signed in to plex.tv", unit: "bool", better: "higher" }
+  - { name: plex_database_backup_enabled, label: "Database backup scheduled", unit: "bool", better: "higher" }
   - { name: plex_streams_paused, label: "Streams paused" }
   - { name: plex_activities, label: "Activities" }
   - { name: plex_libraries, label: "Libraries" }
@@ -22,6 +29,12 @@ views:
     title: "Current values"
     metrics:
       - plex_streams_remote
+      - plex_streaming_users
+      - plex_transcode_errors
+      - plex_transcode_speed_min
+      - plex_remote_access_failed
+      - plex_signin_ok
+      - plex_database_backup_enabled
       - plex_streams_paused
       - plex_activities
       - plex_libraries
@@ -33,7 +46,7 @@ views:
     metrics: [plex_streams]
   - view: timeseries
     title: "Stream bandwidth"
-    metrics: [plex_stream_bandwidth_bits_per_second]
+    metrics: [plex_stream_bandwidth_bits_per_second, plex_stream_remote_bandwidth_bits_per_second]
   - view: timeseries
     title: "Transcoding"
     metrics: [plex_transcodes, plex_transcodes_video, plex_transcodes_hardware, plex_transcoder_active_video_sessions]

@@ -14,6 +14,10 @@
 //! et les photos téléversées n'ont plus ni miniature, ni métadonnées, ni
 //! reconnaissance — sans rien d'autre qu'un compteur dans l'administration.
 //!
+//! Compléments : le quota de chaque compte (`server.statistics`), et, sans
+//! condamner la sonde si la permission manque, les sauvegardes de la base
+//! (`databaseBackup.list`, Immich 2.5+) dont seule la fraîcheur est lue.
+//!
 //! Immich ≥ 2 expose les files sous `/api/queues` ; les versions antérieures
 //! sous `/api/jobs` (permission `job.read`), lu en repli.
 //!
@@ -47,7 +51,7 @@ use serde_json::Value;
 use crate::client_devices::{self, Device};
 
 use super::client::{Auth, HttpClient};
-use super::{MAX_NAMED, flag, gauge, http_client, newer, now_ms, number, token};
+use super::{MAX_NAMED, flag, gauge, http_client, newer, now_ms, number, optional_json, token};
 
 pub const DEFAULT_PORT: u16 = 2283;
 
@@ -212,7 +216,7 @@ pub async fn probe(
     // La preuve de vie et d'authentification : le seul appel qui condamne.
     let about: About = client.get_json("/api/server/about").await?;
     let mut errors = 0u32;
-    let (check, storage, statistics, queues, config, sessions, user, last_backup) = futures::join!(
+    let (check, storage, stats, queues, config, sessions, user, newest, backups) = futures::join!(
         client.get_json::<VersionCheck>("/api/server/version-check"),
         client.get_json::<Storage>("/api/server/storage"),
         optional::<Statistics>(client, "/api/server/statistics"),
@@ -221,6 +225,8 @@ pub async fn probe(
         optional::<Vec<Session>>(client, "/api/sessions"),
         optional::<UserMe>(client, "/api/users/me"),
         last_asset_created_at(client),
+        // Immich 2.5 et plus, permission `databaseBackup.list` (facultative).
+        optional_json(client, "/api/admin/database-backups"),
     );
 
     let mut out =
@@ -234,7 +240,7 @@ pub async fn probe(
     note(check.map(|check| out.extend(update_samples(&about, &check, ts_ms))), "version-check");
     note(storage.map(|storage| out.extend(storage_samples(&storage, ts_ms))), "storage");
     note(
-        statistics.map(|stats| {
+        stats.map(|stats| {
             out.push(flag("immich_statistics_readable", stats.is_some(), ts_ms));
             out.extend(stats.iter().flat_map(|stats| statistics_samples(stats, ts_ms)));
         }),
@@ -252,6 +258,15 @@ pub async fn probe(
             }
         }),
         "config",
+    );
+
+    note(
+        backups.map(|body| {
+            if let Some(body) = body {
+                out.extend(backup_samples(&body, ts_ms / 1000, ts_ms));
+            }
+        }),
+        "database-backups",
     );
 
     // Appareils : voir le commentaire de module pour les limites de l'API.
@@ -274,7 +289,7 @@ pub async fn probe(
         "sessions",
     );
     note(
-        last_backup.map(|instant| {
+        newest.map(|instant| {
             if let Some(instant) = instant {
                 devices.push(Device {
                     name: LIBRARY_DEVICE.to_string(),
@@ -412,12 +427,71 @@ pub fn storage_samples(storage: &Storage, ts_ms: i64) -> Vec<Sample> {
 }
 
 pub fn statistics_samples(stats: &Statistics, ts_ms: i64) -> Vec<Sample> {
-    vec![
+    let mut out = vec![
         gauge("immich_photos", stats.photos, ts_ms),
         gauge("immich_videos", stats.videos, ts_ms),
         gauge("immich_usage_bytes", stats.usage, ts_ms),
         gauge("immich_users", stats.usage_by_user.len() as f64, ts_ms),
-    ]
+    ];
+    // Par compte : l'espace pris, et la part du quota quand l'administrateur
+    // en a fixé un (`quotaSizeInBytes` nul ou absent : illimité).
+    for user in stats.usage_by_user.iter().take(MAX_NAMED) {
+        let Some(name) = user.get("userName").and_then(Value::as_str) else {
+            continue;
+        };
+        let usage = number(user.get("usage")).unwrap_or(0.0);
+        out.push(gauge("immich_user_usage_bytes", usage, ts_ms).with_label("user", name));
+        if let Some(quota) = number(user.get("quotaSizeInBytes")).filter(|quota| *quota > 0.0) {
+            out.push(
+                gauge("immich_user_quota_used_percent", 100.0 * usage / quota, ts_ms)
+                    .with_label("user", name),
+            );
+        }
+    }
+    out
+}
+
+/// L'instant d'une sauvegarde de base, lu dans le nom du fichier : Immich le
+/// nomme `immich-db-backup-20260930T020000-v3.2.4-pg16.4.sql.gz` (anciennement
+/// avec des millisecondes Unix à la place de la date). L'heure est celle du
+/// serveur, lue ici comme UTC : l'erreur reste sous une journée, très en deçà
+/// du délai que les règles tolèrent.
+fn backup_instant(filename: &str) -> Option<i64> {
+    let name = filename.rsplit('/').next()?;
+    let stamp = name.strip_prefix("immich-db-backup-")?.split(['-', '.']).next()?;
+    if stamp.len() == 15 && stamp.as_bytes()[8] == b'T' {
+        let date = chrono::NaiveDateTime::parse_from_str(stamp, "%Y%m%dT%H%M%S").ok()?;
+        return Some(date.and_utc().timestamp());
+    }
+    if stamp.bytes().all(|b| b.is_ascii_digit()) {
+        let value: i64 = stamp.parse().ok()?;
+        return match stamp.len() {
+            13 => Some(value / 1000),
+            10 => Some(value),
+            _ => None,
+        };
+    }
+    None
+}
+
+/// `GET /api/admin/database-backups` : `{"backups": [{"filename", "filesize",
+/// "timezone"}]}`. Sans sauvegarde, seul le compte (zéro) est publié : un
+/// Immich dont les sauvegardes sont coupées n'a pas à être signalé.
+pub fn backup_samples(body: &Value, now_secs: i64, ts_ms: i64) -> Vec<Sample> {
+    let backups = body.get("backups").and_then(Value::as_array).map(Vec::as_slice).unwrap_or(&[]);
+    let mut out = vec![gauge("immich_db_backups", backups.len() as f64, ts_ms)];
+    let latest = backups
+        .iter()
+        .filter_map(|b| Some((backup_instant(b.get("filename")?.as_str()?)?, b)))
+        .max_by_key(|(instant, _)| *instant);
+    if let Some((instant, backup)) = latest {
+        let age = (now_secs - instant).max(0) as f64;
+        out.push(gauge("immich_db_backup_last_age_seconds", age, ts_ms));
+        if let Some(size) = number(backup.get("filesize")) {
+            out.push(gauge("immich_db_backup_last_bytes", size, ts_ms));
+        }
+    }
+    out
 }
 
 pub fn queue_samples(queues: &[Queue], ts_ms: i64) -> Vec<Sample> {
@@ -572,6 +646,58 @@ mod tests {
         assert_eq!(value(&samples, "immich_photos"), Some(6.0));
         assert_eq!(value(&samples, "immich_videos"), Some(1.0));
         assert_eq!(value(&samples, "immich_users"), Some(2.0));
+    }
+
+    #[test]
+    fn le_quota_par_compte_n_existe_que_s_il_est_fixe() {
+        let stats: Statistics = serde_json::from_str(
+            r#"{"photos":10,"videos":2,"usage":9500,"usageByUser":[
+              {"userId":"u1","userName":"Anna","usage":9000,"quotaSizeInBytes":10000},
+              {"userId":"u2","userName":"Ben","usage":500,"quotaSizeInBytes":null}]}"#,
+        )
+        .unwrap();
+        let samples = statistics_samples(&stats, 0);
+        let anna = samples
+            .iter()
+            .find(|s| s.metric == "immich_user_quota_used_percent")
+            .expect("quota d'Anna");
+        assert_eq!((anna.labels["user"].as_str(), anna.value), ("Anna", 90.0));
+        let quotas = samples.iter().filter(|s| s.metric == "immich_user_quota_used_percent");
+        assert_eq!(quotas.count(), 1, "Ben n'a pas de quota");
+        let usages = samples.iter().filter(|s| s.metric == "immich_user_usage_bytes").count();
+        assert_eq!(usages, 2);
+        // Les comptes de la fixture réelle n'ont pas de quota.
+        let real = statistics_samples(&serde_json::from_str(STATISTICS).unwrap(), 0);
+        assert!(real.iter().all(|s| s.metric != "immich_user_quota_used_percent"));
+    }
+
+    #[test]
+    fn la_derniere_sauvegarde_de_base_se_date_par_son_nom() {
+        assert_eq!(
+            backup_instant("immich-db-backup-20260930T020000-v3.2.4-pg16.4.sql.gz"),
+            Some(1_790_733_600)
+        );
+        assert_eq!(backup_instant("immich-db-backup-1790647200000.sql.gz"), Some(1_790_733_600));
+        assert_eq!(backup_instant("immich-db-backup-1790647200.sql.gz"), Some(1_790_733_600));
+        assert_eq!(backup_instant("dump.sql.gz"), None);
+        assert_eq!(backup_instant("immich-db-backup-latest.sql.gz"), None);
+
+        let body: Value = serde_json::from_str(
+            r#"{"backups":[
+              {"filename":"immich-db-backup-20260928T020000-v3.2.4-pg16.4.sql.gz",
+               "filesize":812345,"timezone":"UTC"},
+              {"filename":"immich-db-backup-20260930T020000-v3.2.4-pg16.4.sql.gz",
+               "filesize":823456,"timezone":"UTC"}]}"#,
+        )
+        .unwrap();
+        // Une heure après la sauvegarde la plus récente.
+        let samples = backup_samples(&body, 1_790_733_600 + 3600, 0);
+        assert_eq!(value(&samples, "immich_db_backups"), Some(2.0));
+        assert_eq!(value(&samples, "immich_db_backup_last_age_seconds"), Some(3600.0));
+        assert_eq!(value(&samples, "immich_db_backup_last_bytes"), Some(823_456.0));
+        let none = backup_samples(&serde_json::json!({"backups": []}), 0, 0);
+        assert_eq!(value(&none, "immich_db_backups"), Some(0.0));
+        assert!(value(&none, "immich_db_backup_last_age_seconds").is_none());
     }
 
     #[test]
