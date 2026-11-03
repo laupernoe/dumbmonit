@@ -951,6 +951,22 @@ Reported by the Linux agent on a KVM host; see [Agent](../devices/agent.md#kvm-v
 | KVM domain crashed | libvirt reports a KVM domain as crashed: the hypervisor had to stop it (`dumbmonit_agent_libvirt_domain_crashed`). | > 0 | 1 min | Warning (`critical`) | 1 h |
 | libvirt pool almost full | A libvirt storage pool's allocation reaches 90% of its capacity (`dumbmonit_agent_libvirt_pool_used_percent`). | ≥ 90 % (clears below 88 %) | 15 min | Advisory (`warning`), escalates after 24 h | 6 h |
 
+### Synology NAS (agent package)
+
+Reported by the agent of the [Synology package](../devices/synology-agent.md). A UPS
+plugged into the NAS is reported under the NUT names, so the
+[UPS behind NUT](#ups-behind-nut) rules apply to it; the SMART verdict, when
+`smartctl` is readable, goes through "Disk SMART failing".
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| NAS RAID degraded | A RAID array of the NAS lost a disk or is rebuilding (`dumbmonit_agent_dsm_raid_status`: 0 normal, 1 resyncing, 2 degraded, 3 inactive). | ≥ 2 | 5 min | Warning (`critical`) | 6 h |
+| NAS volume read-only | A `/volumeN` is mounted read-only, which DSM does to a crashed volume (`dumbmonit_agent_dsm_volume_read_only`). | > 0 | 5 min | Warning (`critical`) | 6 h |
+| NAS disk temperature high | A disk is above 55 °C (`dumbmonit_agent_dsm_disk_temperature_celsius`); clears below 52 °C. | > 55 °C | 15 min | Advisory (`warning`) | 6 h |
+| NAS disk bad sectors growing | New unreadable sectors appeared in the last 24 hours (`delta(dumbmonit_agent_dsm_disk_unc_count[24h])`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
+| NAS SSD wearing out | An SSD has less than 10 % of its rated life left (`dumbmonit_agent_dsm_disk_remaining_life_percent`); clears above 12 %. | < 10 % | 1 h | Advisory (`warning`) | 7 d |
+| NAS package stopped | A package that should run (enabled) is stopped (`dumbmonit_agent_dsm_package_down`). Needs `synopkg` to answer the agent; a package stopped by hand does not alert. | > 0 | 15 min | Advisory (`warning`) | 24 h |
+
 ### XCP-ng / XenServer
 
 See [XCP-ng / XenServer](../devices/xcpng.md).

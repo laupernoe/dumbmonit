@@ -1,8 +1,11 @@
 # DumbMonit agent for Synology DSM 7
 
 A minimal `.spk` that installs the existing DumbMonit agent on a Synology NAS.
-It collects what the agent already collects (CPU, memory, disks, network); no
-Synology-specific collection yet.
+Besides what the agent collects on any Linux machine, it detects DSM and reads,
+as the package user (no root): RAID arrays (`/proc/mdstat`), volumes, disks
+(`/sys/block`, `/run/synostorage`), packages (`/var/packages`, `synopkg status`
+when allowed), SMB/NFS/SSH and the UPS (`upsc`). See
+`crates/agent/src/collect/dsm.rs` and `docs/devices/synology-agent.md`.
 
 ## Layout
 

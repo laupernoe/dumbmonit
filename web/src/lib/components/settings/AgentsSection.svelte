@@ -199,7 +199,7 @@
 			{:else if loading}
 				<Skeleton class="h-14 w-full" />
 			{:else if tokens.length === 0}
-				<EmptyState icon={Cpu} title={m.settings_agents_empty_title()} description={m.settings_agents_tokens_none()} />
+				<EmptyState compact icon={Cpu} title={m.settings_agents_empty_title()} description={m.settings_agents_tokens_none()} />
 			{:else}
 				<ul class="divide-y divide-line rounded-[var(--radius-card)] border border-line" role="list">
 					{#each tokens as token (token.id)}
