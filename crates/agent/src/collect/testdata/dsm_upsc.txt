@@ -1,0 +1,12 @@
+Init SSL without certificate database
+battery.charge: 87
+battery.charge.low: 10
+battery.runtime: 1520
+battery.type: PbAc
+device.mfr: American Power Conversion
+device.model: Back-UPS ES 700G
+device.type: ups
+driver.name: usbhid-ups
+input.voltage: 0.0
+ups.load: 18
+ups.status: OB DISCHRG
