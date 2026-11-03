@@ -438,6 +438,10 @@ One rule, shared by every integration that tracks client devices connecting and 
 | Pi-hole blocklists stale | The blocklists (gravity) have not been rebuilt for more than eight days (`dumbmonit_pihole_gravity_age_seconds`): the weekly update fails. | > 8 d | 1 h | Advisory (`warning`) | 24 h |
 | Pi-hole update available | A newer version is available (`dumbmonit_pihole_updates_available`): the image in Docker, core, web interface or FTL otherwise. Pi-hole checks once a day. | > 0 | 1 h | Info (`info`) | 7 d |
 | Pi-hole diagnosis messages | Pi-hole lists messages on its diagnosis page (`dumbmonit_pihole_messages`): a blocklist that failed to download, a rate-limited client, an overloaded host. | > 0 | 15 min | Info (`info`) | 24 h |
+| Pi-hole SERVFAIL replies | More than 5% of the DNS replies of the last 24 hours are SERVFAIL (`100 * dumbmonit_pihole_replies_servfail_24h / dumbmonit_pihole_queries_24h`), once at least 200 queries were answered: an upstream resolver is failing. | > 5 % | 30 min | Advisory (`warning`) | 6 h |
+| Pi-hole upstream resolver slow | An upstream resolver answers in more than a second on average (`dumbmonit_pihole_upstream_response_seconds`, one series per resolver that was asked). | > 1 s | 30 min | Advisory (`warning`) | 6 h |
+| Pi-hole blocklist download failing | At least one enabled blocklist failed to download on the last gravity update (`dumbmonit_pihole_lists_download_failed`): it is stale or empty. | > 0 | 1 h | Advisory (`warning`) | 24 h |
+| Pi-hole receives no queries | No DNS query in the last 24 hours (`dumbmonit_pihole_queries_24h`): no client uses it any more, or FTL is stuck. | < 1 | 1 h | Info (`info`) | 24 h |
 
 ### AdGuard Home
 
@@ -450,6 +454,12 @@ The DNS filter ([monitor](../devices/adguard.md)). Query and block figures are s
 | AdGuard Home upstream failing | An upstream DNS server fails AdGuard Home's own test, or stays silent 4 seconds (`dumbmonit_adguard_upstream_up`, one series per upstream). | < 1 | 10 min | Advisory (`warning`) | 6 h |
 | AdGuard Home filter lists stale | The oldest update of an enabled filter list is more than three days old (`dumbmonit_adguard_filter_oldest_update_age_seconds`). | > 3 days | 1 h | Advisory (`warning`) | 24 h |
 | AdGuard Home update available | A newer version is announced by AdGuard Home's own version check (`dumbmonit_adguard_update_available`); never fires when that check is disabled, as in the official Docker image. | > 0 | 1 h | Info (`info`) | 7 days |
+| AdGuard Home slow to answer | The average time to process a DNS query is above half a second (`dumbmonit_adguard_avg_processing_seconds`): the host is overloaded or an upstream is slow. | > 0.5 s | 30 min | Advisory (`warning`) | 6 h |
+| AdGuard Home upstream slow | An upstream answers in more than a second on average over the statistics window (`dumbmonit_adguard_upstream_avg_seconds`, one series per upstream). | > 1 s | 30 min | Advisory (`warning`) | 6 h |
+| AdGuard Home certificate invalid | The certificate or private key of the encrypted DNS does not load or does not match (`dumbmonit_adguard_tls_valid`); only when encryption is on. | < 1 | 10 min | Advisory (`warning`) | 12 h |
+| AdGuard Home certificate expiring | The certificate of the encrypted DNS expires in less than 14 days (`dumbmonit_adguard_tls_expiry_seconds`). | < 14 d | 1 h | Advisory (`warning`) | 24 h |
+| AdGuard Home DHCP range almost full | More than 90% of the DHCP address range is leased (`dumbmonit_adguard_dhcp_pool_used_percent`); only when the DHCP server is on. | > 90 % | 30 min | Advisory (`warning`) | 12 h |
+| AdGuard Home receives no queries | No query over the whole statistics window, when statistics are on and cover at least a day (`dumbmonit_adguard_dns_queries`). | < 1 | 1 h | Info (`info`) | 24 h |
 
 ### UPS behind NUT
 
@@ -509,6 +519,10 @@ Series carry the `interface` or `sensor` label, so a notification names the port
 | Home Assistant battery low | A battery reported by Home Assistant is low (`dumbmonit_homeassistant_battery_low`, one series per battery below the device's threshold, 20% by default; its value is the level). | ≥ 0 % | 30 min | Info (`info`) | 3 d |
 | Home Assistant update available | Home Assistant has updates waiting: core, operating system, add-ons or device firmware (`dumbmonit_homeassistant_updates_available`). | > 0 | 1 h | Info (`info`) | 7 d |
 | Home Assistant repair to address | Home Assistant has an open repair of error or critical severity (`dumbmonit_homeassistant_repair{severity=~"error\|critical"}`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
+| Home Assistant safety sensor triggered | A smoke, gas, carbon monoxide, water leak or safety sensor is on (`dumbmonit_homeassistant_safety_alert`, one series per sensor). | > 0 | 1 min | Warning (`critical`) | 30 min |
+| Home Assistant alarm triggered | An alarm panel is in the `triggered` state (`dumbmonit_homeassistant_alarm_triggered`). | > 0 | 30 s | Warning (`critical`) | 30 min |
+| Home Assistant problem sensor on | A binary sensor of class `problem` or `tamper` has been on for thirty minutes (`dumbmonit_homeassistant_problem`). | > 0 | 30 min | Advisory (`warning`) | 12 h |
+| Home Assistant automation unavailable | An automation is unavailable: its configuration no longer loads, so it never runs (`dumbmonit_homeassistant_entities_unavailable{domain="automation"}`). | > 0 | 30 min | Advisory (`warning`) | 24 h |
 
 ### VMware vSphere
 
