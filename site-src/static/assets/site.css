@@ -914,7 +914,9 @@ main {
 /* ---- code blocks ---- */
 .code {
 	position: relative;
-	max-width: 40rem;
+	max-width: min(40rem, 100%);
+	min-width: 0;
+	margin-inline: auto;
 	border: 1px solid var(--c-line-strong);
 	border-radius: 10px;
 	background: var(--c-canvas-deep);
@@ -923,6 +925,8 @@ main {
 	margin: 0;
 	padding: 16px 84px 16px 16px;
 	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
 	color: var(--c-ink);
 	font-size: 0.8125rem;
 	line-height: 1.75;
