@@ -1,20 +1,19 @@
 # Settings
 
-![Settings: seven tabs, here My account with appearance, account & security and push notifications](../assets/screenshots/settings-light.png){ loading=lazy }
+![Settings: six tabs, here My account with appearance, account & security and push notifications](../assets/screenshots/settings-light.png){ loading=lazy }
 
-Settings holds what is administrative: the instance itself, your account, who can sign in and how, the agents, the notification channels, backing the instance up, and the server's health. It is split into seven tabs, each with its own address. A rail on a wide screen, a strip of chips on a phone and a search box over the section names help you find a section.
+Settings holds what is administrative: the instance itself, your account, who can sign in and how, the agents, the notification channels, backing the instance up, and the server's health. It is split into six tabs, each with its own address. A rail on a wide screen, a strip of chips on a phone and a search box over the section names help you find a section.
 
 | Tab | Address | What it holds |
 |---|---|---|
-| General | `/settings/general` | Instance name, language and time zone, the setup wizard ([Interface and setup wizard](product-modes.md)) |
-| My account | `/settings/account` | Language, Account & security (password, two-factor, security log), Push notifications, On-call contacts and quiet hours ([On-call](../alerting/oncall.md)) |
+| My account | `/settings/account` | Appearance (theme and language), Account & security (password, two-factor, security log), Push notifications, On-call contacts and quiet hours ([On-call](../alerting/oncall.md)) |
 | Team & access | `/settings/team` | Users, Teams, Clients, Single sign-on, SAML, SCIM, LDAP |
 | Monitoring | `/settings/monitoring` | Agents, Integration packs, [Security score](security-score.md), Locations |
 | Notifications | `/settings/notifications` | Channels, Notification policy ([Notification channels](../notifications.md)) |
 | Wall display | `/settings/wall` | Wall mode: what it shows, and the way in ([Wall mode](wall.md)) |
-| System | `/settings/system` | Backup, Configuration files, DumbMonit itself, HTTPS and encryption, Network ports, Data & retention, Logs, API & assistants, About |
+| System | `/settings/system` | Instance name and time zone, the setup wizard ([Interface and setup wizard](product-modes.md)), Backup, Configuration files, DumbMonit itself, HTTPS and encryption, Network ports, Data & retention, Logs, API & assistants, About |
 
-Each section keeps its own anchor: `/settings#agents` forwards to `/settings/monitoring#agents`. The old links (`/alerts#notifications`) forward to the new place too. Status pages and reports are not in Settings any more: they have their own pages, **Status pages** (`/status`) and **Reports** (`/reports`); `/settings/status` and `/settings/reports` forward there. The wall's news and widgets are gone: their old links (`#news`, `#widgets`) open the Wall display tab, where **Wall music** (`#music`) is.
+Each section keeps its own anchor: `/settings#agents` forwards to `/settings/monitoring#agents`. The old links (`/alerts#notifications`) forward to the new place too. `/settings/general` forwards to the System tab. Status pages and reports are not in Settings any more: they have their own pages, **Status pages** (`/status`) and **Reports** (`/reports`); `/settings/status` and `/settings/reports` forward there. The wall's news and widgets are gone: their old links (`#news`, `#widgets`) open the Wall display tab, where **Wall music** (`#music`) is.
 
 ## Appearance {#appearance}
 
