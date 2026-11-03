@@ -95,16 +95,20 @@
 			(enabled !== (host.relay_wanted ?? host.relay) || site.trim() !== (host.relay_wanted_site ?? host.site ?? '').trim() || gatewayDirty)
 	);
 
+	/** True once the last submit went through (the button confirms in green). */
+	let savedOk = $state(false);
 	async function save(event: SubmitEvent) {
 		event.preventDefault();
 		if (saving || !host) return;
 		saving = true;
 		error = null;
+		savedOk = false;
 		try {
 			const choice = gatewayKnown
 				? { enabled: enabled && gateway, port: portValid ? portValue : 8443, host: gatewayHost.trim() || null }
 				: undefined;
 			adopt(await setAgentRelay(target.id, enabled, site.trim() || null, choice));
+			savedOk = true;
 		} catch (cause) {
 			error = cause;
 		} finally {
@@ -194,7 +198,7 @@
 				{/if}
 				{#if !pinned}
 					<div>
-						<Button type="submit" variant="secondary" size="sm" loading={saving} disabled={!dirty || (gateway && !portValid)}>{m.devicesb_relay_panel_save()}</Button>
+						<Button type="submit" variant="secondary" size="sm" loading={saving} success={savedOk} disabled={!dirty || (gateway && !portValid)}>{m.devicesb_relay_panel_save()}</Button>
 					</div>
 				{/if}
 			</form>

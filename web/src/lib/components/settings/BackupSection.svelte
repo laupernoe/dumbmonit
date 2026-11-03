@@ -162,29 +162,33 @@
 		}
 	}
 
-	async function check() {
-		if (!bundle) return;
+	async function check(): Promise<boolean> {
+		if (!bundle) return false;
 		checking = true;
 		restoreError = null;
 		report = null;
 		try {
 			report = await restoreBackup(bundle, restorePassphrase, false);
+			return true;
 		} catch (cause) {
 			restoreError = cause;
+			return false;
 		} finally {
 			checking = false;
 		}
 	}
 
-	async function apply() {
-		if (!bundle) return;
+	async function apply(): Promise<boolean> {
+		if (!bundle) return false;
 		applying = true;
 		restoreError = null;
 		try {
 			report = await restoreBackup(bundle, restorePassphrase, true);
 			await load();
+			return true;
 		} catch (cause) {
 			restoreError = cause;
+			return false;
 		} finally {
 			applying = false;
 		}
@@ -197,14 +201,16 @@
 	let running = $state(false);
 	let runError = $state<unknown>(null);
 
-	async function runNow() {
+	async function runNow(): Promise<boolean> {
 		running = true;
 		runError = null;
 		try {
 			const schedule = await runLocalBackup();
 			if (status) status = { ...status, schedule };
+			return true;
 		} catch (cause) {
 			runError = cause;
+			return false;
 		} finally {
 			running = false;
 		}

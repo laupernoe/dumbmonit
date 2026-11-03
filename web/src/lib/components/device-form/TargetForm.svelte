@@ -422,8 +422,9 @@
 		});
 	});
 
-	async function runTest() {
-		if (blocker || testing) return;
+	/** Resolves true only when the probe succeeded (the button then confirms in green). */
+	async function runTest(): Promise<boolean> {
+		if (blocker || testing) return false;
 		testController?.abort();
 		testController = new AbortController();
 		const signal = testController.signal;
@@ -435,9 +436,10 @@
 			// The server wants a name; the test does not need the person to pick one.
 			payload.name = payload.name || suggestName(payload.address) || payload.address;
 			testReport = await testTarget({ ...payload, id: target?.id }, signal);
+			return testReport.ok;
 		} catch (cause) {
-			if (cause instanceof DOMException && cause.name === 'AbortError') return;
-			testError = cause;
+			if (!(cause instanceof DOMException && cause.name === 'AbortError')) testError = cause;
+			return false;
 		} finally {
 			testing = false;
 		}

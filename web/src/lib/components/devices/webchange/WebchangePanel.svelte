@@ -95,7 +95,7 @@
 		loading = false;
 	}
 
-	async function checkNow() {
+	async function checkNow(): Promise<boolean> {
 		checking = true;
 		checkError = null;
 		try {
@@ -106,8 +106,10 @@
 				justChecked = false;
 				void refresh();
 			}, 6000);
+			return true;
 		} catch (cause) {
 			checkError = cause;
+			return false;
 		} finally {
 			checking = false;
 		}
