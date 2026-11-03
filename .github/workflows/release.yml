@@ -5,11 +5,14 @@ name: Release
 # `--target agent-image`), with the same tags:
 #   - every push to dev    -> :edge (development; main only gets dev through a PR)
 #   - every tag vX.Y.Z     -> :X.Y.Z, :X.Y, :X and :latest
-#   - every pre-release tag (with a `-`, e.g. v0.9.0-rc.1)
-#                          -> :X.Y.Z-rc.N only: never :latest, :X.Y, :X or :edge
+#   - a tag vX.Y.Z on a commit that is on dev but not on main (job `kind`)
+#                          -> :X.Y.Z only, a published GitHub pre-release: never
+#                             :latest, :X.Y, :X or :edge; no upgrade gate
+#   - a pre-release tag with a `-` (e.g. v0.9.0-rc.1)
+#                          -> :X.Y.Z-rc.N only, a draft pre-release
 # upgrade.yml builds the same images without pushing, on every push to dev and
-# main; a tag is only published once that workflow is green on main for the
-# tagged commit (job `upgrade-gate`).
+# main; a tag on main is only published once that workflow is green on main for
+# the tagged commit (job `upgrade-gate`).
 #
 # Speed: on a tag nearly nothing is compiled. upgrade.yml, on the push to main
 # of the same commit, built the images with the same inputs and left the
@@ -50,12 +53,7 @@ permissions:
 env:
   IMAGE: ghcr.io/laupernoe/dumbmonit
   AGENT_IMAGE: ghcr.io/laupernoe/dumbmonit-agent
-  # Decided once here, read by every job ("true"/"false" strings):
-  # a tag v* with a `-` (v0.9.0-rc.1, v1.0.0-beta.2) is a pre-release, any
-  # other tag v* a stable release; a push to dev is neither.
   RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
-  PRERELEASE: ${{ startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-') }}
-  STABLE_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') }}
 
 # Only the newest :edge matters: a newer push to dev cancels the build in
 # progress. Tags each get their own group and are never cancelled.
@@ -64,7 +62,49 @@ concurrency:
   cancel-in-progress: ${{ github.ref == 'refs/heads/dev' }}
 
 jobs:
-  # A tag is never published before the upgrade test has passed on the very
+  # What kind of release a tag v* is, decided once here and read through
+  # `needs.kind.outputs` ("true"/"false" strings):
+  #   - tag on a commit of main -> stable release (:latest), after the upgrade
+  #     test of that commit (job `upgrade-gate`);
+  #   - tag on a commit that is not (yet) on main, i.e. dev -> published
+  #     pre-release, same build, never :latest, never offered to stable installs;
+  #   - tag with a `-` (v0.9.0-rc.1) -> draft pre-release, as before.
+  # A push to dev is none of them (:edge only).
+  kind:
+    name: Kind of release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      prerelease: ${{ steps.kind.outputs.prerelease }}
+      stable: ${{ steps.kind.outputs.stable }}
+      draft: ${{ steps.kind.outputs.draft }}
+      gate: ${{ steps.kind.outputs.gate }}
+    steps:
+      - id: kind
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          prerelease=false stable=false draft=false gate=false
+          if [ "$RELEASE_TAG" = true ]; then
+            on_main=false
+            status=$(gh api "repos/$GITHUB_REPOSITORY/compare/main...$GITHUB_SHA" --jq .status)
+            case "$status" in behind|identical) on_main=true ;; esac
+            case "$GITHUB_REF_NAME" in
+              *-*) prerelease=true draft=true gate=$on_main ;;
+              *) if [ "$on_main" = true ]; then stable=true gate=true; else prerelease=true; fi ;;
+            esac
+            echo "tag $GITHUB_REF_NAME: commit vs main = $status, stable=$stable prerelease=$prerelease"
+          fi
+          {
+            echo "prerelease=$prerelease"
+            echo "stable=$stable"
+            echo "draft=$draft"
+            echo "gate=$gate"
+          } >> "$GITHUB_OUTPUT"
+
+  # A tag on main is never published before the upgrade test has passed on the very
   # commit it points to: the run of upgrade.yml for the push of that commit to
   # main. Still running: waited for. Missing (commit never pushed to main) or
   # failed: the release stops here, nothing is pushed. A failed run that is
@@ -72,6 +112,7 @@ jobs:
   # straight through.
   upgrade-gate:
     name: Upgrade test passed on main
+    needs: kind
     runs-on: ubuntu-latest
     timeout-minutes: 90
     permissions:
@@ -79,11 +120,11 @@ jobs:
       # Read the runs of upgrade.yml.
       actions: read
     steps:
-      - name: Not a release
-        if: env.RELEASE_TAG != 'true'
-        run: echo "Push to dev, no release gate."
+      - name: No release gate
+        if: needs.kind.outputs.gate != 'true'
+        run: echo "Push to dev or tag on dev, no release gate."
       - name: Wait for the upgrade test of this commit on main
-        if: env.RELEASE_TAG == 'true'
+        if: needs.kind.outputs.gate == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -116,8 +157,10 @@ jobs:
 
   image:
     name: Build and push image
-    needs: upgrade-gate
+    needs: [kind, upgrade-gate]
     runs-on: ubuntu-latest
+    env:
+      PRERELEASE: ${{ needs.kind.outputs.prerelease }}
     timeout-minutes: 300
     permissions:
       contents: read
@@ -166,14 +209,14 @@ jobs:
           tags: |
             type=edge,branch=dev
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}},enable=${{ env.STABLE_RELEASE }}
-            type=semver,pattern={{major}},enable=${{ env.STABLE_RELEASE }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ needs.kind.outputs.stable }}
+            type=semver,pattern={{major}},enable=${{ needs.kind.outputs.stable }}
           # :X.Y, :X and :latest follow stable releases only: never dev, never
           # a pre-release. (metadata-action v6 already reduces {{major}} and
           # {{major}}.{{minor}} to the full version for a pre-release, but a
           # forced `latest=true` would still apply: both are spelled out.)
           flavor: |
-            latest=${{ env.STABLE_RELEASE }}
+            latest=${{ needs.kind.outputs.stable }}
           # `created` is the commit date (the default is the time of the build).
           labels: |
             org.opencontainers.image.title=DumbMonit
@@ -292,10 +335,10 @@ jobs:
           tags: |
             type=edge,branch=dev
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}},enable=${{ env.STABLE_RELEASE }}
-            type=semver,pattern={{major}},enable=${{ env.STABLE_RELEASE }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ needs.kind.outputs.stable }}
+            type=semver,pattern={{major}},enable=${{ needs.kind.outputs.stable }}
           flavor: |
-            latest=${{ env.STABLE_RELEASE }}
+            latest=${{ needs.kind.outputs.stable }}
           labels: |
             org.opencontainers.image.title=DumbMonit agent
             org.opencontainers.image.description=DumbMonit agent, for Docker hosts and remote sites (relay mode)
@@ -411,8 +454,10 @@ jobs:
   github-release:
     name: Publish the GitHub release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [image, macos-agent, synology-spk]
+    needs: [kind, image, macos-agent, synology-spk]
     runs-on: ubuntu-latest
+    env:
+      PRERELEASE: ${{ needs.kind.outputs.prerelease }}
     permissions:
       # Create the release and attach the files.
       contents: write
@@ -517,6 +562,6 @@ jobs:
           body_path: notes.md
           files: dist/*
           fail_on_unmatched_files: true
-          draft: ${{ env.PRERELEASE == 'true' }}
-          prerelease: ${{ env.PRERELEASE == 'true' }}
-          make_latest: ${{ env.PRERELEASE == 'true' && 'false' || 'true' }}
+          draft: ${{ needs.kind.outputs.draft == 'true' }}
+          prerelease: ${{ needs.kind.outputs.prerelease == 'true' }}
+          make_latest: ${{ needs.kind.outputs.prerelease == 'true' && 'false' || 'true' }}
