@@ -11,6 +11,11 @@
 //! nouveaux films n'apparaissent plus, et rien ne le dit sinon une ligne dans
 //! les tâches planifiées.
 //!
+//! Compléments, lus sans condamner la sonde (403/404 sautés) : le stockage
+//! (`/System/Info/Storage`, Jellyfin 10.11+), les bibliothèques
+//! (`/Library/VirtualFolders`), les comptes (`/Users`) et, dans le journal
+//! d'activité de la dernière heure, les connexions refusées.
+//!
 //! Jellyfin ne vérifie pas ses propres mises à jour (c'est l'affaire du
 //! paquet ou de l'image) : seul un redémarrage en attente, après une mise à
 //! jour d'extension, est signalé.
@@ -18,9 +23,10 @@
 use async_trait::async_trait;
 use dumbmonit_proto::{Collector, ProbeError, Sample, Target, TargetId};
 use serde::Deserialize;
+use serde_json::Value;
 
 use super::client::{Auth, HttpClient};
-use super::{MAX_NAMED, flag, gauge, http_client, now_ms, settle, token};
+use super::{MAX_NAMED, flag, gauge, http_client, now_ms, number, optional_json, settle, token};
 
 pub const DEFAULT_PORT: u16 = 8096;
 
@@ -48,6 +54,8 @@ pub struct ScheduledTask {
     pub state: Option<String>,
     #[serde(default)]
     pub last_execution_result: Option<TaskResult>,
+    #[serde(default)]
+    pub triggers: Vec<Value>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -64,6 +72,8 @@ pub struct TaskResult {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Session {
+    #[serde(default)]
+    pub user_name: Option<String>,
     #[serde(default)]
     pub now_playing_item: Option<serde_json::Value>,
     #[serde(default)]
@@ -100,13 +110,32 @@ pub async fn probe(
     let info: SystemInfo = client.get_json("/System/Info").await?;
     let mut out = system_samples(&info, ts_ms);
     let mut errors = 0u32;
-    let (tasks, sessions, plugins) = futures::join!(
+    let now = chrono::Utc::now();
+    let activity_path = activity_path(now);
+    let (tasks, sessions, plugins, storage, libs, users, activity) = futures::join!(
         client.get_json::<Vec<ScheduledTask>>("/ScheduledTasks"),
         client.get_json::<Vec<Session>>("/Sessions"),
         client.get_json::<Vec<Plugin>>("/Plugins"),
+        // Jellyfin 10.11 et plus ; 403/404 : sautés sans erreur.
+        optional_json(client, "/System/Info/Storage"),
+        optional_json(client, "/Library/VirtualFolders"),
+        optional_json(client, "/Users"),
+        optional_json(client, &activity_path),
     );
     if let Some(tasks) = settle(tasks, &mut errors, target_id, "/ScheduledTasks") {
-        out.extend(task_samples(&tasks, chrono::Utc::now(), ts_ms));
+        out.extend(task_samples(&tasks, now, ts_ms));
+    }
+    if let Some(Some(storage)) = settle(storage, &mut errors, target_id, "/System/Info/Storage") {
+        out.extend(storage_samples(&storage, ts_ms));
+    }
+    if let Some(Some(libs)) = settle(libs, &mut errors, target_id, "/Library/VirtualFolders") {
+        out.extend(library_samples(&libs, ts_ms));
+    }
+    if let Some(Some(users)) = settle(users, &mut errors, target_id, "/Users") {
+        out.extend(user_samples(&users, ts_ms));
+    }
+    if let Some(Some(activity)) = settle(activity, &mut errors, target_id, "/System/ActivityLog") {
+        out.extend(activity_samples(&activity, ts_ms));
     }
     if let Some(sessions) = settle(sessions, &mut errors, target_id, "/Sessions") {
         out.extend(session_samples(&sessions, ts_ms));
@@ -169,6 +198,13 @@ pub fn task_samples(
         && let Some(result) = &scan.last_execution_result
     {
         out.push(flag("jellyfin_library_scan_last_ok", !failed(result), ts_ms));
+        // Un scan sans déclencheur périodique (désactivé à la main, ou lancé
+        // seulement au démarrage) n'est pas « en retard » : la règle de
+        // fraîcheur ne vise que les scans qui devraient tourner seuls.
+        let periodic = scan.triggers.iter().any(|t| {
+            t.get("Type").and_then(Value::as_str).is_some_and(|kind| kind != "StartupTrigger")
+        });
+        out.push(flag("jellyfin_library_scan_scheduled", periodic, ts_ms));
         let ended = result
             .end_time_utc
             .as_deref()
@@ -183,7 +219,7 @@ pub fn task_samples(
 
 pub fn session_samples(sessions: &[Session], ts_ms: i64) -> Vec<Sample> {
     let playing: Vec<&Session> = sessions.iter().filter(|s| s.now_playing_item.is_some()).collect();
-    let transcoding = playing
+    let transcoding: Vec<&&Session> = playing
         .iter()
         .filter(|s| {
             s.play_state.as_ref().and_then(|p| p.play_method.as_deref()) == Some("Transcode")
@@ -191,15 +227,135 @@ pub fn session_samples(sessions: &[Session], ts_ms: i64) -> Vec<Sample> {
                     t.get("IsVideoDirect").and_then(serde_json::Value::as_bool) == Some(false)
                 })
         })
+        .collect();
+    // Sans accélération matérielle déclarée, le transcodage tourne sur le processeur.
+    let software = transcoding
+        .iter()
+        .filter(|s| {
+            s.transcoding_info
+                .as_ref()
+                .and_then(|t| t.get("HardwareAccelerationType"))
+                .and_then(Value::as_str)
+                .is_none_or(str::is_empty)
+        })
         .count();
     let paused =
         playing.iter().filter(|s| s.play_state.as_ref().is_some_and(|p| p.is_paused)).count();
+    let mut viewers: Vec<&str> = playing.iter().filter_map(|s| s.user_name.as_deref()).collect();
+    viewers.sort_unstable();
+    viewers.dedup();
     vec![
         gauge("jellyfin_sessions", sessions.len() as f64, ts_ms),
         gauge("jellyfin_streams", playing.len() as f64, ts_ms),
         gauge("jellyfin_streams_paused", paused as f64, ts_ms),
-        gauge("jellyfin_transcodes", transcoding as f64, ts_ms),
+        gauge("jellyfin_transcodes", transcoding.len() as f64, ts_ms),
+        gauge("jellyfin_transcodes_software", software as f64, ts_ms),
+        gauge("jellyfin_streaming_users", viewers.len() as f64, ts_ms),
     ]
+}
+
+/// `GET /System/Info/Storage` (10.11+) : un volume par dossier de l'application
+/// (données, métadonnées, cache, transcodages, journaux) et par dossier de
+/// bibliothèque. Deux dossiers sur le même disque (même `DeviceId`, à défaut
+/// même chemin) ne font qu'un volume : l'alerte ne sonne qu'une fois.
+pub fn storage_samples(body: &Value, ts_ms: i64) -> Vec<Sample> {
+    const APP_FOLDERS: [(&str, &str); 6] = [
+        ("ProgramDataFolder", "data"),
+        ("InternalMetadataFolder", "metadata"),
+        ("CacheFolder", "cache"),
+        ("ImageCacheFolder", "images"),
+        ("TranscodingTempFolder", "transcodes"),
+        ("LogFolder", "logs"),
+    ];
+    let mut folders: Vec<(String, &Value)> = Vec::new();
+    for library in body.get("Libraries").and_then(Value::as_array).into_iter().flatten() {
+        let name = library.get("Name").and_then(Value::as_str).unwrap_or("library");
+        for folder in library.get("Folders").and_then(Value::as_array).into_iter().flatten() {
+            folders.push((name.to_string(), folder));
+        }
+    }
+    for (key, name) in APP_FOLDERS {
+        if let Some(folder) = body.get(key) {
+            folders.push((name.to_string(), folder));
+        }
+    }
+    let mut seen: Vec<String> = Vec::new();
+    let mut out = Vec::new();
+    for (volume, folder) in folders {
+        let (Some(free), Some(used)) =
+            (number(folder.get("FreeSpace")), number(folder.get("UsedSpace")))
+        else {
+            continue;
+        };
+        let identity = folder
+            .get("DeviceId")
+            .and_then(Value::as_str)
+            .filter(|id| !id.is_empty())
+            .or_else(|| folder.get("Path").and_then(Value::as_str))
+            .unwrap_or(&volume)
+            .to_string();
+        if free < 0.0 || used < 0.0 || free + used <= 0.0 || seen.contains(&identity) {
+            continue;
+        }
+        if seen.len() >= MAX_NAMED {
+            break;
+        }
+        seen.push(identity);
+        out.push(
+            gauge("jellyfin_storage_used_percent", 100.0 * used / (used + free), ts_ms)
+                .with_label("volume", volume.as_str()),
+        );
+        out.push(
+            gauge("jellyfin_storage_free_bytes", free, ts_ms).with_label("volume", volume.as_str()),
+        );
+    }
+    out
+}
+
+/// `GET /Library/VirtualFolders` : les bibliothèques et celles que Jellyfin
+/// est en train d'actualiser (`RefreshStatus` à `Active`).
+pub fn library_samples(folders: &Value, ts_ms: i64) -> Vec<Sample> {
+    let libraries = folders.as_array().map(Vec::as_slice).unwrap_or(&[]);
+    let scanning = libraries
+        .iter()
+        .filter(|l| l.get("RefreshStatus").and_then(Value::as_str) == Some("Active"))
+        .count();
+    vec![
+        gauge("jellyfin_libraries", libraries.len() as f64, ts_ms),
+        gauge("jellyfin_libraries_scanning", scanning as f64, ts_ms),
+    ]
+}
+
+/// `GET /Users` : les comptes, dont ceux désactivés.
+pub fn user_samples(users: &Value, ts_ms: i64) -> Vec<Sample> {
+    let users = users.as_array().map(Vec::as_slice).unwrap_or(&[]);
+    let disabled = users
+        .iter()
+        .filter(|u| u.pointer("/Policy/IsDisabled").and_then(Value::as_bool) == Some(true))
+        .count();
+    vec![
+        gauge("jellyfin_users", users.len() as f64, ts_ms),
+        gauge("jellyfin_users_disabled", disabled as f64, ts_ms),
+    ]
+}
+
+/// Le journal d'activité de la dernière heure.
+fn activity_path(now: chrono::DateTime<chrono::Utc>) -> String {
+    let since = (now - chrono::Duration::hours(1)).format("%Y-%m-%dT%H:%M:%SZ");
+    format!("/System/ActivityLog/Entries?startIndex=0&limit=500&minDate={since}")
+}
+
+/// Connexions refusées de la dernière heure (au plus 500 entrées lues : au-delà,
+/// le compte est un minorant, bien assez pour alerter).
+pub fn activity_samples(activity: &Value, ts_ms: i64) -> Vec<Sample> {
+    let failed = activity
+        .get("Items")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter(|e| e.get("Type").and_then(Value::as_str) == Some("AuthenticationFailed"))
+        .count();
+    vec![gauge("jellyfin_failed_logins_recent", failed as f64, ts_ms)]
 }
 
 /// Une extension qui ne charge plus (`Malfunctioned`), ou plus compatible
@@ -348,6 +504,105 @@ mod tests {
         let samples = plugin_samples(&broken, 0);
         let plugin = samples.iter().find(|s| s.metric == "jellyfin_plugin_broken").unwrap();
         assert_eq!(plugin.labels["plugin"], "Trakt");
+    }
+
+    #[test]
+    fn le_scan_periodique_est_distingue_du_scan_au_demarrage() {
+        let tasks: Vec<ScheduledTask> = serde_json::from_str(TASKS).unwrap();
+        let samples = task_samples(&tasks, chrono::Utc::now(), 0);
+        assert_eq!(value(&samples, "jellyfin_library_scan_scheduled"), Some(1.0));
+        let startup: Vec<ScheduledTask> = serde_json::from_str(
+            r#"[{"Name":"Scan Media Library","Key":"RefreshLibrary","State":"Idle",
+                "Triggers":[{"Type":"StartupTrigger"}],
+                "LastExecutionResult":{"Status":"Completed","EndTimeUtc":"2026-09-30T07:03:28.77Z"}}]"#,
+        )
+        .unwrap();
+        let samples = task_samples(&startup, chrono::Utc::now(), 0);
+        assert_eq!(value(&samples, "jellyfin_library_scan_scheduled"), Some(0.0));
+    }
+
+    #[test]
+    fn un_transcodage_sans_materiel_est_logiciel() {
+        let sessions: Vec<Session> = serde_json::from_str(
+            r#"[
+              {"UserName":"anna","NowPlayingItem":{"Name":"A"},
+               "PlayState":{"PlayMethod":"Transcode","IsPaused":false},
+               "TranscodingInfo":{"IsVideoDirect":false,"HardwareAccelerationType":"vaapi"}},
+              {"UserName":"anna","NowPlayingItem":{"Name":"B"},
+               "PlayState":{"PlayMethod":"Transcode","IsPaused":true},
+               "TranscodingInfo":{"IsVideoDirect":false}},
+              {"UserName":"ben","NowPlayingItem":{"Name":"C"},
+               "PlayState":{"PlayMethod":"DirectPlay","IsPaused":false}},
+              {"UserName":"cleo"}
+            ]"#,
+        )
+        .unwrap();
+        let samples = session_samples(&sessions, 0);
+        assert_eq!(value(&samples, "jellyfin_streams"), Some(3.0));
+        assert_eq!(value(&samples, "jellyfin_transcodes"), Some(2.0));
+        assert_eq!(value(&samples, "jellyfin_transcodes_software"), Some(1.0));
+        assert_eq!(value(&samples, "jellyfin_streaming_users"), Some(2.0));
+        assert_eq!(value(&samples, "jellyfin_streams_paused"), Some(1.0));
+    }
+
+    #[test]
+    fn le_stockage_compte_un_volume_par_disque() {
+        let body: Value = serde_json::from_str(
+            r#"{
+              "ProgramDataFolder":{"Path":"/config","FreeSpace":20000000000,"UsedSpace":80000000000,
+                "StorageType":"ext4","DeviceId":"259:2"},
+              "CacheFolder":{"Path":"/cache","FreeSpace":20000000000,"UsedSpace":80000000000,
+                "StorageType":"ext4","DeviceId":"259:2"},
+              "TranscodingTempFolder":{"Path":"/cache/transcodes","FreeSpace":null,"UsedSpace":null},
+              "Libraries":[{"Id":"1","Name":"Movies","Folders":[
+                {"Path":"/media/movies","FreeSpace":1000000000,"UsedSpace":9000000000,
+                 "StorageType":"zfs","DeviceId":"0:45"}]}]
+            }"#,
+        )
+        .unwrap();
+        let samples = storage_samples(&body, 0);
+        let used: Vec<_> =
+            samples.iter().filter(|s| s.metric == "jellyfin_storage_used_percent").collect();
+        assert_eq!(used.len(), 2, "le cache partage le disque des données");
+        assert_eq!(used[0].labels["volume"], "Movies");
+        assert_eq!(used[0].value, 90.0);
+        assert_eq!(used[1].labels["volume"], "data");
+        assert_eq!(used[1].value, 80.0);
+        assert!(storage_samples(&serde_json::json!({}), 0).is_empty());
+    }
+
+    #[test]
+    fn bibliotheques_utilisateurs_et_connexions_refusees() {
+        let folders: Value = serde_json::from_str(
+            r#"[{"Name":"Movies","Locations":["/media/movies"],"RefreshStatus":"Idle"},
+                {"Name":"Shows","Locations":["/media/shows"],"RefreshStatus":"Active"}]"#,
+        )
+        .unwrap();
+        let samples = library_samples(&folders, 0);
+        assert_eq!(value(&samples, "jellyfin_libraries"), Some(2.0));
+        assert_eq!(value(&samples, "jellyfin_libraries_scanning"), Some(1.0));
+
+        let users: Value = serde_json::from_str(
+            r#"[{"Name":"anna","Policy":{"IsDisabled":false}},
+                {"Name":"old","Policy":{"IsDisabled":true}}]"#,
+        )
+        .unwrap();
+        let samples = user_samples(&users, 0);
+        assert_eq!(value(&samples, "jellyfin_users"), Some(2.0));
+        assert_eq!(value(&samples, "jellyfin_users_disabled"), Some(1.0));
+
+        let log: Value = serde_json::from_str(
+            r#"{"TotalRecordCount":3,"Items":[
+              {"Name":"Failed login attempt from user anna","Type":"AuthenticationFailed","Severity":"Error"},
+              {"Name":"Failed login attempt from user anna","Type":"AuthenticationFailed","Severity":"Error"},
+              {"Name":"anna is online","Type":"SessionStarted","Severity":"Information"}]}"#,
+        )
+        .unwrap();
+        assert_eq!(value(&activity_samples(&log, 0), "jellyfin_failed_logins_recent"), Some(2.0));
+        let path = activity_path(
+            chrono::DateTime::parse_from_rfc3339("2026-09-30T08:00:00Z").unwrap().into(),
+        );
+        assert!(path.ends_with("minDate=2026-09-30T07:00:00Z"), "{path}");
     }
 
     async fn serve(app: Router) -> String {

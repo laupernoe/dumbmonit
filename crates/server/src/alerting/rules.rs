@@ -12,6 +12,9 @@ use crate::alerting::model::{
 };
 
 mod cloud;
+mod immich;
+mod jellyfin;
+mod plex;
 
 /// Taux d'occupation processeur, toutes sources confondues.
 ///
@@ -7755,6 +7758,9 @@ pub fn builtin_rules() -> Vec<Rule> {
     ];
     // Intégrations en nuage, un fichier par produit (`rules/cloud/`).
     rules.extend(cloud::rules());
+    rules.extend(immich::rules());
+    rules.extend(jellyfin::rules());
+    rules.extend(plex::rules());
     rules.extend(apps_rules());
     rules
 }
@@ -9100,6 +9106,20 @@ mod tests {
             "jellyfin_plugin_broken",
             "jellyfin_restart_pending",
             "plex_update_available",
+            "immich_jobs_failed",
+            "immich_ml_failing",
+            "immich_maintenance_mode",
+            "immich_user_quota_almost_full",
+            "immich_db_backup_stale",
+            "jellyfin_library_scan_stale",
+            "jellyfin_storage_almost_full",
+            "jellyfin_cpu_transcoding_heavy",
+            "jellyfin_failed_logins",
+            "plex_transcoder_too_slow",
+            "plex_transcode_error",
+            "plex_remote_access_failed",
+            "plex_signin_lost",
+            "plex_database_backup_off",
             "gitlab_runners_all_offline",
             "gitlab_sidekiq_backlog_high",
             "gitlab_migrations_pending",
@@ -9376,7 +9396,11 @@ mod tests {
             for mot in rule.query.split(|c: char| !c.is_alphanumeric() && c != '_') {
                 if mot.starts_with("dumbmonit_") {
                     assert!(
-                        PRODUITES.contains(&mot) || cloud::produced().contains(&mot),
+                        PRODUITES.contains(&mot)
+                            || cloud::produced().contains(&mot)
+                            || immich::PRODUCED.contains(&mot)
+                            || jellyfin::PRODUCED.contains(&mot)
+                            || plex::PRODUCED.contains(&mot),
                         "rule \"{}\" targets \"{mot}\", which no collector produces",
                         rule.uid
                     );

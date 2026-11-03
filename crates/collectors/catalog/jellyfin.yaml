@@ -6,11 +6,21 @@ metrics:
   - { name: jellyfin_transcodes, label: "Transcodes" }
   - { name: jellyfin_sessions, label: "Sessions" }
   - { name: jellyfin_streams_paused, label: "Streams paused" }
+  - { name: jellyfin_transcodes_software, label: "Transcodes on CPU" }
+  - { name: jellyfin_streaming_users, label: "Viewers" }
   - { name: jellyfin_scheduled_tasks_failed, label: "Scheduled tasks failed", better: "lower" }
   - { name: jellyfin_scheduled_tasks_running, label: "Scheduled tasks running" }
   - { name: jellyfin_scheduled_task_failed, label: "Scheduled task failed", unit: "bool", better: "lower" }
   - { name: jellyfin_library_scan_age_seconds, label: "Library scan age", unit: "s" }
   - { name: jellyfin_library_scan_last_ok, label: "Library scan last ok", unit: "bool" }
+  - { name: jellyfin_library_scan_scheduled, label: "Library scan scheduled", unit: "bool" }
+  - { name: jellyfin_libraries, label: "Libraries" }
+  - { name: jellyfin_libraries_scanning, label: "Libraries scanning" }
+  - { name: jellyfin_users, label: "Users" }
+  - { name: jellyfin_users_disabled, label: "Users disabled" }
+  - { name: jellyfin_failed_logins_recent, label: "Failed logins (last hour)", better: "lower" }
+  - { name: jellyfin_storage_used_percent, label: "Storage used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: jellyfin_storage_free_bytes, label: "Storage free", unit: "B", better: "higher" }
   - { name: jellyfin_plugins, label: "Plugins" }
   - { name: jellyfin_plugins_broken, label: "Plugins broken" }
   - { name: jellyfin_plugin_broken, label: "Plugin broken", unit: "bool" }
@@ -24,6 +34,11 @@ views:
     metrics:
       - jellyfin_sessions
       - jellyfin_streams_paused
+      - jellyfin_streaming_users
+      - jellyfin_failed_logins_recent
+      - jellyfin_libraries
+      - jellyfin_libraries_scanning
+      - jellyfin_users
       - jellyfin_scheduled_tasks_failed
       - jellyfin_scheduled_tasks_running
       - jellyfin_scheduled_task_failed
@@ -37,4 +52,7 @@ views:
       - jellyfin_version_info
   - view: timeseries
     title: "Playback"
-    metrics: [jellyfin_streams, jellyfin_transcodes]
+    metrics: [jellyfin_streams, jellyfin_transcodes, jellyfin_transcodes_software]
+  - view: timeseries
+    title: "Storage used"
+    metrics: [jellyfin_storage_used_percent]
