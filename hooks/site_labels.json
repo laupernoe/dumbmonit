@@ -1,0 +1,66 @@
+{
+ "de": {
+  "k172": "DumbMonit Startseite",
+  "k173": "Abschnitte",
+  "nav_docs": "Doku",
+  "nav_menu": "Menü",
+  "nav_product": "Produkt"
+ },
+ "en": {
+  "k010": "GitHub",
+  "k172": "DumbMonit home",
+  "k173": "Sections",
+  "nav_docs": "Docs",
+  "nav_menu": "Menu",
+  "nav_product": "Product"
+ },
+ "es": {
+  "k172": "Inicio de DumbMonit",
+  "k173": "Secciones",
+  "nav_docs": "Docs",
+  "nav_menu": "Menú",
+  "nav_product": "Producto"
+ },
+ "fr": {
+  "k172": "Accueil DumbMonit",
+  "k173": "Sections",
+  "nav_docs": "Docs",
+  "nav_menu": "Menu",
+  "nav_product": "Produit"
+ },
+ "it": {
+  "k172": "Home di DumbMonit",
+  "k173": "Sezioni",
+  "nav_docs": "Docs",
+  "nav_menu": "Menu",
+  "nav_product": "Prodotto"
+ },
+ "pt": {
+  "k172": "Página inicial do DumbMonit",
+  "k173": "Secções",
+  "nav_docs": "Docs",
+  "nav_menu": "Menu",
+  "nav_product": "Produto"
+ },
+ "pt-BR": {
+  "k172": "Página inicial do DumbMonit",
+  "k173": "Seções",
+  "nav_docs": "Docs",
+  "nav_menu": "Menu",
+  "nav_product": "Produto"
+ },
+ "ru": {
+  "k172": "Главная DumbMonit",
+  "k173": "Разделы",
+  "nav_docs": "Документация",
+  "nav_menu": "Меню",
+  "nav_product": "Продукт"
+ },
+ "zh-Hans": {
+  "k172": "DumbMonit 首页",
+  "k173": "章节",
+  "nav_docs": "文档",
+  "nav_menu": "菜单",
+  "nav_product": "产品"
+ }
+}
