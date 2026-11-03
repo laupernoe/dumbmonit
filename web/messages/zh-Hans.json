@@ -9301,5 +9301,15 @@
 	"devices_agent_remove_text": "删除监控项不会卸载代理：它会继续在机器上运行并再次请求注册。请先在机器上运行以下命令，再删除监控项。",
 	"devices_agent_remove_docker": "如果代理以 Docker 容器运行，请改用第二条命令。",
 	"devices_agent_remove_delete": "删除监控项",
-	"devices_agent_remove_cancel": "取消"
+	"devices_agent_remove_cancel": "取消",
+	"devices_agent_remove_auto": "自动移除代理",
+	"devices_agent_remove_auto_text": "删除监控项不会卸载代理。该代理在线且接受命令：它可以自行从机器上移除（服务、二进制文件和配置），随后删除监控项。",
+	"devices_agent_remove_manual": "或者在机器上手动移除，再删除监控项：",
+	"devices_agent_remove_waiting": "正在等待代理领取请求…",
+	"devices_agent_remove_running": "代理正在从机器上移除自身…",
+	"devices_agent_remove_done": "代理已从机器上移除。正在删除监控项…",
+	"devices_agent_remove_failed": "代理无法移除自身：{reason}",
+	"devices_agent_remove_failed_title": "代理无法移除自身。",
+	"devices_agent_remove_timeout": "代理在 2 分钟内未确认。请使用下方命令手动移除，再删除监控项。",
+	"devices_agent_remove_delete_anyway": "仍然删除监控项"
 }

@@ -27,6 +27,7 @@ mod shutdown;
 #[cfg(test)]
 mod testsupport;
 mod tls;
+mod uninstall;
 #[cfg(windows)]
 mod winsvc;
 

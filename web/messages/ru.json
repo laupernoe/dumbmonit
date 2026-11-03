@@ -9587,5 +9587,15 @@
 	"devices_agent_remove_text": "Удаление монитора не удаляет агента: он продолжает работать на машине и снова просит регистрацию. Сначала выполните это на машине, затем удалите монитор.",
 	"devices_agent_remove_docker": "Если агент работает как контейнер Docker, используйте вторую команду.",
 	"devices_agent_remove_delete": "Удалить монитор",
-	"devices_agent_remove_cancel": "Отмена"
+	"devices_agent_remove_cancel": "Отмена",
+	"devices_agent_remove_auto": "Удалить агента автоматически",
+	"devices_agent_remove_auto_text": "Удаление монитора не удаляет агента. Он в сети и принимает команды: он может сам удалиться с машины (служба, исполняемый файл и конфигурация), после чего монитор будет удалён.",
+	"devices_agent_remove_manual": "Или удалите его вручную на машине, затем удалите монитор:",
+	"devices_agent_remove_waiting": "Ожидание, пока агент заберёт запрос…",
+	"devices_agent_remove_running": "Агент удаляется с машины…",
+	"devices_agent_remove_done": "Агент удалён с машины. Удаление монитора…",
+	"devices_agent_remove_failed": "Агенту не удалось удалиться: {reason}",
+	"devices_agent_remove_failed_title": "Агенту не удалось удалиться.",
+	"devices_agent_remove_timeout": "Агент не подтвердил удаление в течение 2 минут. Удалите его вручную командами ниже, затем удалите монитор.",
+	"devices_agent_remove_delete_anyway": "Всё равно удалить монитор"
 }

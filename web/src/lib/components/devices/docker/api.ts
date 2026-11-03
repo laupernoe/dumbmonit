@@ -17,7 +17,7 @@ export type ContainerHealth = 'none' | 'healthy' | 'unhealthy' | 'starting';
  */
 export type CommandStatus = 'queued' | 'running' | 'done' | 'failed' | 'cancelled' | 'expired';
 
-export type CommandKind = 'container.restart' | 'container.update';
+export type CommandKind = 'container.restart' | 'container.update' | 'agent.uninstall';
 
 export interface ContainerPolicy {
 	auto_restart: boolean;

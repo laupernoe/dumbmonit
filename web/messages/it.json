@@ -9401,5 +9401,15 @@
 	"devices_agent_remove_text": "Eliminare il monitor non disinstalla l'agente: continua a funzionare sulla macchina e chiede di nuovo l'iscrizione. Esegui prima questo sulla macchina, poi elimina il monitor.",
 	"devices_agent_remove_docker": "Se l'agente gira come container Docker, usa invece il secondo comando.",
 	"devices_agent_remove_delete": "Elimina il monitor",
-	"devices_agent_remove_cancel": "Annulla"
+	"devices_agent_remove_cancel": "Annulla",
+	"devices_agent_remove_auto": "Rimuovi l'agente automaticamente",
+	"devices_agent_remove_auto_text": "Eliminare il monitor non disinstalla l'agente. È online e accetta comandi: può rimuoversi da solo dalla macchina (servizio, binario e configurazione), poi il monitor viene eliminato.",
+	"devices_agent_remove_manual": "Oppure rimuovilo a mano sulla macchina, poi elimina il monitor:",
+	"devices_agent_remove_waiting": "In attesa che l'agente prenda in carico la richiesta…",
+	"devices_agent_remove_running": "L'agente si sta rimuovendo dalla macchina…",
+	"devices_agent_remove_done": "Agente rimosso dalla macchina. Eliminazione del monitor…",
+	"devices_agent_remove_failed": "L'agente non è riuscito a rimuoversi: {reason}",
+	"devices_agent_remove_failed_title": "L'agente non è riuscito a rimuoversi.",
+	"devices_agent_remove_timeout": "L'agente non ha confermato entro 2 minuti. Rimuovilo a mano con i comandi qui sotto, poi elimina il monitor.",
+	"devices_agent_remove_delete_anyway": "Elimina comunque il monitor"
 }

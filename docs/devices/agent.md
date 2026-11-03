@@ -357,6 +357,31 @@ on every system.
     so loudly; `--bin=PATH` installs a local file as is, the file being yours
     to verify.
 
+### Removing an agent {#removing-an-agent}
+
+Deleting a machine's monitor does not uninstall its agent: the agent keeps
+running and asks to enrol again. When you delete the monitor, DumbMonit offers
+**Remove the agent automatically** if the agent can do it:
+
+- it accepts commands (`commands: true`, the default; an agent configured with
+  `commands: false` never receives the request);
+- it reported in the last few minutes;
+- it was installed by `install.sh` or `install.ps1`, outside a container.
+
+The agent then starts a helper that, a few seconds later, does what
+`--uninstall` (`-Uninstall`) does: it stops and removes the service and deletes
+the binary and the configuration. Nothing is downloaded. The agent confirms
+just before the clean-up and stops; DumbMonit then deletes the monitor. Only an
+administrator signed in to the web interface can ask for it (API tokens
+cannot), and the request is recorded in the audit log.
+
+An agent running in Docker refuses: remove its container instead
+(`docker rm -f dumbmonit-agent`, then `docker volume rm dumbmonit-agent`). If
+the agent refuses, does not answer within two minutes or is offline, the page
+shows the commands to run on the machine, and **Delete the monitor anyway**.
+By hand, at any time, the install command with `--uninstall` (`-Uninstall` on
+Windows) in place of its other flags does the same.
+
 ### Installer flags
 
 | `install.sh` | `install.ps1` | Effect |

@@ -17,6 +17,7 @@ import type {
 	AgentTokenPayload,
 	TokenMachine,
 	RebindWindow,
+	AgentCommandView,
 	AgentModule,
 	AckPayload,
 	Alert,
@@ -774,6 +775,32 @@ export async function getAgentHost(id: TargetId, signal?: AbortSignal): Promise<
  */
 export function allowAgentRebind(id: TargetId): Promise<RebindWindow> {
 	return request<RebindWindow>(`/targets/${id}/agent/rebind`, { method: 'POST' });
+}
+
+/**
+ * Asks the agent to remove itself from the machine (`agent.uninstall`): service,
+ * binary and configuration. Administrator session only; `409` when the agent
+ * does not run commands, has not reported lately, or a removal is already
+ * pending. The monitor stays: follow the command with `getAgentCommand`, and
+ * delete the monitor once the agent answered `done`.
+ */
+export function uninstallAgent(id: TargetId): Promise<AgentCommandView> {
+	return request<AgentCommandView>(`/targets/${id}/agent/uninstall`, { method: 'POST' });
+}
+
+/** One of the machine's recent commands; `null` once it left the recent list. */
+export async function getAgentCommand(
+	id: TargetId,
+	commandId: number,
+	signal?: AbortSignal
+): Promise<AgentCommandView | null> {
+	const recent = await request<AgentCommandView[]>(`/targets/${id}/commands`, { signal });
+	return recent.find((command) => command.id === commandId) ?? null;
+}
+
+/** Pulls a command back before the agent picks it up; `409` once it runs or is closed. */
+export function cancelAgentCommand(id: TargetId, commandId: number): Promise<void> {
+	return request<void>(`/targets/${id}/commands/${commandId}`, { method: 'DELETE' });
 }
 
 /** The services the agent can detect on this machine, found or not. Empty on an older server. */

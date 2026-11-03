@@ -9401,5 +9401,15 @@
 	"devices_agent_remove_text": "Das Löschen des Monitors deinstalliert den Agenten nicht: Er läuft weiter und bittet erneut um Registrierung. Führen Sie zuerst dies auf dem Rechner aus und löschen Sie dann den Monitor.",
 	"devices_agent_remove_docker": "Läuft der Agent als Docker-Container, verwenden Sie stattdessen den zweiten Befehl.",
 	"devices_agent_remove_delete": "Monitor löschen",
-	"devices_agent_remove_cancel": "Abbrechen"
+	"devices_agent_remove_cancel": "Abbrechen",
+	"devices_agent_remove_auto": "Agent automatisch entfernen",
+	"devices_agent_remove_auto_text": "Das Löschen des Monitors deinstalliert den Agenten nicht. Er ist online und nimmt Befehle an: Er kann sich selbst vom Rechner entfernen (Dienst, Programmdatei und Konfiguration), danach wird der Monitor gelöscht.",
+	"devices_agent_remove_manual": "Oder entfernen Sie ihn von Hand auf dem Rechner und löschen Sie dann den Monitor:",
+	"devices_agent_remove_waiting": "Warten, bis der Agent die Anfrage abholt …",
+	"devices_agent_remove_running": "Der Agent entfernt sich vom Rechner …",
+	"devices_agent_remove_done": "Agent vom Rechner entfernt. Der Monitor wird gelöscht …",
+	"devices_agent_remove_failed": "Der Agent konnte sich nicht entfernen: {reason}",
+	"devices_agent_remove_failed_title": "Der Agent konnte sich nicht entfernen.",
+	"devices_agent_remove_timeout": "Der Agent hat innerhalb von 2 Minuten nicht bestätigt. Entfernen Sie ihn mit den Befehlen unten von Hand und löschen Sie dann den Monitor.",
+	"devices_agent_remove_delete_anyway": "Monitor trotzdem löschen"
 }

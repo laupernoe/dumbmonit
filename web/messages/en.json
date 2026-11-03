@@ -9401,5 +9401,15 @@
 	"devices_agent_remove_text": "Deleting the monitor does not uninstall the agent: it keeps running on the machine and asks to enrol again. Run this on the machine first, then delete the monitor.",
 	"devices_agent_remove_docker": "If the agent runs as a Docker container, use the second command instead.",
 	"devices_agent_remove_delete": "Delete the monitor",
-	"devices_agent_remove_cancel": "Cancel"
+	"devices_agent_remove_cancel": "Cancel",
+	"devices_agent_remove_auto": "Remove the agent automatically",
+	"devices_agent_remove_auto_text": "Deleting the monitor does not uninstall the agent. It is online and accepts commands: it can remove itself from the machine (service, binary and configuration), then the monitor is deleted.",
+	"devices_agent_remove_manual": "Or remove it by hand on the machine, then delete the monitor:",
+	"devices_agent_remove_waiting": "Waiting for the agent to pick up the request…",
+	"devices_agent_remove_running": "The agent is removing itself from the machine…",
+	"devices_agent_remove_done": "Agent removed from the machine. Deleting the monitor…",
+	"devices_agent_remove_failed": "The agent could not remove itself: {reason}",
+	"devices_agent_remove_failed_title": "The agent could not remove itself.",
+	"devices_agent_remove_timeout": "The agent did not confirm within 2 minutes. Remove it by hand with the commands below, then delete the monitor.",
+	"devices_agent_remove_delete_anyway": "Delete the monitor anyway"
 }

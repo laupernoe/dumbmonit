@@ -5976,6 +5976,34 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/agent/uninstall:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    post:
+      operationId: uninstallAgent
+      tags: [Agents]
+      summary: Ask the agent to remove itself from the machine
+      description: >-
+        Queues an `agent.uninstall` command: the agent stops its service and removes
+        its service definition, binary and configuration, as the installer's
+        uninstall option does, then stops. It answers `done` just before the clean-up
+        starts; follow it with `GET /api/targets/{id}/commands`. The monitor itself
+        is not deleted. Administrator session only, recorded in the audit log.
+        `409` when the agent cannot run commands, has not reported for ten minutes,
+        or an uninstall is already queued or running. The agent refuses when it runs
+        in a container or was not installed by the install scripts.
+      x-token-scope: none
+      responses:
+        "201":
+          description: The queued command.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Command" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
   /api/targets/{id}/agent/relay:
     parameters:
       - $ref: "#/components/parameters/TargetId"
