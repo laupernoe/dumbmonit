@@ -15,7 +15,7 @@
 		type NotificationPolicy
 	} from '#lib/api/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, ClickSpark, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
+	import { Button, ClickSpark, DocLink, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
 	import { matcherIsEmpty, matcherSentence } from '#lib/components/alerts/helpers.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
@@ -260,7 +260,7 @@
 			</Field>
 
 			<div class="grid gap-1">
-				<Field label={m.notifications_policy_actions()} for="policy-actions" inline help={m.notifications_policy_actions_help()}>
+				<Field label={m.notifications_policy_actions()} for="policy-actions" inline>
 					<Toggle id="policy-actions" bind:checked={actionLinks} disabled={saving || !auth.isAdmin} label={m.notifications_policy_actions()} />
 				</Field>
 				{#if actionLinks && publicUrl.trim() === ''}
@@ -268,7 +268,7 @@
 				{/if}
 			</div>
 
-			<Field label={m.notifications_policy_silence_resolutions()} for="policy-silence-resolutions" inline help={m.notifications_policy_silence_resolutions_help()}>
+			<Field label={m.notifications_policy_silence_resolutions()} for="policy-silence-resolutions" inline>
 				<Toggle id="policy-silence-resolutions" bind:checked={silenceRecoveries} disabled={saving || !auth.isAdmin} label={m.notifications_policy_silence_resolutions()} />
 			</Field>
 
@@ -307,7 +307,7 @@
 				</button>
 				{#if showMore}
 					<div id="policy-more" class="grid gap-4 rounded-lg border border-line bg-surface-2 p-4">
-						<Field label={m.notifications_policy_flap()} for="policy-flap" inline help={m.notifications_policy_flap_help()}>
+						<Field label={m.notifications_policy_flap()} for="policy-flap" inline>
 							<Toggle id="policy-flap" bind:checked={flapOn} disabled={saving || !auth.isAdmin} label={m.notifications_policy_flap()} />
 						</Field>
 						{#if flapOn}
@@ -356,9 +356,6 @@
 
 		<div class="mt-6 border-t border-line pt-4">
 			<h3 class="text-sm font-semibold text-ink">{m.notifications_policy_per_channel()}</h3>
-			<p class="mt-0.5 text-[0.8125rem] text-ink-2">
-				{m.notifications_policy_per_channel_note()}
-			</p>
 			{#if channels.some((channel) => channel.enabled)}
 				<ul class="mt-2 grid gap-1.5" role="list">
 					{#each channels.filter((channel) => channel.enabled) as channel (channel.id)}
@@ -378,4 +375,5 @@
 			{/if}
 		</div>
 	{/if}
+	<DocLink page="notifications/" class="mt-3" />
 </Panel>

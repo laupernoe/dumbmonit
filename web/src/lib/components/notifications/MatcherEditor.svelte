@@ -139,7 +139,6 @@
 		label={m.notifications_matcher_only_some()}
 		for="channel-matcher-on"
 		inline
-		help={m.notifications_matcher_help()}
 	>
 		<Toggle
 			id="channel-matcher-on"
