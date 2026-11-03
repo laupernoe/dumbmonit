@@ -17,7 +17,7 @@ You can use either way, or both on the same NAS. In DumbMonit, **Add a monitor
 |---|---|---|
 | Connection | The NAS connects out to DumbMonit; no port opened | DumbMonit connects to the NAS (port 5001) |
 | Credential | Enrolment token, used once; no DSM account stored | A dedicated read-only DSM account, stored in DumbMonit |
-| Reports | CPU, memory, disks, network | Volumes, storage pools, disk health and SMART, temperatures, Hyper Backup and Active Backup tasks, Synology Drive and Photos |
+| Reports | CPU, memory, disks, network; RAID arrays, volumes, disk temperatures, packages, SMB/NFS, UPS | Volumes, storage pools, disk health and SMART, temperatures, Hyper Backup and Active Backup tasks, Synology Drive and Photos |
 | DSM version | 7.x only | 6 and 7 |
 | Needs | Installing the package on each NAS | The NAS reachable from the server (or a relay agent) |
 
