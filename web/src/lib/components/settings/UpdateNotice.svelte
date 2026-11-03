@@ -12,7 +12,7 @@
 	import { checkUpdateNow, getUpdate, setUpdateCheck } from '#lib/api/update.js';
 	import type { UpdateInfo } from '#lib/api/types.js';
 	import { formatRelative } from '#lib/format.js';
-	import { Button, CopyBlock, ErrorNotice, Toggle } from '#lib/ui/index.js';
+	import { Button, CopyBlock, DocLink, ErrorNotice, Toggle } from '#lib/ui/index.js';
 
 	interface Props {
 		/** Reopens the "What's new" window; omit to hide the button. */
@@ -20,7 +20,6 @@
 	}
 	let { onSeeWhatsNew }: Props = $props();
 
-	const DOCS = 'https://dumbmonit.readthedocs.io/en/latest/install/update/';
 	const COMMAND = 'docker compose pull && docker compose up -d';
 
 	let info = $state<UpdateInfo | null>(null);
@@ -97,22 +96,10 @@
 			</div>
 			{#if guideOpen}
 				<div class="mt-3 grid gap-3 rounded-lg border border-line bg-surface-2 p-4" data-testid="update-guide">
-					<ol class="grid list-decimal gap-2 pl-5 text-ink-2">
-						<li>
-							<strong class="text-ink">{m.settings_update_backup_lead()}</strong>
-							{m.settings_update_backup_body()}
-						</li>
-						<li>
-							<strong class="text-ink">{m.settings_update_pull_lead()}</strong>, {m.settings_update_pull_body()}
-						</li>
-					</ol>
 					<CopyBlock sudo value={COMMAND} label={m.settings_update_copy_command()} />
-					<p class="text-ink-2">
-						{m.settings_update_data_kept()}
-					</p>
 					<div class="flex flex-wrap gap-x-4 gap-y-1 font-medium">
 						<a href={info.release_url ?? 'https://github.com/laupernoe/dumbmonit/releases'} target="_blank" rel="noopener" class="text-signal-ink hover:underline">{m.settings_update_release_notes()}</a>
-						<a href={DOCS} target="_blank" rel="noopener" class="text-signal-ink hover:underline">{m.settings_update_guide()}</a>
+						<DocLink page="install/update/" class="min-h-0" />
 					</div>
 				</div>
 			{/if}
@@ -146,9 +133,6 @@
 				label={m.settings_update_toggle()}
 				onchange={toggle}
 			/>
-			<p class="min-w-0 text-ink-3">
-				{m.settings_update_toggle_help()}
-			</p>
 		</div>
 	{/if}
 </div>
