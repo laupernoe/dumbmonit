@@ -1,5 +1,7 @@
 # Synology DSM
 
+![The NAS fleet: one line per Synology, with its model, DSM version and health](../assets/screenshots/nas-fleet-light.png){ loading=lazy }
+
 Synology NAS through the DSM web API: volumes, storage pools, disk health,
 temperature, Hyper Backup tasks, Active Backup for Business tasks, and
 Synology Drive and Photos. The first reason to monitor a NAS is its disks: a
