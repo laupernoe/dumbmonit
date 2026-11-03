@@ -14,6 +14,7 @@ use crate::alerting::model::{
 mod cloud;
 mod nextcloud;
 mod postgres;
+mod synology;
 
 /// Taux d'occupation processeur, toutes sources confondues.
 ///
@@ -7759,6 +7760,7 @@ pub fn builtin_rules() -> Vec<Rule> {
     rules.extend(cloud::rules());
     rules.extend(nextcloud::rules());
     rules.extend(postgres::rules());
+    rules.extend(synology::rules());
     rules.extend(apps_rules());
     rules
 }
@@ -9383,7 +9385,8 @@ mod tests {
                         PRODUITES.contains(&mot)
                             || cloud::produced().contains(&mot)
                             || nextcloud::PRODUCED.contains(&mot)
-                            || postgres::PRODUCED.contains(&mot),
+                            || postgres::PRODUCED.contains(&mot)
+                            || synology::PRODUCED.contains(&mot),
                         "rule \"{}\" targets \"{mot}\", which no collector produces",
                         rule.uid
                     );
