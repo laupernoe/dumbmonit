@@ -258,14 +258,16 @@
 		viewer: () => m.settings_users_role_viewer()
 	};
 
-	async function test() {
+	async function test(): Promise<boolean> {
 		testing = true;
 		report = null;
 		testError = null;
 		try {
 			report = await testLdapConnection(payload(), testUsername.trim() || undefined);
+			return report.ok;
 		} catch (cause) {
 			testError = cause;
+			return false;
 		} finally {
 			testing = false;
 		}
@@ -401,7 +403,7 @@
 			{/if}
 
 			<div class="flex flex-wrap items-center gap-2" aria-live="polite">
-				<Button type="submit" variant="secondary" loading={saving}>{m.settings_ldap_save()}</Button>
+				<Button type="submit" variant="secondary" loading={saving} success={saved}>{m.settings_ldap_save()}</Button>
 				<UnsavedBadge dirty={tracker.dirty} />
 				{#if config.source === 'settings'}
 					<Confirm variant="secondary" size="md" confirmLabel={config.env_available ? m.settings_ldap_use_env() : m.settings_ldap_turn_off()} loading={clearing} onconfirm={clearSaved}>
@@ -419,7 +421,7 @@
 				<Field label={m.settings_ldap_test_username()} for="ldap-test-user" help={m.settings_ldap_test_username_help()} class="min-w-0 flex-[1_1_14rem]">
 					<input id="ldap-test-user" type="text" class="input" bind:value={testUsername} placeholder="jdoe" autocomplete="off" autocapitalize="off" spellcheck="false" disabled={testing} />
 				</Field>
-				<Button variant="secondary" onclick={() => void test()} loading={testing} disabled={saving || !form.url.trim()}>
+				<Button variant="secondary" onclick={() => test()} loading={testing} disabled={saving || !form.url.trim()}>
 					<Radar class="size-4" aria-hidden="true" />
 					{m.settings_ldap_test()}
 				</Button>

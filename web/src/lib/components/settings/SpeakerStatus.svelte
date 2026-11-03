@@ -98,7 +98,7 @@
 	let testing = $state<string | null>(null);
 	let testResult = $state<{ ok: boolean; message: string } | null>(null);
 
-	async function test(deviceId: string | null, key: string) {
+	async function test(deviceId: string | null, key: string): Promise<boolean> {
 		testing = key;
 		testResult = null;
 		try {
@@ -108,8 +108,10 @@
 				message: m.settings_speaker_test_ok({ name: played.speaker_name })
 			};
 			void load();
+			return true;
 		} catch (cause) {
 			testResult = { ok: false, message: cause instanceof Error ? cause.message : m.settings_speaker_test_fail() };
+			return false;
 		} finally {
 			testing = null;
 		}
@@ -235,7 +237,7 @@
 									size="sm"
 									class="ml-auto"
 									loading={testing === wall.display}
-									onclick={() => void test(wall.device_id, wall.display)}
+									onclick={() => test(wall.device_id, wall.display)}
 								>
 									<Play class="size-3.5" aria-hidden="true" />
 									{m.settings_speaker_test_sound()}
@@ -251,7 +253,7 @@
 		{/if}
 
 		<div class="mt-4 flex flex-wrap items-center gap-2">
-			<Button variant="secondary" size="md" loading={testing === 'speaker'} onclick={() => void test(null, 'speaker')}>
+			<Button variant="secondary" size="md" loading={testing === 'speaker'} onclick={() => test(null, 'speaker')}>
 				<Play class="size-4" aria-hidden="true" />
 				{m.settings_speaker_test_sound()}
 			</Button>

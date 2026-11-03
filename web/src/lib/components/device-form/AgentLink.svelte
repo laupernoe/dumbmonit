@@ -35,12 +35,14 @@
 		(fresh ?? targets).filter((t) => t.kind === 'agent').sort((a, b) => a.name.localeCompare(b.name))
 	);
 
-	async function refresh() {
+	async function refresh(): Promise<boolean> {
 		refreshing = true;
 		try {
 			fresh = await listTargets();
+			return true;
 		} catch {
 			// The list stays as it was: the user can retry.
+			return false;
 		} finally {
 			refreshing = false;
 		}
