@@ -25,7 +25,7 @@
 	let armed = $state(false);
 	let timer: ReturnType<typeof setTimeout> | null = null;
 
-	function click() {
+	function click(): void | Promise<void> {
 		if (!armed) {
 			armed = true;
 			timer = setTimeout(() => (armed = false), 5000);
@@ -33,7 +33,7 @@
 		}
 		if (timer) clearTimeout(timer);
 		armed = false;
-		void onconfirm();
+		return onconfirm();
 	}
 </script>
 

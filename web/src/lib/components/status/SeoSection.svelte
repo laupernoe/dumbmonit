@@ -93,7 +93,7 @@
 		void loadMessages(promptLocale(shown.lang, locales, getLocale()));
 	});
 
-	async function copyPrompt() {
+	async function copyPrompt(): Promise<boolean> {
 		copyFailed = false;
 		const wanted = promptLocale(shown.lang, locales, getLocale());
 		if (!hasMessages(wanted)) await loadMessages(wanted);
@@ -103,6 +103,7 @@
 		copied = ok;
 		copyFailed = !ok;
 		if (ok) setTimeout(() => (copied = false), 2500);
+		return ok;
 	}
 
 	const FIELD_LABEL: Record<SeoTextKey, () => string> = {
@@ -129,7 +130,7 @@
 		}
 	}
 
-	function applyPasted() {
+	function applyPasted(): boolean {
 		applied = false;
 		pasteNotes = [];
 		const result = parseSeoReply(pasted);
@@ -140,13 +141,14 @@
 				not_object: m.status_seo_paste_not_object(),
 				no_fields: m.status_seo_paste_no_fields()
 			}[result.reason];
-			return;
+			return false;
 		}
 		pasteError = null;
 		seo = { ...seo, ...result.values };
 		pasteNotes = result.problems.map(problemText);
 		applied = true;
 		pasted = '';
+		return true;
 	}
 
 	const COUNT_OK = 'text-[0.75rem] tnum text-ink-3';
