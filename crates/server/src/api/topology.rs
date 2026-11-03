@@ -52,7 +52,7 @@
 //! un réseau distant. Sans aucun de ces indices, le nœud est au site principal.
 //! L'emplacement affecté à la main (`targets.location_id`, « Place at ») passe
 //! avant tout le reste : sur un emplacement distant, la cible est dessinée dans
-//! le cadre de ce site ; sur l'emplacement du site principal, au site principal.
+//! le cadre de ce site (à défaut de site déclaré, du nom de l'emplacement).
 //!
 //! Un invité ou un voisin n'est relié à un équipement surveillé que si son nom
 //! désigne une seule cible : un nom ambigu ne crée aucun lien plutôt qu'un lien
@@ -497,9 +497,8 @@ pub async fn target_sites(state: &AppState) -> ApiResult<HashMap<TargetId, Optio
     Ok(nodes.into_iter().filter_map(|n| n.target_id.map(|id| (id, n.site))).collect())
 }
 
-/// Site imposé par l'emplacement affecté à une cible : `Some(None)` pour
-/// l'emplacement du site principal, `Some(Some((nom, "location")))` pour un
-/// emplacement distant. Une cible sans affectation n'y figure pas.
+/// Site imposé par l'emplacement affecté à une cible : `Some(Some((nom,
+/// "location")))`. Une cible sans affectation n'y figure pas.
 pub type Placed = HashMap<TargetId, Option<(String, &'static str)>>;
 
 /// Lit les affectations d'emplacement et en tire le site de chaque cible placée.
@@ -532,9 +531,6 @@ pub fn placed_from(
         .iter()
         .filter_map(|(target, location)| {
             let location = by_id.get(location)?;
-            if location.main_site {
-                return Some((*target, None));
-            }
             let name = location_name(location);
             if name.is_empty() {
                 return Some((*target, None));
@@ -1442,16 +1438,15 @@ mod tests {
     #[test]
     fn un_emplacement_affecte_place_la_cible_dans_le_cadre_du_site() {
         use super::super::locations::LocationRow;
-        let loc = |id, name: &str, site: &str, main_site| LocationRow {
+        let loc = |id, name: &str, site: &str| LocationRow {
             id,
             name: name.into(),
             address: String::new(),
             latitude: 0.0,
             longitude: 0.0,
             site: site.into(),
-            main_site,
         };
-        let locations = [loc(1, "Siège", "", true), loc(2, "Crissier", "crissier", false)];
+        let locations = [loc(1, "Siège", ""), loc(2, "Crissier", "crissier")];
         let relay = row(1, "dm01", "dm01", "agent");
         let nas = row(2, "nas60", "10.0.0.2", "synology");
         let fw = row(3, "fw03", "10.0.0.3", "opnsense");
@@ -1474,7 +1469,11 @@ mod tests {
             (Some("Crissier".into()), Some("location")),
             "orthographe du site connu"
         );
-        assert_eq!(site("t3"), (None, None), "l'emplacement principal ramène au site principal");
+        assert_eq!(
+            site("t3"),
+            (Some("Siège".into()), Some("location")),
+            "un emplacement sans site"
+        );
         assert_eq!(site("t4"), (Some("Crissier".into()), Some("location")), "le service suit");
         assert_eq!(site("g2:v9").0.as_deref(), Some("Crissier"), "l'invité aussi");
         assert_eq!(site("t5"), (None, None));

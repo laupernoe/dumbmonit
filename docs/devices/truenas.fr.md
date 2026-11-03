@@ -114,6 +114,36 @@ Quelques choses que fait TrueNAS qui valent d'être connues :
   essayés ; `smart/test/results` a disparu en 25.10 et est alors ignoré en
   silence.
 
+### Vérifications supplémentaires
+
+En plus des pools, des disques et des tâches, le collecteur lit quelques autres
+endroits où un NAS tombe en panne sans bruit. Chaque appel est facultatif : une
+version de TrueNAS qui ne le connaît pas, ou un appel refusé, coûte ces
+métriques et rien d'autre.
+
+* **Certificat de l'interface web.** `certificate_expiry_days` par certificat
+  (négatif une fois expiré). Seul le certificat qui sert l'interface web porte
+  `in_use="1"`, et seul lui déclenche une alerte : un certificat de rechange
+  périmé ne gêne personne. Les demandes de signature sont ignorées.
+* **Pool de démarrage.** `boot_pool_healthy` et `boot_pool_used_percent`. Un
+  miroir de démarrage dégradé démarre encore ; le disque suivant qui lâche
+  laisse le NAS sans système. Les anciens environnements de démarrage
+  s'accumulent à chaque mise à jour et un pool de démarrage plein bloque la
+  suivante.
+* **Tâches de sauvegarde distantes.** Cloud sync, rsync et sauvegarde cloud :
+  `backup_task_failed` (1 si le dernier travail a échoué, 0 s'il a réussi) et
+  `backup_task_last_run_age_seconds`. Une tâche désactivée, jamais lancée ou
+  en cours ne publie aucun échec. Pilotées par l'option `tasks`.
+* **Applications et machines virtuelles.** `app_running`, `app_crashed` et
+  `app_upgrade_available` par application, et `vm_running` pour les seules
+  machines virtuelles qui démarrent avec le NAS (une machine arrêtée exprès n'a
+  pas de série). Pilotées par l'option `services`.
+
+Règles intégrées ajoutées : certificat du NAS bientôt expiré (14 jours),
+certificat du NAS expiré (2 jours), pool de démarrage du NAS dégradé, pool de
+démarrage du NAS presque plein (85 %), tâche de sauvegarde distante du NAS en
+échec, application du NAS plantée, machine virtuelle du NAS arrêtée.
+
 Règles intégrées qui s'appliquent : Surveillance inaccessible, pool NAS
 dégradé, erreurs de disque NAS, pool NAS presque plein, scrub NAS a trouvé
 des erreurs, scrub NAS en retard, disque NAS a échoué son test SMART,

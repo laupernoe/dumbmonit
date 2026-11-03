@@ -61,6 +61,26 @@ metrics:
   - { name: synology_scrape_errors, label: "Scrape errors", better: "lower" }
   - { name: synology_scrape_duration_seconds, label: "Scrape duration", unit: "s", better: "lower" }
   - { name: synology_up, label: "Up" }
+  - { name: synology_volume_read_only, label: "Volume read-only", unit: "bool", better: "lower" }
+  - { name: synology_volume_locked, label: "Volume locked", unit: "bool", better: "lower" }
+  - { name: synology_volume_inode_full, label: "Volume out of inodes", unit: "bool", better: "lower" }
+  - { name: synology_volume_task_progress_percent, label: "Volume task progress", unit: "%", min: 0, max: 100 }
+  - { name: synology_pool_task_progress_percent, label: "Pool task progress", unit: "%", min: 0, max: 100 }
+  - { name: synology_pool_scrub_scheduled, label: "Data scrubbing scheduled", unit: "bool", better: "higher" }
+  - { name: synology_pool_scrub_age_seconds, label: "Last data scrubbing", unit: "s", better: "lower" }
+  - { name: synology_ssd_cache_hit_rate_percent, label: "SSD cache hit rate", unit: "%", better: "higher", min: 0, max: 100 }
+  - { name: synology_system_rebuilding, label: "System rebuilding", unit: "bool" }
+  - { name: synology_disk_busy_percent, label: "Disk busy", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: synology_disk_read_bytes_per_second, label: "Disk read", unit: "B/s" }
+  - { name: synology_disk_write_bytes_per_second, label: "Disk write", unit: "B/s" }
+  - { name: synology_disk_read_iops, label: "Disk reads", unit: "/s" }
+  - { name: synology_disk_write_iops, label: "Disk writes", unit: "/s" }
+  - { name: synology_certificate_expires_in_seconds, label: "Certificate expires in", unit: "s", better: "higher" }
+  - { name: synology_certificate_broken, label: "Certificate broken", unit: "bool", better: "lower" }
+  - { name: synology_packages_installed, label: "Packages installed" }
+  - { name: synology_package_running, label: "Package running", unit: "bool" }
+  - { name: synology_connections_total, label: "Open connections" }
+  - { name: synology_connections, label: "Connections by protocol" }
 views:
   - view: stat
     title: "Current values"
@@ -90,6 +110,10 @@ views:
       - synology_disk_bad_sector_exceeded
       - synology_disk_life_below_threshold
       - synology_pool_status
+      - synology_pool_scrub_age_seconds
+      - synology_ssd_cache_hit_rate_percent
+      - synology_certificate_expires_in_seconds
+      - synology_connections_total
       - synology_ssd_cache_status
       - synology_system_crashed
       - synology_system_need_repair

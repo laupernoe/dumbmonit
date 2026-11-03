@@ -341,15 +341,13 @@ const KIND_KEYWORDS: Record<string, string> = {
 /**
  * What the agent reports once installed, each as its own entry: nobody looks
  * for "Docker containers" under "Server with agent". Every one of them leads
- * to the agent's install; `next` says what happens then. Kept in line with
+ * to the agent's install. Kept in line with
  * what `crates/agent/src/collect` really reads.
  */
 export interface AgentFeature {
 	id: string;
 	label: string;
 	summary: string;
-	/** Shown above the install form: how this one arrives once the agent runs. */
-	next: string;
 	keywords: string;
 	icon: typeof LucideIcon;
 }
@@ -362,7 +360,6 @@ export const AGENT_FEATURES: AgentFeature[] = [
 		id: 'relay',
 		label: m.deviceform_feature_relay_label(),
 		summary: m.deviceform_feature_relay_summary(),
-		next: m.deviceform_feature_relay_next(),
 		keywords: 'relay remote site branch office second site client customer nat firewall vpn vps network probe proxy satellite outpost',
 		icon: RadioTower
 	},
@@ -370,7 +367,6 @@ export const AGENT_FEATURES: AgentFeature[] = [
 		id: 'docker',
 		label: m.deviceform_feature_docker_label(),
 		summary: m.deviceform_feature_docker_summary(),
-		next: m.deviceform_feature_docker_next(),
 		keywords: 'docker container compose image update restart portainer',
 		icon: Container
 	},
@@ -378,7 +374,6 @@ export const AGENT_FEATURES: AgentFeature[] = [
 		id: 'plakar',
 		label: m.deviceform_feature_plakar_label(),
 		summary: m.deviceform_feature_plakar_summary(),
-		next: m.deviceform_feature_plakar_next(),
 		keywords: 'plakar backup snapshot kloset restore',
 		icon: DatabaseBackup
 	},
@@ -386,7 +381,6 @@ export const AGENT_FEATURES: AgentFeature[] = [
 		id: 'backups',
 		label: m.deviceform_feature_backups_label(),
 		summary: m.deviceform_feature_backups_summary(),
-		next: m.deviceform_feature_backups_next(),
 		keywords: 'restic borg borgbackup borgmatic backup snapshot archive repository repo',
 		icon: ArchiveRestore
 	},
@@ -394,7 +388,6 @@ export const AGENT_FEATURES: AgentFeature[] = [
 		id: 'wireguard',
 		label: m.deviceform_feature_wireguard_label(),
 		summary: m.deviceform_feature_wireguard_summary(),
-		next: m.deviceform_feature_wireguard_next(),
 		keywords: 'wireguard wg vpn tunnel peer handshake site-to-site wg-quick wg-easy',
 		icon: Waypoints
 	},
@@ -402,7 +395,6 @@ export const AGENT_FEATURES: AgentFeature[] = [
 		id: 'ipsec',
 		label: m.deviceform_feature_ipsec_label(),
 		summary: m.deviceform_feature_ipsec_summary(),
-		next: m.deviceform_feature_ipsec_next(),
 		keywords: 'ipsec strongswan swanctl vici tunnel ike child sa vpn site-to-site racoon libreswan',
 		icon: Cable
 	},
@@ -410,7 +402,6 @@ export const AGENT_FEATURES: AgentFeature[] = [
 		id: 'speedtest',
 		label: m.deviceform_feature_speedtest_label(),
 		summary: m.deviceform_feature_speedtest_summary(),
-		next: m.deviceform_feature_speedtest_next(),
 		keywords: 'speedtest speed test bandwidth throughput latency jitter librespeed cloudflare download upload isp line',
 		icon: Gauge
 	},
@@ -418,7 +409,6 @@ export const AGENT_FEATURES: AgentFeature[] = [
 		id: 'hyperv',
 		label: m.deviceform_feature_hyperv_label(),
 		summary: m.deviceform_feature_hyperv_summary(),
-		next: m.deviceform_feature_hyperv_next(),
 		keywords: 'hyper-v hyperv microsoft windows server virtualization virtual machine vm vhdx vmms host hypervisor',
 		icon: Boxes
 	},
@@ -426,7 +416,6 @@ export const AGENT_FEATURES: AgentFeature[] = [
 		id: 'services',
 		label: m.deviceform_feature_services_label(),
 		summary: m.deviceform_feature_services_summary(),
-		next: m.deviceform_feature_services_next(),
 		keywords: 'service systemd systemctl unit daemon windows service launchd rc.d nginx sshd',
 		icon: Cog
 	},
@@ -434,7 +423,6 @@ export const AGENT_FEATURES: AgentFeature[] = [
 		id: 'disks',
 		label: m.deviceform_feature_disks_label(),
 		summary: m.deviceform_feature_disks_summary(),
-		next: m.deviceform_feature_disks_next(),
 		keywords: 'disk drive smart hdd ssd nvme health smartctl smartmontools wear',
 		icon: Disc3
 	},
@@ -442,7 +430,6 @@ export const AGENT_FEATURES: AgentFeature[] = [
 		id: 'zfs',
 		label: m.deviceform_feature_zfs_label(),
 		summary: m.deviceform_feature_zfs_summary(),
-		next: m.deviceform_feature_zfs_next(),
 		keywords: 'zfs zpool pool scrub openzfs storage raid',
 		icon: Layers
 	},
@@ -450,7 +437,6 @@ export const AGENT_FEATURES: AgentFeature[] = [
 		id: 'sensors',
 		label: m.deviceform_feature_sensors_label(),
 		summary: m.deviceform_feature_sensors_summary(),
-		next: m.deviceform_feature_sensors_next(),
 		keywords: 'temperature fan sensor hwmon heat cooling rpm',
 		icon: Thermometer
 	},
@@ -458,7 +444,6 @@ export const AGENT_FEATURES: AgentFeature[] = [
 		id: 'updates',
 		label: m.deviceform_feature_updates_label(),
 		summary: m.deviceform_feature_updates_summary(),
-		next: m.deviceform_feature_updates_next(),
 		keywords: 'update upgrade patch security reboot dnf apt selinux os',
 		icon: PackageCheck
 	}

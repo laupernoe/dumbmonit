@@ -171,7 +171,6 @@
 			<label for={`${idBase}-sla`} class="text-sm text-ink">{m.settings_clients_report_toggle()}</label>
 			<Toggle id={`${idBase}-sla`} bind:checked={slaReport} label={m.settings_clients_report_toggle()} />
 		</div>
-		<p class="text-sm text-ink-2">{m.settings_clients_report_help()}</p>
 		<div class="grid gap-4 sm:grid-cols-2">
 			<Field label={m.settings_clients_objective()} for={`${idBase}-objective`} help={m.settings_clients_objective_help()}>
 				<input id={`${idBase}-objective`} type="text" inputmode="decimal" class="input" bind:value={objective} placeholder="99.9" autocomplete="off" />
@@ -203,7 +202,6 @@
 					<Button variant="ghost" onclick={() => void removeLogo()} disabled={logoBusy}>{m.settings_clients_logo_remove()}</Button>
 				{/if}
 			</div>
-			<p class="text-sm text-ink-2">{m.settings_clients_logo_help()}</p>
 			{#if logoTooBig}<p class="text-sm font-semibold text-warning">{m.settings_clients_logo_too_big()}</p>{/if}
 			{#if logoError}<ErrorNotice error={logoError} title={m.settings_clients_logo_error()} />{/if}
 		</div>

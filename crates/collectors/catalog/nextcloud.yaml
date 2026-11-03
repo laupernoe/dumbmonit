@@ -12,6 +12,32 @@ metrics:
   - { name: nextcloud_app_update_available, label: "App update available", better: "higher" }
   - { name: nextcloud_maintenance, label: "Maintenance", unit: "bool" }
   - { name: nextcloud_needs_db_upgrade, label: "Needs db upgrade", unit: "bool" }
+  - { name: nextcloud_extended_support, label: "Extended support", unit: "bool" }
+  - { name: nextcloud_disabled_users, label: "Disabled users" }
+  - { name: nextcloud_storages, label: "Storages" }
+  - { name: nextcloud_shares_by_type, label: "Shares by type" }
+  - { name: nextcloud_shares_link_without_password, label: "Public links without password", better: "lower" }
+  - { name: nextcloud_cpu_count, label: "CPU cores" }
+  - { name: nextcloud_cpu_load, label: "CPU load" }
+  - { name: nextcloud_memory_total_bytes, label: "Memory total", unit: "B" }
+  - { name: nextcloud_memory_free_bytes, label: "Memory free", unit: "B" }
+  - { name: nextcloud_memory_used_percent, label: "Memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: nextcloud_swap_total_bytes, label: "Swap total", unit: "B" }
+  - { name: nextcloud_swap_free_bytes, label: "Swap free", unit: "B" }
+  - { name: nextcloud_swap_used_percent, label: "Swap used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: nextcloud_php_max_execution_time_seconds, label: "PHP max execution time", unit: "s" }
+  - { name: nextcloud_php_upload_max_filesize_bytes, label: "PHP upload limit", unit: "B" }
+  - { name: nextcloud_debug_mode, label: "Debug mode", unit: "bool", better: "lower" }
+  - { name: nextcloud_file_locking_enabled, label: "File locking", unit: "bool" }
+  - { name: nextcloud_memcache_local_enabled, label: "Local cache", unit: "bool", better: "higher" }
+  - { name: nextcloud_memcache_distributed_enabled, label: "Distributed cache", unit: "bool" }
+  - { name: nextcloud_memcache_locking_enabled, label: "Locking cache", unit: "bool" }
+  - { name: nextcloud_update_check_age_seconds, label: "Last update check", unit: "s", better: "lower" }
+  - { name: nextcloud_apcu_hit_rate_percent, label: "APCu hit rate", unit: "%", min: 0, max: 100 }
+  - { name: nextcloud_apcu_memory_used_percent, label: "APCu memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: nextcloud_apcu_expunges, label: "APCu expunges" }
+  - { name: nextcloud_opcache_wasted_percent, label: "OPcache wasted", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: nextcloud_opcache_cached_keys_used_percent, label: "OPcache key slots used", unit: "%", better: "lower", min: 0, max: 100 }
   - { name: nextcloud_platform_info, label: "Platform", kind: info }
   - { name: nextcloud_version_info, label: "Version", kind: info }
 views:
@@ -29,3 +55,18 @@ views:
       - nextcloud_maintenance
       - nextcloud_needs_db_upgrade
       - nextcloud_version_info
+      - nextcloud_update_check_age_seconds
+      - nextcloud_memory_used_percent
+      - nextcloud_swap_used_percent
+      - nextcloud_opcache_cached_keys_used_percent
+      - nextcloud_apcu_hit_rate_percent
+      - nextcloud_apcu_memory_used_percent
+      - nextcloud_shares_by_type
+      - nextcloud_shares_link_without_password
+      - nextcloud_disabled_users
+      - nextcloud_debug_mode
+      - nextcloud_memcache_local_enabled
+      - nextcloud_extended_support
+  - view: timeseries
+    title: "Server load"
+    metrics: [nextcloud_cpu_load, nextcloud_memory_used_percent, nextcloud_swap_used_percent]

@@ -265,6 +265,32 @@ Board temperatures are not available: the Proxmox VE API does not expose
 sensors, only the disks' own SMART temperature. Install the DumbMonit agent on
 the node if you need more.
 
+### Deeper checks
+
+* **Storage state.** `storage_active` and `storage_enabled` per node and
+  storage. An NFS, CIFS or PBS storage that becomes unreachable turns inactive
+  while the guests keep running and the backups that target it start failing. A
+  storage you disabled on purpose is not reported.
+* **Pending reboot.** `node_reboot_required` is 1 when a newer kernel is
+  installed than the one running (the labels name both).
+* **Subscription.** `node_subscription_active` and `node_subscription_info`
+  (with the status, level and renewal date). `notfound` is the normal state of
+  a homelab without a subscription and raises nothing; `expired`, `invalid` and
+  `suspended` do.
+* **Replication schedule.** `replication_job_next_sync_seconds` goes negative
+  when a job is late on its schedule without being in error, which is what a
+  stuck replication looks like.
+* **Failed tasks.** `node_tasks_failed`: the tasks that ended in error in the
+  last six hours (guest start refused, migration aborted, restore failed...)
+  from `/nodes/{node}/tasks?errors=1`. Backups, console sessions, warnings and
+  tasks you interrupted yourself are left out. No additional permission is
+  needed.
+
+Added built-in rules: Proxmox storage inactive, Proxmox node needs a reboot
+(after three days), Proxmox subscription expired, Proxmox replication overdue
+(six hours late), Proxmox backup job not running (eight days), Proxmox guest
+not in any backup job (informational), Proxmox tasks failed (informational).
+
 Built-in rules that apply: Monitor unreachable, High CPU, Disk almost full,
 Filesystem almost full (forecast), Backup too old, Unusual CPU, VM or
 container stopped, VM or container CPU high, VM or container memory high, VM

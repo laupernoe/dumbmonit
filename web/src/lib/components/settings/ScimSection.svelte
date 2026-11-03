@@ -73,7 +73,7 @@
 	}
 
 	let rotating = $state(false);
-	async function rotate() {
+	async function rotate(): Promise<boolean> {
 		rotating = true;
 		actionError = null;
 		try {
@@ -81,8 +81,10 @@
 			token = reply.token;
 			const { token: _shown, ...rest } = reply;
 			fill(rest);
+			return true;
 		} catch (cause) {
 			actionError = cause;
+			return false;
 		} finally {
 			rotating = false;
 		}
@@ -154,7 +156,7 @@
 						</Confirm>
 						<Confirm size="md" confirmLabel={m.settings_scim_revoke_confirm()} loading={revoking} onconfirm={revoke}>{m.settings_scim_revoke()}</Confirm>
 					{:else}
-						<Button variant="secondary" onclick={() => void rotate()} loading={rotating}>
+						<Button variant="secondary" onclick={() => rotate()} loading={rotating}>
 							<KeyRound class="size-4" aria-hidden="true" />
 							{m.settings_scim_generate()}
 						</Button>
@@ -174,7 +176,7 @@
 				</Field>
 				{#if actionError}<ErrorNotice error={actionError} title={m.settings_scim_action_error()} />{/if}
 				<div class="flex flex-wrap items-center gap-2" aria-live="polite">
-					<Button type="submit" variant="secondary" loading={saving} disabled={!dirty}>{m.settings_scim_save()}</Button>
+					<Button type="submit" variant="secondary" loading={saving} success={saved} disabled={!dirty}>{m.settings_scim_save()}</Button>
 					{#if saved && !dirty}<Plate tone="signal" label={m.settings_scim_saved()} draw />{/if}
 				</div>
 			</form>

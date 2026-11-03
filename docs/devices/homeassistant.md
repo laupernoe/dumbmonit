@@ -44,6 +44,12 @@ All metrics are prefixed `dumbmonit_homeassistant_`.
 | `update_available` | value 1 per update waiting, at most 50 | `entity`, `name`, `installed`, `latest` |
 | `repairs` | open repairs (neither ignored nor dismissed) by severity: `critical`, `error`, `warning` | `severity` |
 | `repair` | value 1 per open repair, at most 50 | `issue`, `domain`, `severity` |
+| `safety_alerts` | triggered binary sensors of class `smoke`, `gas`, `carbon_monoxide`, `moisture` (water leak) or `safety` | |
+| `safety_alert` | value 1 per triggered safety sensor, at most 50 | `entity`, `name`, `device_class` |
+| `alarms_triggered` | `alarm_control_panel.*` entities in the `triggered` state | |
+| `alarm_triggered` | value 1 per triggered alarm panel, at most 50 | `entity`, `name` |
+| `problems` | binary sensors of class `problem` or `tamper` that are on | |
+| `problem` | value 1 per such sensor, at most 50 | `entity`, `name`, `device_class` |
 | `scrape_errors` | calls that failed on the last probe | |
 
 Some domains rest in the `unknown` state by nature: a button never pressed, an
@@ -61,7 +67,21 @@ list them. The **Read the repairs** option turns this off.
 The [built-in rules](../alerting/rules.md#home-assistant) that apply: Home
 Assistant in recovery mode, Home Assistant not running, Home Assistant entities
 went unavailable, Home Assistant battery low, Home Assistant update available,
-Home Assistant repair to address, plus Monitor unreachable.
+Home Assistant repair to address, Home Assistant safety sensor triggered, Home
+Assistant alarm triggered, Home Assistant problem sensor on, Home Assistant
+automation unavailable, plus Monitor unreachable.
+
+What it does not see: the Supervisor (add-ons stopped, the database size) and
+the recorder are not exposed to a regular user over the REST API. An add-on
+that needs an update still shows as an `update` entity. To watch the recorder,
+expose a `sql` sensor of the database size in Home Assistant: it then becomes
+an ordinary entity.
+
+If an automation rule fires, open Settings → Automations: an unavailable
+automation is greyed out and says which entity or blueprint it can no longer
+find. A safety or problem sensor is only reported while it is on; a detector
+that lost its connection turns `unavailable` and is counted with the unavailable
+entities instead.
 
 ## Devices
 

@@ -8,7 +8,7 @@
 	 */
 	import { Tv } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
-	import { Button, Panel } from '#lib/ui/index.js';
+	import { Button, DocLink, Panel } from '#lib/ui/index.js';
 	import { wallSceneOptions, wallThemeOptions } from '#lib/components/wall/wallOptions.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { DEFAULT_WALL_SCENE, readWallScene, writeWallScene, type WallSceneChoice } from '#lib/components/wall/wallScene.js';
@@ -48,7 +48,6 @@
 	<div class="grid gap-5">
 		<div class="grid gap-2" role="group" aria-labelledby="wall-default-scene">
 			<p id="wall-default-scene" class="m-0 text-sm font-semibold text-ink">{m.settings_wall_scene_label()}</p>
-			<p class="m-0 text-[0.8125rem] text-ink-2">{m.settings_wall_scene_help()}</p>
 			<div class="flex flex-wrap gap-1.5" role="radiogroup" aria-labelledby="wall-default-scene">
 				{#each SCENE_OPTIONS as option, i (option.value)}
 					<button
@@ -66,7 +65,6 @@
 
 		<div class="grid gap-2" role="group" aria-labelledby="wall-default-theme">
 			<p id="wall-default-theme" class="m-0 text-sm font-semibold text-ink">{m.settings_wall_theme_label()}</p>
-			<p class="m-0 text-[0.8125rem] text-ink-2">{m.settings_wall_theme_help()}</p>
 			<div class="flex flex-wrap gap-1.5" role="radiogroup" aria-labelledby="wall-default-theme">
 				{#each THEME_OPTIONS as option, i (option.value)}
 					<button
@@ -91,4 +89,5 @@
 			</Button>
 		</div>
 	</div>
+	<DocLink page="using/wall/" class="mt-3" />
 </Panel>

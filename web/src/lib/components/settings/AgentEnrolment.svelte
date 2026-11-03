@@ -13,7 +13,7 @@
 	import { decideAgentEnrolments, getAgentEnrolment, setAgentEnrolmentSettings } from '#lib/api/agent_enrolment.js';
 	import type { AgentEnrolmentOverview, AgentEnrolmentSettings, EnrolmentApprovalMode } from '#lib/api/types.js';
 	import { formatDateTime, formatRelative } from '#lib/format.js';
-	import { Button, Disclosure, EmptyState, ErrorNotice, Plate, SelectionBar, Skeleton } from '#lib/ui/index.js';
+	import { Button, Disclosure, DocLink, EmptyState, ErrorNotice, Plate, SelectionBar, Skeleton } from '#lib/ui/index.js';
 
 	let data = $state<AgentEnrolmentOverview | null>(null);
 	let loadError = $state<unknown>(null);
@@ -84,8 +84,8 @@
 				Number(draft.dormant_days) !== data.settings.dormant_days)
 	);
 
-	async function save() {
-		if (!draft || saving) return;
+	async function save(): Promise<boolean> {
+		if (!draft || saving) return false;
 		saving = true;
 		saveError = null;
 		saved = false;
@@ -98,8 +98,10 @@
 				})
 			);
 			saved = true;
+			return true;
 		} catch (cause) {
 			saveError = cause;
+			return false;
 		} finally {
 			saving = false;
 		}
@@ -133,7 +135,7 @@
 
 <div class="border-b border-line px-5 py-4">
 	<Disclosure title={m.settings_agents_enrol_title()} bind:open {summary}>
-		<p class="max-w-prose text-sm text-ink-2">{m.settings_agents_enrol_intro()}</p>
+		<DocLink page="install/agent-security/" />
 
 		{#if loadError && !data}
 			<ErrorNotice error={loadError} title={m.settings_agents_enrol_load_error()} class="mt-3" onretry={() => void load()} />
@@ -149,7 +151,6 @@
 							<Plate tone="advisory" label={m.settings_agents_enrol_pending_count({ count: pending.length, max: data.max_pending })} />
 						{/if}
 					</div>
-					<p class="max-w-prose text-sm text-ink-2">{m.settings_agents_enrol_pending_intro({ hours: data.reject_hold_hours })}</p>
 
 					{#if decideError}
 						<ErrorNotice error={decideError} title={m.settings_agents_enrol_decide_error()} />
@@ -217,7 +218,6 @@
 							<select id="enrol-fleet" class="input" disabled={saving} bind:value={draft.fleet_approval}>
 								{#each MODES as mode (mode.value)}<option value={mode.value}>{mode.label()}</option>{/each}
 							</select>
-							<p class="max-w-prose text-sm text-ink-2">{m.settings_agents_enrol_fleet_hint()}</p>
 						</div>
 						<div class="grid content-start gap-1.5">
 							<label for="enrol-single" class="text-sm font-semibold text-ink">{m.settings_agents_enrol_single_label()}</label>
@@ -234,7 +234,6 @@
 						<div class="grid content-start gap-1.5">
 							<label for="enrol-dormant" class="text-sm font-semibold text-ink">{m.settings_agents_enrol_dormant_label()}</label>
 							<input id="enrol-dormant" type="number" inputmode="numeric" min="0" max="3650" step="1" class="input tnum" disabled={saving} bind:value={draft.dormant_days} />
-							<p class="max-w-prose text-sm text-ink-2">{m.settings_agents_enrol_dormant_hint()}</p>
 						</div>
 					</div>
 					{#if saveError}

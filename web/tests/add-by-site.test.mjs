@@ -14,7 +14,7 @@ import {
 
 const collectors = ['http', 'ping', 'tcp', 'snmp', 'proxmox', 'agent'].map((kind) => ({ kind, label: kind }));
 const target = (id, o = {}) => ({ id, name: `t${id}`, address: `10.0.0.${id}`, kind: 'ping', group_name: '', via_agent: null, client_id: 1, ...o });
-const location = (id, o = {}) => ({ id, name: `L${id}`, site: '', main_site: false, members: [], ...o });
+const location = (id, o = {}) => ({ id, name: `L${id}`, site: '', members: [], ...o });
 const relay = (id, o = {}) => ({ id, name: `relay${id}`, site: null, relay: true, relayed: 0, ...o });
 const device = (id, ip, o = {}) => ({ id, schedule_id: 1, ip, hostname: null, vendor: null, known: false, ports: [], ...o });
 

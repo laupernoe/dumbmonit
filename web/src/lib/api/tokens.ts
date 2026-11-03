@@ -61,12 +61,6 @@ export const DEFAULT_TOKEN_EXPIRY_DAYS = 90;
 /** The OpenAPI 3.1 description of this instance's API (public, no secret in it). */
 export const OPENAPI_PATH = '/api/openapi.json';
 
-/** Where the HTTP API is documented. The interface links to it, never serves it. */
-export const API_DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/reference/api/';
-
-/** Where connecting an assistant (MCP) is documented. */
-export const ASSISTANT_DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/using/assistant/';
-
 export function listApiTokens(signal?: AbortSignal): Promise<ApiToken[]> {
 	return request<ApiToken[]>('/tokens', { signal });
 }

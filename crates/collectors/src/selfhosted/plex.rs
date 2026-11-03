@@ -11,9 +11,11 @@
 //! côté de son XML historique.
 //!
 //! Ce que Plex ne publie pas : l'issue des tâches de maintenance (le
-//! « butler » ne donne que leur programmation) ni l'état d'une sauvegarde de
-//! base. Le module s'en tient aux lectures en cours, au transcodeur, aux
-//! bibliothèques et aux mises à jour.
+//! « butler » ne donne que leur programmation, dont celle de la sauvegarde de
+//! la base), l'espace disque, ni la liste des comptes. Le module s'en tient
+//! aux lectures en cours (dont la vitesse du transcodeur), aux bibliothèques,
+//! au lien avec plex.tv (accès distant, connexion du compte) et aux mises à
+//! jour.
 
 use async_trait::async_trait;
 use dumbmonit_proto::{Collector, Credential, ProbeError, Sample, Target, TargetId};
@@ -44,17 +46,24 @@ pub async fn probe(
     let root: Value = client.get_json("/").await?;
     let mut out = root_samples(&root, ts_ms);
     let mut errors = 0u32;
-    let (identity, sessions, sections, updater, activities) = futures::join!(
+    let (identity, sessions, sections, updater, activities, butler) = futures::join!(
         client.get_json::<Value>("/identity"),
         client.get_json::<Value>("/status/sessions"),
         client.get_json::<Value>("/library/sections"),
         client.get_json::<Value>("/updater/status"),
         client.get_json::<Value>("/activities"),
+        client.get_json::<Value>("/butler"),
     );
-    if let Some(identity) = settle(identity, &mut errors, target_id, "/identity")
-        && let Some(claimed) = container(&identity).get("claimed").and_then(Value::as_bool)
-    {
-        out.push(flag("plex_claimed", claimed, ts_ms));
+    let mut claimed = None;
+    if let Some(identity) = settle(identity, &mut errors, target_id, "/identity") {
+        claimed = container(&identity).get("claimed").and_then(Value::as_bool);
+        if let Some(claimed) = claimed {
+            out.push(flag("plex_claimed", claimed, ts_ms));
+        }
+    }
+    out.extend(account_samples(&root, claimed, ts_ms));
+    if let Some(butler) = settle(butler, &mut errors, target_id, "/butler") {
+        out.extend(butler_samples(&butler, ts_ms));
     }
     if let Some(sessions) = settle(sessions, &mut errors, target_id, "/status/sessions") {
         out.extend(session_samples(&sessions, ts_ms));
@@ -84,6 +93,46 @@ pub fn root_samples(root: &Value, ts_ms: i64) -> Vec<Sample> {
     }
     if let Some(active) = number(root.get("transcoderActiveVideoSessions")) {
         out.push(gauge("plex_transcoder_active_video_sessions", active, ts_ms));
+    }
+    out
+}
+
+/// Le lien avec plex.tv, lu sur la racine : l'accès distant (le mappage de port
+/// ou le relais) et la connexion du serveur à son compte. Seul un serveur
+/// revendiqué en dépend ; un serveur local pur n'en dit rien. `claimed` vient
+/// de `/identity`.
+pub fn account_samples(root: &Value, claimed: Option<bool>, ts_ms: i64) -> Vec<Sample> {
+    let root = container(root);
+    let text = |key: &str| root.get(key).and_then(Value::as_str).filter(|s| !s.is_empty());
+    let mut out = Vec::new();
+    if root.get("myPlex").and_then(Value::as_bool) == Some(true)
+        && let Some(mapping) = text("myPlexMappingState")
+    {
+        out.push(flag("plex_remote_access_failed", mapping == "failed", ts_ms));
+    }
+    if claimed == Some(true)
+        && let Some(signin) = text("myPlexSigninState")
+    {
+        out.push(flag("plex_signin_ok", signin == "ok", ts_ms));
+    }
+    out
+}
+
+/// `/butler` : la programmation des tâches de maintenance. Elle ne dit pas
+/// comment la dernière a fini, mais dit si la sauvegarde de la base est
+/// programmée.
+pub fn butler_samples(butler: &Value, ts_ms: i64) -> Vec<Sample> {
+    let tasks = butler
+        .pointer("/ButlerTasks/ButlerTask")
+        .and_then(Value::as_array)
+        .map(Vec::as_slice)
+        .unwrap_or(&[]);
+    let enabled = |task: &Value| task.get("enabled").and_then(Value::as_bool) == Some(true);
+    let mut out = Vec::new();
+    if let Some(backup) =
+        tasks.iter().find(|t| t.get("name").and_then(Value::as_str) == Some("BackupDatabase"))
+    {
+        out.push(flag("plex_database_backup_enabled", enabled(backup), ts_ms));
     }
     out
 }
@@ -122,7 +171,36 @@ pub fn session_samples(sessions: &Value, ts_ms: i64) -> Vec<Sample> {
         .count();
     let bandwidth: f64 =
         items.iter().filter_map(|item| number(item.pointer("/Session/bandwidth"))).sum();
-    vec![
+    let remote_bandwidth: f64 = items
+        .iter()
+        .filter(|item| item.pointer("/Session/location").and_then(Value::as_str) == Some("wan"))
+        .filter_map(|item| number(item.pointer("/Session/bandwidth")))
+        .sum();
+    let transcode_errors = items
+        .iter()
+        .filter(|item| {
+            item.pointer("/TranscodeSession/error").and_then(Value::as_bool) == Some(true)
+        })
+        .count();
+    let mut viewers: Vec<&str> =
+        items.iter().filter_map(|item| item.pointer("/User/title")?.as_str()).collect();
+    viewers.sort_unstable();
+    viewers.dedup();
+    // La vitesse du transcodeur, en multiples du temps réel : sous 1, la lecture
+    // finit par attendre ses données. Seules comptent les vidéos réellement
+    // lues ; un transcodage freiné (`throttled`, en avance) ou en pause tourne
+    // volontairement au ralenti.
+    let slowest = items
+        .iter()
+        .filter(|item| {
+            decision(item, "videoDecision")
+                && item.pointer("/Player/state").and_then(Value::as_str) == Some("playing")
+                && item.pointer("/TranscodeSession/throttled").and_then(Value::as_bool)
+                    != Some(true)
+        })
+        .filter_map(|item| number(item.pointer("/TranscodeSession/speed")))
+        .reduce(f64::min);
+    let mut out = vec![
         gauge("plex_streams", items.len() as f64, ts_ms),
         gauge("plex_streams_paused", paused as f64, ts_ms),
         gauge("plex_streams_remote", remote as f64, ts_ms),
@@ -131,7 +209,14 @@ pub fn session_samples(sessions: &Value, ts_ms: i64) -> Vec<Sample> {
         gauge("plex_transcodes_hardware", hardware as f64, ts_ms),
         // Plex donne la bande passante réservée par lecture en kbit/s.
         gauge("plex_stream_bandwidth_bits_per_second", bandwidth * 1000.0, ts_ms),
-    ]
+        gauge("plex_stream_remote_bandwidth_bits_per_second", remote_bandwidth * 1000.0, ts_ms),
+        gauge("plex_transcode_errors", transcode_errors as f64, ts_ms),
+        gauge("plex_streaming_users", viewers.len() as f64, ts_ms),
+    ];
+    if let Some(speed) = slowest {
+        out.push(gauge("plex_transcode_speed_min", speed, ts_ms));
+    }
+    out
 }
 
 pub fn library_samples(sections: &Value, ts_ms: i64) -> Vec<Sample> {
@@ -235,6 +320,7 @@ mod tests {
     const UPDATER: &str = include_str!("testdata/plex_1.43.4/updater_status.json");
     const UPDATER_CHECKED: &str = include_str!("testdata/plex_1.43.4/updater_status_checked.json");
     const ACTIVITIES: &str = include_str!("testdata/plex_1.43.4/activities.json");
+    const BUTLER: &str = include_str!("testdata/plex_1.43.4/butler.json");
 
     fn json(body: &str) -> Value {
         serde_json::from_str(body).unwrap()
@@ -261,8 +347,67 @@ mod tests {
         assert_eq!(value(&samples, "plex_transcodes_hardware"), Some(0.0));
         assert_eq!(value(&samples, "plex_streams_remote"), Some(0.0));
         assert_eq!(value(&samples, "plex_stream_bandwidth_bits_per_second"), Some(414_000.0));
+        assert_eq!(value(&samples, "plex_stream_remote_bandwidth_bits_per_second"), Some(0.0));
+        assert_eq!(value(&samples, "plex_transcode_errors"), Some(0.0));
+        assert_eq!(value(&samples, "plex_streaming_users"), Some(0.0), "utilisateur anonyme");
+        assert_eq!(value(&samples, "plex_transcode_speed_min"), Some(1.5));
         let empty = session_samples(&json(r#"{"MediaContainer":{"size":0}}"#), 0);
         assert_eq!(value(&empty, "plex_streams"), Some(0.0));
+    }
+
+    #[test]
+    fn un_transcodeur_lent_distant_et_en_erreur_se_voit() {
+        let sessions = json(
+            r#"{"MediaContainer":{"size":3,"Metadata":[
+              {"User":{"title":"anna"},"Player":{"state":"playing","local":false},
+               "Session":{"bandwidth":8000,"location":"wan"},
+               "TranscodeSession":{"videoDecision":"transcode","audioDecision":"copy",
+                 "throttled":false,"speed":0.6,"error":false}},
+              {"User":{"title":"anna"},"Player":{"state":"playing","local":true},
+               "Session":{"bandwidth":2000,"location":"lan"},
+               "TranscodeSession":{"videoDecision":"transcode","audioDecision":"transcode",
+                 "throttled":true,"speed":0.1,"error":true}},
+              {"User":{"title":"ben"},"Player":{"state":"paused","local":true},
+               "Session":{"bandwidth":4000,"location":"lan"},
+               "TranscodeSession":{"videoDecision":"transcode","throttled":false,"speed":0.0}}
+            ]}}"#,
+        );
+        let samples = session_samples(&sessions, 0);
+        assert_eq!(value(&samples, "plex_stream_remote_bandwidth_bits_per_second"), Some(8e6));
+        assert_eq!(value(&samples, "plex_transcode_errors"), Some(1.0));
+        assert_eq!(value(&samples, "plex_streaming_users"), Some(2.0));
+        // Ni la lecture freinée ni celle en pause ne comptent.
+        assert_eq!(value(&samples, "plex_transcode_speed_min"), Some(0.6));
+        // Aucune vidéo transcodée en lecture : pas de mesure plutôt qu'un zéro.
+        let direct = session_samples(&json(r#"{"MediaContainer":{"size":0}}"#), 0);
+        assert_eq!(value(&direct, "plex_transcode_speed_min"), None);
+    }
+
+    #[test]
+    fn le_lien_avec_plex_tv_et_la_sauvegarde_de_base() {
+        let root = |mapping: &str, signin: &str| {
+            json(&format!(
+                r#"{{"MediaContainer":{{"myPlex":true,"myPlexMappingState":"{mapping}",
+                    "myPlexSigninState":"{signin}"}}}}"#
+            ))
+        };
+        let samples = account_samples(&root("failed", "ok"), Some(true), 0);
+        assert_eq!(value(&samples, "plex_remote_access_failed"), Some(1.0));
+        assert_eq!(value(&samples, "plex_signin_ok"), Some(1.0));
+        let samples = account_samples(&root("mapped", "expired"), Some(true), 0);
+        assert_eq!(value(&samples, "plex_remote_access_failed"), Some(0.0));
+        assert_eq!(value(&samples, "plex_signin_ok"), Some(0.0));
+        // Serveur non revendiqué : l'état de connexion ne veut rien dire.
+        let samples = account_samples(&json(ROOT), Some(false), 0);
+        assert_eq!(value(&samples, "plex_signin_ok"), None);
+        assert_eq!(value(&samples, "plex_remote_access_failed"), Some(0.0));
+
+        let samples = butler_samples(&json(BUTLER), 0);
+        assert_eq!(value(&samples, "plex_database_backup_enabled"), Some(1.0));
+        let off =
+            json(r#"{"ButlerTasks":{"ButlerTask":[{"name":"BackupDatabase","enabled":false}]}}"#);
+        assert_eq!(value(&butler_samples(&off, 0), "plex_database_backup_enabled"), Some(0.0));
+        assert!(butler_samples(&json("{}"), 0).is_empty());
     }
 
     #[test]
@@ -337,7 +482,8 @@ mod tests {
             .route("/status/sessions", get(|| async { SESSIONS }))
             .route("/library/sections", get(|| async { SECTIONS }))
             .route("/updater/status", get(|| async { UPDATER_CHECKED }))
-            .route("/activities", get(|| async { ACTIVITIES }));
+            .route("/activities", get(|| async { ACTIVITIES }))
+            .route("/butler", get(|| async { BUTLER }));
         let base = serve(app).await;
         let samples = PlexCollector::new()
             .probe(&target(base.clone(), Credential::ApiToken { token: "tok".into() }))
@@ -347,6 +493,8 @@ mod tests {
         assert_eq!(value(&samples, "plex_claimed"), Some(0.0));
         assert_eq!(value(&samples, "plex_update_available"), Some(0.0));
         assert_eq!(value(&samples, "plex_activities"), Some(0.0));
+        assert_eq!(value(&samples, "plex_database_backup_enabled"), Some(1.0));
+        assert_eq!(value(&samples, "plex_remote_access_failed"), Some(0.0));
         assert_eq!(value(&samples, "plex_scrape_errors"), Some(0.0));
 
         let error = PlexCollector::new().probe(&target(base, Credential::None)).await.unwrap_err();

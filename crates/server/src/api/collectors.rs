@@ -980,6 +980,12 @@ const POSTGRES_OPTIONS: &[OptionView] = &[
         "prefer",
         &["prefer", "require", "verify-full", "disable"],
     ),
+    boolean(
+        "server_stats",
+        "Server health metrics",
+        "Also reads connections, long transactions, locks, replication, transaction ID age, dead rows and WAL archiving from the server's statistics views, on the same connection. A role without pg_monitor sees fewer of them; nothing here can make the check fail.",
+        true,
+    ),
     ALLOW_PRIVATE_TARGETS,
     PROBE_TIMEOUT,
 ];
@@ -2346,6 +2352,12 @@ const OPNSENSE_OPTIONS: &[OptionView] = &[
         "temperature",
         "Read the temperature sensors",
         "Reads the CPU and board sensors the firewall exposes. A machine without sensors reports none, which is not an error.",
+        true,
+    ),
+    boolean(
+        "certificates",
+        "Watch the certificates",
+        "Reads the expiry date of the certificates the firewall keeps (web interface, captive portal, VPN); those OPNsense marks as unused are ignored. Needs the privilege System: Trust: Certificates; without it the option is skipped, which is not an error.",
         true,
     ),
     boolean(
@@ -5608,7 +5620,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
         "postgres" => CollectorView {
             kind: "postgres",
             label: "PostgreSQL database",
-            summary: "Logs in and runs a query: catches a database that is up but no longer answering.",
+            summary: "Logs in, runs a query and reads the server's health: catches a database that is up but no longer answering, and one that is running out of connections, lagging or bloating.",
             examples: &[
                 "The database behind Nextcloud or Immich",
                 "A Home Assistant recorder",
@@ -5626,9 +5638,13 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Allow it to connect from the DumbMonit host with this line in pg_hba.conf (adjust the address), then reload PostgreSQL.\nhost all dumbmonit 10.0.0.5/32 scram-sha-256",
                     "In DumbMonit, enter the server, for example db.home.lan:5433 (port 5432 by default), then the role's user and password.",
                     "Optional: replace the default query SELECT 1 with one that returns a single number, to chart it.",
+                    "Optional, for the complete server health metrics (sessions of every user, locks, replication, vacuum): let the role read the statistics views.\nGRANT pg_monitor TO dumbmonit;",
                 ],
                 ports: &[to_device!(5432, "tcp", "PostgreSQL (default port)")],
-                permissions: &["LOGIN (role attribute)\nConnect only, no other privilege"],
+                permissions: &[
+                    "LOGIN (role attribute)\nConnect only, no other privilege",
+                    "pg_monitor (optional role membership)\nRead the statistics views, nothing else; without it the health metrics only cover the role's own sessions",
+                ],
                 warning: "The check opens a real connection on every poll: on an instance close to its connection limit, give it a longer interval.",
             },
             options: POSTGRES_OPTIONS,
@@ -8523,6 +8539,7 @@ mod tests {
                     "query",
                     "expect",
                     "sslmode",
+                    "server_stats",
                     "allow_private_targets",
                     "timeout_seconds",
                 ],
@@ -8771,6 +8788,7 @@ mod tests {
                     "carp",
                     "firmware",
                     "temperature",
+                    "certificates",
                     "live_map",
                 ],
             ),

@@ -131,12 +131,15 @@
 		input.value = '';
 	}
 
+	/** True once the last submit went through (the button confirms in green). */
+	let installedOk = $state(false);
 	async function install(event: SubmitEvent) {
 		event.preventDefault();
 		if (!yaml.trim()) return;
 		installing = true;
 		installError = null;
 		report = null;
+		installedOk = false;
 		try {
 			report = await installPack(yaml);
 			yaml = '';
@@ -145,6 +148,7 @@
 			packs = packs.some((p) => p.id === installed.id)
 				? packs.map((p) => (p.id === installed.id ? installed : p))
 				: [...packs, installed].sort((a, b) => a.id.localeCompare(b.id));
+			installedOk = true;
 		} catch (cause) {
 			installError = cause;
 		} finally {
@@ -275,10 +279,6 @@
 			</section>
 
 			<Disclosure title={m.settings_packs_install_heading()}>
-				<p class="mt-1 text-sm text-ink-2">
-					{m.settings_packs_install_intro()}
-				</p>
-
 				<form class="mt-4 grid gap-4" onsubmit={install} novalidate>
 					<Field label={m.settings_packs_upload_label()} for="pack-file" error={fileError}>
 						<label
@@ -340,7 +340,7 @@
 					{/if}
 
 					<div>
-						<Button type="submit" variant="secondary" loading={installing} disabled={!yaml.trim()}>
+						<Button type="submit" variant="secondary" loading={installing} success={installedOk} disabled={!yaml.trim()}>
 							<Plus class="size-4" aria-hidden="true" />
 							{m.settings_packs_install_button()}
 						</Button>

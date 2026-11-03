@@ -11,8 +11,6 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import {
-		API_DOCS_URL,
-		ASSISTANT_DOCS_URL,
 		DEFAULT_TOKEN_EXPIRY_DAYS,
 		OPENAPI_PATH,
 		TOKEN_EXPIRY_CHOICES,
@@ -27,9 +25,8 @@
 	import { formatDateTime, formatRelative, parseServerDate } from '#lib/format.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { rovingIndex } from '#lib/ui/roving.js';
-	import { Button, Confirm, CopyBlock, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { Button, Confirm, CopyBlock, DocLink, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 
-	const EXAMPLE_PROMPTS = [m.settings_assistant_prompt_fine(), m.settings_assistant_prompt_silence(), m.settings_assistant_prompt_night(), m.settings_assistant_prompt_backup()];
 
 	let tokens = $state<ApiToken[]>([]);
 	let loading = $state(true);
@@ -73,11 +70,14 @@
 	let createError = $state<unknown>(null);
 	let created = $state<CreatedApiToken | null>(null);
 
+	/** True once the last submit went through (the button confirms in green). */
+	let createdOk = $state(false);
 	async function create(event: SubmitEvent) {
 		event.preventDefault();
 		createError = null;
 		nameError = null;
 		creating = true;
+		createdOk = false;
 		try {
 			created = await createApiToken({
 				// Blank: the server generates a generic dated name.
@@ -89,6 +89,7 @@
 			tokens = [created, ...tokens.filter((token) => token.id !== created?.id)];
 			name = '';
 			networks = '';
+			createdOk = true;
 		} catch (cause) {
 			createError = cause;
 		} finally {
@@ -204,19 +205,11 @@
 <Panel
 	id="assistant"
 	title={m.settings_assistant_title()}
-	description={m.settings_assistant_description()}
 	padded={false}
 >
 	<div class="px-5 py-4">
-		<p class="text-sm text-ink-2">{m.settings_assistant_try_asking()}</p>
-		<ul class="mt-2 flex flex-wrap gap-2" aria-label={m.settings_assistant_prompts_aria()}>
-			{#each EXAMPLE_PROMPTS as prompt (prompt)}
-				<li class="rounded-lg border border-line bg-canvas-deep px-2.5 py-1 text-sm text-ink">“{prompt}”</li>
-			{/each}
-		</ul>
-
 		<!-- Create -->
-		<form class="mt-5 grid gap-4 sm:grid-cols-2" onsubmit={create} novalidate>
+		<form class="grid gap-4 sm:grid-cols-2" onsubmit={create} novalidate>
 			<Field label={m.settings_assistant_new_token()} for="api-token-name" error={nameError} help={m.settings_assistant_name_help()}>
 				<input
 					id="api-token-name"
@@ -271,7 +264,7 @@
 				/>
 			</Field>
 			<div class="sm:col-span-2">
-				<Button type="submit" variant="secondary" loading={creating}>
+				<Button type="submit" variant="secondary" loading={creating} success={createdOk}>
 					<KeyRound class="size-4" aria-hidden="true" />
 					{m.settings_assistant_create()}
 				</Button>
@@ -335,9 +328,6 @@
 					</div>
 				{:else if client === 'claude-desktop'}
 					<div>
-						<p class="mb-1.5 text-sm text-ink-2">
-							{m.settings_assistant_desktop_text()}
-						</p>
 						<CopyBlock value={claudeDesktop} label={m.settings_assistant_copy_json()} secret={live} />
 					</div>
 					{#if !isHttps}
@@ -345,19 +335,14 @@
 					{/if}
 				{:else if client === 'vscode'}
 					<div>
-						<p class="mb-1.5 text-sm text-ink-2">{m.settings_assistant_vscode_text()}</p>
 						<CopyBlock value={vscodeJson} label={m.settings_assistant_copy_json()} secret={live} />
 					</div>
 				{:else if client === 'cursor'}
 					<div>
-						<p class="mb-1.5 text-sm text-ink-2">{m.settings_assistant_cursor_text()}</p>
 						<CopyBlock value={cursorJson} label={m.settings_assistant_copy_json()} secret={live} />
 					</div>
 				{:else}
 					<div class="grid min-w-0 gap-3">
-						<p class="text-sm text-ink-2">
-							{m.settings_assistant_chatgpt_text()}
-						</p>
 						{#if !isHttps}
 							<Plate tone="advisory" label={m.settings_assistant_chatgpt_https_warning()} />
 						{/if}
@@ -371,18 +356,12 @@
 						</div>
 					</div>
 				{/if}
-				<p class="text-sm text-ink-2">
-					{m.settings_assistant_mcp_note()} <a class={linkClass} href={ASSISTANT_DOCS_URL} target="_blank" rel="noreferrer">{m.settings_assistant_mcp_link()}</a>
-				</p>
 			</div>
 		</div>
 
 		<!-- REST API access -->
 		<div class="mt-6">
 			<p class="text-sm font-semibold text-ink">{m.settings_assistant_rest_title()}</p>
-			<p class="mt-1 text-sm text-ink-2">
-				{m.settings_assistant_rest_text()}
-			</p>
 			<div class="mt-3 grid min-w-0 gap-3">
 				<div>
 					<p class="mb-1.5 text-sm text-ink-2">{m.settings_assistant_rest_read()}</p>
@@ -398,14 +377,7 @@
 					<FileJson class="size-4 shrink-0" aria-hidden="true" />
 					{m.settings_assistant_openapi()}
 				</a>
-				<a class={linkClass} href={API_DOCS_URL} target="_blank" rel="noreferrer">{m.settings_assistant_api_reference()}</a>
 			</div>
-			<p class="mt-2 text-sm text-ink-2">
-				{m.settings_assistant_openapi_note()}
-			</p>
-			<p class="mt-2 text-sm text-ink-2">
-				{m.settings_assistant_prometheus_text()} <a class={linkClass} href="https://dumbmonit.readthedocs.io/en/latest/reference/metrics/#scraping-dumbmonit" target="_blank" rel="noreferrer">{m.settings_assistant_prometheus_link()}</a>
-			</p>
 		</div>
 
 		<!-- Token list -->
@@ -473,5 +445,7 @@
 				</ul>
 			{/if}
 		</div>
+
+		<DocLink page="using/assistant/" class="mt-4" />
 	</div>
 </Panel>

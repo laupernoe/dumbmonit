@@ -158,6 +158,7 @@ was checked against every call DumbMonit makes, on OPNsense 26.1.
 - **VPN: WireGuard: Status** — WireGuard tunnels
 - **Status: OpenVPN** — OpenVPN tunnels
 - **Status: IPsec** — IPsec tunnels
+- **System: Trust: Certificates** — Certificate expiry
 - **Diagnostics: Logs: Firewall: Live View** — Only for the live firewall map option
 
 !!! warning
@@ -200,6 +201,23 @@ spelling, and on 25.1 on some of the new ones. DumbMonit asks for the current
 spelling first and falls back to the other on a `403`, so the same group works
 on either side of the rename.
 
+## Certificates and default alerts
+
+The expiry date of the certificates the firewall keeps (web interface, captive portal, VPN) is read from System: Trust: Certificates. Certificates OPNsense marks as unused are ignored. The option is skipped silently if the account lacks the privilege.
+
+| Alert | Fires when |
+|---|---|
+| OPNsense certificate expiring / expired | A certificate expires in less than 14 days / has expired |
+| OPNsense disk almost full | The disk is more than 90% full for 15 minutes |
+| OPNsense CPU high | The processor is above 90% for 15 minutes |
+| OPNsense swap in use | More than half of the swap is used for an hour |
+| OPNsense packet filter disabled | pf is disabled for 5 minutes |
+| OPNsense interface errors | An interface logs more than 100 errors in 15 minutes |
+| OPNsense update mirror unreachable | The firewall cannot reach its update mirror for 12 hours (information) |
+| Gateway down, loss, latency, state table, VPN tunnel, services, CARP, updates | As before |
+
+All rules can be edited or disabled in Alerts.
+
 ## Options
 
 | Key | Label | Default | Help |
@@ -218,6 +236,7 @@ on either side of the rename.
 | `carp` | Watch CARP | `true` | Reads the virtual addresses of a high-availability pair, and persistent maintenance mode. |
 | `firmware` | Watch for updates | `true` | Reads the result of the firewall's last update check and whether a reboot is pending. |
 | `temperature` | Read the temperature sensors | `true` | Reads the CPU and board sensors the firewall exposes. |
+| `certificates` | Watch the certificates | `true` | Reads the expiry date of the certificates in use. |
 | `live_map` | Live firewall map | `false` | Shows where the connections your rules block or pass come from, by country. Needs `Diagnostics: Logs: Firewall: Live View`. |
 
 ## Live map
@@ -246,7 +265,7 @@ rules and ports that come up most.
   **Settings → Monitoring → Locations → IP geolocation**: nothing is downloaded,
   and countries show as unknown.
 - **Arcs need a location.** Place the firewall on the [world map](../using/world-map.md)
-  (by hand, through its site, or as part of the main site); without one the
+  (by hand or through its site); without one the
   discs are still drawn.
 - **Motion.** With *reduce motion* set in the system, the travelling arcs are
   left out; the discs and the steady arcs of the busiest countries remain.

@@ -15,9 +15,10 @@
 //! * [`nextcloud`] — `status.php` et l'application `serverinfo` (jeton `NC-Token`) ;
 //! * [`immich`] — `/api/server/*` et les files de travaux (clé d'API restreinte) ;
 //! * [`paperless`] — `/api/status/`, `/api/tasks/`, `/api/remote_version/` ;
-//! * [`jellyfin`] — `/System/Info`, `/ScheduledTasks`, `/Sessions`, `/Plugins` ;
+//! * [`jellyfin`] — `/System/Info`, `/ScheduledTasks`, `/Sessions`, `/Plugins`,
+//!   puis stockage, bibliothèques, comptes et journal d'activité ;
 //! * [`plex`] — `/`, `/identity`, `/status/sessions`, `/library/sections`,
-//!   `/updater/status`, `/activities` ;
+//!   `/updater/status`, `/activities`, `/butler` ;
 //! * [`gitlab`] — `/api/v4/version`, `/-/readiness`, Sidekiq, exécuteurs,
 //!   migrations, statistiques, réglages de sécurité, licence (jeton `PRIVATE-TOKEN`) ;
 //! * [`forgejo`] — `/api/v1/version`, `/api/healthz`, statistiques et

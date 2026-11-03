@@ -34,6 +34,9 @@ All metrics are prefixed `dumbmonit_immich_`.
 | `maintenance_mode` | 1 while Immich is in maintenance mode | |
 | `storage_used_percent`, `storage_available_bytes`, `storage_size_bytes` | the disk that holds the library | |
 | `photos`, `videos`, `usage_bytes`, `users` | library size, all users together | |
+| `user_usage_bytes` | space used by each account | `user` |
+| `user_quota_used_percent` | share of the quota used; only for accounts with a quota | `user` |
+| `db_backups`, `db_backup_last_age_seconds`, `db_backup_last_bytes` | database backups Immich holds; age and size of the newest (age read from its file name, server time taken as UTC); Immich 2.5+ | |
 | `jobs_waiting`, `jobs_active`, `jobs_failed`, `queues_paused` | all queues together | |
 | `queue_waiting`, `queue_active`, `queue_failed`, `queue_paused` | per queue: waiting (including delayed and held by a pause), running, failed, paused | `queue` |
 | `statistics_readable` | 0 when the key belongs to an ordinary account and counts and queues are skipped | |
@@ -44,7 +47,14 @@ Recent Immich versions drop failed jobs from the queue once they are logged, so
 
 The [built-in rules](../alerting/rules.md#self-hosted-applications) that apply:
 Immich jobs stalled, Immich queue paused, Immich storage almost full, Immich
-update available, plus Monitor unreachable.
+update available, Immich jobs failing (25 failed jobs in a queue), Immich
+machine learning failing (10 failed jobs in the machine-learning queues),
+Immich in maintenance mode, Immich user quota almost full, Immich database
+backup stale (newest older than three days), plus Monitor unreachable.
+
+Database backups need one more, optional permission, `databaseBackup.list`
+(Immich 2.5 and later). Without it, or on an older Immich, those figures are
+simply absent and nothing is reported as wrong.
 
 ## Devices
 
@@ -123,6 +133,13 @@ disk, `server.statistics` photo and video counts, `queue.read` the job queues
 `session.read` the account's devices (`/api/sessions`), `asset.read` the
 library's most recent upload (`/api/search/metadata`), `user.read` the
 account's display name (`/api/users/me`).
+
+## Troubleshooting
+
+- **Failed-job rules never fire**: recent Immich versions drop failed jobs from the queue once they are logged, so `queue_failed` reads 0 there; those rules serve the versions that keep them. Look at Immich's own log in that case.
+- **No database backup figures**: needs Immich 2.5 or later and the `databaseBackup.list` permission on the key; without either, they are absent and nothing is raised. If Immich holds no backup at all (the nightly job is off), only `db_backups` = 0 is published.
+- **No quota or per-user figures**: they come from `server.statistics`, which only an account that opens Administration can read; `statistics_readable` is then 0.
+- **Queues waiting but "stalled" does not fire**: it waits one hour with nothing running and ignores paused queues; resume a paused queue in Administration → Jobs.
 
 ## Credentials
 

@@ -76,7 +76,6 @@
 	<h3 id="inv-review" class="flex items-center gap-2 text-sm font-semibold text-ink">
 		{m.discovery_review_heading({ count: queue.length })}
 	</h3>
-	<p class="text-sm leading-relaxed text-ink-2">{m.discovery_review_intro()}</p>
 
 	{#if failure}
 		<ErrorNotice error={failure} title={m.discovery_review_action_error()} />

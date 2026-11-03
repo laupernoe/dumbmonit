@@ -1,5 +1,5 @@
 //! Emplacements de la carte du monde : création, affectation explicite ou par
-//! site, site principal, et fond de carte (avec son effet sur la politique de
+//! site, et fond de carte (avec son effet sur la politique de
 //! sécurité de l'interface).
 
 mod common;
@@ -66,8 +66,7 @@ async fn les_cibles_trouvent_leur_emplacement() {
     let siege = create_location(
         &app,
         &admin,
-        json!({ "name": "Siège", "address": "Lausanne", "latitude": 46.52, "longitude": 6.63,
-                "main_site": true }),
+        json!({ "name": "Siège", "address": "Lausanne", "latitude": 46.52, "longitude": 6.63 }),
     )
     .await;
     let annexe = create_location(
@@ -80,9 +79,9 @@ async fn les_cibles_trouvent_leur_emplacement() {
     let viewer = app.viewer_cookie(&admin).await;
     let reply = app.get("/api/locations", Some(&viewer)).await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
-    assert_eq!(members(&reply.body, siege), vec![(routeur, "main".to_string())]);
+    assert!(members(&reply.body, siege).is_empty(), "aucun site par défaut");
     assert_eq!(members(&reply.body, annexe), vec![(nas, "site".to_string())]);
-    assert_eq!(reply.body["unplaced"], json!([camera]));
+    assert_eq!(reply.body["unplaced"], json!([routeur, camera]));
     assert_eq!(reply.body["sites"], json!(["Annexe", "Cave"]));
 
     // En masse depuis la liste, puis par le formulaire du moniteur.
@@ -117,11 +116,8 @@ async fn les_cibles_trouvent_leur_emplacement() {
     assert_eq!(reply.body["location_id"], siege);
 
     let reply = app.get("/api/locations", Some(&admin)).await;
-    assert_eq!(
-        members(&reply.body, siege),
-        vec![(routeur, "main".to_string()), (camera, "assigned".to_string())]
-    );
-    assert_eq!(reply.body["unplaced"], json!([]));
+    assert_eq!(members(&reply.body, siege), vec![(camera, "assigned".to_string())]);
+    assert_eq!(reply.body["unplaced"], json!([routeur]));
 
     // Un emplacement inconnu est une erreur de saisie.
     let reply = app
@@ -153,30 +149,22 @@ async fn les_cibles_trouvent_leur_emplacement() {
 }
 
 #[tokio::test]
-async fn un_seul_site_principal_et_des_noms_uniques() {
+async fn des_noms_uniques_et_main_site_ignore() {
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;
-    let a = create_location(
-        &app,
-        &admin,
-        json!({ "name": "A", "latitude": 0, "longitude": 0, "main_site": true }),
-    )
-    .await;
-    let b = create_location(
+    let a =
+        create_location(&app, &admin, json!({ "name": "A", "latitude": 0, "longitude": 0 })).await;
+    create_location(
         &app,
         &admin,
         json!({ "name": "B", "latitude": 1, "longitude": 1, "main_site": true }),
     )
     .await;
     let reply = app.get("/api/locations", Some(&admin)).await;
-    let main: Vec<i64> = reply.body["locations"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .filter(|l| l["main_site"] == true)
-        .map(|l| l["id"].as_i64().unwrap())
-        .collect();
-    assert_eq!(main, vec![b], "le dernier marqué l'emporte");
+    assert!(
+        reply.body["locations"].as_array().unwrap().iter().all(|l| l.get("main_site").is_none()),
+        "l'ancien champ est accepté mais ignoré"
+    );
 
     let reply = app
         .post("/api/locations", json!({ "name": "a", "latitude": 2, "longitude": 2 }), Some(&admin))

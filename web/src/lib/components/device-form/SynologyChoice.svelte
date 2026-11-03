@@ -5,7 +5,7 @@
 	 * can be combined on the same NAS; the choice only decides which to set up now.
 	 */
 	import { KeyRound, Package } from 'lucide-svelte';
-	import { Button, Plate } from '#lib/ui/index.js';
+	import { Button, DocLink, Plate } from '#lib/ui/index.js';
 
 	let { onpick }: { onpick: (mode: 'agent' | 'api') => void } = $props();
 </script>
@@ -18,12 +18,7 @@
 				<h3 id="syn-pkg" class="text-base font-semibold text-ink">{m.deviceform_synology_pkg_title()}</h3>
 				<Plate tone="signal" label={m.deviceform_synology_pkg_recommended()} />
 			</div>
-			<ul class="grid list-disc gap-1 pl-5 text-sm leading-relaxed text-ink-2">
-				<li>{m.deviceform_synology_pkg_point_install()}</li>
-				<li>{m.deviceform_synology_pkg_point_outbound()}</li>
-				<li>{m.deviceform_synology_pkg_point_reports()}</li>
-				<li>{m.deviceform_synology_pkg_point_dsm()}</li>
-			</ul>
+			<p class="text-sm text-ink-2">{m.deviceform_synology_pkg_point_install()}</p>
 			<div class="mt-auto"><Button variant="primary" onclick={() => onpick('agent')}>{m.deviceform_synology_pkg_cta()}</Button></div>
 		</section>
 
@@ -32,14 +27,9 @@
 				<KeyRound class="size-5 text-ink-2" aria-hidden="true" />
 				<h3 id="syn-api" class="text-base font-semibold text-ink">{m.deviceform_synology_api_title()}</h3>
 			</div>
-			<ul class="grid list-disc gap-1 pl-5 text-sm leading-relaxed text-ink-2">
-				<li>{m.deviceform_synology_api_point_login()}</li>
-				<li>{m.deviceform_synology_api_point_gives()}</li>
-				<li>{m.deviceform_synology_api_point_dsm()}</li>
-				<li>{m.deviceform_synology_api_point_needs()}</li>
-			</ul>
+			<p class="text-sm text-ink-2">{m.deviceform_synology_api_point_login()}</p>
 			<div class="mt-auto"><Button variant="secondary" onclick={() => onpick('api')}>{m.deviceform_synology_api_cta()}</Button></div>
 		</section>
 	</div>
-	<p class="text-sm leading-relaxed text-ink-2">{m.deviceform_synology_combine()}</p>
+	<DocLink page="devices/synology/" />
 </div>
