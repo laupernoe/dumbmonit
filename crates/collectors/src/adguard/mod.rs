@@ -12,6 +12,10 @@
 //!   moins en moins ;
 //! * la version, et la mise à jour disponible quand le contrôle de version
 //!   n'est pas désactivé (il l'est dans l'image Docker officielle) ;
+//! * le certificat du DNS chiffré (DoH, DoT, DoQ) quand il est activé : validité
+//!   et jours restants ;
+//! * le serveur DHCP quand il est activé : baux en cours et remplissage de la
+//!   plage ;
 //! * chaque serveur DNS amont, testé par AdGuard Home lui-même (le bouton
 //!   « Tester les serveurs amont ») : les statistiques ne comptent que les
 //!   réponses, un amont muet n'y laisse aucune trace.
@@ -50,7 +54,9 @@ use serde_json::json;
 use tracing::warn;
 
 use client::{Client, Login};
-use metrics::{DnsInfo, FilteringStatus, Stats, StatsConfig, Status, VersionCheck};
+use metrics::{
+    DhcpStatus, DnsInfo, FilteringStatus, Stats, StatsConfig, Status, TlsStatus, VersionCheck,
+};
 use options::Options;
 
 pub use options::{DEFAULT_PORT, DEFAULT_REQUEST_TIMEOUT};
@@ -168,7 +174,15 @@ pub async fn probe(target: &Target, ts_ms: i64) -> Result<Vec<Sample>, ProbeErro
             Err(error) => (Err(error), Vec::new(), errors),
         }
     };
-    let (stats, stats_config, filtering, version, (dns_info, upstreams, upstream_errors)) = futures::join!(
+    let (
+        stats,
+        stats_config,
+        filtering,
+        version,
+        (dns_info, upstreams, upstream_errors),
+        tls,
+        dhcp,
+    ) = futures::join!(
         client.get::<Stats>("/control/stats"),
         client.get::<StatsConfig>("/control/stats/config"),
         client.get::<FilteringStatus>("/control/filtering/status"),
@@ -178,11 +192,20 @@ pub async fn probe(target: &Target, ts_ms: i64) -> Result<Vec<Sample>, ProbeErro
             options.request_timeout
         ),
         upstream_phase,
+        client.get::<TlsStatus>("/control/tls/status"),
+        client.get::<DhcpStatus>("/control/dhcp/status"),
     );
 
     // `stats/config` n'existe qu'à partir de 0.107.30 : son absence ne compte
-    // pas comme une erreur.
+    // pas comme une erreur. Le chiffrement et le DHCP sont facultatifs de
+    // même : une version ou une plateforme qui ne les sert pas n'est pas en panne.
     let stats_config = stats_config.ok();
+    if let Ok(tls) = tls {
+        out.extend(metrics::tls_samples(&tls, chrono::Utc::now(), ts_ms));
+    }
+    if let Ok(dhcp) = dhcp {
+        out.extend(metrics::dhcp_samples(&dhcp, ts_ms));
+    }
     if let Some(stats) = settle(stats, &mut errors, target.id, "stats") {
         out.extend(metrics::stats_samples(&stats, stats_config.as_ref(), ts_ms));
     }
@@ -277,6 +300,8 @@ mod tests {
             "filtering" => include_str!("testdata/v0.107.79/filtering_status.json"),
             "version" => include_str!("testdata/v0.107.79/version_update_from_v0.107.78.json"),
             "dns_info" => include_str!("testdata/v0.107.79/dns_info.json"),
+            "tls" => include_str!("testdata/v0.107.79/tls_status.json"),
+            "dhcp" => include_str!("testdata/v0.107.79/dhcp_status.json"),
             "upstream_ok" => include_str!("testdata/v0.107.79/test_upstream_ok.json"),
             "upstream_failed" => include_str!("testdata/v0.107.79/test_upstream_failed.json"),
             other => panic!("pas de fichier « {other} »"),
@@ -297,6 +322,8 @@ mod tests {
             .route("/control/stats", get(json("stats")))
             // Une version antérieure à 0.107.30 : pas de `stats/config`.
             .route("/control/filtering/status", get(json("filtering")))
+            .route("/control/tls/status", get(json("tls")))
+            .route("/control/dhcp/status", get(json("dhcp")))
             .route("/control/dns_info", get(|| async {
                 r#"{"upstream_dns":["https://dns10.quad9.net/dns-query","192.0.2.1","10.0.0.9"],"bootstrap_dns":["9.9.9.10"]}"#
             }))
@@ -333,6 +360,9 @@ mod tests {
         assert_eq!(value(&samples, "adguard_dns_queries"), Some(18.0));
         assert_eq!(value(&samples, "adguard_filters_enabled"), Some(1.0));
         assert!(value(&samples, "adguard_stats_window_seconds").is_none());
+        assert_eq!(value(&samples, "adguard_tls_valid"), Some(1.0));
+        assert!(value(&samples, "adguard_tls_expiry_seconds").is_some());
+        assert_eq!(value(&samples, "adguard_dhcp_pool_used_percent"), Some(20.0));
         // Le fichier de version vient d'une 0.107.78 ; le statut dit 0.107.79.
         assert_eq!(value(&samples, "adguard_update_available"), Some(0.0));
         let up = |name: &str| {

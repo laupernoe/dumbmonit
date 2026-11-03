@@ -9,12 +9,12 @@
 	 * `$lib/push`; the server side in `$lib/api/webpush`.
 	 */
 	import { m } from '#lib/paraglide/messages.js';
-	import { BellRing, Info, Send, Smartphone } from 'lucide-svelte';
+	import { BellRing, Send, Smartphone } from 'lucide-svelte';
 	import type { PushDevice, PushOverview } from '#lib/api/index.js';
 	import { deletePushDevice, getPushOverview, savePushSubscription, sendPushTest } from '#lib/api/webpush.js';
 	import { currentSubscription, fingerprint, isStandalone, pushSupport, subscribe, type PushSupport } from '#lib/push.js';
 	import { formatDateTime, formatRelative } from '#lib/format.js';
-	import { Button, Confirm, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { Button, Confirm, DocLink, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 
 	let overview = $state<PushOverview | null>(null);
 	let loadError = $state<unknown>(null);
@@ -24,7 +24,6 @@
 	let busy = $state<'enable' | 'test' | number | null>(null);
 	let actionError = $state<unknown>(null);
 	let notice = $state<{ ok: boolean; text: string } | null>(null);
-	let helpOpen = $state(false);
 
 	const thisDevice = $derived(overview?.devices.find((d) => d.fingerprint === here) ?? null);
 	const origin = typeof window === 'undefined' ? '' : window.location.origin;
@@ -58,8 +57,8 @@
 		void load();
 	});
 
-	async function enable() {
-		if (!overview) return;
+	async function enable(): Promise<boolean> {
+		if (!overview) return false;
 		busy = 'enable';
 		actionError = null;
 		notice = null;
@@ -69,15 +68,17 @@
 			here = saved.fingerprint;
 			overview = { ...overview, devices: [saved, ...overview.devices.filter((d) => d.id !== saved.id)] };
 			notice = { ok: true, text: m.settings_push_enabled_notice() };
+			return true;
 		} catch (cause) {
 			actionError = cause;
+			return false;
 		} finally {
 			support = pushSupport();
 			busy = null;
 		}
 	}
 
-	async function test() {
+	async function test(): Promise<boolean> {
 		busy = 'test';
 		actionError = null;
 		notice = null;
@@ -85,8 +86,10 @@
 			const report = await sendPushTest();
 			notice = { ok: report.ok, text: report.message };
 			overview = await getPushOverview();
+			return report.ok;
 		} catch (cause) {
 			actionError = cause;
+			return false;
 		} finally {
 			busy = null;
 		}
@@ -116,31 +119,8 @@
 
 <Panel id="push" title={m.settings_push_title()} description={m.settings_push_description()}>
 	{#snippet aside()}
-		<button
-			type="button"
-			class="inline-flex size-8 items-center justify-center rounded-full border border-line text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
-			aria-expanded={helpOpen}
-			aria-controls="push-help"
-			aria-label={m.settings_push_help_label()}
-			title={m.settings_push_help_label()}
-			onclick={() => (helpOpen = !helpOpen)}
-		>
-			<Info class="size-4" aria-hidden="true" />
-		</button>
+		<DocLink page="using/push-notifications/" />
 	{/snippet}
-
-	{#if helpOpen}
-		<div id="push-help" class="mb-4 rounded-lg border border-line bg-canvas-deep px-4 py-3 text-[0.8125rem] leading-relaxed text-ink-2">
-			<ul class="list-disc space-y-1 pl-4">
-				<li><span class="font-semibold text-ink">{m.settings_push_help_https_lead()}</span> {m.settings_push_help_https_body()}</li>
-				<li><span class="font-semibold text-ink">{m.settings_push_help_ios_lead()}</span> {m.settings_push_help_ios_body()}</li>
-				<li><span class="font-semibold text-ink">{m.settings_push_help_desktop_lead()}</span> {m.settings_push_help_desktop_body()}</li>
-				<li><span class="font-semibold text-ink">{m.settings_push_help_domains_lead()}</span> {m.settings_push_help_domains_body()}</li>
-				<li><a href="/settings/notifications#notifications-channels" class="font-semibold text-ink hover:underline">{m.settings_push_help_channel()}</a></li>
-			</ul>
-			<a href="https://dumbmonit.readthedocs.io/en/latest/using/push-notifications/" target="_blank" rel="noopener" class="mt-2 inline-block font-semibold text-signal-ink hover:underline">{m.settings_push_help_guide()}</a>
-		</div>
-	{/if}
 
 	{#if loadError}
 		<ErrorNotice error={loadError} title={m.settings_push_load_error()} onretry={() => void load()} />
@@ -174,13 +154,13 @@
 			</div>
 			<div class="flex flex-wrap items-center gap-2">
 				{#if support.state === 'ready' && support.permission !== 'denied' && !thisDevice}
-					<Button size="sm" variant="secondary" loading={busy === 'enable'} disabled={busy !== null} onclick={() => void enable()}>
+					<Button size="sm" variant="secondary" loading={busy === 'enable'} disabled={busy !== null} onclick={() => enable()}>
 						<BellRing class="size-4" aria-hidden="true" />
 						{m.settings_push_enable()}
 					</Button>
 				{/if}
 				{#if overview.devices.length > 0}
-					<Button size="sm" variant="secondary" loading={busy === 'test'} disabled={busy !== null} onclick={() => void test()}>
+					<Button size="sm" variant="secondary" loading={busy === 'test'} disabled={busy !== null} onclick={() => test()}>
 						<Send class="size-4" aria-hidden="true" />
 						{m.settings_push_test()}
 					</Button>

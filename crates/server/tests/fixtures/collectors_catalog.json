@@ -804,6 +804,42 @@
         "kind": "info"
       },
       {
+        "name": "adguard_tls_valid",
+        "label": "Encrypted DNS certificate valid",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "adguard_tls_expiry_seconds",
+        "label": "Encrypted DNS certificate expires in",
+        "unit": "s",
+        "kind": "gauge"
+      },
+      {
+        "name": "adguard_dhcp_enabled",
+        "label": "DHCP server",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "adguard_dhcp_leases",
+        "label": "DHCP leases",
+        "kind": "gauge"
+      },
+      {
+        "name": "adguard_dhcp_static_leases",
+        "label": "DHCP static leases",
+        "kind": "gauge"
+      },
+      {
+        "name": "adguard_dhcp_pool_used_percent",
+        "label": "DHCP pool used",
+        "unit": "%",
+        "kind": "gauge",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
         "name": "adguard_scrape_errors",
         "label": "Scrape errors",
         "kind": "gauge",
@@ -826,6 +862,9 @@
           "adguard_filter_rules",
           "adguard_filter_oldest_update_age_seconds",
           "adguard_filter_update_age_seconds",
+          "adguard_tls_expiry_seconds",
+          "adguard_dhcp_leases",
+          "adguard_dhcp_pool_used_percent",
           "adguard_version_info"
         ]
       },
@@ -7123,6 +7162,39 @@
         "better": "higher"
       },
       {
+        "name": "homeassistant_safety_alerts",
+        "label": "Safety sensors triggered",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "homeassistant_safety_alert",
+        "label": "Safety sensor triggered",
+        "kind": "gauge"
+      },
+      {
+        "name": "homeassistant_alarms_triggered",
+        "label": "Alarms triggered",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "homeassistant_alarm_triggered",
+        "label": "Alarm triggered",
+        "kind": "gauge"
+      },
+      {
+        "name": "homeassistant_problems",
+        "label": "Problem sensors on",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "homeassistant_problem",
+        "label": "Problem sensor on",
+        "kind": "gauge"
+      },
+      {
         "name": "homeassistant_scrape_errors",
         "label": "Scrape errors",
         "kind": "gauge",
@@ -7137,6 +7209,9 @@
           "homeassistant_repairs",
           "homeassistant_updates_available",
           "homeassistant_batteries_low",
+          "homeassistant_safety_alerts",
+          "homeassistant_alarms_triggered",
+          "homeassistant_problems",
           "homeassistant_entities",
           "homeassistant_info",
           "homeassistant_recovery_mode",
@@ -7982,6 +8057,37 @@
         "kind": "gauge"
       },
       {
+        "name": "immich_user_usage_bytes",
+        "label": "Usage per user",
+        "unit": "B",
+        "kind": "gauge"
+      },
+      {
+        "name": "immich_user_quota_used_percent",
+        "label": "Quota used per user",
+        "unit": "%",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "immich_db_backups",
+        "label": "Database backups",
+        "kind": "gauge"
+      },
+      {
+        "name": "immich_db_backup_last_age_seconds",
+        "label": "Last database backup age",
+        "unit": "s",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "immich_db_backup_last_bytes",
+        "label": "Last database backup size",
+        "unit": "B",
+        "kind": "gauge"
+      },
+      {
         "name": "immich_jobs_active",
         "label": "Jobs active",
         "kind": "gauge"
@@ -8050,6 +8156,9 @@
           "immich_photos",
           "immich_videos",
           "immich_users",
+          "immich_db_backups",
+          "immich_db_backup_last_age_seconds",
+          "immich_db_backup_last_bytes",
           "immich_jobs_active",
           "immich_jobs_failed",
           "immich_queue_active",
@@ -8068,6 +8177,17 @@
         "metrics": [
           "immich_storage_used_percent"
         ]
+      },
+      {
+        "view": "topn",
+        "title": "Quota used per user",
+        "metrics": [
+          "immich_user_quota_used_percent"
+        ],
+        "group_by": "user",
+        "options": {
+          "limit": "10"
+        }
       },
       {
         "view": "timeseries",
@@ -8995,6 +9115,16 @@
         "kind": "gauge"
       },
       {
+        "name": "jellyfin_transcodes_software",
+        "label": "Transcodes on CPU",
+        "kind": "gauge"
+      },
+      {
+        "name": "jellyfin_streaming_users",
+        "label": "Viewers",
+        "kind": "gauge"
+      },
+      {
         "name": "jellyfin_scheduled_tasks_failed",
         "label": "Scheduled tasks failed",
         "kind": "gauge",
@@ -9023,6 +9153,54 @@
         "label": "Library scan last ok",
         "unit": "bool",
         "kind": "gauge"
+      },
+      {
+        "name": "jellyfin_library_scan_scheduled",
+        "label": "Library scan scheduled",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "jellyfin_libraries",
+        "label": "Libraries",
+        "kind": "gauge"
+      },
+      {
+        "name": "jellyfin_libraries_scanning",
+        "label": "Libraries scanning",
+        "kind": "gauge"
+      },
+      {
+        "name": "jellyfin_users",
+        "label": "Users",
+        "kind": "gauge"
+      },
+      {
+        "name": "jellyfin_users_disabled",
+        "label": "Users disabled",
+        "kind": "gauge"
+      },
+      {
+        "name": "jellyfin_failed_logins_recent",
+        "label": "Failed logins (last hour)",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "jellyfin_storage_used_percent",
+        "label": "Storage used",
+        "unit": "%",
+        "kind": "gauge",
+        "better": "lower",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "name": "jellyfin_storage_free_bytes",
+        "label": "Storage free",
+        "unit": "B",
+        "kind": "gauge",
+        "better": "higher"
       },
       {
         "name": "jellyfin_plugins",
@@ -9072,6 +9250,11 @@
         "metrics": [
           "jellyfin_sessions",
           "jellyfin_streams_paused",
+          "jellyfin_streaming_users",
+          "jellyfin_failed_logins_recent",
+          "jellyfin_libraries",
+          "jellyfin_libraries_scanning",
+          "jellyfin_users",
           "jellyfin_scheduled_tasks_failed",
           "jellyfin_scheduled_tasks_running",
           "jellyfin_scheduled_task_failed",
@@ -9090,7 +9273,15 @@
         "title": "Playback",
         "metrics": [
           "jellyfin_streams",
-          "jellyfin_transcodes"
+          "jellyfin_transcodes",
+          "jellyfin_transcodes_software"
+        ]
+      },
+      {
+        "view": "timeseries",
+        "title": "Storage used",
+        "metrics": [
+          "jellyfin_storage_used_percent"
         ]
       }
     ]
@@ -14079,6 +14270,176 @@
         "kind": "gauge"
       },
       {
+        "name": "nextcloud_extended_support",
+        "label": "Extended support",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "nextcloud_disabled_users",
+        "label": "Disabled users",
+        "kind": "gauge"
+      },
+      {
+        "name": "nextcloud_storages",
+        "label": "Storages",
+        "kind": "gauge"
+      },
+      {
+        "name": "nextcloud_shares_by_type",
+        "label": "Shares by type",
+        "kind": "gauge"
+      },
+      {
+        "name": "nextcloud_shares_link_without_password",
+        "label": "Public links without password",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "nextcloud_cpu_count",
+        "label": "CPU cores",
+        "kind": "gauge"
+      },
+      {
+        "name": "nextcloud_cpu_load",
+        "label": "CPU load",
+        "kind": "gauge"
+      },
+      {
+        "name": "nextcloud_memory_total_bytes",
+        "label": "Memory total",
+        "unit": "B",
+        "kind": "gauge"
+      },
+      {
+        "name": "nextcloud_memory_free_bytes",
+        "label": "Memory free",
+        "unit": "B",
+        "kind": "gauge"
+      },
+      {
+        "name": "nextcloud_memory_used_percent",
+        "label": "Memory used",
+        "unit": "%",
+        "kind": "gauge",
+        "better": "lower",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "name": "nextcloud_swap_total_bytes",
+        "label": "Swap total",
+        "unit": "B",
+        "kind": "gauge"
+      },
+      {
+        "name": "nextcloud_swap_free_bytes",
+        "label": "Swap free",
+        "unit": "B",
+        "kind": "gauge"
+      },
+      {
+        "name": "nextcloud_swap_used_percent",
+        "label": "Swap used",
+        "unit": "%",
+        "kind": "gauge",
+        "better": "lower",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "name": "nextcloud_php_max_execution_time_seconds",
+        "label": "PHP max execution time",
+        "unit": "s",
+        "kind": "gauge"
+      },
+      {
+        "name": "nextcloud_php_upload_max_filesize_bytes",
+        "label": "PHP upload limit",
+        "unit": "B",
+        "kind": "gauge"
+      },
+      {
+        "name": "nextcloud_debug_mode",
+        "label": "Debug mode",
+        "unit": "bool",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "nextcloud_file_locking_enabled",
+        "label": "File locking",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "nextcloud_memcache_local_enabled",
+        "label": "Local cache",
+        "unit": "bool",
+        "kind": "gauge",
+        "better": "higher"
+      },
+      {
+        "name": "nextcloud_memcache_distributed_enabled",
+        "label": "Distributed cache",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "nextcloud_memcache_locking_enabled",
+        "label": "Locking cache",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "nextcloud_update_check_age_seconds",
+        "label": "Last update check",
+        "unit": "s",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "nextcloud_apcu_hit_rate_percent",
+        "label": "APCu hit rate",
+        "unit": "%",
+        "kind": "gauge",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "name": "nextcloud_apcu_memory_used_percent",
+        "label": "APCu memory used",
+        "unit": "%",
+        "kind": "gauge",
+        "better": "lower",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "name": "nextcloud_apcu_expunges",
+        "label": "APCu expunges",
+        "kind": "gauge"
+      },
+      {
+        "name": "nextcloud_opcache_wasted_percent",
+        "label": "OPcache wasted",
+        "unit": "%",
+        "kind": "gauge",
+        "better": "lower",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "name": "nextcloud_opcache_cached_keys_used_percent",
+        "label": "OPcache key slots used",
+        "unit": "%",
+        "kind": "gauge",
+        "better": "lower",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
         "name": "nextcloud_platform_info",
         "label": "Platform",
         "kind": "info"
@@ -14104,7 +14465,28 @@
           "nextcloud_app_update_available",
           "nextcloud_maintenance",
           "nextcloud_needs_db_upgrade",
-          "nextcloud_version_info"
+          "nextcloud_version_info",
+          "nextcloud_update_check_age_seconds",
+          "nextcloud_memory_used_percent",
+          "nextcloud_swap_used_percent",
+          "nextcloud_opcache_cached_keys_used_percent",
+          "nextcloud_apcu_hit_rate_percent",
+          "nextcloud_apcu_memory_used_percent",
+          "nextcloud_shares_by_type",
+          "nextcloud_shares_link_without_password",
+          "nextcloud_disabled_users",
+          "nextcloud_debug_mode",
+          "nextcloud_memcache_local_enabled",
+          "nextcloud_extended_support"
+        ]
+      },
+      {
+        "view": "timeseries",
+        "title": "Server load",
+        "metrics": [
+          "nextcloud_cpu_load",
+          "nextcloud_memory_used_percent",
+          "nextcloud_swap_used_percent"
         ]
       }
     ]
@@ -16070,6 +16452,17 @@
         "group": ""
       },
       {
+        "key": "certificates",
+        "label": "Watch the certificates",
+        "help": "Reads the expiry date of the certificates the firewall keeps (web interface, captive portal, VPN); those OPNsense marks as unused are ignored. Needs the privilege System: Trust: Certificates; without it the option is skipped, which is not an error.",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
         "key": "live_map",
         "label": "Live firewall map",
         "help": "Shows on the device page where the connections your rules block or pass come from, by country. Reads the firewall log every few seconds, only while someone is looking, and keeps fifteen minutes in memory; no address is stored or shown, and countries are found in a local database. Needs the privilege Diagnostics: Logs: Firewall: Live View.",
@@ -16449,6 +16842,13 @@
         "kind": "gauge"
       },
       {
+        "name": "opnsense_certificate_expiry_seconds",
+        "label": "Certificate expiry",
+        "unit": "s",
+        "kind": "gauge",
+        "better": "higher"
+      },
+      {
         "name": "opnsense_unbound_running",
         "label": "Unbound running",
         "unit": "bool",
@@ -16513,7 +16913,8 @@
           "opnsense_firmware_connection_ok",
           "opnsense_unbound_running",
           "opnsense_unbound_cache_hit_percent",
-          "opnsense_unbound_blocklist_size"
+          "opnsense_unbound_blocklist_size",
+          "opnsense_certificate_expiry_seconds"
         ]
       },
       {
@@ -19564,6 +19965,40 @@
         "better": "higher"
       },
       {
+        "name": "pihole_upstream_queries_24h",
+        "label": "Upstream queries 24 h",
+        "kind": "gauge"
+      },
+      {
+        "name": "pihole_upstream_response_seconds",
+        "label": "Upstream response time",
+        "unit": "s",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "pihole_lists_enabled",
+        "label": "Blocklists enabled",
+        "kind": "gauge"
+      },
+      {
+        "name": "pihole_lists_download_failed",
+        "label": "Blocklists failing",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "pihole_lists_invalid_domains",
+        "label": "Blocklist invalid entries",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "pihole_dhcp_leases",
+        "label": "DHCP leases",
+        "kind": "gauge"
+      },
+      {
         "name": "pihole_scrape_errors",
         "label": "Scrape errors",
         "kind": "gauge",
@@ -19584,6 +20019,9 @@
           "pihole_clients_total",
           "pihole_gravity_domains",
           "pihole_blocking_timer_seconds",
+          "pihole_lists_enabled",
+          "pihole_lists_download_failed",
+          "pihole_dhcp_leases",
           "pihole_ftl_uptime_seconds",
           "pihole_privacy_level",
           "pihole_messages",
@@ -19609,6 +20047,13 @@
         "metrics": [
           "pihole_ftl_cpu_percent",
           "pihole_ftl_memory_percent"
+        ]
+      },
+      {
+        "view": "timeseries",
+        "title": "Upstream response time",
+        "metrics": [
+          "pihole_upstream_response_seconds"
         ]
       }
     ]
@@ -19949,6 +20394,51 @@
         "kind": "gauge"
       },
       {
+        "name": "plex_stream_remote_bandwidth_bits_per_second",
+        "label": "Remote stream bandwidth",
+        "unit": "bit/s",
+        "kind": "gauge"
+      },
+      {
+        "name": "plex_streaming_users",
+        "label": "Viewers",
+        "kind": "gauge"
+      },
+      {
+        "name": "plex_transcode_errors",
+        "label": "Transcode errors",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "plex_transcode_speed_min",
+        "label": "Slowest transcode speed",
+        "unit": "ratio",
+        "kind": "gauge",
+        "better": "higher"
+      },
+      {
+        "name": "plex_remote_access_failed",
+        "label": "Remote access failed",
+        "unit": "bool",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "plex_signin_ok",
+        "label": "Signed in to plex.tv",
+        "unit": "bool",
+        "kind": "gauge",
+        "better": "higher"
+      },
+      {
+        "name": "plex_database_backup_enabled",
+        "label": "Database backup scheduled",
+        "unit": "bool",
+        "kind": "gauge",
+        "better": "higher"
+      },
+      {
         "name": "plex_streams_paused",
         "label": "Streams paused",
         "kind": "gauge"
@@ -19998,6 +20488,12 @@
         "title": "Current values",
         "metrics": [
           "plex_streams_remote",
+          "plex_streaming_users",
+          "plex_transcode_errors",
+          "plex_transcode_speed_min",
+          "plex_remote_access_failed",
+          "plex_signin_ok",
+          "plex_database_backup_enabled",
           "plex_streams_paused",
           "plex_activities",
           "plex_libraries",
@@ -20017,7 +20513,8 @@
         "view": "timeseries",
         "title": "Stream bandwidth",
         "metrics": [
-          "plex_stream_bandwidth_bits_per_second"
+          "plex_stream_bandwidth_bits_per_second",
+          "plex_stream_remote_bandwidth_bits_per_second"
         ]
       },
       {
@@ -20950,7 +21447,7 @@
   {
     "kind": "postgres",
     "label": "PostgreSQL database",
-    "summary": "Logs in and runs a query: catches a database that is up but no longer answering.",
+    "summary": "Logs in, runs a query and reads the server's health: catches a database that is up but no longer answering, and one that is running out of connections, lagging or bloating.",
     "examples": [
       "The database behind Nextcloud or Immich",
       "A Home Assistant recorder",
@@ -20995,7 +21492,8 @@
         "In psql, create a role that may only log in.\nCREATE ROLE dumbmonit LOGIN PASSWORD 'a-long-password';",
         "Allow it to connect from the DumbMonit host with this line in pg_hba.conf (adjust the address), then reload PostgreSQL.\nhost all dumbmonit 10.0.0.5/32 scram-sha-256",
         "In DumbMonit, enter the server, for example db.home.lan:5433 (port 5432 by default), then the role's user and password.",
-        "Optional: replace the default query SELECT 1 with one that returns a single number, to chart it."
+        "Optional: replace the default query SELECT 1 with one that returns a single number, to chart it.",
+        "Optional, for the complete server health metrics (sessions of every user, locks, replication, vacuum): let the role read the statistics views.\nGRANT pg_monitor TO dumbmonit;"
       ],
       "ports": [
         {
@@ -21007,7 +21505,8 @@
         }
       ],
       "permissions": [
-        "LOGIN (role attribute)\nConnect only, no other privilege"
+        "LOGIN (role attribute)\nConnect only, no other privilege",
+        "pg_monitor (optional role membership)\nRead the statistics views, nothing else; without it the health metrics only cover the role's own sessions"
       ],
       "warning": "The check opens a real connection on every poll: on an instance close to its connection limit, give it a longer interval.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#postgresql"
@@ -21074,6 +21573,17 @@
         "group": ""
       },
       {
+        "key": "server_stats",
+        "label": "Server health metrics",
+        "help": "Also reads connections, long transactions, locks, replication, transaction ID age, dead rows and WAL archiving from the server's statistics views, on the same connection. A role without pg_monitor sees fewer of them; nothing here can make the check fail.",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
         "key": "allow_private_targets",
         "label": "Allow loopback and link-local targets",
         "help": "By default the check refuses addresses only the DumbMonit host itself can reach (127.0.0.1, ::1, 169.254.x.x). Enable this to monitor a service running on the DumbMonit host. Private LAN addresses (10.x, 192.168.x) are always allowed.",
@@ -21133,6 +21643,235 @@
         "name": "probe_sql_rows",
         "label": "Rows returned",
         "kind": "gauge"
+      },
+      {
+        "name": "postgres_connections",
+        "label": "Connections",
+        "kind": "gauge"
+      },
+      {
+        "name": "postgres_max_connections",
+        "label": "Max connections",
+        "kind": "gauge"
+      },
+      {
+        "name": "postgres_connections_used_percent",
+        "label": "Connections used",
+        "unit": "%",
+        "kind": "gauge",
+        "better": "lower",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "name": "postgres_connections_idle_in_transaction",
+        "label": "Idle in transaction",
+        "kind": "gauge"
+      },
+      {
+        "name": "postgres_longest_transaction_seconds",
+        "label": "Longest transaction",
+        "unit": "s",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "postgres_longest_idle_in_transaction_seconds",
+        "label": "Longest idle in transaction",
+        "unit": "s",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "postgres_longest_query_seconds",
+        "label": "Longest running query",
+        "unit": "s",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "postgres_locks_waiting",
+        "label": "Locks waiting",
+        "kind": "gauge"
+      },
+      {
+        "name": "postgres_cache_hit_percent",
+        "label": "Cache hit ratio",
+        "unit": "%",
+        "kind": "gauge",
+        "better": "higher",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "name": "postgres_database_size_bytes",
+        "label": "Database size",
+        "unit": "B",
+        "kind": "gauge"
+      },
+      {
+        "name": "postgres_database_wraparound_percent",
+        "label": "Transaction ID age",
+        "unit": "%",
+        "kind": "gauge",
+        "better": "lower",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "name": "postgres_database_blocks_hit_total",
+        "label": "Cache blocks hit",
+        "kind": "counter"
+      },
+      {
+        "name": "postgres_database_blocks_read_total",
+        "label": "Disk blocks read",
+        "kind": "counter"
+      },
+      {
+        "name": "postgres_database_deadlocks_total",
+        "label": "Deadlocks",
+        "kind": "counter"
+      },
+      {
+        "name": "postgres_database_commits_total",
+        "label": "Commits",
+        "kind": "counter"
+      },
+      {
+        "name": "postgres_database_rollbacks_total",
+        "label": "Rollbacks",
+        "kind": "counter"
+      },
+      {
+        "name": "postgres_database_temp_bytes_total",
+        "label": "Temporary file bytes",
+        "unit": "B",
+        "kind": "counter"
+      },
+      {
+        "name": "postgres_in_recovery",
+        "label": "Standby",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "postgres_uptime_seconds",
+        "label": "Uptime",
+        "unit": "s",
+        "kind": "gauge"
+      },
+      {
+        "name": "postgres_version_info",
+        "label": "Version",
+        "kind": "info"
+      },
+      {
+        "name": "postgres_replicas",
+        "label": "Replicas",
+        "kind": "gauge"
+      },
+      {
+        "name": "postgres_replica_streaming",
+        "label": "Replica streaming",
+        "unit": "bool",
+        "kind": "gauge",
+        "better": "higher"
+      },
+      {
+        "name": "postgres_replica_lag_seconds",
+        "label": "Replica replay lag",
+        "unit": "s",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "postgres_replica_lag_bytes",
+        "label": "Replica lag",
+        "unit": "B",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "postgres_replication_slot_active",
+        "label": "Replication slot active",
+        "unit": "bool",
+        "kind": "gauge",
+        "better": "higher"
+      },
+      {
+        "name": "postgres_replication_slot_retained_bytes",
+        "label": "WAL kept by slot",
+        "unit": "B",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "postgres_standby_replay_lag_seconds",
+        "label": "Replay lag",
+        "unit": "s",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "postgres_standby_receiving",
+        "label": "Receiving WAL",
+        "unit": "bool",
+        "kind": "gauge",
+        "better": "higher"
+      },
+      {
+        "name": "postgres_dead_tuples_percent",
+        "label": "Dead rows",
+        "unit": "%",
+        "kind": "gauge",
+        "better": "lower",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "name": "postgres_table_dead_tuple_percent",
+        "label": "Dead rows in table",
+        "unit": "%",
+        "kind": "gauge",
+        "better": "lower",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "name": "postgres_archiver_failing",
+        "label": "WAL archiving failing",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "postgres_archiver_failed_total",
+        "label": "WAL archive failures",
+        "kind": "counter"
+      },
+      {
+        "name": "postgres_archiver_archived_total",
+        "label": "WAL segments archived",
+        "kind": "counter"
+      },
+      {
+        "name": "postgres_archiver_last_archived_age_seconds",
+        "label": "Last WAL archived",
+        "unit": "s",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "postgres_prepared_transactions",
+        "label": "Prepared transactions",
+        "kind": "gauge"
+      },
+      {
+        "name": "postgres_prepared_transactions_oldest_seconds",
+        "label": "Oldest prepared transaction",
+        "unit": "s",
+        "kind": "gauge",
+        "better": "lower"
       }
     ],
     "views": [
@@ -21140,6 +21879,20 @@
         "view": "stat",
         "title": "Current values",
         "metrics": [
+          "postgres_connections_used_percent",
+          "postgres_connections",
+          "postgres_max_connections",
+          "postgres_cache_hit_percent",
+          "postgres_longest_transaction_seconds",
+          "postgres_longest_idle_in_transaction_seconds",
+          "postgres_locks_waiting",
+          "postgres_database_wraparound_percent",
+          "postgres_dead_tuples_percent",
+          "postgres_replicas",
+          "postgres_standby_replay_lag_seconds",
+          "postgres_archiver_failing",
+          "postgres_uptime_seconds",
+          "postgres_version_info",
           "probe_sql_rows"
         ]
       },
@@ -21150,6 +21903,31 @@
           "probe_duration_seconds",
           "probe_connect_seconds",
           "probe_sql_query_seconds"
+        ]
+      },
+      {
+        "view": "timeseries",
+        "title": "Connections",
+        "metrics": [
+          "postgres_connections",
+          "postgres_connections_idle_in_transaction",
+          "postgres_locks_waiting"
+        ]
+      },
+      {
+        "view": "timeseries",
+        "title": "Replication",
+        "metrics": [
+          "postgres_replica_lag_seconds",
+          "postgres_replica_lag_bytes",
+          "postgres_standby_replay_lag_seconds"
+        ]
+      },
+      {
+        "view": "timeseries",
+        "title": "Database size",
+        "metrics": [
+          "postgres_database_size_bytes"
         ]
       }
     ]
@@ -28276,6 +29054,140 @@
         "name": "synology_up",
         "label": "Up",
         "kind": "gauge"
+      },
+      {
+        "name": "synology_volume_read_only",
+        "label": "Volume read-only",
+        "unit": "bool",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "synology_volume_locked",
+        "label": "Volume locked",
+        "unit": "bool",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "synology_volume_inode_full",
+        "label": "Volume out of inodes",
+        "unit": "bool",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "synology_volume_task_progress_percent",
+        "label": "Volume task progress",
+        "unit": "%",
+        "kind": "gauge",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "name": "synology_pool_task_progress_percent",
+        "label": "Pool task progress",
+        "unit": "%",
+        "kind": "gauge",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "name": "synology_pool_scrub_scheduled",
+        "label": "Data scrubbing scheduled",
+        "unit": "bool",
+        "kind": "gauge",
+        "better": "higher"
+      },
+      {
+        "name": "synology_pool_scrub_age_seconds",
+        "label": "Last data scrubbing",
+        "unit": "s",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "synology_ssd_cache_hit_rate_percent",
+        "label": "SSD cache hit rate",
+        "unit": "%",
+        "kind": "gauge",
+        "better": "higher",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "name": "synology_system_rebuilding",
+        "label": "System rebuilding",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "synology_disk_busy_percent",
+        "label": "Disk busy",
+        "unit": "%",
+        "kind": "gauge",
+        "better": "lower",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "name": "synology_disk_read_bytes_per_second",
+        "label": "Disk read",
+        "unit": "B/s",
+        "kind": "gauge"
+      },
+      {
+        "name": "synology_disk_write_bytes_per_second",
+        "label": "Disk write",
+        "unit": "B/s",
+        "kind": "gauge"
+      },
+      {
+        "name": "synology_disk_read_iops",
+        "label": "Disk reads",
+        "unit": "/s",
+        "kind": "gauge"
+      },
+      {
+        "name": "synology_disk_write_iops",
+        "label": "Disk writes",
+        "unit": "/s",
+        "kind": "gauge"
+      },
+      {
+        "name": "synology_certificate_expires_in_seconds",
+        "label": "Certificate expires in",
+        "unit": "s",
+        "kind": "gauge",
+        "better": "higher"
+      },
+      {
+        "name": "synology_certificate_broken",
+        "label": "Certificate broken",
+        "unit": "bool",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "synology_packages_installed",
+        "label": "Packages installed",
+        "kind": "gauge"
+      },
+      {
+        "name": "synology_package_running",
+        "label": "Package running",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "synology_connections_total",
+        "label": "Open connections",
+        "kind": "gauge"
+      },
+      {
+        "name": "synology_connections",
+        "label": "Connections by protocol",
+        "kind": "gauge"
       }
     ],
     "views": [
@@ -28308,6 +29220,10 @@
           "synology_disk_bad_sector_exceeded",
           "synology_disk_life_below_threshold",
           "synology_pool_status",
+          "synology_pool_scrub_age_seconds",
+          "synology_ssd_cache_hit_rate_percent",
+          "synology_certificate_expires_in_seconds",
+          "synology_connections_total",
           "synology_ssd_cache_status",
           "synology_system_crashed",
           "synology_system_need_repair",
@@ -28557,6 +29473,37 @@
         "kind": "gauge"
       },
       {
+        "name": "tailscale_device_routes_advertised",
+        "label": "Device routes advertised",
+        "kind": "gauge"
+      },
+      {
+        "name": "tailscale_device_routes_unapproved",
+        "label": "Device routes unapproved",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "tailscale_device_exit_node",
+        "label": "Device exit node",
+        "unit": "bool",
+        "kind": "gauge"
+      },
+      {
+        "name": "tailscale_device_tailnet_lock_error",
+        "label": "Device tailnet lock error",
+        "unit": "bool",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "tailscale_device_derp_latency_seconds",
+        "label": "Device DERP latency",
+        "unit": "s",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
         "name": "tailscale_device_info",
         "label": "Device",
         "kind": "info"
@@ -28578,7 +29525,10 @@
           "tailscale_device_watched",
           "tailscale_device_update_available",
           "tailscale_device_offline_seconds",
-          "tailscale_device_key_expiry_seconds"
+          "tailscale_device_key_expiry_seconds",
+          "tailscale_device_routes_unapproved",
+          "tailscale_device_tailnet_lock_error",
+          "tailscale_device_derp_latency_seconds"
         ]
       }
     ]
@@ -29965,6 +30915,90 @@
         "kind": "gauge"
       },
       {
+        "name": "unifi_device_satisfaction_percent",
+        "label": "Device satisfaction",
+        "unit": "%",
+        "kind": "gauge",
+        "better": "higher",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "name": "unifi_device_temperature_celsius",
+        "label": "Device temperature",
+        "unit": "°C",
+        "kind": "gauge"
+      },
+      {
+        "name": "unifi_device_overheating",
+        "label": "Device overheating",
+        "unit": "bool",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "unifi_device_poe_budget_watts",
+        "label": "PoE budget",
+        "unit": "W",
+        "kind": "gauge"
+      },
+      {
+        "name": "unifi_device_poe_used_watts",
+        "label": "PoE used",
+        "unit": "W",
+        "kind": "gauge"
+      },
+      {
+        "name": "unifi_radio_channel_utilization_percent",
+        "label": "Wi-Fi channel utilization",
+        "unit": "%",
+        "kind": "gauge",
+        "better": "lower",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "name": "unifi_radio_clients",
+        "label": "Wi-Fi clients per radio",
+        "kind": "gauge"
+      },
+      {
+        "name": "unifi_wifi_clients",
+        "label": "Wi-Fi clients",
+        "kind": "gauge"
+      },
+      {
+        "name": "unifi_wifi_clients_weak_signal",
+        "label": "Wi-Fi clients with a weak signal",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
+        "name": "unifi_wifi_signal_dbm_avg",
+        "label": "Wi-Fi signal (average)",
+        "unit": "dBm",
+        "kind": "gauge"
+      },
+      {
+        "name": "unifi_speedtest_download_bps",
+        "label": "Speed test download",
+        "unit": "bps",
+        "kind": "gauge"
+      },
+      {
+        "name": "unifi_speedtest_upload_bps",
+        "label": "Speed test upload",
+        "unit": "bps",
+        "kind": "gauge"
+      },
+      {
+        "name": "unifi_speedtest_latency_seconds",
+        "label": "Speed test latency",
+        "unit": "s",
+        "kind": "gauge",
+        "better": "lower"
+      },
+      {
         "name": "unifi_info",
         "label": "Info",
         "kind": "info"
@@ -29990,7 +31024,11 @@
           "unifi_device_upgradable",
           "unifi_wan_link_up",
           "unifi_wan_up",
-          "unifi_subsystem_status"
+          "unifi_subsystem_status",
+          "unifi_wifi_clients_weak_signal",
+          "unifi_device_satisfaction_percent",
+          "unifi_radio_channel_utilization_percent",
+          "unifi_device_poe_used_watts"
         ]
       },
       {
@@ -30004,7 +31042,15 @@
         "view": "timeseries",
         "title": "Clients",
         "metrics": [
-          "unifi_clients"
+          "unifi_clients",
+          "unifi_wifi_clients"
+        ]
+      },
+      {
+        "view": "timeseries",
+        "title": "Wi-Fi channel utilization",
+        "metrics": [
+          "unifi_radio_channel_utilization_percent"
         ]
       }
     ]

@@ -11,7 +11,7 @@
 	import { getHttps, HTTPS_CERTIFICATE_URL } from '#lib/api/https.js';
 	import type { HttpsFinding, HttpsView } from '#lib/api/types.js';
 	import { formatDateTime } from '#lib/format.js';
-	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { DocLink, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 
 	let data = $state<HttpsView | null>(null);
 	let loadError = $state<unknown>(null);
@@ -126,9 +126,6 @@
 							<dd class="break-words text-ink">{data.certificate.issuer}</dd>
 						{/if}
 					</dl>
-					{#if data.certificate.source === 'self_signed'}
-						<p class="max-w-prose text-sm text-ink-2">{m.settings_https_self_signed_help()}</p>
-					{/if}
 					<a href={HTTPS_CERTIFICATE_URL} download class="inline-flex min-h-10 items-center gap-1.5 justify-self-start text-sm font-semibold text-signal-ink hover:underline">
 						<Download class="size-4" aria-hidden="true" />
 						{m.settings_https_download()}
@@ -148,11 +145,11 @@
 				{#if warnings.length === 0 && infos.length === 0}
 					<p class="text-sm text-ink-2">{m.settings_https_findings_none()}</p>
 				{:else}
-					<p class="max-w-prose text-sm text-ink-2">{m.settings_https_findings_intro()}</p>
 					{#if warnings.length > 0}{@render findingList(warnings, 'warning')}{/if}
 					{#if infos.length > 0}{@render findingList(infos, 'info')}{/if}
 				{/if}
 			</div>
 		</div>
 	{/if}
+	<DocLink page="install/https/" class="mt-3" />
 </Panel>

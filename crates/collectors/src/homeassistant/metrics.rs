@@ -127,6 +127,9 @@ pub fn state_samples(states: &[State], tuning: &Tuning, ts_ms: i64) -> Vec<Sampl
     let mut batteries = 0.0;
     let mut low = Vec::new();
     let mut updates = Vec::new();
+    let mut safety = Vec::new();
+    let mut problems = Vec::new();
+    let mut alarms = Vec::new();
     let excluded: BTreeSet<&str> = tuning.exclude_domains.iter().map(String::as_str).collect();
 
     for state in states {
@@ -165,6 +168,18 @@ pub fn state_samples(states: &[State], tuning: &Tuning, ts_ms: i64) -> Vec<Sampl
         }
         if domain == "update" && state.state == "on" {
             updates.push(state);
+        }
+        if domain == "binary_sensor" && state.state == "on" {
+            match state.attribute("device_class") {
+                Some(class @ ("smoke" | "gas" | "carbon_monoxide" | "moisture" | "safety")) => {
+                    safety.push((state, class));
+                }
+                Some(class @ ("problem" | "tamper")) => problems.push((state, class)),
+                _ => {}
+            }
+        }
+        if domain == "alarm_control_panel" && state.state == "triggered" {
+            alarms.push(state);
         }
     }
 
@@ -213,6 +228,41 @@ pub fn state_samples(states: &[State], tuning: &Tuning, ts_ms: i64) -> Vec<Sampl
                 .with_label("name", state.name())
                 .with_label("installed", state.attribute("installed_version").unwrap_or(""))
                 .with_label("latest", state.attribute("latest_version").unwrap_or("")),
+        );
+    }
+
+    // Ce qui met la maison en danger : détecteur de fumée, de gaz, de monoxyde
+    // ou de fuite déclenché, alarme en cours. L'état « on » d'un capteur
+    // binaire de ces classes veut dire « détecté ».
+    out.push(gauge("homeassistant_safety_alerts", safety.len() as f64, ts_ms));
+    safety.sort_by(|a, b| a.0.entity_id.cmp(&b.0.entity_id));
+    for (state, class) in safety.into_iter().take(MAX_NAMED) {
+        out.push(
+            gauge("homeassistant_safety_alert", 1.0, ts_ms)
+                .with_label("entity", state.entity_id.as_str())
+                .with_label("name", state.name())
+                .with_label("device_class", class),
+        );
+    }
+    out.push(gauge("homeassistant_alarms_triggered", alarms.len() as f64, ts_ms));
+    alarms.sort_by(|a, b| a.entity_id.cmp(&b.entity_id));
+    for state in alarms.into_iter().take(MAX_NAMED) {
+        out.push(
+            gauge("homeassistant_alarm_triggered", 1.0, ts_ms)
+                .with_label("entity", state.entity_id.as_str())
+                .with_label("name", state.name()),
+        );
+    }
+    // Capteurs « problème » et « sabotage » : un onduleur, une imprimante, un
+    // détecteur dont le boîtier a été ouvert.
+    out.push(gauge("homeassistant_problems", problems.len() as f64, ts_ms));
+    problems.sort_by(|a, b| a.0.entity_id.cmp(&b.0.entity_id));
+    for (state, class) in problems.into_iter().take(MAX_NAMED) {
+        out.push(
+            gauge("homeassistant_problem", 1.0, ts_ms)
+                .with_label("entity", state.entity_id.as_str())
+                .with_label("name", state.name())
+                .with_label("device_class", class),
         );
     }
     out
@@ -455,6 +505,64 @@ mod tests {
         let named =
             find(&samples, "homeassistant_repair", "issue", "country_not_configured").unwrap();
         assert_eq!(named.labels["domain"], "homeassistant");
+    }
+
+    fn binary(entity: &str, class: &str, state: &str) -> State {
+        serde_json::from_value(serde_json::json!({
+            "entity_id": entity,
+            "state": state,
+            "attributes": { "device_class": class, "friendly_name": entity },
+        }))
+        .unwrap()
+    }
+
+    fn alarm(entity: &str, state: &str) -> State {
+        serde_json::from_value(serde_json::json!({
+            "entity_id": entity,
+            "state": state,
+            "attributes": { "friendly_name": entity },
+        }))
+        .unwrap()
+    }
+
+    #[test]
+    fn detecteurs_declenches_et_alarme() {
+        let states = [
+            binary("binary_sensor.kitchen_smoke", "smoke", "on"),
+            binary("binary_sensor.hall_smoke", "smoke", "off"),
+            binary("binary_sensor.washer_leak", "moisture", "on"),
+            binary("binary_sensor.garage_door", "door", "on"),
+            binary("binary_sensor.ups_problem", "problem", "on"),
+            binary("binary_sensor.window_tamper", "tamper", "off"),
+            alarm("alarm_control_panel.home", "triggered"),
+            alarm("alarm_control_panel.shed", "armed_away"),
+        ];
+        let samples = state_samples(&states, &tuning(), 0);
+        assert_eq!(single(&samples, "homeassistant_safety_alerts"), 2.0);
+        let leak =
+            find(&samples, "homeassistant_safety_alert", "entity", "binary_sensor.washer_leak");
+        assert_eq!(leak.unwrap().labels["device_class"], "moisture");
+        // Une porte ouverte n'est pas un danger.
+        assert!(
+            find(&samples, "homeassistant_safety_alert", "entity", "binary_sensor.garage_door")
+                .is_none()
+        );
+        assert_eq!(single(&samples, "homeassistant_alarms_triggered"), 1.0);
+        assert!(
+            find(&samples, "homeassistant_alarm_triggered", "entity", "alarm_control_panel.home")
+                .is_some()
+        );
+        assert_eq!(single(&samples, "homeassistant_problems"), 1.0);
+    }
+
+    #[test]
+    fn rien_de_declenche_dans_les_etats_reels() {
+        // Capteur de fuite à `off`, alarme `disarmed`, capteurs de gaz et de
+        // monoxyde qui sont des `sensor` numériques : aucun danger.
+        let samples = state_samples(&states(), &tuning(), 0);
+        assert_eq!(single(&samples, "homeassistant_safety_alerts"), 0.0);
+        assert_eq!(single(&samples, "homeassistant_alarms_triggered"), 0.0);
+        assert!(samples.iter().all(|s| s.metric != "homeassistant_safety_alert"));
     }
 
     fn client_value(

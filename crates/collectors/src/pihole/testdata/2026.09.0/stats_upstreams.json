@@ -1,0 +1,35 @@
+{
+  "upstreams": [
+    {
+      "ip": "blocklist",
+      "name": null,
+      "port": -1,
+      "count": 3,
+      "statistics": { "response": 0.0, "variance": 0.0 }
+    },
+    {
+      "ip": "cache",
+      "name": null,
+      "port": -1,
+      "count": 4,
+      "statistics": { "response": 0.0, "variance": 0.0 }
+    },
+    {
+      "ip": "127.0.0.1",
+      "name": "localhost",
+      "port": 5335,
+      "count": 4,
+      "statistics": { "response": 0.0231, "variance": 0.0004 }
+    },
+    {
+      "ip": "9.9.9.9",
+      "name": "dns9.quad9.net",
+      "port": 53,
+      "count": 0,
+      "statistics": { "response": 0.0, "variance": 0.0 }
+    }
+  ],
+  "forwarded_queries": 4,
+  "total_queries": 11,
+  "took": 0.0001
+}

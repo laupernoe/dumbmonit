@@ -176,6 +176,32 @@ tableau de la page de la surveillance. L'appareil nommé dans l'alerte est le
 nom de l'invité depuis les notes de snapshot quand PVE en a écrit une,
 sinon `type/id`, comme le calendrier de sauvegarde.
 
+### Vérifications supplémentaires
+
+* **Disponibilité des datastores.** Un datastore qui ne s'ouvre pas (disque
+  débranché, chemin non monté, système de fichiers en lecture seule) refuse
+  toute sauvegarde. Il est signalé dès qu'il est indisponible, sauf un
+  datastore amovible simplement démonté, qui a sa propre règle.
+* **Mode maintenance.** `datastore_maintenance` (l'étiquette `mode` dit lequel).
+  Le mode se lève à la main : un `read-only` ou `offline` oublié après une
+  migration fait échouer les sauvegardes des nuits suivantes. Il est signalé
+  au bout de 24 heures.
+* **Système de fichiers racine.** `node_rootfs_percent` : PBS y écrit ses
+  journaux, ses archives de tâches et ses index, et plus aucune tâche ne démarre
+  une fois qu'il est plein, quelle que soit la place des datastores.
+* **Travaux planifiés silencieux.** Un travail de synchronisation ou
+  d'élagage actif, planifié, qui n'a pas tourné depuis huit jours. Un travail
+  qui cesse de tourner n'échoue pas : les règles « dernier passage en échec »
+  ne le voient jamais. Les vérifications sont exclues, souvent mensuelles.
+* **Abonnement.** `node_subscription_active` et `node_subscription_info`
+  (état, niveau, date de renouvellement), lus sur
+  `/nodes/localhost/subscription` (`Sys.Audit`, avec l'option `updates`).
+  `notfound` ne déclenche rien.
+
+Règles intégrées ajoutées : datastore PBS indisponible, datastore PBS laissé en
+maintenance, système de fichiers racine PBS presque plein (90 %), travail
+planifié PBS à l'arrêt, abonnement PBS expiré.
+
 Règles intégrées qui s'appliquent : Surveillance inaccessible, datastore PBS
 presque plein, datastore PBS qui se remplit, sauvegarde PBS trop
 ancienne (par groupe de sauvegarde : pas de nouveau snapshot depuis deux

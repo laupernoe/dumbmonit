@@ -87,6 +87,30 @@ garder en ligne** ci-dessus, qui ne déclenche une alerte que pour les
 appareils surveillés passant hors ligne. Augmentez la **péremption
 d'appareil** pour un tailnet avec des appareils qui se déplacent.
 
+## Routes, verrouillage du tailnet et relais
+
+Pour chaque appareil, DumbMonit lit aussi :
+
+- les **routes** qu'il annonce (routeur de sous-réseau, nœud de sortie) et combien attendent encore une approbation dans la console ;
+- une erreur de **verrouillage du tailnet**, quand l'appareil n'est pas signé par un nœud de confiance ;
+- la latence vers son **relais DERP** préféré, tant qu'il est en ligne.
+
+Aucun droit supplémentaire : c'est la même liste d'appareils.
+
+## Alertes par défaut
+
+| Alerte | Se déclenche quand |
+|---|---|
+| Tailscale device offline | Un appareil surveillé est déconnecté depuis plus de 15 minutes |
+| Tailscale subnet router offline | Un appareil qui annonce des routes est hors ligne depuis 10 minutes, surveillé ou non |
+| Tailscale routes awaiting approval | Un appareil annonce des routes que personne n'a approuvées, depuis une heure |
+| Tailscale node key expiring / expired | Une clé expire dans moins de 14 jours / la clé d'un appareil surveillé a expiré |
+| Tailscale device awaiting approval | Un appareil a rejoint le tailnet sans être autorisé |
+| Tailscale tailnet lock error | Un appareil n'est pas signé par un nœud de confiance, depuis 30 minutes |
+| Tailscale client update | Un appareil surveillé a un client périmé (information) |
+
+Toutes les règles se modifient ou se désactivent dans Alertes.
+
 ## La page de la surveillance
 
 Le panneau Tailnet dit ce qui ne va pas en une phrase, montre les appareils

@@ -17,9 +17,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { closeAgentToken, createAdKit, listAgentTokens, listTargets, type CreatedAdKit, type RelayAgent, type Target } from '#lib/api/index.js';
 	import { listRelays } from '#lib/api/relay.js';
-	import { adDeployDocsUrl } from '#lib/docs.js';
-	import AgentChannelNote from '#lib/components/device-form/AgentChannelNote.svelte';
-	import { Button, Confirm, CopyBlock, ErrorNotice, Field, Led, Plate } from '#lib/ui/index.js';
+	import { Button, Confirm, CopyBlock, DocLink, ErrorNotice, Field, Led, Plate } from '#lib/ui/index.js';
 
 	interface Props {
 		/** Called whenever the token list changed (created, closed), so the page can reload it. */
@@ -452,14 +450,12 @@
 								<input type="radio" name="ad-scope" value="all" class="mt-0.5 size-4 shrink-0 accent-[var(--color-signal)]" bind:group={scope} onchange={() => (scopeError = null)} />
 								<span>{m.settings_agents_ad_scope_all()}</span>
 							</label>
-							<p class="pl-6 text-sm text-ink-2">{m.settings_agents_ad_scope_all_help()}</p>
 						</div>
 						<div>
 							<label class="flex min-h-10 items-start gap-2 py-2 text-sm text-ink">
 								<input type="radio" name="ad-scope" value="ou" class="mt-0.5 size-4 shrink-0 accent-[var(--color-signal)]" bind:group={scope} onchange={() => (scopeError = null)} />
 								<span>{m.settings_agents_ad_scope_ou()}</span>
 							</label>
-							<p class="pl-6 text-sm text-ink-2">{m.settings_agents_ad_scope_ou_help()}</p>
 							{#if scope === 'ou'}
 								<Field label={m.settings_agents_ad_ou_field()} for="ad-ou" class="mt-2 pl-6">
 									<input id="ad-ou" type="text" class="input" bind:value={targetOu} placeholder="OU=Servers,DC=corp,DC=example,DC=com" autocomplete="off" autocapitalize="none" spellcheck="false" oninput={() => (scopeError = null)} aria-invalid={scopeError ? 'true' : undefined} />
@@ -471,7 +467,6 @@
 								<input type="radio" name="ad-scope" value="group" class="mt-0.5 size-4 shrink-0 accent-[var(--color-signal)]" bind:group={scope} onchange={() => (scopeError = null)} />
 								<span>{m.settings_agents_ad_scope_group()}</span>
 							</label>
-							<p class="pl-6 text-sm text-ink-2">{m.settings_agents_ad_scope_group_help()}</p>
 							{#if scope === 'group'}
 								<Field label={m.settings_agents_ad_group_field()} for="ad-group" class="mt-2 pl-6">
 									<input id="ad-group" type="text" class="input" bind:value={securityGroup} placeholder="DumbMonit Servers" autocomplete="off" autocapitalize="none" spellcheck="false" oninput={() => (scopeError = null)} aria-invalid={scopeError ? 'true' : undefined} />
@@ -486,20 +481,17 @@
 							<input type="checkbox" class="size-4 shrink-0 accent-[var(--color-signal)]" checked={scope === 'all' || includeDcs} onchange={(e) => (includeDcs = e.currentTarget.checked)} disabled={creating || scope === 'all'} />
 							{m.settings_agents_ad_dcs()}
 						</label>
-						{#if scope === 'all'}<p class="pl-6 text-sm text-ink-2">{m.settings_agents_ad_dcs_all_help()}</p>{/if}
 					</div>
 					<div>
 						<label class="flex min-h-10 items-center gap-2 text-sm text-ink">
 							<input type="checkbox" class="size-4 shrink-0 accent-[var(--color-signal)]" bind:checked={sysvol} disabled={creating} />
 							{m.settings_agents_ad_sysvol()}
 						</label>
-						<p class="pl-6 text-sm text-ink-2">{m.settings_agents_ad_sysvol_help()}</p>
 					</div>
 
 					<div class="min-w-0">
 						<p class="mb-1 text-sm font-semibold text-ink">{m.settings_agents_ad_command_title()}</p>
-						<p class="mb-1.5 text-sm text-ink-2">{m.settings_agents_ad_command_help()}</p>
-						<CopyBlock value={command} label={m.settings_agents_copy_command()} />
+							<CopyBlock value={command} label={m.settings_agents_copy_command()} />
 					</div>
 
 					{#if createError}
@@ -513,9 +505,8 @@
 					</div>
 				</form>
 			{:else if step === 2}
-				<p class="text-sm text-ink">{m.settings_agents_ad_download_intro()}</p>
 				<div class="mt-3 flex flex-wrap items-center gap-3">
-					<Button variant="primary" onclick={download}>
+					<Button variant="primary" onclick={download} feedback>
 						<Download class="size-4" aria-hidden="true" />
 						{m.settings_agents_ad_download()}
 					</Button>
@@ -524,7 +515,6 @@
 					{/if}
 				</div>
 				<div class="mt-3 min-w-0">
-					<p class="mb-1.5 text-sm text-ink-2">{m.settings_agents_ad_command_help()}</p>
 					<CopyBlock value={command} label={m.settings_agents_copy_command()} />
 				</div>
 				<p class="mt-3 rounded-lg border border-advisory/40 bg-surface-2 px-3.5 py-3 text-sm text-ink">{m.settings_agents_ad_secret_warning()}</p>
@@ -540,9 +530,7 @@
 						</div>
 					</dl>
 				{/if}
-				<AgentChannelNote class="mt-3" />
 			{:else if step === 3}
-				<p class="text-sm text-ink">{m.settings_agents_ad_run_intro()}</p>
 				<div class="mt-3 grid gap-3">
 					<div class="min-w-0">
 						<p class="mb-1.5 text-sm font-semibold text-ink">{m.settings_agents_ad_run_preview()}</p>
@@ -553,16 +541,8 @@
 						<CopyBlock value={command} label={m.settings_agents_copy_command()} />
 					</div>
 				</div>
-				<p class="mt-3 text-sm text-ink-2">{m.settings_agents_ad_run_timing()}</p>
-				<AgentChannelNote class="mt-3" />
-				<p class="mt-2 text-sm">
-					<a class="inline-flex min-h-10 items-center gap-1 font-semibold text-info underline underline-offset-2" href={adDeployDocsUrl()} target="_blank" rel="noopener noreferrer">
-						{m.settings_agents_ad_docs()}
-						<ArrowRight class="size-3.5" aria-hidden="true" />
-					</a>
-				</p>
+				<DocLink page="devices/agent-active-directory/" class="mt-2" />
 			{:else}
-				<p class="text-sm text-ink-2">{m.settings_agents_ad_watch_intro()}</p>
 				<div class="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-canvas-deep/50 px-4 py-3" aria-live="polite">
 					<Led tone={uses > 0 ? 'signal' : 'ghost'} blink={uses === 0} />
 					<p class="tnum text-lg font-semibold text-ink">
@@ -584,7 +564,6 @@
 				{/if}
 
 				<div class="mt-4 rounded-lg border border-line px-3.5 py-3">
-					<p class="text-sm text-ink-2">{m.settings_agents_ad_stop_help()}</p>
 					<div class="mt-2 flex flex-wrap items-center gap-3">
 						{#if closed}
 							<Plate tone="advisory"><OctagonX class="size-3.5" aria-hidden="true" />{m.settings_agents_ad_stopped()}</Plate>

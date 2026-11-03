@@ -118,7 +118,7 @@
 		}
 	}
 
-	async function backupNow() {
+	async function backupNow(): Promise<boolean> {
 		fetching = true;
 		fetchError = null;
 		try {
@@ -129,8 +129,10 @@
 				queued = false;
 				void refresh();
 			}, 8000);
+			return true;
 		} catch (cause) {
 			fetchError = cause;
+			return false;
 		} finally {
 			fetching = false;
 		}

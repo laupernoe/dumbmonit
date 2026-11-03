@@ -341,7 +341,7 @@
 					{m.alerts_history_clear_all()}
 				</Confirm>
 			{/if}
-			<Button variant="secondary" size="sm" onclick={exportCsv} disabled={filtered.length === 0}>
+			<Button variant="secondary" size="sm" onclick={exportCsv} feedback disabled={filtered.length === 0}>
 				<Download class="size-3.5" aria-hidden="true" />
 				{m.alerts_history_export()}
 			</Button>

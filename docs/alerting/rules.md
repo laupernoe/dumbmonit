@@ -347,6 +347,11 @@ Nextcloud, Immich, Paperless-ngx, Jellyfin and Plex ([monitors](../devices/nextc
 | Immich queue paused | A job queue has been paused for a day (`dumbmonit_immich_queue_paused`). | > 0 | 24 h | Info (`info`) | 7 d |
 | Immich storage almost full | The disk holding the library is more than 90 % full (`dumbmonit_immich_storage_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
 | Immich update available | Immich's version check knows a newer release (`dumbmonit_immich_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Immich jobs failing | A queue other than machine learning holds 25 or more failed jobs (`dumbmonit_immich_queue_failed`). The notification names the queue. | ≥ 25 | 30 min | Advisory (`warning`) | 24 h |
+| Immich machine learning failing | The smart search, faces, duplicates and text recognition queues hold 10 or more failed jobs: the machine learning container is probably down (`dumbmonit_immich_queue_failed`). | ≥ 10 | 30 min | Advisory (`warning`) | 24 h |
+| Immich in maintenance mode | Immich has stayed in maintenance mode (`dumbmonit_immich_maintenance_mode`). | > 0 | 30 min | Advisory (`warning`) | 6 h |
+| Immich user quota almost full | An account with a quota used more than 90 % of it (`dumbmonit_immich_user_quota_used_percent`); clears below 85 %. | > 90 % | 1 h | Advisory (`warning`) | 24 h |
+| Immich database backup stale | The newest database backup is more than three days old (`dumbmonit_immich_db_backup_last_age_seconds`); needs `databaseBackup.list`. | > 3 d | 1 h | Advisory (`warning`) | 24 h |
 | Paperless task queue down | Redis or Celery in error (`max by (target) (dumbmonit_paperless_component_status{component=~"redis\|celery"})`: 2 is an error): nothing new is imported. | ≥ 2 | 5 min | Warning (`critical`) | 1 h |
 | Paperless index or sanity check error | The search index, the classifier or the sanity check (missing or altered files) reports an error (`dumbmonit_paperless_component_status{component=~"index\|classifier\|sanity_check"}`). | ≥ 2 | 30 min | Advisory (`warning`) | 24 h |
 | Paperless migrations pending | Database migrations left to apply (`dumbmonit_paperless_unapplied_migrations`). | > 0 | 30 min | Advisory (`warning`) | 24 h |
@@ -356,7 +361,16 @@ Nextcloud, Immich, Paperless-ngx, Jellyfin and Plex ([monitors](../devices/nextc
 | Jellyfin scheduled task failed | A scheduled task (a library scan, a cleanup) failed or was aborted on its last run (`dumbmonit_jellyfin_scheduled_tasks_failed`). | > 0 | 10 min | Advisory (`warning`) | 24 h |
 | Jellyfin plugin broken | A plugin failed to load or does not support this version (`dumbmonit_jellyfin_plugins_broken`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
 | Jellyfin restart pending | Jellyfin has waited a day for a restart after a plugin install or update (`dumbmonit_jellyfin_pending_restart`). | > 0 | 24 h | Info (`info`) | 7 d |
+| Jellyfin library scan stale | The scheduled library scan has not finished for three days (`dumbmonit_jellyfin_library_scan_age_seconds`, only while the scan has a periodic trigger). | > 3 d | 30 min | Advisory (`warning`) | 24 h |
+| Jellyfin storage almost full | A disk used by Jellyfin (library, data, cache, transcodes) is more than 90 % full (`dumbmonit_jellyfin_storage_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
+| Jellyfin heavy CPU transcoding | Three or more streams transcoded without hardware acceleration (`dumbmonit_jellyfin_transcodes_software`). | ≥ 3 | 15 min | Info (`info`) | 12 h |
+| Jellyfin failed sign-ins | Ten or more failed sign-ins in the last hour (`dumbmonit_jellyfin_failed_logins_recent`). | ≥ 10 | 5 min | Advisory (`warning`) | 6 h |
 | Plex update available | Plex's update check found a newer release (`dumbmonit_plex_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Plex transcoder too slow | The slowest video transcode being played runs below real time (`dumbmonit_plex_transcode_speed_min`): playback will buffer. | < 0.95 | 10 min | Advisory (`warning`) | 6 h |
+| Plex transcode error | A transcode session reports an error (`dumbmonit_plex_transcode_errors`). | > 0 | 5 min | Advisory (`warning`) | 12 h |
+| Plex remote access failed | Plex reports its remote access (port mapping) failed (`dumbmonit_plex_remote_access_failed`). | > 0 | 30 min | Advisory (`warning`) | 24 h |
+| Plex signed out of plex.tv | A claimed server lost its plex.tv sign-in (`dumbmonit_plex_signin_ok`). | < 1 | 1 h | Advisory (`warning`) | 24 h |
+| Plex database backup off | The "Backup database" maintenance task is turned off (`dumbmonit_plex_database_backup_enabled`); ignore it if another backup covers the database. | < 1 | 24 h | Info (`info`) | 30 d |
 
 ### Self-hosted forges
 
@@ -438,6 +452,10 @@ One rule, shared by every integration that tracks client devices connecting and 
 | Pi-hole blocklists stale | The blocklists (gravity) have not been rebuilt for more than eight days (`dumbmonit_pihole_gravity_age_seconds`): the weekly update fails. | > 8 d | 1 h | Advisory (`warning`) | 24 h |
 | Pi-hole update available | A newer version is available (`dumbmonit_pihole_updates_available`): the image in Docker, core, web interface or FTL otherwise. Pi-hole checks once a day. | > 0 | 1 h | Info (`info`) | 7 d |
 | Pi-hole diagnosis messages | Pi-hole lists messages on its diagnosis page (`dumbmonit_pihole_messages`): a blocklist that failed to download, a rate-limited client, an overloaded host. | > 0 | 15 min | Info (`info`) | 24 h |
+| Pi-hole SERVFAIL replies | More than 5% of the DNS replies of the last 24 hours are SERVFAIL (`100 * dumbmonit_pihole_replies_servfail_24h / dumbmonit_pihole_queries_24h`), once at least 200 queries were answered: an upstream resolver is failing. | > 5 % | 30 min | Advisory (`warning`) | 6 h |
+| Pi-hole upstream resolver slow | An upstream resolver answers in more than a second on average (`dumbmonit_pihole_upstream_response_seconds`, one series per resolver that was asked). | > 1 s | 30 min | Advisory (`warning`) | 6 h |
+| Pi-hole blocklist download failing | At least one enabled blocklist failed to download on the last gravity update (`dumbmonit_pihole_lists_download_failed`): it is stale or empty. | > 0 | 1 h | Advisory (`warning`) | 24 h |
+| Pi-hole receives no queries | No DNS query in the last 24 hours (`dumbmonit_pihole_queries_24h`): no client uses it any more, or FTL is stuck. | < 1 | 1 h | Info (`info`) | 24 h |
 
 ### AdGuard Home
 
@@ -450,6 +468,12 @@ The DNS filter ([monitor](../devices/adguard.md)). Query and block figures are s
 | AdGuard Home upstream failing | An upstream DNS server fails AdGuard Home's own test, or stays silent 4 seconds (`dumbmonit_adguard_upstream_up`, one series per upstream). | < 1 | 10 min | Advisory (`warning`) | 6 h |
 | AdGuard Home filter lists stale | The oldest update of an enabled filter list is more than three days old (`dumbmonit_adguard_filter_oldest_update_age_seconds`). | > 3 days | 1 h | Advisory (`warning`) | 24 h |
 | AdGuard Home update available | A newer version is announced by AdGuard Home's own version check (`dumbmonit_adguard_update_available`); never fires when that check is disabled, as in the official Docker image. | > 0 | 1 h | Info (`info`) | 7 days |
+| AdGuard Home slow to answer | The average time to process a DNS query is above half a second (`dumbmonit_adguard_avg_processing_seconds`): the host is overloaded or an upstream is slow. | > 0.5 s | 30 min | Advisory (`warning`) | 6 h |
+| AdGuard Home upstream slow | An upstream answers in more than a second on average over the statistics window (`dumbmonit_adguard_upstream_avg_seconds`, one series per upstream). | > 1 s | 30 min | Advisory (`warning`) | 6 h |
+| AdGuard Home certificate invalid | The certificate or private key of the encrypted DNS does not load or does not match (`dumbmonit_adguard_tls_valid`); only when encryption is on. | < 1 | 10 min | Advisory (`warning`) | 12 h |
+| AdGuard Home certificate expiring | The certificate of the encrypted DNS expires in less than 14 days (`dumbmonit_adguard_tls_expiry_seconds`). | < 14 d | 1 h | Advisory (`warning`) | 24 h |
+| AdGuard Home DHCP range almost full | More than 90% of the DHCP address range is leased (`dumbmonit_adguard_dhcp_pool_used_percent`); only when the DHCP server is on. | > 90 % | 30 min | Advisory (`warning`) | 12 h |
+| AdGuard Home receives no queries | No query over the whole statistics window, when statistics are on and cover at least a day (`dumbmonit_adguard_dns_queries`). | < 1 | 1 h | Info (`info`) | 24 h |
 
 ### UPS behind NUT
 
@@ -509,6 +533,10 @@ Series carry the `interface` or `sensor` label, so a notification names the port
 | Home Assistant battery low | A battery reported by Home Assistant is low (`dumbmonit_homeassistant_battery_low`, one series per battery below the device's threshold, 20% by default; its value is the level). | ≥ 0 % | 30 min | Info (`info`) | 3 d |
 | Home Assistant update available | Home Assistant has updates waiting: core, operating system, add-ons or device firmware (`dumbmonit_homeassistant_updates_available`). | > 0 | 1 h | Info (`info`) | 7 d |
 | Home Assistant repair to address | Home Assistant has an open repair of error or critical severity (`dumbmonit_homeassistant_repair{severity=~"error\|critical"}`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
+| Home Assistant safety sensor triggered | A smoke, gas, carbon monoxide, water leak or safety sensor is on (`dumbmonit_homeassistant_safety_alert`, one series per sensor). | > 0 | 1 min | Warning (`critical`) | 30 min |
+| Home Assistant alarm triggered | An alarm panel is in the `triggered` state (`dumbmonit_homeassistant_alarm_triggered`). | > 0 | 30 s | Warning (`critical`) | 30 min |
+| Home Assistant problem sensor on | A binary sensor of class `problem` or `tamper` has been on for thirty minutes (`dumbmonit_homeassistant_problem`). | > 0 | 30 min | Advisory (`warning`) | 12 h |
+| Home Assistant automation unavailable | An automation is unavailable: its configuration no longer loads, so it never runs (`dumbmonit_homeassistant_entities_unavailable{domain="automation"}`). | > 0 | 30 min | Advisory (`warning`) | 24 h |
 
 ### VMware vSphere
 

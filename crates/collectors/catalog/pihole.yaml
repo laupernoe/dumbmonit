@@ -26,6 +26,12 @@ metrics:
   - { name: pihole_version_info, label: "Version", kind: info }
   - { name: pihole_update_available, label: "Update available", unit: "bool", better: "higher" }
   - { name: pihole_updates_available, label: "Updates available", better: "higher" }
+  - { name: pihole_upstream_queries_24h, label: "Upstream queries 24 h" }
+  - { name: pihole_upstream_response_seconds, label: "Upstream response time", unit: "s", better: "lower" }
+  - { name: pihole_lists_enabled, label: "Blocklists enabled" }
+  - { name: pihole_lists_download_failed, label: "Blocklists failing", better: "lower" }
+  - { name: pihole_lists_invalid_domains, label: "Blocklist invalid entries", better: "lower" }
+  - { name: pihole_dhcp_leases, label: "DHCP leases" }
   - { name: pihole_scrape_errors, label: "Scrape errors", better: "lower" }
 views:
   - view: stat
@@ -40,6 +46,9 @@ views:
       - pihole_clients_total
       - pihole_gravity_domains
       - pihole_blocking_timer_seconds
+      - pihole_lists_enabled
+      - pihole_lists_download_failed
+      - pihole_dhcp_leases
       - pihole_ftl_uptime_seconds
       - pihole_privacy_level
       - pihole_messages
@@ -52,3 +61,6 @@ views:
   - view: timeseries
     title: "FTL load"
     metrics: [pihole_ftl_cpu_percent, pihole_ftl_memory_percent]
+  - view: timeseries
+    title: "Upstream response time"
+    metrics: [pihole_upstream_response_seconds]

@@ -17,9 +17,9 @@
 	 */
 	import { Download, ExternalLink, X } from 'lucide-svelte';
 	import type { CollectorInfo } from '#lib/api/index.js';
-	import { Button, CopyBlock, Panel, Plate } from '#lib/ui/index.js';
+	import { Button, CopyBlock, DocLink, Panel, Plate } from '#lib/ui/index.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
-	import { localizedDocsUrl } from '#lib/docs.js';
+	import { kindDocPage, localizedDocsUrl } from '#lib/docs.js';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 
 	interface Props {
@@ -52,7 +52,6 @@
 
 	/** Mail servers: their queues and services are read by the agent on the server. */
 	const needsAgent = $derived(collector?.options.some((option) => option.input === 'agent') ?? false);
-	const product = $derived(collector?.kind === 'securitygateway' ? 'SecurityGateway' : 'MDaemon');
 
 	/** Ports to open, grouped by direction (the usual one first). */
 	const portGroups = $derived.by(() => {
@@ -94,15 +93,12 @@
 	{/snippet}
 
 	{#if !collector}
-		<p class="text-sm leading-relaxed text-ink-2">
-			{m.deviceform_setup_pick()}
-		</p>
+		<DocLink page="devices/" />
 	{:else}
 		{#if needsAgent}
 			<section class="mb-4 rounded-lg border border-advisory/35 bg-advisory-soft px-3 py-3" aria-labelledby="setup-agent">
 				<Plate tone="advisory" label={m.deviceform_mailagent_plate_required()} />
 				<h3 id="setup-agent" class="mt-1.5 text-sm font-semibold text-ink">{m.deviceform_mailagent_title()}</h3>
-				<p class="mt-1 text-sm leading-relaxed text-ink">{m.deviceform_mailagent_why({ product })}</p>
 				<div class="mt-2.5">
 					<Button variant="secondary" href={`/targets/new?kind=agent&os=windows&then=${collector.kind}`}>
 						<Download class="size-4" aria-hidden="true" />{m.deviceform_mailagent_install()}
@@ -151,10 +147,8 @@
 					</li>
 				{/each}
 			</ol>
-		{:else}
-			<p class="text-sm leading-relaxed text-ink-2">
-				{m.deviceform_setup_no_notes()}
-			</p>
+		{:else if !setup?.doc_url}
+			<DocLink page={kindDocPage(collector.kind)} />
 		{/if}
 
 		{#if permissions.length > 0}

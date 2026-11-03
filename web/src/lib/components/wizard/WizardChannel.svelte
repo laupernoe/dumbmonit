@@ -39,14 +39,16 @@
 		void test(channel);
 	}
 
-	async function test(channel: Channel) {
+	async function test(channel: Channel): Promise<boolean> {
 		testing = channel.id;
 		result = null;
 		try {
 			const report = await testChannel(channel.id);
 			result = { id: channel.id, ok: report.ok, message: report.message };
+			return report.ok;
 		} catch (cause) {
 			result = { id: channel.id, ok: false, message: cause instanceof Error ? cause.message : String(cause) };
+			return false;
 		} finally {
 			testing = null;
 		}

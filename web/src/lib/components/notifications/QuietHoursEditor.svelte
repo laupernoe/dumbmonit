@@ -84,7 +84,7 @@
 </script>
 
 <div class="grid gap-3">
-	<Field label={m.notifications_quiet_title()} for={`${idPrefix}-on`} inline help={m.notifications_quiet_help()}>
+	<Field label={m.notifications_quiet_title()} for={`${idPrefix}-on`} inline>
 		<Toggle
 			id={`${idPrefix}-on`}
 			checked={enabled}

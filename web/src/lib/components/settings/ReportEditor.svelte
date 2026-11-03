@@ -216,7 +216,6 @@
 				</label>
 			{/each}
 		</div>
-		<p class="text-[0.8125rem] text-ink-2">{m.settings_report_kind_help()}</p>
 	</fieldset>
 
 	{#if kind === 'sla'}

@@ -42,6 +42,7 @@
 //! | `watched_clients` | vide | Clients à suivre en plus des nommés/IP fixe/annotés : MAC ou noms, ou `all`. |
 //! | `device_stale_days` | `3` | Jours sans connexion au-delà desquels un client suivi est signalé périmé. |
 
+pub mod depth;
 pub mod metrics;
 pub mod model;
 
@@ -526,12 +527,19 @@ async fn classic(
     let mut errors = 0u32;
     let (health_path, device_path) =
         (format!("/api/s/{site}/stat/health"), format!("/api/s/{site}/stat/device"));
-    let (health, devices, alarms, clients) = futures::join!(
+    let stations_path = format!("/api/s/{site}/stat/sta");
+    let (health, devices, alarms, clients, stations) = futures::join!(
         client.classic(&health_path),
         client.classic(&device_path),
         alarm_count(client, &site, ts_ms),
         known_clients(client, &site),
+        client.classic(&stations_path),
     );
+    match stations {
+        Ok(stations) => out.extend(depth::wifi_client_samples(&stations, ts_ms)),
+        // Facultatif : la profondeur Wi-Fi ne compte pas comme une erreur de collecte.
+        Err(error) => warn!(target_id, %error, "clients connectés UniFi illisibles"),
+    }
     match clients {
         Ok(records) => {
             let tracked = watched_client_devices(&records, watch);
@@ -562,6 +570,7 @@ async fn classic(
             let devices: Vec<Device> = raw.iter().filter_map(model::classic_device).collect();
             out.extend(metrics::device_samples(&devices, ts_ms));
             out.extend(metrics::port_samples(&devices, ts_ms));
+            out.extend(depth::device_samples(&raw, ts_ms));
         }
         Err(error) => {
             errors += 1;
@@ -754,6 +763,19 @@ async fn integration(
         Err(error) => {
             errors += 1;
             warn!(target_id, %error, "santé UniFi illisible avec la clé d'API");
+        }
+    }
+    // Profondeur (satisfaction, radios, PoE, signal Wi-Fi) : API classique, au mieux.
+    match client.classic(&format!("/api/s/{site_ref}/stat/device")).await {
+        Ok(raw) => out.extend(depth::device_samples(&raw, ts_ms)),
+        Err(ProbeError::Auth(_) | ProbeError::Protocol(_) | ProbeError::Config(_)) => {}
+        Err(error) => warn!(target_id, %error, "équipements UniFi illisibles avec la clé d'API"),
+    }
+    match client.classic(&format!("/api/s/{site_ref}/stat/sta")).await {
+        Ok(stations) => out.extend(depth::wifi_client_samples(&stations, ts_ms)),
+        Err(ProbeError::Auth(_) | ProbeError::Protocol(_) | ProbeError::Config(_)) => {}
+        Err(error) => {
+            warn!(target_id, %error, "clients connectés UniFi illisibles avec la clé d'API");
         }
     }
     // Les clients connus (`/rest/user`) ne sont pas dans l'API d'intégration

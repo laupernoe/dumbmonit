@@ -56,6 +56,8 @@ pub struct Options {
     pub firmware: bool,
     /// Interroge les sondes de température.
     pub temperature: bool,
+    /// Lit l'expiration des certificats.
+    pub certificates: bool,
 }
 
 impl Options {
@@ -78,6 +80,7 @@ impl Options {
             carp: parse_bool_or(tag(target, "carp"), true)?,
             firmware: parse_bool_or(tag(target, "firmware"), true)?,
             temperature: parse_bool_or(tag(target, "temperature"), true)?,
+            certificates: parse_bool_or(tag(target, "certificates"), true)?,
         })
     }
 }

@@ -46,6 +46,12 @@ Toutes les métriques sont préfixées `dumbmonit_homeassistant_`.
 | `update_available` | valeur 1 par mise à jour en attente, 50 au plus | `entity`, `name`, `installed`, `latest` |
 | `repairs` | réparations ouvertes (ni ignorées ni rejetées) par gravité : `critical`, `error`, `warning` | `severity` |
 | `repair` | valeur 1 par réparation ouverte, 50 au plus | `issue`, `domain`, `severity` |
+| `safety_alerts` | capteurs binaires déclenchés de classe `smoke`, `gas`, `carbon_monoxide`, `moisture` (fuite d'eau) ou `safety` | |
+| `safety_alert` | valeur 1 par capteur de sécurité déclenché, 50 au plus | `entity`, `name`, `device_class` |
+| `alarms_triggered` | entités `alarm_control_panel.*` à l'état `triggered` | |
+| `alarm_triggered` | valeur 1 par centrale d'alarme déclenchée, 50 au plus | `entity`, `name` |
+| `problems` | capteurs binaires de classe `problem` ou `tamper` allumés | |
+| `problem` | valeur 1 par capteur de ce type, 50 au plus | `entity`, `name`, `device_class` |
 | `scrape_errors` | appels qui ont échoué à la dernière sonde | |
 
 Certains domaines restent à l'état `unknown` par nature : un bouton jamais
@@ -65,7 +71,21 @@ Les [règles intégrées](../alerting/rules.md#home-assistant) qui
 s'appliquent : Home Assistant en mode récupération, Home Assistant ne
 tourne pas, entités Home Assistant devenues indisponibles, batterie Home
 Assistant faible, mise à jour Home Assistant disponible, réparation Home
-Assistant à traiter, plus Surveillance inaccessible.
+Assistant à traiter, capteur de sécurité Home Assistant déclenché, alarme Home
+Assistant déclenchée, capteur de problème Home Assistant allumé, automatisation
+Home Assistant indisponible, plus Surveillance inaccessible.
+
+Ce qu'elle ne voit pas : le Supervisor (extensions arrêtées, taille de la base)
+et le recorder ne sont pas exposés à un utilisateur ordinaire par l'API REST.
+Une extension qui attend une mise à jour apparaît quand même comme entité
+`update`. Pour surveiller le recorder, exposez dans Home Assistant un capteur
+`sql` de la taille de la base : il devient alors une entité ordinaire.
+
+Si la règle d'automatisation se déclenche, ouvrez Paramètres → Automatisations :
+une automatisation indisponible est grisée et dit quelle entité ou quel modèle
+elle ne trouve plus. Un capteur de sécurité ou de problème n'est signalé que
+tant qu'il est allumé ; un détecteur qui a perdu sa connexion passe
+`unavailable` et est compté avec les entités indisponibles.
 
 ## Appareils
 

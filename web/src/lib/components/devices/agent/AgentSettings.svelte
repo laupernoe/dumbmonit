@@ -79,14 +79,16 @@
 		};
 	});
 
-	async function rebind() {
+	async function rebind(): Promise<boolean> {
 		rebinding = true;
 		rebindError = null;
 		try {
 			await allowAgentRebind(target.id);
 			reloads += 1;
+			return true;
 		} catch (cause) {
 			rebindError = cause;
+			return false;
 		} finally {
 			rebinding = false;
 		}

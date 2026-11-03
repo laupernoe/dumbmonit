@@ -66,6 +66,7 @@ mod client;
 pub mod devices;
 mod drive;
 mod error;
+mod health;
 mod iscsi;
 mod metrics;
 mod model;
@@ -142,6 +143,9 @@ const WANTED_APIS: &[&str] = &[
     security::API_USER,
     security::API_AUTOBLOCK,
     security::API_FIREWALL,
+    health::API_CERTIFICATE,
+    health::API_PACKAGE,
+    health::API_CONNECTION,
 ];
 
 pub struct SynologyCollector {
@@ -159,6 +163,9 @@ pub struct SynologyCollector {
     abb_history: Arc<dyn AbbHistory>,
     /// Réglages de sécurité lus lentement (voir [`security`]), une entrée par cible.
     security: Mutex<HashMap<TargetId, security::Snapshot>>,
+    /// Certificats et paquets, lus lentement comme les réglages de sécurité (voir
+    /// [`health`]), une entrée par cible.
+    health: Mutex<HashMap<TargetId, health::Snapshot>>,
     /// Dernière liste de LUN lue, par cible : un échec passager de l'API iSCSI ne
     /// doit pas faire réapparaître un volume « plein » le temps d'une collecte.
     luns: Mutex<HashMap<TargetId, LunCacheEntry>>,
@@ -178,6 +185,7 @@ impl Default for SynologyCollector {
             sessions: Mutex::new(HashMap::new()),
             abb_history: Arc::new(MemoryHistory::default()),
             security: Mutex::new(HashMap::new()),
+            health: Mutex::new(HashMap::new()),
             luns: Mutex::new(HashMap::new()),
         }
     }
@@ -475,6 +483,23 @@ impl Collector for SynologyCollector {
         };
         outcome.samples.extend(snapshot.samples(ts_ms));
 
+        // Certificats, paquets et connexions : facultatifs et silencieux, jamais une
+        // erreur comptée (voir [`health`]).
+        let previous = {
+            let cache = self.health.lock().unwrap_or_else(|poison| poison.into_inner());
+            cache.get(&target.id).cloned().unwrap_or_default()
+        };
+        let slow = if previous.is_fresh(std::time::Instant::now()) {
+            previous
+        } else {
+            let fresh = health::refresh(&dsm, previous).await;
+            let mut cache = self.health.lock().unwrap_or_else(|poison| poison.into_inner());
+            cache.insert(target.id, fresh.clone());
+            fresh
+        };
+        outcome.samples.extend(slow.samples(ts_ms));
+        outcome.samples.extend(health::connections(&dsm, ts_ms).await);
+
         let mut samples = outcome.samples;
         samples.push(Sample::new(
             "synology_scrape_errors",
@@ -756,6 +781,9 @@ mod tests {
             drive::API_TEAM_FOLDERS,
             drive::API_CONNECTION,
             photos::API_PRESENCE,
+            health::API_CERTIFICATE,
+            health::API_PACKAGE,
+            health::API_CONNECTION,
         ] {
             assert!(WANTED_APIS.contains(&api), "{api} manque à la requête SYNO.API.Info");
         }

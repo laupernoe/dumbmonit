@@ -70,7 +70,7 @@
 				<p class="text-[0.8125rem] text-ink-2">{m.settings_general_readonly()}</p>
 			{:else}
 				<div class="flex flex-wrap items-center gap-3">
-					<Button type="submit" variant="primary" loading={saving} disabled={!dirty}>{m.settings_general_save()}</Button>
+					<Button type="submit" variant="primary" loading={saving} success={saved} disabled={!dirty}>{m.settings_general_save()}</Button>
 					{#if saved && !dirty}<Plate tone="signal" draw>{m.settings_general_saved()}</Plate>{/if}
 				</div>
 			{/if}

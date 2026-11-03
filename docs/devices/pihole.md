@@ -42,6 +42,9 @@ gauges, suffixed `_24h`, not counters.
 | `update_available` | 1 when a newer version of a component is published, 0 otherwise; absent until Pi-hole's daily check has run | `component` (`core`, `web`, `ftl`, `docker`) |
 | `updates_available` | updates to install: the image in Docker (core, web and FTL come with it), otherwise each outdated component | |
 | `messages`, `messages_by_type` | messages on the diagnosis page | `type` (`LOAD`, `RATE_LIMIT`, `LIST`…) |
+| `upstream_queries_24h`, `upstream_response_seconds` | queries sent to each resolver and its average answer time (at most 8; the virtual `blocklist` and `cache` entries are left out, and a resolver that was not asked has no time) | `upstream` (`ip:port`) |
+| `lists_enabled`, `lists_download_failed`, `lists_invalid_domains` | enabled lists, those whose last gravity download failed (unreachable, with or without a local copy), invalid entries found; `lists_download_failed` is absent from Pi-hole builds that do not report list status | |
+| `dhcp_leases` | active leases of Pi-hole's DHCP server; absent while it has none | |
 | `ftl_uptime_seconds`, `ftl_memory_percent`, `ftl_cpu_percent` | the FTL daemon | |
 | `privacy_level` | Pi-hole's privacy level, 0 to 3 | |
 | `scrape_errors` | secondary API calls that failed during the last check | |
@@ -51,7 +54,13 @@ numbers, and so does DumbMonit.
 
 The [built-in rules](../alerting/rules.md#pi-hole) that apply: Pi-hole
 blocking disabled, Pi-hole blocklists stale, Pi-hole update available, Pi-hole
-diagnosis messages, plus Monitor unreachable.
+diagnosis messages, Pi-hole SERVFAIL replies, Pi-hole upstream resolver slow,
+Pi-hole blocklist download failing, Pi-hole receives no queries, plus Monitor
+unreachable.
+
+The three extra calls (`/api/stats/upstreams`, `/api/lists`,
+`/api/dhcp/leases`) are plain reads. The DHCP one is optional: when Pi-hole
+refuses it or has no DHCP server, nothing is reported and no error is counted.
 
 ## The monitor page
 
@@ -103,6 +112,11 @@ Address: a host name or IP (`pi.hole`), `host:port`, or a full URL
 the browser, is ignored. Options: protocol (HTTP by default), port (80), certificate check
 (for HTTPS on 443, Pi-hole's own certificate is self-signed) and request
 timeout (10 s).
+
+If a blocklist rule fires, open Pi-hole's Adlists page: the list's status shows
+the download error, and `pihole -g` rebuilds gravity by hand. A high SERVFAIL
+share usually means the upstream resolver (Unbound, a router, a public
+resolver) is unreachable from the Pi-hole machine.
 
 If checks fail with "no free API session", Pi-hole's sessions are all taken,
 usually by a script that logs in on every run without logging out. They expire

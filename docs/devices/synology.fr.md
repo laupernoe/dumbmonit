@@ -40,6 +40,11 @@ Toutes les métriques sont préfixées `dumbmonit_synology_`.
 | Volumes | `volume_status`, `volume_total/used/available_bytes`, `volume_used_percent`, `volume_used_warning_percent`, `volume_used_critical_percent` | `volume`, `fs_type`, `raid_type` |
 | Pools de stockage et caches SSD | `pool_status`, `pool_failed_disks`, `pool_total/used_bytes`, et les mêmes quatre sous `ssd_cache_` | `pool` ou `ssd_cache`, `name`, `raid_type` |
 | Disques | `disk_status`, `disk_smart_status`, `disk_temperature_celsius`, `disk_size_bytes`, `disk_bad_sector_exceeded`, `disk_life_below_threshold`, `disk_remaining_life_percent` (SSD seulement : la vie que le disque dit lui rester), `disk_unc_count` (le compteur de secteurs illisibles de DSM, celui qu'il compare à son seuil de secteurs défaillants), `disk_info` | `disk`, `name` ; sur `disk_info` : `model`, `serial`, `vendor`, `firmware`, `type`, `ssd` |
+| Volumes et opérations des groupes | `volume_read_only`, `volume_locked`, `volume_inode_full` (`1` quand levé) ; `volume_task_progress_percent`, `pool_task_progress_percent` (seulement pendant qu'une vérification, une reconstruction ou une resynchronisation tourne ; l'étiquette `step` la nomme) ; `pool_scrub_scheduled`, `pool_scrub_age_seconds` (temps écoulé depuis la fin de la dernière vérification des données ; absent tant qu'aucune n'a eu lieu) ; `ssd_cache_hit_rate_percent` ; `system_rebuilding` | `volume` / `pool`, `step` |
+| Activité des disques | `disk_busy_percent` (part du temps où le disque a servi des requêtes ; proche de 100 % pendant une vérification ou une reconstruction, c'est donc une mesure, pas une alerte), `disk_read_bytes_per_second`, `disk_write_bytes_per_second`, `disk_read_iops`, `disk_write_iops` | `device`, `name` |
+| Certificats | `certificate_expires_in_seconds` (négatif une fois périmé), `certificate_broken` | `certificate`, `subject`, `default` |
+| Paquets | `packages_installed`, `package_running` (`1` en marche, `0` arrêté ou tout autre état ; 64 au plus) | `package`, `name` |
+| Connexions | `connections_total`, `connections` (sessions ouvertes par protocole : `smb`, `https`, `ssh`… ; aucun nom d'utilisateur ni adresse n'est gardé) | `protocol` |
 | Hyper Backup | `backup_tasks`, `backup_running`, `backup_last_result`, `backup_last_run_age_seconds`, `backup_last_success_age_seconds`, `backup_next_run_in_seconds` | par tâche |
 | Synology Drive | `drive_up`, `drive_team_folders`, `drive_team_folder_info`, `drive_connections` (voir ci-dessous) | `drive_team_folder_info` : `name` |
 | Synology Photos | `photos_installed` (voir ci-dessous) | |
@@ -138,6 +143,30 @@ jamais le NAS.
 | Volume Synology presque plein | avis | Un volume est plein à 90 % ou plus, depuis 15 minutes. |
 | Température Synology élevée | avis | Un disque est au-dessus de 55 °C, ou DSM a levé son avertissement de température, depuis 15 minutes. |
 | Mémoire Synology élevée | avis | Usage mémoire au-dessus de 95 % pendant 15 minutes. |
+| Partition système Synology crashée | critique | DSM rapporte `system_crashed`, depuis 5 minutes. |
+| Partition système Synology à réparer | avertissement | DSM rapporte `system_need_repair`, depuis 30 minutes. |
+| Processeur Synology durablement élevé | avertissement | Processeur au-dessus de 90 % pendant 15 minutes. |
+| Swap Synology très utilisé | avis | Plus de 60 % du swap utilisé pendant une heure. |
+| Mise à jour DSM Synology disponible | avis | `update_available` vaut 1 pendant une heure. |
+| Hyper Backup Synology en échec | avertissement | La dernière exécution d'une tâche a échoué (destination injoignable, erreur de somme de contrôle…), depuis 10 minutes. Une exécution en cours, une tâche annulée ou jamais lancée ne la déclenchent pas. |
+| Réussite Hyper Backup Synology trop ancienne | avis | Aucune exécution réussie d'une tâche depuis plus de 8 jours. Une tâche mensuelle demande une limite plus longue : modifiez la règle ou réduisez-la au silence pour cette tâche. |
+| Volume Synology en lecture seule | critique | Un volume est en lecture seule, depuis 5 minutes. |
+| Volume Synology verrouillé | avertissement | Un volume chiffré est verrouillé, depuis 10 minutes : ses partages sont indisponibles. |
+| Volume Synology sans inodes | avertissement | Un volume n'a plus d'inode libre, depuis 10 minutes. |
+| Vérification des données Synology en retard | avis | La dernière vérification des données d'un groupe date de plus de 200 jours. |
+| Certificat Synology bientôt expiré | avertissement | Un certificat DSM expire dans moins de 14 jours (un renouvellement Let's Encrypt automatique se fait normalement à 30). |
+| Certificat Synology sur le point d'expirer | critique | Un certificat DSM expire dans moins de 3 jours, ou a déjà expiré. |
+| Certificat Synology défectueux | avertissement | DSM marque un certificat comme défectueux, depuis une heure. |
+
+!!! note "Certificats, paquets et connexions"
+    Ils viennent de trois API de DSM que Synology ne documente pas
+    (`SYNO.Core.Certificate.CRT`, `SYNO.Core.Package`,
+    `SYNO.Core.CurrentConnection`) ; leur forme suit la bibliothèque
+    communautaire `synology-api` et, contrairement aux métriques de stockage,
+    elles n'ont pas encore été vérifiées sur un vrai NAS. Elles sont lues
+    comme facultatives : si DSM refuse ou répond autrement, les séries sont
+    simplement absentes, aucune erreur n'est comptée et les autres métriques ne
+    changent pas. Certificats et paquets sont lus une fois par heure.
 
 ## Active Backup for Business
 
@@ -389,6 +418,24 @@ l'utiliser (Active Backup for Business → Settings → Privileges) ; sinon
 décochez l'option « Surveiller Active Backup for Business » de DumbMonit pour
 arrêter de demander.
 
+## Ajouter la surveillance
+
+1. Créez le compte DSM ci-dessus.
+2. Dans DumbMonit, cliquez sur **Ajouter une surveillance**, choisissez un site
+   (ou **Aucun site**), **Synology DSM**, puis **Utiliser les identifiants DSM**.
+3. Saisissez un **nom**, l'**adresse** (`nas.lan`, `192.168.1.30` ou
+   `nas.lan:5001`), ainsi que le **nom d'utilisateur** et le **mot de passe** du
+   compte.
+4. Sous *Plus d'options*, cochez **Accepter un certificat non vérifiable** si le
+   NAS a son certificat autosigné par défaut.
+5. Cliquez sur **Ajouter la surveillance**. En moins d'une minute, la page montre
+   le panneau du NAS : vue d'ensemble, volumes et disques.
+
+Si un message rouge apparaît sous l'adresse, lisez-le et voyez les
+[erreurs courantes](#erreurs-courantes). Corrigez le formulaire avec la roue
+crantée de la page de la surveillance : laisser le mot de passe vide conserve
+celui enregistré.
+
 ## Identifiants
 
 | Identifiant | Champs |
@@ -420,4 +467,7 @@ est utilisé en HTTPS et 5000 en HTTP.
 | Aucune métrique `dumbmonit_abb_*`, `scrape_errors` à 1 | Le compte ne peut pas utiliser Active Backup for Business : déléguez-lui le paquet, ou désactivez l'option `abb`. Sans le paquet installé il n'y a ni erreur ni métrique. |
 | Métriques de tâche mais pas de lignes d'appareil sur la page | Le NAS n'annonce pas `SYNO.ActiveBackup.Overview` (ABB plus ancien), ou la surveillance est sondée via un agent relais, qui garde l'historique en mémoire de son côté : les métriques existent, le calendrier non. |
 | Un portable montre « En retard » le jour après son ajout | Moins de trois succès : le modèle apprend encore et autorise 72 heures entre sauvegardes ; ça se stabilise une fois deux semaines d'habitudes connues. |
+| Pas de métriques `certificate_*`, `package_*` ni `connections*` | Le compte n'est pas administrateur, ou ce DSM répond autrement à ces API (voir la note sous les règles). Rien d'autre n'est touché. |
+| `pool_scrub_age_seconds` est absent | Aucune vérification des données n'a jamais fini sur ce groupe : planifiez-en une dans Gestionnaire de stockage → Groupe de stockage → Vérification des données. |
+| Une série d'avancement apparaît puis disparaît | Normal : elle n'existe que pendant qu'une vérification, une reconstruction ou une resynchronisation tourne. |
 | Les disques se réveillent à chaque sonde | L'inventaire de stockage réveille les disques endormis. Allongez l'intervalle de vérification. |

@@ -351,6 +351,11 @@ Surveillance inaccessible.
 | File Immich en pause | Une file de tâches est en pause depuis un jour (`dumbmonit_immich_queue_paused`). | > 0 | 24 h | Info (`info`) | 7 j |
 | Stockage Immich presque plein | Le disque qui contient la bibliothèque est plein à plus de 90 % (`dumbmonit_immich_storage_used_percent`) ; se résout sous 88 %. | > 90 % | 30 min | Avis (`warning`) | 24 h |
 | Mise à jour Immich disponible | La vérification de version d'Immich connaît une release plus récente (`dumbmonit_immich_update_available`). | > 0 | 1 h | Info (`info`) | 7 j |
+| Tâches Immich en échec | Une file autre que l'apprentissage automatique garde 25 tâches en échec ou plus (`dumbmonit_immich_queue_failed`). La notification nomme la file. | ≥ 25 | 30 min | Avis (`warning`) | 24 h |
+| Apprentissage automatique Immich en échec | Les files de recherche intelligente, de visages, de doublons et de reconnaissance de texte gardent 10 tâches en échec ou plus : le conteneur d'apprentissage automatique est probablement arrêté (`dumbmonit_immich_queue_failed`). | ≥ 10 | 30 min | Avis (`warning`) | 24 h |
+| Immich en mode maintenance | Immich reste en mode maintenance (`dumbmonit_immich_maintenance_mode`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Quota d'un utilisateur Immich presque plein | Un compte avec quota en a utilisé plus de 90 % (`dumbmonit_immich_user_quota_used_percent`) ; se résout sous 85 %. | > 90 % | 1 h | Avis (`warning`) | 24 h |
+| Sauvegarde de base Immich périmée | La sauvegarde de base la plus récente date de plus de trois jours (`dumbmonit_immich_db_backup_last_age_seconds`) ; demande `databaseBackup.list`. | > 3 j | 1 h | Avis (`warning`) | 24 h |
 | File d'attente de tâches Paperless arrêtée | Redis ou Celery en erreur (`max by (target) (dumbmonit_paperless_component_status{component=~"redis\|celery"})` : 2 est une erreur) : rien de nouveau n'est importé. | ≥ 2 | 5 min | Avertissement (`critical`) | 1 h |
 | Erreur d'index ou de contrôle de cohérence Paperless | L'index de recherche, le classificateur ou le contrôle de cohérence (fichiers manquants ou altérés) rapporte une erreur (`dumbmonit_paperless_component_status{component=~"index\|classifier\|sanity_check"}`). | ≥ 2 | 30 min | Avis (`warning`) | 24 h |
 | Migrations Paperless en attente | Migrations de base de données restant à appliquer (`dumbmonit_paperless_unapplied_migrations`). | > 0 | 30 min | Avis (`warning`) | 24 h |
@@ -360,7 +365,16 @@ Surveillance inaccessible.
 | Échec d'une tâche planifiée Jellyfin | Une tâche planifiée (un scan de bibliothèque, un nettoyage) a échoué ou a été interrompue à sa dernière exécution (`dumbmonit_jellyfin_scheduled_tasks_failed`). | > 0 | 10 min | Avis (`warning`) | 24 h |
 | Extension Jellyfin cassée | Une extension n'a pas pu se charger ou ne supporte pas cette version (`dumbmonit_jellyfin_plugins_broken`). | > 0 | 15 min | Avis (`warning`) | 24 h |
 | Redémarrage Jellyfin en attente | Jellyfin attend un redémarrage depuis un jour après l'installation ou la mise à jour d'une extension (`dumbmonit_jellyfin_pending_restart`). | > 0 | 24 h | Info (`info`) | 7 j |
+| Scan de bibliothèque Jellyfin en retard | Le scan de bibliothèque planifié n'a pas terminé depuis trois jours (`dumbmonit_jellyfin_library_scan_age_seconds`, seulement tant que le scan a un déclencheur périodique). | > 3 j | 30 min | Avis (`warning`) | 24 h |
+| Stockage Jellyfin presque plein | Un disque utilisé par Jellyfin (bibliothèque, données, cache, transcodages) est plein à plus de 90 % (`dumbmonit_jellyfin_storage_used_percent`) ; se résout sous 88 %. | > 90 % | 30 min | Avis (`warning`) | 24 h |
+| Transcodage Jellyfin lourd sur processeur | Trois flux ou plus transcodés sans accélération matérielle (`dumbmonit_jellyfin_transcodes_software`). | ≥ 3 | 15 min | Info (`info`) | 12 h |
+| Connexions Jellyfin refusées | Dix connexions refusées ou plus dans la dernière heure (`dumbmonit_jellyfin_failed_logins_recent`). | ≥ 10 | 5 min | Avis (`warning`) | 6 h |
 | Mise à jour Plex disponible | La vérification de mise à jour de Plex a trouvé une release plus récente (`dumbmonit_plex_update_available`). | > 0 | 1 h | Info (`info`) | 7 j |
+| Transcodeur Plex trop lent | Le transcodage vidéo le plus lent en cours de lecture tourne sous le temps réel (`dumbmonit_plex_transcode_speed_min`) : la lecture va se mettre en mémoire tampon. | < 0,95 | 10 min | Avis (`warning`) | 6 h |
+| Erreur de transcodage Plex | Une session de transcodage signale une erreur (`dumbmonit_plex_transcode_errors`). | > 0 | 5 min | Avis (`warning`) | 12 h |
+| Accès distant Plex en échec | Plex signale l'échec de son accès distant (mappage de port) (`dumbmonit_plex_remote_access_failed`). | > 0 | 30 min | Avis (`warning`) | 24 h |
+| Plex déconnecté de plex.tv | Un serveur revendiqué a perdu sa connexion à plex.tv (`dumbmonit_plex_signin_ok`). | < 1 | 1 h | Avis (`warning`) | 24 h |
+| Sauvegarde de base Plex désactivée | La tâche de maintenance « Backup database » est désactivée (`dumbmonit_plex_database_backup_enabled`) ; ignorez-la si une autre sauvegarde couvre la base. | < 1 | 24 h | Info (`info`) | 30 j |
 
 ### Forges auto-hébergées {#self-hosted-forges}
 
@@ -459,6 +473,10 @@ générique — voir [Synology](../devices/synology.md).
 | Listes de blocage Pi-hole obsolètes | Les listes de blocage (gravity) n'ont pas été reconstruites depuis plus de huit jours (`dumbmonit_pihole_gravity_age_seconds`) : la mise à jour hebdomadaire échoue. | > 8 j | 1 h | Avis (`warning`) | 24 h |
 | Mise à jour Pi-hole disponible | Une version plus récente est disponible (`dumbmonit_pihole_updates_available`) : l'image en Docker, core, interface web ou FTL sinon. Pi-hole vérifie une fois par jour. | > 0 | 1 h | Info (`info`) | 7 j |
 | Messages de diagnostic Pi-hole | Pi-hole liste des messages sur sa page de diagnostic (`dumbmonit_pihole_messages`) : une liste de blocage qui n'a pas pu se télécharger, un client limité en débit, un hôte surchargé. | > 0 | 15 min | Info (`info`) | 24 h |
+| Réponses SERVFAIL de Pi-hole | Plus de 5 % des réponses DNS des dernières 24 heures sont des SERVFAIL (`100 * dumbmonit_pihole_replies_servfail_24h / dumbmonit_pihole_queries_24h`), à partir de 200 requêtes : un résolveur amont échoue. | > 5 % | 30 min | Avis (`warning`) | 6 h |
+| Résolveur amont de Pi-hole lent | Un résolveur amont répond en plus d'une seconde en moyenne (`dumbmonit_pihole_upstream_response_seconds`, une série par résolveur interrogé). | > 1 s | 30 min | Avis (`warning`) | 6 h |
+| Téléchargement d'une liste de blocage Pi-hole en échec | Au moins une liste de blocage activée n'a pas pu être téléchargée à la dernière mise à jour de gravity (`dumbmonit_pihole_lists_download_failed`) : elle est périmée ou vide. | > 0 | 1 h | Avis (`warning`) | 24 h |
+| Pi-hole ne reçoit aucune requête | Aucune requête DNS sur les dernières 24 heures (`dumbmonit_pihole_queries_24h`) : plus aucun client ne l'utilise, ou FTL est figé. | < 1 | 1 h | Info (`info`) | 24 h |
 
 ### AdGuard Home {#adguard-home}
 
@@ -474,6 +492,12 @@ construite sur eux.
 | Serveur amont AdGuard Home en échec | Un serveur DNS amont échoue le propre test d'AdGuard Home, ou reste silencieux 4 secondes (`dumbmonit_adguard_upstream_up`, une série par serveur amont). | < 1 | 10 min | Avis (`warning`) | 6 h |
 | Listes de filtres AdGuard Home obsolètes | La plus ancienne mise à jour d'une liste de filtres activée a plus de trois jours (`dumbmonit_adguard_filter_oldest_update_age_seconds`). | > 3 jours | 1 h | Avis (`warning`) | 24 h |
 | Mise à jour AdGuard Home disponible | Une version plus récente est annoncée par la propre vérification de version d'AdGuard Home (`dumbmonit_adguard_update_available`) ; ne se déclenche jamais quand cette vérification est désactivée, comme dans l'image Docker officielle. | > 0 | 1 h | Info (`info`) | 7 jours |
+| AdGuard Home lent à répondre | Le temps moyen de traitement d'une requête DNS dépasse une demi-seconde (`dumbmonit_adguard_avg_processing_seconds`) : l'hôte est surchargé ou un amont est lent. | > 0,5 s | 30 min | Avis (`warning`) | 6 h |
+| Amont AdGuard Home lent | Un amont répond en plus d'une seconde en moyenne sur la fenêtre de statistiques (`dumbmonit_adguard_upstream_avg_seconds`, une série par amont). | > 1 s | 30 min | Avis (`warning`) | 6 h |
+| Certificat AdGuard Home invalide | Le certificat ou la clé privée du DNS chiffré ne se charge pas ou ne correspond pas (`dumbmonit_adguard_tls_valid`) ; seulement quand le chiffrement est activé. | < 1 | 10 min | Avis (`warning`) | 12 h |
+| Certificat AdGuard Home bientôt expiré | Le certificat du DNS chiffré expire dans moins de 14 jours (`dumbmonit_adguard_tls_expiry_seconds`). | < 14 j | 1 h | Avis (`warning`) | 24 h |
+| Plage DHCP d'AdGuard Home presque pleine | Plus de 90 % de la plage d'adresses DHCP est attribuée (`dumbmonit_adguard_dhcp_pool_used_percent`) ; seulement quand le serveur DHCP est activé. | > 90 % | 30 min | Avis (`warning`) | 12 h |
+| AdGuard Home ne reçoit aucune requête | Aucune requête sur toute la fenêtre de statistiques, quand les statistiques sont actives et couvrent au moins un jour (`dumbmonit_adguard_dns_queries`). | < 1 | 1 h | Info (`info`) | 24 h |
 
 ### Onduleur via NUT {#ups-behind-nut}
 
@@ -542,6 +566,10 @@ le nom, le modèle et le type de l'appareil, la notification dit donc
 | Batterie Home Assistant faible | Une batterie rapportée par Home Assistant est faible (`dumbmonit_homeassistant_battery_low`, une série par batterie sous le seuil de la surveillance, 20 % par défaut ; sa valeur est le niveau). | ≥ 0 % | 30 min | Info (`info`) | 3 j |
 | Mise à jour Home Assistant disponible | Home Assistant a des mises à jour en attente : core, système d'exploitation, extensions ou firmware d'appareil (`dumbmonit_homeassistant_updates_available`). | > 0 | 1 h | Info (`info`) | 7 j |
 | Réparation Home Assistant à traiter | Home Assistant a une réparation ouverte de gravité erreur ou critique (`dumbmonit_homeassistant_repair{severity=~"error\|critical"}`). | > 0 | 15 min | Avis (`warning`) | 24 h |
+| Capteur de sécurité Home Assistant déclenché | Un détecteur de fumée, de gaz, de monoxyde de carbone, de fuite d'eau ou de sécurité est allumé (`dumbmonit_homeassistant_safety_alert`, une série par capteur). | > 0 | 1 min | Avertissement (`critical`) | 30 min |
+| Alarme Home Assistant déclenchée | Une centrale d'alarme est à l'état `triggered` (`dumbmonit_homeassistant_alarm_triggered`). | > 0 | 30 s | Avertissement (`critical`) | 30 min |
+| Capteur de problème Home Assistant allumé | Un capteur binaire de classe `problem` ou `tamper` est allumé depuis trente minutes (`dumbmonit_homeassistant_problem`). | > 0 | 30 min | Avis (`warning`) | 12 h |
+| Automatisation Home Assistant indisponible | Une automatisation est indisponible : sa configuration ne se charge plus, elle ne s'exécute jamais (`dumbmonit_homeassistant_entities_unavailable{domain="automation"}`). | > 0 | 30 min | Avis (`warning`) | 24 h |
 
 ### VMware vSphere {#vmware-vsphere}
 

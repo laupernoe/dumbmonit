@@ -62,9 +62,6 @@
 	<div class="flex items-start justify-between gap-3">
 		<div class="min-w-0">
 			<p class="text-sm text-ink">{m.deviceform_modules_choose()}</p>
-			<p class="text-sm leading-relaxed text-ink-2">
-				{choosing ? m.deviceform_modules_choose_on() : m.deviceform_modules_choose_off()}
-			</p>
 		</div>
 		<Toggle checked={choosing} label={m.deviceform_modules_choose()} onchange={setChoosing} />
 	</div>
