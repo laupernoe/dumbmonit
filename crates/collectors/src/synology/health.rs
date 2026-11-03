@@ -325,10 +325,8 @@ mod tests {
         let list = parse_certificates(&certificates());
         let expires = list[0].expires_at;
         let samples = certificate_samples(&list, expires - 10 * 86_400, 0);
-        let left = samples
-            .iter()
-            .find(|s| s.metric == "synology_certificate_expires_in_seconds")
-            .unwrap();
+        let left =
+            samples.iter().find(|s| s.metric == "synology_certificate_expires_in_seconds").unwrap();
         assert_eq!(left.value, 10.0 * 86_400.0);
         assert_eq!(left.labels["default"], "1");
         assert_eq!(left.labels["subject"], "nas.example.org");

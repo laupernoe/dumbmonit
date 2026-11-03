@@ -50,12 +50,7 @@ fn is_failure(task: &TaskEntry, floor: i64) -> bool {
 }
 
 /// Le nombre de tâches en échec sur la fenêtre, étiqueté par nœud.
-pub fn failed_task_samples(
-    node: &str,
-    tasks: &[TaskEntry],
-    now_s: i64,
-    ts_ms: i64,
-) -> Vec<Sample> {
+pub fn failed_task_samples(node: &str, tasks: &[TaskEntry], now_s: i64, ts_ms: i64) -> Vec<Sample> {
     let floor = now_s - WINDOW_SECONDS;
     let failed = tasks.iter().filter(|task| is_failure(task, floor)).count();
     vec![gauge("node_tasks_failed", failed as f64, ts_ms).with_label("node", node)]

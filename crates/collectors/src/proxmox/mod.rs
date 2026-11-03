@@ -754,11 +754,8 @@ async fn collect_node_extras(
 
     // Les tâches en échec des dernières heures : `errors=1` laisse PVE filtrer.
     let since = ts_ms / 1000 - tasks::WINDOW_SECONDS;
-    let failed_query = [
-        ("errors", "1".to_string()),
-        ("since", since.to_string()),
-        ("limit", "200".to_string()),
-    ];
+    let failed_query =
+        [("errors", "1".to_string()), ("since", since.to_string()), ("limit", "200".to_string())];
     let failed_path = format!("/nodes/{node}/tasks");
 
     let (services, version, network, netstat, lvm, thin, directories, failed) = futures::join!(
