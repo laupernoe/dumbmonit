@@ -2,21 +2,19 @@
 	/**
 	 * Settings → System → HTTPS and encryption: the certificate the web port
 	 * serves (provided or self-signed, its fingerprint to compare with the
-	 * browser's), the plain-HTTP → HTTPS redirect, and every place where data
+	 * browser's; the web port only serves HTTPS), and every place where data
 	 * still travels in clear or without certificate checks, with a link to
 	 * where it is fixed. Administrators only (`GET /api/security/https`).
 	 */
-	import { Download, Lock, LockOpen, ShieldCheck } from 'lucide-svelte';
+	import { Download, Lock, ShieldCheck } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
-	import { getHttps, HTTPS_CERTIFICATE_URL, setHttpsRedirect } from '#lib/api/https.js';
+	import { getHttps, HTTPS_CERTIFICATE_URL } from '#lib/api/https.js';
 	import type { HttpsFinding, HttpsView } from '#lib/api/types.js';
 	import { formatDateTime } from '#lib/format.js';
-	import { ErrorNotice, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
+	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 
 	let data = $state<HttpsView | null>(null);
 	let loadError = $state<unknown>(null);
-	let saveError = $state<unknown>(null);
-	let busy = $state(false);
 
 	$effect(() => {
 		const controller = new AbortController();
@@ -29,26 +27,12 @@
 		return () => controller.abort();
 	});
 
-	async function setRedirect(value: boolean) {
-		busy = true;
-		saveError = null;
-		try {
-			data = await setHttpsRedirect(value);
-		} catch (cause) {
-			saveError = cause;
-		} finally {
-			busy = false;
-		}
-	}
-
 	/** One sentence per finding code; an unknown code shows as it is. */
 	function describe(finding: HttpsFinding): string {
 		const subject = finding.subject;
 		switch (finding.code) {
 			case 'https_unavailable':
 				return m.settings_https_finding_https_unavailable();
-			case 'https_redirect_off':
-				return m.settings_https_finding_redirect_off();
 			case 'self_signed':
 				return m.settings_https_finding_self_signed();
 			case 'victoria_http':
@@ -88,9 +72,6 @@
 
 	const warnings = $derived(data?.findings.filter((f) => f.severity === 'warning') ?? []);
 	const infos = $derived(data?.findings.filter((f) => f.severity !== 'warning') ?? []);
-	const thisPage = $derived(
-		!data ? '' : data.request_tls ? m.settings_https_page_direct() : data.request_https ? m.settings_https_page_proxy() : m.settings_https_page_plain()
-	);
 </script>
 
 {#snippet findingList(list: HttpsFinding[], tone: 'warning' | 'info')}
@@ -115,12 +96,8 @@
 	{:else}
 		<div class="grid gap-5">
 			<p class="flex items-center gap-2 text-sm text-ink">
-				{#if data.request_https}
-					<Lock class="size-4 shrink-0 text-signal-ink" aria-hidden="true" />
-				{:else}
-					<LockOpen class="size-4 shrink-0 text-warning-ink" aria-hidden="true" />
-				{/if}
-				{thisPage}
+				<Lock class="size-4 shrink-0 text-signal-ink" aria-hidden="true" />
+				{m.settings_https_only()}
 			</p>
 
 			{#if data.certificate}
@@ -158,30 +135,13 @@
 					</a>
 				</div>
 			{:else}
-				<p class="max-w-prose text-sm text-ink">{data.enabled ? m.settings_https_unavailable() : m.settings_https_disabled()}</p>
+				<p class="max-w-prose text-sm text-ink">{m.settings_https_unavailable()}</p>
 			{/if}
 			{#if data.error}
 				<ErrorNotice error={new Error(data.error)} title={m.settings_https_reload_error()} />
 			{/if}
 
-			<div class="flex items-start gap-3">
-				<Toggle
-					id="https-redirect"
-					checked={data.redirect}
-					disabled={busy || data.redirect_forced !== null || !data.available}
-					label={m.settings_https_redirect()}
-					onchange={setRedirect}
-				/>
-				<div class="min-w-0">
-					<label for="https-redirect" class="text-sm font-semibold text-ink">{m.settings_https_redirect()}</label>
-					<p class="max-w-prose text-sm text-ink-2">{m.settings_https_redirect_help()}</p>
-					{#if data.redirect_forced !== null}
-						<p class="max-w-prose text-sm text-ink-2">{m.settings_https_redirect_forced()}</p>
-					{/if}
-					<p class="max-w-prose text-sm text-ink-2">{m.settings_https_hsts({ value: data.hsts })}</p>
-				</div>
-			</div>
-			{#if saveError}<ErrorNotice error={saveError} title={m.settings_https_save_error()} />{/if}
+			<p class="max-w-prose text-sm text-ink-2">{m.settings_https_hsts({ value: data.hsts })}</p>
 
 			<div class="grid gap-2">
 				<h4 class="text-sm font-semibold text-ink">{m.settings_https_findings_title()}</h4>

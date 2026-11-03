@@ -111,9 +111,9 @@ O argumento segue os princípios de conceção de Saltzer e Schroeder.
   como hash (`auth/totp.rs`).
 - OpenID Connect: state, nonce e PKCE `S256` (`auth/oidc/pkce.rs`).
 - Todas as primitivas vêm de bibliotecas mantidas (`aes-gcm`, `argon2`,
-  `sha2`); nenhuma é feita em casa. O listener integrado fala HTTP simples; a
-  documentação exige um proxy inverso com TLS, e os cookies ganham `Secure`
-  quando o pedido chega por HTTPS (`auth/cookie.rs`).
+  `sha2`); nenhuma é feita em casa. O listener integrado fala apenas
+  HTTPS (um pedido HTTP simples recebe um redirecionamento), e os cookies ganham `Secure`
+  (`auth/cookie.rs`).
 
 ## Contramedidas às fraquezas comuns
 
@@ -133,8 +133,8 @@ O argumento segue os princípios de conceção de Saltzer e Schroeder.
 | Integridade do software e dos dados, CWE-494 | Os instaladores do agente verificam o SHA-256 do binário descarregado | `crates/agent/install/install.sh`, `install.ps1` |
 | Falhas de registo e monitorização, CWE-778 | Registo de segurança dos inícios de sessão e das alterações sensíveis | `auth/audit.rs`; teste `security_audit_api.rs` |
 
-Os riscos residuais conhecidos estão listados no modelo de segurança (listener
-HTTP simples, opções de monitores sem cifragem, VictoriaMetrics embutido sem
+Os riscos residuais conhecidos estão listados no modelo de segurança (certificado autoassinado padrão,
+opções de monitores sem cifragem, VictoriaMetrics embutido sem
 autenticação). A CSP permite estilos inline (`style-src 'unsafe-inline'`), o
 que a enfraquece contra a injeção de estilos, mas não contra a execução de
 scripts. Existe um aviso aceite, `RUSTSEC-2023-0071`, ignorado em `deny.toml`

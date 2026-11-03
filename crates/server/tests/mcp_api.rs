@@ -211,17 +211,23 @@ async fn token_management_needs_a_session() {
 }
 
 #[tokio::test]
-async fn a_bad_scope_or_an_empty_name_is_refused() {
+async fn a_bad_scope_is_refused() {
     let app = setup().await;
-    let reply = app
-        .request("POST", "/api/tokens", Some(json!({ "name": "  ", "scope": "read" })), None)
-        .await;
-    assert_eq!(reply.status, StatusCode::BAD_REQUEST);
     let reply = app
         .request("POST", "/api/tokens", Some(json!({ "name": "x", "scope": "admin" })), None)
         .await;
     assert_eq!(reply.status, StatusCode::BAD_REQUEST);
     assert!(reply.body["error"].as_str().unwrap().contains("read, write"));
+}
+
+#[tokio::test]
+async fn an_empty_name_gets_a_generated_one() {
+    let app = setup().await;
+    let reply = app
+        .request("POST", "/api/tokens", Some(json!({ "name": "  ", "scope": "read" })), None)
+        .await;
+    assert_eq!(reply.status, StatusCode::CREATED);
+    assert!(!reply.body["name"].as_str().unwrap_or("").trim().is_empty(), "{}", reply.body);
 }
 
 #[tokio::test]

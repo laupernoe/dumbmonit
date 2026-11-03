@@ -7,8 +7,9 @@
 use std::collections::BTreeMap;
 
 use dumbmonit_proto::{
-    AgentIdentity, MAX_BATCH_SAMPLES, MAX_INVENTORY_PACKAGES, MetricKind, PUSH_PROTOCOL_VERSION,
-    PushAck, PushBatch, Sample, SoftwareInventory, Target,
+    AgentIdentity, ENROLMENT_PENDING, ENROLMENT_REJECTED, MAX_BATCH_SAMPLES,
+    MAX_INVENTORY_PACKAGES, MetricKind, PUSH_PROTOCOL_VERSION, PushAck, PushBatch, Sample,
+    SoftwareInventory, Target,
 };
 use sqlx::SqlitePool;
 
@@ -16,6 +17,7 @@ use crate::crypto::Cipher;
 use crate::db;
 use crate::tsdb::SampleSink;
 
+use super::enrolment::{EnrolOrigin, Refusal};
 use super::eventlog;
 use super::modules::{self, Module};
 use super::store::RegisterError;
@@ -33,6 +35,13 @@ pub enum IngestError {
     /// Lot compréhensible mais invalide. Le réémettre à l'identique échouerait
     /// pareillement : l'agent doit l'abandonner.
     BadRequest(String),
+    /// La machine attend la validation d'un administrateur (403, message
+    /// [`ENROLMENT_PENDING`]). Distinct de [`Self::Forbidden`] : ce n'est pas un
+    /// échec, il ne doit compter ni comme tentative ratée ni comme refus.
+    Pending(String),
+    /// Trop de demandes : débit du jeton dépassé ou liste d'attente pleine
+    /// (429). L'agent garde ses mesures et réessaie plus tard.
+    TooMany(String),
     Internal(anyhow::Error),
 }
 
@@ -54,6 +63,16 @@ pub const AGENT_TOO_OLD: &str = "This agent is too old to be bound to its machin
      no longer accepts unbound agents. Re-run the install command from DumbMonit to update it; \
      for a machine already listed, click 'Allow re-enrolment' on its device page first.";
 
+/// Ce que le serveur répond quand trop de machines attendent déjà leur
+/// validation.
+pub const TOO_MANY_PENDING: &str = "Too many machines are already waiting for approval on this \
+     server. An administrator must accept or reject them in DumbMonit (Settings > Agents) before \
+     new ones can ask; the agent retries on its own.";
+
+/// Ce que le serveur répond quand un jeton dépasse son débit d'enrôlement.
+pub const ENROLMENT_RATE_LIMITED: &str = "Too many machines enrolled with this token in the last \
+     hour; the agent retries later. An administrator was notified (enrolment burst).";
+
 impl From<RegisterError> for IngestError {
     fn from(error: RegisterError) -> Self {
         match error {
@@ -61,6 +80,15 @@ impl From<RegisterError> for IngestError {
             RegisterError::NotBound => Self::Forbidden(NOT_BOUND.to_string()),
             RegisterError::AgentTooOld => Self::Forbidden(AGENT_TOO_OLD.to_string()),
             RegisterError::EnrolmentDenied(denied) => Self::Forbidden(denied.message().to_string()),
+            RegisterError::Held(refusal) => match refusal {
+                Refusal::Pending => Self::Pending(ENROLMENT_PENDING.to_string()),
+                Refusal::Rejected => Self::Forbidden(ENROLMENT_REJECTED.to_string()),
+                Refusal::TooManyPending => Self::TooMany(TOO_MANY_PENDING.to_string()),
+                Refusal::RateLimited => Self::TooMany(ENROLMENT_RATE_LIMITED.to_string()),
+                Refusal::Dormant => {
+                    Self::Forbidden(store::EnrolmentDenied::Dormant.message().to_string())
+                }
+            },
             RegisterError::Internal(error) => Self::Internal(error),
         }
     }
@@ -73,14 +101,15 @@ impl<E: Into<anyhow::Error>> From<E> for IngestError {
 }
 
 /// Enrôlement sur le canal chiffré : même contrôle qu'un premier lot (jeton,
-/// liaison), sans mesure. Rend la machine, créée au besoin, et le secret de
-/// liaison si celui-ci vient d'être attribué.
+/// liaison, garde de l'enrôlement), sans mesure. Rend la machine, créée au
+/// besoin, et le secret de liaison si celui-ci vient d'être attribué.
 pub async fn enrol(
     pool: &SqlitePool,
     cipher: &Cipher,
     bearer: Option<&str>,
     agent_secret: Option<&str>,
     identity: &AgentIdentity,
+    origin: &EnrolOrigin,
 ) -> Result<store::Registration, IngestError> {
     if identity.hostname.trim().is_empty() {
         return Err(IngestError::BadRequest("The host name is required.".to_string()));
@@ -89,9 +118,9 @@ pub async fn enrol(
     let token_id = store::find_active_token(pool, &token::fingerprint(presented))
         .await?
         .ok_or(IngestError::Unauthorized)?;
+    let secret = token::extract_secret(agent_secret);
     let registration =
-        store::register(pool, cipher, identity, token_id, token::extract_secret(agent_secret))
-            .await?;
+        store::register_with(pool, cipher, identity, token_id, secret, origin).await?;
     store::touch_token(pool, token_id).await?;
     Ok(registration)
 }
@@ -112,6 +141,9 @@ pub async fn token_client_of(
 }
 
 /// Accepte un lot : vérifie le jeton, rattache la machine, range les mesures.
+///
+/// Une machine inconnue passe d'abord par la garde de l'enrôlement : tant
+/// qu'elle attend sa validation, son lot est refusé et rien n'est rangé.
 pub async fn ingest(
     pool: &SqlitePool,
     cipher: &Cipher,
@@ -119,6 +151,7 @@ pub async fn ingest(
     bearer: Option<&str>,
     agent_secret: Option<&str>,
     batch: PushBatch,
+    origin: &EnrolOrigin,
 ) -> Result<PushAck, IngestError> {
     validate(&batch).map_err(IngestError::BadRequest)?;
 
@@ -127,12 +160,13 @@ pub async fn ingest(
         .await?
         .ok_or(IngestError::Unauthorized)?;
 
-    let registration = store::register(
+    let registration = store::register_with(
         pool,
         cipher,
         &batch.identity,
         token_id,
         token::extract_secret(agent_secret),
+        origin,
     )
     .await?;
     if registration.created {
@@ -227,6 +261,8 @@ pub async fn ingest(
         agent_update: None,
         // La collecte de journaux réglée dans l'interface (désactivée par défaut).
         logs: Some(super::logs::setting(pool, target.id).await?),
+        // Posée par la route, qui sait si le canal est chiffré : `api/ingest.rs`.
+        sentinel: None,
     })
 }
 

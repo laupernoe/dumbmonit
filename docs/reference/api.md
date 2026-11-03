@@ -38,15 +38,15 @@ Load it in any OpenAPI tool:
 ```bash
 # Browse it, and try calls with your token, in Swagger UI
 docker run --rm -p 8081:8080 \
-  -e SWAGGER_JSON_URL=http://monit.lan:8080/api/openapi.json swaggerapi/swagger-ui
+  -e SWAGGER_JSON_URL=https://monit.lan:8080/api/openapi.json swaggerapi/swagger-ui
 # then open http://localhost:8081 and paste "dmt_…" under Authorize → bearerAuth
 
 # Generate a client library (here Python)
 docker run --rm -v "$PWD:/local" openapitools/openapi-generator-cli generate \
-  -i http://monit.lan:8080/api/openapi.json -g python -o /local/dumbmonit-client
+  -i https://monit.lan:8080/api/openapi.json -g python -o /local/dumbmonit-client
 
 # Or just list what is there
-curl -s http://monit.lan:8080/api/openapi.json | jq -r '.paths | keys[]'
+curl -s https://monit.lan:8080/api/openapi.json | jq -r '.paths | keys[]'
 ```
 
 Postman and Insomnia import it from the same URL.
@@ -56,8 +56,7 @@ Postman and Insomnia import it from the same URL.
 Two ways in, accepted on every protected route:
 
 - **Session cookie** — what the web UI uses. Sign in with a password (or SSO)
-  and send the HttpOnly `dumbmonit_session` cookie (SameSite Lax; `Secure`
-  when `DUMBMONIT_COOKIE_SECURE=1`; 30 days). Every state-changing request
+  and send the HttpOnly `__Host-dumbmonit_session` cookie (SameSite Strict, `Secure`; 30 days). Every state-changing request
   (`POST`, `PUT`, `DELETE`) must also carry `X-Requested-With: DumbMonit` —
   the anti-CSRF proof the UI adds automatically; without it the request is
   refused with `403`.
@@ -68,24 +67,28 @@ Two ways in, accepted on every protected route:
 
 ```bash
 # API token: one header, nothing else
-curl -H 'Authorization: Bearer dmt_…' http://monit.lan:8080/api/targets
-curl -H 'Authorization: Bearer dmt_…' -X POST http://monit.lan:8080/api/targets/4/probe
+curl -H 'Authorization: Bearer dmt_…' https://monit.lan:8080/api/targets
+curl -H 'Authorization: Bearer dmt_…' -X POST https://monit.lan:8080/api/targets/4/probe
 
 # Session: sign in (204 and a Set-Cookie header), then send the cookie
-curl -c cookies.txt -X POST http://monit.lan:8080/api/auth/login \
+curl -c cookies.txt -X POST https://monit.lan:8080/api/auth/login \
   -H 'content-type: application/json' \
   -d '{"username":"admin","password":"…"}'
-curl -b cookies.txt http://monit.lan:8080/api/targets
-curl -b cookies.txt -X POST http://monit.lan:8080/api/targets \
+curl -b cookies.txt https://monit.lan:8080/api/targets
+curl -b cookies.txt -X POST https://monit.lan:8080/api/targets \
   -H 'X-Requested-With: DumbMonit' -H 'content-type: application/json' \
   -d '{"name":"NAS","address":"nas.lan","kind":"snmp","credential":{"type":"snmp_community","community":"public"}}'
 ```
+
+With the self-signed certificate, curl refuses the connection: pass
+`--cacert dumbmonit.pem` (the certificate downloaded from **Settings → System →
+HTTPS and encryption**), or `-k` to skip the check on a trusted network.
 
 When a request carries a bearer token, the cookie is ignored: a revoked token
 is refused even from a signed-in browser, rather than quietly falling back on
 the session.
 
-Agent enrollment tokens (`dmon_…`) are a different thing: they only work on
+Agent enrollment tokens (secrets starting with `dmon_`) are a different thing: they only work on
 the agent routes (`/api/ingest`, `/api/agent/commands/*`, `/api/agent/relay*`).
 They say that a machine may talk, not *which* machine: on those routes a bound
 machine must also present its own binding secret in `X-DumbMonit-Agent-Secret`
@@ -232,16 +235,16 @@ Every error is JSON: `{"error": "message"}`, written for a person.
 | `500` | A server fault; the details are in the server log, never in the response. |
 
 ```bash
-$ curl -i -H 'Authorization: Bearer dmt_revoked…' http://monit.lan:8080/api/targets
+$ curl -i -H 'Authorization: Bearer dmt_revoked…' https://monit.lan:8080/api/targets
 HTTP/1.1 401 Unauthorized
 www-authenticate: Bearer
 {"error":"A valid API token is required."}
 
-$ curl -i -X DELETE -H 'Authorization: Bearer dmt_…read…' http://monit.lan:8080/api/targets/4
+$ curl -i -X DELETE -H 'Authorization: Bearer dmt_…read…' https://monit.lan:8080/api/targets/4
 HTTP/1.1 403 Forbidden
 {"error":"This action needs a token with the \"write\" scope; the token \"Grafana\" is \"read\" only. Create a write token in Settings → API & assistants."}
 
-$ curl -i -H 'Authorization: Bearer dmt_…' http://monit.lan:8080/api/alerts   # the 121st call this minute
+$ curl -i -H 'Authorization: Bearer dmt_…' https://monit.lan:8080/api/alerts   # the 121st call this minute
 HTTP/1.1 429 Too Many Requests
 retry-after: 17
 ratelimit-limit: 120
@@ -524,7 +527,7 @@ Both routes proxy VictoriaMetrics and return series in the Prometheus shape:
 | `GET` | `/api/metrics/query_range?query=…&start=…&end=…&step=…` | Range query. `start` and `end` are **milliseconds** since the epoch; `step` is in seconds and is widened so that a series never exceeds 2,000 points. |
 
 ```bash
-curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
+curl -b cookies.txt -G https://localhost:8080/api/metrics/query \
   --data-urlencode 'query=avg by (target, host) (dumbmonit_cpu_usage_percent)'
 ```
 
@@ -829,7 +832,7 @@ tokens need the `write` scope for changes. See [Email reports](../using/reports.
 | Method | Route | Auth | Purpose |
 |---|---|---|---|
 | `GET` | `/api/agent/tokens` | session only | Every token: `id`, `name`, `prefix`, `created_at`, `last_used_at`, `revoked_at`, `max_uses` (`null` for a fleet token), `uses`, `expires_at`. |
-| `POST` | `/api/agent/tokens` | admin, session only | `{"name": "Home fleet", "base_url": "http://server:8080", "reusable": false, "max_uses": null, "expires_in_days": null}`. `201` with the token fields plus `secret` (shown once), `install_linux` and `install_windows`. `base_url` is the URL agents will use; it defaults to the listen address. Without `reusable`, the token is **single use**: it enrols one machine and no more. With it, `max_uses` caps the enrolments (`null`: no limit). `expires_in_days` stops *enrolments* after that many days; machines already enrolled keep reporting. `400` on a count below 1. |
+| `POST` | `/api/agent/tokens` | admin, session only | `{"name": "Home fleet", "base_url": "https://server:8080", "reusable": false, "max_uses": null, "expires_in_days": null}`. `201` with the token fields plus `secret` (shown once), `install_linux` and `install_windows`. `base_url` is the URL agents will use; it defaults to the listen address. Without `reusable`, the token is **single use**: it enrols one machine and no more. With it, `max_uses` caps the enrolments (`null`: no limit). `expires_in_days` stops *enrolments* after that many days; machines already enrolled keep reporting. `400` on a count below 1. |
 | `DELETE` | `/api/agent/tokens/{id}` | admin, session only | Revoke. `204`; `404` when unknown or already revoked. |
 | `POST` | `/api/ingest` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | Receives a batch of samples from an agent (bodies up to 16 MB). Not meant to be called by hand. The header carries the machine's binding secret; an agent that has none omits it, which is how it asks for one. The response adds `agent_secret` (the secret, returned exactly once, when the machine is bound) and `bound`. `403` when the machine is bound to another agent installation, or when the token can no longer enrol — the message says which, and what to do. |
 | `GET` | `/api/agent/relay?wait=N` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | Probes delegated to a relay agent (`relay: true`). Held up to `wait` seconds (25 at most) when nothing is pending. Each item is a command of kind `probe` whose `args` carry the target, its decrypted credential, `timeout_secs` and `discover`. Never written to disk. |
@@ -844,8 +847,8 @@ tokens need the `write` scope for changes. See [Email reports](../using/reports.
   "id": 1, "name": "Home fleet", "prefix": "dmon_ab12",
   "created_at": "2026-09-15 13:00:00", "last_used_at": null, "revoked_at": null,
   "secret": "dmon_…",
-  "install_linux": "curl -sSL http://server:8080/install.sh | sh -s -- --token=dmon_… --url=http://server:8080",
-  "install_windows": "& ([scriptblock]::Create((irm http://server:8080/install.ps1))) -Token dmon_… -Url http://server:8080"
+  "install_linux": "curl -sSL https://server:8080/install.sh | sh -s -- --token=dmon_… --url=https://server:8080",
+  "install_windows": "& ([scriptblock]::Create((irm https://server:8080/install.ps1))) -Token dmon_… -Url https://server:8080"
 }
 ```
 

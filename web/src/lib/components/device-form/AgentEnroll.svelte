@@ -65,7 +65,6 @@
 	const REMOTE_SITE_GUIDE = 'https://dumbmonit.readthedocs.io/en/latest/install/remote-site/';
 
 	// The form is mounted per kind and feature: its first value is the one that counts.
-	let name = $state(untrack(() => relay) ? m.deviceform_enroll_default_relay_name() : m.deviceform_enroll_default_name());
 	let site = $state('');
 	/** One token for several machines (a playbook, an image); single use by default. */
 	let reusable = $state(false);
@@ -113,14 +112,13 @@
 
 	async function create(event: SubmitEvent) {
 		event.preventDefault();
-		if (!name.trim() || creating) return;
+		if (creating) return;
 		creating = true;
 		error = null;
 		try {
 			// Single use: this flow enrols one machine and follows it to its first report.
 			origin = window.location.origin;
 			token = await createAgentToken({
-				name: name.trim(),
 				base_url: origin,
 				...(relay ? { relay: true, site: siteLabel } : {}),
 				...(reusable && !relay ? { reusable: true } : {}),
@@ -333,7 +331,7 @@
 		{/if}
 
 		<div class="grid gap-1.5">
-			<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_token()} <span class="font-normal text-ink-2">— {token?.name}</span></p>
+			<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_token()} <span class="font-normal text-ink-2">— <span class="select-all font-mono">{token?.name}</span></span></p>
 			<CopyBlock value={token?.secret ?? ''} label={m.deviceform_enroll_copy_token()} secret />
 		</div>
 		<AgentChannelNote />
@@ -458,15 +456,7 @@
 			</p>
 		{/if}
 
-		<div class={relay ? 'grid gap-4 sm:grid-cols-2' : 'contents'}>
-			<Field
-				label={m.deviceform_enroll_token_name()}
-				for="agent-token-name"
-				required
-				help={relay ? m.deviceform_agentflow_token_help_relay() : m.deviceform_enroll_token_help()}
-			>
-				<input id="agent-token-name" class="input" type="text" autocomplete="off" bind:value={name} />
-			</Field>
+		<div class="contents">
 			{#if relay}
 				<Field label={m.deviceform_enroll_site_name()} for="agent-site" help={m.deviceform_enroll_site_help()}>
 					<input id="agent-site" class="input" type="text" autocomplete="off" placeholder={m.deviceform_enroll_site_placeholder()} bind:value={site} />
@@ -535,7 +525,7 @@
 
 		<div class="flex flex-wrap items-center gap-2">
 			<ClickSpark>
-				<Button type="submit" variant="primary" loading={creating} disabled={!name.trim()}>
+				<Button type="submit" variant="primary" loading={creating}>
 					{relay ? m.deviceform_enroll_create_relay() : m.deviceform_enroll_create()}
 				</Button>
 			</ClickSpark>

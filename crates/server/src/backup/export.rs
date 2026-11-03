@@ -71,6 +71,7 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         agent_tokens: agent_tokens(pool).await?,
         api_tokens: api_tokens(pool).await?,
         push_monitors: push_monitors(pool, cipher, &refs).await?,
+        agent_sentinels: agent_sentinels(pool, cipher, &refs).await?,
         packs: packs(pool).await?,
         locations: locations(pool).await?,
         teams: teams(pool).await?,
@@ -96,8 +97,11 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         netscan_schedules: netscan_schedules(pool, &refs).await?,
         lun_links: lun_links(pool, &refs).await?,
         upgrade_notes_closed: upgrade_notes_closed(pool).await?,
-        https_redirect: crate::auth::settings::get::<bool>(pool, crate::web_tls::SETTING_REDIRECT)
-            .await?,
+        // Toujours écrite, valeurs par défaut comprises : un lot sans elle vient
+        // d'une version antérieure à la garde (voir `restore_agent_enrolment`).
+        agent_enrolment: Some(serde_json::to_value(
+            crate::collectors::agent::enrolment::load_settings(pool).await?,
+        )?),
     })
 }
 
@@ -1006,6 +1010,36 @@ async fn api_tokens(pool: &SqlitePool) -> Result<Vec<BundleApiToken>> {
         .collect()
 }
 
+/// Réglages sentinelle, désignés par l'agent (type + adresse).
+async fn agent_sentinels(
+    pool: &SqlitePool,
+    cipher: &Cipher,
+    refs: &HashMap<i64, String>,
+) -> Result<Vec<BundleSentinel>> {
+    let ids: Vec<i64> =
+        sqlx::query_scalar("SELECT target_id FROM agent_sentinel ORDER BY target_id")
+            .fetch_all(pool)
+            .await
+            .context("lecture des sentinelles")?;
+    let mut out = Vec::new();
+    for id in ids {
+        let Some(agent) = refs.get(&id).cloned() else { continue };
+        let Some(stored) = crate::collectors::agent::sentinel::load(pool, cipher, id).await? else {
+            continue;
+        };
+        out.push(BundleSentinel {
+            agent,
+            enabled: stored.enabled,
+            urls: stored.urls,
+            pins: stored.pins,
+            interval_secs: stored.interval_secs,
+            threshold: stored.threshold,
+            channel: stored.channel,
+        });
+    }
+    Ok(out)
+}
+
 async fn push_monitors(
     pool: &SqlitePool,
     cipher: &Cipher,
@@ -1046,6 +1080,11 @@ pub fn sections() -> BTreeMap<&'static str, &'static str> {
         ("agent_tokens", "Agent enrolment tokens, as hashes: installed agents keep working."),
         ("api_tokens", "API tokens, as hashes: existing tokens keep working."),
         ("push_monitors", "Heartbeat tokens, so the URLs your cron jobs call stay the same."),
+        (
+            "agent_sentinels",
+            "Sentinel mode of agents: addresses watched, threshold, and the notification channel \
+             (with its secret).",
+        ),
         ("packs", "Integration packs, so devices of a pack type are probed again."),
         ("teams", "Teams, their members and their folder rights."),
         (

@@ -90,6 +90,12 @@ impl From<agent::IngestError> for Rejection {
             agent::IngestError::BadRequest(why) => {
                 Self { status: StatusCode::BAD_REQUEST, message: why }
             }
+            agent::IngestError::Pending(why) => {
+                Self { status: StatusCode::FORBIDDEN, message: why }
+            }
+            agent::IngestError::TooMany(why) => {
+                Self { status: StatusCode::TOO_MANY_REQUESTS, message: why }
+            }
             agent::IngestError::Internal(error) => {
                 tracing::error!(?error, "internal error on the command channel");
                 Self {

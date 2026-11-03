@@ -163,7 +163,7 @@ pub fn check_client_id(client_id: &str) -> Result<(), &'static str> {
 /// d'`http://`, et exige que l'URI soit déclarée dans l'application.
 pub fn check_redirect_uri(uri: &str, origin: Option<&str>) -> Result<(), &'static str> {
     const REFUSED: &str = "Spotify only accepts an https:// address for the redirect, or \
-                           http://127.0.0.1:8888/callback when DumbMonit is served over plain HTTP.";
+                           http://127.0.0.1:8888/callback (then paste the address it lands on).";
     if uri == spotify::LOOPBACK_REDIRECT_URI {
         return Ok(());
     }

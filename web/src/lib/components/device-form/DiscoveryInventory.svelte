@@ -16,6 +16,7 @@
 		listNetscanInventory,
 		listNetscanSchedules,
 		markAllNetscanKnown,
+		markNetscanReviewSeen,
 		markNetscanDeviceKnown,
 		markNetscanPortKnown,
 		runNetscanSchedule,
@@ -26,11 +27,13 @@
 	import { formatRelative } from '#lib/format.js';
 	import { Button, Confirm, EmptyState, ErrorNotice, Field, Plate, Toggle, type Tone } from '#lib/ui/index.js';
 	import NetscanGrid from './NetscanGrid.svelte';
+	import ReviewQueue from './ReviewQueue.svelte';
 	import { defaultSubnet, usableSubnets } from './test-connection';
 
 	/** Refresh while the screen is open: a scan finishes in the background. */
 	const REFRESH_MS = 15000;
-	const INTERVALS = [900, 3600, 21600, 86400, 604800];
+	/** Periodic re-scan: every 6 hours, daily (default) or weekly; the switch of a scan turns it off. */
+	const INTERVALS = [21600, 86400, 604800];
 
 	let schedules = $state<NetscanSchedule[]>([]);
 	let devices = $state<NetscanDevice[]>([]);
@@ -45,7 +48,7 @@
 	let cidr = $state('');
 	let name = $state('');
 	let agentId = $state('');
-	let intervalSecs = $state(3600);
+	let intervalSecs = $state(86400);
 	let depth = $state<DiscoveryDepth>('standard');
 	let creating = $state(false);
 	let formError = $state<unknown>(null);
@@ -76,6 +79,8 @@
 			.then((list) => (relays = list.filter((r) => r.relay)))
 			.catch(() => {});
 		void refresh(controller.signal);
+		// Opening the screen is seeing the latest batch of new devices: it is announced once.
+		markNetscanReviewSeen().catch(() => {});
 		const timer = setInterval(() => void refresh(controller.signal), REFRESH_MS);
 		return () => {
 			clearInterval(timer);
@@ -181,6 +186,8 @@
 			<ErrorNotice error={actionError} title={m.discovery_inventory_action_error()} />
 		{/if}
 
+		<ReviewQueue {devices} onchanged={() => refresh()} />
+
 		<section aria-labelledby="inv-schedules" class="grid gap-3">
 			<h3 id="inv-schedules" class="flex items-center gap-2 text-sm font-semibold text-ink">
 				<CalendarClock class="size-4 text-ink-2" aria-hidden="true" />
@@ -271,7 +278,7 @@
 							{/each}
 						</select>
 					</Field>
-					<Field label={m.discovery_inventory_interval_label()} for="inv-interval">
+					<Field label={m.discovery_inventory_interval_label()} for="inv-interval" help={m.discovery_inventory_interval_help()}>
 						<select id="inv-interval" class="input" bind:value={intervalSecs}>
 							{#each INTERVALS as secs (secs)}
 								<option value={secs}>{every(secs)}</option>

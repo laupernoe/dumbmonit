@@ -62,7 +62,7 @@ Stellen Sie sicher, dass die `sysctls:`-Zeilen noch da sind, dann
   `dumbmonit-agent` neu.
 - Die URL im Installationsbefehl ist die, mit der Ihr Browser die UI
   erreicht hat. Von der überwachten Maschine aus muss diese URL den
-  Server erreichen: `curl http://server:8080/api/health` von dort
+  Server erreichen: `curl https://server:8080/api/health` von dort
   sagt es Ihnen.
 - Hinter einem Reverse Proxy muss `/api/ingest` weitergeleitet und
   Bodies bis 16 MB erlaubt werden (`client_max_body_size 16m` in

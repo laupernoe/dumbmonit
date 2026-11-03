@@ -122,8 +122,8 @@ disparues 60 jours, les deux dans SQLite (voir la
   `GET /metrics` et la source de données `/prometheus`, avec un jeton
   d'API — [ci-dessous](#scraping-dumbmonit).
 - Directement, en développement : la surcouche `docker-compose.dev.yml`
-  publie le VictoriaMetrics embarqué sur `http://localhost:8428`, avec sa
-  propre interface sur `http://localhost:8428/vmui/`. En production il
+  publie le VictoriaMetrics embarqué sur `https://localhost:8428`, avec sa
+  propre interface sur `https://localhost:8428/vmui/`. En production il
   n'écoute que sur le loopback du conteneur ; réglez
   `DUMBMONIT_VM_LISTEN=0.0.0.0:8428` et publiez le port vous-même si vous
   voulez Grafana ou un autre outil sur les mêmes données.
@@ -209,8 +209,8 @@ dernier point est cherché, pour des surveillances sondées moins souvent que
 toutes les cinq minutes.
 
 ```bash
-curl -H 'Authorization: Bearer dmt_…' http://localhost:8080/metrics
-curl -H 'Authorization: Bearer dmt_…' -G http://localhost:8080/federate \
+curl -H 'Authorization: Bearer dmt_…' https://localhost:8080/metrics
+curl -H 'Authorization: Bearer dmt_…' -G https://localhost:8080/federate \
   --data-urlencode 'match[]={__name__=~"dumbmonit_.*",target="4"}'
 ```
 
@@ -225,7 +225,7 @@ même jeton, pour que Grafana parle à une source de données Prometheus
 normale :
 
 1. **Connections → Data sources → Add → Prometheus**.
-2. **URL** : `http://dumbmonit.lan:8080/prometheus` (Grafana ajoute
+2. **URL** : `https://dumbmonit.lan:8080/prometheus` (Grafana ajoute
    `/api/v1/query` lui-même).
 3. **HTTP headers** : ajoutez-en un, `Authorization` = `Bearer dmt_…`.
    Grafana le stocke chiffré et ne le montre plus jamais.

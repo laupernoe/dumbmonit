@@ -97,7 +97,7 @@ endereço dele (`http://host:8428`): o embutido então não é iniciado e
 
 ## Primeira inicialização {#first-start}
 
-Abra `http://<seu-host>:8080`. Uma instância nova mostra a tela `/setup`,
+Abra `https://<seu-host>:8080`. O navegador mostra um aviso uma vez por causa do certificado autoassinado (veja [HTTPS and encryption](https.md)). Uma instância nova mostra a tela `/setup`,
 onde você cria a primeira conta de administrador (senha de pelo menos 12
 caracteres).
 
@@ -345,7 +345,7 @@ Se o aviso permanecer após a reinicialização, verifique `docker compose logs 
 
 ## Proxy reverso {#reverse-proxy}
 
-A interface e a API são servidas em uma única porta por HTTP simples. Nenhum WebSocket é usado:
+A interface e a API são servidas em uma única porta, que só fala HTTPS (uma requisição HTTP simples recebe um redirecionamento, veja [HTTPS and encryption](https.md)). Um proxy reverso precisa, portanto, se conectar ao contêiner por HTTPS (`https://dumbmonit:8080`), com a verificação de certificado desativada para esse trecho ou com o certificado do DumbMonit confiável. Nenhum WebSocket é usado:
 a interface consulta a API periodicamente, então qualquer proxy reverso funciona sem configuração
 especial.
 
@@ -353,7 +353,11 @@ especial.
 
     ```
     monit.example.com {
-        reverse_proxy 127.0.0.1:8080
+        reverse_proxy https://127.0.0.1:8080 {
+            transport http {
+                tls_insecure_skip_verify
+            }
+        }
     }
     ```
 
@@ -366,7 +370,8 @@ especial.
         # ssl_certificate / ssl_certificate_key …
 
         location / {
-            proxy_pass http://127.0.0.1:8080;
+            proxy_pass https://127.0.0.1:8080;
+            proxy_ssl_verify off;
             proxy_set_header Host $host;
             proxy_set_header X-Forwarded-Proto $scheme;
             # Os agentes enviam lotes de recuperação após uma queda:
@@ -376,7 +381,7 @@ especial.
     ```
 
 Quando o proxy termina o TLS, defina `DUMBMONIT_COOKIE_SECURE: "1"` para que o cookie
-de sessão seja enviado apenas por HTTPS. Não o defina em uma implantação HTTP simples: o
+de sessão seja enviado apenas por HTTPS. Defina-o somente se todos os navegadores acessarem o DumbMonit por HTTPS: o
 navegador nunca devolveria o cookie e o login seria impossível.
 
 !!! note "Agentes atrás de um proxy"

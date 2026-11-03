@@ -245,6 +245,126 @@ impl ServerCertVerifier for PinnedVerifier {
     }
 }
 
+/// Épingle (`sha256//<base64>`, celle de `curl --pinnedpubkey`) : rien
+/// d'autre n'est accepté comme `server_pin`.
+pub fn is_key_pin(pin: &str) -> bool {
+    let base64 = |b: &u8| b.is_ascii_alphanumeric() || *b == b'+' || *b == b'/';
+    let digest = pin.strip_prefix("sha256//").unwrap_or_default().as_bytes();
+    digest.len() == 44 && digest[43] == b'=' && digest[..43].iter().all(base64)
+}
+
+/// Épingle de la clé publique d'un certificat DER : l'empreinte SHA-256 de
+/// son `SubjectPublicKeyInfo`, comme la calcule curl.
+pub fn certificate_key_pin(cert: &[u8]) -> Option<String> {
+    let spki = subject_public_key_info(cert)?;
+    Some(format!("sha256//{}", BASE64.encode(Sha256::digest(spki))))
+}
+
+/// Un élément DER : étiquette, contenu, élément entier, suite.
+type DerElement<'a> = (u8, &'a [u8], &'a [u8], &'a [u8]);
+
+fn der(input: &[u8]) -> Option<DerElement<'_>> {
+    let (&tag, after) = input.split_first()?;
+    let (&first, after) = after.split_first()?;
+    let (len, after) = if first < 0x80 {
+        (usize::from(first), after)
+    } else {
+        let count = usize::from(first & 0x7f);
+        if count == 0 || count > 4 || after.len() < count {
+            return None;
+        }
+        let len = after[..count].iter().fold(0usize, |acc, &b| (acc << 8) | usize::from(b));
+        (len, &after[count..])
+    };
+    if after.len() < len {
+        return None;
+    }
+    let header = input.len() - after.len();
+    Some((tag, &after[..len], &input[..header + len], &after[len..]))
+}
+
+/// `SubjectPublicKeyInfo` d'un certificat X.509, tel quel : septième champ
+/// de `tbsCertificate`, après la version facultative, le numéro de série,
+/// l'algorithme, l'émetteur, la validité et le sujet.
+fn subject_public_key_info(cert: &[u8]) -> Option<&[u8]> {
+    let (0x30, certificate, _, _) = der(cert)? else { return None };
+    let (0x30, tbs, _, _) = der(certificate)? else { return None };
+    let mut rest = tbs;
+    if rest.first() == Some(&0xa0) {
+        rest = der(rest)?.3;
+    }
+    for _ in 0..5 {
+        rest = der(rest)?.3;
+    }
+    let (tag, _, spki, _) = der(rest)?;
+    (tag == 0x30).then_some(spki)
+}
+
+/// Configuration TLS de l'ancien canal (port de l'interface) vers un serveur
+/// au certificat autosigné : seul le certificat dont la clé publique a cette
+/// épingle est accepté — la poignée de main prouve ensuite que le serveur en
+/// tient la clé privée. TLS 1.3 seul, échange de clés post-quantique.
+pub fn pinned_key_config(pin: &str) -> Result<ClientConfig> {
+    if !is_key_pin(pin) {
+        anyhow::bail!("server_pin: a public key pin (sha256//<base64>) is expected, got '{pin}'");
+    }
+    let provider = provider();
+    let verifier = Arc::new(KeyPinVerifier { pin: pin.to_string(), provider: provider.clone() });
+    let mut config = ClientConfig::builder_with_provider(provider)
+        .with_protocol_versions(&[&rustls::version::TLS13])
+        .context("TLS 1.3")?
+        .dangerous()
+        .with_custom_certificate_verifier(verifier)
+        .with_no_client_auth();
+    config.alpn_protocols = vec![b"http/1.1".to_vec()];
+    Ok(config)
+}
+
+/// Vérifie le serveur par la clé publique épinglée de son certificat.
+#[derive(Debug)]
+struct KeyPinVerifier {
+    pin: String,
+    provider: Arc<CryptoProvider>,
+}
+
+impl ServerCertVerifier for KeyPinVerifier {
+    fn verify_server_cert(
+        &self,
+        end_entity: &CertificateDer<'_>,
+        _intermediates: &[CertificateDer<'_>],
+        _server_name: &ServerName<'_>,
+        _ocsp_response: &[u8],
+        _now: UnixTime,
+    ) -> Result<ServerCertVerified, rustls::Error> {
+        match certificate_key_pin(end_entity.as_ref()) {
+            Some(seen) if seen == self.pin => Ok(ServerCertVerified::assertion()),
+            _ => Err(rustls::Error::InvalidCertificate(CertificateError::UnknownIssuer)),
+        }
+    }
+
+    fn verify_tls12_signature(
+        &self,
+        message: &[u8],
+        cert: &CertificateDer<'_>,
+        dss: &DigitallySignedStruct,
+    ) -> Result<HandshakeSignatureValid, rustls::Error> {
+        verify_tls12_signature(message, cert, dss, &self.provider.signature_verification_algorithms)
+    }
+
+    fn verify_tls13_signature(
+        &self,
+        message: &[u8],
+        cert: &CertificateDer<'_>,
+        dss: &DigitallySignedStruct,
+    ) -> Result<HandshakeSignatureValid, rustls::Error> {
+        verify_tls13_signature(message, cert, dss, &self.provider.signature_verification_algorithms)
+    }
+
+    fn supported_verify_schemes(&self) -> Vec<SignatureScheme> {
+        self.provider.signature_verification_algorithms.supported_schemes()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -341,5 +461,28 @@ mod tests {
         assert!(!state.needs_renewal(19 * day));
         assert!(state.needs_renewal(21 * day));
         assert!(!state.usable(0), "sans certificat, rien d'utilisable");
+    }
+
+    #[test]
+    fn the_server_key_pin_is_read_from_the_certificate_as_curl_does() {
+        let key = KeyPair::generate_for(&PKCS_ECDSA_P256_SHA256).unwrap();
+        let params = CertificateParams::new(vec!["nas.lan".to_string()]).unwrap();
+        let cert = params.self_signed(&key).unwrap();
+        // SubjectPublicKeyInfo d'une clé P-256 : en-tête fixe, puis le point.
+        const P256_SPKI_PREFIX: [u8; 26] = [
+            0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06,
+            0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x03, 0x42, 0x00,
+        ];
+        let spki = [&P256_SPKI_PREFIX[..], key.public_key_raw()].concat();
+        let expected = format!("sha256//{}", BASE64.encode(Sha256::digest(&spki)));
+        assert_eq!(certificate_key_pin(cert.der()), Some(expected.clone()));
+        assert!(is_key_pin(&expected));
+        assert!(pinned_key_config(&expected).is_ok());
+        // Ni une autre forme, ni un certificat illisible.
+        assert!(!is_key_pin("sha256//AAAA"));
+        assert!(!is_key_pin(&expected.replace("sha256//", "sha1//")));
+        assert!(pinned_key_config("md5//x").is_err());
+        assert_eq!(certificate_key_pin(b"not a certificate"), None);
+        assert_eq!(certificate_key_pin(&cert.der()[..40]), None);
     }
 }

@@ -358,7 +358,7 @@ async fn the_mcp_endpoint_carries_rate_limit_headers_and_accepts_its_own_origin(
         .header(header::AUTHORIZATION, format!("Bearer {}", mcp.reader))
         .header(header::CONTENT_TYPE, "application/json")
         .header(header::HOST, "monit.lan:8080")
-        .header(header::ORIGIN, "http://monit.lan:8080")
+        .header(header::ORIGIN, "https://monit.lan:8080")
         .body(Body::from(json!({ "jsonrpc": "2.0", "id": 1, "method": "ping" }).to_string()))
         .unwrap();
     let response = mcp.app.router.clone().oneshot(request).await.unwrap();

@@ -383,7 +383,7 @@ async fn a_cookie_authenticated_mutation_must_prove_its_origin() {
             body: body(),
             cookie: Some(&cookie),
             peer: None,
-            headers: &[("origin", "http://monit.lan:8080"), ("host", "monit.lan:8080")],
+            headers: &[("origin", "https://monit.lan:8080"), ("host", "monit.lan:8080")],
         },
     )
     .await;

@@ -14,6 +14,7 @@ use anyhow::{Context, Result, bail};
 use serde::Deserialize;
 
 use crate::collect::backup_repos::{self, BackupReposConfig, RepoConfig, Tool};
+use crate::collect::databases::{self, BackupRule, DatabasesConfig, Engine};
 use crate::collect::docker::DEFAULT_MAX_CONTAINERS;
 use crate::collect::filter::NameFilter;
 use crate::collect::ipsec::IpsecConfig;
@@ -69,6 +70,7 @@ pub const MODULES: &[&str] = &[
     "libvirt",
     "wireguard",
     "ipsec",
+    "databases",
     "perf_counters",
 ];
 
@@ -85,6 +87,7 @@ struct FileConfig {
     token: Option<String>,
     tls_url: Option<String>,
     ca_pin: Option<String>,
+    server_pin: Option<String>,
     interval_secs: Option<u64>,
     hostname: Option<String>,
     services: Option<Vec<String>>,
@@ -150,6 +153,7 @@ struct FileConfig {
     max_buffered_samples: Option<usize>,
     log_level: Option<String>,
     system_health: Option<SystemHealthFile>,
+    databases: Option<DatabasesFile>,
 }
 
 /// Liste de motifs, écrite en YAML soit comme une liste, soit comme une seule
@@ -210,6 +214,33 @@ struct RepoFile {
     glob_archives: Option<String>,
 }
 
+/// Section `databases` du fichier : bases de données détectées et dossiers de
+/// leurs sauvegardes.
+///
+/// ```text
+/// databases:
+///   backups:
+///     sqlserver:
+///       paths: ['D:\Backups\SQL\*.bak']
+///       max_age_hours: 26
+/// ```
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
+struct DatabasesFile {
+    enabled: Option<bool>,
+    #[serde(alias = "interval_seconds")]
+    interval_secs: Option<u64>,
+    backups: BTreeMap<String, DatabaseBackupFile>,
+}
+
+/// Les sauvegardes d'un moteur : des chemins (jokers admis) et un âge maximal.
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
+struct DatabaseBackupFile {
+    paths: Vec<String>,
+    max_age_hours: Option<u64>,
+}
+
 /// Section `system_health` du fichier : santé du système d'exploitation.
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
@@ -236,6 +267,14 @@ pub struct Config {
     /// Empreinte SHA-256 de l'autorité du serveur. Posée, l'agent ne parle
     /// qu'au canal chiffré et ne reconnaît que ce serveur.
     pub ca_pin: Option<String>,
+    /// Clé publique épinglée (`sha256//…`) du certificat autosigné du port de
+    /// l'interface, que la commande d'installation a vérifiée : l'ancien
+    /// canal ne reconnaît alors que ce serveur.
+    pub server_pin: Option<String>,
+    /// `server_url` est en `http://` hors boucle locale (agent installé avant
+    /// le passage au tout-HTTPS) : seul le canal chiffré déjà enrôlé sert,
+    /// jamais l'ancien canal en clair.
+    pub plain_server_url: bool,
     pub interval: Duration,
     /// Nom d'hôte annoncé au serveur. `None` : celui que le système déclare.
     pub hostname: Option<String>,
@@ -295,6 +334,8 @@ pub struct Config {
     pub self_update: bool,
     /// Dépôts restic et Borg déclarés.
     pub backup_repos: BackupReposConfig,
+    /// Bases de données détectées et fraîcheur de leurs sauvegardes.
+    pub databases: DatabasesConfig,
     /// Compteurs de performance Windows : liste libre, jeux MDaemon et Hyper-V.
     pub perf_counters: PerfCountersConfig,
     pub max_buffered_samples: usize,
@@ -320,6 +361,8 @@ impl fmt::Debug for Config {
             .field("token", &"<redacted>")
             .field("tls_url", &self.tls_url)
             .field("ca_pin", &self.ca_pin)
+            .field("server_pin", &self.server_pin)
+            .field("plain_server_url", &self.plain_server_url)
             .field("interval", &self.interval)
             .field("hostname", &self.hostname)
             .field("services", &self.services)
@@ -349,6 +392,7 @@ impl fmt::Debug for Config {
             .field("inventory", &self.inventory)
             .field("self_update", &self.self_update)
             .field("backup_repos", &self.backup_repos)
+            .field("databases", &self.databases)
             .field("perf_counters", &self.perf_counters)
             .finish()
     }
@@ -444,8 +488,13 @@ impl Config {
             bail!("the server URL is required (key 'server_url' or variable DUMBMONIT_AGENT_URL)");
         }
         if !server_url.starts_with("http://") && !server_url.starts_with("https://") {
-            bail!("the server URL must start with http:// or https:// (got '{server_url}')");
+            bail!("the server URL must start with https:// (got '{server_url}')");
         }
+        // Une URL en clair hors boucle locale n'est tolérée que pour un agent
+        // déjà enrôlé, qui ne parlera alors qu'à son canal chiffré rangé : c'est
+        // `Agent::new` qui le vérifie (il lit l'état du canal), et refuse sinon.
+        let plain_server_url =
+            !server_url.starts_with("https://") && !is_loopback_http(&server_url);
 
         let token = env.get("DUMBMONIT_AGENT_TOKEN").or(file.token).unwrap_or_default();
         let token = token.trim().to_string();
@@ -472,6 +521,19 @@ impl Config {
                         "ca_pin: a SHA-256 fingerprint (64 hex digits) is expected, got '{raw}'"
                     )
                 })?)
+            }
+            _ => None,
+        };
+
+        let server_pin = match env.get("DUMBMONIT_AGENT_SERVER_PIN").or(file.server_pin) {
+            Some(raw) if !raw.trim().is_empty() => {
+                let pin = raw.trim().to_string();
+                if !crate::tls::is_key_pin(&pin) {
+                    bail!(
+                        "server_pin: a public key pin (sha256//<base64>) is expected, got '{raw}'"
+                    );
+                }
+                Some(pin)
             }
             _ => None,
         };
@@ -768,6 +830,9 @@ impl Config {
             )?),
         };
 
+        let databases =
+            Self::merge_databases(file.databases.unwrap_or_default(), &env, wanted("databases"))?;
+
         let perf_counters = Self::merge_perf_counters(
             file.perf_counters,
             file.mdaemon,
@@ -802,6 +867,8 @@ impl Config {
             token,
             tls_url,
             ca_pin,
+            server_pin,
+            plain_server_url,
             interval: Duration::from_secs(interval_secs),
             hostname: env
                 .get("DUMBMONIT_AGENT_HOSTNAME")
@@ -837,6 +904,7 @@ impl Config {
             inventory,
             self_update,
             backup_repos,
+            databases,
             perf_counters,
             max_buffered_samples,
             secret_path: Self::resolve_secret_path(&env, config_path),
@@ -935,6 +1003,51 @@ impl Config {
                 })?,
             },
         })
+    }
+
+    /// Bases de données : drapeau, période et chemins de sauvegarde par moteur.
+    fn merge_databases(
+        file: DatabasesFile,
+        env: &EnvSource,
+        wanted: bool,
+    ) -> Result<DatabasesConfig> {
+        let enabled = match env.get("DUMBMONIT_AGENT_DATABASES") {
+            Some(raw) => parse_bool(&raw).context("DUMBMONIT_AGENT_DATABASES")?,
+            None => file.enabled.unwrap_or(wanted),
+        };
+        let interval = Duration::from_secs(read_interval(
+            env,
+            "DUMBMONIT_AGENT_DATABASES_INTERVAL_SECS",
+            file.interval_secs,
+            databases::DEFAULT_INTERVAL_SECS,
+            databases::MIN_INTERVAL_SECS,
+            "the database reading period",
+        )?);
+        let mut backups = Vec::new();
+        for (key, entry) in file.backups {
+            let Some(engine) = Engine::parse(&key) else {
+                let known: Vec<&str> = Engine::ALL.iter().map(|e| e.as_str()).collect();
+                bail!("databases.backups: unknown engine '{key}' (known: {})", known.join(", "));
+            };
+            let paths: Vec<String> = entry
+                .paths
+                .into_iter()
+                .map(|path| path.trim().to_string())
+                .filter(|path| !path.is_empty())
+                .collect();
+            if paths.is_empty() {
+                bail!("databases.backups.{key}: at least one path is needed");
+            }
+            if paths.len() > databases::MAX_PATHS_PER_ENGINE {
+                bail!("databases.backups.{key}: at most {} paths", databases::MAX_PATHS_PER_ENGINE);
+            }
+            let max_age_hours = entry.max_age_hours.unwrap_or(databases::DEFAULT_MAX_AGE_HOURS);
+            if max_age_hours == 0 {
+                bail!("databases.backups.{key}: max_age_hours must be at least 1");
+            }
+            backups.push(BackupRule { engine, paths, max_age_hours });
+        }
+        Ok(DatabasesConfig { enabled, interval, backups })
     }
 
     fn merge_system_health(
@@ -1202,6 +1315,19 @@ fn parse_level(raw: &str) -> Result<tracing::Level> {
     }
 }
 
+/// `http://` vers la boucle locale seulement (serveur de test, tunnel SSH) :
+/// rien n'y traverse le réseau.
+fn is_loopback_http(url: &str) -> bool {
+    let Some(rest) = url.strip_prefix("http://") else { return false };
+    let authority = rest.split('/').next().unwrap_or_default();
+    let host = match authority.strip_prefix('[') {
+        Some(inner) => inner.split(']').next().unwrap_or_default(),
+        None => authority.split(':').next().unwrap_or_default(),
+    };
+    host.eq_ignore_ascii_case("localhost")
+        || host.parse::<std::net::IpAddr>().is_ok_and(|ip| ip.is_loopback())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1211,13 +1337,57 @@ mod tests {
     }
 
     #[test]
+    fn the_server_is_reached_over_https_or_the_loopback_only() {
+        assert!(is_loopback_http("http://127.0.0.1:8080"));
+        assert!(is_loopback_http("http://localhost:8080/x"));
+        assert!(is_loopback_http("http://[::1]:8080"));
+        assert!(!is_loopback_http("http://192.168.1.5:8080"));
+        assert!(!is_loopback_http("http://127.0.0.1.evil.example"));
+        assert!(!is_loopback_http("https://127.0.0.1"));
+        let plain = FileConfig {
+            server_url: Some("http://serveur:8080".into()),
+            token: Some("dmon_x".into()),
+            ..FileConfig::default()
+        };
+        // Lu (un agent déjà enrôlé doit pouvoir redémarrer), mais marqué : sans
+        // canal chiffré rangé, l'agent refusera de démarrer (voir `run.rs`).
+        assert!(Config::merge(plain, env(&[])).unwrap().plain_server_url);
+        let local = FileConfig {
+            server_url: Some("http://127.0.0.1:8080".into()),
+            token: Some("dmon_x".into()),
+            ..FileConfig::default()
+        };
+        assert!(!Config::merge(local, env(&[])).unwrap().plain_server_url);
+        let ftp = FileConfig {
+            server_url: Some("ftp://serveur".into()),
+            token: Some("dmon_x".into()),
+            ..FileConfig::default()
+        };
+        assert!(Config::merge(ftp, env(&[])).is_err());
+        let pinned = FileConfig {
+            server_url: Some("https://serveur:8080".into()),
+            token: Some("dmon_x".into()),
+            server_pin: Some(format!("sha256//{}=", "A".repeat(43))),
+            ..FileConfig::default()
+        };
+        assert!(Config::merge(pinned, env(&[])).unwrap().server_pin.is_some());
+        let bad = FileConfig {
+            server_url: Some("https://serveur:8080".into()),
+            token: Some("dmon_x".into()),
+            server_pin: Some("sha256//AAAA".into()),
+            ..FileConfig::default()
+        };
+        assert!(Config::merge(bad, env(&[])).is_err());
+    }
+
+    #[test]
     fn the_old_variable_names_are_still_read_and_reported() {
         let config = Config::merge(
             FileConfig::default(),
-            env(&[("EZYMONIT_AGENT_URL", "http://old:8080"), ("DUMBMONIT_AGENT_TOKEN", "dmon_x")]),
+            env(&[("EZYMONIT_AGENT_URL", "https://old:8080"), ("DUMBMONIT_AGENT_TOKEN", "dmon_x")]),
         )
         .expect("configuration");
-        assert_eq!(config.server_url, "http://old:8080");
+        assert_eq!(config.server_url, "https://old:8080");
         assert_eq!(
             config.deprecated_env,
             vec![("EZYMONIT_AGENT_URL".to_string(), "DUMBMONIT_AGENT_URL".to_string())]
@@ -1226,7 +1396,7 @@ mod tests {
 
     fn file_with_url_and_token() -> FileConfig {
         FileConfig {
-            server_url: Some("http://serveur:8080/".into()),
+            server_url: Some("https://serveur:8080/".into()),
             token: Some("dmon_abc".into()),
             ..FileConfig::default()
         }
@@ -1305,7 +1475,7 @@ mod tests {
         let config = Config::merge(file_with_url_and_token(), env(&[])).expect("configuration");
         // La barre oblique finale est retirée : sans cela l'URL construite
         // contiendrait un double séparateur et le serveur répondrait 404.
-        assert_eq!(config.server_url, "http://serveur:8080");
+        assert_eq!(config.server_url, "https://serveur:8080");
         assert_eq!(config.interval, Duration::from_secs(DEFAULT_INTERVAL_SECS));
         assert!(config.docker, "la découverte Docker est active par défaut");
         assert!(config.docker_update_check);
@@ -1333,7 +1503,7 @@ cpu_per_core: true
 docker_max_containers: 20
 "#;
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
@@ -1357,7 +1527,7 @@ docker_max_containers: 20
     fn collection_scope_follows_the_environment() {
         let yaml = "interfaces_ignore: ^veth\ncpu_per_core: true\n";
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
@@ -1383,7 +1553,7 @@ docker_max_containers: 20
     fn an_empty_list_disables_a_filter() {
         let yaml = "interfaces_ignore: []\nmounts_ignore: []\n";
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
@@ -1408,7 +1578,7 @@ docker_max_containers: 20
 
         let yaml = "mounts_ignore:\n  - '[unclosed'\n";
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
@@ -1450,7 +1620,7 @@ docker_max_containers: 20
     fn plakar_klosets_are_read_from_the_file_or_the_environment() {
         let yaml = "plakar_klosets:\n  - /srv/backups/main\n  - ' '\nplakar_bin: /opt/plakar\nplakar_home: /root\nplakar_interval_secs: 120\n";
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
@@ -1472,7 +1642,7 @@ docker_max_containers: 20
     #[test]
     fn plakar_can_be_switched_off_from_the_file_or_the_environment() {
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str("plakar: false\n").expect("YAML valide")
         };
@@ -1498,7 +1668,7 @@ docker_max_containers: 20
         let yaml = "libvirt_bin: /usr/bin/virsh\nlibvirt_uri: qemu+ssh://kvm/system\n\
                     libvirt_interval_secs: 30\n";
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
@@ -1541,7 +1711,7 @@ docker_max_containers: 20
         let yaml = "sensors: false\nsmart_bin: /usr/local/sbin/smartctl\n\
                     smart_interval_secs: 900\nzfs_bin: /sbin/zpool\nzfs_interval_secs: 60\n";
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
@@ -1609,7 +1779,7 @@ docker_max_containers: 20
         assert!(Config::merge(no_url, env(&[])).is_err());
 
         let no_token =
-            FileConfig { server_url: Some("http://s:8080".into()), ..FileConfig::default() };
+            FileConfig { server_url: Some("https://s:8080".into()), ..FileConfig::default() };
         assert!(Config::merge(no_token, env(&[])).is_err());
     }
 
@@ -1658,7 +1828,7 @@ docker_max_containers: 20
     #[test]
     fn the_yaml_file_is_parsed_as_expected() {
         let yaml = r#"
-server_url: http://serveur:8080
+server_url: https://serveur:8080
 token: dmon_secret
 interval_secs: 15
 services:
@@ -1707,6 +1877,47 @@ system_health:
     }
 
     #[test]
+    fn databases_are_detected_by_default_without_any_backup_path() {
+        let config = Config::merge(file_with_url_and_token(), env(&[])).expect("configuration");
+        assert_eq!(config.databases, DatabasesConfig::default());
+        assert!(config.databases.enabled && config.databases.backups.is_empty());
+        let off = Config::merge(
+            file_with_url_and_token(),
+            env(&[("DUMBMONIT_AGENT_DATABASES", "false")]),
+        )
+        .expect("configuration");
+        assert!(!off.databases.enabled);
+        let listed = Config::merge(with_yaml("modules: [docker]\n"), env(&[])).expect("config");
+        assert!(!listed.databases.enabled, "absent de la liste des modules");
+    }
+
+    #[test]
+    fn database_backup_paths_are_read_per_engine() {
+        let yaml = "databases:\n  backups:\n    sqlserver:\n      paths: ['D:\\Backups\\SQL\\*.bak']\n      max_age_hours: 26\n    mariadb:\n      paths: [/var/backups/mysql/*.sql.gz]\n";
+        let config = Config::merge(with_yaml(yaml), env(&[])).expect("configuration");
+        let rules = &config.databases.backups;
+        assert_eq!(rules.len(), 2);
+        let sql = rules.iter().find(|r| r.engine == Engine::Sqlserver).expect("sqlserver");
+        assert_eq!(sql.paths, vec!["D:\\Backups\\SQL\\*.bak".to_string()]);
+        assert_eq!(sql.max_age_hours, 26);
+        let mysql = rules.iter().find(|r| r.engine == Engine::Mysql).expect("mysql");
+        assert_eq!(mysql.max_age_hours, databases::DEFAULT_MAX_AGE_HOURS);
+    }
+
+    #[test]
+    fn invalid_database_backup_sections_are_refused() {
+        let unknown = "databases:\n  backups:\n    oracle:\n      paths: [/x/*]\n";
+        let error = Config::merge(with_yaml(unknown), env(&[])).expect_err("unknown engine");
+        assert!(error.to_string().contains("unknown engine 'oracle'"), "{error}");
+        let empty = "databases:\n  backups:\n    postgresql:\n      paths: []\n";
+        assert!(Config::merge(with_yaml(empty), env(&[])).is_err());
+        let zero = "databases:\n  backups:\n    postgresql:\n      paths: [/x/*]\n      max_age_hours: 0\n";
+        assert!(Config::merge(with_yaml(zero), env(&[])).is_err());
+        let fast = "databases:\n  interval_secs: 5\n";
+        assert!(Config::merge(with_yaml(fast), env(&[])).is_err());
+    }
+
+    #[test]
     fn too_frequent_an_updates_inventory_is_refused() {
         // Relancer `dnf` toutes les dix secondes coûterait plus que tout le reste.
         let config = Config::merge(
@@ -1720,7 +1931,7 @@ system_health:
     fn the_long_spelling_of_the_updates_interval_is_accepted() {
         let yaml = "system_health:\n  updates_interval_seconds: 1800\n";
         let file = FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         };
@@ -1738,7 +1949,7 @@ system_health:
 
     fn from_yaml(yaml: &str) -> FileConfig {
         FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         }
@@ -1826,7 +2037,7 @@ mdaemon: true
     #[test]
     fn restic_and_borg_repositories_come_from_the_file() {
         let yaml = r#"
-server_url: http://serveur:8080
+server_url: https://serveur:8080
 token: dmon_abc
 wireguard_peer_names:
   "zonmO992nrIL4FgJ3B/wccmu/SBkoX2kDhSYr8KpgRU=": laptop
@@ -1870,17 +2081,17 @@ backup_repos_interval_secs: 900
     #[test]
     fn a_repository_entry_must_be_complete_and_unique() {
         let missing: FileConfig = dumbmonit_collectors::yaml::from_str(
-            "server_url: http://s\ntoken: t\nrestic_repos:\n  - name: nas\n",
+            "server_url: https://s\ntoken: t\nrestic_repos:\n  - name: nas\n",
         )
         .expect("yaml");
         assert!(Config::merge(missing, env(&[])).is_err());
         let twice: FileConfig = dumbmonit_collectors::yaml::from_str(
-            "server_url: http://s\ntoken: t\nborg_repos:\n  - {name: a, repository: /r1}\n  - {name: a, repository: /r2}\n",
+            "server_url: https://s\ntoken: t\nborg_repos:\n  - {name: a, repository: /r1}\n  - {name: a, repository: /r2}\n",
         )
         .expect("yaml");
         assert!(Config::merge(twice, env(&[])).is_err());
         let too_fast: FileConfig = dumbmonit_collectors::yaml::from_str(
-            "server_url: http://s\ntoken: t\nbackup_repos_interval_secs: 5\n",
+            "server_url: https://s\ntoken: t\nbackup_repos_interval_secs: 5\n",
         )
         .expect("yaml");
         assert!(Config::merge(too_fast, env(&[])).is_err());
@@ -1906,7 +2117,7 @@ backup_repos_interval_secs: 900
 
     fn with_yaml(yaml: &str) -> FileConfig {
         FileConfig {
-            server_url: Some("http://s:8080".into()),
+            server_url: Some("https://s:8080".into()),
             token: Some("dmon_abc".into()),
             ..dumbmonit_collectors::yaml::from_str(yaml).expect("YAML valide")
         }

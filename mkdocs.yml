@@ -77,11 +77,13 @@ nav:
   - Install:
       - Docker: install/docker.md
       - HTTPS and encryption: install/https.md
+      - Network ports: install/ports.md
       - Add your first monitor: install/first-device.md
       - Monitor a remote site: install/remote-site.md
       - Agent channel security: install/agent-security.md
       - Backup and restore: install/backup.md
       - Watching DumbMonit itself: install/self-monitoring.md
+      - Sentinel mode: install/sentinel.md
       - Server logs: install/logs.md
       - Update: install/update.md
       - Verify a release: install/verify.md
@@ -97,6 +99,7 @@ nav:
       - XCP-ng / XenServer: devices/xcpng.md
       - Nutanix AHV: devices/nutanix.md
       - Synology DSM: devices/synology.md
+      - Synology agent (DSM 7): devices/synology-agent.md
       - OPNsense: devices/opnsense.md
       - pfSense: devices/pfsense.md
       - FortiGate: devices/fortigate.md
@@ -180,6 +183,7 @@ nav:
       - Linux, macOS, FreeBSD and Windows agent: devices/agent.md
       - Deploy the agent with Active Directory: devices/agent-active-directory.md
       - Windows event log alerts: devices/agent-windows-events.md
+      - Databases and their backups: devices/agent-databases.md
       - Services (HTTP, TCP, DNS, ping, TLS, NTP): devices/services.md
       - Heartbeat (push): devices/push.md
       - Website changes: devices/webchange.md

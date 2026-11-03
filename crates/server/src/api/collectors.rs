@@ -4948,6 +4948,14 @@ pub fn option_keys(kind: &str) -> Vec<String> {
         .unwrap_or_default()
 }
 
+/// Vrai si ce type compilé ne marche pas sans identifiants : il en déclare, et
+/// aucune de ses formes n'est « none ». Un type inconnu ou sans identifiants :
+/// faux (l'ajout en bloc le crée actif).
+pub fn needs_credential(kind: &str) -> bool {
+    compiled(kind)
+        .is_some_and(|v| !v.credential_types.is_empty() && !v.credential_types.contains(&"none"))
+}
+
 /// Description d'un type : celle des tables de ce fichier s'il y figure, sinon
 /// celle que fournit son collecteur (`Collector::description`, pour un type né à
 /// l'exécution), à défaut une description générique.
@@ -5342,17 +5350,20 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 title: "Install the agent on the machine",
                 steps: &[
                     "In DumbMonit, add a monitor and pick Server with the agent, then choose how the machine reaches the server: directly, or through the relay of a remote site behind a firewall.",
-                    "An enrollment token (dmon_…) is shown once, with the install command ready to copy for Linux/macOS, Windows and Docker.",
+                    "An enrollment token (its secret starts with dmon_; the token is listed as tok_… afterwards) is shown once, with the install command ready to copy for Linux/macOS, Windows and Docker.",
                     "Run that install command on the machine, with elevated rights (sudo on Linux and macOS, an elevated PowerShell on Windows).",
                     "The page waits for the first report (a few seconds), then lets you name the machine, file it in a folder and place it at a site, on the spot.",
                     "Optional, for Docker: if the agent runs under a dedicated user, add that user to the \"docker\" group and restart the agent.\nusermod -aG docker dumbmonit",
                     "For a fleet (a playbook, a machine image), tick Several machines with this command; a whole Windows domain goes through the Active Directory kit, offered on the same page.",
                 ],
-                ports: &[to_server!(
-                    8080,
-                    "tcp",
-                    "Readings and commands (default port, 443 behind a TLS proxy)",
-                )],
+                ports: &[
+                    to_server!(8443, "tcp", "Readings and commands: the encrypted agent channel",),
+                    to_server!(
+                        8080,
+                        "tcp",
+                        "Install script and agent download, at install and update time",
+                    ),
+                ],
                 permissions: &[],
                 warning: "The agent contacts the server, never the other way round: no port needs to be opened on the monitored machine.",
             },
@@ -5375,11 +5386,14 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Install the agent on the machine: each service it finds becomes a monitor under that machine on its first report.",
                     "To stop watching one, untick it in the machine's \"Services found by the agent\" panel or delete its monitor.",
                 ],
-                ports: &[to_server!(
-                    8080,
-                    "tcp",
-                    "Readings and commands (default port, 443 behind a TLS proxy)",
-                )],
+                ports: &[
+                    to_server!(8443, "tcp", "Readings and commands: the encrypted agent channel",),
+                    to_server!(
+                        8080,
+                        "tcp",
+                        "Install script and agent download, at install and update time",
+                    ),
+                ],
                 permissions: &[],
                 warning: "If the machine stops reporting, its services are shown as hidden behind it rather than raising alerts of their own.",
             },

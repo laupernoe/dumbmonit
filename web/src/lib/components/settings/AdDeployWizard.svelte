@@ -19,7 +19,7 @@
 	import { listRelays } from '#lib/api/relay.js';
 	import { adDeployDocsUrl } from '#lib/docs.js';
 	import AgentChannelNote from '#lib/components/device-form/AgentChannelNote.svelte';
-	import { Button, Confirm, CopyBlock, Disclosure, ErrorNotice, Field, Led, Plate } from '#lib/ui/index.js';
+	import { Button, Confirm, CopyBlock, ErrorNotice, Field, Led, Plate } from '#lib/ui/index.js';
 
 	interface Props {
 		/** Called whenever the token list changed (created, closed), so the page can reload it. */
@@ -39,11 +39,16 @@
 	// Step 1
 	let domain = $state('');
 	let maxUses = $state('');
-	let days = $state('30');
+	/** Which servers get the agent: the whole domain (future servers included), one OU or one group. */
+	let scope = $state<'all' | 'ou' | 'group'>('all');
 	let targetOu = $state('');
-	let includeDcs = $state(false);
 	let securityGroup = $state('');
+	let includeDcs = $state(false);
 	let sysvol = $state(false);
+	/** `null`: not chosen yet, so the default follows the scope (never expires for the whole domain). */
+	let validityChoice = $state<'30' | '365' | 'never' | null>(null);
+	const validity = $derived(validityChoice ?? (scope === 'all' ? 'never' : '30'));
+	let scopeError = $state<string | null>(null);
 	let serverHost = $state('');
 	/** Relay agents of a remote site the domain may install through. */
 	let relays = $state<RelayAgent[]>([]);
@@ -81,8 +86,24 @@
 	let closeError = $state<unknown>(null);
 
 	const STEPS = [m.settings_agents_ad_step1, m.settings_agents_ad_step2, m.settings_agents_ad_step3, m.settings_agents_ad_step4];
-	const WHATIF = String.raw`powershell -ExecutionPolicy Bypass -File .\Deploy-DumbMonit.ps1 -WhatIf`;
-	const APPLY = String.raw`powershell -ExecutionPolicy Bypass -File .\Deploy-DumbMonit.ps1`;
+	const RUN = String.raw`Unblock-File .\Deploy-DumbMonit.ps1; powershell -NoProfile -ExecutionPolicy Bypass -File .\Deploy-DumbMonit.ps1`;
+
+	/** The exact command for the options chosen: it changes live with the form. */
+	const command = $derived.by(() => {
+		let line = RUN;
+		if (scope === 'all') line += ' -AllServers';
+		else if (scope === 'ou' && targetOu.trim()) line += ` -TargetOU "${targetOu.trim()}"`;
+		else if (scope === 'group' && securityGroup.trim()) line += ` -SecurityGroup "${securityGroup.trim()}"`;
+		if (scope !== 'all' && includeDcs) line += ' -IncludeDomainControllers';
+		if (sysvol) line += ' -UseSysvol';
+		return line;
+	});
+	const previewCommand = $derived(`${command} -WhatIf`);
+
+	/** Same checks as the server's `optional_field`, plus what could break out of a double-quoted PowerShell string. */
+	function safeText(text: string): boolean {
+		return text.length <= 512 && !/[\p{Cc}"'`$;\u2018\u2019\u201C\u201D]/u.test(text);
+	}
 
 	function show(event?: Event) {
 		returnFocus = (event?.currentTarget as HTMLElement | null) ?? (document.activeElement as HTMLElement | null);
@@ -98,6 +119,13 @@
 		serverHostError = null;
 		dnsServerError = null;
 		step = 1;
+		scope = 'all';
+		targetOu = '';
+		securityGroup = '';
+		includeDcs = false;
+		sysvol = false;
+		validityChoice = null;
+		scopeError = null;
 		downloaded = false;
 		closed = false;
 		closeError = null;
@@ -139,6 +167,7 @@
 		createError = null;
 		domainError = null;
 		numberError = null;
+		scopeError = null;
 		serverHostError = null;
 		dnsServerError = null;
 		if (!domain.trim()) {
@@ -153,9 +182,21 @@
 			dnsServerError = m.settings_agents_ad_dns_server_invalid();
 			return;
 		}
+		if (scope === 'ou') {
+			const dn = targetOu.trim();
+			if (!safeText(dn) || !/(^|,)\s*DC=[^,]+/i.test(dn)) {
+				scopeError = m.settings_agents_ad_ou_invalid();
+				return;
+			}
+		} else if (scope === 'group') {
+			const name = securityGroup.trim();
+			if (!name || !safeText(name)) {
+				scopeError = m.settings_agents_ad_group_invalid();
+				return;
+			}
+		}
 		const uses_ = whole(maxUses);
-		const days_ = whole(days);
-		if (uses_ === 'error' || days_ === 'error') {
+		if (uses_ === 'error') {
 			numberError = m.settings_agents_ad_number_invalid();
 			return;
 		}
@@ -169,10 +210,12 @@
 				...(relay ? { relay_id: relay.id, relay_host: relayHost.trim() || null } : {}),
 				dns_server: dnsServer.trim() || null,
 				max_uses: uses_,
-				expires_in_days: days_,
-				target_ou: targetOu.trim() || null,
-				include_domain_controllers: includeDcs,
-				security_group: securityGroup.trim() || null,
+				// `null`: the token never expires (still limited to this domain, revocable).
+				expires_in_days: validity === 'never' ? null : Number(validity),
+				all_servers: scope === 'all',
+				target_ou: scope === 'ou' ? targetOu.trim() : null,
+				include_domain_controllers: scope !== 'all' && includeDcs,
+				security_group: scope === 'group' ? securityGroup.trim() : null,
 				sysvol_binary: sysvol
 			});
 			uses = kit.token.uses;
@@ -389,33 +432,75 @@
 						<Field label={m.settings_agents_ad_max()} for="ad-max" class="flex-1" help={m.settings_agents_ad_max_help()}>
 							<input id="ad-max" type="number" min="1" step="1" inputmode="numeric" class="input" bind:value={maxUses} placeholder={m.settings_agents_ad_unlimited()} disabled={creating} />
 						</Field>
-						<Field label={m.settings_agents_ad_days()} for="ad-days" class="flex-1" help={m.settings_agents_ad_days_help()}>
-							<input id="ad-days" type="number" min="1" step="1" inputmode="numeric" class="input" bind:value={days} disabled={creating} />
+						<Field label={m.settings_agents_ad_validity()} for="ad-validity" class="flex-1" help={m.settings_agents_ad_days_help()}>
+							<select id="ad-validity" class="input" value={validity} onchange={(e) => (validityChoice = e.currentTarget.value as '30' | '365' | 'never')} disabled={creating}>
+								<option value="30">{m.settings_agents_ad_validity_30()}</option>
+								<option value="365">{m.settings_agents_ad_validity_365()}</option>
+								<option value="never">{m.settings_agents_ad_validity_never()}</option>
+							</select>
 						</Field>
 					</div>
 					{#if numberError}<p class="text-sm text-warning" role="alert">{numberError}</p>{/if}
+					{#if validity === 'never'}
+						<p class="rounded-lg border border-advisory/40 bg-surface-2 px-3.5 py-2.5 text-sm text-ink">{m.settings_agents_ad_validity_never_warning()}</p>
+					{/if}
 
-					<Disclosure title={m.settings_agents_ad_advanced()}>
-						<div class="flex flex-col gap-3 px-4 pt-1 pb-4">
-							<Field label={m.settings_agents_ad_ou()} for="ad-ou" help={m.settings_agents_ad_ou_help()}>
-								<input id="ad-ou" type="text" class="input" bind:value={targetOu} placeholder="OU=Servers,DC=corp,DC=example,DC=com" autocomplete="off" spellcheck="false" disabled={creating} />
-							</Field>
-							<Field label={m.settings_agents_ad_group()} for="ad-group" help={m.settings_agents_ad_group_help()}>
-								<input id="ad-group" type="text" class="input" bind:value={securityGroup} autocomplete="off" spellcheck="false" disabled={creating} />
-							</Field>
-							<label class="flex min-h-10 items-center gap-2 text-sm text-ink">
-								<input type="checkbox" class="size-4 shrink-0 accent-[var(--color-signal)]" bind:checked={includeDcs} disabled={creating} />
-								{m.settings_agents_ad_dcs()}
+					<fieldset class="flex flex-col gap-2 rounded-lg border border-line px-3.5 py-3" disabled={creating}>
+						<legend class="px-1 text-sm font-semibold text-ink">{m.settings_agents_ad_scope()}</legend>
+						<div>
+							<label class="flex min-h-10 items-start gap-2 py-2 text-sm text-ink">
+								<input type="radio" name="ad-scope" value="all" class="mt-0.5 size-4 shrink-0 accent-[var(--color-signal)]" bind:group={scope} onchange={() => (scopeError = null)} />
+								<span>{m.settings_agents_ad_scope_all()}</span>
 							</label>
-							<div>
-								<label class="flex min-h-10 items-center gap-2 text-sm text-ink">
-									<input type="checkbox" class="size-4 shrink-0 accent-[var(--color-signal)]" bind:checked={sysvol} disabled={creating} />
-									{m.settings_agents_ad_sysvol()}
-								</label>
-								<p class="text-sm text-ink-2">{m.settings_agents_ad_sysvol_help()}</p>
-							</div>
+							<p class="pl-6 text-sm text-ink-2">{m.settings_agents_ad_scope_all_help()}</p>
 						</div>
-					</Disclosure>
+						<div>
+							<label class="flex min-h-10 items-start gap-2 py-2 text-sm text-ink">
+								<input type="radio" name="ad-scope" value="ou" class="mt-0.5 size-4 shrink-0 accent-[var(--color-signal)]" bind:group={scope} onchange={() => (scopeError = null)} />
+								<span>{m.settings_agents_ad_scope_ou()}</span>
+							</label>
+							<p class="pl-6 text-sm text-ink-2">{m.settings_agents_ad_scope_ou_help()}</p>
+							{#if scope === 'ou'}
+								<Field label={m.settings_agents_ad_ou_field()} for="ad-ou" class="mt-2 pl-6">
+									<input id="ad-ou" type="text" class="input" bind:value={targetOu} placeholder="OU=Servers,DC=corp,DC=example,DC=com" autocomplete="off" autocapitalize="none" spellcheck="false" oninput={() => (scopeError = null)} aria-invalid={scopeError ? 'true' : undefined} />
+								</Field>
+							{/if}
+						</div>
+						<div>
+							<label class="flex min-h-10 items-start gap-2 py-2 text-sm text-ink">
+								<input type="radio" name="ad-scope" value="group" class="mt-0.5 size-4 shrink-0 accent-[var(--color-signal)]" bind:group={scope} onchange={() => (scopeError = null)} />
+								<span>{m.settings_agents_ad_scope_group()}</span>
+							</label>
+							<p class="pl-6 text-sm text-ink-2">{m.settings_agents_ad_scope_group_help()}</p>
+							{#if scope === 'group'}
+								<Field label={m.settings_agents_ad_group_field()} for="ad-group" class="mt-2 pl-6">
+									<input id="ad-group" type="text" class="input" bind:value={securityGroup} placeholder="DumbMonit Servers" autocomplete="off" autocapitalize="none" spellcheck="false" oninput={() => (scopeError = null)} aria-invalid={scopeError ? 'true' : undefined} />
+								</Field>
+							{/if}
+						</div>
+						{#if scopeError}<p class="text-sm text-warning" role="alert">{scopeError}</p>{/if}
+					</fieldset>
+
+					<div>
+						<label class="flex min-h-10 items-center gap-2 text-sm text-ink">
+							<input type="checkbox" class="size-4 shrink-0 accent-[var(--color-signal)]" checked={scope === 'all' || includeDcs} onchange={(e) => (includeDcs = e.currentTarget.checked)} disabled={creating || scope === 'all'} />
+							{m.settings_agents_ad_dcs()}
+						</label>
+						{#if scope === 'all'}<p class="pl-6 text-sm text-ink-2">{m.settings_agents_ad_dcs_all_help()}</p>{/if}
+					</div>
+					<div>
+						<label class="flex min-h-10 items-center gap-2 text-sm text-ink">
+							<input type="checkbox" class="size-4 shrink-0 accent-[var(--color-signal)]" bind:checked={sysvol} disabled={creating} />
+							{m.settings_agents_ad_sysvol()}
+						</label>
+						<p class="pl-6 text-sm text-ink-2">{m.settings_agents_ad_sysvol_help()}</p>
+					</div>
+
+					<div class="min-w-0">
+						<p class="mb-1 text-sm font-semibold text-ink">{m.settings_agents_ad_command_title()}</p>
+						<p class="mb-1.5 text-sm text-ink-2">{m.settings_agents_ad_command_help()}</p>
+						<CopyBlock value={command} label={m.settings_agents_copy_command()} />
+					</div>
 
 					{#if createError}
 						<ErrorNotice error={createError} title={m.settings_agents_create_error()} />
@@ -438,6 +523,10 @@
 						<Plate tone="signal"><Check class="size-3.5" aria-hidden="true" />{m.settings_agents_ad_downloaded()}</Plate>
 					{/if}
 				</div>
+				<div class="mt-3 min-w-0">
+					<p class="mb-1.5 text-sm text-ink-2">{m.settings_agents_ad_command_help()}</p>
+					<CopyBlock value={command} label={m.settings_agents_copy_command()} />
+				</div>
 				<p class="mt-3 rounded-lg border border-advisory/40 bg-surface-2 px-3.5 py-3 text-sm text-ink">{m.settings_agents_ad_secret_warning()}</p>
 				{#if kit}
 					<dl class="mt-3 grid gap-1 rounded-lg border border-line px-3.5 py-3 text-sm">
@@ -457,11 +546,11 @@
 				<div class="mt-3 grid gap-3">
 					<div class="min-w-0">
 						<p class="mb-1.5 text-sm font-semibold text-ink">{m.settings_agents_ad_run_preview()}</p>
-						<CopyBlock value={WHATIF} label={m.settings_agents_copy_command()} />
+						<CopyBlock value={previewCommand} label={m.settings_agents_copy_command()} />
 					</div>
 					<div class="min-w-0">
 						<p class="mb-1.5 text-sm font-semibold text-ink">{m.settings_agents_ad_run_apply()}</p>
-						<CopyBlock value={APPLY} label={m.settings_agents_copy_command()} />
+						<CopyBlock value={command} label={m.settings_agents_copy_command()} />
 					</div>
 				</div>
 				<p class="mt-3 text-sm text-ink-2">{m.settings_agents_ad_run_timing()}</p>

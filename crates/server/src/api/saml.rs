@@ -40,24 +40,18 @@ fn fingerprint(relay_state: &str) -> String {
     hex::encode(Sha256::digest(relay_state.as_bytes()))
 }
 
-fn binding_cookie(relay_state: &str, secure: bool) -> HeaderValue {
-    let mut value = format!(
-        "{BINDING_COOKIE}={}; Path=/api/auth/saml; HttpOnly; SameSite=Lax; Max-Age={BINDING_MAX_AGE_SECS}",
+fn binding_cookie(relay_state: &str) -> HeaderValue {
+    let value = format!(
+        "{BINDING_COOKIE}={}; Path=/api/auth/saml; HttpOnly; SameSite=Lax; Max-Age={BINDING_MAX_AGE_SECS}; Secure",
         fingerprint(relay_state)
     );
-    if secure {
-        value.push_str("; Secure");
-    }
     header_value(&value)
 }
 
-fn clear_binding_cookie(secure: bool) -> HeaderValue {
-    let mut value =
-        format!("{BINDING_COOKIE}=; Path=/api/auth/saml; HttpOnly; SameSite=Lax; Max-Age=0");
-    if secure {
-        value.push_str("; Secure");
-    }
-    header_value(&value)
+fn clear_binding_cookie() -> HeaderValue {
+    header_value(&format!(
+        "{BINDING_COOKIE}=; Path=/api/auth/saml; HttpOnly; SameSite=Lax; Max-Age=0; Secure"
+    ))
 }
 
 /// Le navigateur qui revient porte-t-il l'empreinte attendue ?
@@ -153,7 +147,7 @@ pub async fn start(
             (
                 StatusCode::SEE_OTHER,
                 [
-                    (header::SET_COOKIE, binding_cookie(&relay_state, auth.cookie_secure())),
+                    (header::SET_COOKIE, binding_cookie(&relay_state)),
                     (header::LOCATION, header_value(&url)),
                 ],
             )
@@ -277,8 +271,8 @@ pub async fn complete(
         StatusCode::SEE_OTHER,
         [(header::LOCATION, header_value(&destination))],
         AppendHeaders([
-            (header::SET_COOKIE, cookie::set(&token, auth.cookie_secure())),
-            (header::SET_COOKIE, clear_binding_cookie(auth.cookie_secure())),
+            (header::SET_COOKIE, cookie::set(&token)),
+            (header::SET_COOKIE, clear_binding_cookie()),
         ]),
     )
         .into_response()
@@ -349,7 +343,7 @@ mod tests {
 
     #[test]
     fn the_completion_must_come_back_to_the_browser_that_started() {
-        let cookie = binding_cookie("relais-1", false);
+        let cookie = binding_cookie("relais-1");
         let pair = cookie.to_str().unwrap().split(';').next().unwrap().to_string();
         let mut headers = HeaderMap::new();
         headers.insert(header::COOKIE, format!("autre=1; {pair}").parse().unwrap());

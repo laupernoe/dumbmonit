@@ -285,6 +285,14 @@ async fn un_lot_complet_se_restaure_section_par_section() {
 
     // Jetons.
     assert_eq!(counts(&report, "agent_tokens"), (2, 0, 0));
+    // Les anciens noms lisibles sont normalisés en identifiants opaques.
+    let token_names: Vec<String> =
+        sqlx::query_scalar("SELECT name FROM agent_tokens").fetch_all(&it.pool).await.unwrap();
+    assert_eq!(token_names.len(), 2);
+    assert!(
+        token_names.iter().all(|n| dumbmonit_server::collectors::agent::is_token_name(n)),
+        "{token_names:?}"
+    );
     assert_eq!(counts(&report, "api_tokens"), (2, 0, 2));
     assert_eq!(
         scalar(&it.pool, "SELECT COUNT(*) FROM api_tokens WHERE user_id IS NOT NULL").await,

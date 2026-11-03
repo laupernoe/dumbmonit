@@ -18,12 +18,20 @@
 //!   remplacé), jusqu'à ce qu'il soit marqué connu ou ignoré.
 //!
 //! Pas de chevauchement : un sous-réseau n'a jamais deux balayages en même
-//! temps, et le registre de découverte n'en tient qu'un par exécutant.
+//! temps, et le registre de découverte n'en tient qu'un par exécutant. La
+//! boucle ne démarre en plus qu'un balayage par exécutant et par tour
+//! ([`due_schedules`]) : les passes périodiques se font l'une après l'autre,
+//! avec les mêmes limites de débit et de concurrence que le balayage manuel.
+//!
+//! Chaque passe qui trouve des appareils nouveaux ouvre un « lot » de
+//! nouveautés ([`store::open_batch`]) : l'interface en fait un seul avis, une
+//! fois, et la file « à examiner » ([`review`]) permet de les traiter en bloc.
 
 pub mod diff;
+pub mod review;
 pub mod store;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 
 use dumbmonit_proto::{MetricKind, Sample};
@@ -82,10 +90,9 @@ async fn tick(state: &AppState, runs: &mut HashMap<i64, String>) -> anyhow::Resu
     settle(state, runs).await;
 
     let now = chrono::Utc::now().naive_utc();
-    for schedule in store::list_schedules(&state.pool).await? {
-        if !schedule.enabled || runs.contains_key(&schedule.id) || !is_due(&schedule, now) {
-            continue;
-        }
+    let schedules = store::list_schedules(&state.pool).await?;
+    let running: HashSet<i64> = runs.keys().copied().collect();
+    for schedule in due_schedules(&schedules, &running, now) {
         let started = crate::api::discovery::start_scan(
             state,
             &schedule.cidr,
@@ -120,6 +127,30 @@ async fn tick(state: &AppState, runs: &mut HashMap<i64, String>) -> anyhow::Resu
     Ok(())
 }
 
+/// Les scans à lancer ce tour : activés, échus, pas déjà en cours, et au plus un
+/// par exécutant (le serveur, ou un agent relais) — jamais deux passes en
+/// parallèle sur le même exécutant. Les autres attendent le tour suivant.
+/// `running` : identifiants des scans dont un balayage tourne.
+fn due_schedules<'a>(
+    schedules: &'a [Schedule],
+    running: &HashSet<i64>,
+    now: chrono::NaiveDateTime,
+) -> Vec<&'a Schedule> {
+    // Un exécutant occupé par un balayage en cours n'en reçoit pas un second.
+    let mut busy: HashSet<Option<dumbmonit_proto::TargetId>> =
+        schedules.iter().filter(|s| running.contains(&s.id)).map(|s| s.agent_id).collect();
+    let mut out = Vec::new();
+    for schedule in schedules {
+        if !schedule.enabled || running.contains(&schedule.id) || !is_due(schedule, now) {
+            continue;
+        }
+        if busy.insert(schedule.agent_id) {
+            out.push(schedule);
+        }
+    }
+    out
+}
+
 /// Vrai si le scan doit repartir : jamais lancé, ou intervalle écoulé.
 fn is_due(schedule: &Schedule, now: chrono::NaiveDateTime) -> bool {
     let Some(last) = schedule
@@ -143,6 +174,11 @@ async fn settle(state: &AppState, runs: &mut HashMap<i64, String>) {
                 JobStatus::Done => {
                     match store::apply_scan(&state.pool, schedule_id, &job.hosts).await {
                         Ok(applied) => {
+                            if let Err(error) =
+                                store::open_batch(&state.pool, applied.new_devices).await
+                            {
+                                warn!(schedule = schedule_id, ?error, "cannot open a review batch");
+                            }
                             info!(
                                 schedule = schedule_id,
                                 hosts = job.hosts.len(),
@@ -239,6 +275,38 @@ mod tests {
 
     fn at(raw: &str) -> NaiveDateTime {
         NaiveDateTime::parse_from_str(raw, TIME_FORMAT).unwrap()
+    }
+
+    fn on(id: i64, agent: Option<i64>) -> Schedule {
+        Schedule { id, agent_id: agent, ..schedule(None, 3600) }
+    }
+
+    #[test]
+    fn jamais_deux_passes_en_parallele_sur_le_meme_executant() {
+        let now = at("2026-01-01T10:00:00");
+        // Deux scans échus sur le serveur : un seul part ce tour.
+        let schedules = [on(1, None), on(2, None), on(3, Some(7)), on(4, Some(7)), on(5, Some(8))];
+        let ids: Vec<i64> =
+            due_schedules(&schedules, &HashSet::new(), now).iter().map(|s| s.id).collect();
+        assert_eq!(ids, vec![1, 3, 5]);
+    }
+
+    #[test]
+    fn un_executant_occupe_ne_recoit_pas_un_second_balayage() {
+        let now = at("2026-01-01T10:00:00");
+        let schedules = [on(1, None), on(2, None), on(3, Some(7))];
+        let running: HashSet<i64> = [1].into();
+        let ids: Vec<i64> = due_schedules(&schedules, &running, now).iter().map(|s| s.id).collect();
+        assert_eq!(ids, vec![3]);
+    }
+
+    #[test]
+    fn un_scan_desactive_ou_pas_echu_n_est_pas_lance() {
+        let now = at("2026-01-01T10:00:00");
+        let mut off = on(1, None);
+        off.enabled = false;
+        let recent = Schedule { last_run_at: Some("2026-01-01T09:30:00".into()), ..on(2, Some(3)) };
+        assert!(due_schedules(&[off, recent], &HashSet::new(), now).is_empty());
     }
 
     #[test]

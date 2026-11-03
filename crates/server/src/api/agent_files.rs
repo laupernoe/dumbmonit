@@ -409,6 +409,20 @@ mod tests {
     }
 
     #[test]
+    fn les_scripts_n_acceptent_que_https_et_gardent_l_epingle() {
+        // Le serveur ne sert que HTTPS : une URL en clair est refusée, et la
+        // clé épinglée du certificat autosigné passe dans la configuration.
+        assert!(INSTALL_SH.contains("https://*) ;;"));
+        assert!(INSTALL_SH.contains("echo \"server_pin: $PINNED_KEY\""));
+        assert!(!INSTALL_SH.contains("--url=http://"));
+        assert!(INSTALL_PS1.contains("[string]$PinnedKey"));
+        assert!(INSTALL_PS1.contains("$lignes.Add(\"server_pin: $PinnedKey\")"));
+        assert!(INSTALL_PS1.contains("ServerCertificateValidationCallback"));
+        assert!(INSTALL_PS1.contains("-notmatch '^https://'"));
+        assert!(!INSTALL_PS1.contains("http://"));
+    }
+
+    #[test]
     fn les_binaires_publies_ailleurs_ne_sont_jamais_servis_par_l_image() {
         // Les deux listes ne doivent pas se recouvrir : un nom présent dans les
         // deux serait servi ou expliqué selon l'ordre du code, ce qui est

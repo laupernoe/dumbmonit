@@ -43,9 +43,13 @@ const WINDOWS_BINARY: &str = "dumbmonit-agent-windows-x86_64.exe";
 /// Longueur maximale d'un nom distinctif d'OU ou de groupe saisi.
 const MAX_FIELD_LEN: usize = 512;
 
-/// Validité par défaut d'un jeton de flotte, en jours : le temps de déployer,
-/// pas davantage. Les machines inscrites continuent après le terme.
-const DEFAULT_EXPIRES_IN_DAYS: i64 = 30;
+/// Validité d'un jeton de flotte selon `expires_in_days` : absent, `null` ou 0
+/// (ou moins) veut dire « n'expire jamais », pour que les serveurs ajoutés plus
+/// tard au domaine puissent encore s'inscrire. Le jeton reste limité à son
+/// domaine, réutilisable et révocable depuis Réglages › Agents.
+fn token_validity(expires_in_days: Option<i64>) -> Option<i64> {
+    expires_in_days.filter(|days| *days > 0)
+}
 
 #[derive(Debug, Deserialize)]
 pub struct AdKitPayload {
@@ -57,10 +61,14 @@ pub struct AdKitPayload {
     /// Nombre maximal de serveurs inscrits. Absent : sans limite.
     #[serde(default)]
     pub max_uses: Option<i64>,
-    /// Jours pendant lesquels le jeton inscrit. Absent : 30 ; `null` explicite
-    /// n'est pas distingué de l'absence.
+    /// Jours pendant lesquels le jeton inscrit. Absent, `null` ou 0 : n'expire
+    /// jamais (voir [`token_validity`]).
     #[serde(default)]
     pub expires_in_days: Option<i64>,
+    /// Couvrir tous les serveurs Windows du domaine, y compris ceux ajoutés plus
+    /// tard : réglage par défaut `-AllServers` du script. Incompatible avec un groupe.
+    #[serde(default)]
+    pub all_servers: bool,
     /// OU à laquelle lier la GPO (nom distinctif). Absent : le script cherche.
     #[serde(default)]
     pub target_ou: Option<String>,
@@ -163,30 +171,31 @@ fn clean_dns_server(raw: &str) -> Result<String, ApiError> {
     })
 }
 
-/// URL des agents quand `server_host` remplace l'hôte de `base_url` : même
-/// schéma (https par défaut) et même port, sauf port donné dans `host`.
+/// URL des agents quand `server_host` remplace l'hôte de `base_url` : en
+/// `https://` (le serveur ne sert que HTTPS), même port, sauf port donné dans
+/// `host`.
 fn url_with_host(base_url: Option<&str>, host: &str) -> String {
     let base = base_url.map(str::trim).filter(|b| !b.is_empty()).unwrap_or("https://x");
-    let (scheme, rest) = base.split_once("://").unwrap_or(("https", base));
+    let rest = base.split_once("://").map_or(base, |(_, rest)| rest);
     let authority = rest.split(['/', '?', '#']).next().unwrap_or_default();
     let base_port = authority
         .rsplit_once(':')
         .map(|(_, port)| port)
         .filter(|port| !port.is_empty() && port.chars().all(|c| c.is_ascii_digit()));
     match (host.contains(':'), base_port) {
-        (false, Some(port)) => format!("{scheme}://{host}:{port}"),
-        _ => format!("{scheme}://{host}"),
+        (false, Some(port)) => format!("https://{host}:{port}"),
+        _ => format!("https://{host}"),
     }
 }
 
 /// URL telle qu'elle sera écrite, entre apostrophes, dans les scripts.
 ///
 /// Elle vient du navigateur de l'administrateur ; elle finit dans un script
-/// exécuté en administrateur du domaine. Rien d'autre qu'une URL HTTP(S)
+/// exécuté en administrateur du domaine. Rien d'autre qu'une URL `https://`
 /// sans apostrophe, guillemet, accent grave ni blanc n'y entre.
 fn script_safe_url(url: &str) -> Result<String, ApiError> {
     let url = url.trim().trim_end_matches('/');
-    let scheme_ok = url.starts_with("https://") || url.starts_with("http://");
+    let scheme_ok = url.starts_with("https://");
     let forbidden = |c: char| {
         c.is_whitespace()
             || c.is_control()
@@ -197,7 +206,7 @@ fn script_safe_url(url: &str) -> Result<String, ApiError> {
     };
     if !scheme_ok || url.chars().any(forbidden) || url.len() > 2048 {
         return Err(ApiError::BadRequest(
-            "The server URL must be a plain http:// or https:// address.".into(),
+            "The server URL must be a plain https:// address.".into(),
         ));
     }
     Ok(url.to_string())
@@ -206,14 +215,25 @@ fn script_safe_url(url: &str) -> Result<String, ApiError> {
 /// Arguments de la commande d'installation Windows générée par le serveur,
 /// sans l'appel de l'installateur qui les précède.
 ///
-/// La commande a la forme `& ([scriptblock]::Create((irm …/install.ps1))) -Token …` :
-/// le kit embarque l'installateur, il ne garde que ce qui suit. Repli sur
-/// `-Token` si la forme de l'appel venait à changer.
+/// La commande a la forme `… & ([scriptblock]::Create(…install.ps1…)) -Token …` :
+/// le kit embarque l'installateur, il ne garde que ce qui commence à `-Token`
+/// (ce qui précède règle TLS et l'épingle de la session qui télécharge).
 pub fn installer_arguments(command: &str) -> Option<&str> {
-    if let Some((_, arguments)) = command.split_once("))) ") {
-        return Some(arguments.trim());
-    }
-    command.find("-Token ").map(|start| command[start..].trim())
+    command.find(" -Token ").map(|start| command[start..].trim())
+}
+
+/// Épingle de la clé du serveur que porte la commande (`-PinnedKey`), vide
+/// sans elle. Elle finit entre apostrophes dans un script : seul le format
+/// `sha256//<base64>` passe.
+fn pinned_key(arguments: &str) -> String {
+    let base64 = |c: char| c.is_ascii_alphanumeric() || matches!(c, '+' | '/' | '=');
+    arguments
+        .split_whitespace()
+        .skip_while(|word| *word != "-PinnedKey")
+        .nth(1)
+        .filter(|pin| pin.len() == 52 && pin.starts_with("sha256//") && pin.chars().all(base64))
+        .unwrap_or_default()
+        .to_string()
 }
 
 /// Valeurs substituées dans les modèles de scripts.
@@ -226,11 +246,16 @@ pub struct KitParams<'a> {
     pub target_ou: &'a str,
     pub include_domain_controllers: bool,
     pub security_group: &'a str,
+    /// Valeur par défaut de `-AllServers` dans le script.
+    pub all_servers: bool,
     pub sysvol_binary: bool,
     /// Serveur DNS à utiliser pour résoudre l'hôte de `url` ; vide : aucun.
     pub dns_server: &'a str,
     /// Port public du canal chiffré des agents ; vide : canal coupé.
     pub agent_port: &'a str,
+    /// Épingle de la clé du serveur (`sha256//…`) ; vide : certificat d'une
+    /// autorité de confiance.
+    pub pinned_key: &'a str,
     pub generated: &'a str,
 }
 
@@ -262,6 +287,7 @@ pub fn render_deploy_script(params: &KitParams<'_>) -> String {
             if params.include_domain_controllers { "true" } else { "false" },
         )
         .replace("__DM_SECURITY_GROUP_B64__", &b64(params.security_group))
+        .replace("__DM_ALL_SERVERS__", if params.all_servers { "true" } else { "false" })
         .replace("__DM_SYSVOL__", if params.sysvol_binary { "true" } else { "false" })
         .replace("__DM_DOMAIN__", params.domain)
         .replace("__DM_URL__", params.url)
@@ -269,6 +295,7 @@ pub fn render_deploy_script(params: &KitParams<'_>) -> String {
         .replace("__DM_SHA256__", params.sha256)
         .replace("__DM_TOKEN_PREFIX__", params.token_prefix)
         .replace("__DM_AGENT_PORT__", params.agent_port)
+        .replace("__DM_PINNED_KEY__", params.pinned_key)
         .replace("__DM_GENERATED__", params.generated)
         .replace("__DM_INSTALLER_B64__", &b64(INSTALL_PS1))
         .replace("__DM_BOOTSTRAP_B64__", &b64(&bootstrap));
@@ -291,7 +318,12 @@ pub async fn create_kit(
     })?;
     let target_ou = optional_field(payload.target_ou.as_deref(), "organisational unit")?;
     let security_group = optional_field(payload.security_group.as_deref(), "security group")?;
-    let expires_in_days = payload.expires_in_days.unwrap_or(DEFAULT_EXPIRES_IN_DAYS);
+    if payload.all_servers && security_group.is_some() {
+        return Err(ApiError::BadRequest(
+            "Covering all servers cannot be combined with a security group.".into(),
+        ));
+    }
+    let expires_in_days = token_validity(payload.expires_in_days);
     // Refusée avant de créer quoi que ce soit, plutôt qu'avec un jeton déjà fait.
     if let Some(url) = payload.base_url.as_deref().filter(|url| !url.trim().is_empty()) {
         script_safe_url(url)?;
@@ -328,9 +360,6 @@ pub async fn create_kit(
         State(state.clone()),
         Authenticated(me.clone()),
         ClientIp(ip),
-        // Le kit de stratégie de groupe ne sert que la commande PowerShell :
-        // pas de clé HTTPS à épingler.
-        None,
         Json(token_payload),
     )
     .await?;
@@ -350,6 +379,7 @@ pub async fn create_kit(
         .map(str::to_string)
         .unwrap_or_default();
     let url = script_safe_url(&url)?;
+    let pinned = pinned_key(arguments);
     let sha256 = crate::api::agent_files::sha256_of(&state.config.agent_dir, WINDOWS_BINARY)
         .await
         .unwrap_or_default()
@@ -374,9 +404,11 @@ pub async fn create_kit(
         target_ou: target_ou.as_deref().unwrap_or(""),
         include_domain_controllers: payload.include_domain_controllers,
         security_group: security_group.as_deref().unwrap_or(""),
+        all_servers: payload.all_servers,
         sysvol_binary: payload.sysvol_binary,
         dns_server: dns_server.as_deref().unwrap_or(""),
         agent_port: &agent_port,
+        pinned_key: &pinned,
         generated: &generated,
     });
 
@@ -428,9 +460,11 @@ mod tests {
             target_ou: "OU=Servers,DC=corp,DC=example,DC=com",
             include_domain_controllers: true,
             security_group: "Serveurs l'équipe",
+            all_servers: false,
             sysvol_binary: false,
             dns_server: "10.0.0.2",
             agent_port: "9443",
+            pinned_key: "sha256//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
             generated: "2026-10-22 12:00",
         }
     }
@@ -455,6 +489,11 @@ mod tests {
         // Une autre forme d'appel garde ce qui commence à -Token.
         assert_eq!(installer_arguments("installer.exe -Token t -Url u"), Some("-Token t -Url u"));
         assert_eq!(installer_arguments("nothing here"), None);
+        // L'épingle passe, une valeur qui pourrait sortir de sa chaîne non.
+        let pin = "sha256//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+        assert_eq!(pinned_key(&format!("-Token t -Url u -PinnedKey {pin} -Sha256 x")), pin);
+        assert_eq!(pinned_key("-Token t -PinnedKey sha256//A';calc;'"), "");
+        assert_eq!(pinned_key("-Token t -Url u"), "");
     }
 
     #[test]
@@ -484,8 +523,14 @@ mod tests {
         assert!(script.contains("$Url            = 'https://dm.example.com'"));
         assert!(script.contains("$DnsServer      = '10.0.0.2'"));
         assert!(script.contains("$AgentPort      = '9443'"), "le vrai port du canal des agents");
+        let pin = "$PinnedKey      = 'sha256//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='";
+        assert!(script.contains(pin), "la clé du serveur, pour le téléchargement du binaire");
         assert!(script.contains("[bool]::Parse('true')"), "contrôleurs de domaine inclus");
         assert!(script.contains("[bool]::Parse('false')"), "pas de binaire dans SYSVOL");
+        assert!(
+            script.contains("[switch]$AllServers = [bool]::Parse('false')"),
+            "-AllServers par défaut du kit"
+        );
         // Le jeton n'apparaît pas en clair : il n'est que dans le script de la
         // tâche, encodé, lui-même encodé dans celui-ci.
         assert!(!script.contains("dmon_secret"));
@@ -507,6 +552,33 @@ mod tests {
     }
 
     #[test]
+    fn all_servers_becomes_the_default_of_the_script_without_leaving_a_placeholder() {
+        let mut kit = params("-Token t -Url https://dm.example.com");
+        kit.all_servers = true;
+        kit.security_group = "";
+        let script = render_deploy_script(&kit);
+        assert!(!script.contains("__DM_"), "un paramètre n'a pas été remplacé");
+        assert!(script.contains("[switch]$AllServers = [bool]::Parse('true')"));
+    }
+
+    #[test]
+    fn a_missing_validity_means_the_token_never_expires() {
+        assert_eq!(token_validity(None), None);
+        assert_eq!(token_validity(Some(0)), None);
+        assert_eq!(token_validity(Some(-5)), None);
+        assert_eq!(token_validity(Some(30)), Some(30));
+        assert_eq!(token_validity(Some(365)), Some(365));
+        let payload: AdKitPayload =
+            serde_json::from_str(r#"{"domain": "corp.example.com"}"#).unwrap();
+        assert_eq!(token_validity(payload.expires_in_days), None);
+        assert!(!payload.all_servers);
+        let null: AdKitPayload =
+            serde_json::from_str(r#"{"domain": "corp.example.com", "expires_in_days": null}"#)
+                .unwrap();
+        assert_eq!(token_validity(null.expires_in_days), None);
+    }
+
+    #[test]
     fn the_deployment_script_does_what_the_wizard_promises() {
         // Prérequis, simulation, GPO idempotente, tâche immédiate SYSTEM,
         // filtrage, liens, SYSVOL et retrait.
@@ -525,6 +597,9 @@ mod tests {
             "[switch]$IncludeDomainControllers",
             "[string]$SecurityGroup",
             "[switch]$UseSysvol",
+            "Unblock-File .\\Deploy-DumbMonit.ps1; powershell -NoProfile -ExecutionPolicy Bypass -File .\\Deploy-DumbMonit.ps1",
+            "Continue? (Y/n)",
+            "[switch]$Yes",
             "[switch]$Remove",
             "Remove-GPO",
             "SetAccessRuleProtection($true, $false)",
@@ -551,9 +626,10 @@ mod tests {
             script_safe_url("https://dm.example.com/").ok().as_deref(),
             Some("https://dm.example.com")
         );
-        assert!(script_safe_url("http://10.0.0.5:8080").is_ok());
+        assert!(script_safe_url("https://10.0.0.5:8080").is_ok());
         for bad in [
             "",
+            "http://10.0.0.5:8080",
             "ftp://dm",
             "https://dm'; Remove-Item C:\\ -Recurse; '",
             "https://dm\u{2019}x",
@@ -601,8 +677,8 @@ mod tests {
     fn the_server_name_replaces_the_host_of_the_public_url() {
         let url = |base, host| url_with_host(Some(base), host);
         assert_eq!(url("https://old.example.com", "dm.corp.lan"), "https://dm.corp.lan");
-        assert_eq!(url("http://10.0.0.1:8080", "dm.corp.lan"), "http://dm.corp.lan:8080");
-        assert_eq!(url("http://10.0.0.1:8080", "dm.corp.lan:8443"), "http://dm.corp.lan:8443");
+        assert_eq!(url("https://10.0.0.1:8080", "dm.corp.lan"), "https://dm.corp.lan:8080");
+        assert_eq!(url("http://10.0.0.1:8080", "dm.corp.lan:8443"), "https://dm.corp.lan:8443");
         assert_eq!(url_with_host(None, "dm.corp.lan"), "https://dm.corp.lan");
     }
 

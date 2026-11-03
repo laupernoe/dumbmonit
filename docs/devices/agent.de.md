@@ -151,7 +151,7 @@ beim Erstellen eines Tokens treffen.
 === "Linux (systemd oder OpenRC)"
 
     ```sh
-    curl -sSL http://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://server:8080
+    curl -sSL https://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     Das Skript ist POSIX-`sh` (BusyBox und dash funktionieren), lädt das Binary für die
@@ -165,7 +165,7 @@ beim Erstellen eines Tokens treffen.
     Derselbe Befehl wie unter Linux, mit `sudo` ausgeführt:
 
     ```sh
-    curl -sSL http://server:8080/install.sh | sudo sh -s -- --token=dmon_xxx --url=http://server:8080
+    curl -sSL https://server:8080/install.sh | sudo sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     Die macOS-Binaries sind **nicht** im DumbMonit-Image: Sie zu bauen erfordert das SDK von
@@ -185,8 +185,8 @@ beim Erstellen eines Tokens treffen.
 
     ```sh
     curl -sSLO https://github.com/laupernoe/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
-    curl -sSL http://server:8080/install.sh | sudo sh -s -- \
-        --token=dmon_xxx --url=http://server:8080 --bin=./dumbmonit-agent-macos-aarch64
+    curl -sSL https://server:8080/install.sh | sudo sh -s -- \
+        --token=dmon_xxx --url=https://server:8080 --bin=./dumbmonit-agent-macos-aarch64
     ```
 
     Das Skript installiert das Binary in `/usr/local/bin` (und entfernt das
@@ -204,7 +204,7 @@ beim Erstellen eines Tokens treffen.
 === "FreeBSD (rc.d)"
 
     ```sh
-    fetch -qo - http://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://server:8080
+    fetch -qo - https://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     Nur x86_64. Das Skript lädt `dumbmonit-agent-freebsd-x86_64` vom Server herunter, schreibt
@@ -219,7 +219,7 @@ beim Erstellen eines Tokens treffen.
 === "Windows (Dienst)"
 
     ```powershell
-    & ([scriptblock]::Create((irm http://server:8080/install.ps1))) -Token dmon_xxx -Url http://server:8080
+    & ([scriptblock]::Create((irm https://server:8080/install.ps1))) -Token dmon_xxx -Url https://server:8080
     ```
 
     Das Skript lädt `dumbmonit-agent-windows-x86_64.exe` vom Server herunter, prüft es gegen
@@ -317,7 +317,7 @@ eingeschlossen.
 | `install.sh` | `install.ps1` | Wirkung |
 |---|---|---|
 | `--token=TOKEN` | `-Token` | Enrollment-Token (erforderlich). |
-| `--url=URL` | `-Url` | Server-URL, zum Beispiel `http://server:8080`. Unter Linux wird `DUMBMONIT_URL` in der Umgebung verwendet, wenn das Flag fehlt. |
+| `--url=URL` | `-Url` | Server-URL, zum Beispiel `https://server:8080`. Unter Linux wird `DUMBMONIT_URL` in der Umgebung verwendet, wenn das Flag fehlt. |
 | `--interval=N` | `-Interval` | Abtastperiode in Sekunden (Standard 30). |
 | `--services=a,b,c` | `-Services @('a','b')` | Dienste, deren Zustand gemeldet wird, benannt wie das Hostsystem sie nennt: systemd-Units unter Linux, launchd-Labels (`com.apple.sshd`) unter macOS, rc.d-Namen unter FreeBSD, Windows-Dienste. |
 | `--tags=key=value,…` | `-Tags @{key='value'}` | Tags, auf jeder Serie als `tag_<key>` kopiert. |
@@ -438,7 +438,7 @@ bleibt beim Rechner.
 FreeBSD, `C:\ProgramData\DumbMonit\agent.yaml` unter Windows:
 
 ```yaml
-server_url: http://server:8080
+server_url: https://server:8080
 token: dmon_...
 interval_secs: 30          # sampling period
 hostname: nas-basement     # optional: name announced to the server

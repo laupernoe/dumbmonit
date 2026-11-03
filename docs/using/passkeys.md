@@ -10,9 +10,8 @@ password (and TOTP) when you want to or when no passkey is at hand.
 
 ## Requirements
 
-- **HTTPS.** Browsers only offer passkeys on secure pages: put DumbMonit behind
-  a reverse proxy with TLS. `http://localhost` is the one exception (handy to
-  try it).
+- **HTTPS.** Browsers only offer passkeys on secure pages: DumbMonit serves HTTPS itself. Accept its certificate once, or put it behind
+  a reverse proxy with a public certificate.
 - **A domain name**, not an IP address. A passkey is bound to the domain it was
   created on (the *relying party ID*, here the host name you type in the browser).
   Open `https://monit.example.org`, not `https://192.168.1.10`.
