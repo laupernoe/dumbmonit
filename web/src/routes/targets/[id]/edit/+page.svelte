@@ -20,6 +20,7 @@
 	import SetupNotice from '#lib/components/device-form/SetupNotice.svelte';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 	import ManagedNotice from '#lib/components/devices/ManagedNotice.svelte';
+	import AgentSettings from '#lib/components/devices/agent/AgentSettings.svelte';
 	import { auth } from '#lib/stores/auth.svelte.js';
 
 	const id = $derived(Number(page.params.id));
@@ -91,7 +92,7 @@
 	</div>
 {:else}
 	<div class="grid items-start gap-6 lg:grid-cols-12">
-		<div class="min-w-0 lg:col-span-7">
+		<div class="flex min-w-0 flex-col gap-6 lg:col-span-7">
 			<Panel title={collector.label} description={m.deviceform_edit_type_fixed()}>
 				{#snippet aside()}
 					{#if target}
@@ -117,6 +118,12 @@
 				{/key}
 				{/if}
 			</Panel>
+			<!-- Relay, logs, services to watch and re-enrolment: settings, not data. -->
+			{#if target.kind === 'agent'}
+				{#key target.id}
+					<AgentSettings {target} />
+				{/key}
+			{/if}
 		</div>
 		<aside class="min-w-0 lg:sticky lg:top-20 lg:col-span-5">
 			<SetupNotice {collector} />

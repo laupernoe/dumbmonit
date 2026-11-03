@@ -1,24 +1,21 @@
 <script lang="ts">
 	import { m } from '#lib/paraglide/messages.js';
 	/**
-	 * Agent panel of a device: which machine the agent describes, and — the part
-	 * that matters for security — whether this registration is bound to that one
-	 * agent installation.
+	 * Agent panel of a device, on the data page: a compact read-only summary of
+	 * the agent (version, last report, binding) and the panels that show what it
+	 * reports. Everything that changes the agent (relay, logs, services to
+	 * watch, re-enrolment) lives in the monitor's settings (`AgentSettings`).
 	 *
 	 * Unbound means refused: a host enrolled before binding existed, and never
 	 * bound since, no longer gets its measurements, container commands or relayed
-	 * probes accepted. The way back is the re-enrolment window below.
+	 * probes accepted. The summary says so and points to the settings.
 	 */
 	import { ShieldCheck, ShieldAlert } from 'lucide-svelte';
-	import { allowAgentRebind, getAgentHost, type AgentHost, type Target } from '#lib/api/index.js';
+	import { getAgentHost, type AgentHost, type Target } from '#lib/api/index.js';
 	import { formatDateTime, formatRelative } from '#lib/format.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, CopyBlock, ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
-	import RelayPanel from '#lib/components/devices/relay/RelayPanel.svelte';
-	import LogsPanel from '#lib/components/devices/agent/LogsPanel.svelte';
-	import SentinelPanel from '#lib/components/devices/agent/SentinelPanel.svelte';
+	import { Plate } from '#lib/ui/index.js';
 	import MailAgentPanel from '#lib/components/devices/mdaemon/MailAgentPanel.svelte';
-	import AgentModulesPanel from './AgentModulesPanel.svelte';
 	import AgentEventsPanel from './AgentEventsPanel.svelte';
 	import AppliancePanel from '#lib/components/devices/appliance/AppliancePanel.svelte';
 
@@ -29,14 +26,9 @@
 	let { target }: Props = $props();
 
 	let host = $state<AgentHost | null>(null);
-	let rebinding = $state(false);
-	let rebindError = $state<unknown>(null);
-	let reloads = $state(0);
 
 	$effect(() => {
 		const id = target.id;
-		// Read so the effect re-runs after a re-enrolment window is opened.
-		reloads;
 		const controller = new AbortController();
 		getAgentHost(id, controller.signal)
 			.then((agent) => (host = agent))
@@ -44,163 +36,47 @@
 		return () => controller.abort();
 	});
 
-	const BINDING = $derived({
-		bound: {
-			tone: 'signal' as const,
-			icon: ShieldCheck,
-			label: m.devices_agent_bound(),
-			detail: m.devices_agent_bound_detail()
-		},
-		unbound: {
-			tone: 'warning' as const,
-			icon: ShieldAlert,
-			label: m.devices_agent_unbound(),
-			detail: m.devices_agent_unbound_detail()
-		}
-	});
-
 	/** An unknown state from a newer server reads as "not bound", never as safe. */
-	const binding = $derived(host ? (BINDING[host.binding as keyof typeof BINDING] ?? BINDING.unbound) : null);
 	const unbound = $derived(!!host && host.binding !== 'bound');
-	/** A re-enrolment window that has not run out yet. */
-	const window_ = $derived.by(() => {
-		if (!host?.rebind_until) return null;
-		return new Date(host.rebind_until + 'Z') > new Date() ? host.rebind_until : null;
-	});
-
-	/** Commands to run on the machine itself when the agent does not report. */
-	const help = $derived.by(() => {
-		const os = (host?.os ?? '').toLowerCase();
-		if (os.includes('win')) {
-			return {
-				sudo: false,
-				items: [
-					{ label: m.devices_agent_help_status(), cmd: 'Get-Service DumbMonitAgent' },
-					{ label: m.devices_agent_help_restart(), cmd: 'Restart-Service DumbMonitAgent' },
-					{ label: m.devices_agent_help_logs(), cmd: "Get-WinEvent -FilterHashtable @{ ProviderName = 'DumbMonitAgent' } -MaxEvents 30" }
-				]
-			};
-		}
-		if (os.includes('freebsd')) {
-			return {
-				sudo: true,
-				items: [
-					{ label: m.devices_agent_help_status(), cmd: 'service dumbmonit_agent status' },
-					{ label: m.devices_agent_help_restart(), cmd: 'service dumbmonit_agent restart' },
-					{ label: m.devices_agent_help_logs(), cmd: 'tail -n 50 /var/log/dumbmonit-agent.log' }
-				]
-			};
-		}
-		return {
-			sudo: true,
-			items: [
-				{ label: m.devices_agent_help_status(), cmd: 'systemctl status dumbmonit-agent' },
-				{ label: m.devices_agent_help_restart(), cmd: 'systemctl restart dumbmonit-agent' },
-				{ label: m.devices_agent_help_logs(), cmd: 'journalctl -u dumbmonit-agent -n 50 --no-pager' }
-			]
-		};
-	});
-
-	async function rebind() {
-		rebinding = true;
-		rebindError = null;
-		try {
-			await allowAgentRebind(target.id);
-			reloads += 1;
-		} catch (cause) {
-			rebindError = cause;
-		} finally {
-			rebinding = false;
-		}
-	}
+	const system = $derived(host ? `${host.os_version ?? host.os}${host.arch ? ` · ${host.arch}` : ''}` : '');
 </script>
 
-{#if host && binding}
-	{@const Icon = binding.icon}
-	<Panel title={m.devices_agent_title()} description={m.devices_agent_description()}>
-		{#snippet aside()}
-			<Plate tone={binding.tone} label={binding.label} />
-		{/snippet}
-
-		<dl class="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[auto_1fr]">
-			<dt class="text-ink-2">{m.devices_agent_machine()}</dt>
-			<dd class="text-ink">{host.hostname}</dd>
-			<dt class="text-ink-2">{m.devices_agent_system()}</dt>
-			<dd class="text-ink">{host.os_version ?? host.os}{host.arch ? ` · ${host.arch}` : ''}</dd>
-			<dt class="text-ink-2">{m.devices_agent_agent()}</dt>
-			<dd class="text-ink">{host.agent_version}</dd>
-			<dt class="text-ink-2">{m.devices_agent_last_batch()}</dt>
-			<dd class="text-ink">
-				<time class="tnum" title={formatDateTime(host.last_seen_at)}>{formatRelative(host.last_seen_at)}</time>
-			</dd>
-			<dt class="text-ink-2">{m.devices_agent_binding()}</dt>
-			<dd class="text-ink">
-				{#if host.bound_at}
-					<time class="tnum" title={formatDateTime(host.bound_at)}>{m.devices_agent_bound_when({ when: formatRelative(host.bound_at) })}</time>
+{#if host}
+	<section class="rounded-[var(--radius-card)] border border-line bg-surface px-4 py-3 shadow-lift sm:px-5" aria-label={m.devices_agent_title()}>
+		<div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+			<h2 class="text-base font-semibold tracking-tight text-ink">{m.devices_agent_title()}</h2>
+			<span class="text-ink-2">
+				{m.devices_agent_agent()} <span class="tnum text-ink">{host.agent_version}</span>
+			</span>
+			<span class="min-w-0 break-words text-ink-2" title={system}>{system}</span>
+			<span class="text-ink-2">
+				{m.devices_agent_last_batch()}
+				<time class="tnum text-ink" title={formatDateTime(host.last_seen_at)}>{formatRelative(host.last_seen_at)}</time>
+			</span>
+			<span class="inline-flex items-center gap-1.5 sm:ml-auto">
+				{#if unbound}
+					<ShieldAlert class="size-4 text-warning-ink" aria-hidden="true" />
+					<Plate tone="warning" label={m.devices_agent_unbound()} />
 				{:else}
-					{m.devices_agent_not_bound()}
+					<ShieldCheck class="size-4 text-signal-ink" aria-hidden="true" />
+					<Plate tone="signal" label={m.devices_agent_bound()} />
 				{/if}
-			</dd>
-		</dl>
-
-		<p class="mt-3 flex items-start gap-2 text-sm text-ink-2">
-			<Icon class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-			<span>{binding.detail}</span>
-		</p>
-		{#if unbound && !host.binding_supported}
-			<p class="mt-2 text-sm text-ink-2">
-				{m.devices_agent_too_old({ version: host.agent_version })}
-			</p>
-		{/if}
-
-		{#if window_}
-			<p class="mt-3 rounded-[var(--radius-card)] border border-advisory/40 bg-surface px-3 py-2 text-sm text-ink">
-				{m.devices_agent_window_open({ until: formatDateTime(window_) })}
-			</p>
-		{:else if auth.isAdmin}
-			<div class="mt-3 flex flex-wrap items-center gap-3">
-				<Button size="sm" variant="secondary" loading={rebinding} onclick={rebind}>{m.devices_agent_allow_rebind()}</Button>
-				<p class="text-sm text-ink-2">
-					{#if unbound}
-						{m.devices_agent_rebind_hint_unbound()}
-					{:else}
-						{m.devices_agent_rebind_hint_bound()}
-					{/if}
-				</p>
-			</div>
-		{/if}
-
-		{#if rebindError}
-			<ErrorNotice error={rebindError} title={m.devices_agent_err_rebind()} class="mt-3" />
-		{/if}
-
-		<div class="mt-4 grid gap-2 border-t border-line pt-3">
-			<p class="text-sm font-semibold text-ink">{m.devices_agent_help_title()}</p>
-			<p class="text-sm text-ink-2">{m.devices_agent_help_intro()}</p>
-			{#each help.items as item (item.cmd)}
-				<div class="grid gap-1">
-					<span class="text-[0.8125rem] text-ink-2">{item.label}</span>
-					<CopyBlock value={item.cmd} sudo={help.sudo} />
-				</div>
-			{/each}
+			</span>
 		</div>
-	</Panel>
+		{#if unbound}
+			<p class="mt-2 text-sm text-ink-2">
+				{m.devices_agent_unbound_detail()}
+				{#if auth.isAdmin}
+					<a href={`/targets/${target.id}/edit`} class="inline-flex min-h-10 items-center text-ink underline decoration-line-strong underline-offset-2 hover:text-signal-ink">{m.devices_agent_open_settings()}</a>
+				{/if}
+			</p>
+		{/if}
+	</section>
 {/if}
-
-<RelayPanel {target} />
-
-<!-- Log collection, off until an administrator turns it on. -->
-<LogsPanel {target} />
-
-<!-- Sentinel mode: this machine watches DumbMonit itself, off until set up. -->
-<SentinelPanel {target} />
 
 <!-- Shown only when this machine runs MDaemon or SecurityGateway and the agent found it. -->
 <MailAgentPanel agent={target.id} product="mdaemon" />
 <MailAgentPanel agent={target.id} product="securitygateway" />
-
-<!-- Services the agent found (Docker, ZFS, tunnels…): each is a device of its own under this machine. -->
-<AgentModulesPanel {target} />
 
 <!-- Windows only: event log rules that raise alerts, and the latest matched events. -->
 <AgentEventsPanel {target} />
