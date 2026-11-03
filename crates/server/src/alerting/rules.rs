@@ -15,6 +15,9 @@ mod cloud;
 mod pbs;
 mod pve;
 mod truenas;
+mod opnsense;
+mod tailscale;
+mod unifi;
 
 /// Taux d'occupation processeur, toutes sources confondues.
 ///
@@ -7761,6 +7764,9 @@ pub fn builtin_rules() -> Vec<Rule> {
     rules.extend(pve::rules());
     rules.extend(pbs::rules());
     rules.extend(truenas::rules());
+    rules.extend(unifi::rules());
+    rules.extend(opnsense::rules());
+    rules.extend(tailscale::rules());
     rules.extend(apps_rules());
     rules
 }
@@ -9148,6 +9154,24 @@ mod tests {
             "unifi_device_pending_adoption",
             "unifi_firmware_update",
             "unifi_alarms",
+            "unifi_subsystem_error",
+            "unifi_device_overheating",
+            "unifi_poe_budget_high",
+            "unifi_radio_channel_busy",
+            "unifi_wifi_weak_signal",
+            "unifi_port_errors",
+            "opnsense_certificate_expiring",
+            "opnsense_certificate_expired",
+            "opnsense_disk_almost_full",
+            "opnsense_cpu_high",
+            "opnsense_swap_high",
+            "opnsense_pf_disabled",
+            "opnsense_interface_errors",
+            "opnsense_firmware_mirror_unreachable",
+            "tailscale_key_expired",
+            "tailscale_router_offline",
+            "tailscale_routes_unapproved",
+            "tailscale_tailnet_lock_error",
             "homeassistant_recovery_mode",
             "homeassistant_not_running",
             "homeassistant_entities_unavailable",
@@ -9406,7 +9430,10 @@ mod tests {
                             || cloud::produced().contains(&mot)
                             || pve::PRODUCED.contains(&mot)
                             || pbs::PRODUCED.contains(&mot)
-                            || truenas::PRODUCED.contains(&mot),
+                            || truenas::PRODUCED.contains(&mot)
+                            || unifi::PRODUCED.contains(&mot)
+                            || opnsense::PRODUCED.contains(&mot)
+                            || tailscale::PRODUCED.contains(&mot),
                         "rule \"{}\" targets \"{mot}\", which no collector produces",
                         rule.uid
                     );
