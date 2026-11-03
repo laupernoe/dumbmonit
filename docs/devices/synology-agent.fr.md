@@ -44,7 +44,7 @@ root :
 
 | Quoi | Source | Affiché comme |
 |---|---|---|
-| Modèle et version de DSM | `/etc.defaults/VERSION`, `synoinfo.conf` (`upnpmodelname`) | En-tête du panneau NAS, parc NAS |
+| Modèle et version de DSM | `/etc.defaults/VERSION`, `synoinfo.conf` (`upnpmodelname`) | En-tête du panneau NAS |
 | Grappes RAID (données, système, échange, cache SSD) | `/proc/mdstat` : membre manquant ou en échec, reconstruction, resynchronisation, vérification | Grappes RAID, alerte **RAID du NAS dégradé** |
 | Volumes | `/proc/mounts` (`/volumeN`) et l'occupation disque habituelle | Volumes, alertes **Volume du NAS en lecture seule** et disque presque plein |
 | Disques | `/sys/block` (modèle, taille, HDD/SSD/NVMe) ; température, durée de vie restante des SSD et secteurs illisibles depuis `/run/synostorage/disks` quand DSM les expose | Disques, alertes **Température de disque du NAS élevée**, **Secteurs illisibles en hausse sur le NAS**, **SSD du NAS en fin de vie** |
@@ -55,8 +55,8 @@ root :
 
 Le numéro de série n'est jamais lu. Une source absente ou illisible est sautée :
 rien n'est inventé, et aucune alerte ne part sur ce qui n'a pas été lu. La santé
-du stockage (0 sain, 1 attention, 2 critique) alimente la vue du parc NAS, comme
-le moniteur par l'API DSM.
+du stockage (0 sain, 1 attention, 2 critique) est lue comme celle du
+moniteur par l'API DSM.
 
 ### Ce qui demande plus que l'utilisateur du paquet
 

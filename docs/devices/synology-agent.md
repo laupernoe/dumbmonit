@@ -39,7 +39,7 @@ without root:
 
 | What | Source | Shown as |
 |---|---|---|
-| Model and DSM version | `/etc.defaults/VERSION`, `synoinfo.conf` (`upnpmodelname`) | Header of the NAS panel, NAS fleet |
+| Model and DSM version | `/etc.defaults/VERSION`, `synoinfo.conf` (`upnpmodelname`) | Header of the NAS panel |
 | RAID arrays (data, system, swap, SSD cache) | `/proc/mdstat`: missing or failed member, rebuild, resync, check | RAID arrays, alert **NAS RAID degraded** |
 | Volumes | `/proc/mounts` (`/volumeN`) and the usual disk usage | Volumes, alerts **NAS volume read-only** and **Disk almost full** |
 | Disks | `/sys/block` (model, size, HDD/SSD/NVMe); temperature, remaining SSD life and unreadable sectors from `/run/synostorage/disks` when DSM exposes them | Disks, alerts **NAS disk temperature high**, **NAS disk bad sectors growing**, **NAS SSD wearing out** |
@@ -50,8 +50,8 @@ without root:
 
 The serial number is never read. A source that is missing or unreadable is
 skipped: nothing is invented, and no alert fires on what was not read. The
-storage health of the NAS (0 healthy, 1 attention, 2 critical) feeds the NAS
-fleet view, like the DSM API monitor.
+storage health of the NAS (0 healthy, 1 attention, 2 critical) is read like the
+DSM API monitor's.
 
 ### What needs more than the package user
 
