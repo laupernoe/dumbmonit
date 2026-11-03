@@ -1,6 +1,6 @@
 <script lang="ts">
 	/**
-	 * Settings, in seven tabs, each its own URL: My account (language,
+	 * Settings, in six tabs, each its own URL: My account (language,
 	 * password, two-factor, push), Team & access (users, single sign-on),
 	 * Monitoring (agents, packs), Notifications (channels, policy), Wall display and
 	 * System (backup, DumbMonit itself, API & assistants, about). A rail on
@@ -15,7 +15,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { Component } from 'svelte';
-	import { BellRing, HardDrive, Search, Server, SlidersHorizontal, Tv, UserRound, Users } from 'lucide-svelte';
+	import { BellRing, HardDrive, Search, Server, Tv, UserRound, Users } from 'lucide-svelte';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { PageHeader } from '#lib/ui/index.js';
 	import GeneralSection from '#lib/components/settings/GeneralSection.svelte';
@@ -65,7 +65,6 @@
 	const showAccounts = $derived(auth.available && auth.configured && auth.isAdmin);
 
 	const ICONS: Record<SettingsTab, typeof UserRound> = {
-		general: SlidersHorizontal,
 		account: UserRound,
 		team: Users,
 		monitoring: Server,
@@ -75,29 +74,26 @@
 	};
 
 	// An account limited by its teams keeps its own preferences.
-	// General (instance name, setup wizard) is for administrators.
 	const tabs = $derived(
 		TAB_IDS.filter(
 			(id) =>
 				(id !== 'team' || showAccounts) &&
-				(id !== 'general' || auth.isAdmin) &&
 				(!auth.scoped || id === 'account')
 		)
 	);
 	const asked = $derived(page.params.tab);
 	// Status pages and reports have their own pages now.
-	const MOVED_TABS: Record<string, string> = { status: '/status', reports: '/status?tab=reports' };
+	const MOVED_TABS: Record<string, string> = { status: '/status', reports: '/status?tab=reports', general: '/settings/system' };
 	const tab = $derived<SettingsTab>(isTab(asked) && tabs.includes(asked) ? asked : DEFAULT_TAB);
 
 	/** The sections of each tab, top to bottom. */
 	const SECTIONS = $derived<Record<SettingsTab, Component[]>>({
-		general: [GeneralSection],
 		account: [AppearanceSection, SecuritySection, PushSection, OnCallContactsSection, OnCallHoursSection],
 		team: [UsersSection, TeamsSection, ...(auth.isAdmin ? [ClientsSection] : []), SsoSection, SamlSection, ScimSection, LdapSection],
 		monitoring: [AgentsSection, PacksSection, SecurityScoreSection, ...(auth.isAdmin ? [LocationsSection] : [])],
 		notifications: [ChannelsSection, NotificationPolicySection],
 		wall: [WallModeSection, MusicSection],
-		system: [BackupSection, ...(auth.isAdmin ? [ConfigFilesSection] : []), SelfMonitoringSection, ...(auth.isAdmin ? [HttpsSection, PortsSection, StorageSection, LogsSection] : []), AssistantSection, AboutSection]
+		system: [...(auth.isAdmin ? [GeneralSection] : []), BackupSection, ...(auth.isAdmin ? [ConfigFilesSection] : []), SelfMonitoringSection, ...(auth.isAdmin ? [HttpsSection, PortsSection, StorageSection, LogsSection] : []), AssistantSection, AboutSection]
 	});
 
 	const sections = $derived(SECTIONS[tab]);

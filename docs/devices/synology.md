@@ -8,6 +8,19 @@ Synology Drive and Photos. The first reason to monitor a NAS is its disks: a
 disk that heats up or whose SMART status degrades announces a failure long
 before a volume falls over.
 
+## Package or API?
+
+You can use either way, or both on the same NAS. In DumbMonit, **Add a monitor
+> Synology DSM** offers the two.
+
+| | [Agent package (.spk)](synology-agent.md) | DSM API (this page) |
+|---|---|---|
+| Connection | The NAS connects out to DumbMonit; no port opened | DumbMonit connects to the NAS (port 5001) |
+| Credential | Enrolment token, used once; no DSM account stored | A dedicated read-only DSM account, stored in DumbMonit |
+| Reports | CPU, memory, disks, network | Volumes, storage pools, disk health and SMART, temperatures, Hyper Backup and Active Backup tasks, Synology Drive and Photos |
+| DSM version | 7.x only | 6 and 7 |
+| Needs | Installing the package on each NAS | The NAS reachable from the server (or a relay agent) |
+
 ## Network ports to open
 
 From the DumbMonit server (or its relay agent) to the device:

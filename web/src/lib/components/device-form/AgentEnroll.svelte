@@ -31,7 +31,7 @@
 	import AgentChannelCheck from './AgentChannelCheck.svelte';
 	import AgentModules from './AgentModules.svelte';
 	import { withModules, type AgentModule } from './agent-modules.js';
-	import { dockerRun, installOptions } from './agent-enroll.js';
+	import { dockerCompose, dockerRun, installOptions } from './agent-enroll.js';
 	import RelayDiagram from './RelayDiagram.svelte';
 
 	interface Props {
@@ -47,6 +47,8 @@
 		/** Site (location) and folder the machine is filed in once connected. */
 		locationDefault?: number | null;
 		folderDefault?: string;
+		/** Enrol a Synology NAS through the .spk wizard: show its three values instead of install commands. */
+		spk?: boolean;
 	}
 
 	let {
@@ -56,7 +58,8 @@
 		afterKind = '',
 		viaDefault = null,
 		locationDefault = null,
-		folderDefault = ''
+		folderDefault = '',
+		spk = false
 	}: Props = $props();
 	const afterProduct = $derived(afterKind === 'securitygateway' ? 'SecurityGateway' : afterKind === 'mdaemon' ? 'MDaemon' : '');
 	/** Relay flow: from the URL (`via=relay`), or ticked in the plain form. */
@@ -170,6 +173,7 @@
 	// Plain words stay bare; anything YAML could misread goes in double quotes (a JSON string is valid YAML).
 	const yaml = $derived(`relay: true\nsite: ${/^[\p{L}\p{N} ._-]+$/u.test(siteLabel) ? siteLabel : JSON.stringify(siteLabel)}`);
 	const docker = $derived(token && options ? dockerRun(options, token.secret, relay ? hostname : null) : '');
+	const compose = $derived(token && options ? dockerCompose(options, token.secret, relay ? hostname : null) : '');
 
 	// --- First connection, then name / folder / site -------------------------
 
@@ -299,7 +303,21 @@
 
 		<!-- The channel must answer where the command sends machines before the command shows. -->
 		<AgentChannelCheck baseUrl={origin} relayId={throughRelay && chosenRelay ? chosenRelay.id : null} relayHost={relayHost.trim() || null}>
-		<AgentModules bind:modules />
+{#if spk}
+			<div class="grid gap-1.5">
+				<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_spk_url()}</p>
+				<CopyBlock value={options?.base ?? origin} label={m.deviceform_enroll_spk_url()} />
+			</div>
+			<div class="grid gap-1.5">
+				<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_spk_pin()}</p>
+				{#if options?.serverPin ?? options?.caPin}
+					<CopyBlock value={options?.serverPin ?? options?.caPin ?? ''} label={m.deviceform_enroll_spk_pin()} />
+				{:else}
+					<p class="text-sm leading-relaxed text-ink-2">{m.deviceform_enroll_spk_pin_none()}</p>
+				{/if}
+			</div>
+		{:else}
+			<AgentModules bind:modules />
 
 		<div role="radiogroup" aria-label={m.deviceform_agentflow_platform_aria()} class="flex flex-wrap gap-2">
 			{#each platforms as [value, label] (value)}
@@ -328,6 +346,12 @@
 				<p class="text-sm leading-relaxed text-ink-2">{m.deviceform_agentflow_docker_note()}</p>
 				<CopyBlock value={docker} label={m.deviceform_enroll_copy_docker()} />
 			</div>
+			<div class="grid gap-1.5">
+				<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_compose_title()}</p>
+				<CopyBlock value={compose} label={m.deviceform_enroll_copy_compose()} />
+			</div>
+		{/if}
+
 		{/if}
 
 		<div class="grid gap-1.5">
