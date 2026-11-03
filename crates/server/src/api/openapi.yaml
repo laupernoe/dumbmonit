@@ -5756,8 +5756,8 @@ paths:
       description: |
         A device finds its location from the most explicit to the most deduced: its
         assignment (`location_id` on the device), then the location that stands for its
-        remote site (the site the topology map deduces: `site` tag, agent, relay agent),
-        then the location marked `main_site` when it has no remote site. Each member says
+        remote site (the site the topology map deduces: `site` tag, agent, relay agent).
+        There is no default location: a device with neither is unplaced. Each member says
         which (`source`). `sites` lists the remote sites the topology knows, `unplaced`
         the devices no location gathers. States are read from `GET /api/targets`.
       x-token-scope: read
@@ -5773,7 +5773,7 @@ paths:
       operationId: createLocation
       tags: [Devices]
       summary: Create a location
-      description: Marking it `main_site` takes the mark from any other location.
+      description: The legacy `main_site` field is accepted and ignored.
       x-token-scope: write
       requestBody:
         required: true
@@ -13446,7 +13446,7 @@ components:
           description: Devices no location gathers.
     Location:
       type: object
-      required: [id, name, address, latitude, longitude, site, main_site, members]
+      required: [id, name, address, latitude, longitude, site, members]
       properties:
         id: { type: integer, format: int64 }
         name: { type: string }
@@ -13454,7 +13454,6 @@ components:
         latitude: { type: number }
         longitude: { type: number }
         site: { type: string, description: "Topology site this location stands for (case-insensitive); empty: none." }
-        main_site: { type: boolean, description: Gathers the devices with no remote site. At most one location. }
         members:
           type: array
           items:
@@ -13464,7 +13463,7 @@ components:
               target_id: { type: integer, format: int64 }
               source:
                 type: string
-                enum: [assigned, site, main]
+                enum: [assigned, site]
     LocationInput:
       type: object
       required: [name, latitude, longitude]
@@ -13474,7 +13473,6 @@ components:
         latitude: { type: number, minimum: -90, maximum: 90 }
         longitude: { type: number, minimum: -180, maximum: 180 }
         site: { type: string, maxLength: 80 }
-        main_site: { type: boolean }
     Basemap:
       type: object
       required: [mode]

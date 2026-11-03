@@ -514,8 +514,6 @@ pub struct BundleLocation {
     pub longitude: f64,
     #[serde(default)]
     pub site: String,
-    #[serde(default)]
-    pub main_site: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

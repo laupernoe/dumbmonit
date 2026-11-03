@@ -246,7 +246,7 @@ rules and ports that come up most.
   **Settings → Monitoring → Locations → IP geolocation**: nothing is downloaded,
   and countries show as unknown.
 - **Arcs need a location.** Place the firewall on the [world map](../using/world-map.md)
-  (by hand, through its site, or as part of the main site); without one the
+  (by hand, or through its site); without one the
   discs are still drawn.
 - **Motion.** With *reduce motion* set in the system, the travelling arcs are
   left out; the discs and the steady arcs of the busiest countries remain.

@@ -271,8 +271,7 @@ ports les plus fréquents.
   Emplacements → Géolocalisation IP** : plus rien n'est téléchargé, et les pays
   apparaissent comme inconnus.
 - **Les arcs ont besoin d'un emplacement.** Placez le pare-feu sur la
-  [carte du monde](../using/world-map.md) (à la main, par son site, ou avec le
-  site principal) ; sans emplacement, les disques sont tout de même dessinés.
+  [carte du monde](../using/world-map.md) (à la main, ou par son site) ; sans emplacement, les disques sont tout de même dessinés.
 - **Animation.** Quand le système demande de *réduire les animations*, les arcs
   qui filent sont omis ; les disques et les arcs fixes des pays les plus actifs
   restent.

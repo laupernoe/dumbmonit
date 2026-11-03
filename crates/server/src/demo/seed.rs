@@ -141,11 +141,11 @@ pub async fn run(
     seed_status_pages(pool, &targets).await?;
     seed_alert_history(pool, &targets).await?;
     seed_network_inventory(pool, agent_id).await?;
-    // Un emplacement, le site principal : la carte du monde et la carte en
-    // direct du pare-feu ont de quoi se dessiner.
+    // Un emplacement : la carte du monde et la carte en direct du pare-feu ont
+    // de quoi se dessiner (les équipements y sont affectés dans `workspace`).
     sqlx::query(
-        "INSERT INTO locations (name, address, latitude, longitude, main_site)
-         VALUES ('Home', 'Lausanne, Switzerland', 46.5197, 6.6323, 1)",
+        "INSERT INTO locations (name, address, latitude, longitude)
+         VALUES ('Home', 'Lausanne, Switzerland', 46.5197, 6.6323)",
     )
     .execute(pool)
     .await?;
