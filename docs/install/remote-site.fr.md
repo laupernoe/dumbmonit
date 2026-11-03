@@ -224,6 +224,17 @@ son rôle et gagne quand les deux sont en panne.
 
 Un moniteur n'a pas à choisir entre le serveur et un relais : il peut être sondé depuis les deux, ou depuis plusieurs relais, avec un quorum et un tour de confirmation avant toute alerte. Voir [Sonder depuis plusieurs emplacements](../devices/services.fr.md#sonder-depuis-plusieurs-emplacements).
 
+## Dépannage
+
+| Ce que vous voyez | Cause et correction |
+|---|---|
+| La machine relais n'apparaît jamais | La commande n'a pas atteint le serveur. Depuis le site distant, ouvrez l'adresse du serveur dans un navigateur et vérifiez le TCP 8443. Voir [Ports réseau](ports.md). |
+| La page d'ajout affiche un message rouge sur le canal | Le port 8443 n'est pas publié ou est bloqué. Publiez-le (`"8443:8443"` sous `ports:`) et ouvrez-le dans le pare-feu. |
+| La page de l'agent n'indique pas *Relais* | L'interrupteur relais est éteint. Ouvrez la surveillance, utilisez la **roue crantée**, activez *Relais pour un site distant*, indiquez le site, enregistrez. C'est pris en compte au prochain envoi. |
+| Une surveillance affiche *Timed out: relay agent … did not pick up the probe* (message du serveur, en anglais) | Le relais est arrêté ou pas en mode relais. Vérifiez le service sur la machine relais et que `relay: true` est défini. |
+| Une surveillance affiche un message rouge sous son adresse | Le relais ne joint pas l'équipement. L'adresse doit être celle **vue depuis le site distant**, et le relais a besoin des mêmes accès que le serveur. |
+| Les agents installés derrière le relais n'apparaissent pas | Lancez la commande copiée depuis la page *Installer un agent derrière ce relais*, pas la commande directe. Le relais ouvre sa passerelle à son prochain envoi, en moins d'une minute. |
+
 ## Limites
 
 - Un relais par surveillance. Une surveillance sondée par le relais n'est pas aussi

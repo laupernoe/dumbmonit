@@ -30,7 +30,7 @@ Une seule barre d'outils regroupe tout :
 
 - la zone de **recherche** (nom, adresse ou type) ;
 - **Filtrer**, qui ouvre les filtres d'état (Tous, À traiter, Actifs,
-  Désactivés), de type, de tri et d'étiquettes — le nombre sur le bouton
+  Désactivés), de type, de site, de tri et d'étiquettes — le nombre sur le bouton
   compte ceux qui sont actifs, et **Effacer les filtres** les remet à zéro.
   Les filtres vivent dans l'adresse : une liste filtrée se met en favori ou se
   partage ;
@@ -101,8 +101,9 @@ aussitôt, sauf les équipements SNMP, qui ouvrent le formulaire pour la
 communauté), et les types de surveillance qui conviennent au site (ceux que ses
 équipements utilisent déjà, puis les plus courants). Chaque proposition est
 préremplie avec le relais du site, son emplacement et son dossier habituel, et
-vous pouvez toujours les changer dans le formulaire. Sans aucun emplacement, la
-page reste la simple liste de types. En mode MSP, seuls les sites du client
+vous pouvez toujours les changer dans le formulaire. **Aucun site** est un choix normal : la surveillance n'est alors pas rattachée
+à un lieu de la carte. Sans aucun emplacement, la page reste la simple liste de
+types. En mode MSP, seuls les sites du client
 courant sont proposés. L'étape *Ajoutez vos premières surveillances* de
 l'assistant propose le même choix.
 
