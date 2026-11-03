@@ -342,6 +342,51 @@ jobs:
     uses: ./.github/workflows/agent-macos.yml
 
   # ---------------------------------------------------------------------------
+  # Paquet Synology DSM 7 (.spk, x86_64 et aarch64) : le binaire musl statique de
+  # l'agent déjà construit par `image`, emballé par packaging/synology. Rien n'est
+  # recompilé. Le résultat voyage dans l'artefact `dumbmonit-agent-spk`, que
+  # `github-release` joint à la publication (signé et attesté avec les binaires).
+  # ---------------------------------------------------------------------------
+  synology-spk:
+    name: Synology package
+    needs: [image]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          sparse-checkout: |
+            packaging/synology
+            web/static
+            Cargo.toml
+          sparse-checkout-cone-mode: true
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: dumbmonit-agent-binaries
+          path: agent
+
+      - name: Build the packages
+        run: |
+          set -eu
+          if [ "$RELEASE_TAG" = true ]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)"
+          fi
+          sudo apt-get install -y --no-install-recommends imagemagick >/dev/null
+          for pair in x86_64:linux-x86_64 aarch64:linux-aarch64; do
+            sh packaging/synology/build-spk.sh "${pair%%:*}" "agent/dumbmonit-agent-${pair##*:}" "$version"
+          done
+          ls -l dist
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: dumbmonit-agent-spk
+          path: dist/*.spk
+          if-no-files-found: error
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
   # Publication GitHub d'une version : tous les binaires de l'agent et leurs
   # empreintes, sur la page de l'étiquette.
   #
@@ -366,7 +411,7 @@ jobs:
   github-release:
     name: Publish the GitHub release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [image, macos-agent]
+    needs: [image, macos-agent, synology-spk]
     runs-on: ubuntu-latest
     permissions:
       # Create the release and attach the files.
@@ -389,6 +434,9 @@ jobs:
           for name in linux-x86_64 linux-aarch64 windows-x86_64.exe freebsd-x86_64 \
                       macos-aarch64 macos-x86_64; do
             test -s "dumbmonit-agent-$name" || { echo "missing: dumbmonit-agent-$name"; exit 1; }
+          done
+          for arch in x86_64 aarch64; do
+            ls dumbmonit-agent-*-"$arch".spk >/dev/null || { echo "missing: Synology package $arch"; exit 1; }
           done
           sha256sum -c ./*.sha256
 
