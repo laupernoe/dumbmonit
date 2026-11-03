@@ -5,18 +5,19 @@
  */
 import { m } from '#lib/paraglide/messages.js';
 
-export type SettingsTab = 'general' | 'account' | 'team' | 'monitoring' | 'notifications' | 'wall' | 'system';
+export type SettingsTab = 'account' | 'team' | 'monitoring' | 'notifications' | 'wall' | 'system';
 
 export const DEFAULT_TAB: SettingsTab = 'account';
 
-export const TAB_IDS: readonly SettingsTab[] = ['general', 'account', 'team', 'monitoring', 'notifications', 'wall', 'system'];
+export const TAB_IDS: readonly SettingsTab[] = ['account', 'team', 'monitoring', 'notifications', 'wall', 'system'];
 
 /** Which tab holds each section (by its anchor id). */
 export const SECTION_TAB: Record<string, SettingsTab> = {
-	general: 'general',
+	// The instance's name and time zone moved from the former General tab to System.
+	general: 'system',
 	// Former anchor of the Homelab / Enterprise choice.
-	'product-mode': 'general',
-	'setup-wizard': 'general',
+	'product-mode': 'system',
+	'setup-wizard': 'system',
 	appearance: 'account',
 	security: 'account',
 	push: 'account',
@@ -71,8 +72,6 @@ export function isTab(value: string | undefined): value is SettingsTab {
 
 export function tabLabel(tab: SettingsTab): string {
 	switch (tab) {
-		case 'general':
-			return m.settings_tab_general();
 		case 'account':
 			return m.settings_tab_account();
 		case 'team':

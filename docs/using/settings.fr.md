@@ -1,18 +1,17 @@
 # Réglages
 
-![Réglages : sept onglets, ici Mon compte avec apparence, compte et sécurité et notifications push](../assets/screenshots/settings-light.png){ loading=lazy }
+![Réglages : six onglets, ici Mon compte avec apparence, compte et sécurité et notifications push](../assets/screenshots/settings-light.png){ loading=lazy }
 
-Réglages contient ce qui est administratif : l'instance elle-même, votre compte, qui peut se connecter et comment, les agents, les canaux de notification, la sauvegarde de l'instance et la santé du serveur. Il est découpé en sept onglets, chacun avec sa propre adresse. Un rail sur grand écran, une bande de puces sur téléphone et une recherche sur les noms de sections aident à trouver une section.
+Réglages contient ce qui est administratif : l'instance elle-même, votre compte, qui peut se connecter et comment, les agents, les canaux de notification, la sauvegarde de l'instance et la santé du serveur. Il est découpé en six onglets, chacun avec sa propre adresse. Un rail sur grand écran, une bande de puces sur téléphone et une recherche sur les noms de sections aident à trouver une section.
 
 | Onglet | Adresse | Contenu |
 |---|---|---|
-| Général | `/settings/general` | Nom de l'instance, langue et fuseau horaire, assistant de démarrage ([Interface et assistant de démarrage](product-modes.md)) |
 | Mon compte | `/settings/account` | Langue, Compte et sécurité (mot de passe, double authentification, journal de sécurité), Notifications push, Contacts d'astreinte et heures calmes ([Astreintes](../alerting/oncall.md)) |
 | Équipe et accès | `/settings/team` | Utilisateurs, Équipes, Clients, Authentification unique, SAML, SCIM, LDAP |
 | Supervision | `/settings/monitoring` | Agents, Packs d'intégration, [Score de sécurité](security-score.md), Emplacements |
 | Notifications | `/settings/notifications` | Canaux, Politique de notification ([Canaux de notification](../notifications.md)) |
 | Mur | `/settings/wall` | Mode mural : ce qu'il montre, et comment l'ouvrir ([Mode mur](wall.md)) |
-| Système | `/settings/system` | Sauvegarde, Fichiers de configuration, DumbMonit lui-même, Données et rétention, Journaux, API et assistants, À propos |
+| Système | `/settings/system` | Nom de l'instance et fuseau horaire, assistant de démarrage, Sauvegarde, Fichiers de configuration, DumbMonit lui-même, Données et rétention, Journaux, API et assistants, À propos |
 
 Chaque section garde son ancre : `/settings#agents` redirige vers `/settings/monitoring#agents`. Les anciens liens (`/alerts#notifications`) redirigent aussi vers le nouvel emplacement. Les pages de statut et les rapports ne sont plus dans les Réglages : ils ont leur propre page, **Pages de statut** (`/status`) et **Rapports** (`/reports`) ; `/settings/status` et `/settings/reports` y redirigent. Les actualités et les widgets du mur ont disparu : leurs anciens liens (`#news`, `#widgets`) ouvrent l'onglet Mur, où se trouve **Musique murale** (`#music`).
 

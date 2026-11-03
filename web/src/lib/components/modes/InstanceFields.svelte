@@ -13,10 +13,12 @@
 		language: string;
 		timezone: string;
 		disabled?: boolean;
+		/** Settings keeps the language in My account; the wizard still asks for it. */
+		showLanguage?: boolean;
 		/** Prefix of the field ids, unique per page. */
 		idPrefix?: string;
 	}
-	let { name = $bindable(), language = $bindable(), timezone = $bindable(), disabled = false, idPrefix = 'instance' }: Props = $props();
+	let { name = $bindable(), language = $bindable(), timezone = $bindable(), disabled = false, showLanguage = true, idPrefix = 'instance' }: Props = $props();
 
 	const zones = timeZones();
 
@@ -34,6 +36,7 @@
 	<Field label={m.wizard_instance_name()} for={`${idPrefix}-name`} help={m.wizard_instance_name_help()} class="sm:col-span-2">
 		<input id={`${idPrefix}-name`} class="input" maxlength="80" autocomplete="off" placeholder={m.wizard_instance_name_placeholder()} bind:value={name} {disabled} />
 	</Field>
+	{#if showLanguage}
 	<Field label={m.wizard_instance_language()} for={`${idPrefix}-language`}>
 		<select id={`${idPrefix}-language`} class="input" bind:value={language} {disabled}>
 			<option value="">{m.wizard_instance_language_auto()}</option>
@@ -42,6 +45,7 @@
 			{/each}
 		</select>
 	</Field>
+	{/if}
 	<Field label={m.wizard_instance_timezone()} for={`${idPrefix}-timezone`}>
 		<select id={`${idPrefix}-timezone`} class="input" bind:value={timezone} {disabled}>
 			<option value="">UTC</option>
