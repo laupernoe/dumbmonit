@@ -9389,5 +9389,10 @@
 	"settings_ports_compose_help": "Cole sob o serviço. Inclui só as portas que escutam aqui.",
 	"settings_ports_ufw_title": "Regras ufw",
 	"settings_ports_ufw_help": "Substitua 192.168.1.0/24 pela rede que deve alcançar o DumbMonit. Para agentes de outras redes, use os endereços deles.",
-	"settings_ports_search_kw": "portas firewall ufw docker compose expor wan lan syslog traps agentes 8080 8443"
+	"settings_ports_search_kw": "portas firewall ufw docker compose expor wan lan syslog traps agentes 8080 8443",
+	"devices_agent_help_title": "Solução de problemas",
+	"devices_agent_help_intro": "Execute-os na própria máquina quando o agente não reportar.",
+	"devices_agent_help_status": "Está em execução?",
+	"devices_agent_help_restart": "Reiniciar o agente",
+	"devices_agent_help_logs": "Últimos logs"
 }
