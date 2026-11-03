@@ -53,7 +53,7 @@ chosen in one of three ways:
 
 ## Which monitors a location gathers
 
-A monitor finds its location from the most explicit to the most deduced:
+A monitor finds its location from the most explicit to the most deduced. There is no default site:
 
 1. **Placed by hand**: the *Location* field of the monitor's form (under *More
    options*), or **Place at** in the Select mode of the Monitors list, for many
@@ -62,9 +62,9 @@ A monitor finds its location from the most explicit to the most deduced:
    [topology map](topology.md) — the `site` tag of the monitor, the site its
    agent or relay agent declares, or the name of the relay agent that polls it.
    Every monitor of that site lands there without being placed one by one.
-3. **The main site** (optional): one location can be marked *Main site*. It
-   gathers every monitor that has no remote site. If you mark none, such
-   monitors stay with **No site**.
+
+A monitor that none of these places is **No site**: it is monitored normally
+and has no pin.
 
 Nothing is copied: change a monitor's relay or its `site` tag, and it moves on
 the map at the next refresh. *Automatic* in the monitor's form (or **Place at →
@@ -101,5 +101,5 @@ comes under the map. Pins are keyboard reachable (Tab, then Enter).
 ## API
 
 `GET /api/locations` returns the locations, their members (with how each one
-got there: `assigned`, `site` or `main`), the known sites and the unplaced
+got there: `assigned` or `site`), the known sites and the unplaced
 monitors. See the [HTTP API](../reference/api.md) for the other routes.

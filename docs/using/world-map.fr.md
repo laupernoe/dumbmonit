@@ -56,7 +56,7 @@ libre, seulement affiché) et un endroit, choisi de trois façons :
 
 ## Quels moniteurs un emplacement réunit
 
-Un moniteur trouve son emplacement du plus explicite au plus déduit :
+Un moniteur trouve son emplacement du plus explicite au plus déduit. Il n'y a pas de site par défaut :
 
 1. **Placé à la main** : le champ *Emplacement* de son formulaire (sous *Plus
    d'options*), ou **Placer à** dans le mode Sélection de la liste des
@@ -65,9 +65,9 @@ Un moniteur trouve son emplacement du plus explicite au plus déduit :
    [carte de topologie](topology.md) — l'étiquette `site` du moniteur, le site
    que déclare son agent ou son agent relais, ou le nom de l'agent relais qui
    l'interroge. Chaque moniteur de ce site y arrive sans être placé un par un.
-3. **Le site principal** (facultatif) : un emplacement peut être marqué *Site
-   principal*. Il réunit tous les moniteurs qui n'ont pas de site distant. Si
-   vous n'en marquez aucun, ces moniteurs restent avec **Aucun site**.
+
+Une surveillance qu'aucune de ces règles ne place est **Aucun site** : elle est
+surveillée normalement et n'a pas de pastille.
 
 Rien n'est recopié : changez le relais d'un moniteur ou son étiquette `site`,
 et il se déplace sur la carte au rafraîchissement suivant. *Automatique* dans le
@@ -108,6 +108,6 @@ téléphone, la liste passe sous la carte. Les pastilles s'atteignent au clavier
 ## API
 
 `GET /api/locations` renvoie les emplacements, leurs membres (avec la façon dont
-chacun y est arrivé : `assigned`, `site` ou `main`), les sites connus et les
+chacun y est arrivé : `assigned` ou `site`), les sites connus et les
 moniteurs sans emplacement. Voir l'[API HTTP](../reference/api.md) pour les
 autres routes.
