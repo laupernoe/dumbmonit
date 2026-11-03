@@ -12,6 +12,9 @@ use crate::alerting::model::{
 };
 
 mod cloud;
+mod pbs;
+mod pve;
+mod truenas;
 
 /// Taux d'occupation processeur, toutes sources confondues.
 ///
@@ -7755,6 +7758,9 @@ pub fn builtin_rules() -> Vec<Rule> {
     ];
     // Intégrations en nuage, un fichier par produit (`rules/cloud/`).
     rules.extend(cloud::rules());
+    rules.extend(pve::rules());
+    rules.extend(pbs::rules());
+    rules.extend(truenas::rules());
     rules.extend(apps_rules());
     rules
 }
@@ -9347,6 +9353,26 @@ mod tests {
             "hyperv_vm_critical",
             "hyperv_host_cpu_high",
             "hyperv_vhd_errors",
+            // Profondeur Proxmox VE, PBS et TrueNAS (`rules/{pve,pbs,truenas}.rs`).
+            "pve_storage_inactive",
+            "pve_reboot_required",
+            "pve_subscription_expired",
+            "pve_replication_overdue",
+            "pve_backup_job_stale",
+            "pve_guest_not_backed_up",
+            "pve_tasks_failed",
+            "pbs_datastore_unavailable",
+            "pbs_datastore_maintenance",
+            "pbs_rootfs_almost_full",
+            "pbs_job_stale",
+            "pbs_subscription_expired",
+            "truenas_certificate_expiring",
+            "truenas_certificate_expired",
+            "truenas_boot_pool_degraded",
+            "truenas_boot_pool_almost_full",
+            "truenas_backup_task_failed",
+            "truenas_app_crashed",
+            "truenas_vm_down",
             // Sauvegarde locale de l'instance (`backup/local.rs`).
             "instance_backup_missing",
             // Auto-surveillance de l'instance (`selfmon.rs`).
@@ -9376,7 +9402,11 @@ mod tests {
             for mot in rule.query.split(|c: char| !c.is_alphanumeric() && c != '_') {
                 if mot.starts_with("dumbmonit_") {
                     assert!(
-                        PRODUITES.contains(&mot) || cloud::produced().contains(&mot),
+                        PRODUITES.contains(&mot)
+                            || cloud::produced().contains(&mot)
+                            || pve::PRODUCED.contains(&mot)
+                            || pbs::PRODUCED.contains(&mot)
+                            || truenas::PRODUCED.contains(&mot),
                         "rule \"{}\" targets \"{mot}\", which no collector produces",
                         rule.uid
                     );
