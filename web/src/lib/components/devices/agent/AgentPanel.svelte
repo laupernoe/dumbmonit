@@ -16,6 +16,7 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Plate } from '#lib/ui/index.js';
 	import MailAgentPanel from '#lib/components/devices/mdaemon/MailAgentPanel.svelte';
+	import DsmPanel from './DsmPanel.svelte';
 	import AgentEventsPanel from './AgentEventsPanel.svelte';
 	import AppliancePanel from '#lib/components/devices/appliance/AppliancePanel.svelte';
 
@@ -40,6 +41,9 @@
 	const unbound = $derived(!!host && host.binding !== 'bound');
 	const system = $derived(host ? `${host.os_version ?? host.os}${host.arch ? ` · ${host.arch}` : ''}` : '');
 </script>
+
+<!-- Shown only on a Synology NAS running the agent package: volumes, RAID, disks, packages. -->
+<DsmPanel {target} />
 
 {#if host}
 	<section class="rounded-[var(--radius-card)] border border-line bg-surface px-4 py-3 shadow-lift sm:px-5" aria-label={m.devices_agent_title()}>
