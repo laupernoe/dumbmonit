@@ -389,6 +389,24 @@ l'utiliser (Active Backup for Business → Settings → Privileges) ; sinon
 décochez l'option « Surveiller Active Backup for Business » de DumbMonit pour
 arrêter de demander.
 
+## Ajouter la surveillance
+
+1. Créez le compte DSM ci-dessus.
+2. Dans DumbMonit, cliquez sur **Ajouter une surveillance**, choisissez un site
+   (ou **Aucun site**), **Synology DSM**, puis **Utiliser les identifiants DSM**.
+3. Saisissez un **nom**, l'**adresse** (`nas.lan`, `192.168.1.30` ou
+   `nas.lan:5001`), ainsi que le **nom d'utilisateur** et le **mot de passe** du
+   compte.
+4. Sous *Plus d'options*, cochez **Accepter un certificat non vérifiable** si le
+   NAS a son certificat autosigné par défaut.
+5. Cliquez sur **Ajouter la surveillance**. En moins d'une minute, la page montre
+   le panneau du NAS : vue d'ensemble, volumes et disques.
+
+Si un message rouge apparaît sous l'adresse, lisez-le et voyez les
+[erreurs courantes](#erreurs-courantes). Corrigez le formulaire avec la roue
+crantée de la page de la surveillance : laisser le mot de passe vide conserve
+celui enregistré.
+
 ## Identifiants
 
 | Identifiant | Champs |

@@ -14,6 +14,26 @@ accepte toujours mon compte et répond à une requête ». NTP se trouve
 entre les deux : une seule requête et réponse, dans le propre protocole
 de NTP, assez pour lire l'horloge du serveur sans session.
 
+## Quel type de service ?
+
+| Vous voulez vérifier | Type | Section |
+|---|---|---|
+| Une page web répond avec le bon code ou texte | HTTP | [HTTP](#http) |
+| Un port TCP accepte les connexions | TCP | [TCP](#tcp) |
+| Un nom se résout vers la bonne réponse | DNS | [DNS](#dns) |
+| Un hôte répond au ping | Ping | [Ping](#ping) |
+| Un certificat est valide et loin de l'expiration | TLS | [TLS](#tls) |
+| Un serveur de temps donne la bonne heure | NTP | [NTP](#ntp) |
+| Un port UDP répond | UDP | [UDP](#udp) |
+| Un serveur SSH répond et garde la même clé d'hôte | SSH | [SSH](#ssh) |
+| Un serveur de mail accepte une session ou une connexion | SMTP, IMAP, POP3 | [SMTP](#smtp), [IMAP](#imap), [POP3](#pop3) |
+| Une base accepte le compte et répond à une requête | PostgreSQL, MySQL | [PostgreSQL](#postgresql), [MySQL](#mysql-et-mariadb) |
+| Un courtier MQTT ou un point WebSocket fonctionne | MQTT, WebSocket | [MQTT](#mqtt), [WebSocket](#websocket) |
+| Un serveur RADIUS répond | RADIUS | [RADIUS](#radius) |
+| Un service gRPC se déclare en bonne santé | gRPC | [gRPC](#grpc) |
+
+Chaque section ci-dessous dit ce que vous saisissez et ce qui est surveillé.
+
 ## Venir d'Uptime Kuma
 
 **Surveillances > ⋯ > Importer depuis Uptime Kuma**, aussi sur
