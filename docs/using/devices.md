@@ -30,7 +30,7 @@ One toolbar holds everything:
 
 - the **search** box (name, address or kind);
 - **Filter**, which opens the state (All, Needs attention, Reporting,
-  Disabled), kind, sort and tag filters — the number on the button counts the
+  Disabled), kind, site, sort and tag filters — the number on the button counts the
   ones in use, and **Clear filters** resets them. Filters live in the address,
   so a filtered list can be bookmarked or shared;
 - **Compact** / **Tiles**;
@@ -94,7 +94,8 @@ agent and nobody monitors yet (**Add** creates them at once, except SNMP devices
 which open the form for the community), and the monitor types that fit the site
 (the ones its devices already use, then the common ones). Every proposal is
 filled in with the site's relay agent, its location and its usual folder, and you
-can still change them in the form. Without any location the page is the plain
+can still change them in the form. **No site** is a normal choice: the monitor is then
+not tied to a place on the map. Without any location the page is the plain
 list of types. In MSP mode only the current client's sites are offered. The
 setup wizard's *Add your first monitors* step offers the same choice.
 

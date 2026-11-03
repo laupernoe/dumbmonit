@@ -212,6 +212,17 @@ role and wins when both are down.
 
 A monitor does not have to choose between the server and one relay: it can be probed from both, or from several relays, with a quorum and a confirmation round before any alert. See [Probing from several locations](../devices/services.md#probing-from-several-locations).
 
+## Troubleshooting
+
+| What you see | Cause and fix |
+|---|---|
+| The relay machine never appears | The command did not reach the server. From the remote site, open the server address in a browser and check TCP 8443. See [Network ports](ports.md). |
+| The add page shows a red channel message | Port 8443 is not published or is blocked. Publish it (`"8443:8443"` under `ports:`) and open it in the firewall. |
+| The agent page does not say *Relay* | The relay switch is off. Open the monitor, use the **gear**, switch on *Relay for a remote site*, give the site, save. It applies at the next report. |
+| A monitor shows *Timed out: relay agent … did not pick up the probe* | The relay is stopped or not in relay mode. Check the service on the relay machine and that `relay: true` is set. |
+| A monitor shows a red message under its address | The relay cannot reach the device. The address must be the one **seen from the remote site**, and the relay needs the same access the server would. |
+| Agents installed behind the relay do not appear | Run the command copied from the relay's *Install an agent behind this relay* page, not the direct one. The relay opens its gateway at its next report, within a minute. |
+
 ## Limits
 
 - One relay per monitor. A monitor probed by the relay is not also probed by

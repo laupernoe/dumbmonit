@@ -19,6 +19,26 @@ something is wrong (`2/5`).
 
 Locations too close to tell apart at the current zoom are drawn as one **group pin**: a double ring, the number of locations, and the state of the worst of them (glyph and colour). Click it to zoom in until it comes apart; when it cannot (same spot, deepest zoom), it lists its locations. Groups are recomputed at each zoom.
 
+## Sites and the map in short
+
+- A **site** is a place you define. Without a site, nothing appears on the map.
+- There is **no default site**. A monitor that is not placed has **No site**: it
+  works normally, it just has no pin. Monitors that no location gathers are
+  counted under the list.
+- With no location at all, the World view only says *No location yet* and offers
+  **Add a location**.
+- You pick the site when you add a monitor (**Where is it?**, or **No site**), or
+  later on the monitor's form.
+
+## Add your first location
+
+1. Open **Settings → Monitoring → Locations** (administrators).
+2. Click **Add a location** and give it a **name**.
+3. Choose the spot: **Find a place** (type a city, click **Find**, then **Use**
+   the answer), the **Latitude / Longitude**, or a click on the map.
+4. Click **Save location**. You should see the location in the list; open the
+   **World** view of the Map page to see its pin.
+
 ## Locations
 
 Locations are set in **Settings → Monitoring → Locations** (administrators). A
@@ -33,7 +53,7 @@ chosen in one of three ways:
 
 ## Which monitors a location gathers
 
-A monitor finds its location from the most explicit to the most deduced:
+A monitor finds its location from the most explicit to the most deduced. There is no default site:
 
 1. **Placed by hand**: the *Location* field of the monitor's form (under *More
    options*), or **Place at** in the Select mode of the Monitors list, for many
@@ -42,13 +62,13 @@ A monitor finds its location from the most explicit to the most deduced:
    [topology map](topology.md) — the `site` tag of the monitor, the site its
    agent or relay agent declares, or the name of the relay agent that polls it.
    Every monitor of that site lands there without being placed one by one.
-A monitor with neither is **on no site**: it is not on the map. There is no default
-site; pick one explicitly. Until the first location exists, the Map page offers no
-World view at all.
+
+A monitor that none of these places is **No site**: it is monitored normally
+and has no pin.
 
 Nothing is copied: change a monitor's relay or its `site` tag, and it moves on
-the map at the next refresh. *None* in the monitor's form (or **Place at →
-None** in bulk) removes a hand placement. Deleting a location keeps its
+the map at the next refresh. *Automatic* in the monitor's form (or **Place at →
+Automatic** in bulk) removes a hand placement. Deleting a location keeps its
 monitors; they simply lose their place. Monitors no location gathers are counted
 under the list.
 

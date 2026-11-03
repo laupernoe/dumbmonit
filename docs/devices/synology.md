@@ -1,5 +1,7 @@
 # Synology DSM
 
+![A Synology NAS monitor: model, DSM version and health](../assets/screenshots/nas-fleet-light.png){ loading=lazy }
+
 Synology NAS through the DSM web API: volumes, storage pools, disk health,
 temperature, Hyper Backup tasks, Active Backup for Business tasks, and
 Synology Drive and Photos. The first reason to monitor a NAS is its disks: a
@@ -129,12 +131,6 @@ the NAS.
 | Synology volume almost full | advisory | A volume is 90 % full or more, for 15 minutes. |
 | Synology temperature high | advisory | A disk is above 55 °C, or DSM raised its temperature warning, for 15 minutes. |
 | Synology memory high | advisory | Memory usage above 95 % for 15 minutes. |
-
-## Finding your NAS in the list
-
-On the [Monitors page](../using/devices.md), the **Type** filter set to
-**Synology** keeps only the DSM API monitors; the search box finds a NAS by
-name or address.
 
 ## Active Backup for Business
 
@@ -362,6 +358,22 @@ Vault) has no tasks of its own to show. Active Backup for Business additionally
 answers only an account allowed to use it (Active Backup for Business →
 Settings → Privileges); otherwise untick DumbMonit's "Watch Active Backup for
 Business" option to stop asking.
+
+## Add the monitor
+
+1. Create the DSM account above.
+2. In DumbMonit, click **Add a monitor**, pick a site (or **No site**), choose
+   **Synology DSM**, then **Use DSM credentials**.
+3. Enter a **name**, the **address** (`nas.lan`, `192.168.1.30` or
+   `nas.lan:5001`), and the account's **user name** and **password**.
+4. Under *More options*, tick **Accept an unverifiable certificate** if the NAS
+   has its default self-signed certificate.
+5. Click **Add monitor**. Within a minute the page shows the NAS panel:
+   overview, volumes and disks.
+
+If the page shows a red message under the address, read it and see
+[Common errors](#common-errors). Fix the form with the gear on the monitor
+page: leaving the password empty keeps the stored one.
 
 ## Credentials
 

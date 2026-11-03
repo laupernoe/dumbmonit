@@ -13,6 +13,26 @@ and "the database still accepts my account and answers a query". NTP sits
 between the two: a single request and reply, in NTP's own protocol, enough to
 read the server's clock without a session.
 
+## Which service type?
+
+| You want to check | Type | Section |
+|---|---|---|
+| A web page answers with the right code or text | HTTP | [HTTP](#http) |
+| A TCP port accepts connections | TCP | [TCP](#tcp) |
+| A name resolves to the right answer | DNS | [DNS](#dns) |
+| A host answers ping | Ping | [Ping](#ping) |
+| A certificate is valid and not close to expiry | TLS | [TLS](#tls) |
+| A time server gives the right time | NTP | [NTP](#ntp) |
+| A UDP port answers | UDP | [UDP](#udp) |
+| An SSH server answers and keeps the same host key | SSH | [SSH](#ssh) |
+| A mail server accepts a session or a login | SMTP, IMAP, POP3 | [SMTP](#smtp), [IMAP](#imap), [POP3](#pop3) |
+| A database accepts the account and answers a query | PostgreSQL, MySQL | [PostgreSQL](#postgresql), [MySQL](#mysql-and-mariadb) |
+| An MQTT broker or a WebSocket endpoint works | MQTT, WebSocket | [MQTT](#mqtt), [WebSocket](#websocket) |
+| A RADIUS server replies | RADIUS | [RADIUS](#radius) |
+| A gRPC service reports itself healthy | gRPC | [gRPC](#grpc) |
+
+Each section below says what you type and what is watched.
+
 ## Coming from Uptime Kuma
 
 **Monitors > ⋯ > Import from Uptime Kuma**, also on **Monitors > Add a

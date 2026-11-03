@@ -127,18 +127,53 @@ critical**, **Hyper-V host CPU high** and **Hyper-V virtual disk errors** (see
 
 ## Install
 
-The steps below are the ones the notice next to the form shows. There is no account to create on the machine: the enrollment token is the only secret.
+There is no account to create on the machine: the enrollment token is the only
+secret. The whole flow is on one page of DumbMonit, and it checks each step for you.
 
-1. In DumbMonit, add a monitor and pick Server with the agent, then choose how the machine reaches the server: directly, or through the relay of a remote site behind a firewall. An enrollment token (its secret starts with dmon_; the token is listed as tok_… afterwards) is shown once, with the install command ready to copy for Linux/macOS, Windows and Docker. See [Monitor a remote site](../install/remote-site.md#5-install-agents-behind-the-relay) for the relay.
-2. Run that install command on the machine, with elevated rights (sudo on Linux and macOS, an elevated PowerShell on Windows).
-3. The page waits for the first report (a few seconds), then lets you name the machine, file it in a folder and place it at a site, on the spot.
-4. Optional, for Docker: if the agent runs under a dedicated user, add that user to the "docker" group and restart the agent.
+### Step by step
 
-    ```
-    usermod -aG docker dumbmonit
-    ```
+1. In DumbMonit, click **Add a monitor**, pick a site (or **No site**), then
+   **Server with the agent**.
+2. Under *How does the machine reach this server?*, keep **Directly**, or choose
+   **Through** a relay for a remote site behind a firewall (see
+   [Monitor a remote site](../install/remote-site.md#5-install-agents-behind-the-relay)).
+3. Optional: choose the modules to turn on.
+4. Choose the machine's system: **Linux / macOS**, **Windows** or **Docker**.
+5. Click **Create the install command**. You should see a **Shown once** label,
+   the command to copy, and the token (its secret starts with `dmon_`; the token
+   is listed as `tok_…` afterwards). Copy the command now.
+6. The page checks the agent channel. You should see *Encrypted agent channel
+   reachable at … (TLS 1.3)*. A red message here means machines will fail too:
+   fix it first (see [Common errors](#common-errors)).
+7. Run the command on the machine, with elevated rights:
+    - **Linux / macOS**: paste it in a terminal; it uses `sudo`.
+    - **Windows**: paste it in a PowerShell opened as administrator.
+    - **Docker**: paste the `docker run` command, or the two lines for your
+      `docker-compose.yml`, then `docker compose up -d`.
+8. Back in DumbMonit, *Waiting for the agent's first report…* turns into
+   *`host` is connected (`os`)* within seconds.
+9. Give the machine a **Name**, optionally a **Folder** and a **Site**, then
+   click **Save**. **Open the machine** shows its page, with its first readings
+   a few seconds later.
 
-5. For a fleet (a playbook, a machine image), tick Several machines with this command; a whole Windows domain goes through the Active Directory kit, offered on the same page. Revoke a lost token in Settings → Agents. See [Active Directory](agent-active-directory.md).
+If the page stays on *Waiting…* for an hour it stops and offers **Wait again**.
+Check the machine with the commands in [Outages and diagnostics](#outages-and-diagnostics).
+
+Optional, for Docker: if the agent runs under a dedicated user, add that user
+to the `docker` group and restart the agent.
+
+```
+usermod -aG docker dumbmonit
+```
+
+For a fleet (a playbook, a machine image), tick **Several machines with this
+command**; a whole Windows domain goes through the Active Directory kit, offered
+on the same page. Revoke a lost token in **Settings → Monitoring → Agents**. See
+[Active Directory](agent-active-directory.md).
+
+To change anything later, open the monitor and use the **gear**: the agent
+settings (relay mode, log collection, the services to watch, re-enrolment) are
+there.
 
 !!! warning
     The agent contacts the server, never the other way round: no port needs to be opened on the monitored machine.
