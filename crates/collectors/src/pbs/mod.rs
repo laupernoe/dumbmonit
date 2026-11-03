@@ -70,6 +70,7 @@
 mod auth;
 mod backup;
 mod client;
+mod extra;
 mod jobs;
 mod metrics;
 mod model;
@@ -389,6 +390,18 @@ impl Collector for PbsCollector {
         if let Some(Ok(list)) = certificates {
             samples.extend(node::certificate_samples(&list, now_s, ts_ms));
             view.certificates = node::certificate_views(&list);
+        }
+        // L'abonnement est un confort : un refus, une version qui ne le sert pas ou
+        // une erreur passagère ne comptent pas comme un défaut de collecte.
+        if options.updates {
+            const SUBSCRIPTION: &str = "/nodes/localhost/subscription";
+            match pbs.get_optional::<extra::Subscription>(SUBSCRIPTION, &[]).await {
+                Ok(Some(subscription)) => {
+                    samples.extend(extra::subscription_samples(&subscription, ts_ms));
+                }
+                Ok(None) => {}
+                Err(error) => debug!(target_id = target.id, %error, "abonnement PBS indisponible"),
+            }
         }
         if let Some(list) = settle(traffic, &mut errors, target.id, "/admin/traffic-control") {
             samples.extend(node::traffic_samples(&list, ts_ms));

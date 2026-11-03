@@ -68,6 +68,7 @@ mod options;
 mod replication;
 mod resources;
 mod snapshots;
+mod tasks;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::future::Future;
@@ -751,7 +752,16 @@ async fn collect_node_extras(
     ];
     let optional = &OPTIONAL_STATUSES;
 
-    let (services, version, network, netstat, lvm, thin, directories) = futures::join!(
+    // Les tâches en échec des dernières heures : `errors=1` laisse PVE filtrer.
+    let since = ts_ms / 1000 - tasks::WINDOW_SECONDS;
+    let failed_query = [
+        ("errors", "1".to_string()),
+        ("since", since.to_string()),
+        ("limit", "200".to_string()),
+    ];
+    let failed_path = format!("/nodes/{node}/tasks");
+
+    let (services, version, network, netstat, lvm, thin, directories, failed) = futures::join!(
         when(options.services, pve.get_unless::<Vec<ServiceEntry>>(&paths[0], &[], optional)),
         when(options.services, pve.get_unless::<model::Version>(&paths[1], &[], optional)),
         when(options.network, pve.get_unless::<Vec<NetworkInterface>>(&paths[2], &[], optional)),
@@ -759,6 +769,7 @@ async fn collect_node_extras(
         when(options.lvm, pve.get_unless::<LvmTree>(&paths[4], &[], optional)),
         when(options.lvm, pve.get_unless::<Vec<ThinPool>>(&paths[5], &[], optional)),
         when(options.lvm, pve.get_unless::<Vec<DirectoryMount>>(&paths[6], &[], optional)),
+        pve.get_unless::<Vec<TaskEntry>>(&failed_path, &failed_query, optional),
     );
 
     let mut samples = Vec::new();
@@ -801,6 +812,13 @@ async fn collect_node_extras(
         Some(Ok(Some(list))) => samples.extend(node::directory_samples(node, &list, ts_ms)),
         Some(Ok(None)) | None => {}
         Some(Err(error)) => debug!(node, %error, "montages gérés indisponibles"),
+    }
+    match failed {
+        Ok(Some(list)) => {
+            samples.extend(tasks::failed_task_samples(node, &list, ts_ms / 1000, ts_ms));
+        }
+        Ok(None) => {}
+        Err(error) => debug!(node, %error, "tâches en échec indisponibles"),
     }
     samples
 }

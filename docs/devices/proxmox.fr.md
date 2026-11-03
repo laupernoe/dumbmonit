@@ -297,6 +297,33 @@ n'expose pas de capteurs, seulement la propre température SMART des
 disques. Installez l'agent DumbMonit sur le nœud si vous en avez besoin
 de plus.
 
+### Vérifications supplémentaires
+
+* **État des stockages.** `storage_active` et `storage_enabled` par nœud et par
+  stockage. Un stockage NFS, CIFS ou PBS devenu injoignable passe inactif alors
+  que les invités tournent toujours et que les sauvegardes qui le visent
+  commencent à échouer. Un stockage désactivé exprès n'est pas signalé.
+* **Redémarrage en attente.** `node_reboot_required` vaut 1 quand un noyau plus
+  récent que celui qui tourne est installé (les étiquettes nomment les deux).
+* **Abonnement.** `node_subscription_active` et `node_subscription_info` (avec
+  l'état, le niveau et la date de renouvellement). `notfound` est l'état normal
+  d'un homelab sans abonnement et ne déclenche rien ; `expired`, `invalid` et
+  `suspended` si.
+* **Calendrier de réplication.** `replication_job_next_sync_seconds` devient
+  négatif quand un travail est en retard sur sa planification sans être en
+  erreur, ce qui ressemble à une réplication bloquée.
+* **Tâches en échec.** `node_tasks_failed` : les tâches terminées en erreur
+  durant les six dernières heures (démarrage d'invité refusé, migration
+  avortée, restauration échouée…), via `/nodes/{node}/tasks?errors=1`. Les
+  sauvegardes, les sessions de console, les avertissements et les tâches que
+  vous avez interrompues vous-même sont écartés. Aucun droit supplémentaire.
+
+Règles intégrées ajoutées : stockage Proxmox inactif, nœud Proxmox à
+redémarrer (après trois jours), abonnement Proxmox expiré, réplication Proxmox
+en retard (six heures), travail de sauvegarde Proxmox à l'arrêt (huit jours),
+invité Proxmox hors de tout travail de sauvegarde (informatif), tâches
+Proxmox en échec (informatif).
+
 Règles intégrées qui s'appliquent : Surveillance inaccessible, CPU élevé,
 Disque presque plein, Système de fichiers presque plein (prévision),
 Sauvegarde trop ancienne, CPU inhabituel, VM ou conteneur arrêté, VM ou
