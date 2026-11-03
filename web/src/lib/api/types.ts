@@ -3037,8 +3037,6 @@ export interface MapLocation {
 	longitude: number;
 	/** Topology site this location stands for; empty: none. */
 	site: string;
-	/** Gathers the devices with no remote site. */
-	main_site: boolean;
 	members: LocationMember[];
 }
 
@@ -3058,7 +3056,6 @@ export interface LocationPayload {
 	latitude: number;
 	longitude: number;
 	site: string;
-	main_site: boolean;
 }
 
 export type BasemapMode = 'offline' | 'osm' | 'custom';

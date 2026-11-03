@@ -41,13 +41,6 @@ One toolbar holds everything:
   websites (CSV)** and **Import from Uptime Kuma**;
 - **Add a monitor**, the primary action.
 
-### NAS fleet {#nas-fleet}
-
-With two or more [Synology](../devices/synology.md#nas-fleet) monitors, a banner
-above the list sums them up (**3 NAS, 1 healthy**). **View fleet** replaces the
-list with one row per NAS: model, DSM version, a level and the reason, ready to
-open. See [The NAS fleet view](../devices/synology.md#nas-fleet).
-
 ## A monitor
 
 ![A monitor page: state, actions, alerts, the kind-specific panel, metrics](../assets/screenshots/device-light.png){ loading=lazy }

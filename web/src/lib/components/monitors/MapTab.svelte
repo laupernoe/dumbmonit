@@ -12,7 +12,8 @@
 	 *
 	 * The "World" view (`?view=world`) is another picture of the same estate:
 	 * locations on a world map (`WorldView`), each with the state of its
-	 * monitors.
+	 * monitors. Offered only once a location exists; devices on no location
+	 * are not on it.
 	 *
 	 * "Correct the map" (admins): drag a node onto its real parent, mark a link
 	 * wrong, draw one, change a node's site or group — with undo and redo, a
@@ -26,6 +27,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { createCorrection, deleteCorrection, deleteRule, getTopology, saveRule } from '#lib/api/topology.js';
+	import { listLocations } from '#lib/api/locations.js';
 	import type { Topology, TopologyCorrection, TopologyRule, TopologySource, TopologySuggestion } from '#lib/api/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { displayState } from '#lib/format.js';
@@ -251,10 +253,20 @@
 	const siteCount = $derived(sections.length - 1);
 	const firstDown = $derived(layout.nodes.find((p) => p.down)?.node.id ?? null);
 
+	/** At least one location exists: otherwise there is no world map to offer. */
+	let hasLocations = $state(false);
+	$effect(() => {
+		const controller = new AbortController();
+		listLocations(controller.signal)
+			.then((found) => (hasLocations = found.locations.length > 0))
+			.catch(() => {});
+		return () => controller.abort();
+	});
+
 	const VIEWS = $derived([
 		{ id: 'map' as const, label: m.topology_view_map() },
 		{ id: 'list' as const, label: m.topology_view_list() },
-		{ id: 'world' as const, label: m.worldmap_view_world() }
+		...(hasLocations || view === 'world' ? [{ id: 'world' as const, label: m.worldmap_view_world() }] : [])
 	]);
 
 	const subtitle = $derived(new Intl.DateTimeFormat(getLocale(), { dateStyle: 'long', timeStyle: 'short' }).format(printedAt));
@@ -445,7 +457,7 @@
 		<EmptyState icon={Network} title={m.topology_empty_title()} description={m.topology_empty_body()}>
 			{#snippet action()}
 				<Button variant="primary" href="/targets/new">{m.devices_targets_add()}</Button>
-				<Button variant="secondary" onclick={() => setView('world')}>{m.worldmap_view_world()}</Button>
+				{#if hasLocations}<Button variant="secondary" onclick={() => setView('world')}>{m.worldmap_view_world()}</Button>{/if}
 			{/snippet}
 		</EmptyState>
 	{:else}

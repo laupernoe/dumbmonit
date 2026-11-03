@@ -35,7 +35,6 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import ReviewNotice from '#lib/components/device-form/ReviewNotice.svelte';
 	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Menu, SelectionBar, Skeleton } from '#lib/ui/index.js';
-	import NasFleet from '#lib/components/monitors/NasFleet.svelte';
 	import RackList from '#lib/components/devices/RackList.svelte';
 	import type { ReorderControls, RowSelection } from '#lib/components/devices/RackList.svelte';
 	import FolderHeader from '#lib/components/devices/FolderHeader.svelte';
@@ -100,13 +99,6 @@
 	let optionKeys = $state<Map<string, Set<string>>>(new Map());
 	const NO_KEYS: ReadonlySet<string> = new Set();
 	const optionKeysOf = (kind: string) => optionKeys.get(kind) ?? NO_KEYS;
-	/** Synology NAS (DSM API, or the agent package that tags its machine): from two of them,
-	 *  a banner offers the fleet view instead of the list. */
-	const nasTargets = $derived(
-		targets.filter((t) => t.kind === 'synology' || (t.kind === 'agent' && t.tags?.vendor === 'synology'))
-	);
-	let fleetOpen = $state(false);
-	const showFleet = $derived(fleetOpen && nasTargets.length >= 2);
 	const firstLoad = $derived(alertsStore.loading && targets.length === 0);
 	const pageError = $derived(!alertsStore.available ? alertsStore.lastError : null);
 
@@ -1214,10 +1206,6 @@
 	{/if}
 {/if}
 
-{#if !firstLoad && !pageError && nasTargets.length >= 2}
-	<NasFleet nas={nasTargets} open={fleetOpen} ontoggle={() => (fleetOpen = !fleetOpen)} />
-{/if}
-
 {#if actionError}
 	<div class="mb-3"><ErrorNotice error={actionError} title={m.devices_targets_err_save()} /></div>
 {/if}
@@ -1256,8 +1244,6 @@
 			{/if}
 		{/snippet}
 	</EmptyState>
-{:else if showFleet}
-	<!-- The fleet rows are drawn by the NAS banner above. -->
 {:else if totalRows === 0}
 	<EmptyState title={m.devices_targets_nomatch_title()} description={m.devices_targets_nomatch_desc()}>
 		{#snippet action()}
