@@ -11,6 +11,7 @@ use crate::alerting::model::{
     AnomalyParams, Operator, RULE_HOST_DOWN, Rule, RuleKind, Severity, TargetSelector,
 };
 
+mod adguard;
 mod cloud;
 mod pbs;
 mod pve;
@@ -18,6 +19,8 @@ mod truenas;
 mod opnsense;
 mod tailscale;
 mod unifi;
+mod homeassistant;
+mod pihole;
 
 /// Taux d'occupation processeur, toutes sources confondues.
 ///
@@ -7767,6 +7770,10 @@ pub fn builtin_rules() -> Vec<Rule> {
     rules.extend(unifi::rules());
     rules.extend(opnsense::rules());
     rules.extend(tailscale::rules());
+    // Résolveurs DNS et domotique : un fichier par produit (`rules/<produit>.rs`).
+    rules.extend(pihole::rules());
+    rules.extend(adguard::rules());
+    rules.extend(homeassistant::rules());
     rules.extend(apps_rules());
     rules
 }
@@ -9433,7 +9440,10 @@ mod tests {
                             || truenas::PRODUCED.contains(&mot)
                             || unifi::PRODUCED.contains(&mot)
                             || opnsense::PRODUCED.contains(&mot)
-                            || tailscale::PRODUCED.contains(&mot),
+                            || tailscale::PRODUCED.contains(&mot)
+                            || pihole::PRODUCED.contains(&mot)
+                            || adguard::PRODUCED.contains(&mot)
+                            || homeassistant::PRODUCED.contains(&mot),
                         "rule \"{}\" targets \"{mot}\", which no collector produces",
                         rule.uid
                     );

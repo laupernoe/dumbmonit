@@ -459,6 +459,10 @@ générique — voir [Synology](../devices/synology.md).
 | Listes de blocage Pi-hole obsolètes | Les listes de blocage (gravity) n'ont pas été reconstruites depuis plus de huit jours (`dumbmonit_pihole_gravity_age_seconds`) : la mise à jour hebdomadaire échoue. | > 8 j | 1 h | Avis (`warning`) | 24 h |
 | Mise à jour Pi-hole disponible | Une version plus récente est disponible (`dumbmonit_pihole_updates_available`) : l'image en Docker, core, interface web ou FTL sinon. Pi-hole vérifie une fois par jour. | > 0 | 1 h | Info (`info`) | 7 j |
 | Messages de diagnostic Pi-hole | Pi-hole liste des messages sur sa page de diagnostic (`dumbmonit_pihole_messages`) : une liste de blocage qui n'a pas pu se télécharger, un client limité en débit, un hôte surchargé. | > 0 | 15 min | Info (`info`) | 24 h |
+| Réponses SERVFAIL de Pi-hole | Plus de 5 % des réponses DNS des dernières 24 heures sont des SERVFAIL (`100 * dumbmonit_pihole_replies_servfail_24h / dumbmonit_pihole_queries_24h`), à partir de 200 requêtes : un résolveur amont échoue. | > 5 % | 30 min | Avis (`warning`) | 6 h |
+| Résolveur amont de Pi-hole lent | Un résolveur amont répond en plus d'une seconde en moyenne (`dumbmonit_pihole_upstream_response_seconds`, une série par résolveur interrogé). | > 1 s | 30 min | Avis (`warning`) | 6 h |
+| Téléchargement d'une liste de blocage Pi-hole en échec | Au moins une liste de blocage activée n'a pas pu être téléchargée à la dernière mise à jour de gravity (`dumbmonit_pihole_lists_download_failed`) : elle est périmée ou vide. | > 0 | 1 h | Avis (`warning`) | 24 h |
+| Pi-hole ne reçoit aucune requête | Aucune requête DNS sur les dernières 24 heures (`dumbmonit_pihole_queries_24h`) : plus aucun client ne l'utilise, ou FTL est figé. | < 1 | 1 h | Info (`info`) | 24 h |
 
 ### AdGuard Home {#adguard-home}
 
@@ -474,6 +478,12 @@ construite sur eux.
 | Serveur amont AdGuard Home en échec | Un serveur DNS amont échoue le propre test d'AdGuard Home, ou reste silencieux 4 secondes (`dumbmonit_adguard_upstream_up`, une série par serveur amont). | < 1 | 10 min | Avis (`warning`) | 6 h |
 | Listes de filtres AdGuard Home obsolètes | La plus ancienne mise à jour d'une liste de filtres activée a plus de trois jours (`dumbmonit_adguard_filter_oldest_update_age_seconds`). | > 3 jours | 1 h | Avis (`warning`) | 24 h |
 | Mise à jour AdGuard Home disponible | Une version plus récente est annoncée par la propre vérification de version d'AdGuard Home (`dumbmonit_adguard_update_available`) ; ne se déclenche jamais quand cette vérification est désactivée, comme dans l'image Docker officielle. | > 0 | 1 h | Info (`info`) | 7 jours |
+| AdGuard Home lent à répondre | Le temps moyen de traitement d'une requête DNS dépasse une demi-seconde (`dumbmonit_adguard_avg_processing_seconds`) : l'hôte est surchargé ou un amont est lent. | > 0,5 s | 30 min | Avis (`warning`) | 6 h |
+| Amont AdGuard Home lent | Un amont répond en plus d'une seconde en moyenne sur la fenêtre de statistiques (`dumbmonit_adguard_upstream_avg_seconds`, une série par amont). | > 1 s | 30 min | Avis (`warning`) | 6 h |
+| Certificat AdGuard Home invalide | Le certificat ou la clé privée du DNS chiffré ne se charge pas ou ne correspond pas (`dumbmonit_adguard_tls_valid`) ; seulement quand le chiffrement est activé. | < 1 | 10 min | Avis (`warning`) | 12 h |
+| Certificat AdGuard Home bientôt expiré | Le certificat du DNS chiffré expire dans moins de 14 jours (`dumbmonit_adguard_tls_expiry_seconds`). | < 14 j | 1 h | Avis (`warning`) | 24 h |
+| Plage DHCP d'AdGuard Home presque pleine | Plus de 90 % de la plage d'adresses DHCP est attribuée (`dumbmonit_adguard_dhcp_pool_used_percent`) ; seulement quand le serveur DHCP est activé. | > 90 % | 30 min | Avis (`warning`) | 12 h |
+| AdGuard Home ne reçoit aucune requête | Aucune requête sur toute la fenêtre de statistiques, quand les statistiques sont actives et couvrent au moins un jour (`dumbmonit_adguard_dns_queries`). | < 1 | 1 h | Info (`info`) | 24 h |
 
 ### Onduleur via NUT {#ups-behind-nut}
 
@@ -542,6 +552,10 @@ le nom, le modèle et le type de l'appareil, la notification dit donc
 | Batterie Home Assistant faible | Une batterie rapportée par Home Assistant est faible (`dumbmonit_homeassistant_battery_low`, une série par batterie sous le seuil de la surveillance, 20 % par défaut ; sa valeur est le niveau). | ≥ 0 % | 30 min | Info (`info`) | 3 j |
 | Mise à jour Home Assistant disponible | Home Assistant a des mises à jour en attente : core, système d'exploitation, extensions ou firmware d'appareil (`dumbmonit_homeassistant_updates_available`). | > 0 | 1 h | Info (`info`) | 7 j |
 | Réparation Home Assistant à traiter | Home Assistant a une réparation ouverte de gravité erreur ou critique (`dumbmonit_homeassistant_repair{severity=~"error\|critical"}`). | > 0 | 15 min | Avis (`warning`) | 24 h |
+| Capteur de sécurité Home Assistant déclenché | Un détecteur de fumée, de gaz, de monoxyde de carbone, de fuite d'eau ou de sécurité est allumé (`dumbmonit_homeassistant_safety_alert`, une série par capteur). | > 0 | 1 min | Avertissement (`critical`) | 30 min |
+| Alarme Home Assistant déclenchée | Une centrale d'alarme est à l'état `triggered` (`dumbmonit_homeassistant_alarm_triggered`). | > 0 | 30 s | Avertissement (`critical`) | 30 min |
+| Capteur de problème Home Assistant allumé | Un capteur binaire de classe `problem` ou `tamper` est allumé depuis trente minutes (`dumbmonit_homeassistant_problem`). | > 0 | 30 min | Avis (`warning`) | 12 h |
+| Automatisation Home Assistant indisponible | Une automatisation est indisponible : sa configuration ne se charge plus, elle ne s'exécute jamais (`dumbmonit_homeassistant_entities_unavailable{domain="automation"}`). | > 0 | 30 min | Avis (`warning`) | 24 h |
 
 ### VMware vSphere {#vmware-vsphere}
 
