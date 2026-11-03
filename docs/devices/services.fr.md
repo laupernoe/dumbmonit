@@ -574,7 +574,10 @@ Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
 
 **Base de données PostgreSQL** — se connecte, s'authentifie et lance une
 requête : le signal d'une base de données qui tourne mais ne répond
-plus. Exemples : la base derrière Nextcloud ou Immich, un recorder Home
+plus. Sur la même connexion, elle lit ensuite les vues de statistiques du
+serveur pour dire *comment* va la base : connexions face à la limite,
+transactions longues ou bloquées, verrous, réplication, âge des identifiants de
+transaction, lignes mortes et archivage WAL. Exemples : la base derrière Nextcloud ou Immich, un recorder Home
 Assistant, une base d'application, une instance TimescaleDB.
 
 ### Configuration
@@ -595,9 +598,16 @@ Assistant, une base d'application, une instance TimescaleDB.
 
 4. Facultatif : remplacez la requête par défaut SELECT 1 par une requête qui renvoie un seul nombre, pour le tracer.
 
+5. Facultatif, pour les métriques de santé complètes (sessions de tous les utilisateurs, verrous, réplication, vacuum) : laissez le rôle lire les vues de statistiques.
+
+    ```
+    GRANT pg_monitor TO dumbmonit;
+    ```
+
 #### Droits requis
 
 - **LOGIN (role attribute)** : Se connecter seulement, aucun autre privilège
+- **pg_monitor (appartenance facultative)** : Lire les vues de statistiques, rien d'autre ; sans lui, les métriques de santé ne couvrent que les sessions du rôle
 
 !!! warning
     La vérification ouvre une vraie connexion à chaque interrogation : sur une instance proche de sa limite de connexions, donnez-lui un intervalle plus long.
@@ -610,12 +620,59 @@ Identifiants : un nom d'utilisateur et mot de passe, requis. Une base de
 données n'est jamais surveillée anonymement, le formulaire n'offre donc
 rien d'autre.
 
-### Ce qu'elle ne peut pas détecter
+### Santé du serveur
 
-Un retard de réplication, un verrou qui s'étire, une table qui ne cesse
-de grandir. Tout ça vit dans les propres vues d'administration du
-moteur — écrivez la requête vous-même, et le nombre qu'elle renvoie
-devient `probe_sql_value`, un graphique sur lequel vous pouvez alerter.
+Toutes les métriques sont préfixées `dumbmonit_postgres_`. Chaque lecture est
+indépendante et en lecture seule (vues de statistiques uniquement) : un droit
+manquant ou un serveur ancien masque simplement la métrique concernée, sans
+jamais faire échouer la vérification. L'option « Métriques de santé du serveur »
+les coupe toutes. Le temps passé à les lire n'est pas compté dans la durée de la
+vérification.
+
+| Métrique | Contenu | Étiquettes |
+|---|---|---|
+| `connections`, `max_connections`, `connections_used_percent` | sessions, `max_connections`, et part utilisée parmi ce que les rôles ordinaires peuvent ouvrir (hors `superuser_reserved_connections`) | |
+| `connections_idle_in_transaction` | sessions qui ont ouvert une transaction puis se sont tues | |
+| `longest_transaction_seconds`, `longest_idle_in_transaction_seconds`, `longest_query_seconds` | plus vieille transaction ouverte, plus vieille session inactive en transaction, requête la plus longue (sessions clientes seulement ; autovacuum et réplication exclus) | |
+| `locks_waiting` | demandes de verrou en attente | |
+| `database_size_bytes` | taille de chaque base (20 au plus) | `database` |
+| `database_wraparound_percent` | âge du plus vieil identifiant de transaction non gelé face à la limite de 2 milliards | `database` |
+| `database_blocks_hit_total`, `database_blocks_read_total` | compteurs derrière le taux de cache | `database` |
+| `cache_hit_percent` | taux de réussite du cache depuis la dernière remise à zéro des statistiques | |
+| `database_deadlocks_total`, `database_commits_total`, `database_rollbacks_total`, `database_temp_bytes_total` | compteurs | `database` |
+| `in_recovery`, `uptime_seconds`, `version_info` | réplica ou primaire, durée de fonctionnement, version | `version` |
+| `replicas` | réplicas en streaming vus par un primaire | |
+| `replica_streaming`, `replica_lag_seconds`, `replica_lag_bytes` | par réplica : état du streaming, retard de rejeu, WAL pas encore rejoué | `replica` (`nom@adresse`) |
+| `replication_slot_active`, `replication_slot_retained_bytes` | par slot de réplication : utilisé ou non, WAL qu'il garde sur le disque du primaire | `slot` |
+| `standby_replay_lag_seconds`, `standby_receiving` | sur un réplica : retard de rejeu (0 quand tout ce qui est reçu est rejoué, un primaire au repos n'est donc pas un faux retard), récepteur WAL connecté | |
+| `dead_tuples_percent`, `table_dead_tuple_percent` | lignes mortes de la base ouverte, et ses cinq pires tables (10 000 lignes au moins) | `table` |
+| `archiver_failing`, `archiver_failed_total`, `archiver_archived_total`, `archiver_last_archived_age_seconds` | archivage WAL (seulement si `archive_mode` est actif) | |
+| `prepared_transactions`, `prepared_transactions_oldest_seconds` | transactions à deux phases laissées préparées, qui bloquent le vacuum | |
+
+Les chiffres de tables décrivent **la base ouverte par la vérification** : ajoutez un moniteur par base pour les autres.
+
+Les règles livrées qui s'appliquent : PostgreSQL connections near the limit,
+PostgreSQL long transaction (plus de 6 heures, un pg_dump nocturne ne la
+déclenche donc pas), PostgreSQL session idle in transaction, PostgreSQL lock
+waits, PostgreSQL transaction ID age high (40 %) et wraparound imminent (75 %),
+PostgreSQL replica not streaming, replica lagging, standby lagging, replication
+slot holding WAL (slot inactif qui garde plus de 5 Gio), WAL archiving failing,
+prepared transaction left open, table full of dead rows, cache hit ratio low,
+deadlock et restarted (les trois dernières sont informatives), plus Monitor
+unreachable.
+
+### Dépannage
+
+- **Seule votre session apparaît dans le compte de connexions.** Le rôle n'a pas
+  `pg_monitor` : `GRANT pg_monitor TO dumbmonit;`.
+- **Pas de métriques de réplication.** `replicas` et les retards n'existent que
+  sur un primaire, `standby_*` que sur un réplica ; un serveur seul rapporte
+  `replicas` à 0.
+- **Pas de série `archiver_*`.** L'archivage WAL est coupé (`archive_mode = off`).
+- **Pas de série `table_*`.** Aucune table n'a encore 10 000 lignes dont 1 000
+  mortes, ou le rôle ne lit pas les statistiques de la base ouverte.
+- **Derrière PgBouncer.** Visez PostgreSQL lui-même : les vues de statistiques
+  décrivent le serveur auquel on est connecté.
 
 ### Options
 
@@ -626,6 +683,7 @@ devient `probe_sql_value`, un graphique sur lequel vous pouvez alerter.
 | `query` | Requête | `SELECT 1` | Lancée à chaque vérification. La requête par défaut ne lit aucune table, le compte n'a donc besoin d'aucun privilège au-delà de se connecter. Une requête renvoyant un nombre en fait un graphique. |
 | `expect` | Valeur attendue | *(vide)* | Valeur que la première colonne de la première ligne doit avoir. Vide : seul le succès de la requête est vérifié. |
 | `sslmode` | Chiffrement | `prefer` | `prefer` chiffre quand le serveur le propose, `require` refuse de se connecter sans ça, `verify-full` vérifie aussi le certificat et le nom, `disable` ne chiffre jamais. |
+| `server_stats` | Métriques de santé du serveur | `true` | Lit aussi connexions, transactions longues, verrous, réplication, âge des identifiants de transaction, lignes mortes et archivage WAL dans les vues de statistiques du serveur, sur la même connexion. Un rôle sans pg_monitor en voit moins ; rien ici ne peut faire échouer la vérification. |
 | `allow_private_targets` | Autoriser les cibles loopback et link-local | `false` | Voir « Adresses que les vérifications refusent » ci-dessous. |
 | `timeout_seconds` | Délai (secondes) | `5` | Temps après lequel le service est rapporté en panne s'il n'a pas répondu. Entre 1 et 60. |
 

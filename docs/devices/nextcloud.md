@@ -35,12 +35,26 @@ All metrics are prefixed `dumbmonit_nextcloud_`.
 | `update_available` | 1 when Nextcloud's own update check found a newer release | `available_version` |
 | `apps_installed`, `app_updates_available` | installed apps, and how many have a newer version in the app store | |
 | `app_update_available` | value 1 per app with an update (at most 32) | `app`, `available_version` |
-| `active_users` | users seen in the last 5 minutes, hour and day | `window` (`5m`, `1h`, `24h`) |
+| `active_users` | users seen in the last 5 minutes, hour, day, week and month | `window` (`5m`, `1h`, `24h`, `7d`, `30d`) |
 | `users`, `files`, `shares` | accounts, files and shares on the instance | |
 | `free_space_bytes` | free space where Nextcloud keeps its data | |
 | `database_size_bytes` | size of the database | |
 | `platform_info` | value 1 | `database`, `database_version`, `php_version` |
 | `php_memory_limit_bytes` | PHP `memory_limit` | |
+| `extended_support` | 1 when this version is out of standard support (Enterprise fixes only) | |
+| `disabled_users` | disabled accounts | |
+| `storages` | storages by kind | `kind` (`local`, `home`, `other`) |
+| `shares_by_type` | shares by type | `type` (`user`, `group`, `link`, `mail`, `room`, `federated_sent`, `federated_received`) |
+| `shares_link_without_password` | public links with no password | |
+| `cpu_count`, `cpu_load` | cores and load average of the Nextcloud host | `window` (`1m`, `5m`, `15m`) for `cpu_load` |
+| `memory_total_bytes`, `memory_free_bytes`, `memory_used_percent` | memory of the host | |
+| `swap_total_bytes`, `swap_free_bytes`, `swap_used_percent` | swap of the host | |
+| `php_max_execution_time_seconds`, `php_upload_max_filesize_bytes` | PHP limits that cap long jobs and uploads | |
+| `debug_mode` | 1 when `debug` is on in `config.php` | |
+| `file_locking_enabled`, `memcache_local_enabled`, `memcache_distributed_enabled`, `memcache_locking_enabled` | file locking, and which caches are configured | |
+| `update_check_age_seconds` | age of Nextcloud's last update check, a daily background job: it stops growing healthy and keeps growing when cron is not running (only written once the check ran at least once) | |
+| `apcu_hit_rate_percent`, `apcu_memory_used_percent`, `apcu_expunges` | APCu, the local memory cache | |
+| `opcache_cached_keys_used_percent`, `opcache_wasted_percent` | OPcache script slots used (they fill before the memory does) and wasted memory | |
 | `opcache_enabled`, `opcache_full` | OPcache on; OPcache out of room | |
 | `opcache_memory_used_percent`, `opcache_interned_strings_used_percent`, `opcache_hit_rate_percent`, `opcache_oom_restarts` | how full OPcache is and how well it serves | |
 | `fpm_active_processes`, `fpm_total_processes`, `fpm_listen_queue`, `fpm_max_children_reached`, `fpm_slow_requests` | PHP-FPM pool, when Nextcloud runs behind PHP-FPM (the `-fpm` images, AIO) | |
@@ -50,15 +64,34 @@ While Nextcloud is in maintenance or waits for an upgrade, its API answers
 and the monitor is not reported unreachable.
 
 The [built-in rules](../alerting/rules.md#self-hosted-applications) that apply:
-Nextcloud stuck in maintenance, Nextcloud database upgrade pending, Nextcloud
-update available, Nextcloud OPcache full, Nextcloud free space low, plus Monitor
-unreachable.
+
+| Rule | Fires when |
+|---|---|
+| Nextcloud stuck in maintenance | maintenance mode on for 30 minutes |
+| Nextcloud database upgrade pending | `occ upgrade` waiting for 10 minutes (critical) |
+| Nextcloud update available | a newer release exists (info) |
+| Nextcloud OPcache full | OPcache out of memory for 30 minutes |
+| Nextcloud free space low | under 5 GiB free for 30 minutes |
+| Nextcloud in debug mode | `debug` on for an hour |
+| Nextcloud OPcache script slots almost full | 95% of the slots used for an hour |
+| Nextcloud OPcache restarting | OPcache restarted for lack of memory in the last hour |
+| Nextcloud background jobs seem stopped | no update check for 14 days |
+| Nextcloud PHP memory limit low | `memory_limit` under 512 MiB (info, unlimited is fine) |
+| Nextcloud PHP-FPM out of workers | `pm.max_children` reached in the last 30 minutes |
+| Nextcloud PHP-FPM queue building up | more than 10 requests waiting for ten minutes |
+| Nextcloud app updates waiting | app updates pending for three days (info) |
+| Nextcloud version out of standard support | `extended_support` is 1 |
+
+plus Monitor unreachable.
 
 ## Background jobs (cron)
 
 Nextcloud does not tell the monitoring token when background jobs last ran:
 only an account with every right on the instance can read that, and DumbMonit
-does not ask for one. Watch cron with a [Heartbeat](push.md) instead: create
+does not ask for one. Two things stand in for it. The rule **Nextcloud background
+jobs seem stopped** watches the age of Nextcloud's daily update check, itself a
+background job (if you turned the update checker off in `config.php`, disable that
+rule). For a precise answer, watch cron with a [Heartbeat](push.md): create
 one in DumbMonit, then call its URL at the end of the cron line that runs
 Nextcloud's background jobs, so it only calls in when `cron.php` succeeded:
 
@@ -134,6 +167,22 @@ Checking the token by hand, from the DumbMonit host:
 ```
 curl -H 'NC-Token: YOUR-TOKEN' 'https://cloud.example.com/ocs/v2.php/apps/serverinfo/api/v1/info?format=json'
 ```
+
+## Troubleshooting
+
+- **401 on the first read.** The token was set seconds ago and Nextcloud has not
+  picked it up: DumbMonit retries once after two seconds. A token that stays
+  refused is wrong, or the `serverinfo` app is disabled.
+- **"Untrusted domain" or an HTML page.** The address is not in `trusted_domains`
+  (`config.php`).
+- **Only a few metrics, and "maintenance" is 1.** Normal while Nextcloud is in
+  maintenance mode or waits for `occ upgrade`: its API answers 503 and the monitor
+  is not reported unreachable.
+- **No `update_check_age_seconds`.** The update checker is off or never ran.
+- **No `fpm_*` or `apcu_*` series.** Nextcloud runs under Apache with mod_php (no
+  PHP-FPM), or APCu is not installed.
+- **No integrity check or background job dates.** The monitoring token cannot read
+  them, by design: see "Background jobs (cron)" above.
 
 ## Credentials
 

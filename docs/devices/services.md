@@ -564,7 +564,10 @@ From the DumbMonit server (or its relay agent) to the device:
 | 5432 | TCP | PostgreSQL (default port) |
 
 **PostgreSQL database** — connects, authenticates and runs one query: the signal
-for a database that is up but no longer answering. Examples: the database behind
+for a database that is up but no longer answering. On the same connection it then
+reads the server's own statistics views, to tell you *how* the database is doing:
+connections against the limit, long or stuck transactions, locks, replication,
+transaction ID age, dead rows and WAL archiving. Examples: the database behind
 Nextcloud or Immich, a Home Assistant recorder, an application database, a
 TimescaleDB instance.
 
@@ -586,9 +589,16 @@ TimescaleDB instance.
 
 4. Optional: replace the default query SELECT 1 with one that returns a single number, to chart it.
 
+5. Optional, for the complete server health metrics (sessions of every user, locks, replication, vacuum): let the role read the statistics views.
+
+    ```
+    GRANT pg_monitor TO dumbmonit;
+    ```
+
 #### Required permissions
 
 - **LOGIN (role attribute)**: Connect only, no other privilege
+- **pg_monitor (optional role membership)**: Read the statistics views, nothing else; without it the health metrics only cover the role's own sessions
 
 !!! warning
     The check opens a real connection on every poll: on an instance close to its connection limit, give it a longer interval.
@@ -600,11 +610,57 @@ The default query is SELECT 1, which reads no table: nothing else has to be gran
 Credentials: a username and password, required. A database is never monitored
 anonymously, so the form offers nothing else.
 
-### What it cannot detect
+### Server health
 
-Replication lag, a lock that drags on, a table that keeps growing. All of those
-live in the engine's own administration views — write the query yourself, and
-the number it returns becomes `probe_sql_value`, a chart you can alert on.
+All metrics are prefixed `dumbmonit_postgres_`. Every read is independent and
+read-only (statistics views only): a missing privilege or an older server just
+hides that metric, and never makes the check fail. Turn them all off with the
+"Server health metrics" option. Time spent on them is not counted in the check's
+duration.
+
+| Metric | What | Labels |
+|---|---|---|
+| `connections`, `max_connections`, `connections_used_percent` | sessions, `max_connections`, and the share used out of what ordinary roles may open (`superuser_reserved_connections` excluded) | |
+| `connections_idle_in_transaction` | sessions that opened a transaction and went quiet | |
+| `longest_transaction_seconds`, `longest_idle_in_transaction_seconds`, `longest_query_seconds` | oldest open transaction, oldest idle-in-transaction session, longest running query (client sessions only; autovacuum and replication excluded) | |
+| `locks_waiting` | lock requests waiting to be granted | |
+| `database_size_bytes` | size of each database (at most 20) | `database` |
+| `database_wraparound_percent` | age of the oldest unfrozen transaction ID against the 2 billion limit | `database` |
+| `database_blocks_hit_total`, `database_blocks_read_total` | counters behind the cache hit ratio | `database` |
+| `cache_hit_percent` | cache hit ratio since the statistics were last reset | |
+| `database_deadlocks_total`, `database_commits_total`, `database_rollbacks_total`, `database_temp_bytes_total` | counters | `database` |
+| `in_recovery`, `uptime_seconds`, `version_info` | standby or primary, server uptime, version | `version` |
+| `replicas` | streaming replicas seen by a primary | |
+| `replica_streaming`, `replica_lag_seconds`, `replica_lag_bytes` | per replica: streaming state, replay lag, WAL not yet replayed | `replica` (`name@address`) |
+| `replication_slot_active`, `replication_slot_retained_bytes` | per replication slot: in use, WAL it keeps on the primary's disk | `slot` |
+| `standby_replay_lag_seconds`, `standby_receiving` | on a standby: replay delay (0 when fully caught up, so an idle primary is not a false lag), WAL receiver connected | |
+| `dead_tuples_percent`, `table_dead_tuple_percent` | dead rows in the opened database, and its five worst tables (at least 10,000 rows) | `table` |
+| `archiver_failing`, `archiver_failed_total`, `archiver_archived_total`, `archiver_last_archived_age_seconds` | WAL archiving (only when `archive_mode` is on) | |
+| `prepared_transactions`, `prepared_transactions_oldest_seconds` | two-phase transactions left prepared, which block vacuum | |
+
+The table figures describe the **database opened by the check**: add one monitor per database if you want the others.
+
+The built-in rules that apply: PostgreSQL connections near the limit,
+PostgreSQL long transaction (over 6 hours, so a nightly pg_dump does not trigger
+it), PostgreSQL session idle in transaction, PostgreSQL lock waits, PostgreSQL
+transaction ID age high (40%) and wraparound imminent (75%), PostgreSQL replica
+not streaming, replica lagging, standby lagging, replication slot holding WAL
+(an inactive slot keeping over 5 GiB), WAL archiving failing, prepared
+transaction left open, table full of dead rows, cache hit ratio low, deadlock and
+restarted (the last three are informational), plus Monitor unreachable.
+
+### Troubleshooting
+
+- **Only your own session shows in the connection count.** The role lacks
+  `pg_monitor`: run `GRANT pg_monitor TO dumbmonit;`.
+- **No replication metrics.** `replicas` and the lag figures exist only on a
+  primary, and `standby_*` only on a standby; a standalone server reports
+  `replicas` as 0.
+- **No `archiver_*` series.** WAL archiving is off (`archive_mode = off`).
+- **No `table_*` series.** No table has 10,000 rows and 1,000 dead rows yet, or
+  the role cannot read statistics of the opened database.
+- **Behind PgBouncer.** Point the monitor at PostgreSQL itself: the statistics
+  views describe the server you are connected to.
 
 ### Options
 
@@ -615,6 +671,7 @@ the number it returns becomes `probe_sql_value`, a chart you can alert on.
 | `query` | Query | `SELECT 1` | Run on every check. The default reads no table, so the account needs no privilege beyond connecting. A query returning one number turns it into a chart. |
 | `expect` | Expected value | *(empty)* | Value the first column of the first row must hold. Empty: only the query succeeding is checked. |
 | `sslmode` | Encryption | `prefer` | `prefer` encrypts when the server offers it, `require` refuses to connect without it, `verify-full` also checks the certificate and the name, `disable` never encrypts. |
+| `server_stats` | Server health metrics | `true` | Also reads connections, long transactions, locks, replication, transaction ID age, dead rows and WAL archiving from the server's statistics views, on the same connection. A role without pg_monitor sees fewer of them; nothing here can make the check fail. |
 | `allow_private_targets` | Allow loopback and link-local targets | `false` | See "Addresses the checks refuse" below. |
 | `timeout_seconds` | Timeout (seconds) | `5` | Time after which the service is reported down if it has not answered. Between 1 and 60. |
 
