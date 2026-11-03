@@ -9296,5 +9296,10 @@
 	"devices_agent_help_restart": "重启代理",
 	"devices_agent_help_logs": "最新日志",
 	"deviceform_enroll_compose_title": "或使用 Docker Compose（docker-compose.yml）",
-	"deviceform_enroll_copy_compose": "复制 Compose 文件"
+	"deviceform_enroll_copy_compose": "复制 Compose 文件",
+	"devices_agent_remove_title": "同时移除代理？",
+	"devices_agent_remove_text": "删除监控项不会卸载代理：它会继续在机器上运行并再次请求注册。请先在机器上运行以下命令，再删除监控项。",
+	"devices_agent_remove_docker": "如果代理以 Docker 容器运行，请改用第二条命令。",
+	"devices_agent_remove_delete": "删除监控项",
+	"devices_agent_remove_cancel": "取消"
 }

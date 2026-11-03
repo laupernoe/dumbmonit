@@ -9396,5 +9396,10 @@
 	"devices_agent_help_restart": "Redémarrer l'agent",
 	"devices_agent_help_logs": "Derniers journaux",
 	"deviceform_enroll_compose_title": "Ou avec Docker Compose (docker-compose.yml)",
-	"deviceform_enroll_copy_compose": "Copier le fichier Compose"
+	"deviceform_enroll_copy_compose": "Copier le fichier Compose",
+	"devices_agent_remove_title": "Désinstaller aussi l'agent ?",
+	"devices_agent_remove_text": "Supprimer le moniteur ne désinstalle pas l'agent : il continue de tourner sur la machine et redemande à s'enrôler. Lancez d'abord ceci sur la machine, puis supprimez le moniteur.",
+	"devices_agent_remove_docker": "Si l'agent tourne dans un conteneur Docker, utilisez plutôt la seconde commande.",
+	"devices_agent_remove_delete": "Supprimer le moniteur",
+	"devices_agent_remove_cancel": "Annuler"
 }
