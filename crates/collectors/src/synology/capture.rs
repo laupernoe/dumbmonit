@@ -219,3 +219,104 @@ fn les_metriques_tirees_de_la_capture_reelle_sont_celles_attendues() {
         5
     );
 }
+
+#[test]
+fn letat_des_volumes_et_des_groupes_reels_donne_les_nouvelles_series() {
+    let storage: StorageInfo = data(STORAGE);
+    // 24 septembre 2026 17:07:45 UTC, l'heure du relevé.
+    let ts = 1_790_269_665_000;
+
+    let mut samples = metrics::volume_samples(&storage.volumes, ts);
+    samples.extend(metrics::pool_samples(&storage.storage_pools, "pool", ts));
+    samples.extend(metrics::pool_samples(&storage.ssd_caches, "ssd_cache", ts));
+    if let Some(env) = &storage.env {
+        samples.extend(metrics::env_samples(env, ts));
+    }
+    let valeur = |metric: &str| samples.iter().find(|s| s.metric == metric).map(|s| s.value);
+
+    // Le volume du relevé est inscriptible, déverrouillé, avec des inodes libres.
+    assert_eq!(valeur("synology_volume_read_only"), Some(0.0));
+    assert_eq!(valeur("synology_volume_locked"), Some(0.0));
+    assert_eq!(valeur("synology_volume_inode_full"), Some(0.0));
+    // Au repos, DSM annonce `percent: "-1"` et l'étape `none` : aucune série.
+    assert_eq!(valeur("synology_volume_task_progress_percent"), None);
+    assert_eq!(valeur("synology_pool_task_progress_percent"), None);
+
+    // Dernière vérification des données le 4 août 2025 (`last_done_time`), planifiée.
+    assert_eq!(valeur("synology_pool_scrub_scheduled"), Some(1.0));
+    let age = valeur("synology_pool_scrub_age_seconds").expect("ancienneté de la vérification");
+    assert_eq!(age, 1_790_269_665.0 - 1_754_325_253.0);
+    // Le cache SSD n'a pas de vérification de données, mais un taux de réussite.
+    assert_eq!(valeur("synology_ssd_cache_hit_rate_percent"), Some(78.0));
+    assert_eq!(
+        samples.iter().filter(|s| s.metric == "synology_pool_scrub_age_seconds").count(),
+        1,
+        "seul le groupe de stockage a une vérification de données"
+    );
+    assert_eq!(valeur("synology_system_rebuilding"), Some(0.0));
+}
+
+#[test]
+fn une_operation_en_cours_et_un_volume_en_lecture_seule_se_voient() {
+    use super::model::{Pool, Volume};
+
+    let volume: Volume = serde_json::from_str(
+        r#"{"id":"volume_2","status":"normal","is_writable":false,"is_locked":true,
+            "is_inode_full":"1","progress":{"percent":"42","step":"check_fs"}}"#,
+    )
+    .unwrap();
+    let samples = metrics::volume_samples(&[volume], 0);
+    let valeur = |metric: &str| samples.iter().find(|s| s.metric == metric).map(|s| s.value);
+    assert_eq!(valeur("synology_volume_read_only"), Some(1.0));
+    assert_eq!(valeur("synology_volume_locked"), Some(1.0));
+    assert_eq!(valeur("synology_volume_inode_full"), Some(1.0));
+    let progress = samples
+        .iter()
+        .find(|s| s.metric == "synology_volume_task_progress_percent")
+        .expect("une opération tourne");
+    assert_eq!(progress.value, 42.0);
+    assert_eq!(progress.labels["step"], "check_fs");
+
+    // Un ancien DSM sans ces champs : aucune série plutôt qu'un faux « tout va bien ».
+    let ancien: Volume = serde_json::from_str(r#"{"id":"volume_1","status":"normal"}"#).unwrap();
+    let samples = metrics::volume_samples(&[ancien], 0);
+    assert!(samples.iter().all(|s| s.metric != "synology_volume_read_only"));
+
+    // Reconstruction d'un groupe : l'étape est portée en étiquette.
+    let pool: Pool = serde_json::from_str(
+        r#"{"id":"reuse_1","status":"background","progress":{"percent":"7","step":"resync"}}"#,
+    )
+    .unwrap();
+    let samples = metrics::pool_samples(&[pool], "pool", 0);
+    let progress = samples
+        .iter()
+        .find(|s| s.metric == "synology_pool_task_progress_percent")
+        .expect("reconstruction en cours");
+    assert_eq!((progress.value, progress.labels["step"].as_str()), (7.0, "resync"));
+}
+
+#[test]
+fn lactivite_reelle_des_disques_est_publiee_par_peripherique() {
+    let usage: Utilization = data(UTILIZATION);
+    let samples = metrics::utilization_samples(&usage, 1_000);
+
+    let busy: Vec<(&str, &str, f64)> = samples
+        .iter()
+        .filter(|s| s.metric == "synology_disk_busy_percent")
+        .map(|s| (s.labels["device"].as_str(), s.labels["name"].as_str(), s.value))
+        .collect();
+    assert_eq!(busy.len(), 5, "quatre disques et le cache NVMe, sans le total");
+    assert!(busy.contains(&("nvme0n1", "Cache device 1", 0.0)));
+    assert!(busy.contains(&("sda", "Drive 1", 2.0)));
+
+    let lecture = samples
+        .iter()
+        .find(|s| s.metric == "synology_disk_read_bytes_per_second" && s.labels["device"] == "sda")
+        .unwrap();
+    assert_eq!(lecture.value, 104_960.0);
+    let ecriture = samples
+        .iter()
+        .find(|s| s.metric == "synology_disk_write_iops" && s.labels["device"] == "sdc")
+        .unwrap();
+    assert_eq!(ecriture.value, 4.0);
+}

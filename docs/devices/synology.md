@@ -42,6 +42,11 @@ All metrics are prefixed `dumbmonit_synology_`.
 | Volumes | `volume_status`, `volume_total/used/available_bytes`, `volume_used_percent`, `volume_used_warning_percent`, `volume_used_critical_percent` | `volume`, `fs_type`, `raid_type` |
 | Storage pools and SSD caches | `pool_status`, `pool_failed_disks`, `pool_total/used_bytes`, and the same four under `ssd_cache_` | `pool` or `ssd_cache`, `name`, `raid_type` |
 | Disks | `disk_status`, `disk_smart_status`, `disk_temperature_celsius`, `disk_size_bytes`, `disk_bad_sector_exceeded`, `disk_life_below_threshold`, `disk_remaining_life_percent` (SSD only: the life the drive says it has left), `disk_unc_count` (DSM's unreadable-sector counter, the one it checks against its bad-sector threshold), `disk_info` | `disk`, `name`; on `disk_info`: `model`, `serial`, `vendor`, `firmware`, `type`, `ssd` |
+| Volumes and pool operations | `volume_read_only`, `volume_locked`, `volume_inode_full` (`1` when raised); `volume_task_progress_percent`, `pool_task_progress_percent` (only while DSM runs a check, rebuild or resync; the `step` label names it); `pool_scrub_scheduled`, `pool_scrub_age_seconds` (time since the last data scrubbing finished; absent until one has run); `ssd_cache_hit_rate_percent`; `system_rebuilding` | `volume` / `pool`, `step` |
+| Disk activity | `disk_busy_percent` (share of time the disk served requests; it stays near 100 % during a scrub or rebuild, so it is a measure, not an alert), `disk_read_bytes_per_second`, `disk_write_bytes_per_second`, `disk_read_iops`, `disk_write_iops` | `device`, `name` |
+| Certificates | `certificate_expires_in_seconds` (negative once expired), `certificate_broken` | `certificate`, `subject`, `default` |
+| Packages | `packages_installed`, `package_running` (`1` running, `0` stopped or any other state; at most 64) | `package`, `name` |
+| Connections | `connections_total`, `connections` (open sessions by protocol: `smb`, `https`, `ssh`…; no user name or address is kept) | `protocol` |
 | Hyper Backup | `backup_tasks`, `backup_running`, `backup_last_result`, `backup_last_run_age_seconds`, `backup_last_success_age_seconds`, `backup_next_run_in_seconds` | per task |
 | Synology Drive | `drive_up`, `drive_team_folders`, `drive_team_folder_info`, `drive_connections` (see below) | `drive_team_folder_info`: `name` |
 | Synology Photos | `photos_installed` (see below) | |
@@ -131,6 +136,29 @@ the NAS.
 | Synology volume almost full | advisory | A volume is 90 % full or more, for 15 minutes. |
 | Synology temperature high | advisory | A disk is above 55 °C, or DSM raised its temperature warning, for 15 minutes. |
 | Synology memory high | advisory | Memory usage above 95 % for 15 minutes. |
+| Synology system partition crashed | critical | DSM reports `system_crashed`, for 5 minutes. |
+| Synology system partition needs repair | warning | DSM reports `system_need_repair`, for 30 minutes. |
+| Synology CPU sustained high | warning | CPU above 90 % for 15 minutes. |
+| Synology swap heavily used | advisory | More than 60 % of the swap in use for an hour. |
+| Synology DSM update available | advisory | `update_available` is 1 for an hour. |
+| Synology Hyper Backup failed | warning | The last run of a task failed (unreachable destination, checksum error…), for 10 minutes. A run in progress, a cancelled or a never-run task do not fire it. |
+| Synology Hyper Backup success too old | advisory | No successful run of a task for more than 8 days. A monthly task needs a longer limit: edit the rule or silence it for that task. |
+| Synology volume read-only | critical | A volume is read-only, for 5 minutes. |
+| Synology volume locked | warning | An encrypted volume is locked, for 10 minutes: its shares are unavailable. |
+| Synology volume out of inodes | warning | A volume has no free inode left, for 10 minutes. |
+| Synology data scrubbing overdue | advisory | The last data scrubbing of a pool ended more than 200 days ago. |
+| Synology certificate expiring | warning | A DSM certificate expires in less than 14 days (an automatic Let's Encrypt renewal normally happens at 30). |
+| Synology certificate about to expire | critical | A DSM certificate expires in less than 3 days, or already has. |
+| Synology certificate broken | warning | DSM marks a certificate as broken, for an hour. |
+
+!!! note "Certificates, packages and connections"
+    These come from three DSM APIs that Synology does not document
+    (`SYNO.Core.Certificate.CRT`, `SYNO.Core.Package`,
+    `SYNO.Core.CurrentConnection`); their shape follows the community library
+    `synology-api`, and unlike the storage metrics they have not been checked on
+    a real NAS yet. They are read as optional: if DSM refuses or answers
+    differently, the series are simply absent, no error is counted and the other
+    metrics are unaffected. Certificates and packages are read once an hour.
 
 ## Active Backup for Business
 
@@ -406,4 +434,7 @@ used over HTTPS and 5000 over HTTP.
 | No `dumbmonit_abb_*` metrics, `scrape_errors` at 1 | The account cannot use Active Backup for Business: delegate the package to it, or disable the `abb` option. Without the package installed there is no error and no metric. |
 | Task metrics but no device rows on the page | The NAS does not advertise `SYNO.ActiveBackup.Overview` (older ABB), or the device is probed through a relay agent, which keeps the history in memory on its side: the metrics exist, the calendar does not. |
 | A laptop shows "Overdue" the day after it was added | Fewer than three successes: the model is still learning and allows 72 hours between backups; it settles once two weeks of habits are known. |
+| No `certificate_*`, `package_*` or `connections*` metrics | The account is not an administrator, or this DSM answers those APIs differently (see the note under the rules). Nothing else is affected. |
+| `pool_scrub_age_seconds` is absent | No data scrubbing has ever finished on that pool: schedule one in Storage Manager → Storage Pool → Data Scrubbing. |
+| A task progress series appears and disappears | Normal: it exists only while DSM runs a check, a rebuild or a resync. |
 | Disks spin up on every probe | The storage inventory wakes sleeping disks. Lengthen the check interval. |

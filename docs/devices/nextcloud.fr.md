@@ -39,12 +39,26 @@ Toutes les métriques sont préfixées `dumbmonit_nextcloud_`.
 | `update_available` | 1 quand la propre vérification de mise à jour de Nextcloud a trouvé une release plus récente | `available_version` |
 | `apps_installed`, `app_updates_available` | applications installées, et combien ont une version plus récente dans la boutique d'applications | |
 | `app_update_available` | valeur 1 par application avec une mise à jour (32 au plus) | `app`, `available_version` |
-| `active_users` | utilisateurs vus dans les 5 dernières minutes, l'heure et le jour | `window` (`5m`, `1h`, `24h`) |
+| `active_users` | utilisateurs vus dans les 5 dernières minutes, l'heure, le jour, la semaine et le mois | `window` (`5m`, `1h`, `24h`, `7d`, `30d`) |
 | `users`, `files`, `shares` | comptes, fichiers et partages sur l'instance | |
 | `free_space_bytes` | espace libre où Nextcloud garde ses données | |
 | `database_size_bytes` | taille de la base de données | |
 | `platform_info` | valeur 1 | `database`, `database_version`, `php_version` |
 | `php_memory_limit_bytes` | `memory_limit` de PHP | |
+| `extended_support` | 1 quand cette version est sortie du support standard (correctifs Enterprise seulement) | |
+| `disabled_users` | comptes désactivés | |
+| `storages` | stockages par type | `kind` (`local`, `home`, `other`) |
+| `shares_by_type` | partages par type | `type` (`user`, `group`, `link`, `mail`, `room`, `federated_sent`, `federated_received`) |
+| `shares_link_without_password` | liens publics sans mot de passe | |
+| `cpu_count`, `cpu_load` | cœurs et charge moyenne de l'hôte Nextcloud | `window` (`1m`, `5m`, `15m`) pour `cpu_load` |
+| `memory_total_bytes`, `memory_free_bytes`, `memory_used_percent` | mémoire de l'hôte | |
+| `swap_total_bytes`, `swap_free_bytes`, `swap_used_percent` | swap de l'hôte | |
+| `php_max_execution_time_seconds`, `php_upload_max_filesize_bytes` | limites PHP qui bornent les longues tâches et les envois | |
+| `debug_mode` | 1 quand `debug` est actif dans `config.php` | |
+| `file_locking_enabled`, `memcache_local_enabled`, `memcache_distributed_enabled`, `memcache_locking_enabled` | verrouillage des fichiers, et quels caches sont configurés | |
+| `update_check_age_seconds` | ancienneté de la dernière vérification de mise à jour de Nextcloud, tâche de fond quotidienne : elle reste basse en bonne santé et ne cesse de croître quand le cron ne tourne pas (écrite seulement une fois la vérification passée au moins une fois) | |
+| `apcu_hit_rate_percent`, `apcu_memory_used_percent`, `apcu_expunges` | APCu, le cache mémoire local | |
+| `opcache_cached_keys_used_percent`, `opcache_wasted_percent` | emplacements de scripts d'OPcache utilisés (ils se remplissent avant la mémoire) et mémoire gaspillée | |
 | `opcache_enabled`, `opcache_full` | OPcache activé ; OPcache sans place | |
 | `opcache_memory_used_percent`, `opcache_interned_strings_used_percent`, `opcache_hit_rate_percent`, `opcache_oom_restarts` | à quel point OPcache est plein et comme il sert bien | |
 | `fpm_active_processes`, `fpm_total_processes`, `fpm_listen_queue`, `fpm_max_children_reached`, `fpm_slow_requests` | pool PHP-FPM, quand Nextcloud tourne derrière PHP-FPM (les images `-fpm`, AIO) | |
@@ -54,16 +68,37 @@ API répond 503 : seuls `maintenance`, `needs_db_upgrade` et `version_info`
 sont alors écrits, et la surveillance n'est pas rapportée inaccessible.
 
 Les [règles intégrées](../alerting/rules.md#self-hosted-applications) qui
-s'appliquent : Nextcloud bloqué en maintenance, mise à niveau de base de
-données Nextcloud en attente, mise à jour Nextcloud disponible, OPcache
-Nextcloud plein, espace libre Nextcloud faible, plus Surveillance inaccessible.
+s'appliquent :
+
+| Règle | Se déclenche quand |
+|---|---|
+| Nextcloud stuck in maintenance | mode maintenance actif depuis 30 minutes |
+| Nextcloud database upgrade pending | `occ upgrade` en attente depuis 10 minutes (critique) |
+| Nextcloud update available | une release plus récente existe (info) |
+| Nextcloud OPcache full | OPcache sans mémoire depuis 30 minutes |
+| Nextcloud free space low | moins de 5 Gio libres depuis 30 minutes |
+| Nextcloud in debug mode | `debug` actif depuis une heure |
+| Nextcloud OPcache script slots almost full | 95 % des emplacements utilisés depuis une heure |
+| Nextcloud OPcache restarting | OPcache redémarré faute de mémoire dans la dernière heure |
+| Nextcloud background jobs seem stopped | aucune vérification de mise à jour depuis 14 jours |
+| Nextcloud PHP memory limit low | `memory_limit` sous 512 Mio (info, illimité accepté) |
+| Nextcloud PHP-FPM out of workers | `pm.max_children` atteint dans les 30 dernières minutes |
+| Nextcloud PHP-FPM queue building up | plus de 10 requêtes en attente depuis dix minutes |
+| Nextcloud app updates waiting | mises à jour d'applications en attente depuis trois jours (info) |
+| Nextcloud version out of standard support | `extended_support` vaut 1 |
+
+plus Surveillance inaccessible.
 
 ## Tâches de fond (cron)
 
 Nextcloud ne dit pas au jeton de surveillance quand les tâches de fond ont
 tourné pour la dernière fois : seul un compte avec tous les droits sur
-l'instance peut le lire, et DumbMonit n'en demande pas un. Surveillez le
-cron avec un [battement de cœur](push.md) à la place : créez-en un dans
+l'instance peut le lire, et DumbMonit n'en demande pas un. Deux choses le
+remplacent. La règle **Nextcloud background jobs seem stopped** surveille
+l'ancienneté de la vérification quotidienne des mises à jour, elle-même une
+tâche de fond (si vous avez coupé le vérificateur dans `config.php`,
+désactivez cette règle). Pour une réponse précise, surveillez le cron avec un
+[battement de cœur](push.md) : créez-en un dans
 DumbMonit, puis appelez son URL à la fin de la ligne cron qui lance les
 tâches de fond de Nextcloud, pour qu'il n'appelle que lorsque `cron.php` a
 réussi :
@@ -145,6 +180,25 @@ Vérifier le jeton à la main, depuis l'hôte DumbMonit :
 ```
 curl -H 'NC-Token: YOUR-TOKEN' 'https://cloud.example.com/ocs/v2.php/apps/serverinfo/api/v1/info?format=json'
 ```
+
+## Dépannage
+
+- **401 à la première lecture.** Le jeton vient d'être posé et Nextcloud ne
+  l'a pas encore pris en compte : DumbMonit réessaie une fois après deux
+  secondes. Un jeton qui reste refusé est faux, ou l'application `serverinfo`
+  est désactivée.
+- **« Untrusted domain » ou une page HTML.** L'adresse n'est pas dans
+  `trusted_domains` (`config.php`).
+- **Peu de métriques, et `maintenance` vaut 1.** Normal tant que Nextcloud est
+  en maintenance ou attend `occ upgrade` : son API répond 503 et la
+  surveillance n'est pas rapportée inaccessible.
+- **Pas de `update_check_age_seconds`.** Le vérificateur de mises à jour est
+  coupé ou n'a jamais tourné.
+- **Pas de séries `fpm_*` ou `apcu_*`.** Nextcloud tourne sous Apache avec
+  mod_php (pas de PHP-FPM), ou APCu n'est pas installé.
+- **Pas de contrôle d'intégrité ni de dates des tâches de fond.** Le jeton de
+  surveillance ne peut pas les lire, par conception : voir « Tâches de fond
+  (cron) » ci-dessus.
 
 ## Identifiants
 

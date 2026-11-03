@@ -58,6 +58,9 @@ pub struct Status {
     pub version: Option<String>,
     #[serde(default)]
     pub productname: Option<String>,
+    /// Version sortie du support standard (support étendu, entreprise seulement).
+    #[serde(default)]
+    pub extended_support: bool,
 }
 
 // ------------------------------------------------------------------ sonde
@@ -91,6 +94,7 @@ pub fn status_samples(status: &Status, ts_ms: i64) -> Vec<Sample> {
     let mut out = vec![
         flag("nextcloud_maintenance", status.maintenance, ts_ms),
         flag("nextcloud_needs_db_upgrade", status.needs_db_upgrade, ts_ms),
+        flag("nextcloud_extended_support", status.extended_support, ts_ms),
     ];
     if let Some(version) = status.versionstring.as_deref().or(status.version.as_deref()) {
         out.push(gauge("nextcloud_version_info", 1.0, ts_ms).with_label("version", version));
@@ -117,7 +121,13 @@ pub fn serverinfo_samples(data: &Value, ts_ms: i64) -> Vec<Sample> {
     put("nextcloud_database_size_bytes", "/server/database/size");
     put("nextcloud_php_memory_limit_bytes", "/server/php/memory_limit");
 
-    for (window, key) in [("5m", "last5minutes"), ("1h", "last1hour"), ("24h", "last24hours")] {
+    for (window, key) in [
+        ("5m", "last5minutes"),
+        ("1h", "last1hour"),
+        ("24h", "last24hours"),
+        ("7d", "last7days"),
+        ("30d", "lastmonth"),
+    ] {
         if let Some(value) = number(data.pointer(&format!("/activeUsers/{key}"))) {
             out.push(gauge("nextcloud_active_users", value, ts_ms).with_label("window", window));
         }
@@ -152,8 +162,139 @@ pub fn serverinfo_samples(data: &Value, ts_ms: i64) -> Vec<Sample> {
                 .with_label("php_version", php.unwrap_or("")),
         );
     }
+    out.extend(depth_samples(data, ts_ms));
     out.extend(opcache_samples(data.pointer("/server/php/opcache"), ts_ms));
     out.extend(fpm_samples(data.pointer("/server/fpm"), ts_ms));
+    out
+}
+
+/// Un réglage « yes » / « no » de `serverinfo`, ou un booléen selon la version.
+fn yes(value: Option<&Value>) -> Option<bool> {
+    match value? {
+        Value::Bool(b) => Some(*b),
+        Value::String(s) => Some(s.trim().eq_ignore_ascii_case("yes")),
+        _ => None,
+    }
+}
+
+/// Un cache configuré : `none`, vide ou absent signifient « pas de cache ».
+fn cache_configured(value: Option<&Value>) -> Option<bool> {
+    let text = value?.as_str()?.trim();
+    Some(!text.is_empty() && !text.eq_ignore_ascii_case("none"))
+}
+
+/// Ce que `serverinfo` dit au-delà des chiffres de base : charge et mémoire de
+/// la machine (la mémoire est en Kio), répartition des partages, état des
+/// caches, mode debug, ancienneté de la dernière vérification de mise à jour, et
+/// APCu. Chaque champ est facultatif : une version plus ancienne ne le donne pas.
+pub fn depth_samples(data: &Value, ts_ms: i64) -> Vec<Sample> {
+    let mut out = Vec::new();
+    let mut put = |name: &str, pointer: &str, factor: f64| {
+        if let Some(value) = number(data.pointer(pointer)) {
+            out.push(gauge(name, value * factor, ts_ms));
+        }
+    };
+    put("nextcloud_disabled_users", "/nextcloud/storage/num_disabled_users", 1.0);
+    put("nextcloud_cpu_count", "/nextcloud/system/cpunum", 1.0);
+    put("nextcloud_memory_total_bytes", "/nextcloud/system/mem_total", 1024.0);
+    put("nextcloud_memory_free_bytes", "/nextcloud/system/mem_free", 1024.0);
+    put("nextcloud_swap_total_bytes", "/nextcloud/system/swap_total", 1024.0);
+    put("nextcloud_swap_free_bytes", "/nextcloud/system/swap_free", 1024.0);
+    put("nextcloud_php_max_execution_time_seconds", "/server/php/max_execution_time", 1.0);
+    put("nextcloud_php_upload_max_filesize_bytes", "/server/php/upload_max_filesize", 1.0);
+    put(
+        "nextcloud_shares_link_without_password",
+        "/nextcloud/shares/num_shares_link_no_password",
+        1.0,
+    );
+
+    for (window, index) in [("1m", 0), ("5m", 1), ("15m", 2)] {
+        if let Some(load) = number(data.pointer(&format!("/nextcloud/system/cpuload/{index}"))) {
+            out.push(gauge("nextcloud_cpu_load", load, ts_ms).with_label("window", window));
+        }
+    }
+    for (label, total, free) in [
+        ("nextcloud_memory_used_percent", "mem_total", "mem_free"),
+        ("nextcloud_swap_used_percent", "swap_total", "swap_free"),
+    ] {
+        let total = number(data.pointer(&format!("/nextcloud/system/{total}")));
+        let free = number(data.pointer(&format!("/nextcloud/system/{free}")));
+        if let (Some(total), Some(free)) = (total, free)
+            && total > 0.0
+        {
+            out.push(gauge(label, ((total - free) / total * 100.0).clamp(0.0, 100.0), ts_ms));
+        }
+    }
+
+    for (kind, key) in [
+        ("user", "num_shares_user"),
+        ("group", "num_shares_groups"),
+        ("link", "num_shares_link"),
+        ("mail", "num_shares_mail"),
+        ("room", "num_shares_room"),
+        ("federated_sent", "num_fed_shares_sent"),
+        ("federated_received", "num_fed_shares_received"),
+    ] {
+        if let Some(count) = number(data.pointer(&format!("/nextcloud/shares/{key}"))) {
+            out.push(gauge("nextcloud_shares_by_type", count, ts_ms).with_label("type", kind));
+        }
+    }
+    for (kind, key) in [
+        ("local", "num_storages_local"),
+        ("home", "num_storages_home"),
+        ("other", "num_storages_other"),
+    ] {
+        if let Some(count) = number(data.pointer(&format!("/nextcloud/storage/{key}"))) {
+            out.push(gauge("nextcloud_storages", count, ts_ms).with_label("kind", kind));
+        }
+    }
+
+    if let Some(debug) = yes(data.pointer("/nextcloud/system/debug")) {
+        out.push(flag("nextcloud_debug_mode", debug, ts_ms));
+    }
+    if let Some(locking) = yes(data.pointer("/nextcloud/system/filelocking.enabled")) {
+        out.push(flag("nextcloud_file_locking_enabled", locking, ts_ms));
+    }
+    for (name, key) in [
+        ("nextcloud_memcache_local_enabled", "memcache.local"),
+        ("nextcloud_memcache_distributed_enabled", "memcache.distributed"),
+        ("nextcloud_memcache_locking_enabled", "memcache.locking"),
+    ] {
+        if let Some(on) = cache_configured(data.pointer(&format!("/nextcloud/system/{key}"))) {
+            out.push(flag(name, on, ts_ms));
+        }
+    }
+
+    // La vérification des mises à jour est une tâche de fond quotidienne : si sa
+    // date n'avance plus, c'est le cron qui ne tourne pas (le jeton de supervision
+    // ne lit pas la date des tâches de fond elles-mêmes). 0 : jamais faite ou
+    // vérificateur coupé, rien à dire.
+    if let Some(checked) = number(data.pointer("/nextcloud/system/update/lastupdatedat"))
+        && checked > 0.0
+    {
+        let age = (ts_ms as f64 / 1000.0 - checked).max(0.0);
+        out.push(gauge("nextcloud_update_check_age_seconds", age, ts_ms));
+    }
+
+    let hits = number(data.pointer("/server/php/apcu/cache/num_hits"));
+    let misses = number(data.pointer("/server/php/apcu/cache/num_misses"));
+    if let (Some(hits), Some(misses)) = (hits, misses)
+        && hits + misses > 0.0
+    {
+        out.push(gauge("nextcloud_apcu_hit_rate_percent", hits / (hits + misses) * 100.0, ts_ms));
+    }
+    let segments = number(data.pointer("/server/php/apcu/sma/num_seg"));
+    let size = number(data.pointer("/server/php/apcu/sma/seg_size"));
+    let available = number(data.pointer("/server/php/apcu/sma/avail_mem"));
+    if let (Some(segments), Some(size), Some(available)) = (segments, size, available)
+        && segments * size > 0.0
+    {
+        let used = (1.0 - available / (segments * size)) * 100.0;
+        out.push(gauge("nextcloud_apcu_memory_used_percent", used.clamp(0.0, 100.0), ts_ms));
+    }
+    if let Some(expunges) = number(data.pointer("/server/php/apcu/cache/expunges")) {
+        out.push(gauge("nextcloud_apcu_expunges", expunges, ts_ms));
+    }
     out
 }
 
@@ -196,6 +337,22 @@ fn opcache_samples(opcache: Option<&Value>, ts_ms: i64) -> Vec<Sample> {
     }
     if let Some(rate) = number(opcache.pointer("/opcache_statistics/opcache_hit_rate")) {
         out.push(gauge("nextcloud_opcache_hit_rate_percent", rate, ts_ms));
+    }
+    if let Some(wasted) = number(opcache.pointer("/memory_usage/current_wasted_percentage")) {
+        out.push(gauge("nextcloud_opcache_wasted_percent", wasted, ts_ms));
+    }
+    // Les emplacements de clés se remplissent avant la mémoire : `cache_full` reste
+    // faux alors que PHP redémarre le cache à chaque dépassement.
+    let keys = number(opcache.pointer("/opcache_statistics/num_cached_keys"));
+    let max_keys = number(opcache.pointer("/opcache_statistics/max_cached_keys"));
+    if let (Some(keys), Some(max_keys)) = (keys, max_keys)
+        && max_keys > 0.0
+    {
+        out.push(gauge(
+            "nextcloud_opcache_cached_keys_used_percent",
+            (keys / max_keys * 100.0).clamp(0.0, 100.0),
+            ts_ms,
+        ));
     }
     if let Some(restarts) = number(opcache.pointer("/opcache_statistics/oom_restarts")) {
         out.push(gauge("nextcloud_opcache_oom_restarts", restarts, ts_ms));
@@ -347,7 +504,7 @@ mod tests {
         assert_eq!(value(&samples, "nextcloud_apps_installed"), Some(52.0));
         let active: Vec<_> =
             samples.iter().filter(|s| s.metric == "nextcloud_active_users").collect();
-        assert_eq!(active.len(), 3);
+        assert_eq!(active.len(), 5);
         assert!(value(&samples, "nextcloud_free_space_bytes").unwrap() > 1e9);
         assert!(value(&samples, "nextcloud_database_size_bytes").unwrap() > 0.0);
         assert_eq!(value(&samples, "nextcloud_php_memory_limit_bytes"), Some(536_870_912.0));
@@ -374,6 +531,69 @@ mod tests {
             0,
         );
         assert_eq!(value(&fpm, "nextcloud_fpm_max_children_reached"), Some(12.0));
+    }
+
+    #[test]
+    fn serverinfo_donne_charge_memoire_partages_et_caches() {
+        let samples = serverinfo_samples(&data(), 1_790_760_000_000);
+        let load: Vec<_> = samples.iter().filter(|s| s.metric == "nextcloud_cpu_load").collect();
+        assert_eq!(load.len(), 3);
+        assert_eq!(load[1].labels["window"], "5m");
+        assert_eq!(value(&samples, "nextcloud_cpu_count"), Some(8.0));
+        // 15 902 720 Kio dans le relevé de test : octets, et part utilisée.
+        assert_eq!(value(&samples, "nextcloud_memory_total_bytes"), Some(15_902_720.0 * 1024.0));
+        let used = value(&samples, "nextcloud_memory_used_percent").unwrap();
+        assert!((used - 55.53).abs() < 0.05, "{used}");
+        let swap = value(&samples, "nextcloud_swap_used_percent").unwrap();
+        assert!((swap - 43.35).abs() < 0.05, "{swap}");
+        let kinds: Vec<_> = samples
+            .iter()
+            .filter(|s| s.metric == "nextcloud_shares_by_type")
+            .map(|s| s.labels["type"].as_str())
+            .collect();
+        assert_eq!(kinds.len(), 7);
+        assert!(kinds.contains(&"federated_received"));
+        assert_eq!(value(&samples, "nextcloud_shares_link_without_password"), Some(0.0));
+        assert_eq!(value(&samples, "nextcloud_disabled_users"), Some(0.0));
+        let storages = samples.iter().filter(|s| s.metric == "nextcloud_storages").count();
+        assert_eq!(storages, 3);
+    }
+
+    #[test]
+    fn debug_caches_et_verification_des_mises_a_jour() {
+        // L'instance de test : pas de debug, APCu en cache local, aucun cache
+        // distribué ni de verrouillage en mémoire.
+        let samples = serverinfo_samples(&data(), 1_790_760_000_000);
+        assert_eq!(value(&samples, "nextcloud_debug_mode"), Some(0.0));
+        assert_eq!(value(&samples, "nextcloud_file_locking_enabled"), Some(1.0));
+        assert_eq!(value(&samples, "nextcloud_memcache_local_enabled"), Some(1.0));
+        assert_eq!(value(&samples, "nextcloud_memcache_distributed_enabled"), Some(0.0));
+        assert_eq!(value(&samples, "nextcloud_memcache_locking_enabled"), Some(0.0));
+        // Dernière vérification à 1790751153 : 8847 secondes plus tôt.
+        let age = value(&samples, "nextcloud_update_check_age_seconds").unwrap();
+        assert!((age - 8847.0).abs() < 1.0, "{age}");
+        let hit = value(&samples, "nextcloud_apcu_hit_rate_percent").unwrap();
+        assert!(hit > 90.0 && hit < 91.0, "{hit}");
+        let apcu = value(&samples, "nextcloud_apcu_memory_used_percent").unwrap();
+        assert!(apcu > 1.0 && apcu < 3.0, "{apcu}");
+        let keys = value(&samples, "nextcloud_opcache_cached_keys_used_percent").unwrap();
+        assert!(keys > 19.0 && keys < 20.0, "{keys}");
+        assert!(value(&samples, "nextcloud_opcache_wasted_percent").is_some());
+
+        // Vérificateur coupé ou jamais passé : pas d'âge à publier.
+        let never = serde_json::json!({"nextcloud": {"system": {"update": {"lastupdatedat": 0}}}});
+        assert!(value(&depth_samples(&never, 0), "nextcloud_update_check_age_seconds").is_none());
+        // Mode debug actif, sur une version qui répond par un booléen.
+        let debug = serde_json::json!({"nextcloud": {"system": {"debug": true}}});
+        assert_eq!(value(&depth_samples(&debug, 0), "nextcloud_debug_mode"), Some(1.0));
+    }
+
+    #[test]
+    fn status_php_dit_le_support_etendu() {
+        let status: Status =
+            serde_json::from_str(r#"{"installed":true,"extendedSupport":true}"#).unwrap();
+        let samples = status_samples(&status, 0);
+        assert_eq!(value(&samples, "nextcloud_extended_support"), Some(1.0));
     }
 
     fn target(address: String, token: &str) -> Target {

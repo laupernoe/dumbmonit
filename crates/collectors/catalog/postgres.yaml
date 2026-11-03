@@ -8,11 +8,70 @@ metrics:
   - { name: probe_connect_seconds, label: "Connect time", unit: "s", better: "lower" }
   - { name: probe_sql_query_seconds, label: "Query time", unit: "s", better: "lower" }
   - { name: probe_sql_rows, label: "Rows returned" }
+  - { name: postgres_connections, label: "Connections" }
+  - { name: postgres_max_connections, label: "Max connections" }
+  - { name: postgres_connections_used_percent, label: "Connections used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: postgres_connections_idle_in_transaction, label: "Idle in transaction" }
+  - { name: postgres_longest_transaction_seconds, label: "Longest transaction", unit: "s", better: "lower" }
+  - { name: postgres_longest_idle_in_transaction_seconds, label: "Longest idle in transaction", unit: "s", better: "lower" }
+  - { name: postgres_longest_query_seconds, label: "Longest running query", unit: "s", better: "lower" }
+  - { name: postgres_locks_waiting, label: "Locks waiting" }
+  - { name: postgres_cache_hit_percent, label: "Cache hit ratio", unit: "%", better: "higher", min: 0, max: 100 }
+  - { name: postgres_database_size_bytes, label: "Database size", unit: "B" }
+  - { name: postgres_database_wraparound_percent, label: "Transaction ID age", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: postgres_database_blocks_hit_total, label: "Cache blocks hit", kind: counter }
+  - { name: postgres_database_blocks_read_total, label: "Disk blocks read", kind: counter }
+  - { name: postgres_database_deadlocks_total, label: "Deadlocks", kind: counter }
+  - { name: postgres_database_commits_total, label: "Commits", kind: counter }
+  - { name: postgres_database_rollbacks_total, label: "Rollbacks", kind: counter }
+  - { name: postgres_database_temp_bytes_total, label: "Temporary file bytes", unit: "B", kind: counter }
+  - { name: postgres_in_recovery, label: "Standby", unit: "bool" }
+  - { name: postgres_uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: postgres_version_info, label: "Version", kind: info }
+  - { name: postgres_replicas, label: "Replicas" }
+  - { name: postgres_replica_streaming, label: "Replica streaming", unit: "bool", better: "higher" }
+  - { name: postgres_replica_lag_seconds, label: "Replica replay lag", unit: "s", better: "lower" }
+  - { name: postgres_replica_lag_bytes, label: "Replica lag", unit: "B", better: "lower" }
+  - { name: postgres_replication_slot_active, label: "Replication slot active", unit: "bool", better: "higher" }
+  - { name: postgres_replication_slot_retained_bytes, label: "WAL kept by slot", unit: "B", better: "lower" }
+  - { name: postgres_standby_replay_lag_seconds, label: "Replay lag", unit: "s", better: "lower" }
+  - { name: postgres_standby_receiving, label: "Receiving WAL", unit: "bool", better: "higher" }
+  - { name: postgres_dead_tuples_percent, label: "Dead rows", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: postgres_table_dead_tuple_percent, label: "Dead rows in table", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: postgres_archiver_failing, label: "WAL archiving failing", unit: "bool" }
+  - { name: postgres_archiver_failed_total, label: "WAL archive failures", kind: counter }
+  - { name: postgres_archiver_archived_total, label: "WAL segments archived", kind: counter }
+  - { name: postgres_archiver_last_archived_age_seconds, label: "Last WAL archived", unit: "s", better: "lower" }
+  - { name: postgres_prepared_transactions, label: "Prepared transactions" }
+  - { name: postgres_prepared_transactions_oldest_seconds, label: "Oldest prepared transaction", unit: "s", better: "lower" }
 views:
   - view: stat
     title: "Current values"
     metrics:
+      - postgres_connections_used_percent
+      - postgres_connections
+      - postgres_max_connections
+      - postgres_cache_hit_percent
+      - postgres_longest_transaction_seconds
+      - postgres_longest_idle_in_transaction_seconds
+      - postgres_locks_waiting
+      - postgres_database_wraparound_percent
+      - postgres_dead_tuples_percent
+      - postgres_replicas
+      - postgres_standby_replay_lag_seconds
+      - postgres_archiver_failing
+      - postgres_uptime_seconds
+      - postgres_version_info
       - probe_sql_rows
   - view: timeseries
     title: "Response time"
     metrics: [probe_duration_seconds, probe_connect_seconds, probe_sql_query_seconds]
+  - view: timeseries
+    title: "Connections"
+    metrics: [postgres_connections, postgres_connections_idle_in_transaction, postgres_locks_waiting]
+  - view: timeseries
+    title: "Replication"
+    metrics: [postgres_replica_lag_seconds, postgres_replica_lag_bytes, postgres_standby_replay_lag_seconds]
+  - view: timeseries
+    title: "Database size"
+    metrics: [postgres_database_size_bytes]

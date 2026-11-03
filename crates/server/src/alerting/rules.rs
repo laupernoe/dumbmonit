@@ -24,6 +24,9 @@ mod pihole;
 mod immich;
 mod jellyfin;
 mod plex;
+mod nextcloud;
+mod postgres;
+mod synology;
 
 /// Taux d'occupation processeur, toutes sources confondues.
 ///
@@ -7780,6 +7783,9 @@ pub fn builtin_rules() -> Vec<Rule> {
     rules.extend(immich::rules());
     rules.extend(jellyfin::rules());
     rules.extend(plex::rules());
+    rules.extend(nextcloud::rules());
+    rules.extend(postgres::rules());
+    rules.extend(synology::rules());
     rules.extend(apps_rules());
     rules
 }
@@ -9466,7 +9472,10 @@ mod tests {
                             || homeassistant::PRODUCED.contains(&mot)
                             || immich::PRODUCED.contains(&mot)
                             || jellyfin::PRODUCED.contains(&mot)
-                            || plex::PRODUCED.contains(&mot),
+                            || plex::PRODUCED.contains(&mot)
+                            || nextcloud::PRODUCED.contains(&mot)
+                            || postgres::PRODUCED.contains(&mot)
+                            || synology::PRODUCED.contains(&mot),
                         "rule \"{}\" targets \"{mot}\", which no collector produces",
                         rule.uid
                     );
