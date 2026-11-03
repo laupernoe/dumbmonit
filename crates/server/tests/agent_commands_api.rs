@@ -248,6 +248,93 @@ async fn an_agent_that_cannot_run_commands_is_reported_and_refused() {
     assert_eq!(none.status, StatusCode::NOT_FOUND);
 }
 
+/// Requête brute : jeton porteur, ou cookie sans l'en-tête anti-CSRF.
+async fn raw_post(app: &TestApp, uri: &str, pair: (header::HeaderName, String)) -> StatusCode {
+    let request =
+        Request::builder().method("POST").uri(uri).header(pair.0, pair.1).body(Body::empty());
+    app.router.clone().oneshot(request.unwrap()).await.expect("réponse").status()
+}
+
+#[tokio::test]
+async fn an_agent_uninstall_is_queued_once_audited_and_kept_to_admin_sessions() {
+    let app = setup().await;
+    let (target, admin) = current_agent(&app).await;
+    let uninstall = format!("/api/targets/{target}/agent/uninstall");
+
+    let reply = app.post(&uninstall, json!({}), Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
+    assert_eq!(reply.body["kind"], "agent.uninstall");
+    assert_eq!(reply.body["status"], "queued");
+    assert_eq!(reply.body["requested_by"], "admin");
+    // L'enveloppe anti-rejeu que l'agent exige pour cette commande.
+    assert_eq!(reply.body["args"]["nonce"].as_str().map(str::len), Some(32), "{}", reply.body);
+    assert!(reply.body["args"]["expires_at_ms"].is_i64());
+    let id = reply.body["id"].as_i64().expect("id");
+
+    // Une seule à la fois.
+    let again = app.post(&uninstall, json!({}), Some(&admin)).await;
+    assert_eq!(again.status, StatusCode::CONFLICT, "{}", again.body);
+
+    // Suivie par la liste des commandes, comme les actions sur les conteneurs.
+    let listed = app.get(&format!("/api/targets/{target}/commands"), Some(&admin)).await;
+    assert_eq!(listed.body[0]["id"], id);
+    assert_eq!(listed.body.as_array().map(Vec::len), Some(1));
+
+    // Inscrite au journal d'audit, avec la machine.
+    let audit = app.get("/api/auth/audit", Some(&admin)).await;
+    assert_eq!(audit.status, StatusCode::OK, "{}", audit.body);
+    let entries = audit.body.as_array().cloned().unwrap_or_default();
+    let entry = entries.iter().find(|e| e["action"] == "agent.uninstall_requested");
+    let entry = entry.expect("entrée d'audit");
+    assert_eq!(entry["actor"], "admin");
+    assert!(entry["subject"].as_str().unwrap_or("").starts_with(&target.to_string()));
+
+    // Un lecteur, un jeton d'API (même `write`), un cookie sans l'en-tête
+    // anti-CSRF : refusés, et rien de plus n'est déposé.
+    let viewer = app.viewer_cookie(&admin).await;
+    let denied = app.post(&uninstall, json!({}), Some(&viewer)).await;
+    assert_eq!(denied.status, StatusCode::FORBIDDEN, "{}", denied.body);
+    let body = json!({ "name": "ci", "scope": "write" });
+    let token = app.post("/api/tokens", body, Some(&admin)).await;
+    assert_eq!(token.status, StatusCode::CREATED, "{}", token.body);
+    let secret = token.body["secret"].as_str().expect("secret");
+    let bearer = (header::AUTHORIZATION, format!("Bearer {secret}"));
+    let status = raw_post(&app, &uninstall, bearer).await;
+    assert!(status == StatusCode::UNAUTHORIZED || status == StatusCode::FORBIDDEN, "{status}");
+    let status = raw_post(&app, &uninstall, (header::COOKIE, admin.clone())).await;
+    assert_eq!(status, StatusCode::FORBIDDEN, "sans X-Requested-With");
+    let listed = app.get(&format!("/api/targets/{target}/commands"), Some(&admin)).await;
+    assert_eq!(listed.body.as_array().map(Vec::len), Some(1));
+
+    // Une cible sans agent n'a rien à désinstaller.
+    let manual = app
+        .post(
+            "/api/targets",
+            json!({ "name": "sw", "address": "10.0.0.2", "kind": "dummy" }),
+            Some(&admin),
+        )
+        .await;
+    let manual_id = manual.body["id"].as_i64().unwrap();
+    let path = format!("/api/targets/{manual_id}/agent/uninstall");
+    let none = app.post(&path, json!({}), Some(&admin)).await;
+    assert_eq!(none.status, StatusCode::NOT_FOUND, "{}", none.body);
+}
+
+#[tokio::test]
+async fn an_agent_without_commands_is_not_asked_to_uninstall() {
+    let app = setup().await;
+    let admin = app.admin_cookie().await;
+    let token = enrollment_token(&app, &admin).await;
+    let target = push_batch(&app, &token, "id-off", "0.9.0", Some(false)).await;
+
+    let reply =
+        app.post(&format!("/api/targets/{target}/agent/uninstall"), json!({}), Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::CONFLICT, "{}", reply.body);
+    assert!(reply.body["error"].as_str().unwrap_or("").contains("cannot run commands"));
+    let listed = app.get(&format!("/api/targets/{target}/commands"), Some(&admin)).await;
+    assert_eq!(listed.body.as_array().map(Vec::len), Some(0), "rien n'a été déposé");
+}
+
 #[tokio::test]
 async fn a_partial_policy_body_keeps_the_stored_fields() {
     let app = setup().await;

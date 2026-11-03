@@ -17,8 +17,8 @@ use std::time::Duration;
 
 use anyhow::{Context, Result, bail};
 use dumbmonit_proto::{
-    AgentCommand, CMD_CONTAINER_RESTART, CMD_CONTAINER_UPDATE, CMD_SCRIPT_RUN, CMD_SERVICE_RESTART,
-    CommandReport, CommandStatus,
+    AgentCommand, CMD_AGENT_UNINSTALL, CMD_CONTAINER_RESTART, CMD_CONTAINER_UPDATE, CMD_SCRIPT_RUN,
+    CMD_SERVICE_RESTART, CommandReport, CommandStatus,
 };
 use serde_json::{Map, Value, json};
 use tokio::task::JoinHandle;
@@ -27,6 +27,7 @@ use tracing::{debug, info, warn};
 use crate::client::PushClient;
 use crate::collect::docker::{DockerClient, DockerResponse};
 use crate::remediation::{self, ActionsConfig, ReplayGuard};
+use crate::uninstall;
 
 /// Taille maximale du compte rendu envoyé au serveur. Le journal complet reste
 /// dans les traces de l'agent ; l'interface n'a besoin que de la fin.
@@ -85,6 +86,8 @@ pub enum Action {
         name: String,
         params: BTreeMap<String, String>,
     },
+    /// Retirer l'agent de la machine (`agent.uninstall`).
+    Uninstall,
 }
 
 impl Action {
@@ -105,6 +108,7 @@ impl Action {
                 let params = remediation::command_params(command)?;
                 return Ok(Self::Script { name: name.to_string(), params });
             }
+            CMD_AGENT_UNINSTALL => return Ok(Self::Uninstall),
             _ => {}
         }
         let name = command.arg_str("name").context("missing container name")?;
@@ -125,6 +129,7 @@ impl Action {
             | Self::Update { name, .. }
             | Self::Service { name }
             | Self::Script { name, .. } => name,
+            Self::Uninstall => "agent",
         }
     }
 
@@ -327,9 +332,12 @@ impl CommandRunner {
             }
             // L'enveloppe anti-rejeu est vérifiée ici, avant toute exécution, et
             // retenue même si l'action échoue ensuite : un nonce ne sert qu'une fois.
-            let remediation_kind =
-                matches!(command.kind.as_str(), CMD_SERVICE_RESTART | CMD_SCRIPT_RUN);
-            if let Err(error) = self.replay.admit(&command, now_ms, remediation_kind) {
+            // La désinstallation l'exige comme la remédiation.
+            let guarded = matches!(
+                command.kind.as_str(),
+                CMD_SERVICE_RESTART | CMD_SCRIPT_RUN | CMD_AGENT_UNINSTALL
+            );
+            if let Err(error) = self.replay.admit(&command, now_ms, guarded) {
                 warn!(id = command.id, kind = command.kind, %error, "command refused");
                 report(
                     &self.client,
@@ -402,6 +410,10 @@ impl Executor {
                 return;
             }
         };
+        if action == Action::Uninstall {
+            self.uninstall(command.id).await;
+            return;
+        }
         if action.is_remediation() && !self.actions.enabled {
             warn!(id = command.id, kind = command.kind, "remediation refused: actions are off");
             report(
@@ -437,6 +449,8 @@ impl Executor {
                     Err(error) => Err(error),
                 }
             }
+            // Traitée à part plus haut : l'agent ne revient pas de celle-là.
+            Action::Uninstall => Ok(()),
         };
         let status = match outcome {
             Ok(()) => CommandStatus::Done,
@@ -447,6 +461,55 @@ impl Executor {
         };
         info!(id = command.id, status = status.as_str(), "command finished");
         report(&self.client, &self.key, command.id, status, log.excerpt()).await;
+    }
+
+    /// Désinstallation : vérifier, lancer l'assistant, rendre compte, s'arrêter.
+    ///
+    /// Le compte rendu « fait » part avant le ménage — l'assistant attend
+    /// [`uninstall::HELPER_DELAY_SECS`] secondes — puisque personne ne sera plus
+    /// là pour l'envoyer ensuite. L'agent s'arrête aussitôt après, sans vider
+    /// son tampon : un dernier lot présenterait de nouveau au serveur la machine
+    /// qu'on est en train d'en retirer.
+    ///
+    /// Rejouée (compte rendu perdu, agent relancé avant le ménage), elle refait
+    /// la même chose : le script n'efface que ce qui existe encore.
+    async fn uninstall(&self, id: i64) {
+        let in_container = crate::selfupdate::in_container() || self_container_id().is_some();
+        let exe = uninstall::current_exe();
+        let program_files = uninstall::program_files();
+        let allowed = uninstall::check(in_container, exe.as_deref(), program_files.as_deref());
+        if let Err(error) = allowed {
+            warn!(id, %error, "agent uninstall refused");
+            report(&self.client, &self.key, id, CommandStatus::Failed, format!("{error:#}")).await;
+            return;
+        }
+        info!(id, "agent uninstall requested by the server");
+        report(&self.client, &self.key, id, CommandStatus::Running, String::new()).await;
+
+        let mut log = Log::default();
+        match uninstall::spawn() {
+            Ok(line) => log.push(line),
+            Err(error) => {
+                warn!(id, %error, "agent uninstall could not start");
+                log.push(format!("error: {error:#}"));
+                report(&self.client, &self.key, id, CommandStatus::Failed, log.excerpt()).await;
+                return;
+            }
+        }
+        let delay = uninstall::HELPER_DELAY_SECS;
+        log.push(format!("service, binary and configuration removed in {delay} s"));
+        log.push("the agent stops now");
+        let done = CommandReport { status: CommandStatus::Done, result: log.excerpt() };
+        // Une seconde chance : c'est le dernier mot de l'agent, et l'interface
+        // attend ce « fait » pour supprimer le moniteur.
+        for attempt in 1..=2 {
+            match self.client.report_command(&self.key, id, &done).await {
+                Ok(()) => break,
+                Err(error) => warn!(id, attempt, %error, "cannot report the uninstall"),
+            }
+        }
+        info!("agent uninstalled on the server's request: stopping");
+        std::process::exit(0);
     }
 }
 
@@ -1014,6 +1077,14 @@ mod tests {
         ))
         .unwrap();
         assert!(ok.is_remediation());
+    }
+
+    #[test]
+    fn the_uninstall_command_needs_no_name() {
+        let action = Action::from_command(&command(CMD_AGENT_UNINSTALL, json!({}))).unwrap();
+        assert_eq!(action, Action::Uninstall);
+        assert!(!action.is_remediation(), "gated by `commands`, not by `actions`");
+        assert_eq!(action.name(), "agent");
     }
 
     #[test]

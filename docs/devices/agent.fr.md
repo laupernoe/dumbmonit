@@ -375,6 +375,32 @@ chaque système.
     vérifier et le dit bruyamment ; `--bin=PATH` installe un fichier local
     tel quel, le fichier étant à vous de vérifier.
 
+### Retirer un agent {#removing-an-agent}
+
+Supprimer le moniteur d'une machine ne désinstalle pas son agent : il continue
+de tourner et redemande à s'enrôler. À la suppression du moniteur, DumbMonit
+propose **Désinstaller l'agent automatiquement** si l'agent en est capable :
+
+- il accepte les commandes (`commands: true`, la valeur par défaut ; un agent
+  réglé sur `commands: false` ne reçoit jamais la demande) ;
+- il s'est manifesté ces dernières minutes ;
+- il a été installé par `install.sh` ou `install.ps1`, hors conteneur.
+
+L'agent lance alors un assistant qui, quelques secondes plus tard, fait ce que
+fait `--uninstall` (`-Uninstall`) : il arrête et retire le service, puis efface
+le binaire et la configuration. Rien n'est téléchargé. L'agent confirme juste
+avant le ménage et s'arrête ; DumbMonit supprime ensuite le moniteur. Seul un
+administrateur connecté à l'interface peut le demander (pas un jeton d'API), et
+la demande est inscrite au journal d'audit.
+
+Un agent qui tourne dans Docker refuse : supprimez plutôt son conteneur
+(`docker rm -f dumbmonit-agent`, puis `docker volume rm dumbmonit-agent`). Si
+l'agent refuse, ne répond pas dans les deux minutes ou est hors ligne, la page
+montre les commandes à lancer sur la machine, et **Supprimer quand même le
+moniteur**. À la main, à tout moment, la commande d'installation avec
+`--uninstall` (`-Uninstall` sur Windows) à la place de ses autres options fait
+la même chose.
+
 ### Options de l'installateur
 
 | `install.sh` | `install.ps1` | Effet |

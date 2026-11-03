@@ -14,6 +14,8 @@ use axum::extract::{Extension, Path, Query, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::routing::{delete, get, post, put};
 use axum::{Json, Router};
+use chrono::{DateTime, NaiveDateTime, Utc};
+use dumbmonit_proto::remediation::{ACTION_TTL_SECS, ARG_EXPIRES_AT_MS, ARG_NONCE};
 use dumbmonit_proto::{
     AGENT_KEY_HEADER, AGENT_SECRET_HEADER, AgentCommand, CMD_CONTAINER_RESTART,
     CMD_CONTAINER_UPDATE, CommandReport, TargetId,
@@ -22,7 +24,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::agent_tls::AgentCert;
 use crate::api::{ApiError, ApiResult};
-use crate::auth::middleware::CurrentPrincipal;
+use crate::auth::audit;
+use crate::auth::client_ip::ClientIp;
+use crate::auth::middleware::{AdminUser, CurrentPrincipal};
 use crate::collectors::agent::commands::{self, CommandError, CommandRecord, ContainerPolicy};
 use crate::collectors::agent::modules::{self, ModuleState};
 use crate::collectors::agent::{self as agent};
@@ -214,6 +218,7 @@ pub fn ui_routes() -> Router<AppState> {
     Router::new()
         .route("/targets/{id}/agent", get(agent_host))
         .route("/targets/{id}/agent/rebind", post(allow_rebind))
+        .route("/targets/{id}/agent/uninstall", post(uninstall))
         .route("/targets/{id}/agent/relay", put(set_relay))
         .route("/targets/{id}/agent/modules", get(list_modules))
         .route("/targets/{id}/agent/modules/{module}", put(set_module))
@@ -831,6 +836,80 @@ async fn allow_rebind(
     Ok(Json(RebindWindow { rebind_until: until, minutes: agent::REBIND_WINDOW_MINUTES }))
 }
 
+/// Lit l'instant de dernier passage d'un agent, avec ou sans `Z`.
+fn parse_seen(text: &str) -> Option<DateTime<Utc>> {
+    if let Some(at) = commands::parse_ts(text) {
+        return Some(at);
+    }
+    let text = text.trim_end_matches('Z').replace(' ', "T");
+    NaiveDateTime::parse_from_str(&text, "%Y-%m-%dT%H:%M:%S").ok().map(|naive| naive.and_utc())
+}
+
+/// Pourquoi l'agent ne peut pas être prié de se désinstaller, le cas échéant.
+///
+/// Deux conditions, vérifiées ici et non seulement dans l'interface : l'agent
+/// exécute les commandes (`commands: false` ne vient jamais les chercher), et
+/// il s'est présenté depuis moins longtemps que la durée de vie d'une
+/// commande — sans quoi elle expirerait sans que rien ne se passe.
+pub fn uninstall_refusal(
+    commands_supported: bool,
+    last_seen_at: Option<&str>,
+    now: DateTime<Utc>,
+) -> Option<String> {
+    if !commands_supported {
+        return Some(
+            "This agent cannot run commands: it is too old or has actions disabled \
+             (commands: false). Remove it from the machine by hand."
+                .to_string(),
+        );
+    }
+    let max_age = dumbmonit_proto::COMMAND_MAX_AGE_SECS as i64;
+    let seen = last_seen_at.and_then(parse_seen);
+    let online = seen.is_some_and(|seen| (now - seen).num_seconds() <= max_age);
+    if !online {
+        return Some(
+            "This agent has not reported for over 10 minutes: it would not pick the request up. \
+             Remove it from the machine by hand."
+                .to_string(),
+        );
+    }
+    None
+}
+
+/// `POST /api/targets/{id}/agent/uninstall` : demande à l'agent de se retirer
+/// de la machine (service, binaire, configuration).
+///
+/// Session d'administrateur seulement — un jeton d'API n'efface pas un logiciel
+/// d'une machine — et inscrit au journal d'audit. La commande porte l'enveloppe
+/// anti-rejeu de la remédiation, que l'agent exige pour celle-ci. L'interface
+/// la suit par `GET …/commands`, et ne supprime le moniteur qu'une fois
+/// l'agent l'a confirmée. L'agent, lui, refuse encore s'il tourne en conteneur
+/// ou n'a pas été installé par les scripts d'installation.
+async fn uninstall(
+    AdminUser(me): AdminUser,
+    ClientIp(ip): ClientIp,
+    State(state): State<AppState>,
+    Path(id): Path<TargetId>,
+) -> ApiResult<(StatusCode, Json<CommandView>)> {
+    agent_target(&state, id).await?;
+    let info = agent::host(&state.pool, id)
+        .await?
+        .ok_or_else(|| ApiError::NotFound(format!("No agent has reported for device {id} yet.")))?;
+    let now = Utc::now();
+    let refusal = uninstall_refusal(info.commands_supported(), info.last_seen_at.as_deref(), now);
+    if let Some(why) = refusal {
+        return Err(ApiError::Conflict(why));
+    }
+    let nonce = hex::encode(rand::random::<[u8; 16]>());
+    let expires = now.timestamp_millis() + ACTION_TTL_SECS * 1000;
+    let args = serde_json::json!({ ARG_NONCE: nonce, ARG_EXPIRES_AT_MS: expires });
+    let by = me.username.clone();
+    let reply = enqueue(&state, id, dumbmonit_proto::CMD_AGENT_UNINSTALL, args, &by).await?;
+    let subject = format!("{id} ({})", info.hostname);
+    audit::record(&state.pool, Some(&by), "agent.uninstall_requested", Some(&subject), ip).await;
+    Ok(reply)
+}
+
 /// Corps de `PUT /api/targets/{id}/agent/relay`.
 #[derive(Debug, Deserialize)]
 pub struct RelayChoice {
@@ -990,6 +1069,21 @@ mod tests {
         headers.insert(AGENT_KEY_HEADER, "9f4c".parse().unwrap());
         assert_eq!(machine_key(&headers, ""), Some("9f4c"));
         assert_eq!(machine_key(&headers, "autre"), Some("9f4c"), "l'en-tête prime");
+    }
+
+    #[test]
+    fn an_uninstall_needs_an_agent_that_runs_commands_and_reported_lately() {
+        let now = commands::parse_ts("2026-11-03T12:00:00Z").unwrap();
+        assert_eq!(uninstall_refusal(true, Some("2026-11-03T11:59:00Z"), now), None);
+        // Sans suffixe, comme ailleurs dans la base : même lecture.
+        assert_eq!(uninstall_refusal(true, Some("2026-11-03 11:55:00"), now), None);
+
+        let disabled = uninstall_refusal(false, Some("2026-11-03T11:59:00Z"), now);
+        assert!(disabled.unwrap_or_default().contains("cannot run commands"));
+        let stale = uninstall_refusal(true, Some("2026-11-03T11:49:00Z"), now);
+        assert!(stale.unwrap_or_default().contains("10 minutes"));
+        assert!(uninstall_refusal(true, None, now).is_some(), "jamais vu");
+        assert!(uninstall_refusal(true, Some("n'importe quoi"), now).is_some());
     }
 
     fn labels(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {
