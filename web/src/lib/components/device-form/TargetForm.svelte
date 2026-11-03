@@ -34,7 +34,8 @@
 	import type { MapLocation } from '#lib/api/types.js';
 	import { isMultisiteKind } from '#lib/format.js';
 	import type { RelayAgent } from '#lib/api/types.js';
-	import { Button, ClickSpark, ErrorNotice, Field, Toggle } from '#lib/ui/index.js';
+	import { Button, ClickSpark, DocLink, ErrorNotice, Field, Toggle } from '#lib/ui/index.js';
+	import { kindDocPage } from '#lib/docs.js';
 	import CredentialFields from './CredentialFields.svelte';
 	import AgentLink from './AgentLink.svelte';
 	import OptionsFields from './OptionsFields.svelte';
@@ -567,7 +568,6 @@
 				<div class="grid gap-4">
 					<div class="grid gap-1">
 						<p class="text-sm font-semibold text-ink">{m.deviceform_form_more_settings({ label: collector.label })}</p>
-						<p class="text-[0.8125rem] text-ink-2">{m.deviceform_form_blank_defaults()}</p>
 					</div>
 					{#each moreOptionGroups as group (group.label || '_ungrouped')}
 						<div class="grid gap-2">
@@ -645,9 +645,7 @@
 					<Field
 						label={m.deviceform_form_relay_label()}
 						for="target-relay"
-						help={relayNotReady
-							? m.deviceform_form_relay_not_ready()
-							: m.deviceform_form_relay_help()}
+						help={relayNotReady ? m.deviceform_form_relay_not_ready() : undefined}
 					>
 						<select id="target-relay" class="input" bind:value={viaAgent}>
 							<option value={null}>{m.deviceform_form_relay_direct()}</option>
@@ -662,7 +660,6 @@
 				{:else if canRelay && relaysRead && !editing}
 					<!-- No relay yet: say once that a device on another network is reachable too. -->
 					<p class="text-[0.8125rem] leading-relaxed text-ink-2 sm:col-span-2">
-						{m.deviceform_form_remote_hint()}
 						<a href="/targets/new?kind=agent&via=relay" class="font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">{m.deviceform_form_remote_link()}</a>
 					</p>
 				{/if}
@@ -673,7 +670,7 @@
 							label={m.deviceform_multisite_label()}
 							for="target-multisite"
 							inline
-							help={viaAgent !== null && !msOn ? m.deviceform_multisite_exclusive() : m.deviceform_multisite_help()}
+							help={viaAgent !== null && !msOn ? m.deviceform_multisite_exclusive() : undefined}
 						>
 							<Toggle
 								id="target-multisite"
@@ -775,6 +772,7 @@
 		{/if}
 		<Button variant="ghost" href={cancelHref}>{m.deviceform_form_cancel()}</Button>
 	</div>
+	<DocLink page={kindDocPage(collector.kind)} />
 	{#if submitBlocker}
 		<p id="target-submit-why" class="text-[0.8125rem] text-ink-2">
 			{m.deviceform_form_submit_blocked({ reason: submitBlocker })}

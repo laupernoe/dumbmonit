@@ -57,7 +57,6 @@
 >
 	<Plate tone={chosen ? 'signal' : 'advisory'} label={chosen ? m.deviceform_mailagent_plate_linked() : m.deviceform_mailagent_plate_required()} />
 	<h3 id="agent-required-title" class="mt-1.5 text-sm font-semibold text-ink">{m.deviceform_mailagent_title()}</h3>
-	<p class="mt-1 text-sm leading-relaxed text-ink">{m.deviceform_mailagent_why({ product })}</p>
 
 	<div class="mt-3 grid gap-3">
 		<Field label={option.label} for="option-agent" help={option.help}>

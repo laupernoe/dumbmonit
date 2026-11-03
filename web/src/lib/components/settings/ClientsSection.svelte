@@ -17,7 +17,7 @@
 		type User
 	} from '#lib/api/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, Confirm, EmptyState, ErrorNotice, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
+	import { Button, Confirm, DocLink, EmptyState, ErrorNotice, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
 	import ClientEditor from './ClientEditor.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 
@@ -115,7 +115,6 @@
 					<label for="msp-mode" class="text-sm font-semibold text-ink">{m.settings_clients_mode()}</label>
 					<Toggle id="msp-mode" checked={data.settings.enabled} disabled={modeBusy} label={m.settings_clients_mode()} onchange={(on) => void setMode(on)} />
 				</div>
-				<p class="text-sm text-ink-2">{data.settings.enabled ? m.settings_clients_mode_on_help() : m.settings_clients_mode_off_help()}</p>
 				{#if modeError}<ErrorNotice error={modeError} title={m.settings_clients_save_error()} />{/if}
 				{#if data.settings.enabled && unassigned.length > 0}
 					<p class="text-sm font-semibold text-ink">
@@ -183,7 +182,7 @@
 				</ul>
 			{/if}
 
-			<p class="text-sm text-ink-2">{m.settings_clients_note()}</p>
+			<DocLink page="using/msp/" />
 		</div>
 	{/if}
 </Panel>

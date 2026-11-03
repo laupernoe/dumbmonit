@@ -28,7 +28,7 @@
 		Panel,
 		Plate,
 		Skeleton,
-		Toggle, Disclosure } from '#lib/ui/index.js';
+		Toggle, Disclosure, DocLink } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
 
 	let status = $state<BackupStatus | null>(null);
@@ -241,27 +241,15 @@
 					<div class="min-w-0">
 						<p class="font-semibold text-ink">{m.settings_backup_secret_title()}</p>
 						{#if status.secret_source === 'file'}
-							<p class="mt-1 text-sm text-ink-2">
-								{m.settings_backup_secret_file({ path: status.secret_path })}
-							</p>
-						{:else}
-							<p class="mt-1 text-sm text-ink-2">
-								{m.settings_backup_secret_env()}
-							</p>
+							<p class="mt-1 font-mono text-[0.8125rem] break-all text-ink-2">{status.secret_path}</p>
 						{/if}
-						<p class="mt-2 text-sm text-ink-2">
-							{m.settings_backup_secret_bundle()}
-						</p>
+						<DocLink page="install/backup/" />
 					</div>
 				</div>
 			</div>
 
 			<!-- Export -->
 			<Disclosure title={m.settings_backup_export_title()}>
-				<p class="mt-1 text-sm text-ink-2">
-					{m.settings_backup_export_intro({ version: status.bundle_version })}
-				</p>
-
 				<ul class="mt-3 grid gap-1 text-sm text-ink-2 sm:grid-cols-2">
 					{#each status.contents as section (section.section)}
 						<li class="flex items-baseline gap-2">
@@ -270,9 +258,6 @@
 						</li>
 					{/each}
 				</ul>
-				<p class="mt-2 text-sm text-ink-3">
-					{m.settings_backup_export_excluded()}
-				</p>
 
 				<form class="mt-4 grid max-w-md gap-4" onsubmit={download} novalidate>
 					<Field
@@ -304,7 +289,6 @@
 						label={m.settings_backup_accounts_label()}
 						for="backup-accounts"
 						inline
-						help={m.settings_backup_accounts_help()}
 					>
 						<Toggle id="backup-accounts" bind:checked={withAccounts} disabled={exporting} />
 					</Field>
@@ -336,10 +320,6 @@
 
 			<!-- Restore -->
 			<Disclosure title={m.settings_backup_restore_title()}>
-				<p class="mt-1 text-sm text-ink-2">
-					{m.settings_backup_restore_intro()}
-				</p>
-
 				<div class="mt-4 grid max-w-md gap-4">
 					<Field label={m.settings_backup_bundle_file()} for="backup-file" error={bundleError}>
 						<input
