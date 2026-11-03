@@ -221,6 +221,22 @@ fn short_name(device: &Value) -> Option<&str> {
         .or_else(|| text(device, "hostname"))
 }
 
+/// Les chaînes d'un tableau JSON, vide si la clé est absente.
+fn strings<'a>(device: &'a Value, key: &str) -> Vec<&'a str> {
+    let items = device.get(key).and_then(Value::as_array);
+    items.into_iter().flatten().filter_map(Value::as_str).collect()
+}
+
+/// Latence, en secondes, vers le relais DERP que l'appareil préfère.
+fn preferred_derp_latency(device: &Value) -> Option<f64> {
+    let regions = device.pointer("/clientConnectivity/latency")?.as_object()?;
+    regions
+        .values()
+        .find(|region| region.get("preferred").and_then(Value::as_bool) == Some(true))
+        .and_then(|region| region.get("latencyMs").and_then(Value::as_f64))
+        .map(|ms| ms / 1000.0)
+}
+
 pub fn samples(reply: &Value, watch: &Watch, stale_days: f64, ts_ms: i64) -> Vec<Sample> {
     let g = |name: &str, value: f64| gauge(name, value, ts_ms);
     let now_s = ts_ms / 1000;
@@ -287,6 +303,23 @@ pub fn samples(reply: &Value, watch: &Watch, stale_days: f64, ts_ms: i64) -> Vec
                 device.get("expires").and_then(Value::as_str).and_then(|t| seconds_until(t, ts_ms))
         {
             out.push(named(g("tailscale_device_key_expiry_seconds", left)));
+        }
+        let advertised = strings(device, "advertisedRoutes");
+        if !advertised.is_empty() {
+            let enabled = strings(device, "enabledRoutes");
+            let unapproved = advertised.iter().filter(|r| !enabled.contains(r)).count();
+            let exit = advertised.iter().any(|r| matches!(*r, "0.0.0.0/0" | "::/0"));
+            out.push(named(g("tailscale_device_routes_advertised", advertised.len() as f64)));
+            out.push(named(g("tailscale_device_routes_unapproved", unapproved as f64)));
+            out.push(named(flag("tailscale_device_exit_node", exit, ts_ms)));
+        }
+        // Verrouillage du tailnet : un nœud que les nœuds de signature n'ont pas
+        // signé ne parle à personne.
+        if let Some(error) = device.get("tailnetLockError").and_then(Value::as_str) {
+            out.push(named(flag("tailscale_device_tailnet_lock_error", !error.is_empty(), ts_ms)));
+        }
+        if is_online && let Some(latency) = preferred_derp_latency(device) {
+            out.push(named(g("tailscale_device_derp_latency_seconds", latency)));
         }
         let version =
             text(device, "clientVersion").map(|v| v.split('-').next().unwrap_or(v)).unwrap_or("");
@@ -405,6 +438,39 @@ mod tests {
             ) < 0.0,
             "quarante-sept minutes n'épuisent pas trois jours"
         );
+    }
+
+    #[test]
+    fn routes_verrouillage_et_relais() {
+        let reply: Value = serde_json::from_str(
+            r#"{"devices":[
+              {"name":"router.tail1.ts.net","hostname":"router","os":"linux","tags":["tag:server"],
+               "connectedToControl":true,"authorized":true,
+               "advertisedRoutes":["192.168.1.0/24","10.0.0.0/8","0.0.0.0/0"],
+               "enabledRoutes":["192.168.1.0/24"],
+               "tailnetLockError":"",
+               "clientConnectivity":{"latency":{
+                 "Paris":{"latencyMs":23.5,"preferred":true},
+                 "Frankfurt":{"latencyMs":31.0}}}},
+              {"name":"laptop.tail1.ts.net","hostname":"laptop","os":"macOS",
+               "connectedToControl":true,"authorized":true,
+               "tailnetLockError":"not signed by a trusted key"}
+            ]}"#,
+        )
+        .unwrap();
+        let s = samples(&reply, &Watch::Tagged, 3.0, now());
+        let r = [("device", "router")];
+        assert_eq!(value(&s, "tailscale_device_routes_advertised", &r), 3.0);
+        assert_eq!(value(&s, "tailscale_device_routes_unapproved", &r), 2.0);
+        assert_eq!(value(&s, "tailscale_device_exit_node", &r), 1.0);
+        assert_eq!(value(&s, "tailscale_device_tailnet_lock_error", &r), 0.0);
+        let derp = value(&s, "tailscale_device_derp_latency_seconds", &r);
+        assert!((derp - 0.0235).abs() < 1e-9);
+        let l = [("device", "laptop")];
+        assert_eq!(value(&s, "tailscale_device_tailnet_lock_error", &l), 1.0);
+        // Aucune route annoncée : aucune série de routes.
+        assert!(find(&s, "tailscale_device_routes_advertised", &l).is_none());
+        assert!(find(&s, "tailscale_device_derp_latency_seconds", &l).is_none());
     }
 
     #[tokio::test]

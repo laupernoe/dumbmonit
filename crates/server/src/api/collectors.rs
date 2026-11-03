@@ -2349,6 +2349,12 @@ const OPNSENSE_OPTIONS: &[OptionView] = &[
         true,
     ),
     boolean(
+        "certificates",
+        "Watch the certificates",
+        "Reads the expiry date of the certificates the firewall keeps (web interface, captive portal, VPN); those OPNsense marks as unused are ignored. Needs the privilege System: Trust: Certificates; without it the option is skipped, which is not an error.",
+        true,
+    ),
+    boolean(
         "live_map",
         "Live firewall map",
         "Shows on the device page where the connections your rules block or pass come from, by country. Reads the firewall log every few seconds, only while someone is looking, and keeps fifteen minutes in memory; no address is stored or shown, and countries are found in a local database. Needs the privilege Diagnostics: Logs: Firewall: Live View.",
