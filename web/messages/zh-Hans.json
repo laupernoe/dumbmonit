@@ -9289,5 +9289,10 @@
 	"settings_ports_compose_help": "粘贴到服务下方。仅包含在此处监听的端口。",
 	"settings_ports_ufw_title": "ufw 规则",
 	"settings_ports_ufw_help": "把 192.168.1.0/24 替换为需要访问 DumbMonit 的网络。其他网络中的代理请使用它们的地址。",
-	"settings_ports_search_kw": "端口 防火墙 ufw docker compose 暴露 wan lan syslog traps 代理 8080 8443"
+	"settings_ports_search_kw": "端口 防火墙 ufw docker compose 暴露 wan lan syslog traps 代理 8080 8443",
+	"devices_agent_help_title": "故障排查",
+	"devices_agent_help_intro": "当代理没有上报时，请在这台机器上运行以下命令。",
+	"devices_agent_help_status": "它在运行吗？",
+	"devices_agent_help_restart": "重启代理",
+	"devices_agent_help_logs": "最新日志"
 }

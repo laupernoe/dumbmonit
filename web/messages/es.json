@@ -9389,5 +9389,10 @@
 	"settings_ports_compose_help": "Péguelo bajo el servicio. Solo incluye los puertos que escuchan aquí.",
 	"settings_ports_ufw_title": "Reglas ufw",
 	"settings_ports_ufw_help": "Sustituya 192.168.1.0/24 por la red que debe llegar a DumbMonit. Para agentes de otras redes, use sus direcciones.",
-	"settings_ports_search_kw": "puertos cortafuegos ufw docker compose exponer wan lan syslog traps agentes 8080 8443"
+	"settings_ports_search_kw": "puertos cortafuegos ufw docker compose exponer wan lan syslog traps agentes 8080 8443",
+	"devices_agent_help_title": "Solución de problemas",
+	"devices_agent_help_intro": "Ejecútalos en la propia máquina cuando el agente no informe.",
+	"devices_agent_help_status": "¿Está en marcha?",
+	"devices_agent_help_restart": "Reiniciar el agente",
+	"devices_agent_help_logs": "Últimos registros"
 }
