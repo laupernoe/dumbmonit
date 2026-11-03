@@ -708,8 +708,8 @@ pub fn read_disks(paths: &Paths) -> Vec<DiskStat> {
             .and_then(|text| text.trim().parse::<u64>().ok())
             .map(|sectors| sectors.saturating_mul(512))
             .filter(|bytes| *bytes > 0);
-        let model = read_trimmed(&block.join("device/model"))
-            .or_else(|| read_trimmed(&syno.join("model")));
+        let model =
+            read_trimmed(&block.join("device/model")).or_else(|| read_trimmed(&syno.join("model")));
         let number = |file: &str| read(&syno.join(file)).and_then(|text| parse_number(&text));
         disks.push(DiskStat {
             kind,
@@ -780,11 +780,8 @@ async fn read_commands(paths: Paths, with_packages: bool, synopkg: bool) -> Comm
     let ups = read_ups().await;
     let (packages, synopkg_usable) = if with_packages {
         let mut packages = list_packages(&paths);
-        let usable = if synopkg {
-            Some(read_package_states(&paths, &mut packages).await)
-        } else {
-            None
-        };
+        let usable =
+            if synopkg { Some(read_package_states(&paths, &mut packages).await) } else { None };
         (Some(packages), usable)
     } else {
         (None, None)
@@ -856,11 +853,7 @@ async fn read_ups() -> Vec<UpsReading> {
 async fn run_text(bin: &str, args: &[&str]) -> Option<String> {
     let output = tokio::time::timeout(
         COMMAND_TIMEOUT,
-        tokio::process::Command::new(bin)
-            .args(args)
-            .env("LC_ALL", "C")
-            .kill_on_drop(true)
-            .output(),
+        tokio::process::Command::new(bin).args(args).env("LC_ALL", "C").kill_on_drop(true).output(),
     )
     .await
     .ok()?
@@ -938,8 +931,7 @@ impl DsmProbe {
         };
         if self.task.is_none() && due(self.refreshed_at, COMMANDS_INTERVAL) {
             let with_packages = due(self.packages_at, PACKAGES_INTERVAL);
-            let synopkg =
-                self.synopkg_retry_at.is_none_or(|at| tokio::time::Instant::now() >= at);
+            let synopkg = self.synopkg_retry_at.is_none_or(|at| tokio::time::Instant::now() >= at);
             if with_packages {
                 self.packages_at = Some(tokio::time::Instant::now());
             }
@@ -1084,8 +1076,7 @@ mod tests {
         for name in ["sata1", "sata12", "sda", "sdab", "nvme0n1", "nvme1n2"] {
             assert!(is_disk_name(name), "{name}");
         }
-        for name in ["sata1p5", "sda5", "nvme0n1p1", "synoboot", "md2", "loop0", "zram0", "sata"]
-        {
+        for name in ["sata1p5", "sda5", "nvme0n1p1", "synoboot", "md2", "loop0", "zram0", "sata"] {
             assert!(!is_disk_name(name), "{name}");
         }
     }
