@@ -1264,6 +1264,13 @@
         "entity": "device"
       },
       {
+        "name": "agent_dsm_disk_temperature_celsius",
+        "label": "NAS disk temperature",
+        "unit": "°C",
+        "kind": "gauge",
+        "entity": "disk"
+      },
+      {
         "name": "agent_sensor_temperature_celsius",
         "label": "Sensor temperature",
         "unit": "°C",
@@ -1377,6 +1384,7 @@
           "agent_zfs_pool_scrub_errors",
           "agent_disk_smart_ok",
           "agent_disk_temperature_celsius",
+          "agent_dsm_disk_temperature_celsius",
           "agent_sensor_temperature_celsius",
           "agent_disk_reallocated_sectors",
           "agent_libvirt_domains_running",
