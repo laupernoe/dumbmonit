@@ -721,7 +721,7 @@ pub fn read_disks(paths: &Paths) -> Vec<DiskStat> {
             name,
         });
     }
-    disks.sort_by(|a, b| natural_key(&a.name).cmp(&natural_key(&b.name)));
+    disks.sort_by_key(|a| natural_key(&a.name));
     disks.truncate(MAX_DISKS);
     disks
 }
