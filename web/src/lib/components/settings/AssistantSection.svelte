@@ -73,11 +73,14 @@
 	let createError = $state<unknown>(null);
 	let created = $state<CreatedApiToken | null>(null);
 
+	/** True once the last submit went through (the button confirms in green). */
+	let createdOk = $state(false);
 	async function create(event: SubmitEvent) {
 		event.preventDefault();
 		createError = null;
 		nameError = null;
 		creating = true;
+		createdOk = false;
 		try {
 			created = await createApiToken({
 				// Blank: the server generates a generic dated name.
@@ -89,6 +92,7 @@
 			tokens = [created, ...tokens.filter((token) => token.id !== created?.id)];
 			name = '';
 			networks = '';
+			createdOk = true;
 		} catch (cause) {
 			createError = cause;
 		} finally {
@@ -271,7 +275,7 @@
 				/>
 			</Field>
 			<div class="sm:col-span-2">
-				<Button type="submit" variant="secondary" loading={creating}>
+				<Button type="submit" variant="secondary" loading={creating} success={createdOk}>
 					<KeyRound class="size-4" aria-hidden="true" />
 					{m.settings_assistant_create()}
 				</Button>

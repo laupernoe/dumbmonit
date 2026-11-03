@@ -186,14 +186,16 @@
 		}
 	}
 
-	async function test(destination: LogDestination) {
+	async function test(destination: LogDestination): Promise<boolean> {
 		busy = { id: destination.id, action: 'test' };
 		actionError = null;
 		testResult = null;
 		try {
 			testResult = { id: destination.id, ...(await testLogDestination(destination.id)) };
+			return testResult.ok;
 		} catch (cause) {
 			actionError = cause;
+			return false;
 		} finally {
 			busy = null;
 		}
@@ -294,7 +296,7 @@
 						<div class="sm:col-span-2"><ErrorNotice error={saveError} title={m.settings_logs_save_error()} /></div>
 					{/if}
 					<div class="flex flex-wrap items-center gap-3 sm:col-span-2" aria-live="polite">
-						<Button type="submit" variant="primary" loading={saving}>{m.settings_logs_save()}</Button>
+						<Button type="submit" variant="primary" loading={saving} success={saved}>{m.settings_logs_save()}</Button>
 						{#if saved}<Plate tone="signal" draw label={m.settings_logs_saved()} />{/if}
 					</div>
 				</form>
@@ -435,7 +437,7 @@
 								{/if}
 
 								<div class="mt-3 flex flex-wrap items-center gap-2">
-									<Button size="sm" variant="secondary" loading={busy?.id === destination.id && busy.action === 'test'} disabled={busy !== null} onclick={() => void test(destination)}>
+									<Button size="sm" variant="secondary" loading={busy?.id === destination.id && busy.action === 'test'} disabled={busy !== null} onclick={() => test(destination)}>
 										<Send class="size-4" aria-hidden="true" />
 										{m.settings_logs_dest_test()}
 									</Button>

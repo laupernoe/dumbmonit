@@ -608,6 +608,7 @@
 	"app_layout_signing_in": "Переходим ко входу…",
 	"app_ui_copied": "Скопировано",
 	"app_ui_copy": "Копировать",
+	"app_ui_done": "Готово",
 	"app_ui_run_with_sudo": "Запустить через sudo",
 	"app_ui_select_copy": "Выделить и скопировать",
 	"app_ui_tone_advisory": "Предупреждение",

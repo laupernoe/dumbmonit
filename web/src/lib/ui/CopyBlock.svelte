@@ -48,13 +48,14 @@
 	<pre class={`overflow-x-auto whitespace-pre-wrap break-all px-3 py-2.5 pr-12 font-mono text-[0.8125rem] leading-relaxed text-ink ${secret ? 'blur-[3px] transition group-focus-within:blur-0 group-hover:blur-0' : ''}`}><code bind:this={code}>{value}</code></pre>
 	<button
 		type="button"
-		class="absolute top-1.5 right-1.5 inline-flex size-10 items-center justify-center rounded-md border sm:size-8 border-line bg-surface text-ink-2 transition hover:text-ink"
+		class={`absolute top-1.5 right-1.5 inline-flex size-10 items-center justify-center rounded-md border transition-colors duration-150 sm:size-8 ${status === 'copied' ? 'border-signal bg-signal-soft' : 'border-line bg-surface'} text-ink-2 hover:text-ink`}
 		onclick={copy}
 		aria-label={title}
 		{title}
 	>
 		{#if status === 'copied'}<Check class="check-draw size-4 text-signal-ink" aria-hidden="true" />{:else if status === 'failed'}<TextCursorInput class="size-4 text-warning-ink" aria-hidden="true" />{:else}<Copy class="size-4" aria-hidden="true" />{/if}
 	</button>
+	<span class="sr-only" role="status" aria-live="polite">{status === 'copied' ? m.app_ui_copied() : ''}</span>
 	{#if status === 'failed'}
 		<span class="pointer-events-none absolute top-full right-1.5 mt-1 rounded-md border border-line bg-surface px-2 py-1 text-xs text-ink-2 shadow-sm" role="status">{m.app_ui_select_copy()}</span>
 	{/if}

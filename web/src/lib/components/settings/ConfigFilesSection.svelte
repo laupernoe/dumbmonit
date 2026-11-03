@@ -83,14 +83,16 @@
 	let exportError = $state<unknown>(null);
 	let exported = $state<ConfigExport | null>(null);
 
-	async function runExport() {
+	async function runExport(): Promise<boolean> {
 		exporting = true;
 		exportError = null;
 		try {
 			exported = await exportConfig();
 			saveYaml(exported.yaml);
+			return true;
 		} catch (cause) {
 			exportError = cause;
+			return false;
 		} finally {
 			exporting = false;
 		}
@@ -116,7 +118,7 @@
 		if (file) yaml = await file.text();
 	}
 
-	async function plan() {
+	async function plan(): Promise<boolean> {
 		planning = true;
 		planError = null;
 		applyError = null;
@@ -125,14 +127,16 @@
 		try {
 			result = await planConfig(yaml, prune);
 			planned = { yaml, prune };
+			return true;
 		} catch (cause) {
 			planError = cause;
+			return false;
 		} finally {
 			planning = false;
 		}
 	}
 
-	async function apply() {
+	async function apply(): Promise<boolean> {
 		applying = true;
 		applyError = null;
 		try {
@@ -140,8 +144,10 @@
 			planned = null;
 			await load();
 			await configManaged.reload();
+			return true;
 		} catch (cause) {
 			applyError = cause;
+			return false;
 		} finally {
 			applying = false;
 		}

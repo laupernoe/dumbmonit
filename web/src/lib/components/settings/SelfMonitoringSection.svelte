@@ -156,24 +156,26 @@
 		}
 	}
 
-	async function test() {
+	async function test(): Promise<boolean> {
 		tested = null;
 		testError = null;
 		urlError = null;
 		const typed = url.trim();
 		if (typed && !/^https?:\/\/\S+$/.test(typed)) {
 			urlError = m.settings_selfmon_url_invalid();
-			return;
+			return false;
 		}
 		if (!typed && !data?.heartbeat.has_url) {
 			urlError = m.settings_selfmon_url_required();
-			return;
+			return false;
 		}
 		testing = true;
 		try {
 			tested = await testHeartbeat(typed || undefined);
+			return tested.ok;
 		} catch (cause) {
 			testError = cause;
+			return false;
 		} finally {
 			testing = false;
 		}
@@ -341,8 +343,8 @@
 						{/if}
 
 						<div class="flex flex-wrap items-center gap-3" aria-live="polite">
-							<Button type="submit" variant="primary" loading={saving}>{m.settings_selfmon_save()}</Button>
-							<Button variant="secondary" loading={testing} disabled={saving} onclick={() => void test()}>
+							<Button type="submit" variant="primary" loading={saving} success={saved}>{m.settings_selfmon_save()}</Button>
+							<Button variant="secondary" loading={testing} disabled={saving} onclick={() => test()}>
 								<Send class="size-4" aria-hidden="true" />
 								{m.settings_selfmon_test()}
 							</Button>

@@ -345,7 +345,7 @@
 			{#if auth.isAdmin}
 				<div class="flex flex-wrap items-center gap-3" aria-live="polite">
 					<ClickSpark>
-						<Button type="submit" variant="primary" loading={saving} disabled={!dirty}>{m.alerts_rules_edit_save()}</Button>
+						<Button type="submit" variant="primary" loading={saving} success={saved} disabled={!dirty}>{m.alerts_rules_edit_save()}</Button>
 					</ClickSpark>
 					{#if saved}
 						<Plate tone="signal" label={m.notifications_policy_saved()} draw />

@@ -40,17 +40,19 @@
 		return () => controller.abort();
 	});
 
-	async function checkNow() {
+	async function checkNow(): Promise<boolean> {
 		checking = true;
 		notice = '';
 		error = null;
 		try {
 			info = await checkUpdateNow();
+			return true;
 		} catch (cause) {
 			const failure = toApiError(cause);
 			// 409: asked again within the minute. Not an error worth a red box.
 			if (failure.status === 409) notice = failure.message;
 			else error = failure;
+			return false;
 		} finally {
 			checking = false;
 		}

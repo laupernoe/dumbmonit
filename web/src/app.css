@@ -360,6 +360,9 @@ html.obsidian .font-sans {
 	--ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
 	/* The console's one curve for entrances, tabs and state changes (100–300 ms). */
 	--ease-standard: cubic-bezier(0.2, 0, 0, 1);
+	/* Durations of the console's motion: hover/focus, then open/close. Nothing above 200 ms. */
+	--dur-fast: 120ms;
+	--dur-base: 180ms;
 }
 
 /* ---------------------------------------------------------------------------
@@ -619,6 +622,39 @@ textarea.input {
 .rise-in {
 	animation: rise-in 260ms var(--ease-standard) both;
 	animation-delay: var(--rise-delay, 0ms);
+}
+
+/* Menus, listboxes and toasts open with a short fade and a small settle. Opacity and
+   transform only: nothing is pushed around. */
+@keyframes pop-in {
+	from {
+		opacity: 0;
+		transform: translateY(var(--pop-from, -4px));
+	}
+}
+.motion-pop {
+	animation: pop-in var(--dur-base) var(--ease-standard) both;
+}
+.motion-pop-up {
+	--pop-from: 6px;
+}
+
+/* A disclosure body, once opened (it stays mounted, `hidden` when closed). */
+@keyframes reveal-in {
+	from {
+		opacity: 0;
+	}
+}
+.motion-reveal:not([hidden]) {
+	animation: reveal-in var(--dur-base) var(--ease-standard) both;
+}
+
+/* Rows and cards that react to the pointer or the keyboard: colour only. */
+.motion-row {
+	transition:
+		background-color var(--dur-fast) var(--ease-standard),
+		border-color var(--dur-fast) var(--ease-standard),
+		box-shadow var(--dur-fast) var(--ease-standard);
 }
 
 /* A value or a mark that just changed state: a short fade from a hair below. */

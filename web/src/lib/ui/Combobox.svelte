@@ -157,7 +157,7 @@
 			role="listbox"
 			aria-multiselectable="true"
 			aria-label={label}
-			class="absolute inset-x-0 top-full z-30 mt-1 max-h-72 overflow-y-auto rounded-[var(--radius-card)] border border-line-strong bg-surface p-1 shadow-lift"
+			class="motion-pop absolute inset-x-0 top-full z-30 mt-1 max-h-72 overflow-y-auto rounded-[var(--radius-card)] border border-line-strong bg-surface p-1 shadow-lift"
 		>
 			{#each shown as option, index (option.value)}
 				{@const on = chosen.has(option.value)}

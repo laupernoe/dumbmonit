@@ -84,8 +84,8 @@
 				Number(draft.dormant_days) !== data.settings.dormant_days)
 	);
 
-	async function save() {
-		if (!draft || saving) return;
+	async function save(): Promise<boolean> {
+		if (!draft || saving) return false;
 		saving = true;
 		saveError = null;
 		saved = false;
@@ -98,8 +98,10 @@
 				})
 			);
 			saved = true;
+			return true;
 		} catch (cause) {
 			saveError = cause;
+			return false;
 		} finally {
 			saving = false;
 		}

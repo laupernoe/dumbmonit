@@ -191,7 +191,7 @@
 					<Upload class="size-4" aria-hidden="true" />
 					{m.devices_import_upload()}
 				</Button>
-				<Button variant="ghost" onclick={downloadTemplate}>
+				<Button variant="ghost" onclick={downloadTemplate} feedback>
 					<Download class="size-4" aria-hidden="true" />
 					{m.devices_import_template()}
 				</Button>
