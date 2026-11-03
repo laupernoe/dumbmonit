@@ -29,6 +29,8 @@
 	import CollectorPicker from '#lib/components/device-form/CollectorPicker.svelte';
 	import TargetForm from '#lib/components/device-form/TargetForm.svelte';
 	import AgentEnroll from '#lib/components/device-form/AgentEnroll.svelte';
+	import SynologyChoice from '#lib/components/device-form/SynologyChoice.svelte';
+	import SynologyPackage from '#lib/components/device-form/SynologyPackage.svelte';
 	import { isMailKind } from '#lib/components/devices/mdaemon/agent-link.js';
 	import { readPrefill } from '#lib/components/device-form/discovery-prefill.js';
 	import Discovery from '#lib/components/device-form/Discovery.svelte';
@@ -117,6 +119,8 @@
 	/** `?os=windows&then=mdaemon`: the agent install for a mail server, then its monitor. */
 	const windowsSetup = $derived(params.get('os') === 'windows');
 	const afterKind = $derived(isMailKind(params.get('then') ?? '') ? (params.get('then') ?? '') : '');
+	/** Synology DSM: `?mode=agent` (the .spk package) or `?mode=api`; none yet shows the choice. */
+	const synologyMode = $derived(selected?.kind === 'synology' ? (params.get('mode') === 'agent' ? 'agent' : params.get('mode') === 'api' ? 'api' : null) : null);
 	const selectedId = $derived(selected ? (feature ? `${AGENT_KIND}:${feature.id}` : selected.kind) : null);
 	const has = (kind: string) => collectors.some((c) => c.kind === kind);
 	/** What the setup guide explains: the scan is an SNMP matter. */
@@ -169,6 +173,7 @@
 			(p) => {
 				p.delete('scan');
 				p.delete('guide');
+				p.delete('mode');
 				p.set('kind', kind);
 				if (via) p.set('via', via);
 				else p.delete('via');
@@ -179,6 +184,10 @@
 			},
 			{ push: true, scroll: true }
 		);
+	}
+
+	function pickSynology(mode: 'agent' | 'api') {
+		void navigate((p) => p.set('mode', mode), { push: true, scroll: true });
 	}
 
 	function openScan() {
@@ -197,7 +206,7 @@
 	function toPicker() {
 		lastChoice = selectedId ?? (scanning ? 'scan' : null);
 		if (depth > 0) history.go(-depth);
-		else void navigate((p) => ['kind', 'via', 'scan', 'guide', 'location', 'folder'].forEach((key) => p.delete(key)), { push: false });
+		else void navigate((p) => ['kind', 'via', 'mode', 'scan', 'guide', 'location', 'folder'].forEach((key) => p.delete(key)), { push: false });
 	}
 
 	function openGuide() {
@@ -490,6 +499,17 @@
 									folderDefault={textParam('folder')}
 								/>
 							{/key}
+						{:else if selected.kind === 'synology' && synologyMode === null}
+							<SynologyChoice onpick={pickSynology} />
+						{:else if selected.kind === 'synology' && synologyMode === 'agent'}
+							<SynologyPackage />
+							<AgentEnroll
+								spk
+								cancelHref="/targets"
+								viaDefault={idParam('via_agent')}
+								locationDefault={idParam('location')}
+								folderDefault={textParam('folder')}
+							/>
 						{:else}
 							{#if prefill}
 								<p class="mb-5 rounded-lg border border-signal/30 bg-signal-soft px-3.5 py-2.5 text-sm text-ink">
