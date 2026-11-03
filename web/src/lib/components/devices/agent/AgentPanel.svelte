@@ -13,7 +13,7 @@
 	import { allowAgentRebind, getAgentHost, type AgentHost, type Target } from '#lib/api/index.js';
 	import { formatDateTime, formatRelative } from '#lib/format.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, Confirm, ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
+	import { Button, ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
 	import RelayPanel from '#lib/components/devices/relay/RelayPanel.svelte';
 	import LogsPanel from '#lib/components/devices/agent/LogsPanel.svelte';
 	import SentinelPanel from '#lib/components/devices/agent/SentinelPanel.svelte';
@@ -126,7 +126,7 @@
 			</p>
 		{:else if auth.isAdmin}
 			<div class="mt-3 flex flex-wrap items-center gap-3">
-				<Confirm variant={unbound ? 'secondary' : 'danger'} confirmLabel={m.devices_agent_open_confirm()} loading={rebinding} onconfirm={rebind}>{m.devices_agent_allow_rebind()}</Confirm>
+				<Button size="sm" variant="secondary" loading={rebinding} onclick={rebind}>{m.devices_agent_allow_rebind()}</Button>
 				<p class="text-sm text-ink-2">
 					{#if unbound}
 						{m.devices_agent_rebind_hint_unbound()}
