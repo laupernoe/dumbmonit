@@ -82,6 +82,30 @@ this is unrelated to the **Devices to keep online** setting above, which only
 raises an alert for watched devices going offline. Raise **Device staleness**
 for a tailnet with devices that roam.
 
+## Routes, tailnet lock and relays
+
+For every device DumbMonit also reads:
+
+- the **routes** it advertises (subnet router, exit node) and how many are still unapproved in the admin console;
+- a **tailnet lock** error, when the device is not signed by a trusted node;
+- the latency to its preferred **DERP relay**, while it is online.
+
+No additional permission is needed: it is the same device list.
+
+## Default alerts
+
+| Alert | Fires when |
+|---|---|
+| Tailscale device offline | A watched device is disconnected for more than 15 minutes |
+| Tailscale subnet router offline | A device that advertises routes is offline for 10 minutes, watched or not |
+| Tailscale routes awaiting approval | A device advertises routes nobody approved, for an hour |
+| Tailscale node key expiring / expired | A key expires in less than 14 days / a watched device's key has expired |
+| Tailscale device awaiting approval | A device joined and is not authorized |
+| Tailscale tailnet lock error | A device is not signed by a trusted node, for 30 minutes |
+| Tailscale client update | A watched device runs an outdated client (information) |
+
+All rules can be edited or disabled in Alerts.
+
 ## The monitor page
 
 The Tailnet panel says what is wrong in a sentence, shows the devices online,

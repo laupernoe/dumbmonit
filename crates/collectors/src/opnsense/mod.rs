@@ -67,6 +67,7 @@
 //! | `carp` | `true` | Interroge l'état CARP. |
 //! | `firmware` | `true` | Interroge l'état du micrologiciel. |
 //! | `temperature` | `true` | Interroge les sondes de température. |
+//! | `certificates` | `true` | Lit la date d'expiration des certificats en service. |
 //!
 //! # La vue, au-delà des métriques
 //!
@@ -78,6 +79,7 @@
 
 #[cfg(test)]
 mod capture;
+mod certs;
 mod client;
 pub mod firewall_log;
 mod metrics;
@@ -419,6 +421,19 @@ impl Collector for OpnsenseCollector {
             let firmware = metrics::firmware_view(&status);
             samples.extend(metrics::firmware_samples(&firmware, ts_ms));
             view.firmware = Some(firmware);
+        }
+
+        // Les certificats : un appel de plus, sans lien avec les précédents.
+        let certificates = optional_search::<SearchResult<Value>>(
+            &fw,
+            options.certificates,
+            "/api/trust/cert/search",
+        )
+        .await
+        .and_then(|outcome| settle(outcome, &mut errors, target.id, "trust/cert"));
+        if let Some(result) = certificates {
+            let expiries = certs::certificate_expiries(&result.rows, now_s);
+            samples.extend(certs::certificate_samples(&expiries, ts_ms));
         }
 
         let wireguard =
