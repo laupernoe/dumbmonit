@@ -52,6 +52,10 @@ slides, and are stored as they are.
 | `filter_oldest_update_age_seconds` | age of the oldest update among enabled lists | |
 | `filters_never_updated` | enabled lists that were never downloaded | |
 | `filter_update_interval_hours` | how often lists are updated; 0 turns updates off | |
+| `tls_valid` | 1 when the certificate and private key of the encrypted DNS (DoH, DoT, DoQ) load and match; absent while encryption is off. The chain is not judged, so a self-signed certificate is fine | |
+| `tls_expiry_seconds` | time left before that certificate expires; negative once it has | |
+| `dhcp_enabled`, `dhcp_leases`, `dhcp_static_leases` | AdGuard Home's DHCP server, when it is on: dynamic and static leases | |
+| `dhcp_pool_used_percent` | dynamic leases against the size of the IPv4 range | |
 | `update_check_enabled` | 0 when AdGuard Home runs with its version check off | |
 | `update_available` | 1 when the last version check announced a newer version; absent when the check is off | `latest` |
 | `scrape_errors` | secondary calls that failed on the last check | |
@@ -71,7 +75,9 @@ down. Untick the Test upstream servers option to turn this off.
 The [built-in rules](../alerting/rules.md#adguard-home) that apply:
 AdGuard Home protection off, AdGuard Home DNS not running, AdGuard Home
 upstream failing, AdGuard Home filter lists stale, AdGuard Home update
-available, plus Monitor unreachable.
+available, AdGuard Home slow to answer, AdGuard Home upstream slow, AdGuard Home
+certificate invalid, AdGuard Home certificate expiring, AdGuard Home DHCP range
+almost full, AdGuard Home receives no queries, plus Monitor unreachable.
 
 ## The monitor page
 
@@ -144,5 +150,6 @@ certificate check, request timeout (5 s) and the upstream test (on).
 | `GET /control/status` | running, protection, version: the only call whose failure fails the check |
 | `GET /control/stats`, `GET /control/stats/config` | queries, blocks, upstream answers, statistics window |
 | `GET /control/filtering/status` | filter lists |
+| `GET /control/tls/status`, `GET /control/dhcp/status` | certificate validity and expiry, DHCP leases; optional, a refusal is not an error |
 | `POST /control/version.json` with `{"recheck_now": false}` | the result of the last version check, as the web interface reads it on every page load; it never forces a new check |
 | `GET /control/dns_info`, then `POST /control/test_upstream_dns` once per upstream | the configured upstreams and bootstrap servers, then the upstream test; changes no setting |

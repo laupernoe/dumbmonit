@@ -11,7 +11,10 @@ use crate::alerting::model::{
     AnomalyParams, Operator, RULE_HOST_DOWN, Rule, RuleKind, Severity, TargetSelector,
 };
 
+mod adguard;
 mod cloud;
+mod homeassistant;
+mod pihole;
 
 /// Taux d'occupation processeur, toutes sources confondues.
 ///
@@ -7755,6 +7758,10 @@ pub fn builtin_rules() -> Vec<Rule> {
     ];
     // Intégrations en nuage, un fichier par produit (`rules/cloud/`).
     rules.extend(cloud::rules());
+    // Résolveurs DNS et domotique : un fichier par produit (`rules/<produit>.rs`).
+    rules.extend(pihole::rules());
+    rules.extend(adguard::rules());
+    rules.extend(homeassistant::rules());
     rules.extend(apps_rules());
     rules
 }
@@ -9376,7 +9383,11 @@ mod tests {
             for mot in rule.query.split(|c: char| !c.is_alphanumeric() && c != '_') {
                 if mot.starts_with("dumbmonit_") {
                     assert!(
-                        PRODUITES.contains(&mot) || cloud::produced().contains(&mot),
+                        PRODUITES.contains(&mot)
+                            || cloud::produced().contains(&mot)
+                            || pihole::PRODUCED.contains(&mot)
+                            || adguard::PRODUCED.contains(&mot)
+                            || homeassistant::PRODUCED.contains(&mot),
                         "rule \"{}\" targets \"{mot}\", which no collector produces",
                         rule.uid
                     );
