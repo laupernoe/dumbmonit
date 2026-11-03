@@ -42,12 +42,13 @@ A monitor finds its location from the most explicit to the most deduced:
    [topology map](topology.md) — the `site` tag of the monitor, the site its
    agent or relay agent declares, or the name of the relay agent that polls it.
    Every monitor of that site lands there without being placed one by one.
-3. **The main site**: one location can be marked *Main site*. It gathers every
-   monitor that has no remote site.
+A monitor with neither is **on no site**: it is not on the map. There is no default
+site; pick one explicitly. Until the first location exists, the Map page offers no
+World view at all.
 
 Nothing is copied: change a monitor's relay or its `site` tag, and it moves on
-the map at the next refresh. *Automatic* in the monitor's form (or **Place at →
-Automatic** in bulk) removes a hand placement. Deleting a location keeps its
+the map at the next refresh. *None* in the monitor's form (or **Place at →
+None** in bulk) removes a hand placement. Deleting a location keeps its
 monitors; they simply lose their place. Monitors no location gathers are counted
 under the list.
 
@@ -80,5 +81,5 @@ comes under the map. Pins are keyboard reachable (Tab, then Enter).
 ## API
 
 `GET /api/locations` returns the locations, their members (with how each one
-got there: `assigned`, `site` or `main`), the known sites and the unplaced
+got there: `assigned` or `site`), the known sites and the unplaced
 monitors. See the [HTTP API](../reference/api.md) for the other routes.

@@ -43,12 +43,13 @@ Un moniteur trouve son emplacement du plus explicite au plus déduit :
    [carte de topologie](topology.md) — l'étiquette `site` du moniteur, le site
    que déclare son agent ou son agent relais, ou le nom de l'agent relais qui
    l'interroge. Chaque moniteur de ce site y arrive sans être placé un par un.
-3. **Le site principal** : un emplacement peut être marqué *Site principal*. Il
-   réunit tous les moniteurs qui n'ont pas de site distant.
+Un moniteur sans l'un ni l'autre est **sans site** : il n'est pas sur la carte.
+Il n'y a pas de site par défaut ; choisissez-en un explicitement. Tant qu'aucun
+emplacement n'existe, la page Carte ne propose pas de vue Monde.
 
 Rien n'est recopié : changez le relais d'un moniteur ou son étiquette `site`,
-et il se déplace sur la carte au rafraîchissement suivant. *Automatique* dans le
-formulaire (ou **Placer à → Automatique** en masse) retire un placement manuel.
+et il se déplace sur la carte au rafraîchissement suivant. *Aucun* dans le
+formulaire (ou **Placer à → Aucun** en masse) retire un placement manuel.
 Supprimer un emplacement garde ses moniteurs ; ils perdent seulement leur place.
 Les moniteurs qu'aucun emplacement ne réunit sont comptés sous la liste.
 
@@ -85,6 +86,6 @@ téléphone, la liste passe sous la carte. Les pastilles s'atteignent au clavier
 ## API
 
 `GET /api/locations` renvoie les emplacements, leurs membres (avec la façon dont
-chacun y est arrivé : `assigned`, `site` ou `main`), les sites connus et les
+chacun y est arrivé : `assigned` ou `site`), les sites connus et les
 moniteurs sans emplacement. Voir l'[API HTTP](../reference/api.md) pour les
 autres routes.

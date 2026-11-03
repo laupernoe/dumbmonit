@@ -97,7 +97,6 @@
 		latitude: string;
 		longitude: string;
 		site: string;
-		main_site: boolean;
 	}
 
 	let draft = $state<Draft | null>(null);
@@ -118,10 +117,9 @@
 					address: location.address,
 					latitude: String(location.latitude),
 					longitude: String(location.longitude),
-					site: location.site,
-					main_site: location.main_site
+					site: location.site
 				}
-			: { id: null, name: '', address: '', latitude: '', longitude: '', site: '', main_site: (data?.locations.length ?? 0) === 0 };
+			: { id: null, name: '', address: '', latitude: '', longitude: '', site: '' };
 	}
 
 	const latitude = $derived(draft && draft.latitude.trim() !== '' ? Number(draft.latitude) : NaN);
@@ -161,8 +159,7 @@
 			address: draft.address.trim(),
 			latitude,
 			longitude,
-			site: draft.site,
-			main_site: draft.main_site
+			site: draft.site
 		};
 		saving = true;
 		saveError = null;
@@ -286,9 +283,6 @@
 							<div class="min-w-0 flex-1">
 								<p class="flex flex-wrap items-center gap-x-2 text-sm font-semibold text-ink">
 									<span class="truncate">{location.name}</span>
-									{#if location.main_site}
-										<span class="rounded-md bg-signal-soft px-1.5 text-xs font-semibold text-signal-ink">{m.locations_badge_main()}</span>
-									{/if}
 									{#if location.site}
 										<span class="rounded-md bg-surface-2 px-1.5 text-xs font-medium text-ink-2">{m.locations_badge_site({ site: location.site })}</span>
 									{/if}
@@ -392,9 +386,6 @@
 								<option value="">{m.locations_site_none()}</option>
 								{#each siteChoices as site (site)}<option value={site}>{site}</option>{/each}
 							</select>
-						</Field>
-						<Field label={m.locations_main()} for="location-main" inline help={m.locations_main_help()}>
-							<Toggle id="location-main" bind:checked={draft.main_site} label={m.locations_main()} />
 						</Field>
 					</div>
 
