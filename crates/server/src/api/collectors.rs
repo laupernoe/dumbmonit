@@ -4835,7 +4835,7 @@ const NUTANIX_OPTIONS: &[OptionView] = &[
 ];
 
 /// Racine de la documentation en ligne, vers laquelle pointent les prérequis.
-const DOCS_INSTALL: &str = "https://dumbmonit.readthedocs.io/en/latest/install/docker/";
+const DOCS_INSTALL: &str = "https://dumbmonit.app/docs/install/docker/";
 
 /// Bloc Compose à ajouter pour les captures d'écran : le navigateur sans tête et
 /// l'adresse que le serveur utilise pour lui parler. Identique à la documentation.
@@ -8209,7 +8209,7 @@ fn guide_url(kind: &str) -> String {
         "mysql" => "#mysql-and-mariadb".to_owned(),
         _ => String::new(),
     };
-    format!("https://dumbmonit.readthedocs.io/en/latest/devices/{page}/{anchor}")
+    format!("https://dumbmonit.app/docs/devices/{page}/{anchor}")
 }
 
 /// Les textes des tables, empruntés plutôt que copiés.

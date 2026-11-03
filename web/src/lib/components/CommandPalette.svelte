@@ -117,7 +117,7 @@
 			: []),
 		{ id: 'page:/settings', group: 'pages', label: m.misc_nav_settings(), keywords: 'preferences account language password users sso agents tokens assistant appearance theme backup about', icon: Settings, href: '/settings', run: go('/settings') },
 		{ id: 'page:/wall', group: 'pages', unscoped: true, label: m.misc_nav_wall(), detail: m.misc_palette_wall_detail(), keywords: 'kiosk tv screen', icon: Tv, href: '/wall', run: go('/wall') },
-		{ id: 'page:docs', group: 'pages', label: m.misc_palette_documentation(), keywords: 'docs help manual notifications channels', icon: BookOpen, run: () => window.open('https://dumbmonit.readthedocs.io/en/latest/', '_blank', 'noopener') },
+		{ id: 'page:docs', group: 'pages', label: m.misc_palette_documentation(), keywords: 'docs help manual notifications channels', icon: BookOpen, run: () => window.open('https://dumbmonit.app/docs/', '_blank', 'noopener') },
 		{ id: 'action:add', group: 'actions', admin: true, label: m.misc_palette_add_device(), keywords: 'new target create host', icon: Plus, run: go('/targets/new') },
 		{ id: 'action:scan', group: 'actions', admin: true, label: m.misc_palette_scan(), keywords: 'discover cidr snmp', icon: Radar, run: go('/targets/new?scan=1') },
 		{ id: 'action:agent', group: 'actions', admin: true, label: m.misc_palette_agent(), detail: m.misc_palette_agent_detail(), keywords: 'agent install machine server linux windows macos freebsd docker containers services disks backups token enroll', icon: Cpu, run: go('/targets/new?kind=agent') },

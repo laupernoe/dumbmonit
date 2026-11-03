@@ -160,7 +160,7 @@ pub async fn get() -> Response {
         "supportedVersions": supported_versions(),
         "transport": "streamable-http",
         "streaming": false,
-        "docs": "https://dumbmonit.readthedocs.io/en/latest/using/assistant/"
+        "docs": "https://dumbmonit.app/docs/using/assistant/"
     });
     let mut response = (StatusCode::METHOD_NOT_ALLOWED, Json(body)).into_response();
     response.headers_mut().insert(header::ALLOW, "POST".parse().unwrap());

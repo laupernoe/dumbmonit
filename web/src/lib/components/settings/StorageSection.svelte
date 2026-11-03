@@ -16,7 +16,7 @@
 	import RetentionInput from './RetentionInput.svelte';
 	import { diffUpdate, diskShare, formatBytes, formFrom, lowersRawRetention, needsRestart, parseDays, type StorageForm } from './storage';
 
-	const EXTERNAL_VM_DOCS = 'https://dumbmonit.readthedocs.io/en/latest/reference/external-victoriametrics/';
+	const EXTERNAL_VM_DOCS = 'https://dumbmonit.app/docs/reference/external-victoriametrics/';
 
 	let view = $state<StorageView | null>(null);
 	let loading = $state(true);

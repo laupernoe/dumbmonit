@@ -17,7 +17,7 @@
 	import ReportEditor from '#lib/components/settings/ReportEditor.svelte';
 	import SlaDownload from '#lib/components/settings/SlaDownload.svelte';
 
-	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/using/reports/';
+	const DOCS_URL = 'https://dumbmonit.app/docs/using/reports/';
 
 	let schedules = $state<ReportSchedule[]>([]);
 	let channels = $state<Channel[]>([]);

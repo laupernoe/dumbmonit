@@ -8,7 +8,7 @@
 	import { Lock, X } from 'lucide-svelte';
 	import { demo } from '#lib/stores/demo.svelte.js';
 
-	const INSTALL_URL = 'https://dumbmonit.readthedocs.io/en/latest/install/docker/';
+	const INSTALL_URL = 'https://dumbmonit.app/docs/install/docker/';
 
 	$effect(() => {
 		demo.noticeSerial;

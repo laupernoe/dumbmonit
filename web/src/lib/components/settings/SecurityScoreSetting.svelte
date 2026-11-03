@@ -12,7 +12,7 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { ErrorNotice, Plate, Toggle } from '#lib/ui/index.js';
 
-	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/using/security-score/';
+	const DOCS_URL = 'https://dumbmonit.app/docs/using/security-score/';
 
 	/** `null` until the server answered. */
 	let saved = $state<boolean | null>(null);
