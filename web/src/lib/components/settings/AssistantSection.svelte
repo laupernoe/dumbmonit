@@ -419,7 +419,7 @@
 			{:else if loading}
 				<Skeleton class="h-14 w-full" />
 			{:else if tokens.length === 0}
-				<EmptyState icon={Bot} title={m.settings_assistant_empty_title()} description={m.settings_assistant_empty_description()} />
+				<EmptyState compact icon={Bot} title={m.settings_assistant_empty_title()} description={m.settings_assistant_empty_description()} />
 			{:else}
 				<ul class="divide-y divide-line rounded-[var(--radius-card)] border border-line" role="list">
 					{#each tokens as item (item.id)}

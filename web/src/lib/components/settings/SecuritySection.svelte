@@ -12,7 +12,6 @@
 	import PasswordInput from './PasswordInput.svelte';
 	import TwoFactorSection from './TwoFactorSection.svelte';
 	import PasskeysSection from './PasskeysSection.svelte';
-	import { viewport } from '#lib/stores/viewport.svelte.js';
 
 	let current = $state('');
 	let next = $state('');
@@ -22,9 +21,17 @@
 	let saving = $state(false);
 	let changed = $state(false);
 	let signingOut = $state(false);
-	/** Phones fold the three password fields behind one button until asked. */
+	/** The password fields stay folded behind one button until asked, and fold again after a success. */
 	let formOpen = $state(false);
-	const folded = $derived(viewport.phone && !formOpen);
+
+	function cancel() {
+		current = '';
+		next = '';
+		confirmation = '';
+		errors = {};
+		apiError = null;
+		formOpen = false;
+	}
 
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
@@ -46,6 +53,8 @@
 			current = '';
 			next = '';
 			confirmation = '';
+			errors = {};
+			formOpen = false;
 			changed = true;
 		} catch (cause) {
 			if (cause instanceof ApiError && cause.status === 401) {
@@ -79,12 +88,17 @@
 			<p class="text-sm text-ink-2">{m.settings_security_oidc_note()}</p>
 		</div>
 	{:else}
-		{#if folded}
-			<Button variant="secondary" aria-expanded="false" aria-controls="password-form" onclick={() => (formOpen = true)}>
-				{m.settings_security_change()}
-			</Button>
+		{#if !formOpen}
+			<div class="flex flex-wrap items-center gap-3" aria-live="polite">
+				<Button variant="secondary" aria-expanded="false" aria-controls="password-form" onclick={() => { changed = false; formOpen = true; }}>
+					{m.settings_security_change()}
+				</Button>
+				{#if changed}
+					<Plate tone="signal" label={m.settings_security_changed()} />
+				{/if}
+			</div>
 		{/if}
-		<form id="password-form" class="grid max-w-md gap-4" hidden={folded} onsubmit={submit} novalidate>
+		<form id="password-form" class="grid max-w-md gap-4" hidden={!formOpen} onsubmit={submit} novalidate>
 			<Field label={m.settings_security_current_label()} for="current-password" error={errors.current}>
 				<PasswordInput
 					id="current-password"
@@ -121,10 +135,8 @@
 			{/if}
 
 			<div class="flex flex-wrap items-center gap-3" aria-live="polite">
-				<Button type="submit" variant="secondary" loading={saving}>{m.settings_security_change()}</Button>
-				{#if changed}
-					<Plate tone="signal" label={m.settings_security_changed()} />
-				{/if}
+				<Button type="submit" variant="primary" loading={saving}>{m.settings_security_save()}</Button>
+				<Button variant="ghost" disabled={saving} onclick={cancel}>{m.settings_security_cancel()}</Button>
 			</div>
 		</form>
 	{/if}
