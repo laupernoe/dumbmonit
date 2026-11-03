@@ -62,3 +62,33 @@ export function dockerRun(options: InstallOptions, token: string, hostname: stri
 		`  ${AGENT_IMAGE}`
 	].join('\n');
 }
+
+/** The same container as a compose file, for those who keep their stack in one. */
+export function dockerCompose(options: InstallOptions, token: string, hostname: string | null): string {
+	const quote = (value: string) => `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\$/g, '$$$$')}"`;
+	const env: [string, string][] = [
+		['DUMBMONIT_AGENT_URL', options.base],
+		['DUMBMONIT_AGENT_TOKEN', token]
+	];
+	if (options.tlsUrl) env.push(['DUMBMONIT_AGENT_TLS_URL', options.tlsUrl]);
+	if (options.caPin) env.push(['DUMBMONIT_AGENT_CA_PIN', options.caPin]);
+	if (options.serverPin) env.push(['DUMBMONIT_AGENT_SERVER_PIN', options.serverPin]);
+	if (hostname) env.push(['DUMBMONIT_AGENT_HOSTNAME', hostname]);
+	env.push(['DUMBMONIT_AGENT_SECRET_FILE', '/var/lib/dumbmonit-agent/agent-secret']);
+	return [
+		'services:',
+		'  dumbmonit-agent:',
+		`    image: ${AGENT_IMAGE}`,
+		'    container_name: dumbmonit-agent',
+		'    restart: unless-stopped',
+		'    environment:',
+		...env.map(([key, value]) => `      ${key}: ${quote(value)}`),
+		...(hostname ? ['    ports:', '      - "8443:8443"'] : []),
+		'    volumes:',
+		'      - dumbmonit-agent:/var/lib/dumbmonit-agent',
+		'      - /var/run/docker.sock:/var/run/docker.sock:ro',
+		'',
+		'volumes:',
+		'  dumbmonit-agent:'
+	].join('\n');
+}

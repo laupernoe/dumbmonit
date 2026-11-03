@@ -1,7 +1,7 @@
 // The add-an-agent flow reads the server's install command; it never builds an address. Run: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { dockerRun, installOptions } from '../src/lib/components/device-form/agent-enroll.ts';
+import { dockerCompose, dockerRun, installOptions } from '../src/lib/components/device-form/agent-enroll.ts';
 
 const pin = 'a'.repeat(64);
 const key = `sha256//${'K'.repeat(43)}=`;
@@ -29,4 +29,13 @@ test('the Docker command carries the same channel and pin, through the relay too
 test('values a shell could misread are quoted', () => {
 	const command = dockerRun({ base: 'https://x', tlsUrl: null, caPin: null, serverPin: null }, "to'ken $x", null);
 	assert.match(command, /DUMBMONIT_AGENT_TOKEN='to'\\''ken \$x'/);
+});
+
+test('the Compose file carries the same channel and pin, and escapes $', () => {
+	const file = dockerCompose(installOptions(relayed), 'dmon_x', null);
+	assert.match(file, /^services:\n {2}dumbmonit-agent:\n/);
+	assert.ok(file.includes(`DUMBMONIT_AGENT_SERVER_PIN: "${key}"`), file);
+	assert.doesNotMatch(file, /ports:/, 'an ordinary agent publishes no port');
+	assert.match(dockerCompose(installOptions(direct), 'dmon_x', 'relay-lyon'), /- "8443:8443"/);
+	assert.match(dockerCompose({ base: 'https://x', tlsUrl: null, caPin: null, serverPin: null }, 'a$b', null), /TOKEN: "a\$\$b"/);
 });

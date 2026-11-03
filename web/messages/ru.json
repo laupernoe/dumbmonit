@@ -9580,5 +9580,7 @@
 	"devices_agent_help_intro": "Выполните на самой машине, если агент не передаёт данные.",
 	"devices_agent_help_status": "Работает ли он?",
 	"devices_agent_help_restart": "Перезапустить агента",
-	"devices_agent_help_logs": "Последние журналы"
+	"devices_agent_help_logs": "Последние журналы",
+	"deviceform_enroll_compose_title": "Или через Docker Compose (docker-compose.yml)",
+	"deviceform_enroll_copy_compose": "Скопировать файл Compose"
 }
