@@ -9,15 +9,14 @@
 	 * The heartbeat URL usually holds its own secret: it is typed, sent, and
 	 * never shown again (only its host). Leaving the field empty keeps it.
 	 */
-	import { ExternalLink, HeartPulse, Send } from 'lucide-svelte';
+	import { HeartPulse, Send } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getSelfMonitoring, setHeartbeat, testHeartbeat } from '#lib/api/selfMonitoring.js';
 	import type { HeartbeatPing, HeartbeatTestResult, SelfMonitoring, SelfMonitoringComponent } from '#lib/api/types.js';
 	import { formatRelative } from '#lib/format.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle, Disclosure } from '#lib/ui/index.js';
+	import { Button, DocLink, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle, Disclosure } from '#lib/ui/index.js';
 
-	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/install/self-monitoring/';
 	const MIN_INTERVAL = 30;
 	const MAX_INTERVAL = 3600;
 
@@ -242,7 +241,6 @@
 						<dd class="tnum text-ink">{data.scheduler_backlog}</dd>
 					</div>
 				</dl>
-				<p class="mt-3 max-w-prose text-[0.8125rem] text-ink-2">{m.settings_selfmon_rules_hint()}</p>
 			</section>
 
 			<!-- Heartbeat -->
@@ -250,16 +248,7 @@
 				<div class="flex items-start gap-2">
 					<HeartPulse class="mt-0.5 size-4 shrink-0 text-ink-2" aria-hidden="true" />
 					<div class="min-w-0">
-						<p class="mt-1 max-w-prose text-sm text-ink-2">{m.settings_selfmon_heartbeat_intro()}</p>
-						<a
-							href={DOCS_URL}
-							target="_blank"
-							rel="noopener"
-							class="mt-1 inline-flex min-h-10 items-center gap-1 text-[0.8125rem] font-semibold text-ink-2 hover:text-ink hover:underline"
-						>
-							{m.settings_selfmon_docs()}
-							<ExternalLink class="size-3.5" aria-hidden="true" />
-						</a>
+						<DocLink page="install/self-monitoring/" />
 					</div>
 				</div>
 
@@ -329,7 +318,7 @@
 								oninput={() => (intervalError = null)}
 							/>
 						</Field>
-						<Field label={m.settings_selfmon_send_fail()} for="heartbeat-fail" inline help={m.settings_selfmon_send_fail_help()}>
+						<Field label={m.settings_selfmon_send_fail()} for="heartbeat-fail" inline>
 							<Toggle id="heartbeat-fail" bind:checked={sendFail} disabled={saving} label={m.settings_selfmon_send_fail()} />
 						</Field>
 

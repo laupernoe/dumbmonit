@@ -35,16 +35,12 @@
 		type WallMusic
 	} from '#lib/api/music.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, Confirm, CopyBlock, ErrorNotice, Field, Panel, Plate, Skeleton, Disclosure } from '#lib/ui/index.js';
+	import { Button, Confirm, CopyBlock, DocLink, ErrorNotice, Field, Panel, Plate, Skeleton, Disclosure } from '#lib/ui/index.js';
 	import { formatRelative, parseServerDate } from '#lib/format.js';
 	import { parseMusicLink } from '#lib/wall/music.js';
 	import { musicErrorText } from '#lib/wall/messages.js';
 	import SpeakerStatus from './SpeakerStatus.svelte';
-	import { localizedDocsUrl } from '#lib/docs.js';
 	import { m } from '#lib/paraglide/messages.js';
-
-	/** The wall page of the documentation, its music part. */
-	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/using/wall/#music-on-the-wall';
 
 	let account = $state<SpotifyAccount | null>(null);
 	let wall = $state<WallMusic | null>(null);
@@ -295,10 +291,6 @@
 
 			<!-- Spotify Connect -->
 			<Disclosure title={m.settings_music_connect_heading()}>
-				<p class="mt-1 max-w-prose text-sm text-ink-2">
-					{m.settings_music_connect_intro({ name: account.speaker_name })}
-				</p>
-
 				{#if account.status === 'connected'}
 					<dl class="mt-3 grid gap-x-4 gap-y-1.5 text-sm sm:grid-cols-[auto_minmax(0,1fr)]">
 						<dt class="text-ink-2">{m.settings_music_account()}</dt>
@@ -365,13 +357,6 @@
 									{m.settings_music_step1_after()}
 								</p>
 								<CopyBlock value={redirectUri} label={m.settings_music_copy_redirect()} />
-								<p class="text-[0.8125rem] text-ink-2">
-									{#if secure}
-										{m.settings_music_redirect_secure()}
-									{:else}
-										{m.settings_music_redirect_insecure()}
-									{/if}
-								</p>
 							</li>
 							<li>
 								<form class="grid gap-2" onsubmit={connect} novalidate>
@@ -439,23 +424,10 @@
 					{/if}
 				{/if}
 
-				<Disclosure class="mt-4" title={m.settings_music_needs_heading()}>
-					<ul class="grid list-disc gap-1.5 pl-4 text-[0.8125rem] text-ink-2">
-						<li>{m.settings_music_needs_1()}</li>
-						<li>{m.settings_music_needs_2()}</li>
-						<li>{m.settings_music_needs_3()}</li>
-						<li>{m.settings_music_needs_4()}</li>
-						<li>{m.settings_music_needs_5()}</li>
-						<li>{m.settings_music_needs_6()}</li>
-					</ul>
-				</Disclosure>
 			</Disclosure>
 
 			<!-- A link for every wall -->
 			<Disclosure title={m.settings_music_link_heading()}>
-				<p class="mt-1 max-w-prose text-sm text-ink-2">
-					{m.settings_music_link_intro()}
-				</p>
 				{#if current && wall?.link}
 					<div class="mt-3 flex flex-wrap items-center gap-2 text-sm">
 						<Plate tone="signal" label={m.settings_music_on_walls()} />
@@ -502,14 +474,5 @@
 			</Disclosure>
 		</div>
 	{/if}
-	<p class="mt-5 text-[0.8125rem]">
-		<a
-			class="inline-flex min-h-10 items-center gap-1 font-semibold text-ink underline-offset-2 hover:underline"
-			href={localizedDocsUrl(DOCS_URL)}
-			target="_blank"
-			rel="noopener noreferrer"
-		>
-			{m.settings_music_docs()}<ExternalLink class="size-3.5" aria-hidden="true" />
-		</a>
-	</p>
+	<DocLink page="using/wall/#music-on-the-wall" class="mt-5" />
 </Panel>

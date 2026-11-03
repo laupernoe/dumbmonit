@@ -23,6 +23,28 @@ export function localizedDocsUrl(url: string): string {
 	return `https://dumbmonit.readthedocs.io/${DOCS_LANGUAGE[locale] ?? locale}/${url.slice(prefix.length)}`;
 }
 
+/** A page of the documentation (`devices/agent/`, `install/remote-site/#anchor`), in the language of the UI. */
+export function docsUrl(page: string): string {
+	return localizedDocsUrl(`https://dumbmonit.readthedocs.io/en/latest/${page}`);
+}
+
+/** Kinds without a page of their own: the closest page of the documentation. */
+const KIND_DOCS: Record<string, string> = {
+	http: 'website',
+	snmp_oid: 'snmp',
+	victorialogs: 'victoriametrics',
+	agent_service: 'agent',
+	dummy: ''
+};
+const SERVICE_KINDS = new Set(['dns', 'grpc', 'imap', 'mqtt', 'mysql', 'ntp', 'ping', 'pop3', 'postgres', 'radius', 'smtp', 'ssh', 'tcp', 'tls', 'udp', 'websocket']);
+
+/** Page of the documentation that covers a monitor kind (`devices/proxmox/`). */
+export function kindDocPage(kind: string): string {
+	if (SERVICE_KINDS.has(kind)) return 'devices/services/';
+	const slug = kind in KIND_DOCS ? KIND_DOCS[kind] : kind;
+	return slug ? `devices/${slug}/` : 'devices/';
+}
+
 /** Page "Deploy with Active Directory" of the documentation, in the language of the UI. */
 export function adDeployDocsUrl(): string {
 	const locale = getLocale();

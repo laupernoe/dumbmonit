@@ -15,7 +15,7 @@
 	import { importableRows, isSqliteHead, selectionState, tickedRows, toggleRow } from './kuma-import.js';
 	import RelayPick from './RelayPick.svelte';
 	import type { KumaImportReport, TargetImportStatus } from '#lib/api/types.js';
-	import { Button, ErrorNotice, Plate } from '#lib/ui/index.js';
+	import { Button, DocLink, ErrorNotice, Plate } from '#lib/ui/index.js';
 	import type { Tone } from '#lib/ui/index.js';
 
 	interface Props {
@@ -175,7 +175,7 @@
 		<div class="flex items-start justify-between gap-3">
 			<div class="min-w-0">
 				<h2 id="kuma-title" class="text-lg font-semibold">{m.devices_kuma_title()}</h2>
-				<p class="mt-1 text-sm text-ink-2">{m.devices_kuma_description()}</p>
+				<DocLink page="using/imports/" class="mt-0.5" />
 			</div>
 			<button
 				type="button"
@@ -205,9 +205,7 @@
 			</div>
 			{#if busy}<p class="mt-3 text-sm text-ink-2" aria-live="polite">{m.devices_kuma_working()}</p>{/if}
 			<div class="mt-4 rounded-lg border border-line bg-surface-2 px-3.5 py-3 text-sm text-ink-2">
-				<p>{m.devices_kuma_howto_intro()}</p>
-				<p class="mt-1.5"><code class="rounded bg-surface px-1.5 py-0.5 font-mono text-[0.8125rem] break-all text-ink select-all">docker cp uptime-kuma:/app/data/kuma.db .</code></p>
-				<p class="mt-1.5">{m.devices_kuma_howto_mariadb()}</p>
+				<p><code class="rounded bg-surface px-1.5 py-0.5 font-mono text-[0.8125rem] break-all text-ink select-all">docker cp uptime-kuma:/app/data/kuma.db .</code></p>
 			</div>
 		{:else}
 			<p class="mt-4 text-sm font-semibold" aria-live="polite">

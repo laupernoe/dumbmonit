@@ -275,10 +275,6 @@
 			</section>
 
 			<Disclosure title={m.settings_packs_install_heading()}>
-				<p class="mt-1 text-sm text-ink-2">
-					{m.settings_packs_install_intro()}
-				</p>
-
 				<form class="mt-4 grid gap-4" onsubmit={install} novalidate>
 					<Field label={m.settings_packs_upload_label()} for="pack-file" error={fileError}>
 						<label

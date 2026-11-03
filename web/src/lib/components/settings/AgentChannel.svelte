@@ -12,7 +12,7 @@
 	import type { AgentChannelOverview } from '#lib/api/types.js';
 	import { formatDateTime } from '#lib/format.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
-	import { Button, Confirm, CopyBlock, Disclosure, ErrorNotice, Toggle } from '#lib/ui/index.js';
+	import { Button, Confirm, CopyBlock, Disclosure, DocLink, ErrorNotice, Toggle } from '#lib/ui/index.js';
 
 	interface Props {
 		overview: AgentChannelOverview;
@@ -51,8 +51,6 @@
 		<div class="min-w-0 flex-1">
 			<h3 class="font-semibold text-ink">{m.settings_agents_tls_title()}</h3>
 			{#if overview.enabled && overview.port !== null}
-				<p class="mt-1 max-w-prose text-sm text-ink-2">{m.settings_agents_tls_summary({ port: overview.port, group: overview.key_exchange })}</p>
-				<p class="mt-1 max-w-prose text-sm text-ink-2">{m.settings_agents_tls_port_hint({ port: overview.port })}</p>
 				<p class="tnum mt-1 text-sm text-ink-2">{m.settings_agents_tls_counts({ encrypted, plain })}</p>
 				{#if plainAgents.length > 0}
 					<p class="mt-1 flex flex-wrap items-center gap-x-3 text-sm text-ink-2">
@@ -79,7 +77,6 @@
 			/>
 			<div class="min-w-0">
 				<label for="agent-tls-required" class="text-sm font-semibold text-ink">{m.settings_agents_tls_require()}</label>
-				<p class="max-w-prose text-sm text-ink-2">{m.settings_agents_tls_require_help()}</p>
 				{#if !overview.required_setting && overview.legacy_until}
 					<p class="mt-1 text-sm text-ink-2">
 						{m.settings_agents_tls_legacy_until({ when: formatDateTime(overview.legacy_until) })}
@@ -92,12 +89,10 @@
 			<div class="mt-4">
 				<p class="mb-1.5 text-sm font-semibold text-ink">{m.settings_agents_tls_fingerprint()}</p>
 				<CopyBlock value={overview.ca_pin} label={m.settings_agents_tls_copy_fingerprint()} />
-				<p class="mt-1.5 max-w-prose text-sm text-ink-2">{m.settings_agents_tls_fingerprint_help()}</p>
 			</div>
 		{/if}
 
 		<Disclosure title={m.settings_agents_tls_rotation_title()} class="mt-4">
-			<p class="mt-0.5 max-w-prose text-sm text-ink-2">{m.settings_agents_tls_rotation_intro()}</p>
 			{#if overview.rotation}
 				<div class="mt-3 grid gap-3">
 					<p class="tnum text-sm text-ink">
@@ -133,4 +128,5 @@
 	{#if error}
 		<ErrorNotice {error} title={m.settings_agents_tls_save_error()} class="mt-3" />
 	{/if}
+	<DocLink page="install/agent-security/" class="mt-2" />
 </div>

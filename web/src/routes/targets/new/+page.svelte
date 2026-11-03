@@ -483,11 +483,6 @@
 					<!-- Re-mounted per kind: the form seeds itself once from its collector. -->
 					{#key selected.kind}
 						{#if selected.kind === AGENT_KIND}
-							{#if feature && !relaying}
-								<p class="mb-5 rounded-lg border border-line bg-surface-2 px-3.5 py-2.5 text-sm leading-relaxed text-ink">
-									{feature.next}
-								</p>
-							{/if}
 							{#key relaying}
 								<AgentEnroll
 									cancelHref="/targets"

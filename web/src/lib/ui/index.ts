@@ -30,3 +30,4 @@ export type { ComboOption } from './Combobox.svelte';
 export { default as Disclosure } from './Disclosure.svelte';
 export { default as Tabs } from './Tabs.svelte';
 export type { TabItem } from './Tabs.svelte';
+export { default as DocLink } from './DocLink.svelte';
