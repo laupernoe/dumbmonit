@@ -1007,6 +1007,22 @@ Rapporté par l'agent Linux sur un hôte KVM ; voir [Agent](../devices/agent.md#
 | Domaine KVM planté | libvirt rapporte un domaine KVM comme planté : l'hyperviseur a dû l'arrêter (`dumbmonit_agent_libvirt_domain_crashed`). | > 0 | 1 min | Avertissement (`critical`) | 1 h |
 | Pool libvirt presque plein | L'allocation d'un pool de stockage libvirt atteint 90 % de sa capacité (`dumbmonit_agent_libvirt_pool_used_percent`). | ≥ 90 % (se résout sous 88 %) | 15 min | Avis (`warning`), escalade après 24 h | 6 h |
 
+### NAS Synology (paquet agent) {#synology-nas-agent-package}
+
+Rapporté par l'agent du [paquet Synology](../devices/synology-agent.md). Un onduleur
+branché au NAS est rapporté sous les noms NUT : les règles
+[Onduleur via NUT](#ups-behind-nut) s'y appliquent ; le verdict SMART, quand
+`smartctl` est lisible, passe par la règle SMART des disques de l'agent.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| RAID du NAS dégradé | Une grappe RAID du NAS a perdu un disque ou se reconstruit (`dumbmonit_agent_dsm_raid_status` : 0 normal, 1 resynchronisation, 2 dégradée, 3 inactive). | ≥ 2 | 5 min | Avertissement (`critical`) | 6 h |
+| Volume du NAS en lecture seule | Un `/volumeN` est monté en lecture seule, ce que DSM fait d'un volume planté (`dumbmonit_agent_dsm_volume_read_only`). | > 0 | 5 min | Avertissement (`critical`) | 6 h |
+| Température de disque du NAS élevée | Un disque dépasse 55 °C (`dumbmonit_agent_dsm_disk_temperature_celsius`) ; se résout sous 52 °C. | > 55 °C | 15 min | Avis (`warning`) | 6 h |
+| Secteurs illisibles en hausse sur le NAS | De nouveaux secteurs illisibles sont apparus en 24 heures (`delta(dumbmonit_agent_dsm_disk_unc_count[24h])`). | > 0 | 15 min | Avis (`warning`) | 24 h |
+| SSD du NAS en fin de vie | Un SSD a moins de 10 % de sa durée de vie nominale (`dumbmonit_agent_dsm_disk_remaining_life_percent`) ; se résout au-dessus de 12 %. | < 10 % | 1 h | Avis (`warning`) | 7 j |
+| Paquet du NAS arrêté | Un paquet qui doit tourner (activé) est arrêté (`dumbmonit_agent_dsm_package_down`). Demande que `synopkg` réponde à l'agent ; un paquet arrêté à la main n'alerte pas. | > 0 | 15 min | Avis (`warning`) | 24 h |
+
 ### XCP-ng / XenServer {#xcp-ng-xenserver}
 
 Voir [XCP-ng / XenServer](../devices/xcpng.md).

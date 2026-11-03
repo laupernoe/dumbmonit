@@ -19,6 +19,7 @@
 	import SentinelPanel from '#lib/components/devices/agent/SentinelPanel.svelte';
 	import MailAgentPanel from '#lib/components/devices/mdaemon/MailAgentPanel.svelte';
 	import AgentModulesPanel from './AgentModulesPanel.svelte';
+	import DsmPanel from './DsmPanel.svelte';
 	import AgentEventsPanel from './AgentEventsPanel.svelte';
 	import AppliancePanel from '#lib/components/devices/appliance/AppliancePanel.svelte';
 
@@ -114,6 +115,9 @@
 		}
 	}
 </script>
+
+<!-- Shown only on a Synology NAS running the agent package: volumes, RAID, disks, packages. -->
+<DsmPanel {target} />
 
 {#if host && binding}
 	{@const Icon = binding.icon}

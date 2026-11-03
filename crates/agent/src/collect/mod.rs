@@ -16,6 +16,7 @@ pub mod databases;
 pub mod docker;
 pub mod docker_labels;
 pub mod docker_stats;
+pub mod dsm;
 pub mod eventlog;
 pub mod filter;
 pub mod inventory;
@@ -44,6 +45,7 @@ use sysinfo::{
 use crate::collect::backup_repos::BackupReposReport;
 use crate::collect::databases::DatabasesReport;
 use crate::collect::docker::{ContainerInventory, ContainerStat, ContainerUsage};
+use crate::collect::dsm::DsmReport;
 use crate::collect::filter::NameFilter;
 use crate::collect::ipsec::IpsecReport;
 use crate::collect::libvirt::LibvirtReport;
@@ -280,6 +282,9 @@ pub struct Snapshot {
     /// Causes de lenteur : top processus, PSI, inodes, horloge, OOM kills (Linux
     /// seulement). `None` : rien de lisible ici.
     pub machine: Option<MachineStat>,
+    /// Synology DSM : grappes RAID, volumes, disques, paquets, onduleur. `None` :
+    /// pas un Synology.
+    pub dsm: Option<DsmReport>,
 }
 
 impl Snapshot {
@@ -341,6 +346,9 @@ impl Snapshot {
         }
         if let Some(report) = &self.databases {
             samples.extend(databases::samples(report, now_ms));
+        }
+        if let Some(report) = &self.dsm {
+            samples.extend(dsm::samples(report, now_ms));
         }
         samples
     }
@@ -662,6 +670,7 @@ impl SystemProbe {
             databases: None,
             libvirt: None,
             machine: None,
+            dsm: None,
         }
     }
 
@@ -1361,6 +1370,10 @@ mod tests {
                 }],
             }),
             machine: Some(MachineStat { oom_kills: Some(1), ..MachineStat::default() }),
+            dsm: Some(dsm::DsmReport {
+                arrays: dsm::parse_mdstat("md2 : active raid1 sda5[0] sdb5[1]\n [2/2] [UU]\n"),
+                ..dsm::DsmReport::default()
+            }),
         };
 
         let samples = snapshot.to_samples(1_700_000_000_000);
@@ -1397,6 +1410,8 @@ mod tests {
             "agent_libvirt_domain_running",
             "agent_libvirt_pool_active",
             "agent_oom_kills_total",
+            "agent_dsm_info",
+            "agent_dsm_raid_status",
         ] {
             assert!(samples.iter().any(|s| s.metric == family), "famille absente : {family}");
         }
