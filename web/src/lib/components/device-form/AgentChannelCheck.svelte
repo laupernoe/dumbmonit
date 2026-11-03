@@ -38,7 +38,7 @@
 	let showAnyway = $state(false);
 	let timer: ReturnType<typeof setTimeout> | null = null;
 
-	async function run() {
+	async function run(): Promise<boolean> {
 		if (timer) clearTimeout(timer);
 		timer = null;
 		checking = true;
@@ -50,8 +50,10 @@
 			});
 			// A relay opens its gateway at its next report: look again shortly.
 			if (result.relay && !result.relay.listening) timer = setTimeout(run, 5000);
+			return true;
 		} catch (cause) {
 			error = cause;
+			return false;
 		} finally {
 			checking = false;
 		}

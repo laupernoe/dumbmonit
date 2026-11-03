@@ -205,28 +205,32 @@
 		};
 	});
 
-	async function save(input: { enabled: boolean; nvd_api_key?: string }) {
+	async function save(input: { enabled: boolean; nvd_api_key?: string }): Promise<boolean> {
 		actionError = null;
 		busy = true;
 		try {
 			settings = await setCveSettings(input);
 			nvdKey = '';
 			summary = await getCveSummary();
+			return true;
 		} catch (cause) {
 			actionError = cause;
+			return false;
 		} finally {
 			busy = false;
 		}
 	}
 
-	async function refreshNow() {
+	async function refreshNow(): Promise<boolean> {
 		actionError = null;
 		busy = true;
 		try {
 			await refreshCves();
 			summary = await getCveSummary();
+			return true;
 		} catch (cause) {
 			actionError = cause;
+			return false;
 		} finally {
 			busy = false;
 		}

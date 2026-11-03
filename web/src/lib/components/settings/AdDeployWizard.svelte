@@ -515,7 +515,7 @@
 			{:else if step === 2}
 				<p class="text-sm text-ink">{m.settings_agents_ad_download_intro()}</p>
 				<div class="mt-3 flex flex-wrap items-center gap-3">
-					<Button variant="primary" onclick={download}>
+					<Button variant="primary" onclick={download} feedback>
 						<Download class="size-4" aria-hidden="true" />
 						{m.settings_agents_ad_download()}
 					</Button>

@@ -58,8 +58,8 @@
 		void load();
 	});
 
-	async function enable() {
-		if (!overview) return;
+	async function enable(): Promise<boolean> {
+		if (!overview) return false;
 		busy = 'enable';
 		actionError = null;
 		notice = null;
@@ -69,15 +69,17 @@
 			here = saved.fingerprint;
 			overview = { ...overview, devices: [saved, ...overview.devices.filter((d) => d.id !== saved.id)] };
 			notice = { ok: true, text: m.settings_push_enabled_notice() };
+			return true;
 		} catch (cause) {
 			actionError = cause;
+			return false;
 		} finally {
 			support = pushSupport();
 			busy = null;
 		}
 	}
 
-	async function test() {
+	async function test(): Promise<boolean> {
 		busy = 'test';
 		actionError = null;
 		notice = null;
@@ -85,8 +87,10 @@
 			const report = await sendPushTest();
 			notice = { ok: report.ok, text: report.message };
 			overview = await getPushOverview();
+			return report.ok;
 		} catch (cause) {
 			actionError = cause;
+			return false;
 		} finally {
 			busy = null;
 		}
@@ -174,13 +178,13 @@
 			</div>
 			<div class="flex flex-wrap items-center gap-2">
 				{#if support.state === 'ready' && support.permission !== 'denied' && !thisDevice}
-					<Button size="sm" variant="secondary" loading={busy === 'enable'} disabled={busy !== null} onclick={() => void enable()}>
+					<Button size="sm" variant="secondary" loading={busy === 'enable'} disabled={busy !== null} onclick={() => enable()}>
 						<BellRing class="size-4" aria-hidden="true" />
 						{m.settings_push_enable()}
 					</Button>
 				{/if}
 				{#if overview.devices.length > 0}
-					<Button size="sm" variant="secondary" loading={busy === 'test'} disabled={busy !== null} onclick={() => void test()}>
+					<Button size="sm" variant="secondary" loading={busy === 'test'} disabled={busy !== null} onclick={() => test()}>
 						<Send class="size-4" aria-hidden="true" />
 						{m.settings_push_test()}
 					</Button>

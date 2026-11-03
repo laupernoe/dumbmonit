@@ -163,15 +163,19 @@
 		}
 	}
 
+	/** True once the last submit went through (the button confirms in green). */
+	let finishedOk = $state(false);
 	async function finish(event: SubmitEvent) {
 		event.preventDefault();
 		finishError = null;
 		finishing = true;
+		finishedOk = false;
 		try {
 			account = await completeSpotifyConnection(landing.trim());
 			authorization = null;
 			outcome = 'connected';
 			wall = await getWallMusic().catch(() => wall);
+			finishedOk = true;
 		} catch (cause) {
 			finishError = cause;
 		} finally {
@@ -202,6 +206,8 @@
 	let sending = $state(false);
 	let sendError = $state<unknown>(null);
 
+	/** True once the last submit went through (the button confirms in green). */
+	let sentOk = $state(false);
 	async function send(event: SubmitEvent) {
 		event.preventDefault();
 		sendError = null;
@@ -212,10 +218,12 @@
 		}
 		linkError = null;
 		sending = true;
+		sentOk = false;
 		try {
 			const saved = await playOnWall(link.trim());
 			if (wall) wall = { ...wall, link: saved };
 			link = '';
+			sentOk = true;
 		} catch (cause) {
 			sendError = cause;
 		} finally {
@@ -427,7 +435,7 @@
 											/>
 										</Field>
 										<div>
-											<Button type="submit" variant="secondary" loading={finishing} disabled={!landing.trim()}>{m.settings_music_finish()}</Button>
+											<Button type="submit" variant="secondary" loading={finishing} success={finishedOk} disabled={!landing.trim()}>{m.settings_music_finish()}</Button>
 										</div>
 										{#if finishError}
 											<ErrorNotice error={finishError} title={m.settings_music_finish_error()} />
@@ -488,7 +496,7 @@
 								<p id="music-wall-link-error" class="mt-1.5 text-[0.8125rem] font-medium text-warning-ink" role="alert">{linkError}</p>
 							{/if}
 						</div>
-						<Button type="submit" variant="secondary" loading={sending}>
+						<Button type="submit" variant="secondary" loading={sending} success={sentOk}>
 							<Link2 class="size-4" aria-hidden="true" />
 							{m.settings_music_play_on_wall()}
 						</Button>

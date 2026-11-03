@@ -243,7 +243,7 @@
 		}
 	}
 
-	async function storeBasemap() {
+	async function storeBasemap(): Promise<boolean> {
 		basemapSaving = true;
 		basemapError = null;
 		try {
@@ -251,8 +251,10 @@
 			savedBasemap = saved;
 			basemap = { ...saved };
 			basemapSaved = true;
+			return true;
 		} catch (error) {
 			basemapError = error;
+			return false;
 		} finally {
 			basemapSaving = false;
 		}

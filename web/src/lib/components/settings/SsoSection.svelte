@@ -161,14 +161,16 @@
 	let report = $state<OidcTestReport | null>(null);
 	let testError = $state<unknown>(null);
 
-	async function test() {
+	async function test(): Promise<boolean> {
 		testing = true;
 		report = null;
 		testError = null;
 		try {
 			report = await testOidcDiscovery(form.issuer.trim() || undefined);
+			return report.ok;
 		} catch (cause) {
 			testError = cause;
+			return false;
 		} finally {
 			testing = false;
 		}
@@ -266,9 +268,9 @@
 			{/if}
 
 			<div class="flex flex-wrap items-center gap-2" aria-live="polite">
-				<Button type="submit" variant="secondary" loading={saving}>{m.settings_sso_save()}</Button>
+				<Button type="submit" variant="secondary" loading={saving} success={saved}>{m.settings_sso_save()}</Button>
 				<UnsavedBadge dirty={tracker.dirty} />
-				<Button variant="secondary" onclick={() => void test()} loading={testing} disabled={saving}>
+				<Button variant="secondary" onclick={() => test()} loading={testing} disabled={saving}>
 					<Radar class="size-4" aria-hidden="true" />
 					{m.settings_sso_test()}
 				</Button>

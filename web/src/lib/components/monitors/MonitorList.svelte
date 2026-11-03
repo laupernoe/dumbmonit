@@ -635,16 +635,18 @@
 		if (location && subjects.length > 0) relayPlace = { location, ids: subjects.map((t) => t.id) };
 	}
 
-	async function placeRelayed() {
-		if (!relayPlace || bulkBusy) return;
+	async function placeRelayed(): Promise<boolean> {
+		if (!relayPlace || bulkBusy) return false;
 		const { location, ids } = relayPlace;
 		bulkBusy = true;
 		try {
 			await assignLocation(location.id, ids);
 			await alertsStore.refresh();
 			relayPlace = null;
+			return true;
 		} catch (error) {
 			bulkReport = { failed: [{ name: location.name, error }], total: ids.length };
+			return false;
 		} finally {
 			bulkBusy = false;
 		}
@@ -1403,7 +1405,7 @@
 			{/if}
 			{#if relayPlace}
 				<p>{m.devices_list_bulk_relay_place({ count: relayPlace.ids.length, location: relayPlace.location.name })}</p>
-				<Button size="sm" variant="secondary" loading={bulkBusy} onclick={() => void placeRelayed()}>{m.devices_list_bulk_relay_place_apply()}</Button>
+				<Button size="sm" variant="secondary" loading={bulkBusy} onclick={() => placeRelayed()}>{m.devices_list_bulk_relay_place_apply()}</Button>
 			{/if}
 			<Button size="sm" variant="ghost" onclick={() => { relaySkipped = 0; relayPlace = null; }}>{m.devices_list_bulk_dismiss()}</Button>
 		</div>

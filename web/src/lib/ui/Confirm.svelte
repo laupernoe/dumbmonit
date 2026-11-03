@@ -11,7 +11,7 @@
 		children: Snippet;
 		/** Shown while armed, e.g. "Delete for good?" */
 		confirmLabel?: string;
-		onconfirm: () => void | Promise<void>;
+		onconfirm: () => unknown;
 		loading?: boolean;
 		disabled?: boolean;
 		size?: 'sm' | 'md';
@@ -25,7 +25,7 @@
 	let armed = $state(false);
 	let timer: ReturnType<typeof setTimeout> | null = null;
 
-	function click(): void | Promise<void> {
+	function click(): unknown {
 		if (!armed) {
 			armed = true;
 			timer = setTimeout(() => (armed = false), 5000);
