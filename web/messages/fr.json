@@ -9394,5 +9394,7 @@
 	"devices_agent_help_intro": "À lancer sur la machine elle-même quand l'agent ne remonte plus.",
 	"devices_agent_help_status": "Tourne-t-il ?",
 	"devices_agent_help_restart": "Redémarrer l'agent",
-	"devices_agent_help_logs": "Derniers journaux"
+	"devices_agent_help_logs": "Derniers journaux",
+	"deviceform_enroll_compose_title": "Ou avec Docker Compose (docker-compose.yml)",
+	"deviceform_enroll_copy_compose": "Copier le fichier Compose"
 }

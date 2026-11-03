@@ -9294,5 +9294,7 @@
 	"devices_agent_help_intro": "当代理没有上报时，请在这台机器上运行以下命令。",
 	"devices_agent_help_status": "它在运行吗？",
 	"devices_agent_help_restart": "重启代理",
-	"devices_agent_help_logs": "最新日志"
+	"devices_agent_help_logs": "最新日志",
+	"deviceform_enroll_compose_title": "或使用 Docker Compose（docker-compose.yml）",
+	"deviceform_enroll_copy_compose": "复制 Compose 文件"
 }

@@ -9394,5 +9394,7 @@
 	"devices_agent_help_intro": "Run these on the machine itself when the agent does not report.",
 	"devices_agent_help_status": "Is it running?",
 	"devices_agent_help_restart": "Restart the agent",
-	"devices_agent_help_logs": "Latest logs"
+	"devices_agent_help_logs": "Latest logs",
+	"deviceform_enroll_compose_title": "Or with Docker Compose (docker-compose.yml)",
+	"deviceform_enroll_copy_compose": "Copy the Compose file"
 }
