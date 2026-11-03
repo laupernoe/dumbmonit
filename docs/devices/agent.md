@@ -1673,3 +1673,12 @@ but serves nothing DumbMonit can reach directly (an internal CA step, a DNS
 validation hook) is the one case this leaves uncovered; it is also the case
 where a TLS monitor could not help either, since nothing on that host speaks
 TLS to probe.
+
+## The installation in short
+
+1. In DumbMonit, add a monitor and pick Server with the agent, then choose how the machine reaches the server: directly, or through the relay of a remote site behind a firewall.
+2. An enrollment token (its secret starts with dmon_; the token is listed as tok_… afterwards) is shown once, with the install command ready to copy for Linux/macOS, Windows and Docker.
+3. Run that install command on the machine, with elevated rights (sudo on Linux and macOS, an elevated PowerShell on Windows).
+4. The page waits for the first report (a few seconds), then lets you name the machine, file it in a folder and place it at a site, on the spot.
+5. Optional, for Docker: if the agent runs under a dedicated user, add that user to the "docker" group and restart the agent.\nusermod -aG docker dumbmonit
+6. For a fleet (a playbook, a machine image), tick Several machines with this command; a whole Windows domain goes through the Active Directory kit, offered on the same page.

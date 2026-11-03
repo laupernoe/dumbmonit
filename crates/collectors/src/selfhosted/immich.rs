@@ -677,8 +677,8 @@ mod tests {
             backup_instant("immich-db-backup-20260930T020000-v3.2.4-pg16.4.sql.gz"),
             Some(1_790_733_600)
         );
-        assert_eq!(backup_instant("immich-db-backup-1790647200000.sql.gz"), Some(1_790_733_600));
-        assert_eq!(backup_instant("immich-db-backup-1790647200.sql.gz"), Some(1_790_733_600));
+        assert_eq!(backup_instant("immich-db-backup-1790733600000.sql.gz"), Some(1_790_733_600));
+        assert_eq!(backup_instant("immich-db-backup-1790733600.sql.gz"), Some(1_790_733_600));
         assert_eq!(backup_instant("dump.sql.gz"), None);
         assert_eq!(backup_instant("immich-db-backup-latest.sql.gz"), None);
 

@@ -8788,6 +8788,7 @@ mod tests {
                     "carp",
                     "firmware",
                     "temperature",
+                    "certificates",
                     "live_map",
                 ],
             ),

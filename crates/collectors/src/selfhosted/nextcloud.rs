@@ -126,7 +126,7 @@ pub fn serverinfo_samples(data: &Value, ts_ms: i64) -> Vec<Sample> {
         ("1h", "last1hour"),
         ("24h", "last24hours"),
         ("7d", "last7days"),
-        ("30d", "lastmonth"),
+        ("30d", "last1month"),
     ] {
         if let Some(value) = number(data.pointer(&format!("/activeUsers/{key}"))) {
             out.push(gauge("nextcloud_active_users", value, ts_ms).with_label("window", window));
