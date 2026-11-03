@@ -135,7 +135,7 @@
 
 			{#if data.clients.length === 0}
 				{#if editing === null}
-					<EmptyState icon={Building2} title={m.settings_clients_empty_title()} description={m.settings_clients_empty_body()} />
+					<EmptyState compact icon={Building2} title={m.settings_clients_empty_title()} description={m.settings_clients_empty_body()} />
 				{/if}
 			{:else}
 				<ul class="grid gap-2">

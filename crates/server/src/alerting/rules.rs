@@ -7197,6 +7197,112 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_agent_libvirt_pool_used_percent",
             )
         },
+        // --- Synology DSM par l'agent du paquet `.spk` (`agent/src/collect/dsm.rs`) ---
+        // L'onduleur branché au NAS est rapporté sous les noms du collecteur NUT :
+        // ses règles (`nut_on_battery`, `nut_battery_low`…) s'appliquent telles
+        // quelles. Le SMART, quand `smartctl` est lisible, passe par
+        // `disk_smart_failed`.
+        //
+        // `agent_dsm_raid_status` : 0 normal, 1 resynchronisation, 2 dégradée
+        // (reconstruction comprise), 3 inactive.
+        Rule {
+            description: "A RAID array of the NAS lost a disk or is rebuilding: its redundancy \
+                          is gone, read from /proc/mdstat by the agent package."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 2.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "dsm_raid_degraded",
+                "NAS RAID degraded",
+                RuleKind::Threshold,
+                "dumbmonit_agent_dsm_raid_status",
+            )
+        },
+        // DSM remonte en lecture seule un volume qu'il juge planté.
+        Rule {
+            description: "A volume of the NAS is mounted read-only: DSM does this to a crashed \
+                          volume to protect its data."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "dsm_volume_read_only",
+                "NAS volume read-only",
+                RuleKind::Threshold,
+                "dumbmonit_agent_dsm_volume_read_only",
+            )
+        },
+        Rule {
+            description: "A disk of the NAS is above 55 °C, as read by the agent package."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 55.0,
+            clear_threshold: Some(52.0),
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "°C".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "dsm_disk_hot",
+                "NAS disk temperature high",
+                RuleKind::Threshold,
+                "dumbmonit_agent_dsm_disk_temperature_celsius",
+            )
+        },
+        Rule {
+            description: "New unreadable (UNC) sectors appeared on a disk of the NAS in the last \
+                          24 hours."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "dsm_disk_bad_sectors_growing",
+                "NAS disk bad sectors growing",
+                RuleKind::Threshold,
+                "delta(dumbmonit_agent_dsm_disk_unc_count[24h])",
+            )
+        },
+        Rule {
+            description: "An SSD of the NAS has less than 10% of its rated life left.".to_string(),
+            operator: Operator::Lt,
+            threshold: 10.0,
+            clear_threshold: Some(12.0),
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "dsm_ssd_wearout",
+                "NAS SSD wearing out",
+                RuleKind::Threshold,
+                "dumbmonit_agent_dsm_disk_remaining_life_percent",
+            )
+        },
+        // Seulement un paquet qui doit tourner (témoin `enabled`) et que
+        // `synopkg` dit arrêté : un paquet arrêté à la main ne déclenche rien.
+        Rule {
+            description: "A package of the NAS that should be running is stopped.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "dsm_package_down",
+                "NAS package stopped",
+                RuleKind::Threshold,
+                "dumbmonit_agent_dsm_package_down",
+            )
+        },
         // --- XCP-ng / XenServer (`collectors/xcpng`) ---
         Rule {
             description: "A host of the XCP-ng pool no longer answers the coordinator.".to_string(),
@@ -8592,6 +8698,13 @@ pub(crate) const PRODUITES: &[&str] = &[
     "dumbmonit_sonicwall_interface_down",
     "dumbmonit_agent_libvirt_domain_crashed",
     "dumbmonit_agent_libvirt_pool_used_percent",
+    // Synology DSM par l'agent du paquet (`crates/agent/src/collect/dsm.rs`).
+    "dumbmonit_agent_dsm_raid_status",
+    "dumbmonit_agent_dsm_volume_read_only",
+    "dumbmonit_agent_dsm_disk_temperature_celsius",
+    "dumbmonit_agent_dsm_disk_unc_count",
+    "dumbmonit_agent_dsm_disk_remaining_life_percent",
+    "dumbmonit_agent_dsm_package_down",
     "dumbmonit_xcpng_host_live",
     "dumbmonit_xcpng_sr_used_percent",
     "dumbmonit_xcpng_vm_ha_protected_down",
@@ -9218,6 +9331,12 @@ mod tests {
             "duplicati_backup_old",
             "libvirt_domain_crashed",
             "libvirt_pool_almost_full",
+            "dsm_raid_degraded",
+            "dsm_volume_read_only",
+            "dsm_disk_hot",
+            "dsm_disk_bad_sectors_growing",
+            "dsm_ssd_wearout",
+            "dsm_package_down",
             "xcpng_host_offline",
             "xcpng_sr_almost_full",
             "xcpng_vm_ha_protected_down",
