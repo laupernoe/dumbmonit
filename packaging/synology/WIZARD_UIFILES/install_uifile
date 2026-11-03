@@ -1,0 +1,61 @@
+[
+    {
+        "step_title": "DumbMonit server",
+        "items": [
+            {
+                "desc": "Enter the address of your DumbMonit server and an enrollment token (DumbMonit: Add monitor, Server with the agent). The token is used once, to enroll this NAS. Unless the server has a certificate from a trusted authority, also paste the certificate fingerprint (pin) shown in DumbMonit, Settings, System, HTTPS."
+            },
+            {
+                "type": "textfield",
+                "subitems": [
+                    {
+                        "key": "wizard_server_url",
+                        "desc": "Server URL (for example https://192.168.1.10:8080)",
+                        "defaultValue": "",
+                        "validator": {
+                            "allowBlank": false,
+                            "regex": {
+                                "expr": "/^https:\\/\\/[A-Za-z0-9._:\\/\\[\\]-]+$/",
+                                "errorText": "Enter a URL starting with https:// (DumbMonit only serves HTTPS)"
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "password",
+                "subitems": [
+                    {
+                        "key": "wizard_token",
+                        "desc": "Enrollment token",
+                        "defaultValue": "",
+                        "validator": {
+                            "allowBlank": false,
+                            "regex": {
+                                "expr": "/^[A-Za-z0-9_.-]+$/",
+                                "errorText": "The token only contains letters, digits, underscore, dot and dash"
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "textfield",
+                "subitems": [
+                    {
+                        "key": "wizard_server_pin",
+                        "desc": "Server certificate fingerprint (pin), as shown in Settings > System > HTTPS (sha256//...)",
+                        "defaultValue": "",
+                        "validator": {
+                            "allowBlank": true,
+                            "regex": {
+                                "expr": "/^sha256\\/\\/[A-Za-z0-9+\\/]{43}=$/",
+                                "errorText": "Paste the pin exactly as shown in Settings > System > HTTPS (sha256//...)"
+                            }
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+]

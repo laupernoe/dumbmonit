@@ -9,18 +9,24 @@
     name (EzyMonitAgent) is migrated in place by the same command.
 
 .EXAMPLE
-    & ([scriptblock]::Create((irm http://serveur:8080/install.ps1))) -Token dmon_xxx -Url http://serveur:8080 -Sha256 windows-x86_64:<hex>
+    & ([scriptblock]::Create((irm https://serveur:8080/install.ps1))) -Token dmon_xxx -Url https://serveur:8080 -Sha256 windows-x86_64:<hex>
 
     The install command shown by the server carries -Sha256: a downloaded binary
-    that does not match it, or a download without it, is refused.
+    that does not match it, or a download without it, is refused. With a
+    self-signed server certificate, it also carries -PinnedKey and checks the
+    server's key before downloading anything.
 
 .EXAMPLE
-    .\install.ps1 -Token dmon_xxx -Url http://serveur:8080 -Services @('Spooler','MSSQLSERVER')
+    .\install.ps1 -Token dmon_xxx -Url https://serveur:8080 -PinnedKey sha256//<base64> -Services @('Spooler','MSSQLSERVER')
 #>
 [CmdletBinding()]
 param(
     [string]$Token,
+    # Server URL, https:// only: DumbMonit never serves plain HTTP.
     [string]$Url,
+    # Public key of the server's certificate (sha256//<base64>, as curl --pinnedpubkey takes it),
+    # when it is self-signed: downloads are then accepted from that key only, and the agent keeps it.
+    [string]$PinnedKey,
     # Encrypted agent channel, for example https://server:8443 (default: the host of -Url, port 8443).
     [string]$TlsUrl,
     # Fingerprint (SHA-256) of the server's certificate authority: the agent then only talks to
@@ -73,8 +79,25 @@ $LegacyConfigDir   = Join-Path $env:ProgramData 'EzyMonit'
 function Write-Etape($message) { Write-Host "==> $message" }
 
 function Stop-Sur($message) {
+    Restore-ValidationTls
     Write-Error $message
     exit 1
+}
+
+# Le serveur ne parle que HTTPS : TLS 1.2 au moins (Windows PowerShell 5 ne le
+# propose pas toujours d'office), et, pour un certificat autosigné, seul celui
+# dont la clé publique a l'empreinte -PinnedKey est accepté — l'en-tête
+# SubjectPublicKeyInfo d'une clé P-256 suivi de son point, comme le calcule
+# curl. Le rappel vaut pour toute la session : il est retiré en sortie.
+function Use-ServerTls {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    if (-not $PinnedKey) { return }
+    [Net.ServicePointManager]::ServerCertificateValidationCallback = [scriptblock]::Create(
+        "param(`$s, `$c) ('sha256//' + [Convert]::ToBase64String([Security.Cryptography.SHA256]::Create().ComputeHash([byte[]]((48,89,48,19,6,7,42,134,72,206,61,2,1,6,8,42,134,72,206,61,3,1,7,3,66,0) + `$c.GetPublicKey())))) -ceq '$PinnedKey'")
+}
+
+function Restore-ValidationTls {
+    if ($PinnedKey) { [Net.ServicePointManager]::ServerCertificateValidationCallback = $null }
 }
 
 # Le canal chiffré des agents répond-il ? Une simple connexion TCP, bornée à
@@ -210,8 +233,15 @@ if ($Uninstall) {
 }
 
 if ([string]::IsNullOrWhiteSpace($Token)) { Stop-Sur "The enrollment token is required (-Token)." }
-if ([string]::IsNullOrWhiteSpace($Url))   { Stop-Sur "The server URL is required (-Url http://server:8080)." }
+if ([string]::IsNullOrWhiteSpace($Url))   { Stop-Sur "The server URL is required (-Url https://server:8080)." }
 $Url = $Url.TrimEnd('/')
+if ($Url -notmatch '^https://') {
+    Stop-Sur "The server URL must start with https:// (got $Url): DumbMonit only serves HTTPS. Copy a fresh install command from DumbMonit."
+}
+if ($PinnedKey -and $PinnedKey -cnotmatch '^sha256//[A-Za-z0-9+/]{43}=$') {
+    Stop-Sur "Invalid -PinnedKey value (expected sha256//<base64>): $PinnedKey"
+}
+Use-ServerTls
 
 # ------------------------------------------------------------------ binaire
 
@@ -243,15 +273,12 @@ if ($BinPath) {
     $source = "$Url/download/dumbmonit-agent-windows-$architecture.exe"
     Write-Etape "Downloading $source"
     try {
-        # Sans la barre de progression, `Invoke-WebRequest` est plusieurs fois plus
-        # rapide sur Windows PowerShell 5 : elle repeint la console à chaque bloc.
-        $progression = $ProgressPreference
-        $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest -Uri $source -OutFile $exeTemporaire -UseBasicParsing
+        # `WebClient` plutôt qu'`Invoke-WebRequest` : il suit le rappel de
+        # validation de la session (l'épingle) sous Windows PowerShell 5 comme
+        # sous PowerShell 7, et n'a pas de barre de progression qui ralentit.
+        (New-Object Net.WebClient).DownloadFile($source, $exeTemporaire)
     } catch {
-        Stop-Sur "Download failed from ${source}: $_"
-    } finally {
-        $ProgressPreference = $progression
+        Stop-Sur "Download failed from ${source} (is the server certificate the expected one?): $_"
     }
 
     # Le binaire n'est installé que s'il correspond à l'empreinte portée par la
@@ -306,6 +333,7 @@ $lignes.Add("# DumbMonit system agent configuration.")
 $lignes.Add("# Written by install.ps1 — environment variables override it.")
 $lignes.Add("server_url: $Url")
 $lignes.Add("token: $Token")
+if ($PinnedKey) { $lignes.Add("server_pin: $PinnedKey") }
 if ($TlsUrl) { $lignes.Add("tls_url: $TlsUrl") }
 if ($CaPin)  { $lignes.Add("ca_pin: $CaPin") }
 if ($Interval -gt 0)  { $lignes.Add("interval_secs: $Interval") }
@@ -402,6 +430,7 @@ if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {
 & sc.exe failure $ServiceName reset= 86400 actions= restart/10000/restart/30000/restart/60000 | Out-Null
 
 Start-Service -Name $ServiceName
+Restore-ValidationTls
 
 Write-Etape "Agent installed and started"
 Write-Etape "Status: Get-Service $ServiceName"

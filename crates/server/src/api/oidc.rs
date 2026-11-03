@@ -43,24 +43,18 @@ fn state_fingerprint(state: &str) -> String {
     hex::encode(Sha256::digest(state.as_bytes()))
 }
 
-fn binding_cookie(state: &str, secure: bool) -> HeaderValue {
-    let mut value = format!(
-        "{BINDING_COOKIE}={}; Path=/api/auth/oidc; HttpOnly; SameSite=Lax; Max-Age={BINDING_MAX_AGE_SECS}",
+fn binding_cookie(state: &str) -> HeaderValue {
+    let value = format!(
+        "{BINDING_COOKIE}={}; Path=/api/auth/oidc; HttpOnly; SameSite=Lax; Max-Age={BINDING_MAX_AGE_SECS}; Secure",
         state_fingerprint(state)
     );
-    if secure {
-        value.push_str("; Secure");
-    }
     header_value(&value)
 }
 
-fn clear_binding_cookie(secure: bool) -> HeaderValue {
-    let mut value =
-        format!("{BINDING_COOKIE}=; Path=/api/auth/oidc; HttpOnly; SameSite=Lax; Max-Age=0");
-    if secure {
-        value.push_str("; Secure");
-    }
-    header_value(&value)
+fn clear_binding_cookie() -> HeaderValue {
+    header_value(&format!(
+        "{BINDING_COOKIE}=; Path=/api/auth/oidc; HttpOnly; SameSite=Lax; Max-Age=0; Secure"
+    ))
 }
 
 /// Le navigateur qui revient est-il celui qui est parti avec ce `state` ?
@@ -93,7 +87,7 @@ pub async fn start(
         Ok((url, login_state)) => (
             StatusCode::SEE_OTHER,
             [
-                (header::SET_COOKIE, binding_cookie(&login_state, auth.cookie_secure())),
+                (header::SET_COOKIE, binding_cookie(&login_state)),
                 (header::LOCATION, header_value(&url)),
             ],
         )
@@ -130,8 +124,8 @@ pub async fn callback(
         StatusCode::SEE_OTHER,
         [(header::LOCATION, header_value(&destination))],
         axum::response::AppendHeaders([
-            (header::SET_COOKIE, cookie::set(&token, auth.cookie_secure())),
-            (header::SET_COOKIE, clear_binding_cookie(auth.cookie_secure())),
+            (header::SET_COOKIE, cookie::set(&token)),
+            (header::SET_COOKIE, clear_binding_cookie()),
         ]),
     )
         .into_response()
@@ -206,24 +200,20 @@ impl<S: Send + Sync> FromRequestParts<S> for Origin {
             .unwrap_or_default();
         let peer = parts.extensions.get::<ConnectInfo<SocketAddr>>().map(|info| info.0.ip());
         let behind_proxy = peer.is_some_and(|peer| trusted.iter().any(|net| net.contains(&peer)));
-        let origin = request_origin(&parts.headers, behind_proxy);
-        // HTTPS direct sur le port de l'interface : le schéma est celui de la
-        // connexion, pas celui d'un mandataire.
-        let tls = parts.extensions.get::<crate::web_tls::Transport>().is_some_and(|t| t.tls);
-        Ok(Self(match origin.strip_prefix("http://") {
-            Some(rest) if tls => format!("https://{rest}"),
-            _ => origin,
-        }))
+        Ok(Self(request_origin(&parts.headers, behind_proxy)))
     }
 }
 
 /// Origine par laquelle le navigateur nous joint, pour construire l'URL de
 /// retour quand aucune URL publique n'est configurée.
 ///
-/// Les en-têtes `X-Forwarded-*` ne sont lus que si la connexion vient d'un
-/// mandataire déclaré de confiance (`DUMBMONIT_TRUSTED_PROXIES`), comme pour
-/// l'adresse du client : sinon n'importe quel client choisirait l'adresse vers
-/// laquelle le fournisseur renverra le code.
+/// Toujours en `https://` : le port ne sert que HTTPS, et un mandataire placé
+/// devant ne peut pas faire revenir le code d'autorisation en clair — un
+/// `X-Forwarded-Proto: http` est ignoré. `X-Forwarded-Host` n'est lu que si
+/// la connexion vient d'un mandataire déclaré de confiance
+/// (`DUMBMONIT_TRUSTED_PROXIES`), comme pour l'adresse du client : sinon
+/// n'importe quel client choisirait l'adresse vers laquelle le fournisseur
+/// renverra le code.
 fn request_origin(headers: &HeaderMap, behind_trusted_proxy: bool) -> String {
     let text = |name: &str| headers.get(name).and_then(|value| value.to_str().ok()).map(str::trim);
     let forwarded = |name: &str| {
@@ -233,14 +223,11 @@ fn request_origin(headers: &HeaderMap, behind_trusted_proxy: bool) -> String {
             .and_then(|value| value.split(',').next())
             .map(str::trim)
     };
-    let scheme = forwarded("x-forwarded-proto")
-        .filter(|scheme| *scheme == "https" || *scheme == "http")
-        .unwrap_or("http");
     let host = forwarded("x-forwarded-host")
         .filter(|host| !host.is_empty())
         .or_else(|| text("host"))
         .unwrap_or("localhost:8080");
-    format!("{scheme}://{host}")
+    format!("https://{host}")
 }
 
 // --- Réglages, réservés aux administrateurs ---------------------------------
@@ -369,11 +356,9 @@ pub async fn put_config(
             ));
         }
     }
-    if !config.public_url.is_empty()
-        && !(config.public_url.starts_with("https://") || config.public_url.starts_with("http://"))
-    {
+    if !config.public_url.is_empty() && !crate::config::is_https_url(&config.public_url) {
         return Err(crate::auth::AuthError::Invalid(
-            "The public URL must start with http:// or https://.".into(),
+            "The public URL must start with https://: DumbMonit only serves HTTPS.".into(),
         ));
     }
 
@@ -448,21 +433,22 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_origin_follows_the_proxy_headers_then_the_host() {
+    fn the_origin_follows_the_proxy_headers_then_the_host_and_is_always_https() {
         let mut headers = HeaderMap::new();
         headers.insert("host", "192.168.1.10:8080".parse().unwrap());
-        assert_eq!(request_origin(&headers, true), "http://192.168.1.10:8080");
+        assert_eq!(request_origin(&headers, true), "https://192.168.1.10:8080");
 
-        headers.insert("x-forwarded-proto", "https".parse().unwrap());
+        headers.insert("x-forwarded-proto", "http".parse().unwrap());
         headers.insert("x-forwarded-host", "monit.example.org".parse().unwrap());
+        // Un mandataire qui dit `http` ne fait pas revenir le code en clair.
         assert_eq!(request_origin(&headers, true), "https://monit.example.org");
         // Sans mandataire de confiance devant, les en-têtes ne comptent pas.
-        assert_eq!(request_origin(&headers, false), "http://192.168.1.10:8080");
+        assert_eq!(request_origin(&headers, false), "https://192.168.1.10:8080");
     }
 
     #[test]
     fn the_callback_must_come_back_to_the_browser_that_started() {
-        let cookie = binding_cookie("etat-1", false);
+        let cookie = binding_cookie("etat-1");
         let pair = cookie.to_str().unwrap().split(';').next().unwrap().to_string();
         let mut headers = HeaderMap::new();
         headers.insert(header::COOKIE, format!("autre=1; {pair}").parse().unwrap());

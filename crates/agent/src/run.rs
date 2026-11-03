@@ -16,6 +16,7 @@ use crate::binding::Binding;
 use crate::buffer::PendingBuffer;
 use crate::client::{PushClient, PushError};
 use crate::collect::backup_repos::BackupReposProbe;
+use crate::collect::databases::DatabasesProbe;
 use crate::collect::docker::DockerProbe;
 use crate::collect::eventlog::{self, PlatformProbe as EventLogProbe};
 use crate::collect::inventory::{self, PendingInventory};
@@ -38,6 +39,7 @@ use crate::config::{Config, MIN_INTERVAL_SECS};
 use crate::logs::LogRunner;
 use crate::relay::RelayRunner;
 use crate::selfupdate::{AfterStop, SelfUpdater};
+use crate::sentinel::SentinelRunner;
 use crate::shutdown::Shutdown;
 use crate::tls::TlsState;
 
@@ -94,6 +96,8 @@ pub struct Agent {
     plakar: PlakarProbe,
     /// Dépôts restic et Borg déclarés dans la configuration.
     backup_repos: BackupReposProbe,
+    /// Bases de données et fraîcheur de leurs sauvegardes : muet sans base.
+    databases: DatabasesProbe,
     /// Tunnels WireGuard : muet sans `wg` ni interface.
     wireguard: WireguardProbe,
     /// Tunnels IPsec : muet sans `swanctl` ni connexion.
@@ -146,6 +150,11 @@ pub struct Agent {
     /// de réception portait (`None` : serveur antérieur, rien n'est collecté).
     logs: LogRunner,
     server_logs: Option<dumbmonit_proto::LogsSetting>,
+    /// Mode sentinelle : la tâche de surveillance du serveur, et le réglage que
+    /// le dernier accusé de réception portait. Elle survit à une panne du
+    /// serveur — c'est son rôle —, mais pas à un redémarrage de l'agent.
+    sentinel: SentinelRunner,
+    server_sentinel: Option<dumbmonit_proto::SentinelSetting>,
     /// Période courante : celle de la configuration, jusqu'à ce que le serveur en
     /// demande une autre dans son accusé de réception.
     interval: Duration,
@@ -155,6 +164,9 @@ pub struct Agent {
     /// Vrai une fois le refus de liaison signalé, pour ne le dire qu'une fois
     /// par panne plutôt qu'à chaque tentative.
     binding_refused: bool,
+    /// Vrai tant que le serveur fait attendre l'enrôlement de cette machine
+    /// (validation par un administrateur) : dit une fois, pas à chaque essai.
+    awaiting_approval: bool,
     /// Modules décochés dans l'interface, tels que le dernier accusé de
     /// réception les nomme : leur collecte est sautée. Le serveur écarte de
     /// toute façon leurs mesures ; ne pas les lire épargne la machine (un test
@@ -203,8 +215,14 @@ impl Agent {
             HTTP_TIMEOUT,
         )
         .context("preparing the push client")?;
+        if let Some(pin) = &config.server_pin {
+            client.pin_server(pin).context("pinning the server key")?;
+        }
         let tls_path = crate::tls::beside(&config.secret_path);
-        let tls = initial_tls(&config, TlsState::load(&tls_path));
+        let mut tls = initial_tls(&config, TlsState::load(&tls_path));
+        if config.plain_server_url {
+            plain_url_channel(&config.server_url, tls.as_mut())?;
+        }
         if let Some(state) = &tls {
             client.set_pins(state.pins.clone());
             if let Some(identity) = state.identity() {
@@ -224,6 +242,11 @@ impl Agent {
             &config.docker_socket,
         )
         .with_actions(config.actions.clone());
+        let sentinel = SentinelRunner::new(
+            client.clone(),
+            identity.hostname.clone(),
+            config.secret_path.with_file_name("sentinel.json"),
+        );
         let logs = LogRunner::new(
             client.clone(),
             identity.key(),
@@ -238,6 +261,7 @@ impl Agent {
             updates: UpdateChecker::new(),
             plakar: PlakarProbe::new(&config.plakar),
             backup_repos: BackupReposProbe::new(&config.backup_repos),
+            databases: DatabasesProbe::new(&config.databases),
             wireguard: WireguardProbe::new(&config.wireguard),
             ipsec: IpsecProbe::new(&config.ipsec),
             speedtest: SpeedtestProbe::new(&config.speedtest),
@@ -262,8 +286,11 @@ impl Agent {
             gateway_failed: None,
             logs,
             server_logs: None,
+            sentinel,
+            server_sentinel: None,
             binding,
             binding_refused: false,
+            awaiting_approval: false,
             disabled_modules: BTreeSet::new(),
             batch_limit: MAX_BATCH_SAMPLES,
             all_refused: false,
@@ -300,6 +327,9 @@ impl Agent {
         }
         if self.wants("backup_repos") {
             snapshot.backup_repos = self.backup_repos.read().await;
+        }
+        if self.wants("databases") {
+            snapshot.databases = self.databases.read().await;
         }
         if self.wants("wireguard") {
             snapshot.wireguard = self.wireguard.read().await;
@@ -443,6 +473,8 @@ impl Agent {
             None => info!("modules: auto-detected (set 'modules' in agent.yaml to choose)"),
         }
         self.restore_pending();
+        // La sentinelle repart seule, sans attendre le serveur (peut-être en panne).
+        self.sentinel.resume(&shutdown);
         self.probe.warm_up().await;
 
         let mut next_collect = Instant::now();
@@ -487,6 +519,7 @@ impl Agent {
                             self.sync_relay(&shutdown);
                             self.sync_gateway(&shutdown).await;
                             self.logs.apply(self.server_logs.clone(), &shutdown);
+                            self.sentinel.apply(self.server_sentinel.clone(), &shutdown);
                             if self.apply_update().await {
                                 break;
                             }
@@ -712,6 +745,7 @@ impl Agent {
                 }
                 self.backoff.reset();
                 self.binding_refused = false;
+                self.note_approved();
                 debug!(target = ack.target_id, accepted = ack.accepted, "batch accepted");
                 self.note_acceptance(count, ack.accepted);
                 self.forget_inventory(batch.inventory.as_ref());
@@ -726,6 +760,11 @@ impl Agent {
                     self.eventlog.set_rules(rules);
                 }
                 self.server_logs = ack.logs;
+                // `None` : serveur antérieur. Un serveur qui répond sans réglage
+                // ne retire rien à une sentinelle déjà en marche.
+                if ack.sentinel.is_some() {
+                    self.server_sentinel = ack.sentinel;
+                }
                 // Nouveau binaire à l'essai : ce lot accepté le confirme.
                 if self.updater.confirm() {
                     self.identity.self_update = Some(self.updater.info());
@@ -873,8 +912,15 @@ impl Agent {
                 if let Some(secret) = issued.agent_secret.clone() {
                     self.adopt_binding(Some(secret), true);
                 }
+                self.note_approved();
                 self.adopt_certificate(&mut state, issued, &key);
                 info!(url = state.url, "enrolled on the encrypted agent channel (TLS 1.3, mTLS)");
+            }
+            // Validation attendue : rien d'anormal, l'agent réessaie à son
+            // rythme sans le signaler comme une panne.
+            Err(PushError::Forbidden(message)) if message == dumbmonit_proto::ENROLMENT_PENDING => {
+                self.note_awaiting_approval();
+                self.tls_retry_at = Some(Instant::now() + TLS_RETRY);
             }
             Err(error) => {
                 if let PushError::Forbidden(message) = &error {
@@ -1089,6 +1135,10 @@ impl Agent {
     /// machine à la main. Les mesures restent en tampon dans les deux cas,
     /// l'agent réessaie avec sa temporisation habituelle.
     fn on_binding_refused(&mut self, message: &str) {
+        if message == dumbmonit_proto::ENROLMENT_PENDING {
+            self.note_awaiting_approval();
+            return;
+        }
         if message == dumbmonit_proto::BINDING_MISMATCH {
             self.binding.forget();
             self.client.set_secret(None);
@@ -1099,6 +1149,27 @@ impl Agent {
         }
         self.binding_refused = true;
         warn!(reason = message, "this agent is not recognised for this machine");
+    }
+
+    /// Le serveur fait attendre l'enrôlement : un administrateur doit accepter
+    /// la machine. Dit une fois, puis en `debug` à chaque nouvelle tentative.
+    fn note_awaiting_approval(&mut self) {
+        if self.awaiting_approval {
+            debug!("still waiting for approval");
+            return;
+        }
+        self.awaiting_approval = true;
+        info!(
+            "waiting for approval: an administrator must accept this machine in DumbMonit \
+             (Settings > Agents > Waiting for approval); retrying on its own"
+        );
+    }
+
+    /// Fin de l'attente de validation, si l'agent attendait.
+    fn note_approved(&mut self) {
+        if std::mem::take(&mut self.awaiting_approval) {
+            info!("enrolment approved by the server");
+        }
     }
 
     /// Adopte la période demandée par le serveur.
@@ -1148,6 +1219,31 @@ fn initial_tls(config: &Config, stored: Option<TlsState>) -> Option<TlsState> {
         }
         (None, None) => None,
     }
+}
+
+/// `server_url` en clair hors boucle locale (agent installé avant le tout-
+/// HTTPS) : l'agent ne démarre que s'il a déjà un canal chiffré enrôlé
+/// (certificat client et URL `https://` rangés), et ne parle plus qu'à lui —
+/// ni jeton ni mesure ne partent en clair. Sinon, une erreur explicite plutôt
+/// qu'un repli sur le clair.
+fn plain_url_channel(server_url: &str, tls: Option<&mut TlsState>) -> Result<()> {
+    let Some(state) =
+        tls.filter(|state| state.identity().is_some() && state.url.starts_with("https://"))
+    else {
+        anyhow::bail!(
+            "the server URL '{server_url}' is plain http and no enrolled encrypted channel is \
+             stored: run the installer again with the https:// command shown by DumbMonit"
+        );
+    };
+    // Plus jamais l'ancien canal, même pour se réenrôler.
+    state.locked = true;
+    warn!(
+        server_url,
+        channel = %state.url,
+        "server_url is plain http; using the stored encrypted channel only, re-run the installer \
+         to switch to https"
+    );
+    Ok(())
 }
 
 /// Passerelle du relais en service.
@@ -1202,11 +1298,14 @@ mod tests {
             inventory: false,
             self_update: true,
             backup_repos: crate::collect::backup_repos::BackupReposConfig::default(),
+            databases: crate::collect::databases::DatabasesConfig::default(),
             perf_counters: crate::collect::perf_counters::PerfCountersConfig::default(),
             max_buffered_samples: 1_000,
             secret_path: std::path::PathBuf::from("/inexistant/agent-secret"),
             tls_url: None,
             ca_pin: None,
+            server_pin: None,
+            plain_server_url: false,
             log_level: tracing::Level::INFO,
             deprecated_env: Vec::new(),
         }
@@ -1548,6 +1647,63 @@ mod tests {
         assert!(calls.all().is_empty(), "{:?}", calls.lines());
     }
 
+    /// Canal chiffré rangé d'un agent enrôlé : un vrai certificat et sa clé.
+    fn enrolled_state(url: &str) -> TlsState {
+        use base64::Engine as _;
+        let engine = base64::engine::general_purpose::STANDARD;
+        let key = rcgen::KeyPair::generate_for(&rcgen::PKCS_ECDSA_P256_SHA256).unwrap();
+        let params = rcgen::CertificateParams::new(vec!["agent".to_string()]).unwrap();
+        let cert = params.self_signed(&key).unwrap();
+        let mut state = TlsState::new(url.into(), vec![PIN.to_string()]);
+        state.certificate = Some(engine.encode(cert.der()));
+        state.key = Some(engine.encode(key.serialize_der()));
+        state
+    }
+
+    /// Agent installé avant le tout-HTTPS : `server_url` en clair, hors boucle.
+    fn plain_config(dir: &tempfile::TempDir) -> Config {
+        let mut config = config();
+        config.server_url = "http://192.168.254.240:8443".into();
+        config.plain_server_url = true;
+        config.secret_path = dir.path().join("agent-secret");
+        config
+    }
+
+    #[test]
+    fn an_enrolled_agent_with_a_plain_url_keeps_running_on_its_encrypted_channel_only() {
+        let dir = tempfile::tempdir().unwrap();
+        let state = enrolled_state("https://192.168.254.240:8443");
+        state.save(&crate::tls::beside(&dir.path().join("agent-secret"))).unwrap();
+        let agent = Agent::new(plain_config(&dir)).expect("l'agent enrôlé redémarre");
+        assert!(agent.client.is_encrypted(), "le canal chiffré rangé, et lui seul");
+        assert!(agent.tls_only(), "jamais de repli sur l'ancien canal en clair");
+    }
+
+    #[test]
+    fn an_agent_never_enrolled_with_a_plain_url_is_refused() {
+        let dir = tempfile::tempdir().unwrap();
+        let refused = match Agent::new(plain_config(&dir)) {
+            Ok(_) => panic!("un jeton ne part jamais en clair"),
+            Err(error) => error.to_string(),
+        };
+        assert!(refused.contains("plain http"), "{refused}");
+    }
+
+    #[test]
+    fn an_enrolled_agent_without_a_usable_channel_does_not_fall_back_to_clear() {
+        // Enrôlé un jour (verrouillé), mais sans certificat rangé.
+        let dir = tempfile::tempdir().unwrap();
+        let mut state = TlsState::new("https://192.168.254.240:8443".into(), vec![PIN.to_string()]);
+        state.locked = true;
+        state.save(&crate::tls::beside(&dir.path().join("agent-secret"))).unwrap();
+        assert!(Agent::new(plain_config(&dir)).is_err(), "certificat absent");
+        // Un canal rangé qui ne serait pas en https ne vaut pas mieux.
+        let dir = tempfile::tempdir().unwrap();
+        let state = enrolled_state("http://192.168.254.240:8443");
+        state.save(&crate::tls::beside(&dir.path().join("agent-secret"))).unwrap();
+        assert!(Agent::new(plain_config(&dir)).is_err(), "canal rangé en clair");
+    }
+
     #[test]
     fn a_new_pin_in_the_install_command_replaces_the_stored_channel() {
         let mut stored = TlsState::new("https://ancien:8443".into(), vec!["f".repeat(64)]);
@@ -1607,6 +1763,32 @@ mod tests {
         assert!(agent.binding_refused);
         assert!(!dir.path().join("agent-secret").exists());
         assert!(matches!(agent.flush().await, FlushOutcome::Failed(_)));
+    }
+
+    #[tokio::test]
+    async fn an_enrolment_waiting_for_approval_keeps_everything_and_retries() {
+        // Le serveur fait attendre la machine : ni secret effacé, ni mesure
+        // perdue, et le journal le dit une seule fois.
+        let dir = tempfile::tempdir().unwrap();
+        let body = serde_json::json!({ "error": dumbmonit_proto::ENROLMENT_PENDING });
+        let pending = (403u16, body.to_string());
+        let answer = std::sync::Arc::new(std::sync::Mutex::new(pending));
+        let shared = answer.clone();
+        let (url, _calls) =
+            crate::testsupport::fake_http(move |_| shared.lock().unwrap().clone()).await;
+        let mut agent = agent_for(&url, &dir);
+        let samples = agent.collect().await;
+        let count = samples.len();
+        agent.buffer.push(samples);
+        assert!(matches!(agent.flush().await, FlushOutcome::Failed(PushError::Forbidden(_))));
+        assert!(agent.awaiting_approval);
+        assert!(!agent.binding_refused, "une attente n'est pas un refus de liaison");
+        assert_eq!(agent.buffer.len(), count, "les mesures restent en tampon");
+
+        // Acceptée : le lot suivant passe et l'attente est close.
+        *answer.lock().unwrap() = (200, ACK.to_string());
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+        assert!(!agent.awaiting_approval);
     }
 
     #[tokio::test]

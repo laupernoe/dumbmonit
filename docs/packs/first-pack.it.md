@@ -178,7 +178,7 @@ Con un token API che ha l'ambito `write`:
 
 ```bash
 curl -H 'Authorization: Bearer dmt_…' -H 'Content-Type: application/yaml' \
-  --data-binary @shelly-plug/pack.yaml http://localhost:8080/api/packs
+  --data-binary @shelly-plug/pack.yaml https://localhost:8080/api/packs
 ```
 
 Apri **Devices → Add device**: *Shelly plug (Gen2+)* è nell'elenco.

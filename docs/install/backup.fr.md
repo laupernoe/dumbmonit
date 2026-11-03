@@ -154,19 +154,19 @@ faire à exporter chaque identifiant de l'instance.
 
 ```bash
 # Se connecter
-curl -s -c jar -X POST http://localhost:8080/api/auth/login \
+curl -s -c jar -X POST https://localhost:8080/api/auth/login \
   -H 'content-type: application/json' -H 'X-Requested-With: DumbMonit' \
   -d '{"username":"admin","password":"…"}'
 
 # Exporter
-curl -s -b jar -X POST http://localhost:8080/api/backup \
+curl -s -b jar -X POST https://localhost:8080/api/backup \
   -H 'content-type: application/json' -H 'X-Requested-With: DumbMonit' \
   -d '{"passphrase":"three words are enough"}' -o backup.json
 
 # Essai à sec, puis appliquer
 jq -n --slurpfile b backup.json \
   '{bundle: $b[0], passphrase: "three words are enough", apply: false}' > restore.json
-curl -s -b jar -X POST http://localhost:8080/api/backup/restore \
+curl -s -b jar -X POST https://localhost:8080/api/backup/restore \
   -H 'content-type: application/json' -H 'X-Requested-With: DumbMonit' \
   -d @restore.json | jq
 ```

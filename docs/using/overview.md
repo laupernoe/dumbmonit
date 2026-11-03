@@ -78,9 +78,11 @@ input, results in three groups.
 
 ## Navigation {#navigation}
 
-A slim **icon rail** on the left lists every destination: Overview, Monitors,
-Alerts (with the count of what needs you), Dashboards, Explore, the topology map,
-Security, Logs, Status pages, Reports and Settings. At its foot sit the
+A slim **icon rail** on the left lists the destinations: Overview, Monitors,
+Alerts (with the count of what needs you), Status pages and Settings (plus
+Clients in [multi-client mode](msp.md)). The topology map, Security and Logs are
+reached from the Monitors page, Reports from Status pages. The
+[metrics explorer](dashboards.md) opens from the command palette. At its foot sit the
 documentation, GitHub and your account. The header shows where you are, the
 **LIVE** switch that pauses the console's own refreshes, the time range, the
 palette, **Wall mode** and **New monitor**. On a phone, the rail becomes a bottom

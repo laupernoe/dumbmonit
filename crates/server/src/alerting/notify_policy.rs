@@ -130,11 +130,13 @@ impl Default for GlobalPolicy {
 }
 
 impl GlobalPolicy {
-    /// URL publique effective, sans barre finale. `None` quand rien n'est réglé.
+    /// URL publique effective, sans barre finale. `None` quand rien n'est réglé,
+    /// ou quand ce qui l'est n'est pas en `https://` : aucun lien vers nous ne
+    /// part en clair (liens d'action, pages, mails).
     pub fn public_url(&self, env_fallback: Option<&str>) -> Option<String> {
         let raw = if self.public_url.trim().is_empty() { env_fallback? } else { &self.public_url };
         let trimmed = raw.trim().trim_end_matches('/');
-        (!trimmed.is_empty()).then(|| trimmed.to_string())
+        crate::config::is_https_url(trimmed).then(|| trimmed.to_string())
     }
 
     /// Escalade configurée : délai et canal. `None` dès que l'un des deux manque.
@@ -1627,5 +1629,9 @@ mod tests {
         assert_eq!(policy.public_url(None), None);
         let set = GlobalPolicy { public_url: "https://a.b/".into(), ..GlobalPolicy::default() };
         assert_eq!(set.public_url(Some("https://x")), Some("https://a.b".into()));
+        // Une adresse en clair n'est jamais employée pour un lien.
+        let plain = GlobalPolicy { public_url: "http://a.b/".into(), ..GlobalPolicy::default() };
+        assert_eq!(plain.public_url(None), None);
+        assert_eq!(policy.public_url(Some("http://monit.lan")), None);
     }
 }

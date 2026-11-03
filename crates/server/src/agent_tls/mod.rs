@@ -14,7 +14,14 @@
 //!   (jeton d'enrôlement, une fois) puis au renouvellement (sous le
 //!   certificat en cours). Supprimer la machine révoque le certificat ;
 //! - **épinglage** : l'agent ne reconnaît le serveur qu'à l'empreinte SHA-256
-//!   de l'autorité, que porte la commande d'installation.
+//!   de l'autorité, que porte la commande d'installation ;
+//! - **installation à travers un relais** : les machines d'un site lisent les
+//!   fichiers d'installation sur ce port, par le tunnel du relais. `curl` et
+//!   PowerShell y reconnaissent le serveur à la clé publique de son
+//!   certificat, gardée d'un renouvellement à l'autre ([`AgentTls::server_pin`]),
+//!   et peuvent n'y parler que TLS 1.2 (Windows 10, Windows Server 2019) :
+//!   le port l'accepte, suites ECDHE + AEAD seules — un agent, lui, ne
+//!   propose que TLS 1.3.
 //!
 //! L'ancien canal (les mêmes routes sur le port de l'interface, en clair ou
 //! derrière un mandataire) reste accepté tant que le réglage « exiger mTLS »
@@ -47,6 +54,10 @@ use crate::state::AppState;
 /// Réglage « exiger mTLS pour les agents » : `on` / `off`.
 pub const SETTING_REQUIRED: &str = "agent_mtls_required";
 
+/// Clé du certificat du serveur sur ce port (PKCS#8 en hexadécimal, chiffrée
+/// par la clé de l'instance), gardée d'un renouvellement quotidien à l'autre.
+const SETTING_SERVER_KEY: &str = "agent_channel_key";
+
 /// Instant (ms) de la mise à jour qui a introduit le canal chiffré sur une
 /// instance qui avait déjà des agents : point de départ de
 /// `DUMBMONIT_AGENT_LEGACY_DAYS`.
@@ -62,6 +73,8 @@ pub struct AgentTls {
     server_config: RwLock<Option<Arc<ServerConfig>>>,
     /// Empreintes épinglables (autorité active, puis suivante en rotation).
     pins: RwLock<Vec<String>>,
+    /// Épingle (`sha256//…`) de la clé du certificat du serveur.
+    server_pin: RwLock<Option<String>>,
     /// Tentatives d'enrôlement manquées, par adresse.
     limits: Mutex<Buckets>,
     /// File des connexions établies du port des agents : les tunnels des
@@ -82,6 +95,7 @@ impl AgentTls {
         Self {
             server_config: RwLock::new(None),
             pins: RwLock::new(Vec::new()),
+            server_pin: RwLock::new(None),
             limits: Mutex::new(Buckets::new()),
             ready: Mutex::new(None),
             tunnels: Arc::new(Mutex::new(HashMap::new())),
@@ -96,6 +110,12 @@ impl AgentTls {
     /// Empreintes à épingler.
     pub fn pins(&self) -> Vec<String> {
         self.pins.read().map(|pins| pins.clone()).unwrap_or_default()
+    }
+
+    /// Épingle de la clé publique du certificat du serveur (`sha256//…`, celle
+    /// de `curl --pinnedpubkey`), stable d'un renouvellement à l'autre.
+    pub fn server_pin(&self) -> Option<String> {
+        self.server_pin.read().ok().and_then(|pin| pin.clone())
     }
 
     pub(crate) fn limits(&self) -> std::sync::MutexGuard<'_, Buckets> {
@@ -123,12 +143,15 @@ impl AgentTls {
         self.tunnels.lock().map(|open| open.get(&relay).copied().unwrap_or(0)).unwrap_or(0)
     }
 
-    fn install(&self, config: Arc<ServerConfig>, pins: Vec<String>) {
+    fn install(&self, config: Arc<ServerConfig>, pins: Vec<String>, server_pin: Option<String>) {
         if let Ok(mut slot) = self.server_config.write() {
             *slot = Some(config);
         }
         if let Ok(mut slot) = self.pins.write() {
             *slot = pins;
+        }
+        if let Ok(mut slot) = self.server_pin.write() {
+            *slot = server_pin;
         }
     }
 }
@@ -141,11 +164,20 @@ pub fn offer(state: &AppState) -> Option<TlsOffer> {
     (!pins.is_empty()).then_some(TlsOffer { port, pins })
 }
 
-/// Fournisseur cryptographique du canal : aws-lc-rs, TLS 1.3 seulement (fixé
-/// par la configuration), échange de clés hybride post-quantique d'abord.
+/// Fournisseur cryptographique du canal : aws-lc-rs, suites AEAD seules (TLS
+/// 1.3, et TLS 1.2 ECDHE-ECDSA pour les installateurs des vieux Windows),
+/// échange de clés hybride post-quantique d'abord.
 pub fn provider() -> Arc<CryptoProvider> {
-    use rustls::crypto::aws_lc_rs::{self, kx_group};
+    use rustls::crypto::aws_lc_rs::{self, cipher_suite as suite, kx_group};
     Arc::new(CryptoProvider {
+        cipher_suites: vec![
+            suite::TLS13_AES_256_GCM_SHA384,
+            suite::TLS13_AES_128_GCM_SHA256,
+            suite::TLS13_CHACHA20_POLY1305_SHA256,
+            suite::TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+            suite::TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+            suite::TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+        ],
         kx_groups: vec![kx_group::X25519MLKEM768, kx_group::X25519, kx_group::SECP256R1],
         ..aws_lc_rs::default_provider()
     })
@@ -184,7 +216,18 @@ pub async fn reload(state: &AppState) -> Result<()> {
     let authorities = pki::authorities(&state.pool).await?;
     let active =
         authorities.iter().find(|ca| ca.state == "active").context("no active agent authority")?;
-    let identity = pki::issue_server(active, &state.cipher)?;
+    let stored = crate::auth::settings::get_secret(&state.pool, &state.cipher, SETTING_SERVER_KEY)
+        .await?
+        .map(hex::decode)
+        .transpose()
+        .context("stored agent channel key")?;
+    let identity = pki::issue_server(active, &state.cipher, stored.as_deref())?;
+    if stored.is_none() {
+        let key_hex = hex::encode(&identity.key_der);
+        crate::auth::settings::set_secret(&state.pool, &state.cipher, SETTING_SERVER_KEY, &key_hex)
+            .await?;
+    }
+    let server_pin = crate::web_tls::cert::spki_pin(&identity.key_der).ok();
 
     let mut roots = rustls::RootCertStore::empty();
     for authority in &authorities {
@@ -200,9 +243,11 @@ pub async fn reload(state: &AppState) -> Result<()> {
         .allow_unauthenticated()
         .build()
         .context("agent certificate verifier")?;
+    // TLS 1.2 pour les seuls installateurs (PowerShell de Windows 10 et Server
+    // 2019, sans TLS 1.3) ; l'agent ne propose que TLS 1.3.
     let mut config = ServerConfig::builder_with_provider(provider)
-        .with_protocol_versions(&[&rustls::version::TLS13])
-        .context("TLS 1.3")?
+        .with_protocol_versions(&[&rustls::version::TLS13, &rustls::version::TLS12])
+        .context("TLS versions")?
         .with_client_cert_verifier(verifier)
         .with_single_cert(identity.chain, identity.key)
         .context("agent channel certificate")?;
@@ -216,7 +261,7 @@ pub async fn reload(state: &AppState) -> Result<()> {
     pins.extend(
         authorities.iter().filter(|ca| ca.state == "next").map(|ca| ca.fingerprint.clone()),
     );
-    state.agent_tls().install(Arc::new(config), pins);
+    state.agent_tls().install(Arc::new(config), pins, server_pin);
     Ok(())
 }
 

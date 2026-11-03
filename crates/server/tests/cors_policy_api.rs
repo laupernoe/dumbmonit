@@ -57,6 +57,6 @@ async fn only_listed_origins_may_call_the_api_or_the_mcp_server() {
     let response = app.router.clone().oneshot(mcp("https://dash.example")).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(response.headers()["access-control-allow-origin"], "https://dash.example");
-    let response = app.router.clone().oneshot(mcp("http://monit.lan:8080")).await.unwrap();
+    let response = app.router.clone().oneshot(mcp("https://monit.lan:8080")).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK, "notre propre origine est toujours admise");
 }

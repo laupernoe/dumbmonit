@@ -9,14 +9,16 @@
 	 * (`/targets/new?kind=agent`), never here; the agents themselves are on the
 	 * rack and their own pages.
 	 */
-	import { Cpu, OctagonX, Plus } from 'lucide-svelte';
+	import { Cpu, OctagonX, Plus, RotateCcw } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
-	import { closeAgentToken, listAgentTokens, revokeAgentToken, type AgentToken } from '#lib/api/index.js';
+	import { closeAgentToken, listAgentTokens, listTokenMachines, revokeAgentToken, type AgentToken, type TokenMachine } from '#lib/api/index.js';
 	import { formatDateTime, formatRelative } from '#lib/format.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, Confirm, Disclosure, EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import AgentChannel from '#lib/components/settings/AgentChannel.svelte';
 	import AgentUpdates from '#lib/components/settings/AgentUpdates.svelte';
+	import AgentEnrolment from '#lib/components/settings/AgentEnrolment.svelte';
+	import { reactivateAgentToken } from '#lib/api/agent_enrolment.js';
 	import { getAgentChannel } from '#lib/api/agent_tls.js';
 	import type { AgentChannelOverview } from '#lib/api/types.js';
 
@@ -42,6 +44,22 @@
 	let loading = $state(true);
 	let error = $state<unknown>(null);
 
+	/** The machine a single-machine token enrolled, by token id: what the token is linked to. */
+	let machines = $state<Record<number, TokenMachine>>({});
+
+	async function loadMachines(list: AgentToken[], signal?: AbortSignal) {
+		for (const token of list) {
+			// A fleet token shows its count; only a token that enrolled exactly one machine names it.
+			if (token.uses !== 1 || machines[token.id]) continue;
+			try {
+				const found = await listTokenMachines(token.id, signal);
+				if (found.length > 0) machines[token.id] = found[0];
+			} catch {
+				// The link is a convenience: the token row stands without it.
+			}
+		}
+	}
+
 	async function load(signal?: AbortSignal) {
 		// The enrolment token list is admin-only on the server.
 		if (!auth.isAdmin) {
@@ -54,6 +72,7 @@
 		try {
 			const list = await listAgentTokens(signal);
 			tokens = Array.isArray(list) ? list : [];
+			void loadMachines(tokens, signal);
 		} catch (cause) {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
 			error = cause;
@@ -95,6 +114,23 @@
 			revokeError = { id: token.id, cause };
 		} finally {
 			stopping = null;
+		}
+	}
+
+	// --- Reactivate a sleeping fleet token ---------------------------------------
+
+	let reactivating = $state<number | null>(null);
+
+	async function reactivate(token: AgentToken) {
+		reactivating = token.id;
+		revokeError = null;
+		try {
+			await reactivateAgentToken(token.id);
+			tokens = await listAgentTokens();
+		} catch (cause) {
+			revokeError = { id: token.id, cause };
+		} finally {
+			reactivating = null;
 		}
 	}
 
@@ -148,6 +184,7 @@
 	{/if}
 
 	{#if auth.isAdmin}
+		<AgentEnrolment />
 		<AgentUpdates />
 	{/if}
 
@@ -171,7 +208,7 @@
 							<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
 								<div class="min-w-0 flex-1">
 									<div class="flex flex-wrap items-center gap-2">
-										<span class={`font-semibold ${revoked ? 'text-ink-2' : 'text-ink'}`}>{token.name}</span>
+										<span class={`select-all font-mono text-[0.8125rem] font-semibold ${revoked ? 'text-ink-2' : 'text-ink'}`}>{token.name}</span>
 										<code class="rounded-md border border-line bg-canvas-deep px-1.5 py-0.5 font-mono text-[0.75rem] text-ink-2">{token.prefix}…</code>
 										{#if revoked}<Plate tone="ghost" label={m.settings_agents_revoked()} />{/if}
 										{#if token.ad_domain}<Plate tone="info" label={m.settings_agents_ad_badge({ domain: token.ad_domain })} />{/if}
@@ -182,6 +219,7 @@
 										{#if !revoked}
 											<Plate tone={token.max_uses === null ? 'info' : 'ghost'} label={scopeLabel(token)} />
 											{#if spent(token)}<Plate tone="advisory" label={m.settings_agents_enrols_no_more()} />{/if}
+											{#if token.dormant_at}<Plate tone="ghost" label={m.settings_agents_enrol_dormant_badge()} />{/if}
 										{/if}
 									</div>
 									<p class="mt-1 text-sm text-ink-2">
@@ -194,12 +232,31 @@
 											· <time class="tnum" title={formatDateTime(token.revoked_at)}>{m.settings_agents_revoked_at({ when: formatRelative(token.revoked_at) })}</time>
 										{/if}
 									</p>
+									{#if token.max_uses === 1 || token.uses === 1}
+										<p class="mt-1 text-sm text-ink-2">
+											{#if machines[token.id]}
+												{m.settings_agents_used_by_lead()} <a class="font-semibold text-ink underline-offset-2 hover:underline" href={`/targets/${machines[token.id].id}`}>{machines[token.id].name}</a>
+											{:else if token.uses === 0}
+												{m.settings_agents_not_used_yet()}
+											{/if}
+										</p>
+									{/if}
 									{#if !revoked && spent(token)}
 										<p class="mt-1 text-sm text-ink-2">
 											{m.settings_agents_spent_note()}
 										</p>
 									{/if}
+									{#if !revoked && token.dormant_at}
+										<p class="mt-1 text-sm text-ink-2">
+											<time class="tnum" title={formatDateTime(token.dormant_at)}>{m.settings_agents_enrol_dormant_note({ when: formatRelative(token.dormant_at) })}</time>
+										</p>
+									{/if}
 								</div>
+								{#if !revoked && auth.isAdmin && token.dormant_at}
+									<Button variant="secondary" size="sm" loading={reactivating === token.id} onclick={() => reactivate(token)}>
+										<RotateCcw class="size-4" aria-hidden="true" />{m.settings_agents_enrol_reactivate()}
+									</Button>
+								{/if}
 								{#if !revoked && auth.isAdmin && token.ad_domain && !spent(token)}
 									<Confirm variant="secondary" confirmLabel={m.settings_agents_ad_token_stop_confirm()} loading={stopping === token.id} onconfirm={() => stopEnrolments(token)}>
 										<OctagonX class="size-4" aria-hidden="true" />{m.settings_agents_ad_token_stop()}

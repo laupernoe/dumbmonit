@@ -289,7 +289,7 @@ async fn un_client_ne_choisit_pas_le_lien_du_flux_rss() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let feed = String::from_utf8_lossy(&body);
     assert!(!feed.contains("evil.example"), "{feed}");
-    assert!(feed.contains("http://status.example.test/s/flux"), "{feed}");
+    assert!(feed.contains("https://status.example.test/s/flux"), "{feed}");
 }
 
 // --- L5 : cookie `Secure` en HTTPS -------------------------------------------
@@ -310,14 +310,15 @@ async fn login_cookie(app: &TestApp, origin: Option<&str>) -> String {
 }
 
 #[tokio::test]
-async fn le_cookie_de_session_est_secure_quand_le_navigateur_est_en_https() {
+async fn le_cookie_de_session_est_toujours_secure_et_host() {
+    // Le port ne sert que HTTPS : quelle que soit l'origine annoncée, le
+    // cookie de session est `__Host-` et `Secure`.
     let app = TestApp::configured().await;
-    let https = login_cookie(&app, Some("https://dumbmonit.example.test")).await;
-    assert!(https.contains("; Secure"), "{https}");
-    let plain = login_cookie(&app, Some("http://192.168.1.5:8080")).await;
-    assert!(!plain.contains("Secure"), "plain HTTP on a LAN must keep working: {plain}");
-    let none = login_cookie(&app, None).await;
-    assert!(!none.contains("Secure"), "{none}");
+    for origin in [Some("https://dumbmonit.example.test"), Some("http://192.168.1.5:8080"), None] {
+        let cookie = login_cookie(&app, origin).await;
+        assert!(cookie.starts_with("__Host-dumbmonit_session="), "{cookie}");
+        assert!(cookie.contains("; Secure"), "{cookie}");
+    }
 }
 
 // --- L6 : santé publique sans détail ------------------------------------------

@@ -126,9 +126,8 @@ pub async fn run(
     // machine : la machine Docker, le contrôleur de domaine, le relais.
     let mut agents = Vec::new();
     for host in synthetic::AGENT_HOSTS {
-        let label = format!("{} (demo)", host.hostname.split('.').next().unwrap_or(host.hostname));
         let policy = TokenPolicy { max_uses: None, expires_in_days: None };
-        let (_, token) = agent::create_token(pool, &label, policy).await?;
+        let (_, token) = agent::create_token(pool, policy).await?;
         let (id, secret) = push_agent_batch(pool, cipher, sink, host, &token, None).await?;
         targets.push((id, host.hostname.to_string(), "agent".to_string()));
         agents.push(SeededAgent { host, id, token, secret });
@@ -221,7 +220,10 @@ pub async fn push_agent_batch(
         declared_monitors: None,
     };
     let bearer = format!("Bearer {token}");
-    let ack = agent::ingest(pool, cipher, sink, Some(&bearer), secret, batch)
+    // Données de démonstration : rien ne vient du réseau, la garde de
+    // l'enrôlement n'a rien à valider.
+    let origin = agent::EnrolOrigin::Internal;
+    let ack = agent::ingest(pool, cipher, sink, Some(&bearer), secret, batch, &origin)
         .await
         .map_err(|error| anyhow::anyhow!("demo agent push refused: {error:?}"))?;
     Ok((ack.target_id, ack.agent_secret))

@@ -181,11 +181,6 @@ pub struct Config {
     /// (`DUMBMONIT_AGENT_LEGACY_DAYS`). `None` : jusqu'à ce qu'un administrateur
     /// exige mTLS dans l'interface.
     pub agent_legacy_days: Option<u32>,
-    /// HTTPS de l'interface et de l'API sur le port même de l'interface
-    /// (`DUMBMONIT_TLS`, actif par défaut ; `off` le coupe). Le port sert alors
-    /// HTTP et HTTPS : le premier octet de la connexion décide (voir
-    /// [`crate::web_tls`]).
-    pub tls_enabled: bool,
     /// Certificat fourni (`DUMBMONIT_TLS_CERT`, chaîne PEM) et sa clé
     /// (`DUMBMONIT_TLS_KEY`). Absents : un certificat autosigné est créé au
     /// premier démarrage et gardé, clé chiffrée, dans la base.
@@ -195,10 +190,6 @@ pub struct Config {
     /// séparés par des virgules), en plus de `localhost`, de la boucle locale,
     /// du nom d'hôte et de l'hôte de `DUMBMONIT_PUBLIC_URL`.
     pub tls_names: Vec<String>,
-    /// Redirection HTTP → HTTPS imposée par l'environnement
-    /// (`DUMBMONIT_HTTPS_REDIRECT`). `None` : le réglage de l'interface, actif
-    /// d'office sur une installation neuve.
-    pub https_redirect: Option<bool>,
 }
 
 /// Réglages d'instance du collecteur `website`.
@@ -248,6 +239,7 @@ impl WebsiteLimits {
 
 impl Config {
     pub fn from_env() -> Result<Self> {
+        check_https_only()?;
         Ok(Self {
             bind: env_parsed("DUMBMONIT_BIND", "0.0.0.0:8080")?,
             data_dir: PathBuf::from(env_or("DUMBMONIT_DATA_DIR", "/data")),
@@ -328,13 +320,9 @@ impl Config {
                     })
                 })
                 .transpose()?,
-            tls_enabled: env_flag_or("DUMBMONIT_TLS", true),
             tls_cert: env_path("DUMBMONIT_TLS_CERT"),
             tls_key: env_path("DUMBMONIT_TLS_KEY"),
             tls_names: parse_tls_names(&env_or("DUMBMONIT_TLS_NAMES", "")),
-            https_redirect: env_var("DUMBMONIT_HTTPS_REDIRECT")
-                .filter(|raw| !raw.trim().is_empty())
-                .map(|_| env_flag("DUMBMONIT_HTTPS_REDIRECT")),
         })
     }
 
@@ -438,6 +426,43 @@ fn loopback_address(listen: &str) -> String {
 /// Threads de travail par défaut : au plus quatre, et jamais plus que de cœurs.
 fn default_workers() -> usize {
     std::thread::available_parallelism().map_or(2, |n| n.get()).min(4)
+}
+
+/// DumbMonit ne sert plus que HTTPS : les variables qui demandaient du clair
+/// arrêtent le démarrage avec une explication, plutôt que d'être ignorées en
+/// silence, et l'URL publique doit être en `https://`.
+fn check_https_only() -> Result<()> {
+    if env_var("DUMBMONIT_TLS").is_some() && !env_flag_or("DUMBMONIT_TLS", true) {
+        anyhow::bail!(
+            "DUMBMONIT_TLS=off is no longer supported: DumbMonit only serves HTTPS on the web \
+             port. Remove the variable; a reverse proxy in front talks HTTPS to the container."
+        );
+    }
+    if env_var("DUMBMONIT_HTTPS_REDIRECT").is_some()
+        && !env_flag_or("DUMBMONIT_HTTPS_REDIRECT", true)
+    {
+        anyhow::bail!(
+            "DUMBMONIT_HTTPS_REDIRECT=off is no longer supported: plain HTTP is never served, \
+             it is always redirected to HTTPS. Remove the variable."
+        );
+    }
+    if let Some(url) = env_var("DUMBMONIT_PUBLIC_URL")
+        && !url.trim().is_empty()
+        && !is_https_url(&url)
+    {
+        anyhow::bail!(
+            "DUMBMONIT_PUBLIC_URL must start with https:// (got '{}'): DumbMonit only serves \
+             HTTPS.",
+            url.trim()
+        );
+    }
+    Ok(())
+}
+
+/// Vrai pour une URL absolue `https://hôte…`.
+pub fn is_https_url(url: &str) -> bool {
+    let url = url.trim();
+    url.len() > 8 && url.get(..8).is_some_and(|scheme| scheme.eq_ignore_ascii_case("https://"))
 }
 
 /// Lecture d'une variable `DUMBMONIT_*`, avec repli sur `EZYMONIT_*` (voir
@@ -554,6 +579,16 @@ mod tests {
             vec!["nas.lan".to_string(), "192.168.1.10".into(), "::1".into()]
         );
         assert!(parse_tls_names("").is_empty());
+    }
+
+    #[test]
+    fn only_an_https_url_is_a_public_url() {
+        assert!(is_https_url("https://monit.example.org"));
+        assert!(is_https_url(" HTTPS://monit.lan:8080/ "));
+        assert!(!is_https_url("http://monit.lan:8080"));
+        assert!(!is_https_url("https://"));
+        assert!(!is_https_url("monit.lan"));
+        assert!(!is_https_url("é"));
     }
 
     #[test]

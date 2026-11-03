@@ -906,6 +906,41 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_agent_backup_repo_reachable",
             )
         },
+        // Bases de données détectées par l'agent
+        // (`agent/src/collect/databases.rs`). L'agent calcule lui-même `overdue`
+        // d'après l'âge maximal choisi dans `agent.yaml` : la règle ne fait que
+        // lire le verdict. Sans dossier de sauvegarde connu ni déclaré, aucune
+        // série `overdue`, donc aucune alerte.
+        Rule {
+            description: "The newest backup file of this database is older than the maximum \
+                          age set for it (or no backup file was found in the watched folders)."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.5,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "database_backup_overdue",
+                "Database backup overdue",
+                RuleKind::Threshold,
+                "dumbmonit_agent_database_backup_overdue",
+            )
+        },
+        Rule {
+            description: "A database service installed on this machine is stopped.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "database_service_stopped",
+                "Database service stopped",
+                RuleKind::Threshold,
+                "dumbmonit_agent_database_up",
+            )
+        },
         // WireGuard : seuls les pairs à maintien de connexion
         // (`PersistentKeepalive`) sont visés. Ceux-là refont une poignée de main
         // toutes les deux minutes tant que le tunnel vit ; un téléphone ou un
@@ -8475,6 +8510,9 @@ pub(crate) const PRODUITES: &[&str] = &[
     "dumbmonit_agent_backup_repo_last_snapshot_age_seconds",
     "dumbmonit_agent_backup_repo_reachable",
     "dumbmonit_agent_wireguard_peer_handshake_age_seconds",
+    // Agent : bases de données (`agent/src/collect/databases.rs`).
+    "dumbmonit_agent_database_up",
+    "dumbmonit_agent_database_backup_overdue",
     "dumbmonit_agent_wireguard_peer_keepalive_seconds",
     // Agent : tunnels IPsec et test de débit Internet
     // (`agent/src/collect/{ipsec,speedtest}.rs`).
@@ -9091,6 +9129,8 @@ mod tests {
             "k8s_pvc_pending",
             "backup_repo_too_old",
             "backup_repo_unreachable",
+            "database_backup_overdue",
+            "database_service_stopped",
             "wireguard_peer_silent",
             "ipsec_tunnel_down",
             "speedtest_download_slow",

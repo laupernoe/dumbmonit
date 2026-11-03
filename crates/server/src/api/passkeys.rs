@@ -372,7 +372,7 @@ pub async fn login_finish(
     };
     auth.limiter().lock().await.record_success(&keys);
     audit::record(&state.pool, Some(&user.username), "login.passkey", None, ip).await;
-    open_session(&state, &auth, &user, ip).await
+    open_session(&state, &user, ip).await
 }
 
 /// Retrouve la clé, le compte, et vérifie l'assertion. L'erreur est la raison

@@ -14,11 +14,12 @@ there with a **Web Push** channel
 
 ## Before you start
 
-- **HTTPS is required.** Browsers only offer push to a secure origin. Put
-  DumbMonit behind a reverse proxy with a certificate (Caddy, Traefik, Nginx
-  Proxy Manager…) and open it through that address. `http://localhost` is
-  accepted too, which is only useful for testing on the server itself. On plain
-  `http://192.168.x.x`, the section says **Needs HTTPS**.
+- **HTTPS is required.** Browsers only offer push to a secure origin. DumbMonit
+  serves HTTPS itself, but a browser only offers push on a certificate it
+  trusts: put DumbMonit behind a reverse proxy with a public certificate (Caddy,
+  Traefik, Nginx Proxy Manager…) and open it through that address, or add the
+  self-signed certificate to your device's trusted certificates. Otherwise the
+  section says **Needs HTTPS**.
 - **The server needs outbound HTTPS** to the push services:
   `fcm.googleapis.com` (Chrome, and Edge on Android), `*.notify.windows.com`
   (Edge on Windows), `updates.push.services.mozilla.com` (Firefox) and

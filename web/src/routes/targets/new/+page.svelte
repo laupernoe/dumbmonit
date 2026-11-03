@@ -34,6 +34,7 @@
 	import Discovery from '#lib/components/device-form/Discovery.svelte';
 	import DiscoveryInventory from '#lib/components/device-form/DiscoveryInventory.svelte';
 	import AddBySite from '#lib/components/device-form/AddBySite.svelte';
+	import ReviewNotice from '#lib/components/device-form/ReviewNotice.svelte';
 	import { NO_DEFAULTS, defaultsParams, type SiteDefaults } from '#lib/components/device-form/add-by-site.js';
 	import SetupNotice from '#lib/components/device-form/SetupNotice.svelte';
 	import KindIcon from '#lib/components/KindIcon.svelte';
@@ -379,6 +380,7 @@
 				description={m.deviceform_new_none_desc()}
 			/>
 		{:else}
+			<ReviewNotice />
 			<AddBySite {collectors} bind:site bind:defaults={siteDefaults} onkind={(kind, d) => select(kind, null, d)} onadded={(t) => (targets = [...targets, t])} />
 			{#if requestedKind}
 				<p class="mb-4 rounded-lg border border-advisory/35 bg-advisory-soft px-3.5 py-2.5 text-sm text-ink">

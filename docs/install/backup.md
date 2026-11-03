@@ -68,7 +68,7 @@ recovery**: a bundle whose passphrase is lost is lost.
 | `status_pages` | Public status pages and the services each one lists. |
 | `incidents` | Incidents and maintenance announcements, with their updates. |
 | `users` | Accounts: username, display name, role, SSO link, enabled or not. |
-| `agent_tokens` | Agent enrolment tokens, as hashes. Installed agents keep pushing after a restore. |
+| `agent_tokens` | Agent enrolment tokens, as hashes. Installed agents keep pushing after a restore. Tokens from an older backup are renamed to opaque `tok_…` identifiers. |
 | `api_tokens` | API tokens, as hashes. Existing tokens keep working. |
 | `push_monitors` | Heartbeat tokens, so the URLs your cron jobs already call stay the same. |
 | `locations` | World map locations (name, address, spot, site, main site); each monitor keeps its location. |
@@ -141,19 +141,19 @@ instance.
 
 ```bash
 # Sign in
-curl -s -c jar -X POST http://localhost:8080/api/auth/login \
+curl -s -c jar -X POST https://localhost:8080/api/auth/login \
   -H 'content-type: application/json' -H 'X-Requested-With: DumbMonit' \
   -d '{"username":"admin","password":"…"}'
 
 # Export
-curl -s -b jar -X POST http://localhost:8080/api/backup \
+curl -s -b jar -X POST https://localhost:8080/api/backup \
   -H 'content-type: application/json' -H 'X-Requested-With: DumbMonit' \
   -d '{"passphrase":"three words are enough"}' -o backup.json
 
 # Dry run, then apply
 jq -n --slurpfile b backup.json \
   '{bundle: $b[0], passphrase: "three words are enough", apply: false}' > restore.json
-curl -s -b jar -X POST http://localhost:8080/api/backup/restore \
+curl -s -b jar -X POST https://localhost:8080/api/backup/restore \
   -H 'content-type: application/json' -H 'X-Requested-With: DumbMonit' \
   -d @restore.json | jq
 ```

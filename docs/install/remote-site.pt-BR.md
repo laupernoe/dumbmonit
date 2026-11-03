@@ -25,9 +25,8 @@ site remoto, normalmente `https://monitor.example.org` atrás de um proxy revers
 - as **credenciais de monitor** dos monitores que o agente de retransmissão sonda (comunidade SNMP,
   token API Proxmox…), descriptografadas, dentro de cada trabalho de sonda.
 
-Sobre HTTP simples através da internet, ambas seriam legíveis no caminho: coloque o
-servidor atrás de HTTPS antes de retransmitir nada fora de sua própria rede. Em uma
-LAN ou VPN, HTTP é aceitável e o token é o único segredo em trânsito
+A porta web aceita somente HTTPS, então ambos ficam criptografados no caminho. Na internet, coloque o
+servidor atrás de um proxy reverso com certificado público (ele se conecta ao DumbMonit por HTTPS); em uma LAN ou VPN o certificado autoassinado funciona, fixado pela impressão digital do comando exibido. O token é o único segredo em trânsito
 até que você atribua monitores ao agente de retransmissão. As credenciais nunca são escritas em disco
 em nenhum lado: um trabalho de sonda vive na memória do servidor até o agente de retransmissão
 relatá-lo, e o agente não mantém nada entre duas sondas.

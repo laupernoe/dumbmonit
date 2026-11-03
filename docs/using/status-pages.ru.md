@@ -254,7 +254,7 @@ Kuma. Введите имя в поле **Public domain** редактора (з
 1. **DNS.** Создайте запись для имени (или публичное имя хоста
    Cloudflare Tunnel), указывающую на ваш обратный прокси.
 2. **Прокси.** Направьте имя на адрес DumbMonit, например
-   `http://dumbmonit:8080`, **не переписывая путь**: прокси передаёт
+   `https://dumbmonit:8080`, **не переписывая путь**: прокси передаёт
    `/`, а не `/s/<address>`.
 3. **Заголовок Host.** Передавайте исходный заголовок `Host` дальше: именно так DumbMonit
    отличает домен страницы от собственного адреса. DumbMonit читает только `Host`;
@@ -281,7 +281,7 @@ Nginx Proxy Manager — добавьте **Proxy Host** с доменом
 **Custom locations** пустым.
 
 Cloudflare Tunnel — добавьте **Public hostname** `status.example.com` с
-сервисом `http://dumbmonit:8080` и без пути. Туннель сохраняет `Host` посетителя;
+сервисом `https://dumbmonit:8080` и без пути. Туннель сохраняет `Host` посетителя;
 оставьте **HTTP Host Header** в расширенных настройках пустым.
 
 Caddy — `reverse_proxy` передаёт `Host` дальше, и Caddy сам получает сертификат:
@@ -302,7 +302,7 @@ server {
     # ssl_certificate … ;
 
     location / {
-        proxy_pass http://dumbmonit:8080;
+        proxy_pass https://dumbmonit:8080;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
@@ -344,7 +344,7 @@ status.example.com {
 
 ```nginx
 location ~ ^/(s/|api/public/|_app/|favicon\.svg) {
-    proxy_pass http://dumbmonit:8080;
+    proxy_pass https://dumbmonit:8080;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-Proto $scheme;
 }

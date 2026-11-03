@@ -36,6 +36,7 @@ async fn lab_with<T>(before_init: impl AsyncFnOnce(&TestApp, &str) -> T) -> (Lab
     let config = common::base_config(dir.path());
     let pool = db::open(&config.database_path()).await.expect("base");
     let cipher = db::init_cipher(&pool, "secret-de-test-suffisamment-long").await.expect("chiffre");
+    common::accept_enrolments(&pool).await;
     let mut registry = collectors::Registry::new();
     registry.register(Arc::new(collectors::AgentCollector::new(pool.clone())));
     let victoria = tsdb::Victoria::new(common::UNREACHABLE_VICTORIA.to_string()).expect("client");
@@ -281,6 +282,43 @@ async fn a_bad_token_is_refused_and_repeated_attempts_are_throttled() {
         last = enrol(&lab, "dmon_faux", "id-x", None).await.0.status();
     }
     assert_eq!(last, StatusCode::TOO_MANY_REQUESTS);
+}
+
+#[tokio::test]
+async fn a_machine_waiting_for_approval_gets_no_certificate_until_it_is_accepted() {
+    let (lab, admin) = lab().await;
+    let settings = json!({
+        "fleet_approval": "manual", "single_use_approval": "auto",
+        "rate_per_hour": 60, "dormant_days": 30
+    });
+    let reply = lab.app.put("/api/agent/enrolment", settings, Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    let enrolment = token(&lab.app, &admin).await;
+
+    // L'agent réessaie : toujours en attente, jamais un certificat, et ses
+    // tentatives ne comptent pas comme des échecs (pas de 429).
+    for _ in 0..8 {
+        let (response, _) = enrol(&lab, &enrolment, "id-new", None).await;
+        assert_eq!(response.status(), StatusCode::FORBIDDEN);
+        let body: Value = response.json().await.unwrap();
+        assert_eq!(body["error"], dumbmonit_proto::ENROLMENT_PENDING);
+    }
+    let certificates: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM agent_hosts")
+        .fetch_one(&lab.state.pool)
+        .await
+        .unwrap();
+    assert_eq!(certificates, 0, "aucune machine tant qu'elle attend");
+
+    let view = lab.app.get("/api/agent/enrolment", Some(&admin)).await;
+    let id = view.body["pending"][0]["id"].as_i64().expect("en attente");
+    let decided = json!({ "ids": [id], "approve": true });
+    let reply = lab.app.post("/api/agent/enrolment/decide", decided, Some(&admin)).await;
+    assert_eq!(reply.body["decided"], 1, "{}", reply.body);
+
+    let agent = enrolled(&lab, &enrolment, "id-new", None).await;
+    assert!(agent.secret.is_some(), "acceptée : enrôlée, certificat et secret remis");
+    let response = push_tls(&lab, &agent, &enrolment, "id-new").await;
+    assert_eq!(response.status(), StatusCode::OK);
 }
 
 #[tokio::test]
@@ -646,6 +684,32 @@ async fn only_a_relay_with_its_certificate_can_open_a_tunnel() {
 }
 
 #[tokio::test]
+async fn the_install_files_are_read_over_tls_through_a_relay_only() {
+    let (lab, admin) = lab().await;
+    let ca = authority(&lab).await;
+    // En direct, le port des agents ne sert aucun fichier d'installation.
+    let direct =
+        client(&lab, &ca, None).get(url(&lab, "/install.sh")).send().await.expect("direct");
+    assert_eq!(direct.status(), StatusCode::NOT_FOUND);
+
+    // À travers la passerelle d'un relais : les scripts, sous TLS jusqu'au
+    // serveur ; le relais ne voit que du chiffré.
+    let relay = enrolled(&lab, &relay_token(&lab.app, &admin).await, "id-relais", None).await;
+    let through = gateway(&lab, &relay).await;
+    let site = client_at(through, &ca, None);
+    let script = site.get(url_at(through, "/install.sh")).send().await.expect("script");
+    assert_eq!(script.status(), StatusCode::OK);
+    assert!(script.text().await.unwrap().starts_with("#!/bin/sh"));
+    let windows = site.get(url_at(through, "/install.ps1")).send().await.expect("script");
+    assert_eq!(windows.status(), StatusCode::OK);
+    // L'épingle de la clé du port des agents ne change pas d'un certificat au
+    // suivant : les commandes déjà affichées restent valables.
+    let pin = lab.state.agent_tls().server_pin().expect("épingle");
+    dumbmonit_server::agent_tls::reload(&lab.state).await.expect("nouveau certificat");
+    assert_eq!(lab.state.agent_tls().server_pin(), Some(pin));
+}
+
+#[tokio::test]
 async fn a_relay_cannot_enrol_a_machine_for_another_client() {
     let (lab, admin) = lab().await;
     let relay = enrolled(&lab, &relay_token(&lab.app, &admin).await, "id-relais", None).await;
@@ -701,7 +765,20 @@ async fn install_commands_through_a_relay_point_at_its_gateway_and_open_it() {
     assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
     let pin = lab.state.agent_tls().pins()[0].clone();
     let linux = reply.body["install_linux"].as_str().unwrap();
-    assert!(linux.starts_with("curl -sSL http://192.168.10.5:8443/install.sh"), "{linux}");
+    // Scripts et binaires passent eux aussi par TLS jusqu'au serveur, qu'ils
+    // reconnaissent à la clé de son certificat sur le port des agents.
+    let server_pin = lab.state.agent_tls().server_pin().expect("épingle du port des agents");
+    let fetch =
+        format!("curl -sSL -k --pinnedpubkey {server_pin} https://192.168.10.5:8443/install.sh");
+    assert!(linux.starts_with(&fetch), "{linux}");
+    assert!(linux.contains(&format!("--pinned-key={server_pin}")), "{linux}");
+    let windows = reply.body["install_windows"].as_str().unwrap();
+    assert!(
+        windows.contains("DownloadString('https://192.168.10.5:8443/install.ps1')"),
+        "{windows}"
+    );
+    assert!(windows.contains(&format!("-PinnedKey {server_pin}")), "{windows}");
+    assert!(!linux.contains("http://") && !windows.contains("http://"));
     assert!(linux.contains("--tls-url=https://192.168.10.5:8443"), "{linux}");
     assert!(linux.contains(&format!("--ca-pin={pin}")), "la session va jusqu'au serveur : {linux}");
 

@@ -184,12 +184,10 @@ impl PolicyPayload {
             None => current.public_url,
             Some(raw) => {
                 let trimmed = raw.trim().trim_end_matches('/').to_string();
-                if !trimmed.is_empty()
-                    && !(trimmed.starts_with("http://") || trimmed.starts_with("https://"))
-                {
+                if !trimmed.is_empty() && !crate::config::is_https_url(&trimmed) {
                     return Err(ApiError::BadRequest(
-                        "\"public_url\" must start with http:// or https://, for example \
-                         https://monit.example.lan."
+                        "\"public_url\" must start with https://, for example \
+                         https://monit.example.lan: DumbMonit only serves HTTPS."
                             .into(),
                     ));
                 }
@@ -361,7 +359,12 @@ mod tests {
         assert!(refus(payload.apply_to(GlobalPolicy::default())).contains("limited"));
         let payload =
             PolicyPayload { public_url: Some("monit.lan".into()), ..PolicyPayload::default() };
-        assert!(refus(payload.apply_to(GlobalPolicy::default())).contains("http"));
+        assert!(refus(payload.apply_to(GlobalPolicy::default())).contains("https://"));
+        let payload = PolicyPayload {
+            public_url: Some("http://monit.lan".into()),
+            ..PolicyPayload::default()
+        };
+        assert!(refus(payload.apply_to(GlobalPolicy::default())).contains("https://"));
         let payload = PolicyPayload {
             public_url: Some("https://monit.lan/".into()),
             ..PolicyPayload::default()

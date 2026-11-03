@@ -26,9 +26,8 @@ quel collegamento:
 - le **credenziali del monitor** dei monitor che l'agente relè esegue il probe (comunità SNMP,
   token API Proxmox…), decifrate, all'interno di ogni lavoro di probe.
 
-Su plain HTTP attraverso Internet entrambi sarebbero leggibili per strada: metti il
-server dietro HTTPS prima di inoltrare nulla al di fuori della tua stessa rete. Su
-una LAN o una VPN, HTTP è accettabile e il token è l'unico segreto in volo
+La porta web accetta solo HTTPS, quindi entrambi sono cifrati lungo il percorso. Su Internet metti il
+server dietro un reverse proxy con certificato pubblico (si connette a DumbMonit in HTTPS); su una LAN o una VPN va bene il certificato autofirmato, fissato dall'impronta del comando mostrato. Il token è l'unico segreto in volo
 fino a quando non assegni monitor all'agente relè. Le credenziali non vengono mai scritte su disco
 da nessuno: un lavoro di probe vive nella memoria del server fino a quando l'agente relè
 lo segnala, e l'agente non mantiene nulla tra due probe.

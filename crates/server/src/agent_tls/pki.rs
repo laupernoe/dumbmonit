@@ -272,13 +272,29 @@ pub struct ServerIdentity {
     /// l'autorité dont il a épinglé l'empreinte.
     pub chain: Vec<CertificateDer<'static>>,
     pub key: PrivateKeyDer<'static>,
+    /// La clé, en PKCS#8 : gardée d'un certificat au suivant.
+    pub key_der: Vec<u8>,
 }
 
-/// Fabrique un certificat de serveur neuf (nouvelle clé) sous l'autorité active.
-pub fn issue_server(authority: &Authority, cipher: &Cipher) -> Result<ServerIdentity> {
+/// Fabrique un certificat de serveur neuf sous l'autorité active, avec la clé
+/// donnée (PKCS#8), ou une nouvelle. Garder la clé d'un jour à l'autre rend
+/// stable son épingle, celle que portent les commandes d'installation à
+/// travers un relais.
+pub fn issue_server(
+    authority: &Authority,
+    cipher: &Cipher,
+    key_der: Option<&[u8]>,
+) -> Result<ServerIdentity> {
     let issuer = authority.issuer(cipher)?;
-    let key = KeyPair::generate_for(&PKCS_ECDSA_P256_SHA256)
-        .context("generating the agent channel key")?;
+    let key = match key_der {
+        Some(der) => KeyPair::from_pkcs8_der_and_sign_algo(
+            &PrivatePkcs8KeyDer::from(der.to_vec()),
+            &PKCS_ECDSA_P256_SHA256,
+        )
+        .context("reading the agent channel key")?,
+        None => KeyPair::generate_for(&PKCS_ECDSA_P256_SHA256)
+            .context("generating the agent channel key")?,
+    };
     let mut params = CertificateParams::default();
     params.distinguished_name = distinguished_name("DumbMonit agent channel");
     params.subject_alt_names = vec![SanType::DnsName(
@@ -294,6 +310,7 @@ pub fn issue_server(authority: &Authority, cipher: &Cipher) -> Result<ServerIden
     Ok(ServerIdentity {
         chain: vec![cert.der().clone(), CertificateDer::from(authority.cert_der.clone())],
         key: PrivateKeyDer::Pkcs8(PrivatePkcs8KeyDer::from(key.serialize_der())),
+        key_der: key.serialize_der(),
     })
 }
 
