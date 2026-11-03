@@ -86,7 +86,7 @@ pub const CATALOG: &[Note] = &[
         compose: "services:\n  dumbmonit:\n    ports:\n      - \"8080:8080\"   # already \
                   there\n      - \"8443:8443\"   # new: encrypted agent channel",
         apply: Some("docker compose up -d"),
-        docs_url: Some("https://dumbmonit.readthedocs.io/en/latest/install/agent-security/"),
+        docs_url: Some("https://dumbmonit.app/docs/install/agent-security/"),
         check: Some(Check::AgentChannelPort),
     },
     Note {
@@ -103,7 +103,7 @@ pub const CATALOG: &[Note] = &[
                   DUMBMONIT_TRUSTED_PROXIES: 172.16.0.0/12\n    volumes:\n      - \
                   ./certs:/certs:ro",
         apply: Some("docker compose up -d"),
-        docs_url: Some("https://dumbmonit.readthedocs.io/en/latest/install/https/"),
+        docs_url: Some("https://dumbmonit.app/docs/install/https/"),
         check: None,
     },
     Note {
@@ -121,7 +121,7 @@ pub const CATALOG: &[Note] = &[
                   Traefik, Caddy): https://dumbmonit:8080\n    # Skip certificate \
                   verification, or trust the DumbMonit certificate",
         apply: None,
-        docs_url: Some("https://dumbmonit.readthedocs.io/en/latest/install/https/"),
+        docs_url: Some("https://dumbmonit.app/docs/install/https/"),
         check: None,
     },
 ];

@@ -90,7 +90,7 @@ info:
     from another origin. Allowed origins: any by default, or the list in
     `DUMBMONIT_API_CORS_ORIGINS` (`off` disables CORS altogether).
 
-    Full guide: <https://dumbmonit.readthedocs.io/en/latest/reference/api/>
+    Full guide: <https://dumbmonit.app/docs/reference/api/>
   license:
     name: MIT
     identifier: MIT
@@ -99,7 +99,7 @@ info:
     url: https://github.com/laupernoe/dumbmonit
 externalDocs:
   description: HTTP API reference (Read the Docs)
-  url: https://dumbmonit.readthedocs.io/en/latest/reference/api/
+  url: https://dumbmonit.app/docs/reference/api/
 servers:
   - url: /
     description: This DumbMonit instance
@@ -8943,7 +8943,7 @@ paths:
         scope applies tool by tool: a `read` token can call every read tool and
         gets an explanatory tool error (`isError: true`) from a write tool. The
         28 tools are documented at
-        <https://dumbmonit.readthedocs.io/en/latest/using/assistant/>.
+        <https://dumbmonit.app/docs/using/assistant/>.
       x-token-scope: read
       parameters:
         - name: MCP-Protocol-Version

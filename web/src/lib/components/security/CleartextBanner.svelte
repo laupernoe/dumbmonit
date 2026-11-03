@@ -15,7 +15,7 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 
 	const DISMISSED = 'dumbmonit.cleartext-banner.dismissed';
-	const DOC = 'https://dumbmonit.readthedocs.io/en/latest/install/https/';
+	const DOC = 'https://dumbmonit.app/docs/install/https/';
 
 	function loopback(host: string): boolean {
 		return host === 'localhost' || host === '[::1]' || host.startsWith('127.');

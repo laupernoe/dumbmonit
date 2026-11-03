@@ -7,7 +7,7 @@
 	import { BookOpen, GitBranch, Compass } from 'lucide-svelte';
 	import { demo } from '#lib/stores/demo.svelte.js';
 
-	const INSTALL_URL = 'https://dumbmonit.readthedocs.io/en/latest/install/docker/';
+	const INSTALL_URL = 'https://dumbmonit.app/docs/install/docker/';
 	const GITHUB_URL = 'https://github.com/laupernoe/dumbmonit';
 
 	const link =
