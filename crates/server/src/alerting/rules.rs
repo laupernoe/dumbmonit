@@ -12,6 +12,7 @@ use crate::alerting::model::{
 };
 
 mod cloud;
+mod postgres;
 
 /// Taux d'occupation processeur, toutes sources confondues.
 ///
@@ -7755,6 +7756,7 @@ pub fn builtin_rules() -> Vec<Rule> {
     ];
     // Intégrations en nuage, un fichier par produit (`rules/cloud/`).
     rules.extend(cloud::rules());
+    rules.extend(postgres::rules());
     rules.extend(apps_rules());
     rules
 }
@@ -9376,7 +9378,9 @@ mod tests {
             for mot in rule.query.split(|c: char| !c.is_alphanumeric() && c != '_') {
                 if mot.starts_with("dumbmonit_") {
                     assert!(
-                        PRODUITES.contains(&mot) || cloud::produced().contains(&mot),
+                        PRODUITES.contains(&mot)
+                            || cloud::produced().contains(&mot)
+                            || postgres::PRODUCED.contains(&mot),
                         "rule \"{}\" targets \"{mot}\", which no collector produces",
                         rule.uid
                     );
