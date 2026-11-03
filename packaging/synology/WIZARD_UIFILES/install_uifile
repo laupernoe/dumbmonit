@@ -3,15 +3,15 @@
         "step_title": "DumbMonit server",
         "items": [
             {
-                "desc": "Enter the address of your DumbMonit server and an enrollment token (DumbMonit: Add monitor, Server with the agent). The token is used once, to enroll this NAS. Unless the server has a certificate from a trusted authority, also paste the certificate fingerprint (pin) shown in DumbMonit, Settings, System, HTTPS."
+                "desc": "Enter the address of your DumbMonit server and an enrollment token. DumbMonit shows all three values, ready to copy and paste, when you add the monitor (Add monitor, Synology, Install the package). The token is used once, to enroll this NAS.<br><br>Certificate pin (sha256//...): paste it exactly as shown there. Leave it empty if your server has a certificate from a trusted authority."
             },
             {
                 "type": "textfield",
                 "subitems": [
                     {
                         "key": "wizard_server_url",
-                        "desc": "Server URL (for example https://192.168.1.10:8080)",
-                        "defaultValue": "",
+                        "desc": "Server URL",
+                        "defaultValue": "https://",
                         "validator": {
                             "allowBlank": false,
                             "regex": {
@@ -44,7 +44,7 @@
                 "subitems": [
                     {
                         "key": "wizard_server_pin",
-                        "desc": "Server certificate fingerprint (pin), as shown in Settings > System > HTTPS (sha256//...)",
+                        "desc": "Certificate pin",
                         "defaultValue": "",
                         "validator": {
                             "allowBlank": true,

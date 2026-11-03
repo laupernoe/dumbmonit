@@ -5,7 +5,8 @@
 	 * worst). Opening it swaps the list for one row per NAS: name, model, DSM
 	 * version, a light with an icon and a word, and one sentence saying why.
 	 * Details stay on the NAS's own page. Readings come from what the
-	 * collector already stores; a missing one leaves its cell empty.
+	 * collector (or the agent package) already stores; a missing one leaves
+	 * its cell empty.
 	 */
 	import { onMount } from 'svelte';
 	import { ChevronRight, CircleCheck, CircleHelp, CircleX, Package, TriangleAlert } from 'lucide-svelte';
@@ -48,9 +49,10 @@
 
 	async function load(signal?: AbortSignal) {
 		try {
+			// The agent package reports the same identity and storage scale under its own names.
 			const [info, storage, update] = await Promise.all([
-				queryInstant(`last_over_time(dumbmonit_synology_system_info[${WINDOW}])`, signal),
-				queryInstant(`last_over_time(dumbmonit_synology_storage_health[${WINDOW}])`, signal),
+				queryInstant(`last_over_time({__name__=~"dumbmonit_(synology_system|agent_dsm)_info"}[${WINDOW}])`, signal),
+				queryInstant(`last_over_time({__name__=~"dumbmonit_(synology|agent_dsm)_storage_health"}[${WINDOW}])`, signal),
 				queryInstant(`last_over_time(dumbmonit_synology_update_available[${WINDOW}])`, signal)
 			]);
 			const next = new Map<TargetId, Readings>();

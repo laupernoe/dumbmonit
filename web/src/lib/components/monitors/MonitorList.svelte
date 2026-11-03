@@ -100,8 +100,11 @@
 	let optionKeys = $state<Map<string, Set<string>>>(new Map());
 	const NO_KEYS: ReadonlySet<string> = new Set();
 	const optionKeysOf = (kind: string) => optionKeys.get(kind) ?? NO_KEYS;
-	/** Synology NAS: from two of them, a banner offers the fleet view instead of the list. */
-	const nasTargets = $derived(targets.filter((t) => t.kind === 'synology'));
+	/** Synology NAS (DSM API, or the agent package that tags its machine): from two of them,
+	 *  a banner offers the fleet view instead of the list. */
+	const nasTargets = $derived(
+		targets.filter((t) => t.kind === 'synology' || (t.kind === 'agent' && t.tags?.vendor === 'synology'))
+	);
 	let fleetOpen = $state(false);
 	const showFleet = $derived(fleetOpen && nasTargets.length >= 2);
 	const firstLoad = $derived(alertsStore.loading && targets.length === 0);

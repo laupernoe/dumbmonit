@@ -15,7 +15,7 @@ DumbMonit, **Ajouter un moniteur > Synology DSM** propose les deux.
 |---|---|---|
 | Connexion | Le NAS se connecte vers DumbMonit ; aucun port ouvert | DumbMonit se connecte au NAS (port 5001) |
 | Identifiant | Jeton d'enrôlement, utilisé une fois ; aucun compte DSM stocké | Un compte DSM dédié en lecture seule, stocké dans DumbMonit |
-| Remonte | CPU, mémoire, disques, réseau | Volumes, pools de stockage, santé des disques et SMART, températures, tâches Hyper Backup et Active Backup, Synology Drive et Photos |
+| Remonte | CPU, mémoire, disques, réseau ; grappes RAID, volumes, températures des disques, paquets, SMB/NFS, onduleur | Volumes, pools de stockage, santé des disques et SMART, températures, tâches Hyper Backup et Active Backup, Synology Drive et Photos |
 | Version DSM | 7.x uniquement | 6 et 7 |
 | Prérequis | Installer le paquet sur chaque NAS | Le NAS joignable depuis le serveur (ou un agent relais) |
 
