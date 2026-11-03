@@ -35,7 +35,6 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import ReviewNotice from '#lib/components/device-form/ReviewNotice.svelte';
 	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Menu, SelectionBar, Skeleton } from '#lib/ui/index.js';
-	import NasFleet from '#lib/components/monitors/NasFleet.svelte';
 	import RackList from '#lib/components/devices/RackList.svelte';
 	import type { ReorderControls, RowSelection } from '#lib/components/devices/RackList.svelte';
 	import FolderHeader from '#lib/components/devices/FolderHeader.svelte';
@@ -100,13 +99,6 @@
 	let optionKeys = $state<Map<string, Set<string>>>(new Map());
 	const NO_KEYS: ReadonlySet<string> = new Set();
 	const optionKeysOf = (kind: string) => optionKeys.get(kind) ?? NO_KEYS;
-	/** Synology NAS (DSM API, or the agent package that tags its machine): from two of them,
-	 *  a banner offers the fleet view instead of the list. */
-	const nasTargets = $derived(
-		targets.filter((t) => t.kind === 'synology' || (t.kind === 'agent' && t.tags?.vendor === 'synology'))
-	);
-	let fleetOpen = $state(false);
-	const showFleet = $derived(fleetOpen && nasTargets.length >= 2);
 	const firstLoad = $derived(alertsStore.loading && targets.length === 0);
 	const pageError = $derived(!alertsStore.available ? alertsStore.lastError : null);
 
@@ -635,16 +627,18 @@
 		if (location && subjects.length > 0) relayPlace = { location, ids: subjects.map((t) => t.id) };
 	}
 
-	async function placeRelayed() {
-		if (!relayPlace || bulkBusy) return;
+	async function placeRelayed(): Promise<boolean> {
+		if (!relayPlace || bulkBusy) return false;
 		const { location, ids } = relayPlace;
 		bulkBusy = true;
 		try {
 			await assignLocation(location.id, ids);
 			await alertsStore.refresh();
 			relayPlace = null;
+			return true;
 		} catch (error) {
 			bulkReport = { failed: [{ name: location.name, error }], total: ids.length };
+			return false;
 		} finally {
 			bulkBusy = false;
 		}
@@ -1214,10 +1208,6 @@
 	{/if}
 {/if}
 
-{#if !firstLoad && !pageError && nasTargets.length >= 2}
-	<NasFleet nas={nasTargets} open={fleetOpen} ontoggle={() => (fleetOpen = !fleetOpen)} />
-{/if}
-
 {#if actionError}
 	<div class="mb-3"><ErrorNotice error={actionError} title={m.devices_targets_err_save()} /></div>
 {/if}
@@ -1256,8 +1246,6 @@
 			{/if}
 		{/snippet}
 	</EmptyState>
-{:else if showFleet}
-	<!-- The fleet rows are drawn by the NAS banner above. -->
 {:else if totalRows === 0}
 	<EmptyState title={m.devices_targets_nomatch_title()} description={m.devices_targets_nomatch_desc()}>
 		{#snippet action()}
@@ -1403,7 +1391,7 @@
 			{/if}
 			{#if relayPlace}
 				<p>{m.devices_list_bulk_relay_place({ count: relayPlace.ids.length, location: relayPlace.location.name })}</p>
-				<Button size="sm" variant="secondary" loading={bulkBusy} onclick={() => void placeRelayed()}>{m.devices_list_bulk_relay_place_apply()}</Button>
+				<Button size="sm" variant="secondary" loading={bulkBusy} onclick={() => placeRelayed()}>{m.devices_list_bulk_relay_place_apply()}</Button>
 			{/if}
 			<Button size="sm" variant="ghost" onclick={() => { relaySkipped = 0; relayPlace = null; }}>{m.devices_list_bulk_dismiss()}</Button>
 		</div>

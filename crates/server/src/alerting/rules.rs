@@ -11,7 +11,22 @@ use crate::alerting::model::{
     AnomalyParams, Operator, RULE_HOST_DOWN, Rule, RuleKind, Severity, TargetSelector,
 };
 
+mod adguard;
 mod cloud;
+mod homeassistant;
+mod immich;
+mod jellyfin;
+mod nextcloud;
+mod opnsense;
+mod pbs;
+mod pihole;
+mod plex;
+mod postgres;
+mod pve;
+mod synology;
+mod tailscale;
+mod truenas;
+mod unifi;
 
 /// Taux d'occupation processeur, toutes sources confondues.
 ///
@@ -7755,6 +7770,22 @@ pub fn builtin_rules() -> Vec<Rule> {
     ];
     // Intégrations en nuage, un fichier par produit (`rules/cloud/`).
     rules.extend(cloud::rules());
+    rules.extend(pve::rules());
+    rules.extend(pbs::rules());
+    rules.extend(truenas::rules());
+    rules.extend(unifi::rules());
+    rules.extend(opnsense::rules());
+    rules.extend(tailscale::rules());
+    // Résolveurs DNS et domotique : un fichier par produit (`rules/<produit>.rs`).
+    rules.extend(pihole::rules());
+    rules.extend(adguard::rules());
+    rules.extend(homeassistant::rules());
+    rules.extend(immich::rules());
+    rules.extend(jellyfin::rules());
+    rules.extend(plex::rules());
+    rules.extend(nextcloud::rules());
+    rules.extend(postgres::rules());
+    rules.extend(synology::rules());
     rules.extend(apps_rules());
     rules
 }
@@ -9100,6 +9131,20 @@ mod tests {
             "jellyfin_plugin_broken",
             "jellyfin_restart_pending",
             "plex_update_available",
+            "immich_jobs_failed",
+            "immich_ml_failing",
+            "immich_maintenance_mode",
+            "immich_user_quota_almost_full",
+            "immich_db_backup_stale",
+            "jellyfin_library_scan_stale",
+            "jellyfin_storage_almost_full",
+            "jellyfin_cpu_transcoding_heavy",
+            "jellyfin_failed_logins",
+            "plex_transcoder_too_slow",
+            "plex_transcode_error",
+            "plex_remote_access_failed",
+            "plex_signin_lost",
+            "plex_database_backup_off",
             "gitlab_runners_all_offline",
             "gitlab_sidekiq_backlog_high",
             "gitlab_migrations_pending",
@@ -9142,6 +9187,24 @@ mod tests {
             "unifi_device_pending_adoption",
             "unifi_firmware_update",
             "unifi_alarms",
+            "unifi_subsystem_error",
+            "unifi_device_overheating",
+            "unifi_poe_budget_high",
+            "unifi_radio_channel_busy",
+            "unifi_wifi_weak_signal",
+            "unifi_port_errors",
+            "opnsense_certificate_expiring",
+            "opnsense_certificate_expired",
+            "opnsense_disk_almost_full",
+            "opnsense_cpu_high",
+            "opnsense_swap_high",
+            "opnsense_pf_disabled",
+            "opnsense_interface_errors",
+            "opnsense_firmware_mirror_unreachable",
+            "tailscale_key_expired",
+            "tailscale_router_offline",
+            "tailscale_routes_unapproved",
+            "tailscale_tailnet_lock_error",
             "homeassistant_recovery_mode",
             "homeassistant_not_running",
             "homeassistant_entities_unavailable",
@@ -9347,6 +9410,26 @@ mod tests {
             "hyperv_vm_critical",
             "hyperv_host_cpu_high",
             "hyperv_vhd_errors",
+            // Profondeur Proxmox VE, PBS et TrueNAS (`rules/{pve,pbs,truenas}.rs`).
+            "pve_storage_inactive",
+            "pve_reboot_required",
+            "pve_subscription_expired",
+            "pve_replication_overdue",
+            "pve_backup_job_stale",
+            "pve_guest_not_backed_up",
+            "pve_tasks_failed",
+            "pbs_datastore_unavailable",
+            "pbs_datastore_maintenance",
+            "pbs_rootfs_almost_full",
+            "pbs_job_stale",
+            "pbs_subscription_expired",
+            "truenas_certificate_expiring",
+            "truenas_certificate_expired",
+            "truenas_boot_pool_degraded",
+            "truenas_boot_pool_almost_full",
+            "truenas_backup_task_failed",
+            "truenas_app_crashed",
+            "truenas_vm_down",
             // Sauvegarde locale de l'instance (`backup/local.rs`).
             "instance_backup_missing",
             // Auto-surveillance de l'instance (`selfmon.rs`).
@@ -9376,7 +9459,23 @@ mod tests {
             for mot in rule.query.split(|c: char| !c.is_alphanumeric() && c != '_') {
                 if mot.starts_with("dumbmonit_") {
                     assert!(
-                        PRODUITES.contains(&mot) || cloud::produced().contains(&mot),
+                        PRODUITES.contains(&mot)
+                            || cloud::produced().contains(&mot)
+                            || pve::PRODUCED.contains(&mot)
+                            || pbs::PRODUCED.contains(&mot)
+                            || truenas::PRODUCED.contains(&mot)
+                            || unifi::PRODUCED.contains(&mot)
+                            || opnsense::PRODUCED.contains(&mot)
+                            || tailscale::PRODUCED.contains(&mot)
+                            || pihole::PRODUCED.contains(&mot)
+                            || adguard::PRODUCED.contains(&mot)
+                            || homeassistant::PRODUCED.contains(&mot)
+                            || immich::PRODUCED.contains(&mot)
+                            || jellyfin::PRODUCED.contains(&mot)
+                            || plex::PRODUCED.contains(&mot)
+                            || nextcloud::PRODUCED.contains(&mot)
+                            || postgres::PRODUCED.contains(&mot)
+                            || synology::PRODUCED.contains(&mot),
                         "rule \"{}\" targets \"{mot}\", which no collector produces",
                         rule.uid
                     );

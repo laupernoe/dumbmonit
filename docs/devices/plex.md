@@ -16,8 +16,9 @@ DumbMonit reads the server's own API on port 32400, never plex.tv. It never
 stops a stream, never scans a library and never changes a setting.
 
 Plex does not publish the outcome of its maintenance tasks (the "butler" only
-gives their schedule) nor the state of its database backups, so there is
-nothing to say about those.
+gives their schedule, from which DumbMonit reads whether the database backup is
+scheduled), nor the free space of its disks, so there is nothing to say about
+those.
 
 ## What it watches
 
@@ -28,16 +29,24 @@ All metrics are prefixed `dumbmonit_plex_`.
 | `version_info` | value 1 | `version` |
 | `update_available` | 1 when Plex's own update check found a newer release; absent until Plex has checked once | `latest_version` |
 | `claimed` | 1 when the server is linked to a Plex account | |
+| `remote_access_failed` | 1 when Plex reports that its remote access (port mapping) failed; absent when the server is not linked to plex.tv | |
+| `signin_ok` | 1 while a claimed server is signed in to its plex.tv account; 0 when the sign-in was lost or expired | |
+| `database_backup_enabled` | 1 when the "Backup database" maintenance task is turned on | |
 | `streams`, `streams_paused`, `streams_remote` | playbacks now; paused; from outside the local network | |
 | `transcodes`, `transcodes_video`, `transcodes_hardware` | playbacks re-encoded (video or audio); with the video re-encoded; with hardware acceleration | |
 | `transcoder_active_video_sessions` | video transcodes the server itself counts | |
-| `stream_bandwidth_bits_per_second` | bandwidth reserved by all playbacks | |
+| `stream_bandwidth_bits_per_second`, `stream_remote_bandwidth_bits_per_second` | bandwidth reserved by all playbacks; by those from outside the network | |
+| `streaming_users` | distinct users playing something | |
+| `transcode_speed_min` | speed of the slowest video transcode being played, in multiples of real time (below 1, playback will buffer); throttled and paused transcodes are ignored; absent when nothing transcodes | |
+| `transcode_errors` | transcode sessions reporting an error | |
 | `libraries`, `libraries_scanning` | libraries; those being scanned now | |
 | `activities` | background activities running (scans, analysis, updates) | |
 | `scrape_errors` | calls that failed on the last probe | |
 
-The [built-in rule](../alerting/rules.md#self-hosted-applications) that applies:
-Plex update available, plus Monitor unreachable.
+The [built-in rules](../alerting/rules.md#self-hosted-applications) that apply:
+Plex update available, Plex transcoder too slow, Plex transcode error, Plex
+remote access failed, Plex signed out of plex.tv, Plex database backup off,
+plus Monitor unreachable.
 
 ## The monitor page
 
@@ -66,7 +75,7 @@ Vendor documentation: <https://support.plex.tv/articles/204059436-finding-an-aut
 
 DumbMonit reads the server's own API on port 32400, never plex.tv. A server linked to a Plex account asks for a token (X-Plex-Token), and Plex cannot issue a limited one: it is the owner's token. Listing DumbMonit's address as allowed without auth avoids the token altogether.
 
-DumbMonit only reads sessions, libraries, the updater and the activity list; it never stops a stream and never changes a setting.
+DumbMonit only reads sessions, libraries, the updater, the activity list and the maintenance schedule; it never stops a stream and never changes a setting.
 
 !!! warning
     The token is your Plex account's and can manage the server and every library: prefer the allowed network when DumbMonit is on your own network.
@@ -74,6 +83,15 @@ DumbMonit only reads sessions, libraries, the updater and the activity list; it 
 The allowed network is also what makes Plex answer without a token from Docker:
 DumbMonit's container reaches Plex from its Docker network address, so list
 that network, or the host's address when Plex publishes its port on the host.
+
+## Troubleshooting
+
+- **Unauthorized (401)**: the server is claimed and wants a token, or DumbMonit's address is not in the allowed networks; behind Docker, list the Docker network address, not the host's.
+- **No `transcode_speed_min`**: normal while nothing is being transcoded, or only throttled or paused transcodes exist.
+- **`remote_access_failed` is 1**: Plex could not map its port; check the router (UPnP or a manual forward) in Settings → Remote Access. If you do not want remote access, turn it off there.
+- **`signin_ok` is 0**: sign the server in again from Settings → General; the token Plex held was revoked or expired.
+- **"Database backup off" while you back up the data folder yourself**: silence or disable the rule; it only reads the Plex setting.
+- **No update figure**: Plex never checked (update checks off, or server not claimed); `update_available` stays absent.
 
 ## Credentials
 

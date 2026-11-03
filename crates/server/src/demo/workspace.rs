@@ -310,19 +310,19 @@ async fn seed_channels(pool: &SqlitePool) -> Result<Channels> {
 }
 
 /// Le bureau de Genève sur la carte du monde : le site déclaré par le relais
-/// et le contrôleur de domaine. La maison (Lausanne) est le site principal.
+/// et le contrôleur de domaine. Le reste est affecté à la maison (Lausanne).
 async fn seed_locations(pool: &SqlitePool) -> Result<()> {
     sqlx::query(
-        "INSERT INTO locations (name, address, latitude, longitude, site, main_site)
-         VALUES ('Geneva office', 'Rue du Rhône 42, Geneva, Switzerland', 46.2035, 6.1466, ?, 0)",
+        "INSERT INTO locations (name, address, latitude, longitude, site)
+         VALUES ('Geneva office', 'Rue du Rhône 42, Geneva, Switzerland', 46.2035, 6.1466, ?)",
     )
     .bind(OFFICE_SITE)
     .execute(pool)
     .await
     .context("demo office location")?;
     sqlx::query(
-        "INSERT INTO locations (name, address, latitude, longitude, site, main_site)
-         VALUES ('Offsite backups', 'Equinix ZH4, Zurich, Switzerland', 47.4241, 8.5525, '', 0)",
+        "INSERT INTO locations (name, address, latitude, longitude, site)
+         VALUES ('Offsite backups', 'Equinix ZH4, Zurich, Switzerland', 47.4241, 8.5525, '')",
     )
     .execute(pool)
     .await?;
@@ -336,6 +336,13 @@ async fn seed_locations(pool: &SqlitePool) -> Result<()> {
     sqlx::query(
         "UPDATE targets SET location_id = (SELECT id FROM locations WHERE name = 'Offsite backups')
          WHERE name = 'pbs.home.arpa'",
+    )
+    .execute(pool)
+    .await?;
+    // Aucun site par défaut : le reste est affecté à la maison, explicitement.
+    sqlx::query(
+        "UPDATE targets SET location_id = (SELECT id FROM locations WHERE name = 'Home')
+         WHERE location_id IS NULL AND (SELECT COUNT(*) FROM locations WHERE name = 'Home') > 0",
     )
     .execute(pool)
     .await?;

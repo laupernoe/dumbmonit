@@ -47,7 +47,9 @@ use serde::de::DeserializeOwned;
 use tracing::warn;
 
 use client::{Client, Reply};
-use metrics::{Blocking, FtlReply, Messages, Summary, VersionReply};
+use metrics::{
+    Blocking, FtlReply, LeasesReply, ListsReply, Messages, Summary, UpstreamsReply, VersionReply,
+};
 use options::Options;
 
 pub use options::{DEFAULT_PORT, DEFAULT_REQUEST_TIMEOUT};
@@ -200,11 +202,14 @@ pub async fn probe(
     let mut out = metrics::summary_samples(&summary, ts_ms);
 
     let sid = sid.as_deref();
-    let (blocking, version, messages, ftl) = futures::join!(
+    let (blocking, version, messages, ftl, upstreams, lists, leases) = futures::join!(
         probe.client.get("/api/dns/blocking", sid),
         probe.client.get("/api/info/version", sid),
         probe.client.get("/api/info/messages", sid),
         probe.client.get("/api/info/ftl", sid),
+        probe.client.get("/api/stats/upstreams", sid),
+        probe.client.get("/api/lists", sid),
+        probe.client.get("/api/dhcp/leases", sid),
     );
     let mut errors = 0u32;
     if let Some(blocking) = probe.settle::<Blocking>(blocking, "/api/dns/blocking", &mut errors) {
@@ -218,6 +223,21 @@ pub async fn probe(
     }
     if let Some(ftl) = probe.settle::<FtlReply>(ftl, "/api/info/ftl", &mut errors) {
         out.extend(metrics::ftl_samples(&ftl.ftl, ts_ms));
+    }
+    if let Some(upstreams) =
+        probe.settle::<UpstreamsReply>(upstreams, "/api/stats/upstreams", &mut errors)
+    {
+        out.extend(metrics::upstream_samples(&upstreams, ts_ms));
+    }
+    if let Some(lists) = probe.settle::<ListsReply>(lists, "/api/lists", &mut errors) {
+        out.extend(metrics::list_samples(&lists, ts_ms));
+    }
+    // Facultatif : le serveur DHCP est éteint par défaut, et un compte sans le
+    // droit de lire les baux ne doit pas gonfler le compte d'erreurs.
+    let leases =
+        leases.and_then(|reply| probe.client.decode::<LeasesReply>(&reply, "/api/dhcp/leases"));
+    if let Ok(leases) = leases {
+        out.extend(metrics::dhcp_samples(&leases, ts_ms));
     }
     out.push(Sample::new("pihole_scrape_errors", f64::from(errors), MetricKind::Gauge, ts_ms));
     Ok(out)
@@ -258,6 +278,9 @@ mod tests {
     const VERSION: &str = include_str!("testdata/2026.09.0/info_version.json");
     const MESSAGES: &str = include_str!("testdata/2026.09.0/info_messages.json");
     const FTL: &str = include_str!("testdata/2026.09.0/info_ftl.json");
+    const UPSTREAMS: &str = include_str!("testdata/2026.09.0/stats_upstreams.json");
+    const LISTS: &str = include_str!("testdata/2026.09.0/lists.json");
+    const LEASES: &str = include_str!("testdata/2026.09.0/dhcp_leases.json");
 
     const PASSWORD: &str = "mot-de-passe-application";
 
@@ -348,6 +371,9 @@ mod tests {
                 .route("/api/info/version", get(guard(self.clone(), VERSION)))
                 .route("/api/info/messages", get(guard(self.clone(), MESSAGES)))
                 .route("/api/info/ftl", get(guard(self.clone(), FTL)))
+                .route("/api/stats/upstreams", get(guard(self.clone(), UPSTREAMS)))
+                .route("/api/lists", get(guard(self.clone(), LISTS)))
+                .route("/api/dhcp/leases", get(guard(self.clone(), LEASES)))
         }
     }
 
@@ -370,6 +396,9 @@ mod tests {
         assert_eq!(value(&samples, "pihole_updates_available"), Some(0.0));
         assert_eq!(value(&samples, "pihole_messages"), Some(1.0));
         assert_eq!(value(&samples, "pihole_scrape_errors"), Some(0.0));
+        assert_eq!(value(&samples, "pihole_lists_download_failed"), Some(2.0));
+        assert_eq!(value(&samples, "pihole_dhcp_leases"), Some(2.0));
+        assert!(samples.iter().any(|s| s.metric == "pihole_upstream_response_seconds"));
         assert_eq!(fake.logins.load(Ordering::SeqCst), 1);
 
         // Deuxième interrogation : la même session, aucune nouvelle connexion.
@@ -408,7 +437,9 @@ mod tests {
             .route("/api/dns/blocking", get(|| async { BLOCKING }))
             .route("/api/info/version", get(|| async { VERSION }))
             .route("/api/info/messages", get(|| async { MESSAGES }))
-            .route("/api/info/ftl", get(|| async { (StatusCode::FORBIDDEN, "{}") }));
+            .route("/api/info/ftl", get(|| async { (StatusCode::FORBIDDEN, "{}") }))
+            .route("/api/stats/upstreams", get(|| async { UPSTREAMS }))
+            .route("/api/lists", get(|| async { LISTS }));
         let base = serve(app).await;
         let samples = PiholeCollector::new().probe(&target(base, Credential::None)).await.unwrap();
         assert_eq!(value(&samples, "pihole_queries_blocked_24h"), Some(3.0));

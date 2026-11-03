@@ -44,6 +44,9 @@ descend : ces chiffres sont des jauges, suffixées `_24h`, pas des compteurs.
 | `update_available` | 1 quand une version plus récente d'un composant est publiée, 0 sinon ; absent jusqu'à ce que la vérification quotidienne de Pi-hole ait tourné | `component` (`core`, `web`, `ftl`, `docker`) |
 | `updates_available` | mises à jour à installer : l'image en Docker (core, web et FTL viennent avec), sinon chaque composant obsolète | |
 | `messages`, `messages_by_type` | messages sur la page de diagnostic | `type` (`LOAD`, `RATE_LIMIT`, `LIST`…) |
+| `upstream_queries_24h`, `upstream_response_seconds` | requêtes envoyées à chaque résolveur et son temps de réponse moyen (8 au plus ; les entrées virtuelles `blocklist` et `cache` sont écartées, et un résolveur qui n'a rien reçu n'a pas de temps) | `upstream` (`ip:port`) |
+| `lists_enabled`, `lists_download_failed`, `lists_invalid_domains` | listes activées, celles dont le dernier téléchargement de gravity a échoué (injoignable, avec ou sans copie locale), entrées invalides ; `lists_download_failed` est absente des versions de Pi-hole qui ne donnent pas l'état des listes | |
+| `dhcp_leases` | baux actifs du serveur DHCP de Pi-hole ; absent tant qu'il n'y en a aucun | |
 | `ftl_uptime_seconds`, `ftl_memory_percent`, `ftl_cpu_percent` | le démon FTL | |
 | `privacy_level` | le niveau de confidentialité de Pi-hole, 0 à 3 | |
 | `scrape_errors` | appels d'API secondaires qui ont échoué pendant la dernière vérification | |
@@ -53,8 +56,14 @@ numéros de version, et DumbMonit fait de même.
 
 Les [règles intégrées](../alerting/rules.md#pi-hole) qui s'appliquent :
 blocage Pi-hole désactivé, listes de blocage Pi-hole obsolètes, mise à jour
-Pi-hole disponible, messages de diagnostic Pi-hole, plus Surveillance
-inaccessible.
+Pi-hole disponible, messages de diagnostic Pi-hole, réponses SERVFAIL de
+Pi-hole, résolveur amont de Pi-hole lent, téléchargement d'une liste de blocage
+en échec, Pi-hole ne reçoit aucune requête, plus Surveillance inaccessible.
+
+Les trois appels ajoutés (`/api/stats/upstreams`, `/api/lists`,
+`/api/dhcp/leases`) sont de simples lectures. Celui du DHCP est facultatif :
+quand Pi-hole le refuse ou n'a pas de serveur DHCP, rien n'est publié et aucune
+erreur n'est comptée.
 
 ## La page de la surveillance
 
@@ -107,6 +116,12 @@ complète (`https://pi.hole`) ; le chemin de l'interface web ou de l'API,
 copié depuis le navigateur, est ignoré. Options : protocole (HTTP par
 défaut), port (80), vérification du certificat (pour HTTPS sur 443, le propre
 certificat de Pi-hole est autosigné) et délai de requête (10 s).
+
+Si une règle de liste de blocage se déclenche, ouvrez la page Adlists de
+Pi-hole : l'état de la liste donne l'erreur de téléchargement, et `pihole -g`
+reconstruit gravity à la main. Une part élevée de SERVFAIL signifie le plus
+souvent que le résolveur amont (Unbound, un routeur, un résolveur public) est
+injoignable depuis la machine de Pi-hole.
 
 Si les vérifications échouent avec « no free API session », les sessions de
 Pi-hole sont toutes prises, généralement par un script qui se connecte à

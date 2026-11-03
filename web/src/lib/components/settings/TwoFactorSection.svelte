@@ -13,7 +13,7 @@
 	import { disableTotp, enrolTotp, getTotpStatus, listAuditLog, verifyTotp } from '#lib/api/totp.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { formatDateTime } from '#lib/format.js';
-	import { Button, CopyBlock, ErrorNotice, Field, Plate, Skeleton } from '#lib/ui/index.js';
+	import { Button, CopyBlock, DocLink, ErrorNotice, Field, Plate, Skeleton } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 
@@ -169,9 +169,7 @@
 		<div class="flex flex-wrap items-start justify-between gap-3">
 			<div>
 				<p class="text-sm font-semibold text-ink">{m.settings_2fa_title()}</p>
-				<p class="mt-0.5 max-w-prose text-[0.8125rem] text-ink-2 max-sm:hidden">
-					{m.settings_2fa_intro()}
-				</p>
+				<DocLink page="using/settings/" />
 			</div>
 			{#if status === null && !loadError}
 				<Skeleton class="h-7 w-24" />
@@ -253,7 +251,6 @@
 		{:else if step === 'codes'}
 			<div class="mt-4 max-w-md">
 				<Plate tone="signal" size="md" label={m.settings_2fa_is_on()} />
-				<p class="mt-3 text-sm text-ink">{m.settings_2fa_save_codes()}</p>
 				<div class="mt-3"><CopyBlock value={recoveryCodes.join('\n')} label={m.settings_2fa_copy_codes()} /></div>
 				<Button class="mt-3" variant="secondary" onclick={cancel}>{m.settings_2fa_saved()}</Button>
 			</div>

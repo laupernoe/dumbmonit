@@ -20,6 +20,28 @@ quand quelque chose ne va pas (`2/5`).
 
 Les emplacements trop proches pour être distingués au zoom courant forment une **pastille de groupe** : un double anneau, le nombre d'emplacements, et l'état du pire d'entre eux (symbole et couleur). Un clic zoome jusqu'à ce qu'ils se séparent ; quand ce n'est pas possible (même endroit, zoom maximal), il liste ses emplacements. Les groupes sont recalculés à chaque zoom.
 
+## Sites et carte en bref
+
+- Un **site** est un lieu que vous définissez. Sans site, rien n'apparaît sur la
+  carte.
+- Il n'y a **aucun site par défaut**. Une surveillance non placée a **Aucun
+  site** : elle fonctionne normalement, elle n'a simplement pas de pastille. Les
+  moniteurs qu'aucun emplacement ne réunit sont comptés sous la liste.
+- Sans aucun emplacement, la vue Monde affiche seulement *Aucun emplacement pour l'instant* et
+  propose **Ajouter un emplacement**.
+- Vous choisissez le site en ajoutant une surveillance (**Où se trouve-t-il ?**,
+  ou **Aucun site**), ou plus tard dans le formulaire de la surveillance.
+
+## Ajouter votre premier emplacement
+
+1. Ouvrez **Réglages → Supervision → Emplacements** (administrateurs).
+2. Cliquez sur **Ajouter un emplacement** et donnez-lui un **nom**.
+3. Choisissez l'endroit : **Chercher un lieu** (tapez une ville, cliquez sur
+   **Chercher**, puis **Utiliser** la réponse), la **latitude / longitude**, ou
+   un clic sur la carte.
+4. Cliquez sur **Enregistrer l'emplacement**. L'emplacement apparaît dans la
+   liste ; ouvrez la vue **Monde** de la page Carte pour voir sa pastille.
+
 ## Emplacements
 
 Les emplacements se règlent dans **Réglages → Surveillance → Emplacements**
@@ -34,7 +56,7 @@ libre, seulement affiché) et un endroit, choisi de trois façons :
 
 ## Quels moniteurs un emplacement réunit
 
-Un moniteur trouve son emplacement du plus explicite au plus déduit :
+Un moniteur trouve son emplacement du plus explicite au plus déduit. Il n'y a pas de site par défaut :
 
 1. **Placé à la main** : le champ *Emplacement* de son formulaire (sous *Plus
    d'options*), ou **Placer à** dans le mode Sélection de la liste des
@@ -43,8 +65,9 @@ Un moniteur trouve son emplacement du plus explicite au plus déduit :
    [carte de topologie](topology.md) — l'étiquette `site` du moniteur, le site
    que déclare son agent ou son agent relais, ou le nom de l'agent relais qui
    l'interroge. Chaque moniteur de ce site y arrive sans être placé un par un.
-3. **Le site principal** : un emplacement peut être marqué *Site principal*. Il
-   réunit tous les moniteurs qui n'ont pas de site distant.
+
+Une surveillance qu'aucune de ces règles ne place est **Aucun site** : elle est
+surveillée normalement et n'a pas de pastille.
 
 Rien n'est recopié : changez le relais d'un moniteur ou son étiquette `site`,
 et il se déplace sur la carte au rafraîchissement suivant. *Automatique* dans le
@@ -85,6 +108,6 @@ téléphone, la liste passe sous la carte. Les pastilles s'atteignent au clavier
 ## API
 
 `GET /api/locations` renvoie les emplacements, leurs membres (avec la façon dont
-chacun y est arrivé : `assigned`, `site` ou `main`), les sites connus et les
+chacun y est arrivé : `assigned` ou `site`), les sites connus et les
 moniteurs sans emplacement. Voir l'[API HTTP](../reference/api.md) pour les
 autres routes.

@@ -100,6 +100,33 @@ prefixed without `unifi`, documented in full under
 | `last_seen_timestamp_seconds` | Last connection, as `/rest/user` reports it | `device`, `type` (`Wired`, `Wireless` or `Unknown`), `os` (empty), `user` (empty), `kind` |
 | `stale_seconds` | Positive once a tracked client has gone past `device_stale_days` (3 by default) without connecting; drives the [Client device stale](../alerting/rules.md#client-devices) rule | `device`, `type`, `os`, `user`, `kind`, `signal` (always `connection`: UniFi has no backup to report) |
 
+## Going deeper
+
+On top of the device states, WAN and clients above, DumbMonit reads, with a local account or an API key that the classic API accepts:
+
+- **Device health**: satisfaction score, temperature and overheating flag of every online device.
+- **PoE**: the PoE budget of each switch and what its ports draw.
+- **Wi-Fi**: channel utilization and client count of every radio (2.4, 5 and 6 GHz), the number of Wi-Fi clients and how many have a signal weaker than -75 dBm.
+- **Gateway speed test**: download, upload and latency of the last test run by the gateway.
+
+Nothing here sends a command; if the classic API refuses a call, the matching series are simply missing and the monitor is not in error.
+
+## Default alerts
+
+| Alert | Fires when |
+|---|---|
+| UniFi device offline | An adopted device is offline, isolated or failed to adopt for 5 minutes |
+| UniFi Internet down / WAN link down | The gateway reports no Internet, or a WAN link is down |
+| UniFi subsystem in error | Wi-Fi, LAN or VPN reports an error for 10 minutes |
+| UniFi device overheating | A device reports overheating for 5 minutes |
+| UniFi PoE budget nearly used | A switch draws more than 90% of its PoE budget for 15 minutes |
+| UniFi Wi-Fi channel saturated | A radio's channel is busy more than 80% of the time for 30 minutes |
+| UniFi Wi-Fi clients with a weak signal | More than 40% of at least five Wi-Fi clients are under -75 dBm for an hour (information) |
+| UniFi port errors | A port logs more than 100 errors in 15 minutes |
+| UniFi firmware update, device waiting for adoption, alarms, gateway CPU | As before |
+
+All rules can be edited or disabled in Alerts.
+
 ## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never

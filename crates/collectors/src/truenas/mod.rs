@@ -50,6 +50,7 @@
 #[cfg(test)]
 mod capture;
 mod client;
+mod extra;
 mod metrics;
 mod model;
 mod options;
@@ -71,6 +72,7 @@ use serde_json::{Value, json};
 use tracing::{debug, warn};
 
 use client::TruenasClient;
+use extra::{App, BackupTask, Certificate, Vm};
 use model::{
     Alert, Dataset, Disk, Pool, Replication, ScrubTask, Service, SmartResult, SnapshotTask,
     SystemInfo,
@@ -232,6 +234,8 @@ impl Collector for TruenasCollector {
             samples.extend(metrics::service_samples(&view.services, ts_ms));
         }
 
+        samples.extend(collect_extra(&nas, &options, now_s, ts_ms, &mut errors, target.id).await);
+
         if options.disks {
             view.disks = collect_disks(&nas, &options, &mut errors, target.id).await;
             samples.extend(metrics::disk_samples(&view.disks, ts_ms));
@@ -320,6 +324,57 @@ async fn snapshot_total(
     }
     let counts: Vec<f64> = datasets.iter().filter_map(|dataset| dataset.snapshot_count).collect();
     (!counts.is_empty()).then(|| counts.iter().sum())
+}
+
+/// Les mesures de profondeur : certificats, pool de démarrage, tâches de
+/// sauvegarde distantes, applications et machines virtuelles. Chaque appel est
+/// facultatif : une version qui ne le connaît pas (404) ou un rôle qui le refuse
+/// coûte une famille de métriques, jamais la sonde.
+async fn collect_extra(
+    nas: &TruenasClient,
+    options: &Options,
+    now_s: i64,
+    ts_ms: i64,
+    errors: &mut u32,
+    target_id: TargetId,
+) -> Vec<Sample> {
+    let (certificates, general, boot, cloudsync, rsync, cloud_backup, apps, vms) = futures::join!(
+        nas.get_optional::<Vec<Certificate>>("/certificate", &[]),
+        nas.get_optional::<Value>("/system/general", &[]),
+        nas.get_optional::<Pool>("/boot/get_state", &[]),
+        enabled(options.tasks, nas.get_optional::<Vec<BackupTask>>("/cloudsync", &[])),
+        enabled(options.tasks, nas.get_optional::<Vec<BackupTask>>("/rsynctask", &[])),
+        enabled(options.tasks, nas.get_optional::<Vec<BackupTask>>("/cloud_backup", &[])),
+        enabled(options.services, nas.get_optional::<Vec<App>>("/app", &[])),
+        enabled(options.services, nas.get_optional::<Vec<Vm>>("/vm", &[])),
+    );
+    let mut samples = Vec::new();
+    if let Some(certificates) = settle(certificates, errors, target_id, "certificate") {
+        let ui_id = settle(general, errors, target_id, "system/general")
+            .as_ref()
+            .and_then(extra::ui_certificate_id);
+        samples.extend(extra::certificate_samples(&certificates, ui_id, now_s, ts_ms));
+    }
+    if let Some(boot) = settle(boot, errors, target_id, "boot/get_state") {
+        samples.extend(extra::boot_samples(&boot, ts_ms));
+    }
+    let remote = [
+        ("cloudsync", "cloudsync", cloudsync),
+        ("rsync", "rsynctask", rsync),
+        ("cloud_backup", "cloud_backup", cloud_backup),
+    ];
+    for (kind, path, tasks) in remote {
+        if let Some(tasks) = tasks.and_then(|outcome| settle(outcome, errors, target_id, path)) {
+            samples.extend(extra::backup_task_samples(kind, &tasks, now_s, ts_ms));
+        }
+    }
+    if let Some(apps) = apps.and_then(|outcome| settle(outcome, errors, target_id, "app")) {
+        samples.extend(extra::app_samples(&apps, ts_ms));
+    }
+    if let Some(vms) = vms.and_then(|outcome| settle(outcome, errors, target_id, "vm")) {
+        samples.extend(extra::vm_samples(&vms, ts_ms));
+    }
+    samples
 }
 
 /// Les disques, leur température lue en cache et leurs tests SMART.

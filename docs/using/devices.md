@@ -30,7 +30,7 @@ One toolbar holds everything:
 
 - the **search** box (name, address or kind);
 - **Filter**, which opens the state (All, Needs attention, Reporting,
-  Disabled), kind, sort and tag filters — the number on the button counts the
+  Disabled), kind, site, sort and tag filters — the number on the button counts the
   ones in use, and **Clear filters** resets them. Filters live in the address,
   so a filtered list can be bookmarked or shared;
 - **Compact** / **Tiles**;
@@ -40,13 +40,6 @@ One toolbar holds everything:
 - **⋯** (more actions): the topology **Map**, **Create folder**, **Import
   websites (CSV)** and **Import from Uptime Kuma**;
 - **Add a monitor**, the primary action.
-
-### NAS fleet {#nas-fleet}
-
-With two or more [Synology](../devices/synology.md#nas-fleet) monitors, a banner
-above the list sums them up (**3 NAS, 1 healthy**). **View fleet** replaces the
-list with one row per NAS: model, DSM version, a level and the reason, ready to
-open. See [The NAS fleet view](../devices/synology.md#nas-fleet).
 
 ## A monitor
 
@@ -101,7 +94,8 @@ agent and nobody monitors yet (**Add** creates them at once, except SNMP devices
 which open the form for the community), and the monitor types that fit the site
 (the ones its devices already use, then the common ones). Every proposal is
 filled in with the site's relay agent, its location and its usual folder, and you
-can still change them in the form. Without any location the page is the plain
+can still change them in the form. **No site** is a normal choice: the monitor is then
+not tied to a place on the map. Without any location the page is the plain
 list of types. In MSP mode only the current client's sites are offered. The
 setup wizard's *Add your first monitors* step offers the same choice.
 

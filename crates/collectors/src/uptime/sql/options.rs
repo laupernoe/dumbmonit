@@ -74,6 +74,8 @@ pub struct Options {
     /// Valeur attendue en première colonne de la première ligne.
     pub expect: Option<String>,
     pub allow_private: bool,
+    /// PostgreSQL : lit aussi la santé interne du serveur (voir `pgstats`).
+    pub server_stats: bool,
     pub timeout: Duration,
 }
 
@@ -127,6 +129,7 @@ impl Options {
             query,
             expect: tags::tag(target, "expect").map(str::to_string),
             allow_private: crate::uptime::guard::allowed(target)?,
+            server_stats: tags::parse_bool(target, "server_stats", true)?,
             timeout: tags::parse_timeout(target, "timeout_seconds")?,
         })
     }
@@ -215,6 +218,14 @@ mod tests {
         for mode in [SslMode::Disable, SslMode::Prefer, SslMode::Require] {
             assert!(!mode.verifies_hostname(), "{:?}", mode);
         }
+    }
+
+    #[test]
+    fn les_statistiques_du_serveur_sont_actives_sauf_demande_contraire() {
+        assert!(options(Engine::Postgres, "db.lan", &[]).unwrap().server_stats);
+        let off = options(Engine::Postgres, "db.lan", &[("server_stats", "false")]).unwrap();
+        assert!(!off.server_stats);
+        assert!(options(Engine::Postgres, "db.lan", &[("server_stats", "peut-être")]).is_err());
     }
 
     #[test]

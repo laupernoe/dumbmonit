@@ -221,7 +221,7 @@
 				<ErrorNotice {error} title={m.agentsentinel_save_error()} />
 			{/if}
 			<div>
-				<Button type="submit" variant="secondary" size="sm" loading={saving} disabled={!dirty}>{m.agentsentinel_save()}</Button>
+				<Button type="submit" variant="secondary" size="sm" loading={saving} success={saved} disabled={!dirty}>{m.agentsentinel_save()}</Button>
 			</div>
 		</form>
 	</Panel>
