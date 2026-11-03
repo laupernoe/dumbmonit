@@ -3,7 +3,6 @@
 export const SPK_ARCHES = ['x86_64', 'aarch64'] as const;
 export type SpkArch = (typeof SPK_ARCHES)[number];
 
-export const SPK_DOCS = 'https://dumbmonit.readthedocs.io/en/latest/devices/synology-agent/';
 
 /** Release asset of the package: attached to each GitHub release. */
 export function spkUrl(version: string, arch: SpkArch): string {

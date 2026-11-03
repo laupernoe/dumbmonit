@@ -27,6 +27,7 @@
 		Button,
 		Confirm,
 		Disclosure,
+		DocLink,
 		EmptyState,
 		ErrorNotice,
 		Field,
@@ -232,12 +233,10 @@
 				{:else}
 					<p class="mt-3 text-ink-2">{m.settings_config_watch_none()}</p>
 				{/if}
-				<p class="mt-3 text-ink-3">{m.settings_config_cli_hint()}</p>
 			</div>
 
 			<!-- Export -->
 			<Disclosure title={m.settings_config_export_title()}>
-				<p class="mt-1 text-sm text-ink-2">{m.settings_config_export_intro()}</p>
 				<div class="mt-4 flex flex-wrap items-center gap-3" aria-live="polite">
 					<Button variant="secondary" loading={exporting} onclick={runExport}>
 						<Download class="size-4" aria-hidden="true" />
@@ -261,7 +260,6 @@
 
 			<!-- Plan and apply -->
 			<Disclosure title={m.settings_config_plan_title()} open>
-				<p class="mt-1 text-sm text-ink-2">{m.settings_config_plan_intro()}</p>
 
 				<div class="mt-4 grid max-w-3xl gap-4">
 					<Field label={m.settings_config_file_label()} for="config-file-input">
@@ -375,7 +373,6 @@
 			<!-- Release -->
 			{#if managedTotal > 0}
 				<Disclosure title={m.settings_config_release_title()}>
-					<p class="mt-1 text-sm text-ink-2">{m.settings_config_release_help()}</p>
 					<div class="mt-4 flex flex-wrap items-center gap-3" aria-live="polite">
 						<Confirm
 							variant="secondary"
@@ -397,5 +394,6 @@
 				</Disclosure>
 			{/if}
 		</div>
+		<DocLink page="using/config-files/" class="mt-4" />
 	{/if}
 </Panel>

@@ -9,9 +9,8 @@
 	import type { AgentUpdateAgent, AgentUpdates, AgentUpdateSettings, AgentUpdateStatus } from '#lib/api/types.js';
 	import { formatDateTime } from '#lib/format.js';
 	import { ShieldAlert } from 'lucide-svelte';
-	import { Button, Confirm, Disclosure, ErrorNotice, Plate, Skeleton, Toggle, type Tone } from '#lib/ui/index.js';
+	import { Button, Confirm, Disclosure, DocLink, ErrorNotice, Plate, Skeleton, Toggle, type Tone } from '#lib/ui/index.js';
 
-	const SIGNING_DOC = 'https://dumbmonit.readthedocs.io/en/latest/development/agent-signing/';
 
 	let data = $state<AgentUpdates | null>(null);
 	let loadError = $state<unknown>(null);
@@ -139,7 +138,7 @@
 
 <div class="border-b border-line px-5 py-4">
 	<Disclosure title={m.settings_agentupdates_title()} bind:open summary={data ? (data.blocked_unsigned ? m.settings_agentupdates_summary_blocked() : data.settings.enabled ? m.settings_agentupdates_summary_on() : m.settings_agentupdates_summary_off()) : undefined}>
-		<p class="max-w-prose text-sm text-ink-2">{m.settings_agentupdates_intro()}</p>
+		<DocLink page="install/agent-security/" />
 
 		{#if loadError}
 			<ErrorNotice error={loadError} title={m.settings_agentupdates_load_error()} class="mt-3" />
@@ -154,22 +153,13 @@
 							<ShieldAlert class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
 							{m.settings_agentupdates_blocked_title()}
 						</p>
-						<p class="max-w-prose text-sm text-ink">{m.settings_agentupdates_blocked_body()}</p>
-						<ul class="ml-5 grid max-w-prose list-disc gap-1 text-sm text-ink">
-							<li>{m.settings_agentupdates_blocked_fix_signed()}</li>
-							<li>{m.settings_agentupdates_blocked_fix_manual()}</li>
-							<li>{m.settings_agentupdates_blocked_fix_dev()}</li>
-						</ul>
-						<a href={SIGNING_DOC} target="_blank" rel="noopener" class="inline-flex min-h-10 items-center justify-self-start text-sm font-semibold text-signal-ink hover:underline">
-							{m.settings_agentupdates_blocked_doc()}
-						</a>
+						<DocLink page="development/agent-signing/" />
 					</div>
 				{/if}
 				<div class="flex items-start gap-3">
 					<Toggle id="agent-upd-enabled" checked={data.settings.enabled} disabled={busy} label={m.settings_agentupdates_enabled()} onchange={(value) => save({ enabled: value })} />
 					<div class="min-w-0">
 						<label for="agent-upd-enabled" class="text-sm font-semibold text-ink">{m.settings_agentupdates_enabled()}</label>
-						<p class="max-w-prose text-sm text-ink-2">{m.settings_agentupdates_enabled_help()}</p>
 					</div>
 				</div>
 
@@ -185,7 +175,6 @@
 					<div class="grid content-start gap-1.5">
 						<label for="agent-upd-canary" class="text-sm font-semibold text-ink">{m.settings_agentupdates_canary_minutes()}</label>
 						<input id="agent-upd-canary" type="number" inputmode="numeric" min="0" max="10080" step="1" class="input tnum" disabled={busy} bind:value={canaryInput} onchange={saveCanary} />
-						<p class="max-w-prose text-sm text-ink-2">{m.settings_agentupdates_canary_help()}</p>
 					</div>
 				</div>
 

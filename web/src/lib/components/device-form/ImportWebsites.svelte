@@ -12,7 +12,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { importTargets, IMPORT_TEMPLATE_CSV } from '#lib/api/targetsImport.js';
 	import type { TargetImportReport, TargetImportStatus } from '#lib/api/types.js';
-	import { Button, ErrorNotice, Plate } from '#lib/ui/index.js';
+	import { Button, DocLink, ErrorNotice, Plate } from '#lib/ui/index.js';
 	import type { Tone } from '#lib/ui/index.js';
 
 	interface Props {
@@ -157,7 +157,7 @@
 		<div class="flex items-start justify-between gap-3">
 			<div class="min-w-0">
 				<h2 id="import-title" class="text-lg font-semibold">{m.devices_import_title()}</h2>
-				<p class="mt-1 text-sm text-ink-2">{m.devices_import_description()}</p>
+				<DocLink page="using/imports/" class="mt-0.5" />
 			</div>
 			<button
 				type="button"

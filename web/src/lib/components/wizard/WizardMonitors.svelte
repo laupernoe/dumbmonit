@@ -67,7 +67,6 @@
 		</div>
 	{/if}
 </div>
-<p class="mt-2 text-[0.8125rem] text-ink-2">{m.wizard_monitors_new_tab()}</p>
 
 {#if scanning}
 	<div id="wizard-scan" class="mt-4 min-w-0">
