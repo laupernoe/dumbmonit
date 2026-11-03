@@ -9,7 +9,7 @@ exclude_docs: |
 # hooks/rtd_language.py. site_url, theme.language, the search language, the language
 # switcher (extra.alternate) and the navigation titles are set there.
 # Published twice: on the product website under /docs/ (DUMBMONIT_DOCS_BASE, built by
-# .github/workflows/site.yml) and on Read the Docs as a mirror (the site_url below).
+# the website build) and on Read the Docs as a mirror (the site_url below).
 # The header carries the website's navigation (overrides/partials/header.html).
 hooks:
   - hooks/rtd_language.py
