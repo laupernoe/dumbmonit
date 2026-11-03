@@ -347,6 +347,11 @@ Nextcloud, Immich, Paperless-ngx, Jellyfin and Plex ([monitors](../devices/nextc
 | Immich queue paused | A job queue has been paused for a day (`dumbmonit_immich_queue_paused`). | > 0 | 24 h | Info (`info`) | 7 d |
 | Immich storage almost full | The disk holding the library is more than 90 % full (`dumbmonit_immich_storage_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
 | Immich update available | Immich's version check knows a newer release (`dumbmonit_immich_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Immich jobs failing | A queue other than machine learning holds 25 or more failed jobs (`dumbmonit_immich_queue_failed`). The notification names the queue. | ≥ 25 | 30 min | Advisory (`warning`) | 24 h |
+| Immich machine learning failing | The smart search, faces, duplicates and text recognition queues hold 10 or more failed jobs: the machine learning container is probably down (`dumbmonit_immich_queue_failed`). | ≥ 10 | 30 min | Advisory (`warning`) | 24 h |
+| Immich in maintenance mode | Immich has stayed in maintenance mode (`dumbmonit_immich_maintenance_mode`). | > 0 | 30 min | Advisory (`warning`) | 6 h |
+| Immich user quota almost full | An account with a quota used more than 90 % of it (`dumbmonit_immich_user_quota_used_percent`); clears below 85 %. | > 90 % | 1 h | Advisory (`warning`) | 24 h |
+| Immich database backup stale | The newest database backup is more than three days old (`dumbmonit_immich_db_backup_last_age_seconds`); needs `databaseBackup.list`. | > 3 d | 1 h | Advisory (`warning`) | 24 h |
 | Paperless task queue down | Redis or Celery in error (`max by (target) (dumbmonit_paperless_component_status{component=~"redis\|celery"})`: 2 is an error): nothing new is imported. | ≥ 2 | 5 min | Warning (`critical`) | 1 h |
 | Paperless index or sanity check error | The search index, the classifier or the sanity check (missing or altered files) reports an error (`dumbmonit_paperless_component_status{component=~"index\|classifier\|sanity_check"}`). | ≥ 2 | 30 min | Advisory (`warning`) | 24 h |
 | Paperless migrations pending | Database migrations left to apply (`dumbmonit_paperless_unapplied_migrations`). | > 0 | 30 min | Advisory (`warning`) | 24 h |
@@ -356,7 +361,16 @@ Nextcloud, Immich, Paperless-ngx, Jellyfin and Plex ([monitors](../devices/nextc
 | Jellyfin scheduled task failed | A scheduled task (a library scan, a cleanup) failed or was aborted on its last run (`dumbmonit_jellyfin_scheduled_tasks_failed`). | > 0 | 10 min | Advisory (`warning`) | 24 h |
 | Jellyfin plugin broken | A plugin failed to load or does not support this version (`dumbmonit_jellyfin_plugins_broken`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
 | Jellyfin restart pending | Jellyfin has waited a day for a restart after a plugin install or update (`dumbmonit_jellyfin_pending_restart`). | > 0 | 24 h | Info (`info`) | 7 d |
+| Jellyfin library scan stale | The scheduled library scan has not finished for three days (`dumbmonit_jellyfin_library_scan_age_seconds`, only while the scan has a periodic trigger). | > 3 d | 30 min | Advisory (`warning`) | 24 h |
+| Jellyfin storage almost full | A disk used by Jellyfin (library, data, cache, transcodes) is more than 90 % full (`dumbmonit_jellyfin_storage_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
+| Jellyfin heavy CPU transcoding | Three or more streams transcoded without hardware acceleration (`dumbmonit_jellyfin_transcodes_software`). | ≥ 3 | 15 min | Info (`info`) | 12 h |
+| Jellyfin failed sign-ins | Ten or more failed sign-ins in the last hour (`dumbmonit_jellyfin_failed_logins_recent`). | ≥ 10 | 5 min | Advisory (`warning`) | 6 h |
 | Plex update available | Plex's update check found a newer release (`dumbmonit_plex_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Plex transcoder too slow | The slowest video transcode being played runs below real time (`dumbmonit_plex_transcode_speed_min`): playback will buffer. | < 0.95 | 10 min | Advisory (`warning`) | 6 h |
+| Plex transcode error | A transcode session reports an error (`dumbmonit_plex_transcode_errors`). | > 0 | 5 min | Advisory (`warning`) | 12 h |
+| Plex remote access failed | Plex reports its remote access (port mapping) failed (`dumbmonit_plex_remote_access_failed`). | > 0 | 30 min | Advisory (`warning`) | 24 h |
+| Plex signed out of plex.tv | A claimed server lost its plex.tv sign-in (`dumbmonit_plex_signin_ok`). | < 1 | 1 h | Advisory (`warning`) | 24 h |
+| Plex database backup off | The "Backup database" maintenance task is turned off (`dumbmonit_plex_database_backup_enabled`); ignore it if another backup covers the database. | < 1 | 24 h | Info (`info`) | 30 d |
 
 ### Self-hosted forges
 
