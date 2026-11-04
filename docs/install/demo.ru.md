@@ -1,6 +1,6 @@
 # Запуск демо-инстанса
 
-Публичная демонстрация на **[demo.dumbmonit.selfhostr.io](https://demo.dumbmonit.selfhostr.io)**
+Публичная демонстрация на **[dumbmonit-demo.selfhostr.io](https://dumbmonit-demo.selfhostr.io)**
 — это обычный образ DumbMonit, запущенный с `DUMBMONIT_DEMO=1`. Вы можете
 запустить то же самое сами — чтобы показать DumbMonit команде перед настоящей
 установкой, или чтобы разместить витрину на собственном сайте.

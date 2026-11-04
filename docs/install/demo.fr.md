@@ -1,6 +1,6 @@
 # Lancer une instance de démonstration
 
-La démo publique sur **[demo.dumbmonit.selfhostr.io](https://demo.dumbmonit.selfhostr.io)** est
+La démo publique sur **[dumbmonit-demo.selfhostr.io](https://dumbmonit-demo.selfhostr.io)** est
 une image DumbMonit ordinaire démarrée avec `DUMBMONIT_DEMO=1`. Vous pouvez
 faire la même chose vous-même — pour montrer DumbMonit à une équipe avant de
 l'installer pour de vrai, ou pour mettre une vitrine sur votre propre site.
