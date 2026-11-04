@@ -126,9 +126,8 @@ pub async fn run(
     // machine : la machine Docker, le contrôleur de domaine, le relais.
     let mut agents = Vec::new();
     for host in synthetic::AGENT_HOSTS {
-        let label = format!("{} (demo)", host.hostname.split('.').next().unwrap_or(host.hostname));
         let policy = TokenPolicy { max_uses: None, expires_in_days: None };
-        let (_, token) = agent::create_token(pool, &label, policy).await?;
+        let (_, token) = agent::create_token(pool, policy).await?;
         let (id, secret) = push_agent_batch(pool, cipher, sink, host, &token, None).await?;
         targets.push((id, host.hostname.to_string(), "agent".to_string()));
         agents.push(SeededAgent { host, id, token, secret });
@@ -142,11 +141,11 @@ pub async fn run(
     seed_status_pages(pool, &targets).await?;
     seed_alert_history(pool, &targets).await?;
     seed_network_inventory(pool, agent_id).await?;
-    // Un emplacement, le site principal : la carte du monde et la carte en
-    // direct du pare-feu ont de quoi se dessiner.
+    // Un emplacement : la carte du monde et la carte en direct du pare-feu ont
+    // de quoi se dessiner (les équipements y sont affectés dans `workspace`).
     sqlx::query(
-        "INSERT INTO locations (name, address, latitude, longitude, main_site)
-         VALUES ('Home', 'Lausanne, Switzerland', 46.5197, 6.6323, 1)",
+        "INSERT INTO locations (name, address, latitude, longitude)
+         VALUES ('Home', 'Lausanne, Switzerland', 46.5197, 6.6323)",
     )
     .execute(pool)
     .await?;
@@ -221,7 +220,10 @@ pub async fn push_agent_batch(
         declared_monitors: None,
     };
     let bearer = format!("Bearer {token}");
-    let ack = agent::ingest(pool, cipher, sink, Some(&bearer), secret, batch)
+    // Données de démonstration : rien ne vient du réseau, la garde de
+    // l'enrôlement n'a rien à valider.
+    let origin = agent::EnrolOrigin::Internal;
+    let ack = agent::ingest(pool, cipher, sink, Some(&bearer), secret, batch, &origin)
         .await
         .map_err(|error| anyhow::anyhow!("demo agent push refused: {error:?}"))?;
     Ok((ack.target_id, ack.agent_secret))

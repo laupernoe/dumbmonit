@@ -50,10 +50,10 @@ API 令牌(设置 → **API 与助手**)。
 ```bash
 # 安装,或将同一个包更新到更新的版本
 curl -H 'Authorization: Bearer dmt_…' -H 'Content-Type: application/yaml' \
-  --data-binary @packs/shelly-plug/pack.yaml http://localhost:8080/api/packs
+  --data-binary @packs/shelly-plug/pack.yaml https://localhost:8080/api/packs
 
 # 列出已安装的内容
-curl -H 'Authorization: Bearer dmt_…' http://localhost:8080/api/packs
+curl -H 'Authorization: Bearer dmt_…' https://localhost:8080/api/packs
 ```
 
 应答会说明发生了什么(`created`、`updated` 或 `unchanged`)、该包

@@ -12,9 +12,11 @@
 //! ce serait ce même état qui mentirait au premier redémarrage.
 
 pub mod backup_repos;
+pub mod databases;
 pub mod docker;
 pub mod docker_labels;
 pub mod docker_stats;
+pub mod dsm;
 pub mod eventlog;
 pub mod filter;
 pub mod inventory;
@@ -41,7 +43,9 @@ use sysinfo::{
 };
 
 use crate::collect::backup_repos::BackupReposReport;
+use crate::collect::databases::DatabasesReport;
 use crate::collect::docker::{ContainerInventory, ContainerStat, ContainerUsage};
+use crate::collect::dsm::DsmReport;
 use crate::collect::filter::NameFilter;
 use crate::collect::ipsec::IpsecReport;
 use crate::collect::libvirt::LibvirtReport;
@@ -269,12 +273,18 @@ pub struct Snapshot {
     pub speedtest: Option<SpeedtestReport>,
     /// Dépôts restic et Borg déclarés. `None` : aucun, ou première lecture en cours.
     pub backup_repos: Option<BackupReposReport>,
+    /// Bases de données détectées et fraîcheur de leurs sauvegardes. `None` :
+    /// aucune base, ou première lecture en cours.
+    pub databases: Option<DatabasesReport>,
     /// Domaines KVM et pools libvirt. `None` : pas de `virsh` sur cette machine,
     /// ou première lecture en cours.
     pub libvirt: Option<LibvirtReport>,
     /// Causes de lenteur : top processus, PSI, inodes, horloge, OOM kills (Linux
     /// seulement). `None` : rien de lisible ici.
     pub machine: Option<MachineStat>,
+    /// Synology DSM : grappes RAID, volumes, disques, paquets, onduleur. `None` :
+    /// pas un Synology.
+    pub dsm: Option<DsmReport>,
 }
 
 impl Snapshot {
@@ -333,6 +343,12 @@ impl Snapshot {
         }
         if let Some(report) = &self.libvirt {
             samples.extend(libvirt::samples(report, now_ms));
+        }
+        if let Some(report) = &self.databases {
+            samples.extend(databases::samples(report, now_ms));
+        }
+        if let Some(report) = &self.dsm {
+            samples.extend(dsm::samples(report, now_ms));
         }
         samples
     }
@@ -651,8 +667,10 @@ impl SystemProbe {
             ipsec: None,
             speedtest: None,
             backup_repos: None,
+            databases: None,
             libvirt: None,
             machine: None,
+            dsm: None,
         }
     }
 
@@ -1337,7 +1355,25 @@ mod tests {
                     available_bytes: Some(60),
                 }],
             }),
+            databases: Some(databases::DatabasesReport {
+                databases: vec![databases::DatabaseStat {
+                    db: databases::Detected {
+                        engine: databases::Engine::Postgresql,
+                        instance: "16-main".into(),
+                        version: Some("16".into()),
+                        running: true,
+                        port: Some(5432),
+                        backup_dir: None,
+                        exe_dir: None,
+                    },
+                    backup: None,
+                }],
+            }),
             machine: Some(MachineStat { oom_kills: Some(1), ..MachineStat::default() }),
+            dsm: Some(dsm::DsmReport {
+                arrays: dsm::parse_mdstat("md2 : active raid1 sda5[0] sdb5[1]\n [2/2] [UU]\n"),
+                ..dsm::DsmReport::default()
+            }),
         };
 
         let samples = snapshot.to_samples(1_700_000_000_000);
@@ -1374,6 +1410,8 @@ mod tests {
             "agent_libvirt_domain_running",
             "agent_libvirt_pool_active",
             "agent_oom_kills_total",
+            "agent_dsm_info",
+            "agent_dsm_raid_status",
         ] {
             assert!(samples.iter().any(|s| s.metric == family), "famille absente : {family}");
         }

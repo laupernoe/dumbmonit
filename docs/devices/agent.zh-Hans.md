@@ -105,7 +105,7 @@ Windows 故意没有温度行：读取那里的传感器意味着通过 WMI 进�
 === "Linux（systemd 或 OpenRC）"
 
     ```sh
-    curl -sSL http://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://server:8080
+    curl -sSL https://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     脚本是 POSIX `sh`（BusyBox 和 dash 工作），下载机器架构（x86_64 或 aarch64）的二进制文件从服务器，写 `/etc/dumbmonit/agent.yaml`（模式 0600）并使用 systemd 注册 `dumbmonit-agent`，或在 Alpine 上使用 OpenRC。systemd 单元被强化（`ProtectSystem=strict`、`NoNewPrivileges`、`MemoryMax=256M`、`CPUQuota=20%`）。
@@ -115,7 +115,7 @@ Windows 故意没有温度行：读取那里的传感器意味着通过 WMI 进�
     与 Linux 上相同的命令，用 `sudo` 运行：
 
     ```sh
-    curl -sSL http://server:8080/install.sh | sudo sh -s -- --token=dmon_xxx --url=http://server:8080
+    curl -sSL https://server:8080/install.sh | sudo sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     macOS 二进制文件 **不是** 在 DumbMonit 映像中：构建它们需要 Apple 的 SDK，其许可证禁止重新分发。它们附加到每个 [GitHub 发行版](https://github.com/laupernoe/dumbmonit/releases/latest) — `dumbmonit-agent-macos-aarch64`（Apple silicon）和 `dumbmonit-agent-macos-x86_64`（Intel），每个都有其 `.sha256` — 并且服务器重定向 `/download/dumbmonit-agent-macos-…` 那里，所以脚本为 Mac 的架构（`uname -m`）选择正确的。服务器不附带那些二进制文件，所以安装命令对它们不进行校验和：添加 `--sha256=macos-aarch64:<hex>`（或 `macos-x86_64`）带有发行版的 `.sha256` 的值，或安装程序拒绝下载。Mac 也需要到达 github.com。
@@ -124,8 +124,8 @@ Windows 故意没有温度行：读取那里的传感器意味着通过 WMI 进�
 
     ```sh
     curl -sSLO https://github.com/laupernoe/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
-    curl -sSL http://server:8080/install.sh | sudo sh -s -- \
-        --token=dmon_xxx --url=http://server:8080 --bin=./dumbmonit-agent-macos-aarch64
+    curl -sSL https://server:8080/install.sh | sudo sh -s -- \
+        --token=dmon_xxx --url=https://server:8080 --bin=./dumbmonit-agent-macos-aarch64
     ```
 
     脚本在 `/usr/local/bin` 中安装二进制文件（并移除浏览器下载附带的隔离属性，这会使 Gatekeeper 拒绝启动它），写 `/usr/local/etc/dumbmonit/agent.yaml`（模式 0600）并在 `/Library/LaunchDaemons` 中注册系统守护进程 `com.dumbmonit.agent`，用 `launchctl bootstrap system` 启动。它在启动时运行，没有人登录。
@@ -136,7 +136,7 @@ Windows 故意没有温度行：读取那里的传感器意味着通过 WMI 进�
 === "FreeBSD（rc.d）"
 
     ```sh
-    fetch -qo - http://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://server:8080
+    fetch -qo - https://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     仅 x86_64。脚本下载 `dumbmonit-agent-freebsd-x86_64` 从服务器，写 `/usr/local/etc/dumbmonit/agent.yaml`（模式 0600）并安装 `/usr/local/etc/rc.d/dumbmonit_agent`，用 `service dumbmonit_agent enable` 启用。`daemon(8)` 监管代理，如果它停止会重启它，并写 `/var/log/dumbmonit-agent.log`。
@@ -146,7 +146,7 @@ Windows 故意没有温度行：读取那里的传感器意味着通过 WMI 进�
 === "Windows（服务）"
 
     ```powershell
-    & ([scriptblock]::Create((irm http://server:8080/install.ps1))) -Token dmon_xxx -Url http://server:8080
+    & ([scriptblock]::Create((irm https://server:8080/install.ps1))) -Token dmon_xxx -Url https://server:8080
     ```
 
     脚本下载 `dumbmonit-agent-windows-x86_64.exe` 从服务器，对其 SHA-256 检查，在 `C:\Program Files\DumbMonit\dumbmonit-agent.exe` 中安装它，写 `C:\ProgramData\DumbMonit\agent.yaml`（仅 SYSTEM 和 Administrators 可读），并注册 Windows 服务 `DumbMonitAgent`（"DumbMonit 系统代理"）：在启动时自动启动，如 LocalSystem，并在失败后重启（10 秒、30 秒、随后 60 秒）。代理与服务管理器自己对话（`--service`），所以停止服务让它在退出前发送它仍然持有的东西。
@@ -215,7 +215,7 @@ docker buildx build --target agent-dist --output type=local,dest=dist/agent .
 | `install.sh` | `install.ps1` | 效果 |
 |---|---|---|
 | `--token=TOKEN` | `-Token` | 注册令牌（必需）。 |
-| `--url=URL` | `-Url` | 服务器 URL，例如 `http://server:8080`。在 Linux 上，环境中的 `DUMBMONIT_URL` 在标志缺失时使用。 |
+| `--url=URL` | `-Url` | 服务器 URL，例如 `https://server:8080`。在 Linux 上，环境中的 `DUMBMONIT_URL` 在标志缺失时使用。 |
 | `--interval=N` | `-Interval` | 采样期间秒数（默认 30）。 |
 | `--services=a,b,c` | `-Services @('a','b')` | 报告其状态的服务，按主机系统命名方式命名：Linux 上的 systemd 单元，macOS 上的 launchd 标签（`com.apple.sshd`），FreeBSD 上的 rc.d 名称，Windows 服务。 |
 | `--tags=key=value,…` | `-Tags @{key='value'}` | 标签，复制为每个系列上的 `tag_<key>`。 |
@@ -284,7 +284,7 @@ docker buildx build --target agent-dist --output type=local,dest=dist/agent .
 Linux 上的 `/etc/dumbmonit/agent.yaml`，macOS 和 FreeBSD 上的 `/usr/local/etc/dumbmonit/agent.yaml`，Windows 上的 `C:\ProgramData\DumbMonit\agent.yaml`：
 
 ```yaml
-server_url: http://server:8080
+server_url: https://server:8080
 token: dmon_...
 interval_secs: 30          # 采样期间
 hostname: nas-basement     # 可选：向服务器宣布的名称

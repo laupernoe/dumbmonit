@@ -11,7 +11,22 @@ use crate::alerting::model::{
     AnomalyParams, Operator, RULE_HOST_DOWN, Rule, RuleKind, Severity, TargetSelector,
 };
 
+mod adguard;
 mod cloud;
+mod homeassistant;
+mod immich;
+mod jellyfin;
+mod nextcloud;
+mod opnsense;
+mod pbs;
+mod pihole;
+mod plex;
+mod postgres;
+mod pve;
+mod synology;
+mod tailscale;
+mod truenas;
+mod unifi;
 
 /// Taux d'occupation processeur, toutes sources confondues.
 ///
@@ -904,6 +919,41 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "restic/Borg repository unreachable",
                 RuleKind::Threshold,
                 "dumbmonit_agent_backup_repo_reachable",
+            )
+        },
+        // Bases de données détectées par l'agent
+        // (`agent/src/collect/databases.rs`). L'agent calcule lui-même `overdue`
+        // d'après l'âge maximal choisi dans `agent.yaml` : la règle ne fait que
+        // lire le verdict. Sans dossier de sauvegarde connu ni déclaré, aucune
+        // série `overdue`, donc aucune alerte.
+        Rule {
+            description: "The newest backup file of this database is older than the maximum \
+                          age set for it (or no backup file was found in the watched folders)."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.5,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "database_backup_overdue",
+                "Database backup overdue",
+                RuleKind::Threshold,
+                "dumbmonit_agent_database_backup_overdue",
+            )
+        },
+        Rule {
+            description: "A database service installed on this machine is stopped.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "database_service_stopped",
+                "Database service stopped",
+                RuleKind::Threshold,
+                "dumbmonit_agent_database_up",
             )
         },
         // WireGuard : seuls les pairs à maintien de connexion
@@ -7162,6 +7212,112 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_agent_libvirt_pool_used_percent",
             )
         },
+        // --- Synology DSM par l'agent du paquet `.spk` (`agent/src/collect/dsm.rs`) ---
+        // L'onduleur branché au NAS est rapporté sous les noms du collecteur NUT :
+        // ses règles (`nut_on_battery`, `nut_battery_low`…) s'appliquent telles
+        // quelles. Le SMART, quand `smartctl` est lisible, passe par
+        // `disk_smart_failed`.
+        //
+        // `agent_dsm_raid_status` : 0 normal, 1 resynchronisation, 2 dégradée
+        // (reconstruction comprise), 3 inactive.
+        Rule {
+            description: "A RAID array of the NAS lost a disk or is rebuilding: its redundancy \
+                          is gone, read from /proc/mdstat by the agent package."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 2.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "dsm_raid_degraded",
+                "NAS RAID degraded",
+                RuleKind::Threshold,
+                "dumbmonit_agent_dsm_raid_status",
+            )
+        },
+        // DSM remonte en lecture seule un volume qu'il juge planté.
+        Rule {
+            description: "A volume of the NAS is mounted read-only: DSM does this to a crashed \
+                          volume to protect its data."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "dsm_volume_read_only",
+                "NAS volume read-only",
+                RuleKind::Threshold,
+                "dumbmonit_agent_dsm_volume_read_only",
+            )
+        },
+        Rule {
+            description: "A disk of the NAS is above 55 °C, as read by the agent package."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 55.0,
+            clear_threshold: Some(52.0),
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "°C".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "dsm_disk_hot",
+                "NAS disk temperature high",
+                RuleKind::Threshold,
+                "dumbmonit_agent_dsm_disk_temperature_celsius",
+            )
+        },
+        Rule {
+            description: "New unreadable (UNC) sectors appeared on a disk of the NAS in the last \
+                          24 hours."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "dsm_disk_bad_sectors_growing",
+                "NAS disk bad sectors growing",
+                RuleKind::Threshold,
+                "delta(dumbmonit_agent_dsm_disk_unc_count[24h])",
+            )
+        },
+        Rule {
+            description: "An SSD of the NAS has less than 10% of its rated life left.".to_string(),
+            operator: Operator::Lt,
+            threshold: 10.0,
+            clear_threshold: Some(12.0),
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "dsm_ssd_wearout",
+                "NAS SSD wearing out",
+                RuleKind::Threshold,
+                "dumbmonit_agent_dsm_disk_remaining_life_percent",
+            )
+        },
+        // Seulement un paquet qui doit tourner (témoin `enabled`) et que
+        // `synopkg` dit arrêté : un paquet arrêté à la main ne déclenche rien.
+        Rule {
+            description: "A package of the NAS that should be running is stopped.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "dsm_package_down",
+                "NAS package stopped",
+                RuleKind::Threshold,
+                "dumbmonit_agent_dsm_package_down",
+            )
+        },
         // --- XCP-ng / XenServer (`collectors/xcpng`) ---
         Rule {
             description: "A host of the XCP-ng pool no longer answers the coordinator.".to_string(),
@@ -7614,6 +7770,22 @@ pub fn builtin_rules() -> Vec<Rule> {
     ];
     // Intégrations en nuage, un fichier par produit (`rules/cloud/`).
     rules.extend(cloud::rules());
+    rules.extend(pve::rules());
+    rules.extend(pbs::rules());
+    rules.extend(truenas::rules());
+    rules.extend(unifi::rules());
+    rules.extend(opnsense::rules());
+    rules.extend(tailscale::rules());
+    // Résolveurs DNS et domotique : un fichier par produit (`rules/<produit>.rs`).
+    rules.extend(pihole::rules());
+    rules.extend(adguard::rules());
+    rules.extend(homeassistant::rules());
+    rules.extend(immich::rules());
+    rules.extend(jellyfin::rules());
+    rules.extend(plex::rules());
+    rules.extend(nextcloud::rules());
+    rules.extend(postgres::rules());
+    rules.extend(synology::rules());
     rules.extend(apps_rules());
     rules
 }
@@ -8475,6 +8647,9 @@ pub(crate) const PRODUITES: &[&str] = &[
     "dumbmonit_agent_backup_repo_last_snapshot_age_seconds",
     "dumbmonit_agent_backup_repo_reachable",
     "dumbmonit_agent_wireguard_peer_handshake_age_seconds",
+    // Agent : bases de données (`agent/src/collect/databases.rs`).
+    "dumbmonit_agent_database_up",
+    "dumbmonit_agent_database_backup_overdue",
     "dumbmonit_agent_wireguard_peer_keepalive_seconds",
     // Agent : tunnels IPsec et test de débit Internet
     // (`agent/src/collect/{ipsec,speedtest}.rs`).
@@ -8554,6 +8729,13 @@ pub(crate) const PRODUITES: &[&str] = &[
     "dumbmonit_sonicwall_interface_down",
     "dumbmonit_agent_libvirt_domain_crashed",
     "dumbmonit_agent_libvirt_pool_used_percent",
+    // Synology DSM par l'agent du paquet (`crates/agent/src/collect/dsm.rs`).
+    "dumbmonit_agent_dsm_raid_status",
+    "dumbmonit_agent_dsm_volume_read_only",
+    "dumbmonit_agent_dsm_disk_temperature_celsius",
+    "dumbmonit_agent_dsm_disk_unc_count",
+    "dumbmonit_agent_dsm_disk_remaining_life_percent",
+    "dumbmonit_agent_dsm_package_down",
     "dumbmonit_xcpng_host_live",
     "dumbmonit_xcpng_sr_used_percent",
     "dumbmonit_xcpng_vm_ha_protected_down",
@@ -8949,6 +9131,20 @@ mod tests {
             "jellyfin_plugin_broken",
             "jellyfin_restart_pending",
             "plex_update_available",
+            "immich_jobs_failed",
+            "immich_ml_failing",
+            "immich_maintenance_mode",
+            "immich_user_quota_almost_full",
+            "immich_db_backup_stale",
+            "jellyfin_library_scan_stale",
+            "jellyfin_storage_almost_full",
+            "jellyfin_cpu_transcoding_heavy",
+            "jellyfin_failed_logins",
+            "plex_transcoder_too_slow",
+            "plex_transcode_error",
+            "plex_remote_access_failed",
+            "plex_signin_lost",
+            "plex_database_backup_off",
             "gitlab_runners_all_offline",
             "gitlab_sidekiq_backlog_high",
             "gitlab_migrations_pending",
@@ -8991,6 +9187,24 @@ mod tests {
             "unifi_device_pending_adoption",
             "unifi_firmware_update",
             "unifi_alarms",
+            "unifi_subsystem_error",
+            "unifi_device_overheating",
+            "unifi_poe_budget_high",
+            "unifi_radio_channel_busy",
+            "unifi_wifi_weak_signal",
+            "unifi_port_errors",
+            "opnsense_certificate_expiring",
+            "opnsense_certificate_expired",
+            "opnsense_disk_almost_full",
+            "opnsense_cpu_high",
+            "opnsense_swap_high",
+            "opnsense_pf_disabled",
+            "opnsense_interface_errors",
+            "opnsense_firmware_mirror_unreachable",
+            "tailscale_key_expired",
+            "tailscale_router_offline",
+            "tailscale_routes_unapproved",
+            "tailscale_tailnet_lock_error",
             "homeassistant_recovery_mode",
             "homeassistant_not_running",
             "homeassistant_entities_unavailable",
@@ -9091,6 +9305,8 @@ mod tests {
             "k8s_pvc_pending",
             "backup_repo_too_old",
             "backup_repo_unreachable",
+            "database_backup_overdue",
+            "database_service_stopped",
             "wireguard_peer_silent",
             "ipsec_tunnel_down",
             "speedtest_download_slow",
@@ -9178,6 +9394,12 @@ mod tests {
             "duplicati_backup_old",
             "libvirt_domain_crashed",
             "libvirt_pool_almost_full",
+            "dsm_raid_degraded",
+            "dsm_volume_read_only",
+            "dsm_disk_hot",
+            "dsm_disk_bad_sectors_growing",
+            "dsm_ssd_wearout",
+            "dsm_package_down",
             "xcpng_host_offline",
             "xcpng_sr_almost_full",
             "xcpng_vm_ha_protected_down",
@@ -9188,6 +9410,26 @@ mod tests {
             "hyperv_vm_critical",
             "hyperv_host_cpu_high",
             "hyperv_vhd_errors",
+            // Profondeur Proxmox VE, PBS et TrueNAS (`rules/{pve,pbs,truenas}.rs`).
+            "pve_storage_inactive",
+            "pve_reboot_required",
+            "pve_subscription_expired",
+            "pve_replication_overdue",
+            "pve_backup_job_stale",
+            "pve_guest_not_backed_up",
+            "pve_tasks_failed",
+            "pbs_datastore_unavailable",
+            "pbs_datastore_maintenance",
+            "pbs_rootfs_almost_full",
+            "pbs_job_stale",
+            "pbs_subscription_expired",
+            "truenas_certificate_expiring",
+            "truenas_certificate_expired",
+            "truenas_boot_pool_degraded",
+            "truenas_boot_pool_almost_full",
+            "truenas_backup_task_failed",
+            "truenas_app_crashed",
+            "truenas_vm_down",
             // Sauvegarde locale de l'instance (`backup/local.rs`).
             "instance_backup_missing",
             // Auto-surveillance de l'instance (`selfmon.rs`).
@@ -9217,7 +9459,23 @@ mod tests {
             for mot in rule.query.split(|c: char| !c.is_alphanumeric() && c != '_') {
                 if mot.starts_with("dumbmonit_") {
                     assert!(
-                        PRODUITES.contains(&mot) || cloud::produced().contains(&mot),
+                        PRODUITES.contains(&mot)
+                            || cloud::produced().contains(&mot)
+                            || pve::PRODUCED.contains(&mot)
+                            || pbs::PRODUCED.contains(&mot)
+                            || truenas::PRODUCED.contains(&mot)
+                            || unifi::PRODUCED.contains(&mot)
+                            || opnsense::PRODUCED.contains(&mot)
+                            || tailscale::PRODUCED.contains(&mot)
+                            || pihole::PRODUCED.contains(&mot)
+                            || adguard::PRODUCED.contains(&mot)
+                            || homeassistant::PRODUCED.contains(&mot)
+                            || immich::PRODUCED.contains(&mot)
+                            || jellyfin::PRODUCED.contains(&mot)
+                            || plex::PRODUCED.contains(&mot)
+                            || nextcloud::PRODUCED.contains(&mot)
+                            || postgres::PRODUCED.contains(&mot)
+                            || synology::PRODUCED.contains(&mot),
                         "rule \"{}\" targets \"{mot}\", which no collector produces",
                         rule.uid
                     );

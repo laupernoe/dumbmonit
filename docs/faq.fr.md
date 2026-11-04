@@ -57,7 +57,7 @@ Voir [Ping ICMP sans capacité](install/docker.md#icmp-ping-without-a-capability
   Corrigez `/etc/dumbmonit/agent.yaml` et redémarrez `dumbmonit-agent`.
 - L'URL dans la commande d'installation est celle que votre navigateur a
   utilisée pour atteindre l'interface. Depuis la machine surveillée, cette
-  URL doit atteindre le serveur : `curl http://server:8080/api/health`
+  URL doit atteindre le serveur : `curl https://server:8080/api/health`
   depuis là vous le dit.
 - Derrière un reverse proxy, `/api/ingest` doit être transféré et les corps
   jusqu'à 16 Mo autorisés (`client_max_body_size 16m` dans nginx).

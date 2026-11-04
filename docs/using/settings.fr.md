@@ -1,20 +1,19 @@
 # Réglages
 
-![Réglages : sept onglets, ici Mon compte avec apparence, compte et sécurité et notifications push](../assets/screenshots/settings-light.png){ loading=lazy }
+![Réglages : six onglets, ici Mon compte avec apparence, compte et sécurité et notifications push](../assets/screenshots/settings-light.png){ loading=lazy }
 
-Réglages contient ce qui est administratif : l'instance elle-même, votre compte, qui peut se connecter et comment, les agents, les canaux de notification, la sauvegarde de l'instance et la santé du serveur. Il est découpé en sept onglets, chacun avec sa propre adresse. Un rail sur grand écran, une bande de puces sur téléphone et une recherche sur les noms de sections aident à trouver une section.
+Réglages contient ce qui est administratif : l'instance elle-même, votre compte, qui peut se connecter et comment, les agents, les canaux de notification, la sauvegarde de l'instance et la santé du serveur. Il est découpé en six onglets, chacun avec sa propre adresse. Un rail sur grand écran, une bande de puces sur téléphone et une recherche sur les noms de sections aident à trouver une section.
 
 | Onglet | Adresse | Contenu |
 |---|---|---|
-| Général | `/settings/general` | Nom de l'instance, langue et fuseau horaire, assistant de démarrage ([Interface et assistant de démarrage](product-modes.md)) |
-| Mon compte | `/settings/account` | Langue, Compte et sécurité (mot de passe, double authentification, journal de sécurité), Notifications push, Contacts d'astreinte et heures calmes ([Astreintes](../alerting/oncall.md)) |
+| Mon compte | `/settings/account` | Langue, Compte et sécurité (changer le mot de passe, se déconnecter, double authentification, clés d'accès, journal de sécurité), Notifications push |
 | Équipe et accès | `/settings/team` | Utilisateurs, Équipes, Clients, Authentification unique, SAML, SCIM, LDAP |
 | Supervision | `/settings/monitoring` | Agents, Packs d'intégration, [Score de sécurité](security-score.md), Emplacements |
-| Notifications | `/settings/notifications` | Canaux, Politique de notification ([Canaux de notification](../notifications.md)) |
+| Notifications | `/settings/notifications` | Canaux, Politique de notification, heures calmes ([Canaux de notification](../notifications.md)). Les astreintes sont sur la page Alertes : [Astreintes](../alerting/oncall.md) |
 | Mur | `/settings/wall` | Mode mural : ce qu'il montre, et comment l'ouvrir ([Mode mur](wall.md)) |
-| Système | `/settings/system` | Sauvegarde, Fichiers de configuration, DumbMonit lui-même, Données et rétention, Journaux, API et assistants, À propos |
+| Système | `/settings/system` | Nom de l'instance et fuseau horaire, assistant de démarrage, Sauvegarde, Fichiers de configuration, DumbMonit lui-même, Données et rétention, Journaux, API et assistants, À propos |
 
-Chaque section garde son ancre : `/settings#agents` redirige vers `/settings/monitoring#agents`. Les anciens liens (`/alerts#notifications`) redirigent aussi vers le nouvel emplacement. Les pages de statut et les rapports ne sont plus dans les Réglages : ils ont leur propre page, **Pages de statut** (`/status`) et **Rapports** (`/reports`) ; `/settings/status` et `/settings/reports` y redirigent. Les actualités et les widgets du mur ont disparu : leurs anciens liens (`#news`, `#widgets`) ouvrent l'onglet Mur, où se trouve **Musique murale** (`#music`).
+Chaque section garde son ancre : `/settings#agents` redirige vers `/settings/monitoring#agents`. Les anciens liens (`/alerts#notifications`) redirigent aussi vers le nouvel emplacement. Les pages de statut et les rapports ne sont plus dans les Réglages : ils sont sur la page **Statut** (`/status`), dont l'onglet **Rapports** contient les rapports ; `/reports`, `/settings/status` et `/settings/reports` y redirigent. Les actualités et les widgets du mur ont disparu : leurs anciens liens (`#news`, `#widgets`) ouvrent l'onglet Mur, où se trouve **Musique murale** (`#music`).
 
 ## Apparence {#appearance}
 
@@ -37,10 +36,10 @@ mur](wall.md#music-on-the-wall).
 ## Compte et sécurité
 
 C'est votre propre compte. Le premier est créé au premier démarrage, et
-d'autres peuvent être ajoutés ci-dessous. Ici vous changez votre mot de
-passe : mot de passe actuel, nouveau mot de passe (12 caractères au
-moins ; toute une phrase est plus sûre qu'un mot compliqué),
-confirmation. Le changer déconnecte chaque autre session. Les comptes qui
+d'autres peuvent être ajoutés ci-dessous. Pour changer votre mot de
+passe, cliquez sur **Changer le mot de passe** et saisissez le mot de passe actuel, le nouveau (12 caractères au
+moins ; toute une phrase est plus sûre qu'un mot compliqué) et sa
+confirmation. Vous devez voir *Mot de passe changé*, et chaque autre session est déconnectée. Les comptes qui
 se connectent via le fournisseur d'identité n'ont pas de mot de passe
 ici. **Se déconnecter** termine cette session.
 
@@ -235,7 +234,7 @@ Dans **Réglages → Supervision**, sous les agents : une note qui dit à quel p
 
 ## Rapports
 
-Sur sa propre page **Rapports** (`/reports` ; elle était dans Réglages → Notifications) : l'export de disponibilité (SLA) d'une période, les emails de disponibilité périodiques pour l'équipe et l'historique de leurs envois. Réservé aux administrateurs. Voir [Rapports par email](reports.md).
+Dans l'onglet **Rapports** de la page **Statut** (`/status` ; il était dans Réglages → Notifications) : l'export de disponibilité (SLA) d'une période, les emails de disponibilité périodiques pour l'équipe et l'historique de leurs envois. Réservé aux administrateurs. Voir [Rapports par email](reports.md).
 
 ## Données et rétention {#data-retention}
 

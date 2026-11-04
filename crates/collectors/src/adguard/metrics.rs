@@ -9,6 +9,7 @@
 //! longueur de la fenêtre, et ne doivent jamais passer par `increase`.
 
 use std::collections::BTreeMap;
+use std::net::Ipv4Addr;
 
 use chrono::{DateTime, Utc};
 use dumbmonit_proto::{MetricKind, Sample};
@@ -146,6 +147,44 @@ impl DnsInfo {
     }
 }
 
+/// `GET /control/tls/status` : seules la validité et l'échéance du certificat
+/// nous intéressent ; la clé privée, que la réponse peut porter, n'est pas lue.
+#[derive(Debug, Deserialize)]
+pub struct TlsStatus {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub valid_cert: Option<bool>,
+    #[serde(default)]
+    pub valid_key: Option<bool>,
+    #[serde(default)]
+    pub valid_pair: Option<bool>,
+    #[serde(default)]
+    pub not_after: Option<String>,
+}
+
+/// `GET /control/dhcp/status`.
+#[derive(Debug, Deserialize)]
+pub struct DhcpStatus {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub v4: Option<DhcpV4>,
+    /// Les baux dynamiques en cours.
+    #[serde(default)]
+    pub leases: Option<Vec<serde_json::Value>>,
+    #[serde(default)]
+    pub static_leases: Option<Vec<serde_json::Value>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DhcpV4 {
+    #[serde(default)]
+    pub range_start: Option<String>,
+    #[serde(default)]
+    pub range_end: Option<String>,
+}
+
 // ------------------------------------------------------------------ échantillons
 
 pub fn status_samples(status: &Status, ts_ms: i64) -> Vec<Sample> {
@@ -275,6 +314,54 @@ pub fn is_newer(latest: &str, current: &str) -> bool {
         (Some((l, l_pre)), Some((c, c_pre))) => l > c || (l == c && c_pre && !l_pre),
         _ => latest.trim_start_matches('v') != current.trim_start_matches('v'),
     }
+}
+
+/// Validité et échéance du certificat du serveur DNS chiffré. Rien quand le
+/// chiffrement est éteint : il n'y a alors aucun certificat à surveiller.
+pub fn tls_samples(status: &TlsStatus, now: DateTime<Utc>, ts_ms: i64) -> Vec<Sample> {
+    if !status.enabled {
+        return Vec::new();
+    }
+    // La chaîne (`valid_chain`) n'entre pas dans le verdict : un certificat
+    // autosigné d'un réseau privé est légitime.
+    let valid =
+        [status.valid_cert, status.valid_key, status.valid_pair].into_iter().flatten().all(|ok| ok);
+    let mut out = vec![gauge("adguard_tls_valid", flag(valid), ts_ms)];
+    let expiry = status
+        .not_after
+        .as_deref()
+        .and_then(|date| DateTime::parse_from_rfc3339(date).ok())
+        .map(|date| date.with_timezone(&Utc))
+        .filter(|date| date.timestamp() > 0);
+    if let Some(expiry) = expiry {
+        out.push(gauge("adguard_tls_expiry_seconds", (expiry - now).num_seconds() as f64, ts_ms));
+    }
+    out
+}
+
+/// Le serveur DHCP d'AdGuard Home, quand il est activé : baux en cours, baux
+/// fixes et remplissage de la plage.
+pub fn dhcp_samples(status: &DhcpStatus, ts_ms: i64) -> Vec<Sample> {
+    if !status.enabled {
+        return Vec::new();
+    }
+    let leases = status.leases.as_ref().map_or(0, Vec::len);
+    let statics = status.static_leases.as_ref().map_or(0, Vec::len);
+    let mut out = vec![
+        gauge("adguard_dhcp_enabled", 1.0, ts_ms),
+        gauge("adguard_dhcp_leases", leases as f64, ts_ms),
+        gauge("adguard_dhcp_static_leases", statics as f64, ts_ms),
+    ];
+    let pool = status.v4.as_ref().and_then(|v4| {
+        let start: Ipv4Addr = v4.range_start.as_deref()?.trim().parse().ok()?;
+        let end: Ipv4Addr = v4.range_end.as_deref()?.trim().parse().ok()?;
+        let (start, end) = (u32::from(start), u32::from(end));
+        end.checked_sub(start).map(|span| f64::from(span) + 1.0)
+    });
+    if let Some(pool) = pool {
+        out.push(gauge("adguard_dhcp_pool_used_percent", 100.0 * leases as f64 / pool, ts_ms));
+    }
+    out
 }
 
 /// Résultat du test d'un serveur amont : `OK`, ou la phrase d'erreur
@@ -422,5 +509,49 @@ mod tests {
         assert_eq!(upstream_sample("1.1.1.1", Some("OK"), 0).value, 1.0);
         assert_eq!(upstream_sample("1.1.1.1", Some("couldn't communicate"), 0).value, 0.0);
         assert_eq!(upstream_sample("1.1.1.1", None, 0).value, 0.0);
+    }
+
+    #[test]
+    fn certificat_du_serveur_chiffre() {
+        let tls: TlsStatus =
+            serde_json::from_str(include_str!("testdata/v0.107.79/tls_status.json")).unwrap();
+        let now = DateTime::parse_from_rfc3339("2026-11-03T08:12:43Z").unwrap().to_utc();
+        let samples = tls_samples(&tls, now, 0);
+        assert_eq!(value(&samples, "adguard_tls_valid"), Some(1.0));
+        assert_eq!(value(&samples, "adguard_tls_expiry_seconds"), Some(15.0 * 86_400.0));
+
+        let broken: TlsStatus = serde_json::from_str(
+            r#"{"enabled":true,"valid_cert":false,"not_after":"0001-01-01T00:00:00Z"}"#,
+        )
+        .unwrap();
+        let samples = tls_samples(&broken, now, 0);
+        assert_eq!(value(&samples, "adguard_tls_valid"), Some(0.0));
+        assert!(value(&samples, "adguard_tls_expiry_seconds").is_none());
+
+        let off: TlsStatus = serde_json::from_str(r#"{"enabled":false}"#).unwrap();
+        assert!(tls_samples(&off, now, 0).is_empty());
+    }
+
+    #[test]
+    fn serveur_dhcp() {
+        let dhcp: DhcpStatus =
+            serde_json::from_str(include_str!("testdata/v0.107.79/dhcp_status.json")).unwrap();
+        let samples = dhcp_samples(&dhcp, 0);
+        assert_eq!(value(&samples, "adguard_dhcp_leases"), Some(4.0));
+        assert_eq!(value(&samples, "adguard_dhcp_static_leases"), Some(1.0));
+        // Plage de .100 à .119 : vingt adresses.
+        assert_eq!(value(&samples, "adguard_dhcp_pool_used_percent"), Some(20.0));
+
+        let off: DhcpStatus =
+            serde_json::from_str(r#"{"enabled":false,"leases":null,"static_leases":null}"#)
+                .unwrap();
+        assert!(dhcp_samples(&off, 0).is_empty());
+        let odd: DhcpStatus = serde_json::from_str(
+            r#"{"enabled":true,"v4":{"range_start":"192.168.1.200","range_end":"192.168.1.100"}}"#,
+        )
+        .unwrap();
+        let samples = dhcp_samples(&odd, 0);
+        assert_eq!(value(&samples, "adguard_dhcp_leases"), Some(0.0));
+        assert!(value(&samples, "adguard_dhcp_pool_used_percent").is_none());
     }
 }

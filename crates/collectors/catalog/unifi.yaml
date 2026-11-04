@@ -16,6 +16,19 @@ metrics:
   - { name: unifi_internet_up, label: "Internet up", unit: "bool" }
   - { name: unifi_subsystem_status, label: "Subsystem status", unit: "bool" }
   - { name: unifi_alarms, label: "Alarms" }
+  - { name: unifi_device_satisfaction_percent, label: "Device satisfaction", unit: "%", better: "higher", min: 0, max: 100 }
+  - { name: unifi_device_temperature_celsius, label: "Device temperature", unit: "°C" }
+  - { name: unifi_device_overheating, label: "Device overheating", unit: "bool", better: "lower" }
+  - { name: unifi_device_poe_budget_watts, label: "PoE budget", unit: "W" }
+  - { name: unifi_device_poe_used_watts, label: "PoE used", unit: "W" }
+  - { name: unifi_radio_channel_utilization_percent, label: "Wi-Fi channel utilization", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: unifi_radio_clients, label: "Wi-Fi clients per radio" }
+  - { name: unifi_wifi_clients, label: "Wi-Fi clients" }
+  - { name: unifi_wifi_clients_weak_signal, label: "Wi-Fi clients with a weak signal", better: "lower" }
+  - { name: unifi_wifi_signal_dbm_avg, label: "Wi-Fi signal (average)", unit: "dBm" }
+  - { name: unifi_speedtest_download_bps, label: "Speed test download", unit: "bps" }
+  - { name: unifi_speedtest_upload_bps, label: "Speed test upload", unit: "bps" }
+  - { name: unifi_speedtest_latency_seconds, label: "Speed test latency", unit: "s", better: "lower" }
   - { name: unifi_info, label: "Info", kind: info }
   - { name: unifi_scrape_errors, label: "Scrape errors", better: "lower" }
 views:
@@ -32,9 +45,16 @@ views:
       - unifi_wan_link_up
       - unifi_wan_up
       - unifi_subsystem_status
+      - unifi_wifi_clients_weak_signal
+      - unifi_device_satisfaction_percent
+      - unifi_radio_channel_utilization_percent
+      - unifi_device_poe_used_watts
   - view: timeseries
     title: "Internet latency"
     metrics: [unifi_internet_latency_seconds]
   - view: timeseries
     title: "Clients"
-    metrics: [unifi_clients]
+    metrics: [unifi_clients, unifi_wifi_clients]
+  - view: timeseries
+    title: "Wi-Fi channel utilization"
+    metrics: [unifi_radio_channel_utilization_percent]

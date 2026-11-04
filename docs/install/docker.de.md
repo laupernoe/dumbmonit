@@ -98,7 +98,7 @@ Adresse (`http://host:8428`): Das eingebettete wird dann nicht gestartet und
 
 ## Erster Start {#first-start}
 
-Öffnen Sie `http://<your-host>:8080`. Eine frische Instanz zeigt den Bildschirm `/setup`,
+Öffnen Sie `https://<your-host>:8080`. Der Browser warnt einmal wegen des selbstsignierten Zertifikats (siehe [HTTPS and encryption](https.md)). Eine frische Instanz zeigt den Bildschirm `/setup`,
 auf dem Sie das erste Administratorkonto anlegen (Passwort mit mindestens 12
 Zeichen).
 
@@ -349,7 +349,7 @@ Bleibt der Hinweis nach dem Neustart bestehen, prüfen Sie `docker compose logs 
 
 ## Reverse-Proxy {#reverse-proxy}
 
-Die Oberfläche und die API werden auf einem Port über einfaches HTTP ausgeliefert. Es wird kein WebSocket verwendet:
+Die Oberfläche und die API werden auf einem Port ausgeliefert, der nur HTTPS spricht (eine einfache HTTP-Anfrage erhält eine Weiterleitung, siehe [HTTPS and encryption](https.md)). Ein Reverse-Proxy muss sich daher per HTTPS mit dem Container verbinden (`https://dumbmonit:8080`), mit deaktivierter Zertifikatsprüfung für diesen Abschnitt oder mit dem DumbMonit-Zertifikat als vertrauenswürdig. Es wird kein WebSocket verwendet:
 Die Oberfläche fragt die API per Polling ab, sodass jeder Reverse-Proxy ohne besondere
 Konfiguration funktioniert.
 
@@ -357,7 +357,11 @@ Konfiguration funktioniert.
 
     ```
     monit.example.com {
-        reverse_proxy 127.0.0.1:8080
+        reverse_proxy https://127.0.0.1:8080 {
+            transport http {
+                tls_insecure_skip_verify
+            }
+        }
     }
     ```
 
@@ -370,7 +374,8 @@ Konfiguration funktioniert.
         # ssl_certificate / ssl_certificate_key …
 
         location / {
-            proxy_pass http://127.0.0.1:8080;
+            proxy_pass https://127.0.0.1:8080;
+            proxy_ssl_verify off;
             proxy_set_header Host $host;
             proxy_set_header X-Forwarded-Proto $scheme;
             # Agenten senden nach einem Ausfall nachgeholte Batches:
@@ -380,7 +385,7 @@ Konfiguration funktioniert.
     ```
 
 Wenn der Proxy TLS terminiert, setzen Sie `DUMBMONIT_COOKIE_SECURE: "1"`, damit das Sitzungs-
-Cookie nur über HTTPS gesendet wird. Setzen Sie es nicht bei einer reinen HTTP-Bereitstellung: Der
+Cookie nur über HTTPS gesendet wird. Setzen Sie es nur, wenn jeder Browser DumbMonit über HTTPS erreicht: Der
 Browser würde das Cookie nie zurücksenden, und eine Anmeldung wäre unmöglich.
 
 !!! note "Agenten hinter einem Proxy"

@@ -141,6 +141,13 @@ impl PushClient {
         self.channel().encrypted
     }
 
+    /// Client HTTP du canal courant, avec son certificat client et l'autorité du
+    /// serveur épinglée : celui de la sentinelle, pour sonder le serveur dans
+    /// les mêmes conditions que les lots de mesures.
+    pub fn probe_http(&self) -> reqwest::Client {
+        self.channel().http.clone()
+    }
+
     /// Empreintes épinglées en ce moment.
     pub fn pins(&self) -> Vec<String> {
         self.pins.read().map(|pins| pins.clone()).unwrap_or_default()
@@ -174,6 +181,22 @@ impl PushClient {
             http: http_client(self.timeout, Some(config))?,
             base_url: url.trim_end_matches('/').to_string(),
             encrypted: true,
+        };
+        if let Ok(mut held) = self.channel.write() {
+            *held = Arc::new(channel);
+        }
+        Ok(())
+    }
+
+    /// Ancien canal (port de l'interface) vers un serveur au certificat
+    /// autosigné : seule la clé publique épinglée (`server_pin`, posée par la
+    /// commande d'installation) est acceptée — ni une autre, ni le clair.
+    pub fn pin_server(&self, pin: &str) -> Result<()> {
+        let config = tls::pinned_key_config(pin)?;
+        let channel = Channel {
+            http: http_client(self.timeout, Some(config))?,
+            base_url: self.channel().base_url.clone(),
+            encrypted: false,
         };
         if let Ok(mut held) = self.channel.write() {
             *held = Arc::new(channel);
@@ -524,29 +547,7 @@ impl PushClient {
         self.mark_reachable();
         response.upgrade().await.map_err(|error| self.transport(&error))
     }
-
-    /// Fichier d'installation (`install.sh`, `install.ps1`, `download/<nom>`)
-    /// relu pour les machines du site, par le canal chiffré du relais. La
-    /// réponse est rendue telle quelle, statut compris, pour être recopiée.
-    pub async fn fetch_relay_file(&self, file: &str) -> Result<reqwest::Response, PushError> {
-        let channel = self.channel();
-        if !channel.encrypted {
-            return Err(PushError::Transport(
-                "the relay is not on the encrypted agent channel yet".to_string(),
-            ));
-        }
-        let target = format!("{}{}", channel.base_url, crate::gateway::files_path(file));
-        self.identified(channel.http.get(target).bearer_auth(&self.token))
-            .timeout(RELAY_FILE_TIMEOUT)
-            .send()
-            .await
-            .map_err(|error| self.transport(&error))
-    }
 }
-
-/// Délai d'un fichier d'installation relu par le relais : un binaire d'agent
-/// sur un lien lent.
-const RELAY_FILE_TIMEOUT: Duration = Duration::from_secs(600);
 
 /// Chemin des sondes déléguées, ou du compte rendu de l'une d'elles.
 fn relay_path(id: Option<i64>) -> String {

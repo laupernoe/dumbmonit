@@ -1,6 +1,6 @@
 <script lang="ts">
 	/**
-	 * Settings → General: the instance's name, language and time zone, and a
+	 * Settings → System: the instance's name and time zone, and a
 	 * way back into the setup wizard.
 	 */
 	import { goto } from '$app/navigation';
@@ -64,13 +64,13 @@
 		<ErrorNotice error={loadError} />
 	{:else if loaded}
 		<form onsubmit={save} class="grid gap-4">
-			<InstanceFields bind:name bind:language bind:timezone disabled={readOnly} idPrefix="settings-instance" />
+			<InstanceFields bind:name bind:language bind:timezone showLanguage={false} disabled={readOnly} idPrefix="settings-instance" />
 			{#if saveError}<ErrorNotice error={saveError} />{/if}
 			{#if readOnly}
 				<p class="text-[0.8125rem] text-ink-2">{m.settings_general_readonly()}</p>
 			{:else}
 				<div class="flex flex-wrap items-center gap-3">
-					<Button type="submit" variant="primary" loading={saving} disabled={!dirty}>{m.settings_general_save()}</Button>
+					<Button type="submit" variant="primary" loading={saving} success={saved} disabled={!dirty}>{m.settings_general_save()}</Button>
 					{#if saved && !dirty}<Plate tone="signal" draw>{m.settings_general_saved()}</Plate>{/if}
 				</div>
 			{/if}

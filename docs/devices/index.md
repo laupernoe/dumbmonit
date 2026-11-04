@@ -5,6 +5,28 @@ when it is a web page or a DNS name. Each type is a collector on the server; the
 server describes every type to the interface (`GET /api/collectors`), so the
 form always matches what this version can monitor.
 
+## Add a device: which type?
+
+Start from what you have in front of you, then open the page of the type.
+Every page lists what to prepare, what to type and what to do when it fails.
+
+| You want to watch | Pick | Page |
+|---|---|---|
+| A Linux, macOS, FreeBSD or Windows machine, or Docker | **Server with the agent** | [Agent](agent.md) |
+| A machine at another site behind a firewall | Agent with a relay | [Monitor a remote site](../install/remote-site.md) |
+| A Synology NAS | **Synology DSM**: package or API | [Synology agent](synology-agent.md), [Synology DSM](synology.md) |
+| A switch, router, printer, UPS or any SNMP device | **SNMP device** | [SNMP](snmp.md) |
+| A hypervisor | Proxmox VE, VMware vSphere, XCP-ng, Nutanix | [Proxmox VE](proxmox.md), [vSphere](vsphere.md), [XCP-ng](xcpng.md), [Nutanix](nutanix.md) |
+| A firewall | OPNsense, pfSense, FortiGate… | [OPNsense](opnsense.md), [pfSense](pfsense.md), [FortiGate](fortigate.md) |
+| A website, a port, a DNS name, a certificate, a host | Services | [Services](services.md) |
+| A job that must call in (backup, cron) | Heartbeat | [Heartbeat](push.md) |
+| A list of devices on a network | Scan my network | [Add your first monitor](../install/first-device.md#scan-a-network) |
+| Monitors from another tool | Import | [Import](../using/imports.md) |
+
+Steps are always the same: **Add a monitor**, pick a site (or **No site**), pick
+the type, fill in the form, **Add monitor**. See
+[Add your first monitor](../install/first-device.md).
+
 | Type | `kind` | Credential | Typical use |
 |---|---|---|---|
 | [SNMP device](snmp.md) | `snmp` | community or SNMP v3 | Switch, router, NAS, UPS, printer |

@@ -91,8 +91,8 @@
 	let importError = $state<unknown>(null);
 	let imported = $state(false);
 
-	async function runImport(text: string) {
-		if (!text.trim()) return;
+	async function runImport(text: string): Promise<boolean> {
+		if (!text.trim()) return false;
 		importing = true;
 		importError = null;
 		imported = false;
@@ -103,8 +103,10 @@
 			form.certificates = found.idp_certificates.join('\n\n');
 			errors = {};
 			imported = true;
+			return true;
 		} catch (cause) {
 			importError = cause;
+			return false;
 		} finally {
 			importing = false;
 		}
@@ -221,7 +223,7 @@
 					<textarea id="saml-xml" class="input min-h-24 font-mono text-[0.8125rem]" rows="4" bind:value={xml} spellcheck="false" placeholder="<EntityDescriptor …>" disabled={importing || saving}></textarea>
 				</Field>
 				<div class="flex flex-wrap items-center gap-2" aria-live="polite">
-					<Button variant="secondary" onclick={() => void runImport(xml)} loading={importing} disabled={!xml.trim() || saving}>{m.settings_saml_import_button()}</Button>
+					<Button variant="secondary" onclick={() => runImport(xml)} loading={importing} disabled={!xml.trim() || saving}>{m.settings_saml_import_button()}</Button>
 					<label class="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-line-strong px-3 text-sm font-semibold text-ink hover:bg-surface-2 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-info">
 						<FileUp class="size-4" aria-hidden="true" />
 						{m.settings_saml_import_file()}
@@ -289,7 +291,7 @@
 			{#if saveError}<ErrorNotice error={saveError} title={m.settings_saml_save_error()} />{/if}
 
 			<div class="flex flex-wrap items-center gap-2" aria-live="polite">
-				<Button type="submit" variant="secondary" loading={saving}>{m.settings_saml_save()}</Button>
+				<Button type="submit" variant="secondary" loading={saving} success={saved}>{m.settings_saml_save()}</Button>
 				<UnsavedBadge dirty={tracker.dirty} />
 				{#if saved}<Plate tone="signal" label={m.settings_saml_saved()} draw />{/if}
 			</div>

@@ -130,11 +130,10 @@ pub fn relying_party(
     if host.is_empty() {
         return Err(AuthError::Invalid("Unreadable origin.".into()));
     }
-    let local = host == "localhost" || host.ends_with(".localhost");
-    if scheme != "https" && !local {
+    // Le port ne sert que HTTPS : une origine en clair vient d'ailleurs.
+    if scheme != "https" {
         return Err(AuthError::Invalid(
-            "Passkeys need HTTPS (or http://localhost): open DumbMonit through its HTTPS address."
-                .into(),
+            "Passkeys need HTTPS: open DumbMonit through its https:// address.".into(),
         ));
     }
     if host.parse::<std::net::IpAddr>().is_ok() || host.starts_with('[') {
@@ -356,9 +355,10 @@ mod tests {
     }
 
     #[test]
-    fn https_est_exige_sauf_localhost() {
+    fn https_est_exige() {
         assert!(relying_party(&headers("http://monit.lan"), None).is_err());
-        let local = relying_party(&headers("http://localhost:8080"), None).ok().unwrap();
+        assert!(relying_party(&headers("http://localhost:8080"), None).is_err());
+        let local = relying_party(&headers("https://localhost:8080"), None).ok().unwrap();
         assert_eq!(local.id, "localhost");
     }
 

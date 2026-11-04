@@ -16,7 +16,7 @@ use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use tower::ServiceExt;
 
-const ORIGIN: &str = "http://localhost";
+const ORIGIN: &str = "https://localhost";
 const RP_ID: &str = "localhost";
 
 struct Reply {
@@ -241,7 +241,7 @@ async fn une_signature_fausse_ou_une_cle_inconnue_est_refusee() {
 }
 
 #[tokio::test]
-async fn l_origine_doit_etre_https_ou_localhost() {
+async fn l_origine_doit_etre_https() {
     let app = TestApp::configured().await;
     let request = Request::builder()
         .method("POST")

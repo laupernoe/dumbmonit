@@ -61,10 +61,13 @@
 		to = day(now);
 	}
 
+	/** True once the last submit went through (the button confirms in green). */
+	let downloadedOk = $state(false);
 	async function download(event: SubmitEvent) {
 		event.preventDefault();
 		error = null;
 		busy = true;
+		downloadedOk = false;
 		try {
 			const goal = Number(objective.replace(',', '.'));
 			const { blob, filename } = await downloadSlaReport({
@@ -84,6 +87,7 @@
 			link.click();
 			link.remove();
 			setTimeout(() => URL.revokeObjectURL(url), 10_000);
+			downloadedOk = true;
 		} catch (cause) {
 			error = toApiError(cause);
 		} finally {
@@ -135,7 +139,7 @@
 	{/if}
 
 	<div class="sm:col-span-2">
-		<Button type="submit" variant="primary" loading={busy} disabled={!from || !to}>
+		<Button type="submit" variant="primary" loading={busy} success={downloadedOk} disabled={!from || !to}>
 			<Download class="size-4" aria-hidden="true" />
 			{m.settings_sla_download()}
 		</Button>

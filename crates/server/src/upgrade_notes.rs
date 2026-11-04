@@ -36,7 +36,7 @@ use crate::update::Version;
 
 /// Dernière version publiée avant que les instances n'enregistrent la leur :
 /// celle dont est supposée venir une instance existante sans historique.
-pub const BASELINE: &str = "0.14.2";
+pub const BASELINE: &str = "0.15.0";
 
 const KEY_SEEN: &str = "upgrade_notes_seen";
 const KEY_FROM: &str = "upgrade_notes_from";
@@ -86,7 +86,7 @@ pub const CATALOG: &[Note] = &[
         compose: "services:\n  dumbmonit:\n    ports:\n      - \"8080:8080\"   # already \
                   there\n      - \"8443:8443\"   # new: encrypted agent channel",
         apply: Some("docker compose up -d"),
-        docs_url: Some("https://dumbmonit.readthedocs.io/en/latest/install/agent-security/"),
+        docs_url: Some("https://dumbmonit.app/docs/install/agent-security/"),
         check: Some(Check::AgentChannelPort),
     },
     Note {
@@ -96,15 +96,32 @@ pub const CATALOG: &[Note] = &[
         summary: "DumbMonit now speaks HTTPS itself, on the same port 8080: nothing new to \
                   publish. It uses a self-signed certificate until you give it yours (mount it and \
                   set the two variables below). Behind a reverse proxy, list the proxy's address \
-                  so DumbMonit trusts its X-Forwarded-* headers. Then turn on the HTTP to HTTPS \
-                  redirect in Settings, System, HTTPS and encryption (new installations have it on).",
+                  so DumbMonit trusts its X-Forwarded-* headers.",
         compose: "services:\n  dumbmonit:\n    environment:\n      # optional: your own \
                   certificate\n      DUMBMONIT_TLS_CERT: /certs/fullchain.pem\n      \
                   DUMBMONIT_TLS_KEY: /certs/privkey.pem\n      # behind a reverse proxy only\n      \
                   DUMBMONIT_TRUSTED_PROXIES: 172.16.0.0/12\n    volumes:\n      - \
                   ./certs:/certs:ro",
         apply: Some("docker compose up -d"),
-        docs_url: Some("https://dumbmonit.readthedocs.io/en/latest/install/https/"),
+        docs_url: Some("https://dumbmonit.app/docs/install/https/"),
+        check: None,
+    },
+    Note {
+        id: "https-only",
+        version: "0.16.0",
+        title: "The web port serves HTTPS only",
+        summary: "Since 0.16.0, plain HTTP is no longer served on port 8080: a request in clear \
+                  text only receives a redirect to https://. A reverse proxy must now reach \
+                  DumbMonit over HTTPS (https://dumbmonit:8080, with certificate verification \
+                  off or the DumbMonit certificate trusted). Agent install commands are https \
+                  and pin the server certificate: agents already installed keep reporting \
+                  over their encrypted channel, and a new kit or install command moves them \
+                  to https.",
+        compose: "services:\n  dumbmonit:\n    # Reverse proxy upstream (Nginx Proxy Manager, \
+                  Traefik, Caddy): https://dumbmonit:8080\n    # Skip certificate \
+                  verification, or trust the DumbMonit certificate",
+        apply: None,
+        docs_url: Some("https://dumbmonit.app/docs/install/https/"),
         check: None,
     },
 ];

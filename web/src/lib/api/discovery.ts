@@ -8,7 +8,10 @@ import type {
 	DiscoveryJob,
 	DiscoveryJobRequest,
 	DiscoveryJobSummary,
+	NetscanBulkAction,
+	NetscanBulkReport,
 	NetscanDevice,
+	NetscanReview,
 	NetscanSchedule,
 	NetscanScheduleInput
 } from './types';
@@ -83,4 +86,37 @@ export function markNetscanPortKnown(id: number): Promise<void> {
 export async function markAllNetscanKnown(): Promise<number> {
 	const raw = await request<{ marked?: number }>('/discovery/inventory/known', { method: 'POST' });
 	return raw?.marked ?? 0;
+}
+
+/** Most devices one bulk call accepts. */
+export const BULK_LIMIT = 200;
+
+/**
+ * Adds, ignores or restores several devices at once; one result per device.
+ * Longer lists are cut into calls of {@link BULK_LIMIT} and the reports merged.
+ */
+export async function bulkNetscanDevices(action: NetscanBulkAction, ids: number[]): Promise<NetscanBulkReport> {
+	const merged: NetscanBulkReport = { results: [], added: 0, pending_credentials: 0, already_present: 0, errors: 0 };
+	for (let i = 0; i < ids.length; i += BULK_LIMIT) {
+		const part = await request<NetscanBulkReport>('/discovery/inventory/bulk', {
+			method: 'POST',
+			body: { action, device_ids: ids.slice(i, i + BULK_LIMIT) }
+		});
+		merged.results.push(...part.results);
+		merged.added += part.added;
+		merged.pending_credentials += part.pending_credentials;
+		merged.already_present += part.already_present;
+		merged.errors += part.errors;
+	}
+	return merged;
+}
+
+/** Devices waiting for review, and whether the latest batch still has to be announced. */
+export function getNetscanReview(signal?: AbortSignal): Promise<NetscanReview> {
+	return request<NetscanReview>('/discovery/review', { signal });
+}
+
+/** Acknowledges the latest batch: it is not announced again. */
+export function markNetscanReviewSeen(): Promise<void> {
+	return request<void>('/discovery/review/seen', { method: 'POST' });
 }

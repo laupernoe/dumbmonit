@@ -33,6 +33,7 @@
 	import { countAlertsByTarget } from '#lib/alerts-attention.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
+	import ReviewNotice from '#lib/components/device-form/ReviewNotice.svelte';
 	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Menu, SelectionBar, Skeleton } from '#lib/ui/index.js';
 	import RackList from '#lib/components/devices/RackList.svelte';
 	import type { ReorderControls, RowSelection } from '#lib/components/devices/RackList.svelte';
@@ -626,16 +627,18 @@
 		if (location && subjects.length > 0) relayPlace = { location, ids: subjects.map((t) => t.id) };
 	}
 
-	async function placeRelayed() {
-		if (!relayPlace || bulkBusy) return;
+	async function placeRelayed(): Promise<boolean> {
+		if (!relayPlace || bulkBusy) return false;
 		const { location, ids } = relayPlace;
 		bulkBusy = true;
 		try {
 			await assignLocation(location.id, ids);
 			await alertsStore.refresh();
 			relayPlace = null;
+			return true;
 		} catch (error) {
 			bulkReport = { failed: [{ name: location.name, error }], total: ids.length };
+			return false;
 		} finally {
 			bulkBusy = false;
 		}
@@ -1001,6 +1004,8 @@
 		};
 	});
 </script>
+
+<ReviewNotice />
 
 {#if auth.isAdmin && (firstLoad || pageError)}
 	<!-- Loading or failed: the toolbar is not there yet, the add button still is. The empty state carries its own. -->
@@ -1386,7 +1391,7 @@
 			{/if}
 			{#if relayPlace}
 				<p>{m.devices_list_bulk_relay_place({ count: relayPlace.ids.length, location: relayPlace.location.name })}</p>
-				<Button size="sm" variant="secondary" loading={bulkBusy} onclick={() => void placeRelayed()}>{m.devices_list_bulk_relay_place_apply()}</Button>
+				<Button size="sm" variant="secondary" loading={bulkBusy} onclick={() => placeRelayed()}>{m.devices_list_bulk_relay_place_apply()}</Button>
 			{/if}
 			<Button size="sm" variant="ghost" onclick={() => { relaySkipped = 0; relayPlace = null; }}>{m.devices_list_bulk_dismiss()}</Button>
 		</div>

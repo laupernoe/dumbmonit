@@ -19,12 +19,21 @@
 		primary?: { label: string; href?: string; onclick?: () => void };
 		secondary?: { label: string; href?: string; onclick?: () => void };
 		tone?: 'signal' | 'ghost';
+		/** One discreet line (title, optional action) instead of the full ghost cell: for empty lists inside a settings panel. */
+		compact?: boolean;
 		class?: string;
 	}
 
-	let { title, description, icon: Icon, mascot, action, primary, secondary, tone = 'ghost', class: className = '' }: Props = $props();
+	let { title, description, icon: Icon, mascot, action, primary, secondary, tone = 'ghost', compact = false, class: className = '' }: Props = $props();
 </script>
 
+{#if compact}
+	<div class={`flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-2 ${className}`}>
+		<p>{title}{#if description}<span class="max-sm:hidden"> · {description}</span>{/if}</p>
+		{#if action}{@render action()}{/if}
+		{#if primary}<Button variant="secondary" href={primary.href} onclick={primary.onclick}>{primary.label}</Button>{/if}
+	</div>
+{:else}
 <div class={`ghost-cell rise-in flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-dashed border-line px-6 py-12 text-center max-sm:px-4 max-sm:py-6 ${className}`}>
 	{#if mascot}
 		<Mascot mood={mascot} class="mb-4 size-[4.5rem] max-sm:mb-2 max-sm:size-12" />
@@ -43,3 +52,4 @@
 		</div>
 	{/if}
 </div>
+{/if}

@@ -171,7 +171,7 @@ docker run --rm -v "$PWD:/work:ro" ghcr.io/laupernoe/dumbmonit:latest pack lint 
 
 ```bash
 curl -H 'Authorization: Bearer dmt_…' -H 'Content-Type: application/yaml' \
-  --data-binary @shelly-plug/pack.yaml http://localhost:8080/api/packs
+  --data-binary @shelly-plug/pack.yaml https://localhost:8080/api/packs
 ```
 
 打开**监控项 → 添加监控项**:*Shelly plug (Gen2+)* 已经在列表中。

@@ -30,7 +30,7 @@ docs/            this documentation (MkDocs, published on Read the Docs)
 编译发生在 Docker 中;主机上不需要安装任何 Rust。
 
 ```bash
-# 完整堆栈(构建镜像:大约 10 分钟冷启动) — UI on http://localhost:8080
+# 完整堆栈(构建镜像:大约 10 分钟冷启动) — UI on https://localhost:8080
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 # Rust,在 builder 阶段内(musl/alpine)

@@ -145,6 +145,61 @@ pub struct Ftl {
     pub privacy_level: Option<f64>,
 }
 
+/// `GET /api/stats/upstreams`.
+#[derive(Debug, Deserialize)]
+pub struct UpstreamsReply {
+    #[serde(default)]
+    pub upstreams: Vec<Upstream>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Upstream {
+    #[serde(default)]
+    pub ip: Option<String>,
+    #[serde(default)]
+    pub name: Option<String>,
+    /// -1 pour les deux entrées virtuelles `blocklist` et `cache`.
+    #[serde(default)]
+    pub port: Option<f64>,
+    #[serde(default)]
+    pub count: Option<f64>,
+    #[serde(default)]
+    pub statistics: Option<UpstreamStatistics>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpstreamStatistics {
+    /// Temps de réponse moyen, en secondes.
+    #[serde(default)]
+    pub response: Option<f64>,
+}
+
+/// `GET /api/lists` : les listes de blocage et d'autorisation.
+#[derive(Debug, Deserialize)]
+pub struct ListsReply {
+    #[serde(default)]
+    pub lists: Vec<List>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct List {
+    #[serde(default)]
+    pub enabled: bool,
+    /// Dernier téléchargement de gravity : 0 inconnu, 1 téléchargée, 2 inchangée,
+    /// 3 injoignable (copie locale employée), 4 injoignable sans copie.
+    #[serde(default)]
+    pub status: Option<f64>,
+    #[serde(default)]
+    pub invalid_domains: Option<f64>,
+}
+
+/// `GET /api/dhcp/leases`.
+#[derive(Debug, Deserialize)]
+pub struct LeasesReply {
+    #[serde(default)]
+    pub leases: Vec<serde_json::Value>,
+}
+
 // ------------------------------------------------------------------ mesures
 
 fn gauge(name: &str, value: f64, ts_ms: i64) -> Sample {
@@ -288,6 +343,68 @@ pub fn ftl_samples(ftl: &Ftl, ts_ms: i64) -> Vec<Sample> {
     out
 }
 
+/// Au plus autant de résolveurs amont portent une série nommée.
+pub const MAX_UPSTREAMS: usize = 8;
+
+/// Les résolveurs réellement interrogés : `blocklist` et `cache` sont des
+/// entrées virtuelles (port -1) que Pi-hole range avec eux.
+pub fn upstream_samples(reply: &UpstreamsReply, ts_ms: i64) -> Vec<Sample> {
+    let mut out = Vec::new();
+    let resolvers = reply
+        .upstreams
+        .iter()
+        .filter(|u| u.port.is_none_or(|port| port >= 0.0))
+        .filter(|u| !matches!(text(&u.ip), Some("blocklist" | "cache")))
+        .take(MAX_UPSTREAMS);
+    for upstream in resolvers {
+        let Some(ip) = text(&upstream.ip) else { continue };
+        let name = match upstream.port {
+            Some(port) => format!("{ip}:{port}"),
+            None => ip.to_string(),
+        };
+        let count = upstream.count.filter(|n| n.is_finite());
+        if let Some(count) = count {
+            out.push(
+                gauge("pihole_upstream_queries_24h", count, ts_ms)
+                    .with_label("upstream", name.clone()),
+            );
+        }
+        // Sans requête, la moyenne vaut 0 : ce n'est pas un résolveur rapide.
+        let used = count.is_some_and(|n| n > 0.0);
+        let response = upstream.statistics.as_ref().and_then(|s| s.response);
+        if let Some(response) = response.filter(|r| used && r.is_finite()) {
+            out.push(
+                gauge("pihole_upstream_response_seconds", response, ts_ms)
+                    .with_label("upstream", name),
+            );
+        }
+    }
+    out
+}
+
+/// L'état des listes activées. Sans le champ `status` (Pi-hole 6.0), on ne
+/// dit rien des téléchargements plutôt que d'annoncer « zéro échec ».
+pub fn list_samples(reply: &ListsReply, ts_ms: i64) -> Vec<Sample> {
+    let enabled: Vec<&List> = reply.lists.iter().filter(|l| l.enabled).collect();
+    let mut out = vec![gauge("pihole_lists_enabled", enabled.len() as f64, ts_ms)];
+    if enabled.iter().any(|l| l.status.is_some()) {
+        let failed = enabled.iter().filter(|l| matches!(l.status, Some(s) if s >= 3.0)).count();
+        out.push(gauge("pihole_lists_download_failed", failed as f64, ts_ms));
+    }
+    let invalid: f64 = enabled.iter().filter_map(|l| l.invalid_domains).sum();
+    out.push(gauge("pihole_lists_invalid_domains", invalid, ts_ms));
+    out
+}
+
+/// Les baux DHCP en cours. Rien quand il n'y en a aucun : le serveur DHCP de
+/// Pi-hole est éteint chez la plupart des installations.
+pub fn dhcp_samples(reply: &LeasesReply, ts_ms: i64) -> Vec<Sample> {
+    if reply.leases.is_empty() {
+        return Vec::new();
+    }
+    vec![gauge("pihole_dhcp_leases", reply.leases.len() as f64, ts_ms)]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -423,5 +540,44 @@ mod tests {
         let samples = ftl_samples(&ftl.ftl, 0);
         assert!(value(&samples, "pihole_ftl_uptime_seconds").unwrap() > 0.0);
         assert_eq!(value(&samples, "pihole_privacy_level"), Some(0.0));
+    }
+
+    #[test]
+    fn les_resolveurs_amont_sans_les_entrees_virtuelles() {
+        let reply: UpstreamsReply =
+            serde_json::from_str(include_str!("testdata/2026.09.0/stats_upstreams.json")).unwrap();
+        let samples = upstream_samples(&reply, 0);
+        let named: Vec<&Sample> =
+            samples.iter().filter(|s| s.metric == "pihole_upstream_response_seconds").collect();
+        // `blocklist` et `cache` écartés ; un résolveur sans requête n'a pas de temps.
+        assert_eq!(named.len(), 1);
+        assert_eq!(named[0].labels["upstream"], "127.0.0.1:5335");
+        assert_eq!(named[0].value, 0.0231);
+        let counts = samples.iter().filter(|s| s.metric == "pihole_upstream_queries_24h").count();
+        assert_eq!(counts, 2);
+    }
+
+    #[test]
+    fn les_listes_en_echec_sont_comptees_parmi_les_actives() {
+        let reply: ListsReply =
+            serde_json::from_str(include_str!("testdata/2026.09.0/lists.json")).unwrap();
+        let samples = list_samples(&reply, 0);
+        assert_eq!(value(&samples, "pihole_lists_enabled"), Some(3.0));
+        // Statuts 3 et 4 ; la liste désactivée (statut 4) ne compte pas.
+        assert_eq!(value(&samples, "pihole_lists_download_failed"), Some(2.0));
+        assert_eq!(value(&samples, "pihole_lists_invalid_domains"), Some(2.0));
+
+        let old: ListsReply =
+            serde_json::from_str(r#"{"lists":[{"enabled":true,"invalid_domains":0}]}"#).unwrap();
+        assert!(value(&list_samples(&old, 0), "pihole_lists_download_failed").is_none());
+    }
+
+    #[test]
+    fn les_baux_dhcp_ne_sont_publies_que_s_il_y_en_a() {
+        let reply: LeasesReply =
+            serde_json::from_str(include_str!("testdata/2026.09.0/dhcp_leases.json")).unwrap();
+        assert_eq!(value(&dhcp_samples(&reply, 0), "pihole_dhcp_leases"), Some(2.0));
+        let empty: LeasesReply = serde_json::from_str(r#"{"leases":[]}"#).unwrap();
+        assert!(dhcp_samples(&empty, 0).is_empty());
     }
 }

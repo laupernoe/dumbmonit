@@ -30,7 +30,7 @@ One toolbar holds everything:
 
 - the **search** box (name, address or kind);
 - **Filter**, which opens the state (All, Needs attention, Reporting,
-  Disabled), kind, sort and tag filters — the number on the button counts the
+  Disabled), kind, site, sort and tag filters — the number on the button counts the
   ones in use, and **Clear filters** resets them. Filters live in the address,
   so a filtered list can be bookmarked or shared;
 - **Compact** / **Tiles**;
@@ -45,15 +45,18 @@ One toolbar holds everything:
 
 ![A monitor page: state, actions, alerts, the kind-specific panel, metrics](../assets/screenshots/device-light.png){ loading=lazy }
 
-The monitor page shows its state plate, address, kind, detected profile, tags,
-last probe, and for services the certificate status. Actions:
+The monitor page shows its state plate, kind, address, interval, last probe, and
+for services the certificate status. It is for reading data: actions are icon
+buttons (hover or long-press for the name), and everything that changes the
+monitor is behind the gear. Actions:
 
 | Action | Effect |
 |---|---|
-| Probe now | Runs one probe immediately and reports how many samples and series it produced. The first thing to try when a monitor shows no data. |
-| Edit | Opens the same form as when adding, prefilled. Leaving the credential empty keeps the stored one. |
-| Silence 1 h / Silence until… | A one-off maintenance window on this monitor. |
-| Delete | Asks "Delete for good?" inline for five seconds, then deletes the monitor. Its series stay in VictoriaMetrics until retention expires. |
+| Probe now (pulse icon) | Runs one probe immediately and reports how many samples and series it produced. The first thing to try when a monitor shows no data. |
+| Snooze (bell icon) | A small menu: **Snooze 1 h**, or **Snooze until…** for a custom end. A one-off maintenance window on this monitor; the menu lifts it again. |
+| Logs | Opens the log search filtered on this monitor. |
+| Settings (gear) | Opens the same form as when adding, prefilled. Leaving the credential empty keeps the stored one. For an agent it also holds the relay mode, log collection, the services to watch on its machine and re-enrolment. |
+| More (⋯), Delete | Asks "Delete for good?" inline for five seconds, then deletes the monitor. Its series stay in VictoriaMetrics until retention expires. |
 
 Below: **Alerts on this monitor** — each active alert offers *Ack*, *Snooze*
 and *Ignore*, and a rule ignored on this monitor is listed separately with
@@ -91,7 +94,8 @@ agent and nobody monitors yet (**Add** creates them at once, except SNMP devices
 which open the form for the community), and the monitor types that fit the site
 (the ones its devices already use, then the common ones). Every proposal is
 filled in with the site's relay agent, its location and its usual folder, and you
-can still change them in the form. Without any location the page is the plain
+can still change them in the form. **No site** is a normal choice: the monitor is then
+not tied to a place on the map. Without any location the page is the plain
 list of types. In MSP mode only the current client's sites are offered. The
 setup wizard's *Add your first monitors* step offers the same choice.
 

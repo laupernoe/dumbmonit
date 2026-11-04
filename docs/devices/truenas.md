@@ -99,6 +99,34 @@ A few things TrueNAS does that are worth knowing:
   `pool/snapshot` in 25.10 and both are tried; `smart/test/results` disappeared
   in 25.10 and is then skipped in silence.
 
+### Deeper checks
+
+Besides pools, disks and tasks, the collector reads a few more places where a
+NAS fails quietly. Each call is optional: a TrueNAS version that does not have
+it, or a refused call, costs those metrics and nothing else.
+
+* **Web interface certificate.** `certificate_expiry_days` per certificate
+  (negative once expired). Only the certificate that serves the web interface
+  is marked `in_use="1"`, and only that one raises an alert: a spare
+  certificate that lapsed bothers nobody. Certificate signing requests are
+  ignored.
+* **Boot pool.** `boot_pool_healthy` and `boot_pool_used_percent`. A degraded
+  boot mirror still boots; the next device to fail leaves the NAS without a
+  system. Old boot environments pile up with each update and a full boot pool
+  blocks the next one.
+* **Remote backup tasks.** Cloud sync, rsync and cloud backup tasks:
+  `backup_task_failed` (1 when the last job failed, 0 when it succeeded) and
+  `backup_task_last_run_age_seconds`. Disabled tasks, tasks never run and jobs
+  still running publish no failure. Governed by the `tasks` option.
+* **Apps and virtual machines.** `app_running`, `app_crashed` and
+  `app_upgrade_available` per app, and `vm_running` for the virtual machines
+  set to start with the NAS only (a machine you stopped on purpose has no
+  series). Governed by the `services` option.
+
+Added built-in rules: NAS certificate expiring (14 days), NAS certificate
+expired (2 days), NAS boot pool degraded, NAS boot pool almost full (85%), NAS
+remote backup task failed, NAS app crashed, NAS virtual machine stopped.
+
 Built-in rules that apply: Monitor unreachable, NAS pool degraded, NAS disk
 errors, NAS pool almost full, NAS scrub found errors, NAS scrub overdue, NAS disk
 failed its SMART test, NAS disk too hot, NAS dataset near its quota, NAS

@@ -25,12 +25,15 @@
 //! serveur lui-même, en Rust pur, sans C : il passe le binaire statique musl et
 //! l'image `scratch` sans rien changer.
 //!
-//! # Ce qu'elles ne peuvent pas détecter
+//! # Santé interne (PostgreSQL)
 //!
-//! La réplication en retard, un verrou qui traîne, une table qui enfle. Tout cela
-//! se lit dans les vues d'administration du moteur, avec une requête que
-//! l'utilisateur écrit lui-même dans l'option `query` — auquel cas la valeur
-//! renvoyée devient une courbe, et l'option `expect` un seuil.
+//! Sur la même connexion, la sonde PostgreSQL lit ensuite les vues de statistiques
+//! (voir [`pgstats`]) : connexions contre `max_connections`, transactions longues,
+//! verrous, réplication, âge des identifiants de transaction, gonflement des tables,
+//! archivage WAL. Désactivable avec `server_stats=false`. MySQL / MariaDB n'ont pas
+//! cet équivalent : la requête de l'utilisateur (`query`) y reste le moyen de
+//! lire une valeur du moteur — la valeur renvoyée devient une courbe, et l'option
+//! `expect` un seuil.
 //!
 //! # Adresse et étiquettes
 //!
@@ -45,9 +48,11 @@
 //! | `expect` | — | Valeur attendue en première colonne. |
 //! | `sslmode` | `prefer` | `disable`, `prefer`, `require`, `verify-full`. |
 //! | `allow_private_targets` | `false` | Autorise la boucle locale (voir `guard`). |
+//! | `server_stats` | `true` | PostgreSQL : lit aussi la santé interne du serveur. |
 //! | `timeout_seconds` | `5` | Délai propre à la sonde (1 à 60). |
 
 pub mod options;
+mod pgstats;
 pub(crate) mod verdict;
 
 use std::time::Instant;
@@ -72,6 +77,9 @@ use verdict::{Engine, Scalar, Stage};
 /// collé par mégarde ne fasse enfler la mémoire du superviseur toutes les
 /// minutes.
 const MAX_ROWS: usize = 10_000;
+
+/// Temps au plus consacré à la lecture des statistiques du serveur PostgreSQL.
+const STATS_BUDGET: std::time::Duration = std::time::Duration::from_secs(3);
 
 /// Nom annoncé au moteur, visible dans `pg_stat_activity`.
 ///
@@ -232,6 +240,18 @@ async fn postgres(report: &mut Report, options: &Options, endpoint: &str) {
     drop(rows);
     report.gauge("sql_query_seconds", query_started.elapsed().as_secs_f64());
     finish(report, options, count, first.as_ref());
+
+    // Santé interne du serveur, sur la même connexion. Tout manque est silencieux
+    // (compte sans `pg_monitor`, serveur ancien) et le temps passé ici n'entre pas
+    // dans la durée de la sonde.
+    if options.server_stats {
+        let started = Instant::now();
+        let budget = deadline.remaining().mul_f32(0.75).min(STATS_BUDGET);
+        for sample in pgstats::collect(&mut connection, report.timestamp_ms(), budget).await {
+            report.push(sample);
+        }
+        report.exclude(started.elapsed());
+    }
     let _ = connection.close().await;
 }
 

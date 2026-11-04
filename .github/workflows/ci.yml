@@ -115,7 +115,10 @@ jobs:
         run: cargo fmt --all --check
       - if: env.RUN == 'true'
         run: cargo clippy --all-targets --all-features -- -D warnings
-      - if: env.RUN == 'true'
+      # The tests are the slow part (about 25 minutes). A PR into dev skips them:
+      # the full check already ran on the build VPS, and they run again on the
+      # push to dev and on the dev -> main PR, which is where they gate.
+      - if: env.RUN == 'true' && !(github.event_name == 'pull_request' && github.base_ref == 'dev')
         run: cargo test --all-features
 
   # Test coverage of the Rust workspace, on pushes to dev only (main receives

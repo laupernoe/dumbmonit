@@ -11,6 +11,11 @@ metrics:
   - { name: immich_photos, label: "Photos" }
   - { name: immich_videos, label: "Videos" }
   - { name: immich_users, label: "Users" }
+  - { name: immich_user_usage_bytes, label: "Usage per user", unit: "B" }
+  - { name: immich_user_quota_used_percent, label: "Quota used per user", unit: "%", better: "lower" }
+  - { name: immich_db_backups, label: "Database backups" }
+  - { name: immich_db_backup_last_age_seconds, label: "Last database backup age", unit: "s", better: "lower" }
+  - { name: immich_db_backup_last_bytes, label: "Last database backup size", unit: "B" }
   - { name: immich_jobs_active, label: "Jobs active" }
   - { name: immich_jobs_failed, label: "Jobs failed", better: "lower" }
   - { name: immich_queue_active, label: "Queue active" }
@@ -31,6 +36,9 @@ views:
       - immich_photos
       - immich_videos
       - immich_users
+      - immich_db_backups
+      - immich_db_backup_last_age_seconds
+      - immich_db_backup_last_bytes
       - immich_jobs_active
       - immich_jobs_failed
       - immich_queue_active
@@ -44,6 +52,12 @@ views:
   - view: timeseries
     title: "Storage used"
     metrics: [immich_storage_used_percent]
+  - view: topn
+    title: "Quota used per user"
+    metrics: [immich_user_quota_used_percent]
+    group_by: user
+    options:
+      limit: "10"
   - view: timeseries
     title: "Job queue"
     metrics: [immich_jobs_waiting, immich_queue_waiting]

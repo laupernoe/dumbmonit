@@ -173,6 +173,8 @@ mod tests {
             "/system/storage",
             "/webpush",
             "/upgrade-notes",
+            // Retirer l'agent d'une machine : session d'administrateur (`AdminUser`).
+            "/targets/{id}/agent/uninstall",
         ];
         TOKEN_DENIED.iter().chain(BY_HANDLER.iter()).any(|prefix| {
             rest == *prefix || rest.strip_prefix(prefix).is_some_and(|r| r.starts_with('/'))

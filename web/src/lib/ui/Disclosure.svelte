@@ -32,13 +32,13 @@
 	<h3 class="m-0 text-sm font-semibold text-ink">
 		<button
 			type="button"
-			class="flex min-h-11 w-full items-center gap-2 rounded-[inherit] px-4 py-2.5 text-left hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-signal"
+			class="flex min-h-11 w-full items-center gap-2 rounded-[inherit] px-4 py-2.5 text-left transition-colors duration-150 hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-signal"
 			aria-expanded={open}
 			aria-controls={bodyId}
 			onclick={() => (open = !open)}
 		>
 			<ChevronRight
-				class={`size-4 shrink-0 text-ink-3 transition-transform duration-200 ease-out-expo ${open ? 'rotate-90' : ''}`}
+				class={`size-4 shrink-0 text-ink-3 transition-transform duration-150 ease-out-expo ${open ? 'rotate-90' : ''}`}
 				aria-hidden="true"
 			/>
 			<span class="min-w-0 flex-1 truncate">{title}</span>
@@ -46,7 +46,7 @@
 			{#if summary}<span class="shrink-0 text-[0.8125rem] font-normal text-ink-2">{summary}</span>{/if}
 		</button>
 	</h3>
-	<div id={bodyId} hidden={!open} class="border-t border-line px-4 py-4">
+	<div id={bodyId} hidden={!open} class="motion-reveal border-t border-line px-4 py-4">
 		{@render children()}
 	</div>
 </div>

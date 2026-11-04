@@ -38,10 +38,10 @@ voyagent sur ce lien :
   (communauté SNMP, jeton d'API Proxmox…), déchiffrés, à l'intérieur de
   chaque tâche de sonde.
 
-En HTTP simple à travers l'internet, les deux seraient lisibles en chemin :
-mettez le serveur derrière HTTPS avant de relayer quoi que ce soit en
-dehors de votre propre réseau. Sur un LAN ou un VPN, HTTP est acceptable et
-le jeton est le seul secret en vol jusqu'à ce que vous assigniez des
+Le port web n'accepte que HTTPS, donc les deux sont chiffrés en chemin. Sur
+internet, placez le serveur derrière un reverse proxy avec un certificat public
+(il se connecte à DumbMonit en HTTPS) ; sur un LAN ou un VPN, le certificat
+autosigné convient, épinglé par l'empreinte de la commande affichée. Le jeton est le seul secret en vol jusqu'à ce que vous assigniez des
 surveillances au relais. Les identifiants ne sont jamais écrits sur disque d'un
 côté ou de l'autre : une tâche de sonde vit dans la mémoire du serveur
 jusqu'à ce que le relais la rapporte, et l'agent ne garde rien entre deux
@@ -223,6 +223,17 @@ son rôle et gagne quand les deux sont en panne.
 ## Sonder depuis le serveur et plusieurs relais
 
 Un moniteur n'a pas à choisir entre le serveur et un relais : il peut être sondé depuis les deux, ou depuis plusieurs relais, avec un quorum et un tour de confirmation avant toute alerte. Voir [Sonder depuis plusieurs emplacements](../devices/services.fr.md#sonder-depuis-plusieurs-emplacements).
+
+## Dépannage
+
+| Ce que vous voyez | Cause et correction |
+|---|---|
+| La machine relais n'apparaît jamais | La commande n'a pas atteint le serveur. Depuis le site distant, ouvrez l'adresse du serveur dans un navigateur et vérifiez le TCP 8443. Voir [Ports réseau](ports.md). |
+| La page d'ajout affiche un message rouge sur le canal | Le port 8443 n'est pas publié ou est bloqué. Publiez-le (`"8443:8443"` sous `ports:`) et ouvrez-le dans le pare-feu. |
+| La page de l'agent n'indique pas *Relais* | L'interrupteur relais est éteint. Ouvrez la surveillance, utilisez la **roue crantée**, activez *Relais pour un site distant*, indiquez le site, enregistrez. C'est pris en compte au prochain envoi. |
+| Une surveillance affiche *Timed out: relay agent … did not pick up the probe* (message du serveur, en anglais) | Le relais est arrêté ou pas en mode relais. Vérifiez le service sur la machine relais et que `relay: true` est défini. |
+| Une surveillance affiche un message rouge sous son adresse | Le relais ne joint pas l'équipement. L'adresse doit être celle **vue depuis le site distant**, et le relais a besoin des mêmes accès que le serveur. |
+| Les agents installés derrière le relais n'apparaissent pas | Lancez la commande copiée depuis la page *Installer un agent derrière ce relais*, pas la commande directe. Le relais ouvre sa passerelle à son prochain envoi, en moins d'une minute. |
 
 ## Limites
 

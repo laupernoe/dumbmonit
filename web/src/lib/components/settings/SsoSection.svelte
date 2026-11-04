@@ -15,7 +15,7 @@
 		type OidcTestReport
 	} from '#lib/api/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, Confirm, CopyBlock, Disclosure, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
+	import { Button, Confirm, CopyBlock, Disclosure, DocLink, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
 	import UnsavedBadge from './UnsavedBadge.svelte';
 	import { useDirtyTracker } from '#lib/settings/unsaved.svelte.js';
@@ -161,14 +161,16 @@
 	let report = $state<OidcTestReport | null>(null);
 	let testError = $state<unknown>(null);
 
-	async function test() {
+	async function test(): Promise<boolean> {
 		testing = true;
 		report = null;
 		testError = null;
 		try {
 			report = await testOidcDiscovery(form.issuer.trim() || undefined);
+			return report.ok;
 		} catch (cause) {
 			testError = cause;
+			return false;
 		} finally {
 			testing = false;
 		}
@@ -192,15 +194,7 @@
 		<Skeleton class="h-10 w-full" rows={6} />
 	{:else}
 		<form class="grid gap-4" onsubmit={submit} novalidate>
-			<p class="text-sm text-ink-2">
-				{#if fromEnv}
-					{m.settings_sso_note_env()}
-				{:else if config.source === 'settings'}
-					{m.settings_sso_note_settings()}
-				{:else}
-					{m.settings_sso_note_none()}
-				{/if}
-			</p>
+			<DocLink page="using/settings/" />
 
 			<Disclosure title={m.settings_block_connection()} bind:open={connOpen}>
 			<div class="grid gap-4">
@@ -233,7 +227,6 @@
 				<div class="flex flex-wrap items-start gap-2 rounded-[var(--radius-card)] border border-advisory/30 bg-surface p-3 text-sm text-ink-2" role="note">
 					<Plate tone="advisory" label={m.settings_sso_autocreate_plate()} />
 					<p class="min-w-0 flex-1">
-						{m.settings_sso_autocreate_off_body()}
 						{#if fromEnv}{m.settings_sso_autocreate_env_hint()}{:else}{m.settings_sso_autocreate_ui_hint()}{/if}
 					</p>
 				</div>
@@ -266,9 +259,9 @@
 			{/if}
 
 			<div class="flex flex-wrap items-center gap-2" aria-live="polite">
-				<Button type="submit" variant="secondary" loading={saving}>{m.settings_sso_save()}</Button>
+				<Button type="submit" variant="secondary" loading={saving} success={saved}>{m.settings_sso_save()}</Button>
 				<UnsavedBadge dirty={tracker.dirty} />
-				<Button variant="secondary" onclick={() => void test()} loading={testing} disabled={saving}>
+				<Button variant="secondary" onclick={() => test()} loading={testing} disabled={saving}>
 					<Radar class="size-4" aria-hidden="true" />
 					{m.settings_sso_test()}
 				</Button>

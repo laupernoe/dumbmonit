@@ -1,8 +1,14 @@
 #!/bin/sh
 # Installe l'agent système DumbMonit et son service.
 #
-#   curl -sSL http://serveur:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://serveur:8080 \
+#   curl -sSL -k --pinnedpubkey sha256//<clé> https://serveur:8080/install.sh | sh -s -- \
+#       --token=dmon_xxx --url=https://serveur:8080 --pinned-key=sha256//<clé> \
 #       --sha256=linux-x86_64:<empreinte>,linux-aarch64:<empreinte>,freebsd-x86_64:<empreinte>
+#
+# Le serveur ne sert que HTTPS. Son certificat autosigné est reconnu à sa clé
+# publique (`--pinned-key`, que la commande donne aussi à curl) : le script et
+# le binaire ne sont lus qu'auprès de ce serveur-là, et l'agent garde la clé.
+# Un certificat d'une autorité de confiance se passe d'épingle.
 #
 # C'est la commande que le serveur affiche à la création d'un jeton : elle porte
 # l'empreinte SHA-256 attendue de chaque binaire qu'il livre, et le script refuse
@@ -73,7 +79,7 @@ USAGE:
 
 OPTIONS:
     --token=TOKEN       Enrollment token (required)
-    --url=URL           Server URL, for example http://server:8080
+    --url=URL           Server URL, https:// only, for example https://server:8080
     --tls-url=URL       Encrypted agent channel, for example https://server:8443
                         (default: the host of --url, port 8443)
     --ca-pin=SHA256     Fingerprint of the server's certificate authority. With
@@ -101,8 +107,9 @@ OPTIONS:
     --bin=PATH          Local binary to install instead of downloading it
     --pinned-key=PIN    Public key of the server's HTTPS certificate
                         (sha256//base64, as curl --pinnedpubkey takes it), for
-                        a self-signed certificate: downloads use HTTPS checked
-                        against this key. Requires curl.
+                        a self-signed certificate: downloads are checked
+                        against this key, and the agent keeps it (server_pin).
+                        Requires curl.
     --sha256=LIST       Expected SHA-256 of the downloaded binary, as
                         platform-arch:hex pairs separated by commas (for example
                         linux-x86_64:0a1b…). The install command shown by the
@@ -358,8 +365,12 @@ fi
 # À défaut d'option explicite, l'URL est celle depuis laquelle ce script a été
 # téléchargé. Sans l'une ni l'autre, impossible de deviner : autant le dire.
 [ -n "$URL" ] || URL="$DUMBMONIT_URL"
-[ -n "$URL" ] || echec "the server URL is required (--url=http://server:8080)"
+[ -n "$URL" ] || echec "the server URL is required (--url=https://server:8080)"
 URL="${URL%/}"
+case "$URL" in
+    https://*) ;;
+    *) echec "the server URL must start with https:// (got $URL): DumbMonit only serves HTTPS" ;;
+esac
 
 # ---------------------------------------------------------------- binaire
 
@@ -367,10 +378,11 @@ URL="${URL%/}"
 # certificat autosigné par sa clé, et retomber sur « sans vérification »
 # reviendrait à télécharger en clair.
 if [ -n "$PINNED_KEY" ]; then
-    case "$PINNED_KEY" in
-        sha256//*) ;;
-        *) echec "invalid --pinned-key value (expected sha256//<base64>): $PINNED_KEY" ;;
-    esac
+    # Exactement une empreinte SHA-256 en base64 : la valeur finit dans la
+    # configuration de l'agent.
+    if ! printf '%s' "$PINNED_KEY" | grep -Eq '^sha256//[A-Za-z0-9+/]{43}=$'; then
+        echec "invalid --pinned-key value (expected sha256//<base64>): $PINNED_KEY"
+    fi
     command -v curl >/dev/null 2>&1 \
         || echec "--pinned-key needs curl (the server's HTTPS certificate is checked by its key)"
 fi
@@ -378,10 +390,20 @@ fi
 telecharger() {
     if [ -n "$PINNED_KEY" ]; then
         # `-k` lève la vérification par une autorité (le certificat est
-        # autosigné) ; `--pinnedpubkey` la remplace par la clé attendue.
-        curl -fsSL -k --pinnedpubkey "$PINNED_KEY" "$1" -o "$2"
+        # autosigné) ; `--pinnedpubkey` la remplace par la clé attendue. Un
+        # renvoi (binaire macOS publié sur GitHub) n'est pas suivi sous cette
+        # clé, qui n'est pas celle de GitHub : il l'est à part, en HTTPS
+        # vérifié par les autorités du système — l'empreinte SHA-256 du
+        # binaire fait foi de toute façon.
+        suite="$(curl -fsS -k --pinnedpubkey "$PINNED_KEY" -o "$2" -w '%{redirect_url}' "$1")" \
+            || return 1
+        case "$suite" in
+            "") ;;
+            https://*) curl -fsSL --proto =https "$suite" -o "$2" ;;
+            *) return 1 ;;
+        esac
     elif command -v curl >/dev/null 2>&1; then
-        curl -fsSL "$1" -o "$2"
+        curl -fsSL --proto =https "$1" -o "$2"
     elif command -v fetch >/dev/null 2>&1; then
         fetch -qo "$2" "$1"
     elif command -v wget >/dev/null 2>&1; then
@@ -549,6 +571,7 @@ umask 077
     echo "# Written by install.sh — environment variables override it."
     echo "server_url: $URL"
     echo "token: $TOKEN"
+    if [ -n "$PINNED_KEY" ]; then echo "server_pin: $PINNED_KEY"; fi
     if [ -n "$TLS_URL" ]; then echo "tls_url: $TLS_URL"; fi
     if [ -n "$CA_PIN" ]; then echo "ca_pin: $CA_PIN"; fi
     if [ -n "$INTERVAL" ]; then echo "interval_secs: $INTERVAL"; fi

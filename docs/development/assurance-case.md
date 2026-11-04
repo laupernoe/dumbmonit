@@ -101,9 +101,8 @@ The argument follows the design principles of Saltzer and Schroeder.
 - Second factor: TOTP, with hashed single-use recovery codes (`auth/totp.rs`).
 - OpenID Connect: state, nonce and PKCE `S256` (`auth/oidc/pkce.rs`).
 - All primitives come from maintained libraries (`aes-gcm`, `argon2`, `sha2`);
-  none is home-made. The built-in listener speaks plain HTTP; the
-  documentation requires a TLS reverse proxy, and cookies gain `Secure` when the
-  request arrives over HTTPS (`auth/cookie.rs`).
+  none is home-made. The built-in listener only serves HTTPS (plain HTTP
+  gets a redirect), and cookies gain `Secure` (`auth/cookie.rs`).
 
 ## Countermeasures to common weaknesses
 
@@ -123,7 +122,7 @@ The argument follows the design principles of Saltzer and Schroeder.
 | Software and data integrity, CWE-494 | Agent installers verify the SHA-256 of the downloaded binary | `crates/agent/install/install.sh`, `install.ps1` |
 | Logging and monitoring failures, CWE-778 | Security log of sign-ins and sensitive changes | `auth/audit.rs`; test `security_audit_api.rs` |
 
-Known residual risks are listed in the security model (plain HTTP listener,
+Known residual risks are listed in the security model (self-signed default certificate,
 unencrypted monitor options, unauthenticated embedded VictoriaMetrics). The
 CSP allows inline styles (`style-src 'unsafe-inline'`), which weakens it against
 style injection but not against script execution. One accepted advisory

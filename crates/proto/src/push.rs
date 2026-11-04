@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::logs::LogsSetting;
 use crate::selfupdate::{AgentUpdateOffer, SelfUpdateInfo};
+use crate::sentinel::SentinelSetting;
 use crate::{EventLogReport, EventLogRule, Sample};
 
 /// Version du dialogue de poussée.
@@ -78,6 +79,20 @@ pub const AGENT_KEY_HEADER: &str = "x-dumbmonit-agent-key";
 pub const BINDING_MISMATCH: &str = "This machine is already enrolled and bound to another agent installation. \
      If you reinstalled it, open its device page in DumbMonit and click \
      'Allow re-enrolment', then restart the agent.";
+
+/// Ce que le serveur répond à une machine dont l'enrôlement attend la
+/// validation d'un administrateur.
+///
+/// Fait partie du protocole, comme [`BINDING_MISMATCH`] : l'agent le reconnaît
+/// pour écrire « waiting for approval » dans son journal au lieu d'un refus, et
+/// réessaie avec sa temporisation habituelle.
+pub const ENROLMENT_PENDING: &str = "This machine is waiting for approval: an administrator must \
+     accept it in DumbMonit (Settings > Agents > Waiting for approval). The agent retries on its \
+     own; nothing is recorded until then.";
+
+/// Ce que le serveur répond à une machine dont l'enrôlement a été refusé.
+pub const ENROLMENT_REJECTED: &str = "An administrator rejected the enrolment of this machine. It \
+     can ask again in 24 hours, or right away with another enrolment token.";
 
 /// Ce que la machine surveillée déclare d'elle-même.
 ///
@@ -364,6 +379,11 @@ pub struct PushAck {
     /// `None` chez un serveur antérieur : l'agent ne collecte alors rien.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub logs: Option<LogsSetting>,
+    /// Mode sentinelle de cette machine, avec son canal de notification. Posé
+    /// seulement sur le canal chiffré, et seulement pour la machine désignée.
+    /// `None` chez un serveur antérieur : l'agent ne surveille alors rien.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sentinel: Option<SentinelSetting>,
 }
 
 /// Mode relais tel que l'interface le règle pour une machine.
@@ -507,6 +527,7 @@ mod tests {
             event_rules: None,
             agent_update: None,
             logs: None,
+            sentinel: None,
         };
         let json = serde_json::to_string(&issued).expect("sérialisation");
         assert!(json.contains(AGENT_SECRET_PREFIX));
@@ -569,6 +590,7 @@ mod tests {
             }]),
             agent_update: None,
             logs: Some(LogsSetting { enabled: true, ..LogsSetting::default() }),
+            sentinel: None,
         };
         let decoded: PushAck =
             serde_json::from_str(&serde_json::to_string(&ack).unwrap()).expect("désérialisation");

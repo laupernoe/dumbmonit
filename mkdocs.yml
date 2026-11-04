@@ -1,6 +1,6 @@
 site_name: DumbMonit
 site_description: Simple monitoring from homelabs to mid-sized companies. One container, one IP address, useful alerts in a minute.
-site_url: https://dumbmonit.readthedocs.io/en/latest/
+site_url: https://dumbmonit.app/docs/
 docs_dir: docs
 exclude_docs: |
   requirements.txt
@@ -9,7 +9,7 @@ exclude_docs: |
 # hooks/rtd_language.py. site_url, theme.language, the search language, the language
 # switcher (extra.alternate) and the navigation titles are set there.
 # Published twice: on the product website under /docs/ (DUMBMONIT_DOCS_BASE, built by
-# .github/workflows/site.yml) and on Read the Docs as a mirror (the site_url below).
+# the website build) and on Read the Docs as a mirror (the site_url below).
 # The header carries the website's navigation (overrides/partials/header.html).
 hooks:
   - hooks/rtd_language.py
@@ -77,11 +77,13 @@ nav:
   - Install:
       - Docker: install/docker.md
       - HTTPS and encryption: install/https.md
+      - Network ports: install/ports.md
       - Add your first monitor: install/first-device.md
       - Monitor a remote site: install/remote-site.md
       - Agent channel security: install/agent-security.md
       - Backup and restore: install/backup.md
       - Watching DumbMonit itself: install/self-monitoring.md
+      - Sentinel mode: install/sentinel.md
       - Server logs: install/logs.md
       - Update: install/update.md
       - Verify a release: install/verify.md
@@ -97,6 +99,7 @@ nav:
       - XCP-ng / XenServer: devices/xcpng.md
       - Nutanix AHV: devices/nutanix.md
       - Synology DSM: devices/synology.md
+      - Synology agent (DSM 7): devices/synology-agent.md
       - OPNsense: devices/opnsense.md
       - pfSense: devices/pfsense.md
       - FortiGate: devices/fortigate.md
@@ -180,6 +183,7 @@ nav:
       - Linux, macOS, FreeBSD and Windows agent: devices/agent.md
       - Deploy the agent with Active Directory: devices/agent-active-directory.md
       - Windows event log alerts: devices/agent-windows-events.md
+      - Databases and their backups: devices/agent-databases.md
       - Services (HTTP, TCP, DNS, ping, TLS, NTP): devices/services.md
       - Heartbeat (push): devices/push.md
       - Website changes: devices/webchange.md
@@ -221,6 +225,7 @@ nav:
       - Settings: using/settings.md
       - Configuration files (GitOps): using/config-files.md
       - LDAP / Active Directory: using/ldap.md
+      - Single sign-on (OIDC): using/sso.md
       - SAML 2.0: using/saml.md
       - SCIM provisioning: using/scim.md
       - Teams and permissions: using/teams.md

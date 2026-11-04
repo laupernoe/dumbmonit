@@ -97,7 +97,7 @@ indirizzo (`http://host:8428`): quello integrato non viene più avviato e
 
 ## Primo avvio {#first-start}
 
-Apri `http://<your-host>:8080`. Un'istanza nuova mostra la schermata `/setup`,
+Apri `https://<your-host>:8080`. Il browser mostra un avviso una sola volta per il certificato autofirmato (vedi [HTTPS and encryption](https.md)). Un'istanza nuova mostra la schermata `/setup`,
 dove crei il primo account amministratore (password di almeno 12
 caratteri).
 
@@ -345,7 +345,7 @@ Se l'avviso resta dopo il riavvio, controlla `docker compose logs browser`, che 
 
 ## Reverse proxy {#reverse-proxy}
 
-La UI e l'API sono servite su un'unica porta in HTTP semplice. Non viene usato alcun WebSocket:
+La UI e l'API sono servite su un'unica porta, che accetta solo HTTPS (una richiesta HTTP semplice riceve un reindirizzamento, vedi [HTTPS and encryption](https.md)). Un reverse proxy deve quindi connettersi al container in HTTPS (`https://dumbmonit:8080`), con la verifica del certificato disattivata per quel tratto oppure con il certificato di DumbMonit attendibile. Non viene usato alcun WebSocket:
 l'interfaccia interroga l'API a intervalli, quindi qualsiasi reverse proxy funziona senza
 configurazione particolare.
 
@@ -353,7 +353,11 @@ configurazione particolare.
 
     ```
     monit.example.com {
-        reverse_proxy 127.0.0.1:8080
+        reverse_proxy https://127.0.0.1:8080 {
+            transport http {
+                tls_insecure_skip_verify
+            }
+        }
     }
     ```
 
@@ -366,7 +370,8 @@ configurazione particolare.
         # ssl_certificate / ssl_certificate_key …
 
         location / {
-            proxy_pass http://127.0.0.1:8080;
+            proxy_pass https://127.0.0.1:8080;
+            proxy_ssl_verify off;
             proxy_set_header Host $host;
             proxy_set_header X-Forwarded-Proto $scheme;
             # Gli agent inviano batch di recupero dopo un'interruzione:
@@ -376,7 +381,7 @@ configurazione particolare.
     ```
 
 Quando il proxy termina il TLS, imposta `DUMBMONIT_COOKIE_SECURE: "1"` così il cookie
-di sessione viene inviato solo su HTTPS. Non impostarla in un deployment HTTP semplice: il
+di sessione viene inviato solo su HTTPS. Impostala solo se ogni browser raggiunge DumbMonit in HTTPS: il
 browser non rimanderebbe mai il cookie e il login sarebbe impossibile.
 
 !!! note "Agent dietro un proxy"

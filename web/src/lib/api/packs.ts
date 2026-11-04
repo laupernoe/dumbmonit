@@ -9,7 +9,7 @@ import { request } from './client';
 import type { PackInstallReport, PackView } from './types';
 
 /** Where packs are documented. The interface links to it, never serves it. */
-export const PACKS_DOC_URL = 'https://dumbmonit.readthedocs.io/en/latest/packs/';
+export const PACKS_DOC_URL = 'https://dumbmonit.app/docs/packs/';
 
 export function listPacks(signal?: AbortSignal): Promise<PackView[]> {
 	return request<PackView[]>('/packs', { signal });

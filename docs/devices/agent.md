@@ -3,7 +3,7 @@
 A small binary installed on the machine to monitor. It measures CPU, memory,
 disks, network, services and containers — and, where the machine exposes them,
 temperatures, disk health, ZFS pools and KVM virtual machines — then
-**pushes** its readings to the DumbMonit server over HTTP.
+**pushes** its readings to the DumbMonit server over HTTPS, on an encrypted channel of its own (see [Agent channel security](../install/agent-security.md)).
 
 ## Network ports to open
 
@@ -11,7 +11,8 @@ From the agent to the DumbMonit server:
 
 | Port | Protocol | Purpose |
 |---|---|---|
-| 8080 | TCP | Readings and commands (default port, 443 behind a TLS proxy) |
+| 8443 | TCP | Readings and commands: the encrypted agent channel (TLS 1.3 and a client certificate) |
+| 8080 | TCP | Install script and agent download, at install and update time (HTTPS; 443 behind a reverse proxy) |
 
 The direction is deliberate: the agent calls the server, never the other way
 round. It crosses NAT and home firewalls, and requires opening **no port** on
@@ -126,18 +127,53 @@ critical**, **Hyper-V host CPU high** and **Hyper-V virtual disk errors** (see
 
 ## Install
 
-The steps below are the ones the notice next to the form shows. There is no account to create on the machine: the enrollment token is the only secret.
+There is no account to create on the machine: the enrollment token is the only
+secret. The whole flow is on one page of DumbMonit, and it checks each step for you.
 
-1. In DumbMonit, add a monitor and pick Server with the agent, then choose how the machine reaches the server: directly, or through the relay of a remote site behind a firewall. An enrollment token (dmon_…) is shown once, with the install command ready to copy for Linux/macOS, Windows and Docker. See [Monitor a remote site](../install/remote-site.md#5-install-agents-behind-the-relay) for the relay.
-2. Run that install command on the machine, with elevated rights (sudo on Linux and macOS, an elevated PowerShell on Windows).
-3. The page waits for the first report (a few seconds), then lets you name the machine, file it in a folder and place it at a site, on the spot.
-4. Optional, for Docker: if the agent runs under a dedicated user, add that user to the "docker" group and restart the agent.
+### Step by step
 
-    ```
-    usermod -aG docker dumbmonit
-    ```
+1. In DumbMonit, click **Add a monitor**, pick a site (or **No site**), then
+   **Server with the agent**.
+2. Under *How does the machine reach this server?*, keep **Directly**, or choose
+   **Through** a relay for a remote site behind a firewall (see
+   [Monitor a remote site](../install/remote-site.md#5-install-agents-behind-the-relay)).
+3. Optional: choose the modules to turn on.
+4. Choose the machine's system: **Linux / macOS**, **Windows** or **Docker**.
+5. Click **Create the install command**. You should see a **Shown once** label,
+   the command to copy, and the token (its secret starts with `dmon_`; the token
+   is listed as `tok_…` afterwards). Copy the command now.
+6. The page checks the agent channel. You should see *Encrypted agent channel
+   reachable at … (TLS 1.3)*. A red message here means machines will fail too:
+   fix it first (see [Common errors](#common-errors)).
+7. Run the command on the machine, with elevated rights:
+    - **Linux / macOS**: paste it in a terminal; it uses `sudo`.
+    - **Windows**: paste it in a PowerShell opened as administrator.
+    - **Docker**: paste the `docker run` command, or the two lines for your
+      `docker-compose.yml`, then `docker compose up -d`.
+8. Back in DumbMonit, *Waiting for the agent's first report…* turns into
+   *`host` is connected (`os`)* within seconds.
+9. Give the machine a **Name**, optionally a **Folder** and a **Site**, then
+   click **Save**. **Open the machine** shows its page, with its first readings
+   a few seconds later.
 
-5. For a fleet (a playbook, a machine image), tick Several machines with this command; a whole Windows domain goes through the Active Directory kit, offered on the same page. Revoke a lost token in Settings → Agents. See [Active Directory](agent-active-directory.md).
+If the page stays on *Waiting…* for an hour it stops and offers **Wait again**.
+Check the machine with the commands in [Outages and diagnostics](#outages-and-diagnostics).
+
+Optional, for Docker: if the agent runs under a dedicated user, add that user
+to the `docker` group and restart the agent.
+
+```
+usermod -aG docker dumbmonit
+```
+
+For a fleet (a playbook, a machine image), tick **Several machines with this
+command**; a whole Windows domain goes through the Active Directory kit, offered
+on the same page. Revoke a lost token in **Settings → Monitoring → Agents**. See
+[Active Directory](agent-active-directory.md).
+
+To change anything later, open the monitor and use the **gear**: the agent
+settings (relay mode, log collection, the services to watch, re-enrolment) are
+there.
 
 !!! warning
     The agent contacts the server, never the other way round: no port needs to be opened on the monitored machine.
@@ -174,10 +210,18 @@ Two things are worth reading before you roll this out to more than one machine:
 belong to one agent installation, and [Single use or fleet](#single-use-or-fleet),
 which is the choice you make when you create a token.
 
+!!! note "The command DumbMonit shows"
+    The commands below are the short form, for a server whose certificate your
+    machines trust (a reverse proxy with a public certificate). When the server
+    uses its own self-signed certificate, the command shown in the interface adds
+    the pin of that certificate (`--pinned-key=sha256//…`, `-PinnedKey` on
+    Windows) and the SHA-256 of each binary: the download is checked without
+    any authority. Always copy the command from DumbMonit.
+
 === "Linux (systemd or OpenRC)"
 
     ```sh
-    curl -sSL http://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://server:8080
+    curl -sSL https://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     The script is POSIX `sh` (BusyBox and dash work), downloads the binary for
@@ -192,7 +236,7 @@ which is the choice you make when you create a token.
     The same command as on Linux, run with `sudo`:
 
     ```sh
-    curl -sSL http://server:8080/install.sh | sudo sh -s -- --token=dmon_xxx --url=http://server:8080
+    curl -sSL https://server:8080/install.sh | sudo sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     The macOS binaries are **not** in the DumbMonit image: building them
@@ -213,8 +257,8 @@ which is the choice you make when you create a token.
 
     ```sh
     curl -sSLO https://github.com/laupernoe/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
-    curl -sSL http://server:8080/install.sh | sudo sh -s -- \
-        --token=dmon_xxx --url=http://server:8080 --bin=./dumbmonit-agent-macos-aarch64
+    curl -sSL https://server:8080/install.sh | sudo sh -s -- \
+        --token=dmon_xxx --url=https://server:8080 --bin=./dumbmonit-agent-macos-aarch64
     ```
 
     The script installs the binary in `/usr/local/bin` (and removes the
@@ -233,7 +277,7 @@ which is the choice you make when you create a token.
 === "FreeBSD (rc.d)"
 
     ```sh
-    fetch -qo - http://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://server:8080
+    fetch -qo - https://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     x86_64 only. The script downloads `dumbmonit-agent-freebsd-x86_64` from the
@@ -248,7 +292,7 @@ which is the choice you make when you create a token.
 === "Windows (service)"
 
     ```powershell
-    & ([scriptblock]::Create((irm http://server:8080/install.ps1))) -Token dmon_xxx -Url http://server:8080
+    & ([scriptblock]::Create((irm https://server:8080/install.ps1))) -Token dmon_xxx -Url https://server:8080
     ```
 
     The script downloads `dumbmonit-agent-windows-x86_64.exe` from the server,
@@ -348,15 +392,43 @@ on every system.
     so loudly; `--bin=PATH` installs a local file as is, the file being yours
     to verify.
 
+### Removing an agent {#removing-an-agent}
+
+Deleting a machine's monitor does not uninstall its agent: the agent keeps
+running and asks to enrol again. When you delete the monitor, DumbMonit offers
+**Remove the agent automatically** if the agent can do it:
+
+- it accepts commands (`commands: true`, the default; an agent configured with
+  `commands: false` never receives the request);
+- it reported in the last few minutes;
+- it was installed by `install.sh` or `install.ps1`, outside a container.
+
+The agent then starts a helper that, a few seconds later, does what
+`--uninstall` (`-Uninstall`) does: it stops and removes the service and deletes
+the binary and the configuration. Nothing is downloaded. The agent confirms
+just before the clean-up and stops; DumbMonit then deletes the monitor. Only an
+administrator signed in to the web interface can ask for it (API tokens
+cannot), and the request is recorded in the audit log.
+
+An agent running in Docker refuses: remove its container instead
+(`docker rm -f dumbmonit-agent`, then `docker volume rm dumbmonit-agent`). If
+the agent refuses, does not answer within two minutes or is offline, the page
+shows the commands to run on the machine, and **Delete the monitor anyway**.
+By hand, at any time, the install command with `--uninstall` (`-Uninstall` on
+Windows) in place of its other flags does the same.
+
 ### Installer flags
 
 | `install.sh` | `install.ps1` | Effect |
 |---|---|---|
 | `--token=TOKEN` | `-Token` | Enrollment token (required). |
-| `--url=URL` | `-Url` | Server URL, for example `http://server:8080`. On Linux, `DUMBMONIT_URL` in the environment is used if the flag is absent. |
+| `--url=URL` | `-Url` | Server URL, for example `https://server:8080`. On Linux, `DUMBMONIT_URL` in the environment is used if the flag is absent. |
 | `--interval=N` | `-Interval` | Sampling period in seconds (default 30). |
 | `--services=a,b,c` | `-Services @('a','b')` | Services whose state is reported, named as the host system names them: systemd units on Linux, launchd labels (`com.apple.sshd`) on macOS, rc.d names on FreeBSD, Windows services. |
 | `--tags=key=value,…` | `-Tags @{key='value'}` | Tags, copied as `tag_<key>` on every series. |
+| `--pinned-key=sha256//…` | `-PinnedKey` | Public key of the server's self-signed certificate. The download of the script and of the binary is accepted from that key only, and the agent keeps it. Included in the command DumbMonit shows when the server uses its own certificate. |
+| `--tls-url=URL` | `-TlsUrl` | Address of the encrypted agent channel (default: the host of `--url`, port 8443). |
+| `--ca-pin=SHA256` | `-CaPin` | Fingerprint of the server's certificate authority: the agent then only talks to that server, never in clear. |
 | `--hostname=NAME` | `-HostName` | Name announced to the server (default: the machine's). |
 | `--modules=a,b` | `-Modules a,b` | Optional modules to run — see [Choosing the modules](#choosing-the-modules). Without it, every module detects itself; `none` keeps system metrics only. The install command shown by DumbMonit adds it when you tick modules. |
 | `--plakar-klosets=a,b` | | Plakar klosets to read (`@name` or a path); default: every kloset found. |
@@ -650,7 +722,7 @@ wins over the list. The agent logs the modules it runs at start-up.
 macOS and FreeBSD, `C:\ProgramData\DumbMonit\agent.yaml` on Windows:
 
 ```yaml
-server_url: http://server:8080
+server_url: https://server:8080
 token: dmon_...
 interval_secs: 30          # sampling period
 hostname: nas-basement     # optional: name announced to the server
@@ -1038,10 +1110,10 @@ DumbMonit, is logged and retried with the secret kept.
 - Tokens are created when adding a monitor of type agent (single use, or
   reusable for several machines) and by the Active Directory kit. The server keeps only a fingerprint: the clear token is shown once, in
   the creation response, with the two install commands.
-- The agent sends it as `Authorization: Bearer dmon_…` on `POST /api/ingest`.
+- The agent sends it as `Authorization: Bearer dmon_…` on `POST /api/ingest`, over the encrypted agent channel.
   It never appears in the agent's logs, not even truncated.
-- **Settings → Agents** lists tokens with their prefix, scope, creation date and
-  last use. **Revoke** stops every agent that uses that token at its next push;
+- **Settings → Agents** lists tokens by their opaque identifier (`tok_…`, never
+  the secret), scope, creation date and last use. **Revoke** stops every agent that uses that token at its next push;
   the machines then become *unreachable* after three missed periods. Re-run the
   installer with a new token to re-enrol them.
 - Machines are separate monitors: revoking a token does not delete them.
@@ -1055,6 +1127,10 @@ default that happens to you:
 |---|---|---|
 | **Single use** (the default) | Exactly one machine. | One install. An install command lives on in shell history, in a ticket, in a chat log; a single-use one is worth nothing once used. |
 | **Reusable for a fleet** | As many machines as you allow — a number, or no limit. | A playbook, a machine image, a batch of installs. |
+
+A new machine enrolling with a fleet token can wait for an administrator's
+approval, and a fleet token that enrolled nothing for 30 days goes to sleep: see
+[Protecting enrolment](../install/agent-security.md#protecting-enrolment).
 
 Both can carry a deadline in days. A deadline only stops *enrolments*: machines
 already enrolled keep reporting after it passes, which is what you want for an
@@ -1597,3 +1673,12 @@ but serves nothing DumbMonit can reach directly (an internal CA step, a DNS
 validation hook) is the one case this leaves uncovered; it is also the case
 where a TLS monitor could not help either, since nothing on that host speaks
 TLS to probe.
+
+## The installation in short
+
+1. In DumbMonit, add a monitor and pick Server with the agent, then choose how the machine reaches the server: directly, or through the relay of a remote site behind a firewall.
+2. An enrollment token (its secret starts with dmon_; the token is listed as tok_… afterwards) is shown once, with the install command ready to copy for Linux/macOS, Windows and Docker.
+3. Run that install command on the machine, with elevated rights (sudo on Linux and macOS, an elevated PowerShell on Windows).
+4. The page waits for the first report (a few seconds), then lets you name the machine, file it in a folder and place it at a site, on the spot.
+5. Optional, for Docker: if the agent runs under a dedicated user, add that user to the "docker" group and restart the agent.\nusermod -aG docker dumbmonit
+6. For a fleet (a playbook, a machine image), tick Several machines with this command; a whole Windows domain goes through the Active Directory kit, offered on the same page.

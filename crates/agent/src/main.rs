@@ -22,10 +22,12 @@ mod relay;
 mod remediation;
 mod run;
 mod selfupdate;
+mod sentinel;
 mod shutdown;
 #[cfg(test)]
 mod testsupport;
 mod tls;
+mod uninstall;
 #[cfg(windows)]
 mod winsvc;
 
@@ -181,7 +183,8 @@ OPTIONS:
 
 ENVIRONMENT VARIABLES (override the file):
     DUMBMONIT_AGENT_CONFIG           Configuration file path
-    DUMBMONIT_AGENT_URL              Server URL, for example http://server:8080
+    DUMBMONIT_AGENT_URL              Server URL, https:// only, for example https://server:8080
+    DUMBMONIT_AGENT_SERVER_PIN       Public key pin (sha256//...) of a self-signed server certificate
     DUMBMONIT_AGENT_TOKEN            Enrollment token
     DUMBMONIT_AGENT_INTERVAL_SECS    Sampling period
     DUMBMONIT_AGENT_HOSTNAME         Hostname announced to the server
@@ -211,6 +214,8 @@ ENVIRONMENT VARIABLES (override the file):
     DUMBMONIT_AGENT_RESTIC_BIN       Path to the restic binary (default: restic on PATH)
     DUMBMONIT_AGENT_BORG_BIN         Path to the borg binary (default: borg on PATH)
     DUMBMONIT_AGENT_BACKUP_REPOS_INTERVAL_SECS  Seconds between two restic/Borg readings
+    DUMBMONIT_AGENT_DATABASES        Detect databases and watch their backups (true/false, default true)
+    DUMBMONIT_AGENT_DATABASES_INTERVAL_SECS  Seconds between two database readings (default 300)
     DUMBMONIT_AGENT_SELF_UPDATE      Accept agent updates from the server (true/false, default true)
     DUMBMONIT_AGENT_LOG              Log level (info, debug, ...)",
         version = env!("CARGO_PKG_VERSION"),

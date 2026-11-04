@@ -156,7 +156,7 @@ DumbMonit holds the credentials of every monitor it watches, so changes are
 reviewed with secure design principles in mind: least privilege, secure
 defaults, no secret ever returned by the API, vetted cryptography only, and
 untrusted input from monitors and agents. The
-[security model](https://dumbmonit.readthedocs.io/en/latest/development/security-model/)
+[security model](https://dumbmonit.app/docs/development/security-model/)
 lists the trust boundaries and where each countermeasure lives. Report
 vulnerabilities privately, as described in [SECURITY.md](SECURITY.md). The
 release notes list every fixed vulnerability with its CVE or GHSA identifier.
@@ -336,8 +336,8 @@ Before tagging `vX.Y.Z`:
    vX.Y.Z" window shown once after an update; a version missing from the file
    shows nothing. `WHATSNEW_REQUIRE=1 npm test` in `web/` fails if the
    `Cargo.toml` version has no entry.
-3. Bump the version in `Cargo.toml`, run `python3 site-src/build.py` (the website
-   reads the version from `Cargo.toml`), then tag `vX.Y.Z`; `release.yml` publishes
+3. Bump the version in `Cargo.toml`, then tag `vX.Y.Z` (the product website is
+   built and published outside this repository); `release.yml` publishes
    the images and the GitHub release, whose notes are that version's CHANGELOG
    section; the window links to that release. The workflow refuses a tag
    that does not match the `Cargo.toml` and `Cargo.lock` version.
@@ -347,8 +347,7 @@ pipeline to try it out: the images get only `:0.9.0-rc.1` (never `:latest`,
 `:0.9`, `:0`), and the GitHub release is a **draft**, marked pre-release and
 never latest. Its notes are its own CHANGELOG section, else the `0.9.0` one,
 else `Unreleased`. Bump `Cargo.toml` (and `Cargo.lock`) to the pre-release
-version first; the website shows the version without its `-rc.N`, so
-`site-src/build.py` can be run or skipped.
+version first.
 
 The draft carries every binary, checksum, signature and the provenance, but
 only maintainers see it: running servers never learn about it. Once

@@ -95,7 +95,7 @@
 		loading = false;
 	}
 
-	async function checkNow() {
+	async function checkNow(): Promise<boolean> {
 		checking = true;
 		checkError = null;
 		try {
@@ -106,8 +106,10 @@
 				justChecked = false;
 				void refresh();
 			}, 6000);
+			return true;
 		} catch (cause) {
 			checkError = cause;
+			return false;
 		} finally {
 			checking = false;
 		}
@@ -187,7 +189,7 @@
 				<p class="text-[0.8125rem] text-ink-2">
 					{m.devicesb_webchange_panel_no_browser()}
 					<a
-						href="https://dumbmonit.readthedocs.io/en/latest/devices/webchange/"
+						href="https://dumbmonit.app/docs/devices/webchange/"
 						target="_blank"
 						rel="noopener noreferrer"
 						class="text-ink underline"

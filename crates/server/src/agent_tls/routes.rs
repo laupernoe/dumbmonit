@@ -7,7 +7,11 @@
 //! documentation de l'API : un inconnu qui se connecte n'apprend rien.
 //!
 //! Un agent relais y ouvre aussi les tunnels des agents de son site
-//! ([`super::tunnel`]) et y relit les fichiers d'installation qu'il leur sert.
+//! ([`super::tunnel`]). À travers un tunnel, et seulement ainsi, une machine du
+//! site lit les fichiers d'installation (`/install.sh`, `/install.ps1`,
+//! `/download/…`) : sa commande vise `https://relais:8443`, la passerelle du
+//! relais la porte jusqu'ici, et la session TLS (épinglée par la commande) va
+//! de la machine au serveur — le relais ne voit que du chiffré.
 
 use std::net::SocketAddr;
 use std::time::Instant;
@@ -23,8 +27,8 @@ use axum::{Extension, Json, Router};
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use dumbmonit_proto::{
-    AGENT_SECRET_HEADER, AGENT_TLS_HEADER, CERT_REFUSED, RELAY_FILES_PATH, RELAY_TUNNEL_PATH,
-    RELAY_TUNNEL_PROTOCOL, TargetId, TlsCertificate, TlsEnrolRequest, TlsRenewRequest,
+    AGENT_SECRET_HEADER, AGENT_TLS_HEADER, CERT_REFUSED, RELAY_TUNNEL_PATH, RELAY_TUNNEL_PROTOCOL,
+    TargetId, TlsCertificate, TlsEnrolRequest, TlsRenewRequest,
 };
 use serde_json::json;
 
@@ -51,17 +55,19 @@ fn under_api(path: &str) -> String {
 
 /// Routeur complet du port des agents.
 pub fn router(state: AppState) -> Router {
-    let files = under_api(RELAY_FILES_PATH);
     let certified = crate::api::agent_routes(&state)
         .route("/agent/tls/renew", post(renew))
         .route(&under_api(RELAY_TUNNEL_PATH), get(open_tunnel))
-        .route(&format!("{files}/install.sh"), get(relay_install_sh))
-        .route(&format!("{files}/install.ps1"), get(relay_install_ps1))
-        .route(&format!("{files}/download/{{name}}"), get(relay_download))
         .route_layer(middleware::from_fn_with_state(state.clone(), require_certificate));
     let open = Router::new().route("/agent/tls/enroll", post(enrol));
+    // Fichiers d'installation, pour les machines du site d'un relais.
+    let site = Router::new()
+        .route("/install.sh", get(site_install_sh))
+        .route("/install.ps1", get(site_install_ps1))
+        .route("/download/{name}", get(site_download));
     Router::new()
         .nest("/api", certified.merge(open))
+        .merge(site)
         .fallback(not_found)
         .layer(middleware::from_fn(peer_extensions))
         .with_state(state)
@@ -211,13 +217,14 @@ async fn open_tunnel(
     response
 }
 
-/// Garde des fichiers d'installation relus par un relais : un relais, hors
-/// tunnel. `None` : servi.
-async fn relay_files_refused(state: &AppState, cert: &AgentCert) -> Option<Response> {
-    if cert.via_relay.is_some() {
-        return Some(error(StatusCode::FORBIDDEN, NOT_A_RELAY));
-    }
-    match is_relay(state, cert.target_id).await {
+/// Garde des fichiers d'installation : seulement à travers le tunnel d'un
+/// relais qui l'est encore. En direct, ce port ne sert rien de tel (les
+/// commandes directes visent le port de l'interface). `None` : servi.
+async fn site_files_refused(state: &AppState, peer: Option<&AgentPeer>) -> Option<Response> {
+    let Some(relay) = peer.and_then(|peer| peer.via_relay) else {
+        return Some(not_found().await);
+    };
+    match is_relay(state, relay).await {
         Ok(true) => None,
         Ok(false) => Some(error(StatusCode::FORBIDDEN, NOT_A_RELAY)),
         Err(cause) => {
@@ -227,32 +234,32 @@ async fn relay_files_refused(state: &AppState, cert: &AgentCert) -> Option<Respo
     }
 }
 
-async fn relay_install_sh(
+async fn site_install_sh(
     State(state): State<AppState>,
-    Extension(cert): Extension<AgentCert>,
+    peer: Option<Extension<AgentPeer>>,
 ) -> Response {
-    match relay_files_refused(&state, &cert).await {
+    match site_files_refused(&state, peer.as_deref()).await {
         Some(refused) => refused,
         None => crate::api::agent_files::install_sh().await,
     }
 }
 
-async fn relay_install_ps1(
+async fn site_install_ps1(
     State(state): State<AppState>,
-    Extension(cert): Extension<AgentCert>,
+    peer: Option<Extension<AgentPeer>>,
 ) -> Response {
-    match relay_files_refused(&state, &cert).await {
+    match site_files_refused(&state, peer.as_deref()).await {
         Some(refused) => refused,
         None => crate::api::agent_files::install_ps1().await,
     }
 }
 
-async fn relay_download(
+async fn site_download(
     State(state): State<AppState>,
-    Extension(cert): Extension<AgentCert>,
+    peer: Option<Extension<AgentPeer>>,
     name: Path<String>,
 ) -> Response {
-    if let Some(refused) = relay_files_refused(&state, &cert).await {
+    if let Some(refused) = site_files_refused(&state, peer.as_deref()).await {
         return refused;
     }
     crate::api::agent_files::download(State(state), name).await
@@ -316,24 +323,29 @@ async fn enrol(
             }
         }
     }
-    let registration =
-        match agent::enrol(&state.pool, &state.cipher, bearer, secret, &request.identity).await {
-            Ok(registration) => registration,
-            Err(IngestError::Unauthorized) => {
-                return fail(
-                    StatusCode::UNAUTHORIZED,
-                    "Enrollment token missing, unknown or revoked.",
-                );
-            }
-            Err(IngestError::Forbidden(message)) => return fail(StatusCode::FORBIDDEN, &message),
-            Err(IngestError::BadRequest(message)) => {
-                return fail(StatusCode::BAD_REQUEST, &message);
-            }
-            Err(IngestError::Internal(cause)) => {
-                tracing::error!(error = %format!("{cause:#}"), "agent enrolment failed");
-                return error(StatusCode::INTERNAL_SERVER_ERROR, "Internal server error.");
-            }
-        };
+    let origin = agent::EnrolOrigin::network(ip);
+    let enrolled =
+        agent::enrol(&state.pool, &state.cipher, bearer, secret, &request.identity, &origin).await;
+    let registration = match enrolled {
+        Ok(registration) => registration,
+        Err(IngestError::Unauthorized) => {
+            return fail(StatusCode::UNAUTHORIZED, "Enrollment token missing, unknown or revoked.");
+        }
+        // En attente de validation : ni certificat ni échec compté, l'agent
+        // réessaie de lui-même sans faire bloquer son adresse.
+        Err(IngestError::Pending(message)) => return error(StatusCode::FORBIDDEN, &message),
+        Err(IngestError::TooMany(message)) => {
+            return error(StatusCode::TOO_MANY_REQUESTS, &message);
+        }
+        Err(IngestError::Forbidden(message)) => return fail(StatusCode::FORBIDDEN, &message),
+        Err(IngestError::BadRequest(message)) => {
+            return fail(StatusCode::BAD_REQUEST, &message);
+        }
+        Err(IngestError::Internal(cause)) => {
+            tracing::error!(error = %format!("{cause:#}"), "agent enrolment failed");
+            return error(StatusCode::INTERNAL_SERVER_ERROR, "Internal server error.");
+        }
+    };
     state.agent_tls().limits().record_success(&keys);
     if let Err(cause) = super::note_route(&state.pool, registration.target_id, via_relay).await {
         tracing::warn!(error = %format!("{cause:#}"), "agent relay not recorded");

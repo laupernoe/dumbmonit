@@ -7,7 +7,7 @@ configuration file to mount.
 
 | Variable | Default | Role |
 |---|---|---|
-| `DUMBMONIT_BIND` | `0.0.0.0:8080` | Listen address of the API and the web UI, inside the container. |
+| `DUMBMONIT_BIND` | `0.0.0.0:8080` | Listen address of the API and the web UI, inside the container. The port only speaks HTTPS: a plain HTTP request gets a redirect to `https://`. There is no switch to turn HTTPS off. |
 | `PUID` / `PGID` | `65532` | User and group the server runs as when the container starts as root (`user: "0:0"`, as in the shipped `docker-compose.yml`): the data directory is handed to them at startup, then root is dropped. `0` is refused. `DUMBMONIT_PUID` / `DUMBMONIT_PGID` take precedence. Ignored otherwise. See [Permissions](../install/docker.md#permissions). |
 | `DUMBMONIT_DATA_DIR` | `/data` | Persistent directory: `dumbmonit.db` (SQLite), `secret.key`, `vm/` (embedded VictoriaMetrics) and `webchange/` (screenshots of website changes). |
 | `DUMBMONIT_VM_URL` | *(unset)* | Base URL of an external VictoriaMetrics (`http://host:8428`). When set, the embedded one is not started; see [below](#embedded-victoriametrics) and [External VictoriaMetrics](external-victoriametrics.md). |
@@ -25,12 +25,12 @@ configuration file to mount.
 | `DUMBMONIT_LOG` | `info` | Log filter, `tracing` syntax: `debug`, `warn`, `dumbmonit=debug,sqlx=warn`… |
 | `DUMBMONIT_AGENT_DIR` | `/agents` | Directory of the agent binaries served under `/download/`. Empty or missing: the install command fails with `404`, the server still runs. |
 | `DUMBMONIT_RESET_PASSWORD` | *(off)* | `1`, `true`, `yes` or `on`: clear the password and every session at startup. The UI then shows `/setup` again. Remove it afterwards. |
-| `DUMBMONIT_COOKIE_SECURE` | *(off)* | `1` to always set the `Secure` attribute on the session cookie. Only behind HTTPS: over plain HTTP the browser would never send the cookie back. Without it, the attribute is still added whenever the browser is on an `https://` page (its `Origin` says so, or a trusted proxy sends `X-Forwarded-Proto: https`), so plain HTTP on the LAN keeps working. |
-| `DUMBMONIT_TLS` | `on` | HTTPS on the web port, next to plain HTTP (one port, told apart by the first byte). `off`: plain HTTP only. See [HTTPS and encryption](../install/https.md). |
-| `DUMBMONIT_TLS_CERT` | *(unset)* | PEM certificate chain served over HTTPS. Unset: a self-signed certificate is created at first start, its key stored encrypted. |
+| `DUMBMONIT_AGENT_LISTEN` | `0.0.0.0:8443` | Listen address of the encrypted agent channel (TLS 1.3, client certificates). `off` closes it. The only port agents on other networks need; see [Agent channel security](../install/agent-security.md). |
+| `DUMBMONIT_AGENT_PUBLIC_PORT` | listen port | Port written in the agent install commands, when a port forward or a TCP proxy publishes another number. |
+| `DUMBMONIT_AGENT_LEGACY_DAYS` | *(unset)* | Days during which the old plain agent channel stays accepted after an update of an instance that already had agents. Unset: until an administrator turns on *Require the encrypted channel*. |
+| `DUMBMONIT_TLS_CERT` | *(unset)* | PEM certificate chain to serve; see [HTTPS and encryption](../install/https.md). Unset: a self-signed certificate is created at first start, its key stored encrypted. |
 | `DUMBMONIT_TLS_KEY` | *(unset)* | PEM private key (PKCS#8, PKCS#1 or SEC1) of `DUMBMONIT_TLS_CERT`. Both files are re-read within a minute of a change, or on `SIGHUP`. |
 | `DUMBMONIT_TLS_NAMES` | *(empty)* | Extra DNS names and IP addresses of the self-signed certificate, comma-separated (`nas.lan,192.168.1.10`). |
-| `DUMBMONIT_HTTPS_REDIRECT` | *(setting)* | `on`/`off` forces the redirect of plain-HTTP page visits to HTTPS. Unset, the setting in Settings › System decides: on for a new installation, off after an upgrade until an administrator turns it on. |
 | `DUMBMONIT_TRUSTED_PROXIES` | *(empty)* | Reverse proxies whose `X-Forwarded-For`, `X-Forwarded-Proto` and `X-Forwarded-Host` are believed, as addresses or CIDR ranges separated by commas (`10.0.0.5, 172.16.0.0/12`). The login rate limiter and the security log then see the real client address instead of the proxy's; without it, every visitor behind the proxy shares one bucket. Status page links (RSS feed, subscription emails) and the single sign-on return address also use the forwarded host only from these proxies. The headers are ignored from any other address, so a client cannot pick its own bucket or the address of a link. |
 | `DUMBMONIT_SCAN_SUBNETS` | *(empty)* | Networks offered by the monitor form's network scan, as IPv4 CIDR ranges separated by commas (`192.168.1.0/24, 10.0.5.0/24`). In Docker bridge mode the server only sees the Docker network, not your LAN, so set this to pre-fill the scan with the right one. Unset: the scan suggests the /24 networks of the monitors you already monitor, then the server's own networks (only when it does not run in a container), and otherwise leaves the field empty. |
 | `DUMBMONIT_OIDC_AUTO_CREATE` | *(off)* | `true` to create an account for an unknown identity at its first single sign-on. Off, only existing accounts (already linked, or matched by a provider-verified email) can sign in. Like the other `DUMBMONIT_OIDC_*` variables, read only while no single sign-on settings are saved in the interface. |
@@ -86,9 +86,9 @@ DumbMonit was called EzyMonit until September 2026. Every `DUMBMONIT_*`
 variable is also read under its old `EZYMONIT_*` name, as a fallback, with one
 warning at startup per variable still set that way (`EZYMONIT_X is deprecated,
 use DUMBMONIT_X`). The old database file `/data/ezymonit.db` is renamed to
-`dumbmonit.db` at startup, and agent tokens `ezym_…` remain valid (new ones are
-`dmon_…`). The session cookie is now `dumbmonit_session`: the first start after
-the rename logs everyone out once.
+`dumbmonit.db` at startup, and agent tokens `ezym_…` remain valid (new enrolment
+secrets start with `dmon_`). The session cookie is now `__Host-dumbmonit_session`:
+the first start after the rename logs everyone out once.
 
 ### Embedded VictoriaMetrics
 
@@ -179,8 +179,6 @@ The shipped `docker-compose.yml` reads no variable and needs no `.env` file.
 Everything is set under `environment:` of the service or by editing the file;
 see [Advanced options](../install/docker.md#advanced-options) (port, secret,
 retention and memory, external VictoriaMetrics, password reset, screenshots).
-The development overlay `docker-compose.dev.yml` reads `DUMBMONIT_VM_PORT`
-(default `8428`) for the host port of the embedded VictoriaMetrics.
 
 ## Ports
 
@@ -188,8 +186,11 @@ The development overlay `docker-compose.dev.yml` reads `DUMBMONIT_VM_PORT`
 |---|---|---|
 | `5514/udp`, `5514/tcp` | `dumbmonit` | Syslog server, only when `DUMBMONIT_SYSLOG_ENABLED=true`. Commented out in the Compose file. |
 | `1162/udp` | `dumbmonit` | SNMP trap receiver, only when `DUMBMONIT_TRAPS_ENABLED=true`. Commented out in the Compose file. |
-| `8080/tcp` | `dumbmonit` | Web UI, API, agent installers and downloads, agent ingest. The only port to publish. |
-| `8428/tcp` | `dumbmonit` | Embedded VictoriaMetrics HTTP API, on the container's loopback. Published only by the development overlay. |
+| `8080/tcp` | `dumbmonit` | Web UI, API, agent installers and downloads, public status pages. HTTPS only. |
+| `8443/tcp` | `dumbmonit` | Encrypted agent channel (TLS 1.3, client certificates): agent ingest, commands, relay tunnels. Publish it when agents run on other networks. |
+| `8428/tcp`, `8429/tcp`, `9428/tcp` | `dumbmonit` | Embedded VictoriaMetrics, long-term store and VictoriaLogs, on the container's loopback. Never published. |
+
+See [Network ports](../install/ports.md) for who must reach what, or **Settings → System → Network ports** for the list computed from your own configuration.
 
 Outbound: SNMP (UDP 161 by default) towards monitors, HTTPS towards Proxmox,
 PBS, Synology and notification services, plus whatever your service monitors

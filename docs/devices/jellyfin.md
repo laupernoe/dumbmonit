@@ -36,7 +36,14 @@ All metrics are prefixed `dumbmonit_jellyfin_`.
 | `library_scan_last_ok`, `library_scan_age_seconds` | last run of "Scan Media Library": succeeded or not, and how long ago it ended | |
 | `plugins`, `plugins_broken` | installed plugins; those that failed to load or do not support this version | |
 | `plugin_broken` | value 1 per broken plugin | `plugin`, `status` |
+| `library_scan_scheduled` | 1 when "Scan Media Library" has a periodic trigger (not only at startup); keeps the stale-scan rule off a scan you disabled | |
+| `libraries`, `libraries_scanning` | libraries; those Jellyfin is refreshing now | |
 | `sessions`, `streams`, `streams_paused`, `transcodes` | client sessions; those playing something, paused, and transcoding | |
+| `transcodes_software` | transcodes with no hardware acceleration, so on the CPU | |
+| `streaming_users` | distinct users playing something | |
+| `users`, `users_disabled` | accounts; those disabled | |
+| `failed_logins_recent` | failed sign-ins in the last hour, from the activity log (at most 500 entries read) | |
+| `storage_used_percent`, `storage_free_bytes` | one series per disk (libraries, data, metadata, cache, transcodes, logs; folders on the same disk count once); Jellyfin 10.11 and later | `volume` |
 | `scrape_errors` | calls that failed on the last probe | |
 
 Jellyfin does not check for its own updates (the package or the image does), so
@@ -44,7 +51,14 @@ there is no update metric.
 
 The [built-in rules](../alerting/rules.md#self-hosted-applications) that apply:
 Jellyfin scheduled task failed, Jellyfin plugin broken, Jellyfin restart
-pending, plus Monitor unreachable.
+pending, Jellyfin library scan stale (no finished scan for three days, only
+when the scan is scheduled), Jellyfin storage almost full (90 %), Jellyfin heavy
+CPU transcoding (three or more software transcodes for 15 minutes), Jellyfin
+failed sign-ins (ten in an hour), plus Monitor unreachable.
+
+Everything past the first four calls (storage, libraries, users, activity log)
+is optional: a Jellyfin that does not offer it (storage needs 10.11) or a key
+that cannot read it is skipped without error.
 
 ## The monitor page
 
@@ -70,10 +84,18 @@ Vendor documentation: <https://api.jellyfin.org/>
 
 Jellyfin cannot limit what a key may do: every key has full rights on the server. It is still the only way to read scheduled tasks and everyone's playback; an ordinary user sees neither.
 
-DumbMonit only reads `/System/Info`, `/ScheduledTasks`, `/Sessions` and `/Plugins`. It never starts a task, never stops a playback and never changes a setting. Keep the key to a network you trust and put Jellyfin behind HTTPS across the internet.
+DumbMonit only reads `/System/Info`, `/ScheduledTasks`, `/Sessions`, `/Plugins`, `/System/Info/Storage`, `/Library/VirtualFolders`, `/Users` and `/System/ActivityLog/Entries`. It never starts a task, never stops a playback and never changes a setting. Keep the key to a network you trust and put Jellyfin behind HTTPS across the internet.
 
 !!! warning
     Jellyfin keys cannot be limited, so this one has every right on the server: keep it to DumbMonit and revoke it on the same page if it leaks.
+
+## Troubleshooting
+
+- **No storage, library or user figures**: storage needs Jellyfin 10.11 or later, and these calls are skipped (not an error) when the key cannot read them. A call that really fails raises `scrape_errors`.
+- **"Library scan stale" never fires**: it only watches a scan that has a periodic trigger; check Dashboard → Scheduled Tasks → Scan Media Library.
+- **A task keeps failing**: the `error` label of `scheduled_task_failed` carries the first line of Jellyfin's message; the full trace is in the Jellyfin log.
+- **Failed sign-ins stay at 0**: they come from the activity log, which the key must be able to read; the figure covers the last hour only.
+- **Unauthorized**: the key was revoked or mistyped; create a new one under Dashboard → Advanced → API Keys.
 
 ## Credentials
 

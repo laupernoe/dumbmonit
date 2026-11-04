@@ -1363,8 +1363,7 @@ pub async fn probe_locations(
 }
 
 /// Coordonnées des emplacements de sonde sur la carte du monde, quand ils y
-/// sont : l'agent par son emplacement (affectation, site), le serveur par le
-/// site principal.
+/// sont : l'agent par son emplacement (affectation, site).
 async fn probe_places(
     state: &AppState,
     config: &MultisiteConfig,
@@ -1373,11 +1372,6 @@ async fn probe_places(
     let locations = super::locations::load(&state.pool).await?;
     if locations.is_empty() {
         return Ok(places);
-    }
-    if config.server
-        && let Some(main) = locations.iter().find(|l| l.main_site)
-    {
-        places.insert(crate::multisite::Location::Server, (main.latitude, main.longitude));
     }
     for agent in &config.agents {
         if let Some(found) = super::locations::location_for(state, *agent).await? {

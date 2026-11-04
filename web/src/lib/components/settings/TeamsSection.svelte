@@ -19,7 +19,7 @@
 		type UnassignedAccess,
 		type User
 	} from '#lib/api/index.js';
-	import { Button, Confirm, EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { Button, Confirm, DocLink, EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import TeamEditor from './TeamEditor.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 
@@ -136,7 +136,7 @@
 
 			{#if data.teams.length === 0}
 				{#if editing === null}
-					<EmptyState icon={UsersRound} title={m.settings_teams_empty_title()} description={m.settings_teams_empty_body()}>
+					<EmptyState compact icon={UsersRound} title={m.settings_teams_empty_title()} description={m.settings_teams_empty_body()}>
 						{#snippet action()}
 							<Button variant="primary" onclick={() => (editing = 'new')}>{m.settings_teams_add()}</Button>
 						{/snippet}
@@ -181,7 +181,7 @@
 				</ul>
 			{/if}
 
-			<p class="text-sm text-ink-2">{m.settings_teams_ceiling_note()}</p>
+			<DocLink page="using/teams/" />
 		</div>
 	{/if}
 </Panel>

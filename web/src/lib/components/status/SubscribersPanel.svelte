@@ -55,15 +55,17 @@
 		return () => controller.abort();
 	});
 
-	async function saveSettings() {
+	async function saveSettings(): Promise<boolean> {
 		savingSettings = true;
 		savedSettings = false;
 		settingsError = null;
 		try {
 			settings = await saveStatusSubscriptionSettings(page.id, settings);
 			savedSettings = true;
+			return true;
 		} catch (cause) {
 			settingsError = cause;
+			return false;
 		} finally {
 			savingSettings = false;
 		}

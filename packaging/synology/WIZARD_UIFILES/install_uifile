@@ -1,0 +1,61 @@
+[
+    {
+        "step_title": "DumbMonit server",
+        "items": [
+            {
+                "desc": "Enter the address of your DumbMonit server and an enrollment token. DumbMonit shows all three values, ready to copy and paste, when you add the monitor (Add monitor, Synology, Install the package). The token is used once, to enroll this NAS.<br><br>Certificate pin (sha256//...): paste it exactly as shown there. Leave it empty if your server has a certificate from a trusted authority."
+            },
+            {
+                "type": "textfield",
+                "subitems": [
+                    {
+                        "key": "wizard_server_url",
+                        "desc": "Server URL",
+                        "defaultValue": "https://",
+                        "validator": {
+                            "allowBlank": false,
+                            "regex": {
+                                "expr": "/^https:\\/\\/[A-Za-z0-9._:\\/\\[\\]-]+$/",
+                                "errorText": "Enter a URL starting with https:// (DumbMonit only serves HTTPS)"
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "password",
+                "subitems": [
+                    {
+                        "key": "wizard_token",
+                        "desc": "Enrollment token",
+                        "defaultValue": "",
+                        "validator": {
+                            "allowBlank": false,
+                            "regex": {
+                                "expr": "/^[A-Za-z0-9_.-]+$/",
+                                "errorText": "The token only contains letters, digits, underscore, dot and dash"
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "textfield",
+                "subitems": [
+                    {
+                        "key": "wizard_server_pin",
+                        "desc": "Certificate pin",
+                        "defaultValue": "",
+                        "validator": {
+                            "allowBlank": true,
+                            "regex": {
+                                "expr": "/^sha256\\/\\/[A-Za-z0-9+\\/]{43}=$/",
+                                "errorText": "Paste the pin exactly as shown in Settings > System > HTTPS (sha256//...)"
+                            }
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+]

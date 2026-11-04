@@ -12,15 +12,22 @@ export interface InstallOptions {
 	tlsUrl: string | null;
 	/** `--ca-pin`: fingerprint of the server's authority, pinned end to end. */
 	caPin: string | null;
+	/** `--pinned-key`: public key of a self-signed server certificate, the agent keeps it. */
+	serverPin: string | null;
 }
 
-/** Reads `--url=`, `--tls-url=` and `--ca-pin=` from the Unix install command. */
+/** Reads `--url=`, `--tls-url=`, `--ca-pin=` and `--pinned-key=` from the Unix install command. */
 export function installOptions(command: string): InstallOptions {
 	const value = (flag: string) => {
 		const match = command.match(new RegExp(`(?:^|\\s)--${flag}=(\\S+)`));
 		return match ? match[1] : null;
 	};
-	return { base: value('url') ?? '', tlsUrl: value('tls-url'), caPin: value('ca-pin') };
+	return {
+		base: value('url') ?? '',
+		tlsUrl: value('tls-url'),
+		caPin: value('ca-pin'),
+		serverPin: value('pinned-key')
+	};
 }
 
 /** Quotes a value for a POSIX shell when it needs it. */
@@ -42,6 +49,7 @@ export function dockerRun(options: InstallOptions, token: string, hostname: stri
 	];
 	if (options.tlsUrl) env.push(['DUMBMONIT_AGENT_TLS_URL', options.tlsUrl]);
 	if (options.caPin) env.push(['DUMBMONIT_AGENT_CA_PIN', options.caPin]);
+	if (options.serverPin) env.push(['DUMBMONIT_AGENT_SERVER_PIN', options.serverPin]);
 	if (hostname) env.push(['DUMBMONIT_AGENT_HOSTNAME', hostname]);
 	env.push(['DUMBMONIT_AGENT_SECRET_FILE', '/var/lib/dumbmonit-agent/agent-secret']);
 	return [
@@ -52,5 +60,35 @@ export function dockerRun(options: InstallOptions, token: string, hostname: stri
 		'  -v dumbmonit-agent:/var/lib/dumbmonit-agent \\',
 		'  -v /var/run/docker.sock:/var/run/docker.sock:ro \\',
 		`  ${AGENT_IMAGE}`
+	].join('\n');
+}
+
+/** The same container as a compose file, for those who keep their stack in one. */
+export function dockerCompose(options: InstallOptions, token: string, hostname: string | null): string {
+	const quote = (value: string) => `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\$/g, '$$$$')}"`;
+	const env: [string, string][] = [
+		['DUMBMONIT_AGENT_URL', options.base],
+		['DUMBMONIT_AGENT_TOKEN', token]
+	];
+	if (options.tlsUrl) env.push(['DUMBMONIT_AGENT_TLS_URL', options.tlsUrl]);
+	if (options.caPin) env.push(['DUMBMONIT_AGENT_CA_PIN', options.caPin]);
+	if (options.serverPin) env.push(['DUMBMONIT_AGENT_SERVER_PIN', options.serverPin]);
+	if (hostname) env.push(['DUMBMONIT_AGENT_HOSTNAME', hostname]);
+	env.push(['DUMBMONIT_AGENT_SECRET_FILE', '/var/lib/dumbmonit-agent/agent-secret']);
+	return [
+		'services:',
+		'  dumbmonit-agent:',
+		`    image: ${AGENT_IMAGE}`,
+		'    container_name: dumbmonit-agent',
+		'    restart: unless-stopped',
+		'    environment:',
+		...env.map(([key, value]) => `      ${key}: ${quote(value)}`),
+		...(hostname ? ['    ports:', '      - "8443:8443"'] : []),
+		'    volumes:',
+		'      - dumbmonit-agent:/var/lib/dumbmonit-agent',
+		'      - /var/run/docker.sock:/var/run/docker.sock:ro',
+		'',
+		'volumes:',
+		'  dumbmonit-agent:'
 	].join('\n');
 }

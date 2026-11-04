@@ -46,9 +46,7 @@ export function memberIds(location: MapLocation): Set<number> {
  * (brand new); the other clients' sites are not shown.
  */
 export function visibleLocations(locations: MapLocation[], targets: Target[], client: number | null): MapLocation[] {
-	const sorted = [...locations].sort(
-		(a, b) => Number(b.main_site) - Number(a.main_site) || a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })
-	);
+	const sorted = [...locations].sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
 	if (client === null) return sorted;
 	const owner = new Map(targets.map((t) => [t.id, t.client_id]));
 	return sorted.filter((location) => {
@@ -137,7 +135,7 @@ export function proposalFor(device: NetscanDevice, kinds: Set<string>): { kind: 
 /**
  * Devices the scans of a site found and no monitor covers yet. A scan belongs
  * to the site of the relay agent that ran it; the server's own scans belong
- * to the main site and to "no site".
+ * to "no site".
  *
  * `siteRelays` are the relays of the chosen site, `anyRelays` every relay
  * placed at some site (so "no site" skips what a site already claims).
@@ -160,7 +158,7 @@ export function discoveredFor(
 		if (!agentOf.has(device.schedule_id)) continue;
 		const agent = agentOf.get(device.schedule_id) ?? null;
 		const belongs =
-			agent === null ? location === null || location.main_site : location !== null ? mine.has(agent) : !anyRelays.has(agent);
+			agent === null ? location === null : location !== null ? mine.has(agent) : !anyRelays.has(agent);
 		if (!belongs || monitored.has(device.ip.toLowerCase())) continue;
 		if (device.hostname && monitored.has(device.hostname.toLowerCase())) continue;
 		const proposal = proposalFor(device, kinds);
