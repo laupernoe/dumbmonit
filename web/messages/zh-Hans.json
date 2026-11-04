@@ -994,7 +994,6 @@
 	"demo_tour_s8_title": "墙屏模式",
 	"deviceform_agentflow_another": "添加另一台机器",
 	"deviceform_agentflow_connected": "{host} 已连接（{os}）。",
-	"deviceform_agentflow_fleet": "一次部署整个 Windows 域？",
 	"deviceform_agentflow_folder": "文件夹",
 	"deviceform_agentflow_folder_help": "可选。同一文件夹中的机器在监控列表中归为一组。",
 	"deviceform_agentflow_gateway_pending": "{relay} 将在下次上报时（一分钟内）打开网关。待其开始监听后再运行命令。",
@@ -1094,7 +1093,6 @@
 	"deviceform_enroll_create_relay": "创建中继安装命令",
 	"deviceform_enroll_default_site": "远程站点",
 	"deviceform_enroll_linux": "Linux / macOS",
-	"deviceform_enroll_relay_checkbox": "此代理是远程站点的中继",
 	"deviceform_enroll_see_devices": "查看监控项",
 	"deviceform_enroll_shown_once": "仅显示一次",
 	"deviceform_enroll_single_use": "一次性",
@@ -9093,5 +9091,12 @@
 	"deviceform_synology_api_point_login": "DumbMonit 使用专用的只读账户登录 DSM。",
 	"deviceform_synology_api_cta": "使用 DSM 凭据",
 	"deviceform_synology_dl_title": "下载适合您 NAS 的套件",
-	"deviceform_synology_dl_arch": "下载 {arch}"
+	"deviceform_synology_dl_arch": "下载 {arch}",
+	"deviceform_feature_ad_label": "通过 Active Directory（GPO）部署",
+	"deviceform_feature_ad_summary": "使用组策略在域内所有 Windows 服务器上安装代理。",
+	"deviceform_new_desc_ad": "在域控制器上通过组策略将代理部署到整个 Windows 域。",
+	"deviceform_new_ad_admin_only": "只有管理员才能通过 Active Directory 部署。",
+	"deviceform_agentflow_advanced": "高级",
+	"deviceform_agentflow_synology_hint": "使用 Synology NAS？",
+	"deviceform_agentflow_synology_link": "使用 DSM 软件包"
 }
