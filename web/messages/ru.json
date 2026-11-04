@@ -1045,7 +1045,6 @@
 	"demo_tour_s8_title": "Режим стены",
 	"deviceform_agentflow_another": "Добавить ещё одну машину",
 	"deviceform_agentflow_connected": "{host} подключена ({os}).",
-	"deviceform_agentflow_fleet": "Сразу весь домен Windows?",
 	"deviceform_agentflow_folder": "Папка",
 	"deviceform_agentflow_folder_help": "Необязательно. Машины из одной папки группируются в списке мониторов.",
 	"deviceform_agentflow_gateway_pending": "{relay} откроет шлюз при следующей отправке, в течение минуты. Выполните команду, когда он начнёт слушать.",
@@ -1145,7 +1144,6 @@
 	"deviceform_enroll_create_relay": "Создать команду установки ретранслятора",
 	"deviceform_enroll_default_site": "Удалённая площадка",
 	"deviceform_enroll_linux": "Linux / macOS",
-	"deviceform_enroll_relay_checkbox": "Этот агент — ретранслятор для удалённой площадки",
 	"deviceform_enroll_see_devices": "К мониторам",
 	"deviceform_enroll_shown_once": "Показывается один раз",
 	"deviceform_enroll_single_use": "Одноразовый",
@@ -9379,5 +9377,12 @@
 	"deviceform_synology_api_point_login": "DumbMonit входит в DSM под отдельной учётной записью только для чтения.",
 	"deviceform_synology_api_cta": "Использовать учётные данные DSM",
 	"deviceform_synology_dl_title": "Скачайте пакет для вашего NAS",
-	"deviceform_synology_dl_arch": "Скачать {arch}"
+	"deviceform_synology_dl_arch": "Скачать {arch}",
+	"deviceform_feature_ad_label": "Развернуть через Active Directory (GPO)",
+	"deviceform_feature_ad_summary": "Установите агент на все серверы Windows домена с помощью групповой политики.",
+	"deviceform_new_desc_ad": "Разверните агент во всём домене Windows с помощью групповой политики с контроллера домена.",
+	"deviceform_new_ad_admin_only": "Развёртывание через Active Directory доступно только администраторам.",
+	"deviceform_agentflow_advanced": "Дополнительно",
+	"deviceform_agentflow_synology_hint": "У вас NAS Synology?",
+	"deviceform_agentflow_synology_link": "Используйте пакет DSM"
 }

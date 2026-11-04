@@ -1025,7 +1025,6 @@
 	"demo_tour_s8_title": "Mode mural",
 	"deviceform_agentflow_another": "Ajouter une autre machine",
 	"deviceform_agentflow_connected": "{host} est connectée ({os}).",
-	"deviceform_agentflow_fleet": "Tout un domaine Windows d'un coup ?",
 	"deviceform_agentflow_folder": "Dossier",
 	"deviceform_agentflow_folder_help": "Facultatif. Les machines d'un même dossier sont regroupées dans la liste des surveillances.",
 	"deviceform_agentflow_gateway_pending": "{relay} ouvre sa passerelle à son prochain envoi, d'ici une minute. Lancez la commande une fois qu'elle écoute.",
@@ -1125,7 +1124,6 @@
 	"deviceform_enroll_create_relay": "Créer la commande d’installation du relais",
 	"deviceform_enroll_default_site": "Site distant",
 	"deviceform_enroll_linux": "Linux / macOS",
-	"deviceform_enroll_relay_checkbox": "Cet agent est un relais pour un site distant",
 	"deviceform_enroll_see_devices": "Voir les surveillances",
 	"deviceform_enroll_shown_once": "Affiché une seule fois",
 	"deviceform_enroll_single_use": "Usage unique",
@@ -9193,5 +9191,12 @@
 	"deviceform_synology_api_point_login": "DumbMonit se connecte à DSM avec un compte dédié en lecture seule.",
 	"deviceform_synology_api_cta": "Utiliser les identifiants DSM",
 	"deviceform_synology_dl_title": "Téléchargez le paquet pour votre NAS",
-	"deviceform_synology_dl_arch": "Télécharger {arch}"
+	"deviceform_synology_dl_arch": "Télécharger {arch}",
+	"deviceform_feature_ad_label": "Déployer avec Active Directory (GPO)",
+	"deviceform_feature_ad_summary": "Installez l’agent sur tous les serveurs Windows d’un domaine avec une stratégie de groupe.",
+	"deviceform_new_desc_ad": "Déployez l’agent sur tout un domaine Windows avec une stratégie de groupe, depuis un contrôleur de domaine.",
+	"deviceform_new_ad_admin_only": "Seuls les administrateurs peuvent déployer avec Active Directory.",
+	"deviceform_agentflow_advanced": "Avancé",
+	"deviceform_agentflow_synology_hint": "Sur un NAS Synology ?",
+	"deviceform_agentflow_synology_link": "Utilisez le paquet DSM"
 }
