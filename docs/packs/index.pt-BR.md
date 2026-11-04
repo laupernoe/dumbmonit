@@ -29,7 +29,7 @@ Endereços de LAN privados são sempre permitidos.
 ## Pacotes de referência {#reference-packs}
 
 O repositório entrega três pacotes sob
-[`packs/`](https://github.com/laupernoe/dumbmonit/tree/main/packs), cada um com
+[`packs/`](https://github.com/selfhostr/dumbmonit/tree/main/packs), cada um com
 suas fixtures e saída esperada:
 
 | Pacote | Lê | Regras |
@@ -107,11 +107,11 @@ O binário do servidor valida e testa pacotes offline:
 
 ```bash
 # Verificações de esquema e consistência, sem servidor ou banco de dados
-docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/laupernoe/dumbmonit:latest \
+docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/selfhostr/dumbmonit:latest \
   pack lint /packs/shelly-plug
 
 # Reproduz fixtures/ através da extração real e compara com expected.prom
-docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/laupernoe/dumbmonit:latest \
+docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/selfhostr/dumbmonit:latest \
   pack test /packs/shelly-plug
 ```
 

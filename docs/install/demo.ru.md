@@ -1,6 +1,6 @@
 # Запуск демо-инстанса
 
-Публичная демонстрация на **[demo.dumbmonit.app](https://demo.dumbmonit.app)**
+Публичная демонстрация на **[dumbmonit-demo.selfhostr.io](https://dumbmonit-demo.selfhostr.io)**
 — это обычный образ DumbMonit, запущенный с `DUMBMONIT_DEMO=1`. Вы можете
 запустить то же самое сами — чтобы показать DumbMonit команде перед настоящей
 установкой, или чтобы разместить витрину на собственном сайте.
@@ -59,7 +59,7 @@
 ```bash
 docker run -d --name dumbmonit-demo -p 8080:8080 \
   -e DUMBMONIT_DEMO=1 \
-  ghcr.io/laupernoe/dumbmonit:latest
+  ghcr.io/selfhostr/dumbmonit:latest
 ```
 
 Или с Compose, без тома, чтобы каждый перезапуск начинался с чистого листа:
@@ -67,7 +67,7 @@ docker run -d --name dumbmonit-demo -p 8080:8080 \
 ```yaml
 services:
   dumbmonit-demo:
-    image: ghcr.io/laupernoe/dumbmonit:latest
+    image: ghcr.io/selfhostr/dumbmonit:latest
     restart: unless-stopped
     ports:
       - "8080:8080"

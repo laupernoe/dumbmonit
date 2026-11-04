@@ -1,6 +1,6 @@
 # 运行一个演示实例 {#run-a-demo-instance}
 
-**[demo.dumbmonit.app](https://demo.dumbmonit.app)** 上的公开演示,是
+**[dumbmonit-demo.selfhostr.io](https://dumbmonit-demo.selfhostr.io)** 上的公开演示,是
 一个以 `DUMBMONIT_DEMO=1` 启动的普通 DumbMonit 镜像。你也可以自己运行
 同样的东西——在真正安装之前向团队展示 DumbMonit,或者在自己的网站上
 放一个展示页。
@@ -49,7 +49,7 @@ HTTPS 的反向代理之后,并像对待任何公开实例一样设置
 ```bash
 docker run -d --name dumbmonit-demo -p 8080:8080 \
   -e DUMBMONIT_DEMO=1 \
-  ghcr.io/laupernoe/dumbmonit:latest
+  ghcr.io/selfhostr/dumbmonit:latest
 ```
 
 或者使用 Compose,不挂载任何卷,这样每次重启都是干净的:
@@ -57,7 +57,7 @@ docker run -d --name dumbmonit-demo -p 8080:8080 \
 ```yaml
 services:
   dumbmonit-demo:
-    image: ghcr.io/laupernoe/dumbmonit:latest
+    image: ghcr.io/selfhostr/dumbmonit:latest
     restart: unless-stopped
     ports:
       - "8080:8080"

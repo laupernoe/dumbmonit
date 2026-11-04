@@ -6,7 +6,7 @@ DumbMonit 会在有新版本时告诉你,并引导你完成更新。它永远不
 ## 发现新版本 {#spotting-a-new-version}
 
 服务器最多每天一次向 GitHub 的公开发布 API
-(`api.github.com/repos/laupernoe/dumbmonit/releases`)询问最新发布版本,
+(`api.github.com/repos/selfhostr/dumbmonit/releases`)询问最新发布版本,
 并与你当前运行的版本进行比较。诸如 `0.1.0-alpha.7` 这样的预发布版本
 会被正确比较:`alpha.10` 比 `alpha.9` 新,`0.1.0` 比任何
 `0.1.0-alpha.N` 都新。草稿会被忽略,运行稳定版本的实例永远不会
@@ -49,7 +49,7 @@ environment:
    *已是最新版本*。
 
 若要固定某个版本而不是跟随 `:latest`,请修改 Compose 文件中的镜像
-标签(例如 `ghcr.io/laupernoe/dumbmonit:0.1.0-alpha.7`),然后执行
+标签(例如 `ghcr.io/selfhostr/dumbmonit:0.1.0-alpha.7`),然后执行
 同样的命令。
 
 若要回退,请在上一个镜像上恢复第 1 步中所做的备份。

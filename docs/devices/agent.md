@@ -241,7 +241,7 @@ which is the choice you make when you create a token.
 
     The macOS binaries are **not** in the DumbMonit image: building them
     requires Apple's SDK, which its licence forbids redistributing. They are
-    attached to each [GitHub release](https://github.com/laupernoe/dumbmonit/releases/latest)
+    attached to each [GitHub release](https://github.com/selfhostr/dumbmonit/releases/latest)
     instead — `dumbmonit-agent-macos-aarch64` (Apple silicon) and
     `dumbmonit-agent-macos-x86_64` (Intel), each with its `.sha256` — and the
     server redirects `/download/dumbmonit-agent-macos-…` there, so the script
@@ -256,7 +256,7 @@ which is the choice you make when you create a token.
     `--bin` installs what you give it):
 
     ```sh
-    curl -sSLO https://github.com/laupernoe/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
+    curl -sSLO https://github.com/selfhostr/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
     curl -sSL https://server:8080/install.sh | sudo sh -s -- \
         --token=dmon_xxx --url=https://server:8080 --bin=./dumbmonit-agent-macos-aarch64
     ```
@@ -335,7 +335,7 @@ next to it:
 The Linux binaries are linked statically against musl: they run on any
 distribution, glibc or not (Alpine, NAS firmwares), with no library to match.
 Each file has its checksum next to it, `<file>.sha256`, in `sha256sum`
-format. Every [GitHub release](https://github.com/laupernoe/dumbmonit/releases/latest)
+format. Every [GitHub release](https://github.com/selfhostr/dumbmonit/releases/latest)
 carries all six binaries and their checksums, for machines that cannot reach
 the server's `/download/` or for installing with `--bin`.
 
@@ -348,9 +348,9 @@ repository's release workflow:
 cosign verify-blob dumbmonit-agent-linux-x86_64 \
   --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
+  --certificate-identity-regexp '^https://github.com/selfhostr/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
 # or, with the GitHub CLI:
-gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+gh attestation verify dumbmonit-agent-linux-x86_64 -R selfhostr/dumbmonit
 ```
 
 To build the Linux, Windows and FreeBSD binaries yourself, from a clone of the
@@ -588,7 +588,7 @@ rollback then happens at its next start.
 ### Docker and other cases {#automatic-updates-other-cases}
 
 - **Docker**: an agent in a container never replaces itself (the image
-  `ghcr.io/laupernoe/dumbmonit-agent` sets `DUMBMONIT_AGENT_CONTAINER=1`;
+  `ghcr.io/selfhostr/dumbmonit-agent` sets `DUMBMONIT_AGENT_CONTAINER=1`;
   `/.dockerenv` and `/run/.containerenv` are also detected). The UI says to
   update its image: `docker compose pull && docker compose up -d`.
 - **macOS**: the server image does not ship macOS agents. Update them with
@@ -975,7 +975,7 @@ on its device page, none exists by default. See
 ## Run the agent in Docker / on another network
 
 The agent is also published as a container image, with the same tags as the
-server: `ghcr.io/laupernoe/dumbmonit-agent:latest` (last release), `:edge` (last
+server: `ghcr.io/selfhostr/dumbmonit-agent:latest` (last release), `:edge` (last
 commit on `main`). It is a `FROM scratch` image holding the agent binary and
 the Mozilla CA bundle, configured entirely by environment variables. The
 repository ships a ready-to-use `docker-compose.agent.yml`:

@@ -104,7 +104,7 @@ figura.
 4. l'immagine (`linux/amd64`), solo build.
 
 `.github/workflows/release.yml` pubblica la stessa immagine su
-`ghcr.io/laupernoe/dumbmonit`: `:edge` a ogni push su `main`, `:X.Y.Z`,
+`ghcr.io/selfhostr/dumbmonit`: `:edge` a ogni push su `main`, `:X.Y.Z`,
 `:X.Y`, `:X` e `:latest` a ogni tag `v*`.
 
 I test di integrazione si trovano in `crates/server/tests/`; i moduli puri

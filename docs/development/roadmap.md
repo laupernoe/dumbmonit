@@ -5,20 +5,20 @@ board: [DumbMonit Roadmap](https://github.com/users/laupernoe/projects/2).
 Priorities and timing can change; the board is a living plan, not a promise.
 
 - **Shipped changes** are in the
-  [changelog](https://github.com/laupernoe/dumbmonit/blob/main/CHANGELOG.md)
+  [changelog](https://github.com/selfhostr/dumbmonit/blob/main/CHANGELOG.md)
   and in the notes of each
-  [GitHub release](https://github.com/laupernoe/dumbmonit/releases).
+  [GitHub release](https://github.com/selfhostr/dumbmonit/releases).
 - **Ideas and bugs** live in the
-  [issue tracker](https://github.com/laupernoe/dumbmonit/issues). Open an issue
+  [issue tracker](https://github.com/selfhostr/dumbmonit/issues). Open an issue
   before writing code for something large.
 - **Security fixes** are announced in the release notes and as GitHub security
   advisories, with their CVE or GHSA identifier.
 
 DumbMonit is before 1.0: expect the API and the data model to keep evolving until
 a stable line is announced. See the
-[contributing guide](https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md)
+[contributing guide](https://github.com/selfhostr/dumbmonit/blob/main/CONTRIBUTING.md)
 and the
-[governance](https://github.com/laupernoe/dumbmonit/blob/main/GOVERNANCE.md)
+[governance](https://github.com/selfhostr/dumbmonit/blob/main/GOVERNANCE.md)
 to take part.
 
 ## Direction for the next twelve months
@@ -30,7 +30,7 @@ These are intentions, not commitments, in rough order.
   upgrade notes in the changelog.
 - **More people with access.** A second administrator of the repository,
   registry, documentation hosting and domains (see the
-  [governance](https://github.com/laupernoe/dumbmonit/blob/main/GOVERNANCE.md)).
+  [governance](https://github.com/selfhostr/dumbmonit/blob/main/GOVERNANCE.md)).
 - **Supply chain.** Reproducible release builds
   ([current state](reproducible-builds.md)) and signed version tags.
 - **arm64 images.** Server images are amd64 only for now; arm64 returns with

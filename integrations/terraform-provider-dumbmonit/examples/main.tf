@@ -1,6 +1,6 @@
 terraform {
   required_providers {
-    dumbmonit = { source = "registry.terraform.io/laupernoe/dumbmonit" }
+    dumbmonit = { source = "registry.terraform.io/selfhostr/dumbmonit" }
   }
 }
 

@@ -7,11 +7,11 @@ long-lived signing key** to obtain, protect or rotate: the signing identity is
 the GitHub Actions workflow itself, recorded in a short-lived certificate and
 in the public Sigstore transparency log. Verifying means checking that the
 artifact was built by that workflow, from a `v*` tag of
-`laupernoe/dumbmonit`.
+`selfhostr/dumbmonit`.
 
 ## Agent binaries
 
-Each binary on the [GitHub release](https://github.com/laupernoe/dumbmonit/releases/latest)
+Each binary on the [GitHub release](https://github.com/selfhostr/dumbmonit/releases/latest)
 comes with `<file>.sigstore.json` (the signature bundle) and `<file>.sha256`,
 and the release carries `dumbmonit-agent.intoto.jsonl`, the SLSA build
 provenance.
@@ -20,18 +20,18 @@ provenance.
 cosign verify-blob dumbmonit-agent-linux-x86_64 \
   --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
+  --certificate-identity-regexp '^https://github.com/selfhostr/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
 
 # or, with the GitHub CLI (checks the provenance attestation)
-gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+gh attestation verify dumbmonit-agent-linux-x86_64 -R selfhostr/dumbmonit
 
 # or against the provenance attached to the release
-gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit \
+gh attestation verify dumbmonit-agent-linux-x86_64 -R selfhostr/dumbmonit \
   --bundle dumbmonit-agent.intoto.jsonl
 ```
 
 A successful run prints the workflow identity and the tag. If it fails, do not
-install the file, and [report it](https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md).
+install the file, and [report it](https://github.com/selfhostr/dumbmonit/blob/main/SECURITY.md).
 
 ## Container images
 
@@ -39,12 +39,12 @@ The server and agent images carry a build provenance attestation pushed to
 ghcr.io, and an SPDX SBOM and full SLSA provenance attached to the image index.
 
 ```sh
-gh attestation verify oci://ghcr.io/laupernoe/dumbmonit:0.9.0 -R laupernoe/dumbmonit
+gh attestation verify oci://ghcr.io/selfhostr/dumbmonit:0.9.0 -R selfhostr/dumbmonit
 
 # the SBOM and the provenance recorded by the build
-docker buildx imagetools inspect ghcr.io/laupernoe/dumbmonit:0.9.0 \
+docker buildx imagetools inspect ghcr.io/selfhostr/dumbmonit:0.9.0 \
   --format '{{ json .SBOM }}'
-docker buildx imagetools inspect ghcr.io/laupernoe/dumbmonit:0.9.0 \
+docker buildx imagetools inspect ghcr.io/selfhostr/dumbmonit:0.9.0 \
   --format '{{ json .Provenance }}'
 ```
 
@@ -59,7 +59,7 @@ Releases from before 0.9.0 (`v0.1.0-alpha.N`), and files the release workflow di
 cosign verify-blob dumbmonit-agent-linux-x86_64 \
   --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/sign-releases\.yml@refs/heads/(main|dev)$'
+  --certificate-identity-regexp '^https://github.com/selfhostr/dumbmonit/\.github/workflows/sign-releases\.yml@refs/heads/(main|dev)$'
 ```
 
 These releases have no build provenance: `gh attestation verify` does not apply to them.

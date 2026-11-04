@@ -179,7 +179,7 @@ critical**, **Hyper-V host CPU high** и **Hyper-V virtual disk errors** (см.
 
     Бинарных файлов для macOS **нет** в образе DumbMonit: для их сборки
     требуется SDK Apple, лицензия которого запрещает его распространение. Вместо этого они
-    прикреплены к каждому [релизу на GitHub](https://github.com/laupernoe/dumbmonit/releases/latest)
+    прикреплены к каждому [релизу на GitHub](https://github.com/selfhostr/dumbmonit/releases/latest)
     — `dumbmonit-agent-macos-aarch64` (Apple silicon) и
     `dumbmonit-agent-macos-x86_64` (Intel), каждый со своим `.sha256` — а
     сервер перенаправляет `/download/dumbmonit-agent-macos-…` туда, так что скрипт
@@ -194,7 +194,7 @@ critical**, **Hyper-V host CPU high** и **Hyper-V virtual disk errors** (см.
     `--bin` устанавливает то, что вы ему даёте):
 
     ```sh
-    curl -sSLO https://github.com/laupernoe/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
+    curl -sSLO https://github.com/selfhostr/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
     curl -sSL https://server:8080/install.sh | sudo sh -s -- \
         --token=dmon_xxx --url=https://server:8080 --bin=./dumbmonit-agent-macos-aarch64
     ```
@@ -269,7 +269,7 @@ critical**, **Hyper-V host CPU high** и **Hyper-V virtual disk errors** (см.
 Бинарные файлы для Linux статически скомпонованы с musl: они работают в любом
 дистрибутиве, с glibc или без (Alpine, прошивки NAS), без подбора библиотек.
 Рядом с каждым файлом лежит его контрольная сумма `<file>.sha256` в формате
-`sha256sum`. Каждый [релиз на GitHub](https://github.com/laupernoe/dumbmonit/releases/latest)
+`sha256sum`. Каждый [релиз на GitHub](https://github.com/selfhostr/dumbmonit/releases/latest)
 содержит все шесть бинарных файлов и их контрольные суммы — для машин, которые не могут достучаться до
 `/download/` сервера, или для установки через `--bin`.
 
@@ -282,9 +282,9 @@ critical**, **Hyper-V host CPU high** и **Hyper-V virtual disk errors** (см.
 cosign verify-blob dumbmonit-agent-linux-x86_64 \
   --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
+  --certificate-identity-regexp '^https://github.com/selfhostr/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
 # or, with the GitHub CLI:
-gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+gh attestation verify dumbmonit-agent-linux-x86_64 -R selfhostr/dumbmonit
 ```
 
 Чтобы самостоятельно собрать бинарные файлы для Linux, Windows и FreeBSD из клона
@@ -682,7 +682,7 @@ Windows с включённым Hyper-V — агент находит служб
 ## Запуск агента в Docker / в другой сети {#run-the-agent-in-docker--on-another-network}
 
 Агент также публикуется как образ контейнера с теми же тегами, что и
-сервер: `ghcr.io/laupernoe/dumbmonit-agent:latest` (последний релиз), `:edge` (последний
+сервер: `ghcr.io/selfhostr/dumbmonit-agent:latest` (последний релиз), `:edge` (последний
 коммит в `main`). Это образ `FROM scratch`, содержащий бинарный файл агента и
 набор CA Mozilla, настраиваемый целиком через переменные окружения. В
 репозитории поставляется готовый к использованию `docker-compose.agent.yml`:

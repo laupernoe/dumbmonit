@@ -22,7 +22,7 @@ Put the binary where a development override finds it (`~/.terraformrc`):
 ```hcl
 provider_installation {
   dev_overrides {
-    "registry.terraform.io/laupernoe/dumbmonit" = "/path/to/this/directory"
+    "registry.terraform.io/selfhostr/dumbmonit" = "/path/to/this/directory"
   }
   direct {}
 }
@@ -33,7 +33,7 @@ provider_installation {
 ```hcl
 terraform {
   required_providers {
-    dumbmonit = { source = "registry.terraform.io/laupernoe/dumbmonit" }
+    dumbmonit = { source = "registry.terraform.io/selfhostr/dumbmonit" }
   }
 }
 

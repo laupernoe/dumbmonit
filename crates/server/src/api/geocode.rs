@@ -16,7 +16,7 @@ const GEOCODING: &str = "https://geocoding-api.open-meteo.com/v1/search";
 const MAX_BYTES: usize = 256 * 1024;
 const TIMEOUT: Duration = Duration::from_secs(8);
 const USER_AGENT: &str =
-    concat!("DumbMonit/", env!("CARGO_PKG_VERSION"), " (+https://github.com/laupernoe/dumbmonit)");
+    concat!("DumbMonit/", env!("CARGO_PKG_VERSION"), " (+https://github.com/selfhostr/dumbmonit)");
 
 /// Une ville telle que le géocodage l'a rendue.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -99,7 +99,7 @@ eigenen Neubau das Internet braucht, macht keine gute Figur.
 3. `npm run check` und `npm run build`;
 4. das Image (`linux/amd64`), nur Build.
 
-`.github/workflows/release.yml` pusht dasselbe Image nach `ghcr.io/laupernoe/dumbmonit`:
+`.github/workflows/release.yml` pusht dasselbe Image nach `ghcr.io/selfhostr/dumbmonit`:
 `:edge` bei jedem Push auf `main`, `:X.Y.Z`, `:X.Y`, `:X` und `:latest` bei jedem `v*`-Tag.
 
 Integrationstests liegen in `crates/server/tests/`; reine Module (Metrikumwandlung,

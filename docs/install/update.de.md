@@ -6,7 +6,7 @@ durch das Update. Es installiert nie etwas von selbst.
 ## Eine neue Version entdecken
 
 Höchstens einmal täglich fragt der Server die öffentliche Releases-API
-von GitHub (`api.github.com/repos/laupernoe/dumbmonit/releases`) nach der
+von GitHub (`api.github.com/repos/selfhostr/dumbmonit/releases`) nach der
 neuesten Version und vergleicht sie mit der von Ihnen betriebenen. Vorab-
 Veröffentlichungen wie `0.1.0-alpha.7` werden korrekt verglichen:
 `alpha.10` ist neuer als `alpha.9`, und `0.1.0` ist neuer als jedes
@@ -58,7 +58,7 @@ Dieselbe Information steht Skripten und API-Tokens unter
 
 Um eine Version festzupinnen, statt `:latest` zu folgen, ändern Sie den
 Image-Tag in der Compose-Datei (zum Beispiel
-`ghcr.io/laupernoe/dumbmonit:0.1.0-alpha.7`) und führen Sie denselben
+`ghcr.io/selfhostr/dumbmonit:0.1.0-alpha.7`) und führen Sie denselben
 Befehl aus.
 
 Um zurückzugehen, stellen Sie das in Schritt 1 erstellte Backup auf dem
