@@ -62,7 +62,13 @@ resolve_old_image() {
   if command -v gh >/dev/null; then
     local tag
     tag=$(gh api "repos/$REPO/releases/latest" --jq .tag_name 2>/dev/null || true)
-    [ -n "$tag" ] && { echo "ghcr.io/$REPO:${tag#v}"; return; }
+    [ -n "$tag" ] && docker manifest inspect "ghcr.io/$REPO:${tag#v}" >/dev/null 2>&1 \
+      && { echo "ghcr.io/$REPO:${tag#v}"; return; }
+  fi
+  # Avant le passage à l'organisation selfhostr, les images étaient publiées ici :
+  # la première release de l'organisation part de la dernière de l'ancien nom.
+  if docker manifest inspect ghcr.io/laupernoe/dumbmonit:latest >/dev/null 2>&1; then
+    echo ghcr.io/laupernoe/dumbmonit:latest; return
   fi
   echo "Impossible de trouver la dernière release (fixez OLD_IMAGE)." >&2
   exit 2

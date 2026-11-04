@@ -1,6 +1,6 @@
 # Eine Demo-Instanz betreiben
 
-Die öffentliche Demo auf **[demo.dumbmonit.selfhostr.io](https://demo.dumbmonit.selfhostr.io)**
+Die öffentliche Demo auf **[dumbmonit-demo.selfhostr.io](https://dumbmonit-demo.selfhostr.io)**
 ist ein gewöhnliches DumbMonit-Image, gestartet mit `DUMBMONIT_DEMO=1`.
 Sie können dasselbe selbst betreiben — um DumbMonit einem Team zu zeigen,
 bevor Sie es echt installieren, oder um eine Vorführung auf Ihrer eigenen
