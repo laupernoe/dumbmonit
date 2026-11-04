@@ -7,7 +7,7 @@ Datenbank. Ein Volume, `/data`, enthält die Datenbank, das Instanz-Geheimnis un
 Zeitreihen.
 
 !!! note "Image-Tags"
-    `ghcr.io/laupernoe/dumbmonit:latest` ist der letzte getaggte Release (amd64;
+    `ghcr.io/selfhostr/dumbmonit:latest` ist der letzte getaggte Release (amd64;
     arm64-Images sind vorerst pausiert); `:edge` folgt dem letzten Commit auf `dev`. Um aus dem Quellcode zu starten,
     baut `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
     --build` dasselbe Image lokal (beim ersten Mal etwa zehn Minuten; nur Docker
@@ -29,7 +29,7 @@ Sie sie in einem eigenen Verzeichnis:
 ```yaml
 services:
   dumbmonit:
-    image: ghcr.io/laupernoe/dumbmonit:latest
+    image: ghcr.io/selfhostr/dumbmonit:latest
     ports:
       - "8080:8080"
     volumes:

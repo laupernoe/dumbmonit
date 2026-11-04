@@ -6,20 +6,20 @@ Las prioridades y los plazos pueden cambiar; el tablero es un plan vivo, no una
 promesa.
 
 - **Los cambios publicados** están en el
-  [registro de cambios](https://github.com/laupernoe/dumbmonit/blob/main/CHANGELOG.md)
+  [registro de cambios](https://github.com/selfhostr/dumbmonit/blob/main/CHANGELOG.md)
   y en las notas de cada
-  [versión de GitHub](https://github.com/laupernoe/dumbmonit/releases).
+  [versión de GitHub](https://github.com/selfhostr/dumbmonit/releases).
 - **Las ideas y los errores** viven en el
-  [gestor de incidencias](https://github.com/laupernoe/dumbmonit/issues). Abre
+  [gestor de incidencias](https://github.com/selfhostr/dumbmonit/issues). Abre
   una incidencia antes de escribir código para algo grande.
 - **Las correcciones de seguridad** se anuncian en las notas de la versión y
   como avisos de seguridad de GitHub, con su identificador CVE o GHSA.
 
 DumbMonit está en una versión previa a la 1.0: espera que la API y el modelo de
 datos sigan evolucionando hasta que se anuncie una línea estable. Consulta la
-[guía de contribución](https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md)
+[guía de contribución](https://github.com/selfhostr/dumbmonit/blob/main/CONTRIBUTING.md)
 y la
-[gobernanza](https://github.com/laupernoe/dumbmonit/blob/main/GOVERNANCE.md)
+[gobernanza](https://github.com/selfhostr/dumbmonit/blob/main/GOVERNANCE.md)
 para participar.
 
 ## Dirección para los próximos doce meses {#direction-for-the-next-twelve-months}
@@ -32,7 +32,7 @@ Son intenciones, no compromisos, más o menos por orden.
 - **Más personas con acceso.** Un segundo administrador del repositorio, del
   registro de imágenes, del alojamiento de la documentación y de los dominios
   (consulta la
-  [gobernanza](https://github.com/laupernoe/dumbmonit/blob/main/GOVERNANCE.md)).
+  [gobernanza](https://github.com/selfhostr/dumbmonit/blob/main/GOVERNANCE.md)).
 - **Cadena de suministro.** Compilaciones de versiones reproducibles
   ([estado actual](reproducible-builds.md)) y etiquetas de versión firmadas.
 - **Imágenes arm64.** Las imágenes del servidor son solo amd64 por ahora; arm64

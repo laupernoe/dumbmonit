@@ -105,7 +105,7 @@ O `.github/workflows/ci.yml` executa, em cada push e pull request:
 4. a imagem (`linux/amd64`), apenas build.
 
 O `.github/workflows/release.yml` publica a mesma imagem em
-`ghcr.io/laupernoe/dumbmonit`: `:edge` em cada push para `main`, `:X.Y.Z`,
+`ghcr.io/selfhostr/dumbmonit`: `:edge` em cada push para `main`, `:X.Y.Z`,
 `:X.Y`, `:X` e `:latest` em cada tag `v*`.
 
 Os testes de integração vivem em `crates/server/tests/`; os módulos puros

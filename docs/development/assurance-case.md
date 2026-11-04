@@ -5,7 +5,7 @@ threats, the boundaries where trust changes, why the design limits the damage of
 a mistake, how each common class of weakness is countered, and what evidence
 backs each claim. It extends the [security model](security-model.md), which
 lists the same measures more briefly. To report a vulnerability, follow the
-[security policy](https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md).
+[security policy](https://github.com/selfhostr/dumbmonit/blob/main/SECURITY.md).
 
 File paths below are relative to the repository root.
 

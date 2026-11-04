@@ -22,7 +22,7 @@
 	import BackupHistory from '../backup/BackupHistory.svelte';
 	import { formatAge, formatBytes } from './api';
 
-	const GUIDE_URL = 'https://dumbmonit.app/docs/devices/agent/#plakar-backups';
+	const GUIDE_URL = 'https://dumbmonit.selfhostr.io/docs/devices/agent/#plakar-backups';
 
 	interface Props {
 		target: Target;

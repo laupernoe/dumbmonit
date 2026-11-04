@@ -3,7 +3,7 @@ import { getLocale } from '#lib/paraglide/runtime.js';
 /** Codes de langue de l'interface dans les URL de la documentation (Starlight : l'anglais est à la racine). */
 const DOCS_LANGUAGE: Record<string, string> = {};
 
-const DOCS_ROOT = 'https://dumbmonit.app/docs/';
+const DOCS_ROOT = 'https://dumbmonit.selfhostr.io/docs/';
 
 /** Racine de la documentation dans la langue de l'interface (`/docs/` en anglais, `/docs/fr/` sinon). */
 function docsRoot(): string {

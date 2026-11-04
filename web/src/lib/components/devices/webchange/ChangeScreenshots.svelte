@@ -28,7 +28,7 @@
 	<p class="text-sm text-ink-2">
 		{m.app_change_no_screenshot_lead()}
 		<a
-			href="https://dumbmonit.app/docs/devices/webchange/"
+			href="https://dumbmonit.selfhostr.io/docs/devices/webchange/"
 			target="_blank"
 			rel="noopener noreferrer"
 			class="text-ink underline"

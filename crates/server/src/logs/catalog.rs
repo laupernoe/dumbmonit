@@ -16,7 +16,7 @@ use super::sinks::{self, Sink};
 use crate::notify::catalog::Field;
 
 /// Page de la documentation qui décrit chaque destination.
-pub const LOGS_DOC: &str = "https://dumbmonit.app/docs/install/logs/";
+pub const LOGS_DOC: &str = "https://dumbmonit.selfhostr.io/docs/install/logs/";
 
 /// Un type de destination, prêt à être présenté.
 #[derive(Debug, Clone, Serialize)]

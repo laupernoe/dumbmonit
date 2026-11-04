@@ -78,7 +78,7 @@ cd web && npm run build      # статическая сборка в web/build,
 3. `npm run check` и `npm run build`;
 4. образ (`linux/amd64`), только сборка.
 
-`.github/workflows/release.yml` отправляет тот же образ на `ghcr.io/laupernoe/dumbmonit`: `:edge` при каждом push на `main`, `:X.Y.Z`, `:X.Y`, `:X` и `:latest` при каждом теге `v*`.
+`.github/workflows/release.yml` отправляет тот же образ на `ghcr.io/selfhostr/dumbmonit`: `:edge` при каждом push на `main`, `:X.Y.Z`, `:X.Y`, `:X` и `:latest` при каждом теге `v*`.
 
 Интеграционные тесты находятся в `crates/server/tests/`; чистые модули (преобразование метрик, разбор опций, конечный автомат состояния оповещения, молчание) тестируются на месте без сети.
 

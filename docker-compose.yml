@@ -2,7 +2,7 @@ name: dumbmonit
 
 services:
   dumbmonit:
-    image: ghcr.io/laupernoe/dumbmonit:latest
+    image: ghcr.io/selfhostr/dumbmonit:latest
     ports:
       - "8080:8080"
       # Encrypted agent channel (TLS 1.3 + client certificates). The only port

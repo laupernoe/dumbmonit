@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 
-	"github.com/laupernoe/dumbmonit/integrations/terraform-provider-dumbmonit/internal/provider"
+	"github.com/selfhostr/dumbmonit/integrations/terraform-provider-dumbmonit/internal/provider"
 )
 
 // version est posée à la compilation (-ldflags "-X main.version=...").
@@ -20,7 +20,7 @@ func main() {
 	flag.Parse()
 
 	err := providerserver.Serve(context.Background(), provider.New(version), providerserver.ServeOpts{
-		Address: "registry.terraform.io/laupernoe/dumbmonit",
+		Address: "registry.terraform.io/selfhostr/dumbmonit",
 		Debug:   debug,
 	})
 	if err != nil {

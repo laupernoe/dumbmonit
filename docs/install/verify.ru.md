@@ -7,11 +7,11 @@
 личность — сам рабочий процесс GitHub Actions, записанный в краткосрочном
 сертификате и в публичном журнале прозрачности Sigstore. Проверка означает
 убедиться, что артефакт собран этим рабочим процессом из тега `v*` репозитория
-`laupernoe/dumbmonit`.
+`selfhostr/dumbmonit`.
 
 ## Бинарные файлы агента
 
-К каждому бинарному файлу в [релизе на GitHub](https://github.com/laupernoe/dumbmonit/releases/latest)
+К каждому бинарному файлу в [релизе на GitHub](https://github.com/selfhostr/dumbmonit/releases/latest)
 прилагаются `<файл>.sigstore.json` (пакет подписи) и `<файл>.sha256`, а сам
 релиз содержит `dumbmonit-agent.intoto.jsonl`, происхождение сборки SLSA.
 
@@ -19,18 +19,18 @@
 cosign verify-blob dumbmonit-agent-linux-x86_64 \
   --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
+  --certificate-identity-regexp '^https://github.com/selfhostr/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
 
 # or, with the GitHub CLI (checks the provenance attestation)
-gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+gh attestation verify dumbmonit-agent-linux-x86_64 -R selfhostr/dumbmonit
 
 # or against the provenance attached to the release
-gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit \
+gh attestation verify dumbmonit-agent-linux-x86_64 -R selfhostr/dumbmonit \
   --bundle dumbmonit-agent.intoto.jsonl
 ```
 
 Успешный запуск выводит личность рабочего процесса и тег. Если проверка
-не проходит, не устанавливайте файл и [сообщите об этом](https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md).
+не проходит, не устанавливайте файл и [сообщите об этом](https://github.com/selfhostr/dumbmonit/blob/main/SECURITY.md).
 
 ## Образы контейнеров
 
@@ -39,12 +39,12 @@ ghcr.io, а также SBOM в формате SPDX и полное происх�
 к индексу образа.
 
 ```sh
-gh attestation verify oci://ghcr.io/laupernoe/dumbmonit:0.9.0 -R laupernoe/dumbmonit
+gh attestation verify oci://ghcr.io/selfhostr/dumbmonit:0.9.0 -R selfhostr/dumbmonit
 
 # the SBOM and the provenance recorded by the build
-docker buildx imagetools inspect ghcr.io/laupernoe/dumbmonit:0.9.0 \
+docker buildx imagetools inspect ghcr.io/selfhostr/dumbmonit:0.9.0 \
   --format '{{ json .SBOM }}'
-docker buildx imagetools inspect ghcr.io/laupernoe/dumbmonit:0.9.0 \
+docker buildx imagetools inspect ghcr.io/selfhostr/dumbmonit:0.9.0 \
   --format '{{ json .Provenance }}'
 ```
 
@@ -59,7 +59,7 @@ docker buildx imagetools inspect ghcr.io/laupernoe/dumbmonit:0.9.0 \
 cosign verify-blob dumbmonit-agent-linux-x86_64 \
   --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/sign-releases\.yml@refs/heads/(main|dev)$'
+  --certificate-identity-regexp '^https://github.com/selfhostr/dumbmonit/\.github/workflows/sign-releases\.yml@refs/heads/(main|dev)$'
 ```
 
 У этих версий нет provenance сборки: `gh attestation verify` к ним не применяется.

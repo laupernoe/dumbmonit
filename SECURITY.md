@@ -21,7 +21,7 @@ in the next tagged release and in the `edge` image.
 
 Report it privately through GitHub's private vulnerability reporting: open the
 repository's **Security** tab, then **Report a vulnerability**
-(**https://github.com/laupernoe/dumbmonit/security/advisories/new**).
+(**https://github.com/selfhostr/dumbmonit/security/advisories/new**).
 
 Include what you can of: the affected component (see the scope below), steps to
 reproduce or a proof of concept, the impact as you understand it, and the
@@ -75,7 +75,7 @@ they come.
 
 Release binaries and images are signed and carry a build provenance, so you
 can check that they were built by this repository's release workflow. The
-steps are in [Verifying a release](https://dumbmonit.app/docs/install/verify/).
+steps are in [Verifying a release](https://dumbmonit.selfhostr.io/docs/install/verify/).
 
 ## Scope
 

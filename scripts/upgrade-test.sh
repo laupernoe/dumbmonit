@@ -6,7 +6,7 @@
 #
 # Variables :
 #   OLD_IMAGE   image de départ (défaut : dernière release publiée, voir plus bas)
-#   NEW_IMAGE   image candidate (défaut : ghcr.io/laupernoe/dumbmonit:edge)
+#   NEW_IMAGE   image candidate (défaut : ghcr.io/selfhostr/dumbmonit:edge)
 #   KEEP=1      garde le volume et les conteneurs après coup (débogage)
 #
 # Prérequis : docker, curl, python3. Les images sont lancées comme en production
@@ -14,7 +14,7 @@
 # docker-compose.yml d'alpha.8 tel quel, qui doit continuer de démarrer sans retouche.
 set -euo pipefail
 
-REPO=laupernoe/dumbmonit
+REPO=selfhostr/dumbmonit
 NEW_IMAGE=${1:-${NEW_IMAGE:-ghcr.io/$REPO:edge}}
 PASSWORD='correct horse battery 42'
 USER_NAME=upgrader
@@ -62,7 +62,13 @@ resolve_old_image() {
   if command -v gh >/dev/null; then
     local tag
     tag=$(gh api "repos/$REPO/releases/latest" --jq .tag_name 2>/dev/null || true)
-    [ -n "$tag" ] && { echo "ghcr.io/$REPO:${tag#v}"; return; }
+    [ -n "$tag" ] && docker manifest inspect "ghcr.io/$REPO:${tag#v}" >/dev/null 2>&1 \
+      && { echo "ghcr.io/$REPO:${tag#v}"; return; }
+  fi
+  # Avant le passage à l'organisation selfhostr, les images étaient publiées ici :
+  # la première release de l'organisation part de la dernière de l'ancien nom.
+  if docker manifest inspect ghcr.io/laupernoe/dumbmonit:latest >/dev/null 2>&1; then
+    echo ghcr.io/laupernoe/dumbmonit:latest; return
   fi
   echo "Impossible de trouver la dernière release (fixez OLD_IMAGE)." >&2
   exit 2

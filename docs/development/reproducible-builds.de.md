@@ -16,7 +16,7 @@ erzeugen bitgenau identisch:
 
 Das wird bei jedem Pull Request, der den Code berührt, und bei jedem Push auf
 `main` vom Workflow
-[Reproducible builds](https://github.com/laupernoe/dumbmonit/actions/workflows/reproducible.yml)
+[Reproducible builds](https://github.com/selfhostr/dumbmonit/actions/workflows/reproducible.yml)
 geprüft: Zwei Runner bauen den Commit unabhängig voneinander, und der Job
 schlägt fehl, wenn sich auch nur eine Datei unterscheidet, mit einem Bericht von
 [diffoscope](https://diffoscope.org/) als Artefakt.
@@ -55,7 +55,7 @@ prüfenden Commits oder Tags. Übergeben Sie dieselben zwei Eingaben wie der
 Release-Workflow, den Commit und sein Datum:
 
 ```sh
-git clone https://github.com/laupernoe/dumbmonit && cd dumbmonit
+git clone https://github.com/selfhostr/dumbmonit && cd dumbmonit
 git checkout v0.9.1    # or any commit
 export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
 set -- --build-arg DUMBMONIT_BUILD=$(git rev-parse HEAD) --platform linux/amd64 \
@@ -77,7 +77,7 @@ So vergleichen Sie mit einem veröffentlichten Release:
   Sie:
 
     ```sh
-    docker create --name dm ghcr.io/laupernoe/dumbmonit:0.9.1
+    docker create --name dm ghcr.io/selfhostr/dumbmonit:0.9.1
     docker cp dm:/dumbmonit published-dumbmonit && docker rm dm
     sha256sum published-dumbmonit out/server/dumbmonit
     ```
@@ -86,7 +86,7 @@ So vergleichen Sie mit einem veröffentlichten Release:
   mit den veröffentlichten (das veröffentlichte Image trägt außerdem Labels, eine
   Build-Provenance und eine SBOM, die seinen Manifest-Digest ändern, nicht aber
   seine Schichten; Agent-Image: dieselben Befehle mit `--target agent-image` und
-  `ghcr.io/laupernoe/dumbmonit-agent`):
+  `ghcr.io/selfhostr/dumbmonit-agent`):
 
     ```sh
     docker buildx build "$@" --output type=oci,dest=image.tar,rewrite-timestamp=true .
@@ -97,7 +97,7 @@ So vergleichen Sie mit einem veröffentlichten Release:
     # Layers of the local build (uncompressed digests):
     jq -r '.rootfs.diff_ids[]' "$(blob "$config")"
     # Layers of the published image:
-    docker buildx imagetools inspect ghcr.io/laupernoe/dumbmonit:0.9.1 \
+    docker buildx imagetools inspect ghcr.io/selfhostr/dumbmonit:0.9.1 \
       --format '{{range .Image.RootFS.DiffIDs}}{{println .}}{{end}}'
     ```
 

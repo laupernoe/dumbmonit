@@ -28,7 +28,7 @@ monitor** рядом со встроенными, и его мониторы о�
 ## Эталонные пакеты
 
 Репозиторий поставляется с тремя пакетами в
-[`packs/`](https://github.com/laupernoe/dumbmonit/tree/main/packs), каждый со
+[`packs/`](https://github.com/selfhostr/dumbmonit/tree/main/packs), каждый со
 своими фикстурами и ожидаемым выводом:
 
 | Пакет | Читает | Правила |
@@ -104,11 +104,11 @@ curl -H 'Authorization: Bearer dmt_…' https://localhost:8080/api/packs
 
 ```bash
 # Проверки схемы и согласованности, без сервера или базы данных
-docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/laupernoe/dumbmonit:latest \
+docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/selfhostr/dumbmonit:latest \
   pack lint /packs/shelly-plug
 
 # Воспроизвести fixtures/ через реальное извлечение и сравнить с expected.prom
-docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/laupernoe/dumbmonit:latest \
+docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/selfhostr/dumbmonit:latest \
   pack test /packs/shelly-plug
 ```
 

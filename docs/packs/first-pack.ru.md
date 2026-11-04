@@ -109,7 +109,7 @@ metrics:
 ## 5. Проверьте
 
 ```bash
-docker run --rm -v "$PWD:/work" --user "$(id -u)" ghcr.io/laupernoe/dumbmonit:latest \
+docker run --rm -v "$PWD:/work" --user "$(id -u)" ghcr.io/selfhostr/dumbmonit:latest \
   pack test /work/shelly-plug --update
 ```
 
@@ -162,7 +162,7 @@ rules:
 другое место, будут показаны с указанием, где они находятся.
 
 ```bash
-docker run --rm -v "$PWD:/work:ro" ghcr.io/laupernoe/dumbmonit:latest pack lint /work/shelly-plug
+docker run --rm -v "$PWD:/work:ro" ghcr.io/selfhostr/dumbmonit:latest pack lint /work/shelly-plug
 ```
 
 ## 7. Установите его
@@ -183,5 +183,5 @@ curl -H 'Authorization: Bearer dmt_…' -H 'Content-Type: application/yaml' \
 возможно, настроили, сохраняется.
 
 Полный пак вместе с уведомлением по настройке находится в
-[`packs/shelly-plug`](https://github.com/laupernoe/dumbmonit/tree/main/packs/shelly-plug).
+[`packs/shelly-plug`](https://github.com/selfhostr/dumbmonit/tree/main/packs/shelly-plug).
 Всё, что принимает формат, описано в [справочнике](format.md).

@@ -101,7 +101,7 @@ jsdelivr URL inlang 自己的工具默认:相对的,非`http`路径是
 4. 镜像(`linux/amd64`),仅构建。
 
 `.github/workflows/release.yml`推送相同镜像到
-`ghcr.io/laupernoe/dumbmonit`:`:edge`在每个推送到`main`,`:X.Y.Z`,
+`ghcr.io/selfhostr/dumbmonit`:`:edge`在每个推送到`main`,`:X.Y.Z`,
 `:X.Y`、`:X`和`:latest`在每个`v*`标签。
 
 集成测试生活在`crates/server/tests/`;纯模块(度量

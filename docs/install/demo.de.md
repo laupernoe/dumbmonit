@@ -1,6 +1,6 @@
 # Eine Demo-Instanz betreiben
 
-Die öffentliche Demo auf **[demo.dumbmonit.app](https://demo.dumbmonit.app)**
+Die öffentliche Demo auf **[dumbmonit-demo.selfhostr.io](https://dumbmonit-demo.selfhostr.io)**
 ist ein gewöhnliches DumbMonit-Image, gestartet mit `DUMBMONIT_DEMO=1`.
 Sie können dasselbe selbst betreiben — um DumbMonit einem Team zu zeigen,
 bevor Sie es echt installieren, oder um eine Vorführung auf Ihrer eigenen
@@ -64,7 +64,7 @@ Demo hinter Ihren üblichen Reverse Proxy mit HTTPS und setzen Sie
 ```bash
 docker run -d --name dumbmonit-demo -p 8080:8080 \
   -e DUMBMONIT_DEMO=1 \
-  ghcr.io/laupernoe/dumbmonit:latest
+  ghcr.io/selfhostr/dumbmonit:latest
 ```
 
 Oder mit Compose, ohne Volume, sodass jeder Neustart frisch beginnt:
@@ -72,7 +72,7 @@ Oder mit Compose, ohne Volume, sodass jeder Neustart frisch beginnt:
 ```yaml
 services:
   dumbmonit-demo:
-    image: ghcr.io/laupernoe/dumbmonit:latest
+    image: ghcr.io/selfhostr/dumbmonit:latest
     restart: unless-stopped
     ports:
       - "8080:8080"

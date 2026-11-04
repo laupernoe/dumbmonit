@@ -109,7 +109,7 @@ ferramenta de homelab que precisa da internet para se reconstruir é feia.
 4. a imagem (`linux/amd64`), apenas build.
 
 `.github/workflows/release.yml` envia a mesma imagem para
-`ghcr.io/laupernoe/dumbmonit`: `:edge` em todo push para `main`, `:X.Y.Z`,
+`ghcr.io/selfhostr/dumbmonit`: `:edge` em todo push para `main`, `:X.Y.Z`,
 `:X.Y`, `:X` e `:latest` em toda tag `v*`.
 
 Testes de integração vivem em `crates/server/tests/`; módulos puros

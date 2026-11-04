@@ -18,7 +18,7 @@ on:
         type: number
         default: 30
       tag:
-        description: Image tag of ghcr.io/laupernoe/dumbmonit
+        description: Image tag of ghcr.io/selfhostr/dumbmonit
         type: string
         default: edge
 
@@ -42,7 +42,7 @@ jobs:
         env:
           MONITORS: ${{ inputs.monitors }}
           DURATION_MIN: ${{ inputs.duration }}
-          DUMBMONIT_IMAGE: ghcr.io/laupernoe/dumbmonit:${{ inputs.tag }}
+          DUMBMONIT_IMAGE: ghcr.io/selfhostr/dumbmonit:${{ inputs.tag }}
         run: scripts/load/run.sh "$RUNNER_TEMP/load-out"
       - name: Summary
         if: always()
