@@ -2,8 +2,13 @@
 # DumbMonit agent service control for DSM 7 (runs as the package user).
 
 PKG="dumbmonit-agent"
-BIN="/var/packages/$PKG/target/bin/dumbmonit-agent"
+# Binary shipped in the package: read-only for the package user.
+PKG_BIN="/var/packages/$PKG/target/bin/dumbmonit-agent"
 VAR="/var/packages/$PKG/var"
+# Writable copy the agent replaces on its own when the server offers a new
+# version (self-update). It is the one that runs, as long as it is not older
+# than the packaged one.
+BIN="$VAR/bin/dumbmonit-agent"
 CONFIG="$VAR/agent.yaml"
 PIDFILE="$VAR/agent.pid"
 LOG="$VAR/agent.log"
@@ -14,9 +19,48 @@ is_running() {
     [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null
 }
 
+# Prints the version of an agent binary ("dumbmonit-agent 0.17.0" -> "0.17.0").
+version_of() {
+    "$1" --version 2>/dev/null | sed -n 's/^dumbmonit-agent \([0-9][0-9]*\(\.[0-9][0-9]*\)*\).*/\1/p' | head -n 1
+}
+
+# Succeeds when version $1 is strictly newer than $2 (dotted numbers; an empty
+# $2 is older than anything).
+version_gt() {
+    [ -n "$1" ] || return 1
+    [ -n "$2" ] || return 0
+    a="$1"
+    b="$2"
+    while [ -n "$a" ] || [ -n "$b" ]; do
+        na="${a%%.*}"
+        nb="${b%%.*}"
+        [ -n "$na" ] || na=0
+        [ -n "$nb" ] || nb=0
+        [ "$na" -gt "$nb" ] && return 0
+        [ "$na" -lt "$nb" ] && return 1
+        case "$a" in *.*) a="${a#*.}" ;; *) a="" ;; esac
+        case "$b" in *.*) b="${b#*.}" ;; *) b="" ;; esac
+    done
+    return 1
+}
+
+# Makes sure $BIN exists and is not older than the packaged binary (a package
+# upgrade ships a newer one; a self-update leaves a newer one in $VAR/bin).
+prepare_binary() {
+    mkdir -p "$VAR/bin" || return 1
+    if [ -x "$BIN" ]; then
+        version_gt "$(version_of "$PKG_BIN")" "$(version_of "$BIN")" || return 0
+    fi
+    cp -f "$PKG_BIN" "$BIN.tmp" && chmod 0755 "$BIN.tmp" && mv -f "$BIN.tmp" "$BIN"
+}
+
 case "$1" in
     start)
         is_running && exit 0
+        if ! prepare_binary; then
+            echo "Cannot prepare $BIN, using the packaged binary" >> "$LOG"
+            BIN="$PKG_BIN"
+        fi
         [ -f "$CONFIG" ] || { echo "Missing configuration $CONFIG" >> "$LOG"; exit 1; }
         # Keep the log small: one previous generation only.
         if [ -f "$LOG" ] && [ "$(wc -c < "$LOG")" -gt 1048576 ]; then

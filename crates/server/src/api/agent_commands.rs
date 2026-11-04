@@ -1019,12 +1019,16 @@ async fn list_modules(
     State(state): State<AppState>,
     Path(id): Path<TargetId>,
 ) -> ApiResult<Json<Vec<AgentModuleView>>> {
-    agent_target(&state, id).await?;
+    let host = agent_target(&state, id).await?;
     let states = modules::states(&state.pool, id).await?;
+    let vendor = host.tags.get("vendor").map(String::as_str);
     Ok(Json(
         modules::MODULES
             .iter()
             .map(|module| AgentModuleView::new(module, states.get(module.id)))
+            // Sur un Synology, pas de modules sans objet (ZFS, libvirt…) tant
+            // que l'agent ne les a pas réellement trouvés.
+            .filter(|view| modules::offered(vendor, view.id, view.detected, view.enabled))
             .collect(),
     ))
 }
