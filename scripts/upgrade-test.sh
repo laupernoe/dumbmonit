@@ -77,8 +77,8 @@ jfield() { python3 -I -c 'import sys,json; d=json.load(sys.stdin); print(eval(sy
 # api METHODE CHEMIN [JSON] : imprime le corps, échoue sur un code >= 400.
 api() {
   local method=$1 path=$2 body=${3:-} out code
-  local args=(-s -o "$WORK/body" -w '%{http_code}' -X "$method" -b "$JAR" -c "$JAR"
-    -H 'X-Requested-With: dumbmonit' "http://127.0.0.1:$PORT$path")
+  local args=(-sk -o "$WORK/body" -w '%{http_code}' -X "$method" -b "$JAR" -c "$JAR"
+    -H 'X-Requested-With: dumbmonit' "$SCHEME://127.0.0.1:$PORT$path")
   [ -n "$body" ] && args+=(-H 'content-type: application/json' -d "$body")
   code=$(curl "${args[@]}") || fail "curl $method $path n'a pas abouti"
   out=$(cat "$WORK/body")
@@ -100,7 +100,14 @@ start() { # start IMAGE : lance le conteneur sur le volume, attend /api/health
     if [ "$(docker inspect -f '{{.State.Running}}' "$NAME")" != true ]; then
       fail "$image s'est arrêtée au démarrage"
     fi
-    if curl -fs "http://127.0.0.1:$PORT/api/health" >"$WORK/health" 2>/dev/null; then return; fi
+    # Depuis la 0.16 le port web ne sert que du HTTPS (certificat auto-signé) : une requête en
+    # clair reçoit une redirection sans corps. On garde le premier schéma qui rend du JSON.
+    for SCHEME in https http; do
+      if curl -fsk "$SCHEME://127.0.0.1:$PORT/api/health" >"$WORK/health" 2>/dev/null \
+        && python3 -I -c 'import json,sys; json.load(open(sys.argv[1]))' "$WORK/health" 2>/dev/null; then
+        return
+      fi
+    done
     sleep 1
   done
   fail "$image ne répond pas sur /api/health après 90 s"
@@ -116,12 +123,12 @@ login() {
 # Photographie normalisée de la configuration : seuls les champs stables et
 # significatifs sont gardés, pour qu'une nouvelle version puisse en ajouter.
 snapshot() {
-  python3 -I - "$PORT" "$JAR" >"$1" <<'PY'
+  python3 -I - "$PORT" "$JAR" "$SCHEME" >"$1" <<'PY'
 import json, subprocess, sys
-port, jar = sys.argv[1], sys.argv[2]
+port, jar, scheme = sys.argv[1], sys.argv[2], sys.argv[3]
 def get(path):
-    out = subprocess.run(["curl", "-fs", "-b", jar, "-H", "X-Requested-With: dumbmonit",
-                          f"http://127.0.0.1:{port}{path}"], capture_output=True, text=True)
+    out = subprocess.run(["curl", "-fsk", "-b", jar, "-H", "X-Requested-With: dumbmonit",
+                          f"{scheme}://127.0.0.1:{port}{path}"], capture_output=True, text=True)
     if out.returncode != 0:
         print(f"GET {path} a échoué", file=sys.stderr); sys.exit(1)
     return json.loads(out.stdout)
@@ -203,7 +210,7 @@ done
 echo "échantillons avant : $BEFORE_COUNT (plus ancien : $BEFORE_OLDEST)"
 api GET /api/status-pages >/dev/null
 snapshot "$WORK/before.json"
-curl -fs "http://127.0.0.1:$PORT/api/public/status/upgrade-test" >/dev/null \
+curl -fsk "$SCHEME://127.0.0.1:$PORT/api/public/status/upgrade-test" >/dev/null \
   || fail "la page publique upgrade-test ne répond pas avant la mise à jour"
 
 step "Arrêt propre de l'ancienne version"
@@ -282,15 +289,15 @@ fi
 
 # Les secrets chiffrés doivent rester lisibles par la nouvelle version : une sonde
 # immédiate chiffre/déchiffre côté serveur avec la clé de /data/secret.key.
-PROBE=$(curl -s -b "$JAR" -X POST -H 'X-Requested-With: dumbmonit' \
-  "http://127.0.0.1:$PORT/api/targets/$T_SNMP/probe" || true)
+PROBE=$(curl -sk -b "$JAR" -X POST -H 'X-Requested-With: dumbmonit' \
+  "$SCHEME://127.0.0.1:$PORT/api/targets/$T_SNMP/probe" || true)
 if grep -qi 'decrypt\|cipher' <<<"$PROBE"; then
   check KO "déchiffrement du secret de l'appareil : $PROBE"
 else
   check ok "secrets des appareils toujours déchiffrables"
 fi
 
-curl -fs "http://127.0.0.1:$PORT/api/public/status/upgrade-test" >/dev/null \
+curl -fsk "$SCHEME://127.0.0.1:$PORT/api/public/status/upgrade-test" >/dev/null \
   && check ok "page de statut publique toujours servie" \
   || check KO "page de statut publique /api/public/status/upgrade-test indisponible"
 
