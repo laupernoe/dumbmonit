@@ -1,7 +1,6 @@
 # 运行一个演示实例 {#run-a-demo-instance}
 
-**[dumbmonit-demo.selfhostr.io](https://dumbmonit-demo.selfhostr.io)** 上的公开演示,是
-一个以 `DUMBMONIT_DEMO=1` 启动的普通 DumbMonit 镜像。你也可以自己运行
+演示是一个以 `DUMBMONIT_DEMO=1` 启动的普通 DumbMonit 镜像。你也可以自己运行
 同样的东西——在真正安装之前向团队展示 DumbMonit,或者在自己的网站上
 放一个展示页。
 
