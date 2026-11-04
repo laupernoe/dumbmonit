@@ -1,7 +1,6 @@
 # Ejecutar una instancia de demostración {#run-a-demo-instance}
 
-La demo pública en **[dumbmonit-demo.selfhostr.io](https://dumbmonit-demo.selfhostr.io)** es
-una imagen de DumbMonit corriente iniciada con `DUMBMONIT_DEMO=1`. Puedes
+Una demo es una imagen de DumbMonit corriente iniciada con `DUMBMONIT_DEMO=1`. Puedes
 ejecutar lo mismo tú mismo — para mostrar DumbMonit a un equipo antes de
 instalarlo de verdad, o para poner una vitrina en tu propio sitio.
 
