@@ -10,7 +10,7 @@ the build; a page without translation stays in English with a notice.
 Two places publish the same build:
 - Read the Docs (the mirror): nothing to set, the links between languages point to RTD.
 - The product website, under /docs/ (built outside this repository): DUMBMONIT_DOCS_BASE is the
-  docs root of the website (https://dumbmonit.app/docs/). English lives there, the other
+  docs root of the website (https://dumbmonit.selfhostr.io/docs/). English lives there, the other
   languages under <base><site code>/ (fr, de, pt-BR, zh-Hans, ...: the codes of the website),
   and the language switcher follows that layout.
 Either way the header carries the navigation of the website (overrides/partials/header.html),
@@ -48,8 +48,8 @@ LANGUAGES = {
     "zh-cn": ("zh-Hans", "zh", "简体中文", "此页面尚未翻译，以下为英文版本。"),
 }
 RTD_HOST = "https://dumbmonit.readthedocs.io"
-SITE = "https://dumbmonit.app/"
-REPO = "https://github.com/laupernoe/dumbmonit"
+SITE = "https://dumbmonit.selfhostr.io/"
+REPO = "https://github.com/selfhostr/dumbmonit"
 LABELS = Path(__file__).resolve().parent / "site_labels.json"
 SUFFIXES = {spec[0] for spec in LANGUAGES.values() if spec[0]}
 RE_SUFFIXED = re.compile(r"^(.*)\.(%s)(\.[^./]+)$" % "|".join(map(re.escape, SUFFIXES)))

@@ -7,7 +7,7 @@ database. One volume, `/data`, holds the database, the instance secret and the
 time series.
 
 !!! note "Image tags"
-    `ghcr.io/laupernoe/dumbmonit:latest` is the last tagged release (amd64;
+    `ghcr.io/selfhostr/dumbmonit:latest` is the last tagged release (amd64;
     arm64 images are paused for now); `:edge` follows the last commit on `dev`. To run from source,
     `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
     --build` builds the same image locally (about ten minutes the first time;
@@ -30,7 +30,7 @@ directory of its own:
 ```yaml
 services:
   dumbmonit:
-    image: ghcr.io/laupernoe/dumbmonit:latest
+    image: ghcr.io/selfhostr/dumbmonit:latest
     ports:
       - "8080:8080"
       # Encrypted agent channel: see Agent channel security.

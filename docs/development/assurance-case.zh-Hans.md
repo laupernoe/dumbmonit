@@ -3,7 +3,7 @@
 本页论证 DumbMonit 满足其安全需求:它陈述威胁、信任发生变化的边界、设计为何能限制失误造成的损害、
 每一类常见弱点如何被应对,以及每项主张背后的证据。它是对[安全模型](security-model.md)的扩展,
 后者更简要地列出了相同的措施。如需报告漏洞,请遵循
-[安全策略](https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md)。
+[安全策略](https://github.com/selfhostr/dumbmonit/blob/main/SECURITY.md)。
 
 下文中的文件路径均相对于仓库根目录。
 

@@ -207,7 +207,7 @@ rules:
 
 Ein Paket kann SNMP-Profile mitbringen, genauso geschrieben wie die
 eingebauten in
-[`profiles/`](https://github.com/laupernoe/dumbmonit/tree/main/profiles).
+[`profiles/`](https://github.com/selfhostr/dumbmonit/tree/main/profiles).
 Sie treten dem SNMP-Katalog bei und werden wie die anderen per
 `sysObjectID` angewendet; sie erstellen keinen eigenen Monitortyp.
 

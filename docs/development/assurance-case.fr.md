@@ -6,7 +6,7 @@ conception limite les dégâts d'une erreur, comment chaque grande classe de
 faiblesse est contrée et quelles preuves soutiennent chaque affirmation. Elle
 complète le [modèle de sécurité](security-model.md), qui énumère les mêmes
 mesures plus brièvement. Pour signaler une vulnérabilité, suivez la
-[politique de sécurité](https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md).
+[politique de sécurité](https://github.com/selfhostr/dumbmonit/blob/main/SECURITY.md).
 
 Les chemins ci-dessous sont relatifs à la racine du dépôt.
 

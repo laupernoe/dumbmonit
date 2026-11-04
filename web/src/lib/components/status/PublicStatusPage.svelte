@@ -350,7 +350,7 @@
 		{/if}
 		<p class="flex items-center gap-2">
 			<Logo class="size-5" />
-			<span>{m.status_public_powered_by()} <a class="font-semibold text-ink underline decoration-line underline-offset-2 hover:decoration-ink" href="https://github.com/laupernoe/dumbmonit" rel="noreferrer">DumbMonit</a></span>
+			<span>{m.status_public_powered_by()} <a class="font-semibold text-ink underline decoration-line underline-offset-2 hover:decoration-ink" href="https://github.com/selfhostr/dumbmonit" rel="noreferrer">DumbMonit</a></span>
 		</p>
 		<VersionTag inline />
 	</footer>

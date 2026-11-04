@@ -556,7 +556,7 @@ curl -b cookies.txt -G https://localhost:8080/api/metrics/query \
 
 | 方法 | 路由 | 用途 |
 |---|---|---|
-| `GET` | `/api/notify/kinds` | 每种渠道类型及其 `settings` 和 `secrets` 字段（`key`、`label`、`required`、`input`、`help`、`placeholder`、`options`、`shape`、`default`），以及 `doc_url`，例如 `https://dumbmonit.readthedocs.io/en/latest/notifications/#discord`。 |
+| `GET` | `/api/notify/kinds` | 每种渠道类型及其 `settings` 和 `secrets` 字段（`key`、`label`、`required`、`input`、`help`、`placeholder`、`options`、`shape`、`default`），以及 `doc_url`，例如 `https://dumbmonit.selfhostr.io/docs/notifications/#discord`。 |
 | `GET` | `/api/notify/channels` | 每个渠道：`id`、`name`、`kind`、`enabled`、`settings`、`has_secret`、`last_error`、`last_sent_at`、`policy`（`min_severity`、`notify_resolved`、`min_interval_secs`、`quiet_hours`、`matcher`）。绝不返回机密。 |
 | `POST` | `/api/notify/channels` | 创建。`201`。 |
 | `PUT` | `/api/notify/channels/{id}` | 更新。省略 `secrets` 会保留已存储的机密；`"secrets": {}` 会清除它们。在 `policy` 中，省略 `matcher` 会保留路由过滤器，`"matcher": null` 会清除它。 |

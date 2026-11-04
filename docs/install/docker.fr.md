@@ -7,7 +7,7 @@ embarquée. Un seul volume, `/data`, contient la base, le secret de l'instance e
 séries temporelles.
 
 !!! note "Tags d'image"
-    `ghcr.io/laupernoe/dumbmonit:latest` est la dernière version étiquetée (amd64 ;
+    `ghcr.io/selfhostr/dumbmonit:latest` est la dernière version étiquetée (amd64 ;
     les images arm64 sont suspendues pour l'instant) ; `:edge` suit le dernier commit de `dev`. Pour exécuter depuis les sources,
     `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
     --build` construit la même image en local (environ dix minutes la première
@@ -30,7 +30,7 @@ enregistrez-le dans un répertoire dédié :
 ```yaml
 services:
   dumbmonit:
-    image: ghcr.io/laupernoe/dumbmonit:latest
+    image: ghcr.io/selfhostr/dumbmonit:latest
     ports:
       - "8080:8080"
       # Encrypted agent channel: see Agent channel security.

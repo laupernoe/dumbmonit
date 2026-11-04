@@ -160,7 +160,7 @@ pub async fn get() -> Response {
         "supportedVersions": supported_versions(),
         "transport": "streamable-http",
         "streaming": false,
-        "docs": "https://dumbmonit.app/docs/using/assistant/"
+        "docs": "https://dumbmonit.selfhostr.io/docs/using/assistant/"
     });
     let mut response = (StatusCode::METHOD_NOT_ALLOWED, Json(body)).into_response();
     response.headers_mut().insert(header::ALLOW, "POST".parse().unwrap());
@@ -441,7 +441,7 @@ fn server_info() -> Value {
         "version": env!("CARGO_PKG_VERSION"),
         "description": "Self-hosted monitoring from homelabs to mid-sized companies: devices, \
                         services, alerts, maintenance windows and status pages.",
-        "websiteUrl": "https://github.com/laupernoe/dumbmonit",
+        "websiteUrl": "https://github.com/selfhostr/dumbmonit",
     })
 }
 

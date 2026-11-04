@@ -6,7 +6,7 @@ nell'aggiornamento. Non installa mai nulla da solo.
 ## Individuare una nuova versione
 
 Al massimo una volta al giorno, il server interroga l'API pubblica delle
-release di GitHub (`api.github.com/repos/laupernoe/dumbmonit/releases`) per
+release di GitHub (`api.github.com/repos/selfhostr/dumbmonit/releases`) per
 l'ultima release e la confronta con la versione in uso. Le pre-release come
 `0.1.0-alpha.7` vengono confrontate correttamente: `alpha.10` è più recente di
 `alpha.9`, e `0.1.0` è più recente di qualsiasi `0.1.0-alpha.N`. Le bozze
@@ -58,7 +58,7 @@ La stessa informazione è disponibile per script e token API su
 
 Per fissare una versione invece di seguire `:latest`, cambia il tag
 dell'immagine nel file Compose (per esempio
-`ghcr.io/laupernoe/dumbmonit:0.1.0-alpha.7`) ed esegui lo stesso comando.
+`ghcr.io/selfhostr/dumbmonit:0.1.0-alpha.7`) ed esegui lo stesso comando.
 
 Per tornare indietro, ripristina il backup fatto al passaggio 1 sull'immagine
 precedente.

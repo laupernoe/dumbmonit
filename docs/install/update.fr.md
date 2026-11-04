@@ -6,7 +6,7 @@ dans la mise à jour. Il n'installe jamais rien de lui-même.
 ## Repérer une nouvelle version
 
 Une fois par jour au plus, le serveur interroge l'API publique des releases de
-GitHub (`api.github.com/repos/laupernoe/dumbmonit/releases`) pour connaître la
+GitHub (`api.github.com/repos/selfhostr/dumbmonit/releases`) pour connaître la
 dernière release et la compare à la version que vous utilisez. Les
 pré-versions comme `0.1.0-alpha.7` sont comparées correctement :
 `alpha.10` est plus récent que `alpha.9`, et `0.1.0` est plus récent que
@@ -58,7 +58,7 @@ La même information est disponible pour les scripts et les jetons d'API sur
 
 Pour figer une version plutôt que de suivre `:latest`, changez le tag d'image
 dans le fichier Compose (par exemple
-`ghcr.io/laupernoe/dumbmonit:0.1.0-alpha.7`) et relancez la même commande.
+`ghcr.io/selfhostr/dumbmonit:0.1.0-alpha.7`) et relancez la même commande.
 
 Pour revenir en arrière, restaurez la sauvegarde prise à l'étape 1 sur
 l'image précédente.
@@ -89,7 +89,7 @@ bloc à copier :
 **Réglages → À propos → Changements de configuration → Voir la liste** montre
 tous les changements demandés par une version (à faire, fermés, ou inutiles sur
 cette instance) avec leur bloc, quand vous voulez les relire. Seuls les
-administrateurs la voient, et elle est coupée dans la démo publique.
+administrateurs la voient, et elle est coupée en mode démo.
 
 | Depuis | Changement | Que faire |
 |---|---|---|

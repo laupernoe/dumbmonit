@@ -1,6 +1,6 @@
 site_name: DumbMonit
 site_description: Simple monitoring from homelabs to mid-sized companies. One container, one IP address, useful alerts in a minute.
-site_url: https://dumbmonit.app/docs/
+site_url: https://dumbmonit.selfhostr.io/docs/
 docs_dir: docs
 exclude_docs: |
   requirements.txt

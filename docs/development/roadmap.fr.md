@@ -6,20 +6,20 @@ priorités et les délais peuvent changer ; le tableau est un plan vivant, pas
 une promesse.
 
 - **Les changements livrés** sont dans le
-  [journal des modifications](https://github.com/laupernoe/dumbmonit/blob/main/CHANGELOG.md)
+  [journal des modifications](https://github.com/selfhostr/dumbmonit/blob/main/CHANGELOG.md)
   et dans les notes de chaque
-  [version GitHub](https://github.com/laupernoe/dumbmonit/releases).
+  [version GitHub](https://github.com/selfhostr/dumbmonit/releases).
 - **Les idées et les bogues** vivent dans le
-  [suivi des tickets](https://github.com/laupernoe/dumbmonit/issues). Ouvrez un
+  [suivi des tickets](https://github.com/selfhostr/dumbmonit/issues). Ouvrez un
   ticket avant d'écrire du code pour quelque chose d'important.
 - **Les correctifs de sécurité** sont annoncés dans les notes de version et
   comme avis de sécurité GitHub, avec leur identifiant CVE ou GHSA.
 
 DumbMonit est avant la 1.0 : attendez-vous à ce que l'API et le modèle de données
 évoluent encore jusqu'à l'annonce d'une version stable. Voir le
-[guide de contribution](https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md)
+[guide de contribution](https://github.com/selfhostr/dumbmonit/blob/main/CONTRIBUTING.md)
 et la
-[gouvernance](https://github.com/laupernoe/dumbmonit/blob/main/GOVERNANCE.md)
+[gouvernance](https://github.com/selfhostr/dumbmonit/blob/main/GOVERNANCE.md)
 pour participer.
 
 ## Orientation pour les douze prochains mois
@@ -32,7 +32,7 @@ Ce sont des intentions, pas des engagements, à peu près par ordre de priorité
   modifications.
 - **Plus de personnes avec accès.** Un second administrateur du dépôt, du
   registre, de l'hébergement de la documentation et des domaines (voir la
-  [gouvernance](https://github.com/laupernoe/dumbmonit/blob/main/GOVERNANCE.md)).
+  [gouvernance](https://github.com/selfhostr/dumbmonit/blob/main/GOVERNANCE.md)).
 - **Chaîne d'approvisionnement.** Builds de version reproductibles
   ([état actuel](reproducible-builds.md)) et tags de version signés.
 - **Images arm64.** Les images du serveur sont pour l'instant amd64

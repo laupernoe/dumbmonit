@@ -35,7 +35,7 @@ function shell(value: string): string {
 	return /^[\w@%+=:,./-]+$/.test(value) ? value : `'${value.replace(/'/g, `'\\''`)}'`;
 }
 
-export const AGENT_IMAGE = 'ghcr.io/laupernoe/dumbmonit-agent:latest';
+export const AGENT_IMAGE = 'ghcr.io/selfhostr/dumbmonit-agent:latest';
 
 /**
  * `docker run` for the agent image, with the same server, channel and pin as

@@ -25,7 +25,6 @@
 	import type { MapLocation } from '#lib/api/types.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, ClickSpark, CopyBlock, DocLink, ErrorNotice, Field, Led, Plate } from '#lib/ui/index.js';
-	import AdDeployWizard from '#lib/components/settings/AdDeployWizard.svelte';
 	import AgentChecksums from './AgentChecksums.svelte';
 	import AgentChannelCheck from './AgentChannelCheck.svelte';
 	import AgentModules from './AgentModules.svelte';
@@ -51,7 +50,7 @@
 
 	let {
 		cancelHref = '/targets',
-		relay: relayFromUrl = false,
+		relay = false,
 		windows = false,
 		afterKind = '',
 		viaDefault = null,
@@ -64,8 +63,6 @@
 		relay ? 'install/remote-site/' : spk ? 'devices/synology-agent/' : afterKind ? `devices/${afterKind}/` : 'devices/agent/'
 	);
 	const afterProduct = $derived(afterKind === 'securitygateway' ? 'SecurityGateway' : afterKind === 'mdaemon' ? 'MDaemon' : '');
-	/** Relay flow: from the URL (`via=relay`), or ticked in the plain form. */
-	let relay = $state(untrack(() => relayFromUrl));
 
 	// The form is mounted per kind and feature: its first value is the one that counts.
 	let site = $state('');
@@ -303,8 +300,13 @@
 			</div>
 			<div class="grid gap-1.5">
 				<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_spk_pin()}</p>
-				{#if options?.serverPin ?? options?.caPin}
-					<CopyBlock value={options?.serverPin ?? options?.caPin ?? ''} label={m.deviceform_enroll_spk_pin()} />
+				{#if options?.serverPin}
+					<CopyBlock value={options.serverPin} label={m.deviceform_enroll_spk_pin()} />
+					{#if token?.pin_source === 'proxy'}
+						<p class="text-sm leading-relaxed text-ink-2">{m.deviceform_enroll_spk_pin_proxy()}</p>
+					{/if}
+				{:else if token?.pin_source === 'trusted'}
+					<p class="text-sm leading-relaxed text-ink-2">{m.deviceform_enroll_spk_pin_trusted()}</p>
 				{:else}
 					<p class="text-sm leading-relaxed text-ink-2">{m.deviceform_enroll_spk_pin_none()}</p>
 				{/if}
@@ -482,21 +484,18 @@
 			{/if}
 		{/if}
 
-		{#if !relay}
-			<div class="flex items-start gap-2">
-				<input id="agent-reusable" type="checkbox" class="mt-3 size-4 accent-[var(--color-signal)]" bind:checked={reusable} />
-				<div class="min-w-0">
-					<label for="agent-reusable" class="flex min-h-10 items-center text-sm text-ink">{m.deviceform_agentflow_reusable()}</label>
-					<p class="text-[0.8125rem] text-ink-2">{m.deviceform_agentflow_reusable_help()}</p>
+		{#if !relay && !spk}
+			<!-- Rare: one token for several machines (playbook, image). Folded away. -->
+			<details class="rounded-[var(--radius-card)] border border-line px-3 py-2">
+				<summary class="flex min-h-10 cursor-pointer items-center text-sm font-semibold text-ink">{m.deviceform_agentflow_advanced()}</summary>
+				<div class="flex items-start gap-2 pt-2 pb-1">
+					<input id="agent-reusable" type="checkbox" class="mt-3 size-4 accent-[var(--color-signal)]" bind:checked={reusable} />
+					<div class="min-w-0">
+						<label for="agent-reusable" class="flex min-h-10 items-center text-sm text-ink">{m.deviceform_agentflow_reusable()}</label>
+						<p class="text-[0.8125rem] text-ink-2">{m.deviceform_agentflow_reusable_help()}</p>
+					</div>
 				</div>
-			</div>
-		{/if}
-
-		{#if !relayFromUrl}
-			<label class="flex min-h-10 items-center gap-2 text-sm text-ink">
-				<input type="checkbox" class="size-4 accent-[var(--color-signal)]" bind:checked={relay} />
-				{m.deviceform_enroll_relay_checkbox()}
-			</label>
+			</details>
 		{/if}
 
 		{#if error}
@@ -512,12 +511,11 @@
 			<Button variant="ghost" href={cancelHref}>{m.deviceform_enroll_cancel()}</Button>
 		</div>
 
-		{#if !relay && auth.isAdmin}
-			<!-- A whole Windows domain at once: the GPO kit lives here, not in Settings. -->
-			<div class="flex flex-wrap items-center gap-2 border-t border-line pt-4 text-sm text-ink-2">
-				<span>{m.deviceform_agentflow_fleet()}</span>
-				<AdDeployWizard />
-			</div>
+		{#if !relay && !spk && !windows}
+			<p class="text-sm text-ink-2">
+				{m.deviceform_agentflow_synology_hint()}
+				<a href="/targets/new?kind=synology&mode=agent" class="font-semibold text-ink underline underline-offset-2">{m.deviceform_agentflow_synology_link()}</a>
+			</p>
 		{/if}
 	</form>
 {/if}

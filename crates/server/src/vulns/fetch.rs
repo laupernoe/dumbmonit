@@ -17,7 +17,7 @@ use super::{debian, kev, osv};
 const USER_AGENT: &str = concat!(
     "DumbMonit/",
     env!("CARGO_PKG_VERSION"),
-    " (vulnerability scan; +https://github.com/laupernoe/dumbmonit)"
+    " (vulnerability scan; +https://github.com/selfhostr/dumbmonit)"
 );
 const TIMEOUT: Duration = Duration::from_secs(120);
 const DEBIAN_TIMEOUT: Duration = Duration::from_secs(600);

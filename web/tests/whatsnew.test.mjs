@@ -24,7 +24,7 @@ test('display rules', () => {
 	assert.equal(releaseToShow(current, current), null, 'already seen');
 	assert.equal(releaseToShow(current, '0.0.1'), releaseFor(current));
 	assert.equal(releaseToShow('9.9.9', '0.0.1'), null, 'unlisted version shows nothing');
-	assert.equal(releaseNotesUrl('0.1.0-alpha.7'), 'https://github.com/laupernoe/dumbmonit/releases/tag/v0.1.0-alpha.7');
+	assert.equal(releaseNotesUrl('0.1.0-alpha.7'), 'https://github.com/selfhostr/dumbmonit/releases/tag/v0.1.0-alpha.7');
 });
 
 test('the Cargo.toml version has an entry', { skip: !process.env.WHATSNEW_REQUIRE }, () => {

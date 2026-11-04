@@ -1602,7 +1602,7 @@ export interface ChannelKindInfo {
 	kind: string;
 	label: string;
 	summary: string;
-	/** Documentation link, for example `https://dumbmonit.app/docs/notifications/#discord`. */
+	/** Documentation link, for example `https://dumbmonit.selfhostr.io/docs/notifications/#discord`. */
 	doc_url: string;
 	settings: ChannelField[];
 	secrets: ChannelField[];
@@ -1762,6 +1762,8 @@ export interface CreatedAgentToken extends AgentToken {
 	secret: string;
 	install_linux: string;
 	install_windows: string;
+	/** Origin of the `--pinned-key` in the commands, when the server probed the opened address. */
+	pin_source?: 'own' | 'proxy' | 'trusted' | null;
 }
 
 /** Channel an agent last reported through. Mirrors `AgentChannel` in `crates/server/src/api/agent_tls.rs`. */

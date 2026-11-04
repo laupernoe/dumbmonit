@@ -3,6 +3,28 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.17.1 — 2026-11-04
+
+### Changed
+
+- **DumbMonit moves to the `selfhostr` organization.** The repository is now
+  `github.com/selfhostr/dumbmonit`, the images are `ghcr.io/selfhostr/dumbmonit` and
+  `ghcr.io/selfhostr/dumbmonit-agent`, and the website and documentation live at
+  `dumbmonit.selfhostr.io`. The old `ghcr.io/laupernoe` images receive no more updates:
+  change the image name in your `docker-compose.yml` (an upgrade note in Settings shows the line).
+
+- **Docs:** refreshed screenshots, no more public demo links.
+
+### Fixed
+
+- **Synology package behind a changed port or a reverse proxy.** The certificate pin shown for the
+  package is now the one the address you opened actually serves (a trusted certificate needs no pin).
+- **The Synology agent updates itself.** The package runs a writable copy of the agent, so a new server
+  version brings the agent up to date without reinstalling the package. Modules that make no sense on
+  DSM are no longer offered.
+- **Add monitor:** no more relay checkbox or "several machines" option in the package flow, and the
+  Active Directory deployment is its own choice in the picker.
+
 ## 0.17.0 — 2026-11-04
 
 ### Added

@@ -63,7 +63,7 @@ to do so:
   signing through the workflow's OIDC identity), so no personal key is needed
   to publish a release; release tags are pushed by repository administrators.
 - **Documentation:** maintainer of the Read the Docs project.
-- **Domain names:** access to the DNS of `dumbmonit.app`.
+- **Domain names:** access to the DNS of `dumbmonit.selfhostr.io`.
 
 The source code is MIT licensed and can be forked by anyone if the
 project stops.

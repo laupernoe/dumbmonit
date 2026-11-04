@@ -3,7 +3,7 @@
 This page describes what DumbMonit protects, who it trusts, how the design
 limits the damage of a mistake, and where to look in the code and tests. To
 report a vulnerability, follow the
-[security policy](https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md).
+[security policy](https://github.com/selfhostr/dumbmonit/blob/main/SECURITY.md).
 
 ## What is at stake
 

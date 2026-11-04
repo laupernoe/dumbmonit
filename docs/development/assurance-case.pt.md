@@ -6,7 +6,7 @@ limita os danos de um erro, como se contrapõe cada classe comum de fraqueza e
 que provas sustentam cada afirmação. Prolonga o [modelo de segurança](security-model.md),
 que lista as mesmas medidas de forma mais breve. Para comunicar uma
 vulnerabilidade, siga a
-[política de segurança](https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md).
+[política de segurança](https://github.com/selfhostr/dumbmonit/blob/main/SECURITY.md).
 
 Os caminhos de ficheiros abaixo são relativos à raiz do repositório.
 

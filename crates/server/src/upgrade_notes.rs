@@ -86,7 +86,7 @@ pub const CATALOG: &[Note] = &[
         compose: "services:\n  dumbmonit:\n    ports:\n      - \"8080:8080\"   # already \
                   there\n      - \"8443:8443\"   # new: encrypted agent channel",
         apply: Some("docker compose up -d"),
-        docs_url: Some("https://dumbmonit.app/docs/install/agent-security/"),
+        docs_url: Some("https://dumbmonit.selfhostr.io/docs/install/agent-security/"),
         check: Some(Check::AgentChannelPort),
     },
     Note {
@@ -103,7 +103,7 @@ pub const CATALOG: &[Note] = &[
                   DUMBMONIT_TRUSTED_PROXIES: 172.16.0.0/12\n    volumes:\n      - \
                   ./certs:/certs:ro",
         apply: Some("docker compose up -d"),
-        docs_url: Some("https://dumbmonit.app/docs/install/https/"),
+        docs_url: Some("https://dumbmonit.selfhostr.io/docs/install/https/"),
         check: None,
     },
     Note {
@@ -121,7 +121,22 @@ pub const CATALOG: &[Note] = &[
                   Traefik, Caddy): https://dumbmonit:8080\n    # Skip certificate \
                   verification, or trust the DumbMonit certificate",
         apply: None,
-        docs_url: Some("https://dumbmonit.app/docs/install/https/"),
+        docs_url: Some("https://dumbmonit.selfhostr.io/docs/install/https/"),
+        check: None,
+    },
+    Note {
+        id: "selfhostr-image",
+        version: "0.17.1",
+        title: "The image moved to ghcr.io/selfhostr",
+        summary: "DumbMonit now lives in the selfhostr organization on GitHub. New versions are \
+                  published as ghcr.io/selfhostr/dumbmonit (and ghcr.io/selfhostr/dumbmonit-agent \
+                  for the container agent); the old ghcr.io/laupernoe images receive no more \
+                  updates. Change the image name in your docker-compose.yml, then pull again. \
+                  Your data and settings are untouched.",
+        compose: "services:\n  dumbmonit:\n    image: ghcr.io/selfhostr/dumbmonit:latest   # was \
+                  ghcr.io/laupernoe/dumbmonit:latest",
+        apply: Some("docker compose pull && docker compose up -d"),
+        docs_url: Some("https://dumbmonit.selfhostr.io/docs/install/docker/"),
         check: None,
     },
 ];

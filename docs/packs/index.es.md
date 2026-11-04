@@ -30,7 +30,7 @@ permiten.
 ## Packs de referencia {#reference-packs}
 
 El repositorio incluye tres packs bajo
-[`packs/`](https://github.com/laupernoe/dumbmonit/tree/main/packs), cada
+[`packs/`](https://github.com/selfhostr/dumbmonit/tree/main/packs), cada
 uno con sus fixtures y salida esperada:
 
 | Pack | Lee | Reglas |
@@ -110,11 +110,11 @@ El binario del servidor valida y prueba packs sin conexión:
 
 ```bash
 # Comprobaciones de esquema y consistencia, sin un servidor ni una base de datos
-docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/laupernoe/dumbmonit:latest \
+docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/selfhostr/dumbmonit:latest \
   pack lint /packs/shelly-plug
 
 # Reproduce fixtures/ a través de la extracción real y compara con expected.prom
-docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/laupernoe/dumbmonit:latest \
+docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/selfhostr/dumbmonit:latest \
   pack test /packs/shelly-plug
 ```
 

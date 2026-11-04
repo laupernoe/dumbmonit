@@ -109,7 +109,7 @@ metrics:
 ## 5. 检查它 {#5-check-it}
 
 ```bash
-docker run --rm -v "$PWD:/work" --user "$(id -u)" ghcr.io/laupernoe/dumbmonit:latest \
+docker run --rm -v "$PWD:/work" --user "$(id -u)" ghcr.io/selfhostr/dumbmonit:latest \
   pack test /work/shelly-plug --update
 ```
 
@@ -162,7 +162,7 @@ rules:
 出来并指明位置。
 
 ```bash
-docker run --rm -v "$PWD:/work:ro" ghcr.io/laupernoe/dumbmonit:latest pack lint /work/shelly-plug
+docker run --rm -v "$PWD:/work:ro" ghcr.io/selfhostr/dumbmonit:latest pack lint /work/shelly-plug
 ```
 
 ## 7. 安装它 {#7-install-it}
@@ -182,5 +182,5 @@ overheating* 规则会出现在**告警 → 规则**中。
 重新安装它:提取逻辑会被替换,而你可能调整过的规则会被保留。
 
 完整的集成包及其设置提示位于
-[`packs/shelly-plug`](https://github.com/laupernoe/dumbmonit/tree/main/packs/shelly-plug)。
+[`packs/shelly-plug`](https://github.com/selfhostr/dumbmonit/tree/main/packs/shelly-plug)。
 该格式接受的所有内容都记录在[参考文档](format.md)中。

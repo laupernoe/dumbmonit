@@ -7,7 +7,7 @@ dados SQLite integrada. Um volume, `/data`, contém a base de dados, o segredo d
 instância e as séries temporais.
 
 !!! note "Tags de imagem"
-    `ghcr.io/laupernoe/dumbmonit:latest` é a última versão etiquetada (amd64;
+    `ghcr.io/selfhostr/dumbmonit:latest` é a última versão etiquetada (amd64;
     as imagens arm64 estão suspensas por agora); `:edge` segue o último commit em `dev`. Para correr a partir do código-fonte,
     `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
     --build` compila a mesma imagem localmente (cerca de dez minutos da
@@ -29,7 +29,7 @@ guarde-o numa pasta própria:
 ```yaml
 services:
   dumbmonit:
-    image: ghcr.io/laupernoe/dumbmonit:latest
+    image: ghcr.io/selfhostr/dumbmonit:latest
     ports:
       - "8080:8080"
     volumes:

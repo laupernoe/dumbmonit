@@ -1,4 +1,4 @@
-module github.com/laupernoe/dumbmonit/integrations/terraform-provider-dumbmonit
+module github.com/selfhostr/dumbmonit/integrations/terraform-provider-dumbmonit
 
 go 1.27.3
 

@@ -32,9 +32,9 @@ jobs:
       matrix:
         include:
           - name: server
-            image: ghcr.io/laupernoe/dumbmonit:edge
+            image: ghcr.io/selfhostr/dumbmonit:edge
           - name: agent
-            image: ghcr.io/laupernoe/dumbmonit-agent:edge
+            image: ghcr.io/selfhostr/dumbmonit-agent:edge
     steps:
       - name: Scan
         run: |
