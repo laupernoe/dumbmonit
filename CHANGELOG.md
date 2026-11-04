@@ -13,6 +13,8 @@ All notable changes to this project are documented here. The format follows
   `dumbmonit.selfhostr.io`. The old `ghcr.io/laupernoe` images receive no more updates:
   change the image name in your `docker-compose.yml` (an upgrade note in Settings shows the line).
 
+- **Docs:** refreshed screenshots, no more public demo links.
+
 ### Fixed
 
 - **Synology package behind a changed port or a reverse proxy.** The certificate pin shown for the

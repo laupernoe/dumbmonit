@@ -47,7 +47,7 @@ zum Einbinden.
 | `DUMBMONIT_UPDATE_CHECK` | `1` | `off` stoppt den täglichen Blick auf das neueste GitHub-Release (Air-Gap-Instanzen). Siehe [Update](../install/update.md). |
 | `DUMBMONIT_BACKUP_DIR` | `<data dir>/backups` | Wohin die geplanten Sicherungen geschrieben werden. Verweisen Sie damit auf ein zweites Volume, um den Verlust des ersten zu überstehen. |
 | `DUMBMONIT_BACKUP_INTERVAL_HOURS` | `24` | Stunden zwischen zwei Sicherungen, 1 bis 8760. Die erste erfolgt ein Intervall nach dem Start, nicht beim Start. |
-| `DUMBMONIT_DEMO` | *(aus)* | `1` für eine öffentliche, schreibgeschützte Demo mit einem festen fiktiven Bestand, Anmeldung `demo` / `demo`. **Erstellt die Datenbank bei jedem Start neu**: nie auf einem echten Datenvolume. Siehe [Eine Demo-Instanz betreiben](../install/demo.md). |
+| `DUMBMONIT_DEMO` | *(aus)* | `1` für eine schreibgeschützte Demo mit einem festen fiktiven Bestand, Anmeldung `demo` / `demo`. **Erstellt die Datenbank bei jedem Start neu**: nie auf einem echten Datenvolume. Siehe [Eine Demo-Instanz betreiben](../install/demo.md). |
 | `DUMBMONIT_BACKUP_KEEP` | `7` | Wie viele Sicherungen aufbewahrt werden, 1 bis 365. Die ältesten werden samt ihrer `.key` entfernt. |
 | `DUMBMONIT_BROWSER_URL` | *(nicht gesetzt)* | Headless Chromium für die Screenshots von [Website-Änderungen](../devices/webchange.md#screenshots), als `http://host:9222` (sein DevTools-Port). Fügen Sie Ihrer Compose-Datei einen `chromedp/headless-shell`-Dienst hinzu, wie unter [Screenshots](../devices/webchange.md#screenshots) gezeigt. Nicht gesetzt: nur Textvergleich. |
 

@@ -706,7 +706,7 @@ Regel für jemand anderen zu deaktivieren.
 
 | Methode | Route | Zweck |
 |---|---|---|
-| `GET` | `/api/notify/kinds` | Jeder Kanaltyp mit seinen Feldern `settings` und `secrets` (`key`, `label`, `required`, `input`, `help`, `placeholder`, `options`, `shape`, `default`) und einer `doc_url` wie `https://dumbmonit.readthedocs.io/en/latest/notifications/#discord`. |
+| `GET` | `/api/notify/kinds` | Jeder Kanaltyp mit seinen Feldern `settings` und `secrets` (`key`, `label`, `required`, `input`, `help`, `placeholder`, `options`, `shape`, `default`) und einer `doc_url` wie `https://dumbmonit.selfhostr.io/docs/notifications/#discord`. |
 | `GET` | `/api/notify/channels` | Jeder Kanal: `id`, `name`, `kind`, `enabled`, `settings`, `has_secret`, `last_error`, `last_sent_at`, `policy` (`min_severity`, `notify_resolved`, `min_interval_secs`, `quiet_hours`, `matcher`). Geheimnisse werden nie zurückgegeben. |
 | `POST` | `/api/notify/channels` | Erstellen. `201`. |
 | `PUT` | `/api/notify/channels/{id}` | Aktualisieren. Das Weglassen von `secrets` behält die gespeicherten; `"secrets": {}` löscht sie. In `policy` behält das Weglassen von `matcher` den Routing-Filter, und `"matcher": null` löscht ihn. |

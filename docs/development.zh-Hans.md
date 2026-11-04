@@ -22,7 +22,7 @@ crates/server    the binary
 crates/agent     Linux/macOS/FreeBSD/Windows agent; install/ holds install.sh/.ps1 served by the server
 web/             SvelteKit (Svelte 5 runes, Tailwind 4, uPlot), adapter-static SPA fallback, ssr=false
 profiles/        SNMP collection profiles, auto-applied by sysObjectID
-docs/            this documentation (MkDocs, published on Read the Docs)
+docs/            本文档(MkDocs 源文件,使用 Starlight 发布)
 ```
 
 ## 没有 Rust 工具链编译 {#building-without-a-rust-toolchain}
@@ -151,7 +151,7 @@ timestamp_ms)`带`.with_label(k, v)`;身份标签(`target`、`host`、
    描述呈现形式,所以不需要 UI 发布。
 4. 在`docs/notifications.md`中在*支持的通道*下记录它,带有
    标题其 slug 匹配`doc_url`锚点:UI 链接直接到
-   那个锚点在 Read the Docs 上。
+   那个锚点在在线文档中。
 
 ## 无头截图 {#headless-screenshots}
 
@@ -166,10 +166,12 @@ cookie,然后针对预览服务器运行`web/tools/screenshot.js`或
 ## 文档 {#documentation}
 
 此站点由 MkDocs 和 Material for MkDocs 从`docs/`构建
-(`mkdocs.yml`在根,`.readthedocs.yaml`用于 Read the Docs)。预览:
+(`mkdocs.yml`在根)。预览:
 
 ```bash
 pip install -r docs/requirements.txt
 mkdocs serve
-mkdocs build --strict   # what Read the Docs runs; must pass with no warnings
+mkdocs build --strict   # 必须无警告通过
 ```
+
+文档使用 Starlight 发布在 https://dumbmonit.selfhostr.io/docs/。

@@ -80,7 +80,7 @@ afterwards, a window lists what to change, each with the block to copy:
 **Settings → About → Configuration changes → View the list** shows every change
 a release has asked for (to apply, closed, or not needed on this instance) with
 its block, whenever you want to read it again. Only administrators see it, and
-it is switched off in the public demo.
+it is switched off in demo mode.
 
 | Since | Change | What to do |
 |---|---|---|
