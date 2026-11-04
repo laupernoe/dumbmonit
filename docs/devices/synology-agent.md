@@ -53,6 +53,12 @@ the installation stops with a message and nothing stays installed.
 | The installation stops, token refused | The token was used, revoked or mistyped. Go back to the add page, create a new one, and retry. |
 | The package is installed but the NAS never appears | In **Package Center**, check that **DumbMonit Agent** is running, then wait a minute. |
 
+**Changed port or reverse proxy.** If you changed the web port (for example
+`8090`) or reach DumbMonit through a reverse proxy (such as the DSM one), open the
+add page at the exact address the NAS will use: DumbMonit then shows the pin of
+the certificate that address really presents. By hand, use that same URL in the
+wizard, and leave the pin empty if the address has a trusted certificate.
+
 The agent still verifies its own updates against the DumbMonit signing key.
 
 ## What is monitored

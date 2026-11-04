@@ -9371,6 +9371,8 @@
 	"deviceform_enroll_spk_url": "URL сервера (поле мастера)",
 	"deviceform_enroll_spk_pin": "Отпечаток сертификата (поле мастера)",
 	"deviceform_enroll_spk_pin_none": "У этого сервера сертификат от доверенного центра: оставьте поле отпечатка пустым.",
+	"deviceform_enroll_spk_pin_proxy": "Обнаружен обратный прокси: это отпечаток сертификата, который он отдаёт, а не собственный отпечаток DumbMonit.",
+	"deviceform_enroll_spk_pin_trusted": "У открытого адреса доверенный сертификат: оставьте поле отпечатка пустым.",
 	"deviceform_synology_pkg_title": "Пакет DumbMonit Agent",
 	"deviceform_synology_pkg_recommended": "Рекомендуется для нескольких NAS",
 	"deviceform_synology_pkg_point_install": "Установите .spk через Центр пакетов DSM.",

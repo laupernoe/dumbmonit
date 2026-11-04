@@ -9085,6 +9085,8 @@
 	"deviceform_enroll_spk_url": "服务器 URL（向导中的字段）",
 	"deviceform_enroll_spk_pin": "证书指纹（向导中的字段）",
 	"deviceform_enroll_spk_pin_none": "此服务器使用受信任机构签发的证书：指纹字段留空即可。",
+	"deviceform_enroll_spk_pin_proxy": "检测到反向代理：这是它所提供证书的指纹，而不是 DumbMonit 自身的指纹。",
+	"deviceform_enroll_spk_pin_trusted": "所打开的地址使用受信任的证书：指纹字段留空即可。",
 	"deviceform_synology_pkg_title": "DumbMonit Agent 套件",
 	"deviceform_synology_pkg_recommended": "多台 NAS 时推荐",
 	"deviceform_synology_pkg_point_install": "通过 DSM 套件中心安装 .spk。",

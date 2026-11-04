@@ -13,7 +13,7 @@ when allowed), SMB/NFS/SSH and the UPS (`upsc`). See
 - `conf/privilege`: the service runs as the dedicated package user, not root.
 - `WIZARD_UIFILES/install_uifile`: asks for the server HTTPS URL, the enrollment
   token (password field) and the server certificate pin (`sha256//...`, from
-  Settings > System > HTTPS; optional only with a CA-trusted certificate).
+  the add-monitor page; optional only with a CA-trusted certificate).
 - `scripts/`: `start-stop-status`, `postinst`, `preuninst`, `postuninst` (POSIX sh).
 - `build-spk.sh`: assembles the package.
 

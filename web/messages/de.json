@@ -9185,6 +9185,8 @@
 	"deviceform_enroll_spk_url": "Server-URL (Feld im Assistenten)",
 	"deviceform_enroll_spk_pin": "Zertifikat-Pin (Feld im Assistenten)",
 	"deviceform_enroll_spk_pin_none": "Dieser Server hat ein Zertifikat einer vertrauenswürdigen Stelle: Das Pin-Feld bleibt leer.",
+	"deviceform_enroll_spk_pin_proxy": "Reverse-Proxy erkannt: Dies ist der Pin des Zertifikats, das er ausliefert, nicht der von DumbMonit selbst.",
+	"deviceform_enroll_spk_pin_trusted": "Die geöffnete Adresse hat ein vertrauenswürdiges Zertifikat: Das Pin-Feld bleibt leer.",
 	"deviceform_synology_pkg_title": "DumbMonit-Agent-Paket",
 	"deviceform_synology_pkg_recommended": "Empfohlen für mehrere NAS",
 	"deviceform_synology_pkg_point_install": "Ein .spk über das DSM-Paketzentrum installieren.",

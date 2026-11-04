@@ -56,6 +56,7 @@ mod packs;
 mod passkeys;
 mod pbs;
 mod pdm;
+mod pin_probe;
 mod pmg;
 mod ports;
 mod prometheus;

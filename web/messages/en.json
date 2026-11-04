@@ -9185,6 +9185,8 @@
 	"deviceform_enroll_spk_url": "Server URL (wizard field)",
 	"deviceform_enroll_spk_pin": "Certificate pin (wizard field)",
 	"deviceform_enroll_spk_pin_none": "This server has a certificate from a trusted authority: leave the pin field empty.",
+	"deviceform_enroll_spk_pin_proxy": "Reverse proxy detected: this is the pin of the certificate it serves, not DumbMonit's own.",
+	"deviceform_enroll_spk_pin_trusted": "The address you opened has a trusted certificate: leave the pin field empty.",
 	"deviceform_synology_pkg_title": "DumbMonit Agent package",
 	"deviceform_synology_pkg_recommended": "Recommended for several NAS",
 	"deviceform_synology_pkg_point_install": "Install a .spk through DSM Package Center.",
