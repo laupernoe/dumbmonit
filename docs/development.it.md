@@ -23,7 +23,7 @@ crates/server    the binary
 crates/agent     Linux/macOS/FreeBSD/Windows agent; install/ holds install.sh/.ps1 served by the server
 web/             SvelteKit (Svelte 5 runes, Tailwind 4, uPlot), adapter-static SPA fallback, ssr=false
 profiles/        SNMP collection profiles, auto-applied by sysObjectID
-docs/            this documentation (MkDocs, published on Read the Docs)
+docs/            questa documentazione (sorgenti MkDocs, pubblicata con Starlight)
 ```
 
 ## Compilare senza una toolchain Rust
@@ -156,7 +156,7 @@ vengono copiate come `tag_*`.
    questa descrizione, quindi non serve alcun rilascio dell'interfaccia.
 4. Documentalo in `docs/notifications.md` sotto *Canali supportati*, con un
    titolo il cui slug corrisponda all'ancora `doc_url`: l'interfaccia rimanda
-   direttamente a quell'ancora su Read the Docs.
+   direttamente a quell'ancora nella documentazione online.
 
 ## Screenshot headless
 
@@ -172,11 +172,13 @@ questa documentazione.
 ## Documentazione
 
 Questo sito è costruito con MkDocs e Material for MkDocs a partire da `docs/`
-(`mkdocs.yml` nella radice, `.readthedocs.yaml` per Read the Docs). Per
+(`mkdocs.yml` nella radice). Per
 l'anteprima:
 
 ```bash
 pip install -r docs/requirements.txt
 mkdocs serve
-mkdocs build --strict   # what Read the Docs runs; must pass with no warnings
+mkdocs build --strict   # deve passare senza avvisi
 ```
+
+La documentazione è pubblicata con Starlight su https://dumbmonit.selfhostr.io/docs/.
