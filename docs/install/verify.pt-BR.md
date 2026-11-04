@@ -7,11 +7,11 @@ de assinatura de longa duração** para obter, proteger ou rotacionar: a
 identidade de assinatura é o próprio workflow do GitHub Actions, registrada em
 um certificado de curta duração e no log público de transparência do Sigstore.
 Verificar significa conferir que o artefato foi construído por esse workflow, a
-partir de uma tag `v*` de `laupernoe/dumbmonit`.
+partir de uma tag `v*` de `selfhostr/dumbmonit`.
 
 ## Binários do agente {#agent-binaries}
 
-Cada binário na [release do GitHub](https://github.com/laupernoe/dumbmonit/releases/latest)
+Cada binário na [release do GitHub](https://github.com/selfhostr/dumbmonit/releases/latest)
 acompanha `<arquivo>.sigstore.json` (o pacote de assinatura) e
 `<arquivo>.sha256`, e a release traz `dumbmonit-agent.intoto.jsonl`, a
 proveniência de build SLSA.
@@ -20,18 +20,18 @@ proveniência de build SLSA.
 cosign verify-blob dumbmonit-agent-linux-x86_64 \
   --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
+  --certificate-identity-regexp '^https://github.com/selfhostr/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
 
 # or, with the GitHub CLI (checks the provenance attestation)
-gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+gh attestation verify dumbmonit-agent-linux-x86_64 -R selfhostr/dumbmonit
 
 # or against the provenance attached to the release
-gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit \
+gh attestation verify dumbmonit-agent-linux-x86_64 -R selfhostr/dumbmonit \
   --bundle dumbmonit-agent.intoto.jsonl
 ```
 
 Uma execução bem-sucedida imprime a identidade do workflow e a tag. Se falhar,
-não instale o arquivo e [relate o problema](https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md).
+não instale o arquivo e [relate o problema](https://github.com/selfhostr/dumbmonit/blob/main/SECURITY.md).
 
 ## Imagens de contêiner {#container-images}
 
@@ -40,12 +40,12 @@ build enviada ao ghcr.io, e um SBOM SPDX e a proveniência SLSA completa
 anexados ao índice da imagem.
 
 ```sh
-gh attestation verify oci://ghcr.io/laupernoe/dumbmonit:0.9.0 -R laupernoe/dumbmonit
+gh attestation verify oci://ghcr.io/selfhostr/dumbmonit:0.9.0 -R selfhostr/dumbmonit
 
 # the SBOM and the provenance recorded by the build
-docker buildx imagetools inspect ghcr.io/laupernoe/dumbmonit:0.9.0 \
+docker buildx imagetools inspect ghcr.io/selfhostr/dumbmonit:0.9.0 \
   --format '{{ json .SBOM }}'
-docker buildx imagetools inspect ghcr.io/laupernoe/dumbmonit:0.9.0 \
+docker buildx imagetools inspect ghcr.io/selfhostr/dumbmonit:0.9.0 \
   --format '{{ json .Provenance }}'
 ```
 
@@ -60,7 +60,7 @@ As versões anteriores à 0.9.0 (`v0.1.0-alpha.N`), e os arquivos que o workflow
 cosign verify-blob dumbmonit-agent-linux-x86_64 \
   --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/sign-releases\.yml@refs/heads/(main|dev)$'
+  --certificate-identity-regexp '^https://github.com/selfhostr/dumbmonit/\.github/workflows/sign-releases\.yml@refs/heads/(main|dev)$'
 ```
 
 Essas versões não têm proveniência de build: `gh attestation verify` não se aplica a elas.

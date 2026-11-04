@@ -5,7 +5,7 @@ Bedrohungen, die Grenzen, an denen sich das Vertrauen ändert, warum das Design 
 Fehlers begrenzt, wie jede verbreitete Schwachstellenklasse abgewehrt wird und welche Belege jede
 Aussage stützen. Sie erweitert das [Sicherheitsmodell](security-model.md), das dieselben
 Maßnahmen knapper aufführt. Eine Schwachstelle melden Sie gemäß der
-[Sicherheitsrichtlinie](https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md).
+[Sicherheitsrichtlinie](https://github.com/selfhostr/dumbmonit/blob/main/SECURITY.md).
 
 Dateipfade unten sind relativ zum Wurzelverzeichnis des Repositorys.
 

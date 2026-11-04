@@ -26,9 +26,9 @@ use crate::config::{env_flag_or, env_var};
 
 /// Seule adresse jamais contactée.
 pub const RELEASES_URL: &str =
-    "https://api.github.com/repos/laupernoe/dumbmonit/releases?per_page=15";
+    "https://api.github.com/repos/selfhostr/dumbmonit/releases?per_page=15";
 /// Page des releases, repli quand GitHub ne donne pas de lien.
-pub const RELEASES_PAGE: &str = "https://github.com/laupernoe/dumbmonit/releases";
+pub const RELEASES_PAGE: &str = "https://github.com/selfhostr/dumbmonit/releases";
 
 const TTL: TimeDelta = TimeDelta::hours(24);
 const RETRY_AFTER_FAILURE: TimeDelta = TimeDelta::hours(1);

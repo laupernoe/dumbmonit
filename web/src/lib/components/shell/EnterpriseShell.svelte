@@ -42,8 +42,8 @@
 	/** `banner`: notices drawn above the top bar, in the page column (demo, cleartext session). */
 	let { children, banner }: { children: Snippet; banner?: Snippet } = $props();
 
-	const DOCS_URL = 'https://dumbmonit.app/docs/';
-	const GITHUB_URL = 'https://github.com/laupernoe/dumbmonit';
+	const DOCS_URL = 'https://dumbmonit.selfhostr.io/docs/';
+	const GITHUB_URL = 'https://github.com/selfhostr/dumbmonit';
 	/** '1' once the reader unfolded the rail; folded otherwise. */
 	const RAIL_KEY = 'dumbmonit-rail-expanded';
 

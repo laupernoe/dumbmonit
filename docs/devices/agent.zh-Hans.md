@@ -118,12 +118,12 @@ Windows 故意没有温度行：读取那里的传感器意味着通过 WMI 进�
     curl -sSL https://server:8080/install.sh | sudo sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
-    macOS 二进制文件 **不是** 在 DumbMonit 映像中：构建它们需要 Apple 的 SDK，其许可证禁止重新分发。它们附加到每个 [GitHub 发行版](https://github.com/laupernoe/dumbmonit/releases/latest) — `dumbmonit-agent-macos-aarch64`（Apple silicon）和 `dumbmonit-agent-macos-x86_64`（Intel），每个都有其 `.sha256` — 并且服务器重定向 `/download/dumbmonit-agent-macos-…` 那里，所以脚本为 Mac 的架构（`uname -m`）选择正确的。服务器不附带那些二进制文件，所以安装命令对它们不进行校验和：添加 `--sha256=macos-aarch64:<hex>`（或 `macos-x86_64`）带有发行版的 `.sha256` 的值，或安装程序拒绝下载。Mac 也需要到达 github.com。
+    macOS 二进制文件 **不是** 在 DumbMonit 映像中：构建它们需要 Apple 的 SDK，其许可证禁止重新分发。它们附加到每个 [GitHub 发行版](https://github.com/selfhostr/dumbmonit/releases/latest) — `dumbmonit-agent-macos-aarch64`（Apple silicon）和 `dumbmonit-agent-macos-x86_64`（Intel），每个都有其 `.sha256` — 并且服务器重定向 `/download/dumbmonit-agent-macos-…` 那里，所以脚本为 Mac 的架构（`uname -m`）选择正确的。服务器不附带那些二进制文件，所以安装命令对它们不进行校验和：添加 `--sha256=macos-aarch64:<hex>`（或 `macos-x86_64`）带有发行版的 `.sha256` 的值，或安装程序拒绝下载。Mac 也需要到达 github.com。
 
     没有那个访问，或安装您已经有的二进制文件，下载它并用 `--bin` 传递它（首先用发行版的 `.sha256` 对比它：`--bin` 安装您给的）：
 
     ```sh
-    curl -sSLO https://github.com/laupernoe/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
+    curl -sSLO https://github.com/selfhostr/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
     curl -sSL https://server:8080/install.sh | sudo sh -s -- \
         --token=dmon_xxx --url=https://server:8080 --bin=./dumbmonit-agent-macos-aarch64
     ```
@@ -170,7 +170,7 @@ Windows 故意没有温度行：读取那里的传感器意味着通过 WMI 进�
 | macOS Apple silicon | `dumbmonit-agent-macos-aarch64` | GitHub 发行版（服务器重定向那里） |
 | macOS Intel | `dumbmonit-agent-macos-x86_64` | GitHub 发行版（服务器重定向那里） |
 
-Linux 二进制文件静态链接反对 musl：它们在任何分发上运行，glibc 或不（Alpine、NAS 固件），没有要匹配的库。每个文件在旁边有其校验和，`<file>.sha256`，在 `sha256sum` 格式。每个 [GitHub 发行版](https://github.com/laupernoe/dumbmonit/releases/latest) 带有全六个二进制文件和它们的校验和，对于无法到达服务器的 `/download/` 的机器或用 `--bin` 安装。
+Linux 二进制文件静态链接反对 musl：它们在任何分发上运行，glibc 或不（Alpine、NAS 固件），没有要匹配的库。每个文件在旁边有其校验和，`<file>.sha256`，在 `sha256sum` 格式。每个 [GitHub 发行版](https://github.com/selfhostr/dumbmonit/releases/latest) 带有全六个二进制文件和它们的校验和，对于无法到达服务器的 `/download/` 的机器或用 `--bin` 安装。
 
 自 0.9.0 起,发行版的每个二进制文件还使用 [Sigstore](https://www.sigstore.dev/) 进行了无密钥签名(`<file>.sigstore.json`),并附带 SLSA 来源证明。要验证某个二进制文件确实由本仓库的发行工作流构建:
 
@@ -178,9 +178,9 @@ Linux 二进制文件静态链接反对 musl：它们在任何分发上运行，
 cosign verify-blob dumbmonit-agent-linux-x86_64 \
   --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
+  --certificate-identity-regexp '^https://github.com/selfhostr/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
 # or, with the GitHub CLI:
-gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+gh attestation verify dumbmonit-agent-linux-x86_64 -R selfhostr/dumbmonit
 ```
 
 要自己构建 Linux、Windows 和 FreeBSD 二进制文件，从存储库的克隆（Docker 是唯一的要求）：
@@ -460,7 +460,7 @@ perf_counters:
 
 ## 在 Docker / 另一网络中运行代理 {#run-the-agent-in-docker--on-another-network}
 
-代理也作为容器映像发布，与服务器相同的标签：`ghcr.io/laupernoe/dumbmonit-agent:latest`（最后发行版）、`:edge`（`main` 上最后提交）。它是一个 `FROM scratch` 映像持有代理二进制文件和 Mozilla CA 包，完全由环境变量配置。存储库提供一个现成的 `docker-compose.agent.yml`：
+代理也作为容器映像发布，与服务器相同的标签：`ghcr.io/selfhostr/dumbmonit-agent:latest`（最后发行版）、`:edge`（`main` 上最后提交）。它是一个 `FROM scratch` 映像持有代理二进制文件和 Mozilla CA 包，完全由环境变量配置。存储库提供一个现成的 `docker-compose.agent.yml`：
 
 ```sh
 DUMBMONIT_AGENT_URL=https://monitor.example.org \

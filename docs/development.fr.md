@@ -102,7 +102,7 @@ pour se reconstruire est une mauvaise apparence.
 4. l'image (`linux/amd64`), construction uniquement.
 
 `.github/workflows/release.yml` pousse la même image vers
-`ghcr.io/laupernoe/dumbmonit` : `:edge` à chaque tirage vers `main`, `:X.Y.Z`,
+`ghcr.io/selfhostr/dumbmonit` : `:edge` à chaque tirage vers `main`, `:X.Y.Z`,
 `:X.Y`, `:X` et `:latest` à chaque étiquette `v*`.
 
 Les tests d'intégration vivent dans `crates/server/tests/` ; les modules purs

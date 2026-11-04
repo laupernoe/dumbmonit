@@ -102,7 +102,7 @@ bad look.
 4. the image (`linux/amd64`), build only.
 
 `.github/workflows/release.yml` pushes the same image to
-`ghcr.io/laupernoe/dumbmonit`: `:edge` on every push to `main`, `:X.Y.Z`,
+`ghcr.io/selfhostr/dumbmonit`: `:edge` on every push to `main`, `:X.Y.Z`,
 `:X.Y`, `:X` and `:latest` on every `v*` tag.
 
 Integration tests live in `crates/server/tests/`; pure modules (metric

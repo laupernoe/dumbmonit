@@ -3,7 +3,7 @@
 Diese Seite beschreibt, was DumbMonit schützt, wem es vertraut, wie das Design den Schaden eines
 Fehlers begrenzt und wo Sie in Code und Tests nachsehen können. Eine Schwachstelle melden Sie
 gemäß der
-[Sicherheitsrichtlinie](https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md).
+[Sicherheitsrichtlinie](https://github.com/selfhostr/dumbmonit/blob/main/SECURITY.md).
 
 ## Was auf dem Spiel steht {#what-is-at-stake}
 

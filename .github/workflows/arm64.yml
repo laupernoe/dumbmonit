@@ -19,8 +19,8 @@ permissions:
   contents: read
 
 env:
-  IMAGE: ghcr.io/laupernoe/dumbmonit
-  AGENT_IMAGE: ghcr.io/laupernoe/dumbmonit-agent
+  IMAGE: ghcr.io/selfhostr/dumbmonit
+  AGENT_IMAGE: ghcr.io/selfhostr/dumbmonit-agent
 
 concurrency:
   group: arm64-${{ github.event.workflow_run.head_branch || github.ref_name }}

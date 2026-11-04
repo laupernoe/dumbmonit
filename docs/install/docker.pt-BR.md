@@ -7,7 +7,7 @@ SQLite embutido. Um volume, `/data`, guarda o banco, o segredo da instância e a
 séries temporais.
 
 !!! note "Tags de imagem"
-    `ghcr.io/laupernoe/dumbmonit:latest` é a última versão com tag (amd64;
+    `ghcr.io/selfhostr/dumbmonit:latest` é a última versão com tag (amd64;
     as imagens arm64 estão pausadas por enquanto); `:edge` acompanha o último commit de `dev`. Para rodar a partir do código-fonte,
     `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
     --build` compila a mesma imagem localmente (cerca de dez minutos na primeira
@@ -29,7 +29,7 @@ em um diretório só dele:
 ```yaml
 services:
   dumbmonit:
-    image: ghcr.io/laupernoe/dumbmonit:latest
+    image: ghcr.io/selfhostr/dumbmonit:latest
     ports:
       - "8080:8080"
     volumes:
