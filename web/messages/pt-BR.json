@@ -1025,7 +1025,6 @@
 	"demo_tour_s8_title": "Modo parede",
 	"deviceform_agentflow_another": "Adicionar outra máquina",
 	"deviceform_agentflow_connected": "{host} está conectada ({os}).",
-	"deviceform_agentflow_fleet": "Um domínio Windows inteiro de uma vez?",
 	"deviceform_agentflow_folder": "Pasta",
 	"deviceform_agentflow_folder_help": "Opcional. As máquinas na mesma pasta são agrupadas na lista de monitoramentos.",
 	"deviceform_agentflow_gateway_pending": "{relay} abre seu gateway no próximo envio, em até um minuto. Execute o comando quando ele estiver escutando.",
@@ -1125,7 +1124,6 @@
 	"deviceform_enroll_create_relay": "Criar o comando de instalação do relay",
 	"deviceform_enroll_default_site": "Site remoto",
 	"deviceform_enroll_linux": "Linux / macOS",
-	"deviceform_enroll_relay_checkbox": "Este agente é um relay para um site remoto",
 	"deviceform_enroll_see_devices": "Ver monitores",
 	"deviceform_enroll_shown_once": "Exibido uma única vez",
 	"deviceform_enroll_single_use": "Uso único",
@@ -9185,6 +9183,8 @@
 	"deviceform_enroll_spk_url": "URL do servidor (campo do assistente)",
 	"deviceform_enroll_spk_pin": "Impressão digital do certificado (campo do assistente)",
 	"deviceform_enroll_spk_pin_none": "Este servidor tem um certificado de uma autoridade confiável: deixe o campo da impressão digital vazio.",
+	"deviceform_enroll_spk_pin_proxy": "Proxy reverso detectado: esta é a impressão digital do certificado que ele apresenta, não a do próprio DumbMonit.",
+	"deviceform_enroll_spk_pin_trusted": "O endereço aberto tem um certificado confiável: deixe o campo da impressão digital vazio.",
 	"deviceform_synology_pkg_title": "Pacote DumbMonit Agent",
 	"deviceform_synology_pkg_recommended": "Recomendado para vários NAS",
 	"deviceform_synology_pkg_point_install": "Instale um .spk pela Central de Pacotes do DSM.",
@@ -9193,5 +9193,12 @@
 	"deviceform_synology_api_point_login": "O DumbMonit faz login no DSM com uma conta dedicada somente leitura.",
 	"deviceform_synology_api_cta": "Usar credenciais do DSM",
 	"deviceform_synology_dl_title": "Baixe o pacote do seu NAS",
-	"deviceform_synology_dl_arch": "Baixar {arch}"
+	"deviceform_synology_dl_arch": "Baixar {arch}",
+	"deviceform_feature_ad_label": "Implantar com Active Directory (GPO)",
+	"deviceform_feature_ad_summary": "Instale o agente em todos os servidores Windows de um domínio com uma política de grupo.",
+	"deviceform_new_desc_ad": "Implante o agente em um domínio Windows inteiro com uma política de grupo, a partir de um controlador de domínio.",
+	"deviceform_new_ad_admin_only": "Somente administradores podem implantar com Active Directory.",
+	"deviceform_agentflow_advanced": "Avançado",
+	"deviceform_agentflow_synology_hint": "Em um NAS Synology?",
+	"deviceform_agentflow_synology_link": "Use o pacote DSM"
 }

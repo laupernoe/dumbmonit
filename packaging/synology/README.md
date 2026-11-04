@@ -13,7 +13,7 @@ when allowed), SMB/NFS/SSH and the UPS (`upsc`). See
 - `conf/privilege`: the service runs as the dedicated package user, not root.
 - `WIZARD_UIFILES/install_uifile`: asks for the server HTTPS URL, the enrollment
   token (password field) and the server certificate pin (`sha256//...`, from
-  Settings > System > HTTPS; optional only with a CA-trusted certificate).
+  the add-monitor page; optional only with a CA-trusted certificate).
 - `scripts/`: `start-stop-status`, `postinst`, `preuninst`, `postuninst` (POSIX sh).
 - `build-spk.sh`: assembles the package.
 
@@ -49,6 +49,17 @@ Agent self-updates stay verified by the existing Ed25519 key (see
 agent refuses unsigned updates. The `.spk` itself is not signed yet (DSM will
 show it as coming from an unknown publisher); package signing comes later.
 No key is created here.
+
+## Self-update
+
+`target/bin` belongs to DSM and is read-only for the package user, so the agent
+could not replace itself there (it reported `read_only` and never updated).
+`start-stop-status` now copies the packaged binary to `var/bin/` (writable) and
+starts that copy. The agent self-updates it in place (same SHA-256 and Ed25519
+checks, `.previous` roll-back and ledger next to it). On each start the packaged
+binary replaces the `var/bin` one only when its version is strictly newer (a
+package upgrade), so a self-updated agent is never downgraded. Packages older
+than 0.17.1 need one manual `.spk` install to get this.
 
 ## To validate on a real NAS
 

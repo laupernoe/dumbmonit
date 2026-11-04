@@ -360,6 +360,8 @@ pub async fn create_kit(
         State(state.clone()),
         Authenticated(me.clone()),
         ClientIp(ip),
+        // Pas de sondage : le nom du kit n'est pas forcément l'adresse visitée.
+        axum::http::HeaderMap::new(),
         Json(token_payload),
     )
     .await?;
