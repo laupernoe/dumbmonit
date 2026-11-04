@@ -75,7 +75,7 @@ they come.
 
 Release binaries and images are signed and carry a build provenance, so you
 can check that they were built by this repository's release workflow. The
-steps are in [Verifying a release](https://dumbmonit.readthedocs.io/en/latest/install/verify/).
+steps are in [Verifying a release](https://dumbmonit.app/docs/install/verify/).
 
 ## Scope
 

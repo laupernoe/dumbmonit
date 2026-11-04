@@ -8,7 +8,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { ExternalLink, Info } from 'lucide-svelte';
 
-	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/using/status-pages/#custom-domain';
+	const DOCS_URL = 'https://dumbmonit.app/docs/using/status-pages/#custom-domain';
 
 	interface Props {
 		id: string;
