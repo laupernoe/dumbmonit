@@ -11,7 +11,7 @@ One container, graphs and alerts in under a minute.
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/selfhostr/dumbmonit/badge)](https://scorecard.dev/viewer/?uri=github.com/selfhostr/dumbmonit)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**[Live demo](https://dumbmonit-demo.selfhostr.io)** · **[Website](https://dumbmonit.selfhostr.io)** · **[Documentation](https://dumbmonit.selfhostr.io/docs/)** · **[Roadmap](https://github.com/users/laupernoe/projects/2)**
+**[Website](https://dumbmonit.selfhostr.io)** · **[Documentation](https://dumbmonit.selfhostr.io/docs/)** · **[Roadmap](https://github.com/users/laupernoe/projects/2)**
 
 <img src="docs/assets/screenshots/overview.png" alt="DumbMonit console: fleet status, active alerts and monitors" width="900">
 
