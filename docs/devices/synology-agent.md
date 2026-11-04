@@ -99,8 +99,11 @@ package does not ask for more. Without root:
 The agent is the usual DumbMonit agent: it follows your server's version through
 [automatic updates](agent.md#automatic-updates) and checks each update against
 the DumbMonit signing key. You do not install a new `.spk` after each DumbMonit
-upgrade. If the NAS stops reporting after an upgrade, reinstall the package
-with a new token (uninstall first).
+upgrade: the package updates itself with the server, no reinstall needed. The
+updated binary lives in the package's writable `var` folder and is the one
+started by Package Center. A NAS still running a package older than 0.17.1
+cannot do this yet: install the current `.spk` once over it (the configuration
+is kept), and it follows the server from then on.
 
 ## Uninstall
 
