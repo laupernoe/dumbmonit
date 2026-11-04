@@ -9185,6 +9185,8 @@
 	"deviceform_enroll_spk_url": "URL du serveur (champ de l'assistant)",
 	"deviceform_enroll_spk_pin": "Empreinte du certificat (champ de l'assistant)",
 	"deviceform_enroll_spk_pin_none": "Ce serveur a un certificat d'une autorité reconnue : laissez le champ de l'empreinte vide.",
+	"deviceform_enroll_spk_pin_proxy": "Reverse proxy détecté : voici l'empreinte du certificat qu'il présente, pas celle de DumbMonit.",
+	"deviceform_enroll_spk_pin_trusted": "L'adresse ouverte présente un certificat de confiance : laissez le champ de l'empreinte vide.",
 	"deviceform_synology_pkg_title": "Paquet DumbMonit Agent",
 	"deviceform_synology_pkg_recommended": "Recommandé pour plusieurs NAS",
 	"deviceform_synology_pkg_point_install": "Installez un .spk via le Centre de paquets DSM.",

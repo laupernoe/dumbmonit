@@ -303,8 +303,13 @@
 			</div>
 			<div class="grid gap-1.5">
 				<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_spk_pin()}</p>
-				{#if options?.serverPin ?? options?.caPin}
-					<CopyBlock value={options?.serverPin ?? options?.caPin ?? ''} label={m.deviceform_enroll_spk_pin()} />
+				{#if options?.serverPin}
+					<CopyBlock value={options.serverPin} label={m.deviceform_enroll_spk_pin()} />
+					{#if token?.pin_source === 'proxy'}
+						<p class="text-sm leading-relaxed text-ink-2">{m.deviceform_enroll_spk_pin_proxy()}</p>
+					{/if}
+				{:else if token?.pin_source === 'trusted'}
+					<p class="text-sm leading-relaxed text-ink-2">{m.deviceform_enroll_spk_pin_trusted()}</p>
 				{:else}
 					<p class="text-sm leading-relaxed text-ink-2">{m.deviceform_enroll_spk_pin_none()}</p>
 				{/if}

@@ -50,7 +50,7 @@
                             "allowBlank": true,
                             "regex": {
                                 "expr": "/^sha256\\/\\/[A-Za-z0-9+\\/]{43}=$/",
-                                "errorText": "Paste the pin exactly as shown in Settings > System > HTTPS (sha256//...)"
+                                "errorText": "Paste the pin exactly as shown when you add the monitor (sha256//...)"
                             }
                         }
                     }
