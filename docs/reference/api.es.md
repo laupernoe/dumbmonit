@@ -769,7 +769,7 @@ desactivar la regla para nadie más.
 
 | Método | Ruta | Propósito |
 |---|---|---|
-| `GET` | `/api/notify/kinds` | Cada tipo de canal con sus campos `settings` y `secrets` (`key`, `label`, `required`, `input`, `help`, `placeholder`, `options`, `shape`, `default`) y un `doc_url` como `https://dumbmonit.readthedocs.io/en/latest/notifications/#discord`. |
+| `GET` | `/api/notify/kinds` | Cada tipo de canal con sus campos `settings` y `secrets` (`key`, `label`, `required`, `input`, `help`, `placeholder`, `options`, `shape`, `default`) y un `doc_url` como `https://dumbmonit.selfhostr.io/docs/notifications/#discord`. |
 | `GET` | `/api/notify/channels` | Cada canal: `id`, `name`, `kind`, `enabled`, `settings`, `has_secret`, `last_error`, `last_sent_at`, `policy` (`min_severity`, `notify_resolved`, `min_interval_secs`, `quiet_hours`, `matcher`). Los secretos nunca se devuelven. |
 | `POST` | `/api/notify/channels` | Crear. `201`. |
 | `PUT` | `/api/notify/channels/{id}` | Actualizar. Omitir `secrets` conserva los guardados; `"secrets": {}` los borra. En `policy`, omitir `matcher` conserva el filtro de enrutado y `"matcher": null` lo borra. |

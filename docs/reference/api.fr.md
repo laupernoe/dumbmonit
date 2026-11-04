@@ -728,7 +728,7 @@ la règle pour personne d'autre.
 
 | Méthode | Route | Objet |
 |---|---|---|
-| `GET` | `/api/notify/kinds` | Chaque type de canal avec ses champs `settings` et `secrets` (`key`, `label`, `required`, `input`, `help`, `placeholder`, `options`, `shape`, `default`) et un `doc_url` comme `https://dumbmonit.readthedocs.io/en/latest/notifications/#discord`. |
+| `GET` | `/api/notify/kinds` | Chaque type de canal avec ses champs `settings` et `secrets` (`key`, `label`, `required`, `input`, `help`, `placeholder`, `options`, `shape`, `default`) et un `doc_url` comme `https://dumbmonit.selfhostr.io/docs/notifications/#discord`. |
 | `GET` | `/api/notify/channels` | Chaque canal : `id`, `name`, `kind`, `enabled`, `settings`, `has_secret`, `last_error`, `last_sent_at`, `policy` (`min_severity`, `notify_resolved`, `min_interval_secs`, `quiet_hours`, `matcher`). Les secrets ne sont jamais renvoyés. |
 | `POST` | `/api/notify/channels` | Créer. `201`. |
 | `PUT` | `/api/notify/channels/{id}` | Mettre à jour. Omettre `secrets` garde ceux enregistrés ; `"secrets": {}` les efface. Dans `policy`, omettre `matcher` garde le filtre de routage et `"matcher": null` l'efface. |
