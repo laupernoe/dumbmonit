@@ -42,7 +42,7 @@ Tutto passa attraverso variabili di ambiente; nessuna è richiesta. Non c'è alc
 | `DUMBMONIT_UPDATE_CHECK` | `1` | `off` interrompe il controllo giornaliero dell'ultima release di GitHub (istanze air-gapped). Vedi [Aggiornamento](../install/update.md). |
 | `DUMBMONIT_BACKUP_DIR` | `<data dir>/backups` | Dove vengono scritti i backup programmati. Punta a un secondo volume per sopravvivere alla perdita del primo. |
 | `DUMBMONIT_BACKUP_INTERVAL_HOURS` | `24` | Ore tra due backup, da 1 a 8760. Il primo avviene un intervallo dopo l'avvio, non all'avvio. |
-| `DUMBMONIT_DEMO` | *(disattivato)* | `1` per una demo pubblica di sola lettura con una proprietà fittizia fissa, accedi `demo` / `demo`. **Ricrea il database ad ogni avvio**: mai su un volume dati reale. Vedi [Esegui un'istanza demo](../install/demo.md). |
+| `DUMBMONIT_DEMO` | *(disattivato)* | `1` per una demo di sola lettura con una proprietà fittizia fissa, accedi `demo` / `demo`. **Ricrea il database ad ogni avvio**: mai su un volume dati reale. Vedi [Esegui un'istanza demo](../install/demo.md). |
 | `DUMBMONIT_BACKUP_KEEP` | `7` | Quanti backup vengono mantenuti, da 1 a 365. I più vecchi vengono rimossi con il loro `.key`. |
 | `DUMBMONIT_BROWSER_URL` | *(non impostato)* | Chromium headless utilizzato per gli screenshot di [modifiche del sito web](../devices/webchange.md#screenshots), come `http://host:9222` (porta DevTools). Aggiungi un servizio `chromedp/headless-shell` al tuo file Compose, come mostrato in [Screenshot](../devices/webchange.md#screenshots). Non impostato: confronto solo del testo. |
 

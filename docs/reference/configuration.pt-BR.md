@@ -32,7 +32,7 @@ de configuração para montar.
 | `DUMBMONIT_UPDATE_CHECK` | `1` | `off` para parar a verificação diária do último lançamento no GitHub (instâncias isoladas). Veja [Atualização](../install/update.md). |
 | `DUMBMONIT_BACKUP_DIR` | `<diretório de dados>/backups` | Onde os backups programados são escritos. Aponte para um segundo volume para sobreviver à perda do primeiro. |
 | `DUMBMONIT_BACKUP_INTERVAL_HOURS` | `24` | Horas entre dois backups, 1 a 8760. O primeiro acontece um intervalo depois da inicialização, não na inicialização. |
-| `DUMBMONIT_DEMO` | *(desligado)* | `1` para uma demo pública, somente leitura, com um acervo fictício fixo, login `demo` / `demo`. **Recria o banco de dados a cada inicialização**: nunca em um volume de dados real. Veja [Executar uma instância de demonstração](../install/demo.md). |
+| `DUMBMONIT_DEMO` | *(desligado)* | `1` para uma demo somente leitura, com um acervo fictício fixo, login `demo` / `demo`. **Recria o banco de dados a cada inicialização**: nunca em um volume de dados real. Veja [Executar uma instância de demonstração](../install/demo.md). |
 | `DUMBMONIT_BACKUP_KEEP` | `7` | Quantos backups são mantidos, 1 a 365. Os mais antigos são removidos com seu `.key`. |
 | `DUMBMONIT_BROWSER_URL` | *(não definido)* | Chromium headless usado para as capturas de tela de [mudanças no site](../devices/webchange.md#screenshots), como `http://host:9222` (sua porta DevTools). Adicione um serviço `chromedp/headless-shell` ao seu arquivo Compose, como mostrado em [Capturas de tela](../devices/webchange.md#screenshots). Não definido: apenas comparação de texto. |
 

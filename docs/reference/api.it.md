@@ -726,7 +726,7 @@ la regola per nessun altro.
 
 | Metodo | Rotta | Scopo |
 |---|---|---|
-| `GET` | `/api/notify/kinds` | Ogni tipo di canale con i suoi campi `settings` e `secrets` (`key`, `label`, `required`, `input`, `help`, `placeholder`, `options`, `shape`, `default`) e un `doc_url` come `https://dumbmonit.readthedocs.io/en/latest/notifications/#discord`. |
+| `GET` | `/api/notify/kinds` | Ogni tipo di canale con i suoi campi `settings` e `secrets` (`key`, `label`, `required`, `input`, `help`, `placeholder`, `options`, `shape`, `default`) e un `doc_url` come `https://dumbmonit.selfhostr.io/docs/notifications/#discord`. |
 | `GET` | `/api/notify/channels` | Ogni canale: `id`, `name`, `kind`, `enabled`, `settings`, `has_secret`, `last_error`, `last_sent_at`, `policy` (`min_severity`, `notify_resolved`, `min_interval_secs`, `quiet_hours`, `matcher`). I segreti non vengono mai restituiti. |
 | `POST` | `/api/notify/channels` | Crea. `201`. |
 | `PUT` | `/api/notify/channels/{id}` | Aggiorna. Omettere `secrets` mantiene quelli memorizzati; `"secrets": {}` li cancella. In `policy`, omettere `matcher` mantiene il filtro di instradamento e `"matcher": null` lo cancella. |

@@ -89,7 +89,7 @@ bloc à copier :
 **Réglages → À propos → Changements de configuration → Voir la liste** montre
 tous les changements demandés par une version (à faire, fermés, ou inutiles sur
 cette instance) avec leur bloc, quand vous voulez les relire. Seuls les
-administrateurs la voient, et elle est coupée dans la démo publique.
+administrateurs la voient, et elle est coupée en mode démo.
 
 | Depuis | Changement | Que faire |
 |---|---|---|

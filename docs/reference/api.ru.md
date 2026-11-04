@@ -732,7 +732,7 @@ curl -b cookies.txt -G https://localhost:8080/api/metrics/query \
 
 | Метод | Маршрут | Назначение |
 |---|---|---|
-| `GET` | `/api/notify/kinds` | Все типы каналов с их полями `settings` и `secrets` (`key`, `label`, `required`, `input`, `help`, `placeholder`, `options`, `shape`, `default`) и `doc_url`, например `https://dumbmonit.readthedocs.io/en/latest/notifications/#discord`. |
+| `GET` | `/api/notify/kinds` | Все типы каналов с их полями `settings` и `secrets` (`key`, `label`, `required`, `input`, `help`, `placeholder`, `options`, `shape`, `default`) и `doc_url`, например `https://dumbmonit.selfhostr.io/docs/notifications/#discord`. |
 | `GET` | `/api/notify/channels` | Все каналы: `id`, `name`, `kind`, `enabled`, `settings`, `has_secret`, `last_error`, `last_sent_at`, `policy` (`min_severity`, `notify_resolved`, `min_interval_secs`, `quiet_hours`, `matcher`). Секреты не возвращаются никогда. |
 | `POST` | `/api/notify/channels` | Создать. `201`. |
 | `PUT` | `/api/notify/channels/{id}` | Обновить. Если опустить `secrets`, сохраняются прежние; `"secrets": {}` очищает их. В `policy` отсутствие `matcher` сохраняет фильтр маршрутизации, а `"matcher": null` очищает его. |
