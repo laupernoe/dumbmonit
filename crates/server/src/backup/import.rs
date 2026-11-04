@@ -30,6 +30,7 @@ use sqlx::{Row, Sqlite, SqlitePool, Transaction};
 
 use crate::api::topology_edits::{self, CorrectionKind, RuleKind, RuleSpec, RuleStatus};
 use crate::backup::bundle::*;
+use crate::collectors::agent;
 use crate::crypto::Cipher;
 
 /// Sort d'une ligne du lot.
@@ -134,6 +135,7 @@ pub async fn restore(
     report.push(restore_rules(&mut tx, bundle, &refs, &channels).await?);
     report.push(restore_overrides(&mut tx, bundle, &refs).await?);
     report.push(restore_notify_policy(&mut tx, bundle).await?);
+    report.push(restore_agent_enrolment(&mut tx, bundle).await?);
     report.push(restore_instance(&mut tx, bundle).await?);
     report.push(restore_silences(&mut tx, bundle, &refs).await?);
     report.push(restore_status_pages(&mut tx, bundle, &refs).await?);
@@ -142,6 +144,7 @@ pub async fn restore(
     report.push(restore_agent_tokens(&mut tx, bundle).await?);
     report.push(restore_api_tokens(&mut tx, bundle).await?);
     report.push(restore_push_monitors(&mut tx, cipher, bundle, &refs).await?);
+    report.push(restore_agent_sentinels(&mut tx, cipher, bundle, &refs).await?);
     report.push(crate::backup::oncall::restore(&mut tx, cipher, &bundle.oncall).await?);
     report.push(restore_runbooks(&mut tx, bundle).await?);
     report.push(restore_remediation_actions(&mut tx, cipher, bundle, &refs).await?);
@@ -911,6 +914,65 @@ async fn restore_notify_policy(
     Ok(report)
 }
 
+/// Garde de l'enrôlement des agents (validation, débit, mise en veille) :
+/// remplacée par celle du lot, après contrôle. Un réglage illisible est
+/// signalé et laissé de côté, l'instance garde le sien.
+///
+/// Un lot d'avant la garde n'en a pas : s'il ramène des jetons d'agent et que
+/// l'instance n'a encore rien réglé, elle prend l'acceptation automatique,
+/// comme l'a fait la migration 0233 sur l'instance d'origine. Sans cela, tout
+/// le parc restauré attendrait une validation.
+async fn restore_agent_enrolment(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+) -> Result<SectionReport> {
+    use crate::collectors::agent::enrolment::{EnrolmentSettings, SETTINGS_KEY};
+    let mut report = SectionReport::new("agent_enrolment");
+    let existing = sqlx::query("SELECT value FROM settings WHERE key = ?")
+        .bind(SETTINGS_KEY)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("lecture de la garde de l'enrôlement")?;
+    let settings = match &bundle.agent_enrolment {
+        Some(raw) => match serde_json::from_value::<EnrolmentSettings>(raw.clone()) {
+            Ok(settings) if settings.validate().is_ok() => settings,
+            _ => {
+                report.skipped += 1;
+                let note = "The agent enrolment settings of the backup are unreadable";
+                report.notes.push(note.into());
+                return Ok(report);
+            }
+        },
+        None if !bundle.agent_tokens.is_empty() && existing.is_none() => {
+            EnrolmentSettings::legacy()
+        }
+        None => return Ok(report),
+    };
+    let value = serde_json::to_vec(&settings)?;
+    if let Some(row) = &existing
+        && row.try_get::<Vec<u8>, _>("value")? == value
+    {
+        report.skipped += 1;
+        return Ok(report);
+    }
+    sqlx::query(
+        "INSERT INTO settings (key, value) VALUES (?, ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value,
+             updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')",
+    )
+    .bind(SETTINGS_KEY)
+    .bind(&value)
+    .execute(&mut **tx)
+    .await
+    .context("écriture de la garde de l'enrôlement")?;
+    report.count(if existing.is_some() {
+        RestoreOutcome::Updated
+    } else {
+        RestoreOutcome::Created
+    });
+    Ok(report)
+}
+
 /// Réglages d'instance (`crate::instance`). L'assistant de démarrage reste
 /// terminé s'il l'était ici : restaurer une instance n'oblige pas à le refaire,
 /// et un lot d'une instance déjà installée le marque terminé.
@@ -919,20 +981,6 @@ async fn restore_instance(
     bundle: &Bundle,
 ) -> Result<SectionReport> {
     let mut report = SectionReport::new("instance");
-    // Redirection vers HTTPS : un réglage de sécurité de l'instance, repris tel
-    // quel (le serveur l'applique aussitôt après la restauration).
-    if let Some(redirect) = bundle.https_redirect {
-        sqlx::query(
-            "INSERT INTO settings (key, value) VALUES (?, ?)
-             ON CONFLICT(key) DO UPDATE SET value = excluded.value,
-                 updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')",
-        )
-        .bind(crate::web_tls::SETTING_REDIRECT)
-        .bind(serde_json::to_vec(&redirect)?)
-        .execute(&mut **tx)
-        .await
-        .context("réglage de redirection HTTPS")?;
-    }
     let Some(incoming) = &bundle.instance else { return Ok(report) };
 
     let existing = sqlx::query("SELECT value FROM settings WHERE key = ?")
@@ -1734,11 +1782,28 @@ async fn restore_agent_tokens(
             report.skipped += 1;
             continue;
         }
+        // Les jetons d'enrôlement n'ont plus de nom lisible : une sauvegarde
+        // ancienne est normalisée en identifiant opaque.
+        let name = if agent::is_token_name(&token.name) {
+            token.name.clone()
+        } else {
+            loop {
+                let candidate = agent::generate_token_name();
+                let taken = sqlx::query("SELECT 1 FROM agent_tokens WHERE name = ?")
+                    .bind(&candidate)
+                    .fetch_optional(&mut **tx)
+                    .await
+                    .context("recherche du nom du jeton d'agent")?;
+                if taken.is_none() {
+                    break candidate;
+                }
+            }
+        };
         sqlx::query(
             "INSERT INTO agent_tokens (name, token_hash, prefix, created_at, revoked_at)
              VALUES (?, ?, ?, COALESCE(?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now')), ?)",
         )
-        .bind(&token.name)
+        .bind(&name)
         .bind(&token.token_hash)
         .bind(&token.prefix)
         .bind(&token.created_at)
@@ -2049,6 +2114,121 @@ async fn restore_netconfig_versions(
     Ok(report)
 }
 
+/// Sentinelles : un agent absent du lot (ou de l'instance) est signalé, un réglage
+/// identique à celui en place n'est pas réécrit.
+async fn restore_agent_sentinels(
+    tx: &mut Transaction<'_, Sqlite>,
+    cipher: &Cipher,
+    bundle: &Bundle,
+    refs: &HashMap<String, i64>,
+) -> Result<SectionReport> {
+    use crate::collectors::agent::sentinel::check_channel;
+
+    let mut report = SectionReport::new("agent_sentinels");
+    for entry in &bundle.agent_sentinels {
+        let Some(target_id) = refs.get(&entry.agent).copied() else {
+            report.skipped += 1;
+            report
+                .notes
+                .push(format!("Sentinel: its agent ({}) is not in this backup.", entry.agent));
+            continue;
+        };
+        if let Some(channel) = &entry.channel
+            && let Err(why) = check_channel(channel)
+        {
+            report.skipped += 1;
+            report.notes.push(format!("Sentinel of {}: {why}", entry.agent));
+            continue;
+        }
+        let urls: Vec<&String> = entry
+            .urls
+            .iter()
+            .filter(|url| dumbmonit_proto::https_authority(url).is_some())
+            .take(dumbmonit_proto::SENTINEL_MAX_URLS)
+            .collect();
+        let interval = entry.interval_secs.clamp(
+            dumbmonit_proto::SENTINEL_MIN_INTERVAL_SECS,
+            dumbmonit_proto::SENTINEL_MAX_INTERVAL_SECS,
+        );
+        let threshold = entry.threshold.clamp(1, dumbmonit_proto::SENTINEL_MAX_THRESHOLD);
+        // Sans adresse ni canal, une sentinelle ne peut pas être active.
+        let enabled = entry.enabled && !urls.is_empty() && entry.channel.is_some();
+        let pins: std::collections::BTreeMap<&String, String> = entry
+            .pins
+            .iter()
+            .filter(|(url, _)| urls.contains(url))
+            .filter_map(|(url, raw)| Some((url, dumbmonit_proto::normalize_pin(raw)?)))
+            .collect();
+        let urls_json = serde_json::to_string(&urls)?;
+        let pins_json = serde_json::to_string(&pins)?;
+
+        let existing = sqlx::query(
+            "SELECT enabled, urls, pins, interval_secs, threshold, channel_enc \
+             FROM agent_sentinel WHERE target_id = ?",
+        )
+        .bind(target_id)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("recherche de la sentinelle")?;
+
+        if let Some(row) = &existing {
+            let stored_channel: Option<Vec<u8>> = row.try_get("channel_enc")?;
+            let same_channel = match (&entry.channel, stored_channel) {
+                (None, None) => true,
+                (Some(wanted), Some(bytes)) => cipher
+                    .decrypt(&bytes)
+                    .ok()
+                    .and_then(|plain| serde_json::from_slice(&plain).ok())
+                    .is_some_and(|stored: dumbmonit_proto::SentinelChannel| &stored == wanted),
+                _ => false,
+            };
+            if same_channel
+                && (row.try_get::<i64, _>("enabled")? != 0) == enabled
+                && row.try_get::<String, _>("urls")? == urls_json
+                && row.try_get::<String, _>("pins")? == pins_json
+                && row.try_get::<i64, _>("interval_secs")? == interval as i64
+                && row.try_get::<i64, _>("threshold")? == i64::from(threshold)
+            {
+                report.skipped += 1;
+                continue;
+            }
+        }
+
+        let encrypted = match &entry.channel {
+            Some(channel) => Some(cipher.encrypt(&serde_json::to_vec(channel)?)?),
+            None => None,
+        };
+        let outcome = sqlx::query(
+            "INSERT INTO agent_sentinel \
+                 (target_id, enabled, urls, pins, interval_secs, threshold, channel_enc) \
+             VALUES (?, ?, ?, ?, ?, ?, ?) \
+             ON CONFLICT(target_id) DO UPDATE SET enabled = excluded.enabled, \
+                 urls = excluded.urls, pins = excluded.pins, \
+                 interval_secs = excluded.interval_secs, \
+                 threshold = excluded.threshold, channel_enc = excluded.channel_enc, \
+                 updated_at = datetime('now')",
+        )
+        .bind(target_id)
+        .bind(i64::from(enabled))
+        .bind(&urls_json)
+        .bind(&pins_json)
+        .bind(interval as i64)
+        .bind(i64::from(threshold))
+        .bind(encrypted)
+        .execute(&mut **tx)
+        .await;
+        match outcome {
+            Ok(_) => report.count(if existing.is_some() {
+                RestoreOutcome::Updated
+            } else {
+                RestoreOutcome::Created
+            }),
+            Err(error) => report.refused(&entry.agent, &anyhow::Error::from(error)),
+        }
+    }
+    Ok(report)
+}
+
 async fn restore_push_monitors(
     tx: &mut Transaction<'_, Sqlite>,
     cipher: &Cipher,
@@ -2136,7 +2316,7 @@ async fn restore_locations(
             continue;
         }
         let existing = sqlx::query(
-            "SELECT id, address, latitude, longitude, site, main_site FROM locations
+            "SELECT id, address, latitude, longitude, site FROM locations
              WHERE name = ? COLLATE NOCASE",
         )
         .bind(name)
@@ -2148,31 +2328,22 @@ async fn restore_locations(
             && row.try_get::<f64, _>("latitude")? == entry.latitude
             && row.try_get::<f64, _>("longitude")? == entry.longitude
             && row.try_get::<String, _>("site")? == entry.site
-            && (row.try_get::<i64, _>("main_site")? != 0) == entry.main_site
         {
             report.skipped += 1;
             continue;
         }
-        if entry.main_site {
-            sqlx::query("UPDATE locations SET main_site = 0 WHERE name != ? COLLATE NOCASE")
-                .bind(name)
-                .execute(&mut **tx)
-                .await
-                .context("site principal")?;
-        }
         let result = sqlx::query(
-            "INSERT INTO locations (name, address, latitude, longitude, site, main_site)
-             VALUES (?, ?, ?, ?, ?, ?)
+            "INSERT INTO locations (name, address, latitude, longitude, site)
+             VALUES (?, ?, ?, ?, ?)
              ON CONFLICT(name) DO UPDATE SET address = excluded.address,
                  latitude = excluded.latitude, longitude = excluded.longitude,
-                 site = excluded.site, main_site = excluded.main_site",
+                 site = excluded.site",
         )
         .bind(name)
         .bind(&entry.address)
         .bind(entry.latitude)
         .bind(entry.longitude)
         .bind(&entry.site)
-        .bind(entry.main_site)
         .execute(&mut **tx)
         .await;
         match result {

@@ -26,9 +26,8 @@ atrás de um proxy inverso. Duas coisas viajam nessa ligação:
 - as **credenciais dos monitores** que o retransmissor sonda (community SNMP,
   token da API Proxmox…), decifradas, dentro de cada trabalho de sonda.
 
-Em HTTP simples pela internet ambos seriam legíveis pelo caminho: ponha o
-servidor atrás de HTTPS antes de retransmitir o que quer que seja para fora da
-sua própria rede. Numa LAN ou numa VPN, HTTP é aceitável e o token é o único
+A porta web só aceita HTTPS, por isso ambos viajam cifrados. Na internet, ponha o
+servidor atrás de um proxy inverso com certificado público (liga-se ao DumbMonit por HTTPS); numa LAN ou numa VPN serve o certificado autoassinado, fixado pela impressão digital do comando apresentado. O token é o único
 segredo em trânsito até atribuir monitores ao retransmissor. As credenciais
 nunca são escritas em disco de nenhum dos lados: um trabalho de sonda vive na
 memória do servidor até o retransmissor o reportar, e o agente não guarda nada

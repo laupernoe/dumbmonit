@@ -207,7 +207,7 @@ pub async fn unlock(
     let key = state.cipher.subkey(KEY_LABEL);
     let value = cookie_value(&key, page.id, expires, &fingerprint(&hash));
     let set = format!(
-        "{}={value}; Path=/; HttpOnly; SameSite=Lax; Max-Age={COOKIE_TTL_SECS}",
+        "{}={value}; Path=/; HttpOnly; SameSite=Lax; Max-Age={COOKIE_TTL_SECS}; Secure",
         cookie_name(page.id)
     );
     let mut response = Json(json!({ "status": "unlocked" })).into_response();

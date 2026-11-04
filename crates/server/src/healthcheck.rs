@@ -3,13 +3,24 @@
 //! L'image finale est `FROM scratch` (ni shell ni curl), donc le `HEALTHCHECK`
 //! du Dockerfile rappelle le binaire lui-même. La sonde n'ouvre ni la base ni
 //! VictoriaMetrics et n'écrit aucun log : elle fait un `GET /api/health` en
-//! HTTP/1.1 sur la boucle locale et répond par son code de sortie.
+//! HTTPS (HTTP/1.1) sur la boucle locale et répond par son code de sortie.
+//!
+//! Le port ne sert que HTTPS. Sans la base, la sonde ne connaît pas le
+//! certificat : elle vérifie la poignée de main (signature du serveur) mais
+//! pas l'identité du certificat — elle ne parle qu'à la boucle locale du
+//! conteneur, et `/api/health` ne porte rien de secret.
 
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::sync::Arc;
 use std::time::Duration;
 
+use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier};
+use rustls::crypto::{CryptoProvider, verify_tls12_signature, verify_tls13_signature};
+use rustls::pki_types::{CertificateDer, ServerName, UnixTime};
+use rustls::{ClientConfig, DigitallySignedStruct, SignatureScheme};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
+use tokio_rustls::TlsConnector;
 
 use crate::config::env_var;
 
@@ -38,10 +49,67 @@ pub fn is_ok_status_line(response: &[u8]) -> bool {
     )
 }
 
-/// Sonde `addr` ; `Ok(())` si `/api/health` répond 200 dans le délai imparti.
+/// Certificat accepté tel quel, signature de la poignée de main vérifiée :
+/// la sonde ne parle qu'à la boucle locale du conteneur (voir le module).
+#[derive(Debug)]
+struct LoopbackOnly(Arc<CryptoProvider>);
+
+impl ServerCertVerifier for LoopbackOnly {
+    fn verify_server_cert(
+        &self,
+        _end_entity: &CertificateDer<'_>,
+        _intermediates: &[CertificateDer<'_>],
+        _server_name: &ServerName<'_>,
+        _ocsp_response: &[u8],
+        _now: UnixTime,
+    ) -> Result<ServerCertVerified, rustls::Error> {
+        Ok(ServerCertVerified::assertion())
+    }
+
+    fn verify_tls12_signature(
+        &self,
+        message: &[u8],
+        cert: &CertificateDer<'_>,
+        dss: &DigitallySignedStruct,
+    ) -> Result<HandshakeSignatureValid, rustls::Error> {
+        verify_tls12_signature(message, cert, dss, &self.0.signature_verification_algorithms)
+    }
+
+    fn verify_tls13_signature(
+        &self,
+        message: &[u8],
+        cert: &CertificateDer<'_>,
+        dss: &DigitallySignedStruct,
+    ) -> Result<HandshakeSignatureValid, rustls::Error> {
+        verify_tls13_signature(message, cert, dss, &self.0.signature_verification_algorithms)
+    }
+
+    fn supported_verify_schemes(&self) -> Vec<SignatureScheme> {
+        self.0.signature_verification_algorithms.supported_schemes()
+    }
+}
+
+fn connector() -> Result<TlsConnector, String> {
+    let provider = crate::web_tls::provider();
+    let config = ClientConfig::builder_with_provider(provider.clone())
+        .with_protocol_versions(&[&rustls::version::TLS13])
+        .map_err(|e| e.to_string())?
+        .dangerous()
+        .with_custom_certificate_verifier(Arc::new(LoopbackOnly(provider)))
+        .with_no_client_auth();
+    Ok(TlsConnector::from(Arc::new(config)))
+}
+
+/// Sonde `addr` en HTTPS ; `Ok(())` si `/api/health` répond 200 dans le délai
+/// imparti. Refuse une autre adresse que la boucle locale.
 pub async fn probe(addr: SocketAddr) -> Result<(), String> {
+    if !addr.ip().is_loopback() {
+        return Err("the health check only probes the loopback".into());
+    }
     let attempt = async {
-        let mut stream = TcpStream::connect(addr).await.map_err(|e| e.to_string())?;
+        let tcp = TcpStream::connect(addr).await.map_err(|e| e.to_string())?;
+        let name = ServerName::IpAddress(addr.ip().into());
+        let mut stream = connector()?.connect(name, tcp).await.map_err(|e| e.to_string())?;
         let request = format!(
             "GET /api/health HTTP/1.1\r\nHost: {addr}\r\nConnection: close\r\n\
              Accept: application/json\r\n\r\n"
@@ -85,6 +153,7 @@ pub fn run() -> i32 {
 mod tests {
     use super::*;
     use tokio::net::TcpListener;
+    use tokio_rustls::TlsAcceptor;
 
     #[test]
     fn bind_wildcard_becomes_loopback() {
@@ -103,16 +172,24 @@ mod tests {
         assert!(!is_ok_status_line(b""));
     }
 
+    /// Un serveur HTTPS d'une réponse, au certificat autosigné comme celui
+    /// du premier démarrage.
     async fn serve_once(status: &'static str) -> SocketAddr {
+        let made = crate::web_tls::cert::self_signed(None, &["localhost".to_string()]).unwrap();
+        let identity = crate::web_tls::cert::identity_from_parts(made.cert_der, made.key_der);
+        let config = crate::web_tls::server_config(identity).unwrap();
+        let acceptor = TlsAcceptor::from(Arc::new(config));
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
         tokio::spawn(async move {
-            let (mut socket, _) = listener.accept().await.unwrap();
+            let (socket, _) = listener.accept().await.unwrap();
+            let mut socket = acceptor.accept(socket).await.unwrap();
             let mut buf = [0u8; 512];
             let n = socket.read(&mut buf).await.unwrap();
             assert!(buf[..n].starts_with(b"GET /api/health HTTP/1.1"));
             let reply = format!("HTTP/1.1 {status}\r\nContent-Length: 2\r\n\r\n{{}}");
             socket.write_all(reply.as_bytes()).await.unwrap();
+            let _ = socket.shutdown().await;
         });
         addr
     }
@@ -124,11 +201,21 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn probe_fails_when_nothing_listens() {
+    async fn probe_fails_when_nothing_listens_or_in_clear() {
         let addr = {
             let l = TcpListener::bind("127.0.0.1:0").await.unwrap();
             l.local_addr().unwrap()
         };
         assert!(probe(addr).await.is_err());
+
+        // Un serveur en clair ne passe pas pour le nôtre.
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let _ = socket.write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n").await;
+        });
+        assert!(probe(addr).await.is_err());
+        assert!(probe("10.0.0.5:8080".parse().unwrap()).await.is_err());
     }
 }

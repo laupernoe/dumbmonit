@@ -38,7 +38,7 @@ Caricalo in qualsiasi strumento OpenAPI:
 # Browse it, and try calls with your token, in Swagger UI
 docker run --rm -p 8081:8080 \
   -e SWAGGER_JSON_URL=http://monit.lan:8080/api/openapi.json swaggerapi/swagger-ui
-# then open http://localhost:8081 and paste "dmt_…" under Authorize → bearerAuth
+# then open https://localhost:8081 and paste "dmt_…" under Authorize → bearerAuth
 
 # Generate a client library (here Python)
 docker run --rm -v "$PWD:/local" openapitools/openapi-generator-cli generate \
@@ -520,7 +520,7 @@ forma di Prometheus: `[{"metric": {labels…}, "values": [[timestamp_seconds, "v
 | `GET` | `/api/metrics/query_range?query=…&start=…&end=…&step=…` | Query su intervallo. `start` e `end` sono in **millisecondi** dall'epoch; `step` è in secondi e viene ampliato in modo che una serie non superi mai 2 000 punti. |
 
 ```bash
-curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
+curl -b cookies.txt -G https://localhost:8080/api/metrics/query \
   --data-urlencode 'query=avg by (target, host) (dumbmonit_cpu_usage_percent)'
 ```
 
@@ -807,7 +807,7 @@ token richiedono l'ambito `write` per le modifiche. Vedi
 | Metodo | Rotta | Autenticazione | Scopo |
 |---|---|---|---|
 | `GET` | `/api/agent/tokens` | solo sessione | Ogni token: `id`, `name`, `prefix`, `created_at`, `last_used_at`, `revoked_at`, `max_uses` (`null` per un token di flotta), `uses`, `expires_at`. |
-| `POST` | `/api/agent/tokens` | admin, solo sessione | `{"name": "Home fleet", "base_url": "http://server:8080", "reusable": false, "max_uses": null, "expires_in_days": null}`. `201` con i campi del token più `secret` (mostrato una sola volta), `install_linux` e `install_windows`. `base_url` è l'URL che gli agent useranno; per impostazione predefinita è l'indirizzo di ascolto. Senza `reusable`, il token è **monouso**: registra una macchina e non di più. Con esso, `max_uses` limita le registrazioni (`null`: nessun limite). `expires_in_days` ferma le *registrazioni* dopo quel numero di giorni; le macchine già registrate continuano a riferire. `400` per un conteggio inferiore a 1. |
+| `POST` | `/api/agent/tokens` | admin, solo sessione | `{"name": "Home fleet", "base_url": "https://server:8080", "reusable": false, "max_uses": null, "expires_in_days": null}`. `201` con i campi del token più `secret` (mostrato una sola volta), `install_linux` e `install_windows`. `base_url` è l'URL che gli agent useranno; per impostazione predefinita è l'indirizzo di ascolto. Senza `reusable`, il token è **monouso**: registra una macchina e non di più. Con esso, `max_uses` limita le registrazioni (`null`: nessun limite). `expires_in_days` ferma le *registrazioni* dopo quel numero di giorni; le macchine già registrate continuano a riferire. `400` per un conteggio inferiore a 1. |
 | `DELETE` | `/api/agent/tokens/{id}` | admin, solo sessione | Revoca. `204`; `404` quando sconosciuto o già revocato. |
 | `POST` | `/api/ingest` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | Riceve un batch di campioni da un agent (corpi fino a 16 MB). Non è pensato per essere chiamato a mano. L'header porta il segreto di associazione della macchina; un agent che non ne ha uno lo omette, ed è così che ne chiede uno. La risposta aggiunge `agent_secret` (il segreto, restituito esattamente una volta, quando la macchina viene associata) e `bound`. `403` quando la macchina è associata a un'altra installazione dell'agent, o quando il token non può più registrare — il messaggio dice quale, e cosa fare. |
 | `GET` | `/api/agent/relay?wait=N` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | Probe delegati a un agent relay (`relay: true`). Trattenuta fino a `wait` secondi (al massimo 25) quando nulla è in sospeso. Ogni elemento è un comando di tipo `probe` i cui `args` portano il target, la sua credenziale decifrata, `timeout_secs` e `discover`. Mai scritto su disco. |
@@ -822,8 +822,8 @@ token richiedono l'ambito `write` per le modifiche. Vedi
   "id": 1, "name": "Home fleet", "prefix": "dmon_ab12",
   "created_at": "2026-09-15 13:00:00", "last_used_at": null, "revoked_at": null,
   "secret": "dmon_…",
-  "install_linux": "curl -sSL http://server:8080/install.sh | sh -s -- --token=dmon_… --url=http://server:8080",
-  "install_windows": "& ([scriptblock]::Create((irm http://server:8080/install.ps1))) -Token dmon_… -Url http://server:8080"
+  "install_linux": "curl -sSL https://server:8080/install.sh | sh -s -- --token=dmon_… --url=https://server:8080",
+  "install_windows": "& ([scriptblock]::Create((irm https://server:8080/install.ps1))) -Token dmon_… -Url https://server:8080"
 }
 ```
 

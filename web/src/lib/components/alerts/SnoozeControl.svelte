@@ -53,29 +53,33 @@
 		error = null;
 	}
 
-	async function snooze(secs: number) {
+	async function snooze(secs: number): Promise<boolean> {
 		busy = true;
 		error = null;
 		try {
 			await createSilence(snoozePayload(alert, target, secs));
 			open = false;
 			onchanged?.();
+			return true;
 		} catch (cause) {
 			error = cause instanceof Error ? cause.message : m.alerts_snooze_error();
+			return false;
 		} finally {
 			busy = false;
 		}
 	}
 
-	async function unsnooze() {
-		if (!active) return;
+	async function unsnooze(): Promise<boolean> {
+		if (!active) return false;
 		busy = true;
 		error = null;
 		try {
 			await deleteSilence(active.id);
 			onchanged?.();
+			return true;
 		} catch (cause) {
 			error = cause instanceof Error ? cause.message : m.alerts_snooze_error_lift();
+			return false;
 		} finally {
 			busy = false;
 		}
@@ -150,7 +154,7 @@
 							role="menuitem"
 							class="h-10 rounded-lg border border-line bg-surface px-2 text-[0.8125rem] font-semibold text-ink transition hover:border-ink-3 hover:bg-surface-2 disabled:opacity-50 sm:h-8"
 							disabled={busy}
-							onclick={() => void snooze(choice.secs)}
+							onclick={() => snooze(choice.secs)}
 						>
 							{durationLabel(choice.secs)}
 						</button>

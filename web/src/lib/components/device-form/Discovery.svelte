@@ -13,7 +13,7 @@
 	import { listRelays } from '#lib/api/relay.js';
 	import type { DiscoveryDepth, DiscoveryJob, DiscoveryJobStatus, DiscoveryJobSummary, DiscoveryPhase, RelayAgent } from '#lib/api/types.js';
 	import { formatRelative } from '#lib/format.js';
-	import { Button, EmptyState, ErrorNotice, Field, Plate, Toggle, type Tone } from '#lib/ui/index.js';
+	import { Button, EmptyState, DocLink, ErrorNotice, Field, Plate, Toggle, type Tone } from '#lib/ui/index.js';
 	import { PHONE_QUERY } from '#lib/ui/index.js';
 	import DiscoveryGraph from './DiscoveryGraph.svelte';
 	import DiscoveryList from './DiscoveryList.svelte';
@@ -336,7 +336,7 @@
 					<EmptyState title={m.deviceform_discovery_none_title({ cidr: job.cidr })} description={m.deviceform_scan_none_desc()} />
 				{/if}
 			{:else}
-				<p class="text-sm leading-relaxed text-ink-2">{m.deviceform_scan_intro()}</p>
+				<DocLink page="using/discovery/" />
 			{/if}
 		{/if}
 	</div>

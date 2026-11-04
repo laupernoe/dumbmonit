@@ -155,6 +155,9 @@ impl Failure {
 /// et `probe_duration_seconds` ne mesure que le travail réseau.
 pub struct Report {
     started: Instant,
+    /// Temps passé à autre chose que la sonde (lecture de statistiques en plus de
+    /// la mesure), retranché de `probe_duration_seconds`.
+    excluded: std::time::Duration,
     ts_ms: i64,
     /// Étiquettes d'identité de la sonde (`probe`, `url`, `port`…), appliquées à
     /// tous les échantillons pour qu'aucune sonde ne puisse en oublier une.
@@ -168,6 +171,7 @@ impl Report {
     pub fn new(kind: &str) -> Self {
         Self {
             started: Instant::now(),
+            excluded: std::time::Duration::ZERO,
             ts_ms: chrono::Utc::now().timestamp_millis(),
             labels: vec![("probe".to_string(), kind.to_string())],
             samples: Vec::new(),
@@ -188,6 +192,17 @@ impl Report {
             MetricKind::Gauge,
             self.ts_ms,
         ));
+    }
+
+    /// Ajoute un échantillon déjà construit : il portera les étiquettes d'identité
+    /// de la sonde comme les autres.
+    pub fn push(&mut self, sample: Sample) {
+        self.samples.push(sample);
+    }
+
+    /// Retranche de la durée mesurée un temps qui n'est pas celui de la sonde.
+    pub fn exclude(&mut self, spent: std::time::Duration) {
+        self.excluded += spent;
     }
 
     /// Dernière valeur déjà enregistrée pour une jauge (sans étiquette propre).
@@ -230,7 +245,7 @@ impl Report {
 
     /// Clôt la mesure et produit les échantillons, métriques communes comprises.
     pub fn finish(mut self) -> Vec<Sample> {
-        let elapsed = self.started.elapsed().as_secs_f64();
+        let elapsed = self.started.elapsed().saturating_sub(self.excluded).as_secs_f64();
         let up = self.is_up();
 
         self.gauge("success", if up { 1.0 } else { 0.0 });

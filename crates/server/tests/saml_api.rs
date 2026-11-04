@@ -26,7 +26,7 @@ const NOW: u64 = 1_793_008_860;
 const LATER: u64 = 1_793_012_400;
 const REQUEST_ID: &str = "_dm-test-request-0001";
 const SP_ENTITY: &str = "https://monit.example.test/saml";
-const ACS: &str = "http://localhost:8080/api/auth/saml/acs";
+const ACS: &str = "https://localhost:8080/api/auth/saml/acs";
 
 const ENTRA: &str = "https://sts.windows.net/9188040d-6c67-4c5b-b112-36a304b66dad/";
 const OKTA: &str = "http://www.okta.com/exk8dumbmonittest0h7";
@@ -177,7 +177,7 @@ async fn complete(app: &TestApp, location: &str, binding: Option<&str>) -> Resul
     assert_eq!(next, "/");
     let session = cookies
         .iter()
-        .find(|cookie| cookie.starts_with("dumbmonit_session="))
+        .find(|cookie| cookie.starts_with("__Host-dumbmonit_session="))
         .and_then(|cookie| cookie.split(';').next())
         .expect("cookie de session")
         .to_string();
@@ -235,7 +235,7 @@ async fn the_settings_are_admin_only_and_checked() {
     assert_eq!(initial.body["allow_idp_initiated"], false);
     assert_eq!(initial.body["auto_create"], false);
     assert_eq!(initial.body["acs_url"], ACS);
-    assert_eq!(initial.body["sp_metadata_url"], "http://localhost:8080/api/auth/saml/metadata");
+    assert_eq!(initial.body["sp_metadata_url"], "https://localhost:8080/api/auth/saml/metadata");
 
     // Activée sans certificat : refusée, des assertions non vérifiables ne
     // doivent jamais être acceptées.

@@ -191,7 +191,6 @@ impl std::fmt::Debug for ChangePayload {
 pub async fn status(
     State(state): State<AppState>,
     Extension(auth): Extension<AuthState>,
-    transport: Option<Extension<crate::web_tls::Transport>>,
     headers: HeaderMap,
 ) -> AuthResult<Json<StatusView>> {
     let configured = auth.is_configured(&state.pool).await?;
@@ -220,8 +219,10 @@ pub async fn status(
         https: {
             let summary = state.web_tls().summary();
             HttpsStatus {
-                available: state.web_tls().server_config().is_some(),
-                secure: transport.is_some_and(|t| t.https),
+                // Le port ne sert que HTTPS : toujours vrai, gardé pour les
+                // clients qui lisent ces champs.
+                available: true,
+                secure: true,
                 self_signed: summary
                     .as_ref()
                     .is_some_and(|s| s.source == crate::web_tls::Source::SelfSigned),
@@ -441,7 +442,7 @@ pub async fn login(
     }
     auth.limiter().lock().await.record_success(&keys);
 
-    open_session(&state, &auth, &user, ip).await
+    open_session(&state, &user, ip).await
 }
 
 /// Connexion par l'annuaire : l'identifiant et le mot de passe sont vérifiés
@@ -498,14 +499,13 @@ async fn ldap_login(
         );
     }
     auth.limiter().lock().await.record_success(&keys);
-    open_session(state, auth, &user, ip).await
+    open_session(state, &user, ip).await
 }
 
 /// Ouvre la session d'un compte dont l'identité vient d'être établie et pose le
 /// cookie. Partagé avec le second facteur.
 pub async fn open_session(
     state: &AppState,
-    auth: &AuthState,
     user: &User,
     ip: Option<std::net::IpAddr>,
 ) -> AuthResult<Response> {
@@ -513,8 +513,7 @@ pub async fn open_session(
     users::touch_login(&state.pool, user.id).await?;
     audit::record(&state.pool, Some(&user.username), "login", None, ip).await;
     tracing::info!(user = %user.username, "login succeeded");
-    Ok((StatusCode::NO_CONTENT, [(header::SET_COOKIE, cookie::set(&token, auth.cookie_secure()))])
-        .into_response())
+    Ok((StatusCode::NO_CONTENT, [(header::SET_COOKIE, cookie::set(&token))]).into_response())
 }
 
 /// Seaux du compteur de tentatives : l'adresse du client, et le compte visé
@@ -538,7 +537,6 @@ const DUMMY_HASH: &str = "$argon2id$v=19$m=19456,t=2,p=1$c2VsLWRlLXJlbXBsaXNzYWd
 /// `POST /api/auth/logout` — ferme la session courante et efface le cookie.
 pub async fn logout(
     State(state): State<AppState>,
-    Extension(auth): Extension<AuthState>,
     current: Option<Extension<CurrentSession>>,
 ) -> AuthResult<Response> {
     if let Some(Extension(CurrentSession(token))) = current {
@@ -546,8 +544,7 @@ pub async fn logout(
     }
     // Le cookie est effacé même sans session en base : c'est la seule façon de se
     // débarrasser d'un cookie devenu inutilisable.
-    Ok((StatusCode::NO_CONTENT, [(header::SET_COOKIE, cookie::clear(auth.cookie_secure()))])
-        .into_response())
+    Ok((StatusCode::NO_CONTENT, [(header::SET_COOKIE, cookie::clear())]).into_response())
 }
 
 /// `POST /api/auth/password` — remplace son mot de passe et se déconnecte partout

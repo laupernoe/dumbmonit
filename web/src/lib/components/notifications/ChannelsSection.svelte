@@ -97,7 +97,7 @@
 	let actionError = $state<{ id: number; cause: unknown } | null>(null);
 	let testResult = $state<{ id: number; ok: boolean; message: string } | null>(null);
 
-	async function sendTest(channel: Channel) {
+	async function sendTest(channel: Channel): Promise<boolean> {
 		busy = { id: channel.id, action: 'test' };
 		actionError = null;
 		testResult = null;
@@ -106,8 +106,10 @@
 			testResult = { id: channel.id, ok: report.ok, message: report.message };
 			// The test updates "last sent" and "last error" on the server.
 			channels = await listChannels();
+			return report.ok;
 		} catch (cause) {
 			actionError = { id: channel.id, cause };
+			return false;
 		} finally {
 			busy = null;
 		}
@@ -216,7 +218,7 @@
 								{#if auth.isAdmin}
 									<div class="flex flex-wrap items-center gap-1.5">
 										<ClientAssign kind="channel" id={channel.id} />
-										<Button variant="ghost" size="sm" loading={current === 'test'} disabled={current !== null} onclick={() => void sendTest(channel)}>
+										<Button variant="ghost" size="sm" loading={current === 'test'} disabled={current !== null} onclick={() => sendTest(channel)}>
 											{m.notifications_channels_send_test()}
 										</Button>
 										<Button variant="ghost" size="sm" disabled={current !== null} onclick={() => (form = channel)}>{m.notifications_channels_edit()}</Button>

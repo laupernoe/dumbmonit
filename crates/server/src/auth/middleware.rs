@@ -160,6 +160,8 @@ pub const TOKEN_DENIED: &[&str] = &[
     "/agent/ad-kit",
     "/agent/tls",
     "/agent/updates",
+    // Accepter une machine, c'est lui ouvrir le serveur : un geste de session.
+    "/agent/enrolment",
     "/account",
     // HTTPS de l'interface : couper la redirection se fait en session.
     "/security/https",
@@ -354,8 +356,10 @@ fn is_token_denied(path: &str) -> bool {
 
 /// Une écriture portée par le cookie de session doit prouver qu'elle vient de
 /// chez nous : l'en-tête posé par l'interface, à défaut les métadonnées de
-/// récupération du navigateur (`Sec-Fetch-Site`), à défaut une `Origin` qui
-/// coïncide avec l'hôte. Sans rien de tout cela, c'est un formulaire tiers ou un
+/// récupération du navigateur (`Sec-Fetch-Site`), à défaut une `Origin` en
+/// `https://` qui coïncide avec l'hôte — une page en clair au même nom (servie
+/// par qui intercepte le réseau, puisque nous ne servons que HTTPS) n'est pas
+/// des nôtres. Sans rien de tout cela, c'est un formulaire tiers ou un
 /// client qui n'a pas lu la documentation ; les deux sont refusés, avec le mot
 /// de passe du remède.
 fn same_origin(headers: &HeaderMap) -> Result<(), &'static str> {
@@ -370,7 +374,7 @@ fn same_origin(headers: &HeaderMap) -> Result<(), &'static str> {
         };
     }
     if let Some(origin) = value("origin") {
-        let origin_host = origin.split_once("://").map_or(origin, |(_, rest)| rest);
+        let Some(origin_host) = origin.strip_prefix("https://") else { return Err(CROSS_SITE) };
         let origin_host = origin_host.split('/').next().unwrap_or(origin_host);
         return match value("host") {
             Some(host) if host.eq_ignore_ascii_case(origin_host) => Ok(()),
@@ -659,9 +663,11 @@ mod tests {
         assert!(same_origin(&fetch).is_ok());
 
         let mut origin = HeaderMap::new();
-        origin.insert("origin", "http://monit.lan:8080".parse().unwrap());
+        origin.insert("origin", "https://monit.lan:8080".parse().unwrap());
         origin.insert("host", "monit.lan:8080".parse().unwrap());
         assert!(same_origin(&origin).is_ok());
+        origin.insert("origin", "http://monit.lan:8080".parse().unwrap());
+        assert!(same_origin(&origin).is_err(), "une page en clair au même nom n'est pas la nôtre");
         origin.insert("origin", "http://evil.example".parse().unwrap());
         assert!(same_origin(&origin).is_err());
     }

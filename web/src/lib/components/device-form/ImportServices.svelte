@@ -16,7 +16,7 @@
 	import { importableRows, selectionState, tickedRows, toggleRow } from './kuma-import.js';
 	import RelayPick from './RelayPick.svelte';
 	import type { KumaImportReport, TargetImportStatus } from '#lib/api/types.js';
-	import { Button, ErrorNotice, Field, Plate } from '#lib/ui/index.js';
+	import { Button, DocLink, ErrorNotice, Field, Plate } from '#lib/ui/index.js';
 	import type { Tone } from '#lib/ui/index.js';
 
 	export type Provider = 'uptimerobot' | 'gatus' | 'healthchecks';
@@ -51,13 +51,6 @@
 
 	const title = $derived(
 		provider === 'uptimerobot' ? m.devices_svc_uptimerobot_title() : provider === 'gatus' ? m.devices_svc_gatus_title() : m.devices_svc_healthchecks_title()
-	);
-	const description = $derived(
-		provider === 'uptimerobot'
-			? m.devices_svc_uptimerobot_description()
-			: provider === 'gatus'
-				? m.devices_svc_gatus_description()
-				: m.devices_svc_healthchecks_description()
 	);
 
 	function statusLabel(status: TargetImportStatus): string {
@@ -179,7 +172,7 @@
 		<div class="flex items-start justify-between gap-3">
 			<div class="min-w-0">
 				<h2 id="svc-import-title" class="text-lg font-semibold">{title}</h2>
-				<p class="mt-1 text-sm text-ink-2">{description}</p>
+				<DocLink page="using/imports/" class="mt-0.5" />
 			</div>
 			<button
 				type="button"
@@ -244,8 +237,7 @@
 						</div>
 					{/if}
 				{/if}
-				<div class="flex flex-wrap items-center justify-between gap-2">
-					<p class="text-sm text-ink-3">{m.devices_svc_never_imported()}</p>
+				<div class="flex flex-wrap items-center justify-end gap-2">
 					<Button type="submit" variant="primary" loading={busy} disabled={describe() === null}>{m.devices_import_preview()}</Button>
 				</div>
 			</form>
@@ -258,7 +250,6 @@
 					errors: report.errors
 				})}
 			</p>
-			<p class="mt-1 text-sm text-ink-2">{m.devices_svc_never_imported()}</p>
 			<div class="mt-3 max-h-[46dvh] overflow-auto rounded-lg border border-line">
 				<table class="block w-full text-left text-[0.8125rem] sm:table sm:min-w-[40rem]">
 					<thead class="bg-surface-2 text-ink-2 max-sm:sr-only sm:sticky sm:top-0">

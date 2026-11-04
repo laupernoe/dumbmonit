@@ -20,7 +20,7 @@
 		type LdapTestStep
 	} from '#lib/api/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, Confirm, Disclosure, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
+	import { Button, Confirm, Disclosure, DocLink, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
 	import UnsavedBadge from './UnsavedBadge.svelte';
 	import { useDirtyTracker } from '#lib/settings/unsaved.svelte.js';
@@ -258,14 +258,16 @@
 		viewer: () => m.settings_users_role_viewer()
 	};
 
-	async function test() {
+	async function test(): Promise<boolean> {
 		testing = true;
 		report = null;
 		testError = null;
 		try {
 			report = await testLdapConnection(payload(), testUsername.trim() || undefined);
+			return report.ok;
 		} catch (cause) {
 			testError = cause;
+			return false;
 		} finally {
 			testing = false;
 		}
@@ -360,7 +362,7 @@
 				<Field label={m.settings_ldap_viewer_groups()} for="ldap-viewer-groups">
 					<textarea id="ldap-viewer-groups" class="input min-h-20 font-mono text-[0.8125rem]" rows="3" bind:value={form.viewer_groups} placeholder="CN=IT Staff,OU=Groups,DC=corp,DC=example" spellcheck="false" autocomplete="off" disabled={saving}></textarea>
 				</Field>
-				<p class="text-sm text-ink-2 sm:col-span-2">{m.settings_ldap_groups_help()}</p>
+				<DocLink page="using/ldap/" class="sm:col-span-2" />
 			</div>
 			</Disclosure>
 
@@ -401,7 +403,7 @@
 			{/if}
 
 			<div class="flex flex-wrap items-center gap-2" aria-live="polite">
-				<Button type="submit" variant="secondary" loading={saving}>{m.settings_ldap_save()}</Button>
+				<Button type="submit" variant="secondary" loading={saving} success={saved}>{m.settings_ldap_save()}</Button>
 				<UnsavedBadge dirty={tracker.dirty} />
 				{#if config.source === 'settings'}
 					<Confirm variant="secondary" size="md" confirmLabel={config.env_available ? m.settings_ldap_use_env() : m.settings_ldap_turn_off()} loading={clearing} onconfirm={clearSaved}>
@@ -419,7 +421,7 @@
 				<Field label={m.settings_ldap_test_username()} for="ldap-test-user" help={m.settings_ldap_test_username_help()} class="min-w-0 flex-[1_1_14rem]">
 					<input id="ldap-test-user" type="text" class="input" bind:value={testUsername} placeholder="jdoe" autocomplete="off" autocapitalize="off" spellcheck="false" disabled={testing} />
 				</Field>
-				<Button variant="secondary" onclick={() => void test()} loading={testing} disabled={saving || !form.url.trim()}>
+				<Button variant="secondary" onclick={() => test()} loading={testing} disabled={saving || !form.url.trim()}>
 					<Radar class="size-4" aria-hidden="true" />
 					{m.settings_ldap_test()}
 				</Button>

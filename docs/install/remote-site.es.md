@@ -28,9 +28,7 @@ viajan por ese enlace:
   relay (comunidad SNMP, token de API de Proxmox…), descifradas, dentro
   de cada trabajo de sonda.
 
-Por HTTP plano a través de internet ambas serían legibles en el camino:
-pon el servidor detrás de HTTPS antes de hacer relay de cualquier cosa
-fuera de tu propia red. En una LAN o una VPN, HTTP es aceptable y el
+El puerto web solo acepta HTTPS, así que ambos van cifrados por el camino. En internet, pon el servidor detrás de un proxy inverso con certificado público (se conecta a DumbMonit por HTTPS); en una LAN o una VPN sirve el certificado autofirmado, fijado por la huella del comando mostrado. El
 token es el único secreto en tránsito hasta que asignes monitores al
 relay. Las credenciales nunca se escriben en disco en ninguno de los dos
 lados: un trabajo de sonda vive en la memoria del servidor hasta que el

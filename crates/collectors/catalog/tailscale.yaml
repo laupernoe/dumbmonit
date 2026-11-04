@@ -14,6 +14,11 @@ metrics:
   - { name: tailscale_device_update_available, label: "Device update available", unit: "bool", better: "higher" }
   - { name: tailscale_device_offline_seconds, label: "Device offline", unit: "s" }
   - { name: tailscale_device_key_expiry_seconds, label: "Device key expiry", unit: "s" }
+  - { name: tailscale_device_routes_advertised, label: "Device routes advertised" }
+  - { name: tailscale_device_routes_unapproved, label: "Device routes unapproved", better: "lower" }
+  - { name: tailscale_device_exit_node, label: "Device exit node", unit: "bool" }
+  - { name: tailscale_device_tailnet_lock_error, label: "Device tailnet lock error", unit: "bool", better: "lower" }
+  - { name: tailscale_device_derp_latency_seconds, label: "Device DERP latency", unit: "s", better: "lower" }
   - { name: tailscale_device_info, label: "Device", kind: info }
 views:
   - view: stat
@@ -31,3 +36,6 @@ views:
       - tailscale_device_update_available
       - tailscale_device_offline_seconds
       - tailscale_device_key_expiry_seconds
+      - tailscale_device_routes_unapproved
+      - tailscale_device_tailnet_lock_error
+      - tailscale_device_derp_latency_seconds

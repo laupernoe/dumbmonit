@@ -16,6 +16,7 @@
 		listNetscanInventory,
 		listNetscanSchedules,
 		markAllNetscanKnown,
+		markNetscanReviewSeen,
 		markNetscanDeviceKnown,
 		markNetscanPortKnown,
 		runNetscanSchedule,
@@ -24,13 +25,15 @@
 	import { listRelays } from '#lib/api/relay.js';
 	import type { DiscoveryDepth, NetscanDevice, NetscanRunStatus, NetscanSchedule, RelayAgent } from '#lib/api/types.js';
 	import { formatRelative } from '#lib/format.js';
-	import { Button, Confirm, EmptyState, ErrorNotice, Field, Plate, Toggle, type Tone } from '#lib/ui/index.js';
+	import { Button, Confirm, DocLink, EmptyState, ErrorNotice, Field, Plate, Toggle, type Tone } from '#lib/ui/index.js';
 	import NetscanGrid from './NetscanGrid.svelte';
+	import ReviewQueue from './ReviewQueue.svelte';
 	import { defaultSubnet, usableSubnets } from './test-connection';
 
 	/** Refresh while the screen is open: a scan finishes in the background. */
 	const REFRESH_MS = 15000;
-	const INTERVALS = [900, 3600, 21600, 86400, 604800];
+	/** Periodic re-scan: every 6 hours, daily (default) or weekly; the switch of a scan turns it off. */
+	const INTERVALS = [21600, 86400, 604800];
 
 	let schedules = $state<NetscanSchedule[]>([]);
 	let devices = $state<NetscanDevice[]>([]);
@@ -45,7 +48,7 @@
 	let cidr = $state('');
 	let name = $state('');
 	let agentId = $state('');
-	let intervalSecs = $state(3600);
+	let intervalSecs = $state(86400);
 	let depth = $state<DiscoveryDepth>('standard');
 	let creating = $state(false);
 	let formError = $state<unknown>(null);
@@ -76,6 +79,8 @@
 			.then((list) => (relays = list.filter((r) => r.relay)))
 			.catch(() => {});
 		void refresh(controller.signal);
+		// Opening the screen is seeing the latest batch of new devices: it is announced once.
+		markNetscanReviewSeen().catch(() => {});
 		const timer = setInterval(() => void refresh(controller.signal), REFRESH_MS);
 		return () => {
 			clearInterval(timer);
@@ -169,7 +174,7 @@
 </script>
 
 <div class="grid gap-6">
-	<p class="text-sm leading-relaxed text-ink-2">{m.discovery_inventory_intro()}</p>
+	<DocLink page="using/discovery/" />
 
 	{#if unavailable}
 		<EmptyState title={m.deviceform_discovery_unavailable_title()} description={m.deviceform_discovery_unavailable_desc()} />
@@ -180,6 +185,8 @@
 		{#if actionError}
 			<ErrorNotice error={actionError} title={m.discovery_inventory_action_error()} />
 		{/if}
+
+		<ReviewQueue {devices} onchanged={() => refresh()} />
 
 		<section aria-labelledby="inv-schedules" class="grid gap-3">
 			<h3 id="inv-schedules" class="flex items-center gap-2 text-sm font-semibold text-ink">
@@ -300,7 +307,6 @@
 					</Button>
 				</div>
 			</form>
-			<p class="text-[0.8125rem] text-ink-2">{m.discovery_inventory_alerts_hint()}</p>
 		</section>
 
 		{#if gridSchedule}

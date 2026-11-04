@@ -55,10 +55,10 @@ token de API con el alcance `write` (Settings → **API & assistants**).
 ```bash
 # Instalar, o actualizar a una versión más reciente del mismo pack
 curl -H 'Authorization: Bearer dmt_…' -H 'Content-Type: application/yaml' \
-  --data-binary @packs/shelly-plug/pack.yaml http://localhost:8080/api/packs
+  --data-binary @packs/shelly-plug/pack.yaml https://localhost:8080/api/packs
 
 # Listar lo que está instalado
-curl -H 'Authorization: Bearer dmt_…' http://localhost:8080/api/packs
+curl -H 'Authorization: Bearer dmt_…' https://localhost:8080/api/packs
 ```
 
 La respuesta indica qué ocurrió (`created`, `updated` o `unchanged`),

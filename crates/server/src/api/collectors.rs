@@ -980,6 +980,12 @@ const POSTGRES_OPTIONS: &[OptionView] = &[
         "prefer",
         &["prefer", "require", "verify-full", "disable"],
     ),
+    boolean(
+        "server_stats",
+        "Server health metrics",
+        "Also reads connections, long transactions, locks, replication, transaction ID age, dead rows and WAL archiving from the server's statistics views, on the same connection. A role without pg_monitor sees fewer of them; nothing here can make the check fail.",
+        true,
+    ),
     ALLOW_PRIVATE_TARGETS,
     PROBE_TIMEOUT,
 ];
@@ -2346,6 +2352,12 @@ const OPNSENSE_OPTIONS: &[OptionView] = &[
         "temperature",
         "Read the temperature sensors",
         "Reads the CPU and board sensors the firewall exposes. A machine without sensors reports none, which is not an error.",
+        true,
+    ),
+    boolean(
+        "certificates",
+        "Watch the certificates",
+        "Reads the expiry date of the certificates the firewall keeps (web interface, captive portal, VPN); those OPNsense marks as unused are ignored. Needs the privilege System: Trust: Certificates; without it the option is skipped, which is not an error.",
         true,
     ),
     boolean(
@@ -4823,7 +4835,7 @@ const NUTANIX_OPTIONS: &[OptionView] = &[
 ];
 
 /// Racine de la documentation en ligne, vers laquelle pointent les prérequis.
-const DOCS_INSTALL: &str = "https://dumbmonit.readthedocs.io/en/latest/install/docker/";
+const DOCS_INSTALL: &str = "https://dumbmonit.app/docs/install/docker/";
 
 /// Bloc Compose à ajouter pour les captures d'écran : le navigateur sans tête et
 /// l'adresse que le serveur utilise pour lui parler. Identique à la documentation.
@@ -4946,6 +4958,14 @@ pub fn option_keys(kind: &str) -> Vec<String> {
     compiled(kind)
         .map(|view| view.options.iter().map(|option| option.key.to_string()).collect())
         .unwrap_or_default()
+}
+
+/// Vrai si ce type compilé ne marche pas sans identifiants : il en déclare, et
+/// aucune de ses formes n'est « none ». Un type inconnu ou sans identifiants :
+/// faux (l'ajout en bloc le crée actif).
+pub fn needs_credential(kind: &str) -> bool {
+    compiled(kind)
+        .is_some_and(|v| !v.credential_types.is_empty() && !v.credential_types.contains(&"none"))
 }
 
 /// Description d'un type : celle des tables de ce fichier s'il y figure, sinon
@@ -5342,17 +5362,20 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 title: "Install the agent on the machine",
                 steps: &[
                     "In DumbMonit, add a monitor and pick Server with the agent, then choose how the machine reaches the server: directly, or through the relay of a remote site behind a firewall.",
-                    "An enrollment token (dmon_…) is shown once, with the install command ready to copy for Linux/macOS, Windows and Docker.",
+                    "An enrollment token (its secret starts with dmon_; the token is listed as tok_… afterwards) is shown once, with the install command ready to copy for Linux/macOS, Windows and Docker.",
                     "Run that install command on the machine, with elevated rights (sudo on Linux and macOS, an elevated PowerShell on Windows).",
                     "The page waits for the first report (a few seconds), then lets you name the machine, file it in a folder and place it at a site, on the spot.",
                     "Optional, for Docker: if the agent runs under a dedicated user, add that user to the \"docker\" group and restart the agent.\nusermod -aG docker dumbmonit",
                     "For a fleet (a playbook, a machine image), tick Several machines with this command; a whole Windows domain goes through the Active Directory kit, offered on the same page.",
                 ],
-                ports: &[to_server!(
-                    8080,
-                    "tcp",
-                    "Readings and commands (default port, 443 behind a TLS proxy)",
-                )],
+                ports: &[
+                    to_server!(8443, "tcp", "Readings and commands: the encrypted agent channel",),
+                    to_server!(
+                        8080,
+                        "tcp",
+                        "Install script and agent download, at install and update time",
+                    ),
+                ],
                 permissions: &[],
                 warning: "The agent contacts the server, never the other way round: no port needs to be opened on the monitored machine.",
             },
@@ -5375,11 +5398,14 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Install the agent on the machine: each service it finds becomes a monitor under that machine on its first report.",
                     "To stop watching one, untick it in the machine's \"Services found by the agent\" panel or delete its monitor.",
                 ],
-                ports: &[to_server!(
-                    8080,
-                    "tcp",
-                    "Readings and commands (default port, 443 behind a TLS proxy)",
-                )],
+                ports: &[
+                    to_server!(8443, "tcp", "Readings and commands: the encrypted agent channel",),
+                    to_server!(
+                        8080,
+                        "tcp",
+                        "Install script and agent download, at install and update time",
+                    ),
+                ],
                 permissions: &[],
                 warning: "If the machine stops reporting, its services are shown as hidden behind it rather than raising alerts of their own.",
             },
@@ -5594,7 +5620,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
         "postgres" => CollectorView {
             kind: "postgres",
             label: "PostgreSQL database",
-            summary: "Logs in and runs a query: catches a database that is up but no longer answering.",
+            summary: "Logs in, runs a query and reads the server's health: catches a database that is up but no longer answering, and one that is running out of connections, lagging or bloating.",
             examples: &[
                 "The database behind Nextcloud or Immich",
                 "A Home Assistant recorder",
@@ -5612,9 +5638,13 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Allow it to connect from the DumbMonit host with this line in pg_hba.conf (adjust the address), then reload PostgreSQL.\nhost all dumbmonit 10.0.0.5/32 scram-sha-256",
                     "In DumbMonit, enter the server, for example db.home.lan:5433 (port 5432 by default), then the role's user and password.",
                     "Optional: replace the default query SELECT 1 with one that returns a single number, to chart it.",
+                    "Optional, for the complete server health metrics (sessions of every user, locks, replication, vacuum): let the role read the statistics views.\nGRANT pg_monitor TO dumbmonit;",
                 ],
                 ports: &[to_device!(5432, "tcp", "PostgreSQL (default port)")],
-                permissions: &["LOGIN (role attribute)\nConnect only, no other privilege"],
+                permissions: &[
+                    "LOGIN (role attribute)\nConnect only, no other privilege",
+                    "pg_monitor (optional role membership)\nRead the statistics views, nothing else; without it the health metrics only cover the role's own sessions",
+                ],
                 warning: "The check opens a real connection on every poll: on an instance close to its connection limit, give it a longer interval.",
             },
             options: POSTGRES_OPTIONS,
@@ -8179,7 +8209,7 @@ fn guide_url(kind: &str) -> String {
         "mysql" => "#mysql-and-mariadb".to_owned(),
         _ => String::new(),
     };
-    format!("https://dumbmonit.readthedocs.io/en/latest/devices/{page}/{anchor}")
+    format!("https://dumbmonit.app/docs/devices/{page}/{anchor}")
 }
 
 /// Les textes des tables, empruntés plutôt que copiés.
@@ -8509,6 +8539,7 @@ mod tests {
                     "query",
                     "expect",
                     "sslmode",
+                    "server_stats",
                     "allow_private_targets",
                     "timeout_seconds",
                 ],
@@ -8757,6 +8788,7 @@ mod tests {
                     "carp",
                     "firmware",
                     "temperature",
+                    "certificates",
                     "live_map",
                 ],
             ),

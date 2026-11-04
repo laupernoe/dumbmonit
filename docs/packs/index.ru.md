@@ -53,10 +53,10 @@ YAML пакета или загрузите его `pack.yaml`, затем **Ins
 ```bash
 # Установить, или обновить до более новой версии того же пакета
 curl -H 'Authorization: Bearer dmt_…' -H 'Content-Type: application/yaml' \
-  --data-binary @packs/shelly-plug/pack.yaml http://localhost:8080/api/packs
+  --data-binary @packs/shelly-plug/pack.yaml https://localhost:8080/api/packs
 
 # Перечислить установленное
-curl -H 'Authorization: Bearer dmt_…' http://localhost:8080/api/packs
+curl -H 'Authorization: Bearer dmt_…' https://localhost:8080/api/packs
 ```
 
 Ответ сообщает, что произошло (`created`, `updated` или `unchanged`), метрики,

@@ -78,6 +78,11 @@ async fn self_hosted(counters: Arc<Counters>) -> String {
                             .into_response(),
                         "device" => include_str!("testdata/documented/classic_stat_device.json")
                             .into_response(),
+                        "sta" => r#"{"meta":{"rc":"ok"},"data":[
+                            {"mac":"a","is_wired":false,"signal":-52},
+                            {"mac":"b","is_wired":false,"signal":-81},
+                            {"mac":"c","is_wired":true}]}"#
+                            .into_response(),
                         _ => StatusCode::NOT_FOUND.into_response(),
                     }
                 }
@@ -168,6 +173,8 @@ async fn un_compte_view_only_lit_tout_et_garde_sa_session() {
     assert_eq!(value(&samples, "unifi_clients"), Some(41.0));
     assert_eq!(value(&samples, "unifi_alarms"), Some(0.0));
     assert_eq!(value(&samples, "unifi_scrape_errors"), Some(0.0));
+    assert_eq!(value(&samples, "unifi_wifi_clients"), Some(2.0));
+    assert_eq!(value(&samples, "unifi_wifi_clients_weak_signal"), Some(1.0));
     // Façade du commutateur : port_table et lldp_table de stat/device.
     let port = |metric: &str, index: &str| {
         samples

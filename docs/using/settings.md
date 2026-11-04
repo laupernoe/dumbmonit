@@ -1,20 +1,19 @@
 # Settings
 
-![Settings: seven tabs, here My account with appearance, account & security and push notifications](../assets/screenshots/settings-light.png){ loading=lazy }
+![Settings: six tabs, here My account with appearance, account & security and push notifications](../assets/screenshots/settings-light.png){ loading=lazy }
 
-Settings holds what is administrative: the instance itself, your account, who can sign in and how, the agents, the notification channels, backing the instance up, and the server's health. It is split into seven tabs, each with its own address. A rail on a wide screen, a strip of chips on a phone and a search box over the section names help you find a section.
+Settings holds what is administrative: the instance itself, your account, who can sign in and how, the agents, the notification channels, backing the instance up, and the server's health. It is split into six tabs, each with its own address. A rail on a wide screen, a strip of chips on a phone and a search box over the section names help you find a section.
 
 | Tab | Address | What it holds |
 |---|---|---|
-| General | `/settings/general` | Instance name, language and time zone, the setup wizard ([Interface and setup wizard](product-modes.md)) |
-| My account | `/settings/account` | Language, Account & security (password, two-factor, security log), Push notifications, On-call contacts and quiet hours ([On-call](../alerting/oncall.md)) |
+| My account | `/settings/account` | Appearance (language), Account & security (change password, sign out, two-factor, passkeys, security log), Push notifications |
 | Team & access | `/settings/team` | Users, Teams, Clients, Single sign-on, SAML, SCIM, LDAP |
 | Monitoring | `/settings/monitoring` | Agents, Integration packs, [Security score](security-score.md), Locations |
-| Notifications | `/settings/notifications` | Channels, Notification policy ([Notification channels](../notifications.md)) |
+| Notifications | `/settings/notifications` | Channels, Notification policy, quiet hours ([Notification channels](../notifications.md)). On-call schedules are on the Alerts page: [On-call](../alerting/oncall.md) |
 | Wall display | `/settings/wall` | Wall mode: what it shows, and the way in ([Wall mode](wall.md)) |
-| System | `/settings/system` | Backup, Configuration files, DumbMonit itself, Data & retention, Logs, API & assistants, About |
+| System | `/settings/system` | Instance name and time zone, the setup wizard ([Interface and setup wizard](product-modes.md)), Backup, Configuration files, DumbMonit itself, HTTPS and encryption, Network ports, Data & retention, Logs, API & assistants, About |
 
-Each section keeps its own anchor: `/settings#agents` forwards to `/settings/monitoring#agents`. The old links (`/alerts#notifications`) forward to the new place too. Status pages and reports are not in Settings any more: they have their own pages, **Status pages** (`/status`) and **Reports** (`/reports`); `/settings/status` and `/settings/reports` forward there. The wall's news and widgets are gone: their old links (`#news`, `#widgets`) open the Wall display tab, where **Wall music** (`#music`) is.
+Each section keeps its own anchor: `/settings#agents` forwards to `/settings/monitoring#agents`. The old links (`/alerts#notifications`) forward to the new place too. `/settings/general` forwards to the System tab. Status pages and reports are not in Settings any more: they live on the **Status** page (`/status`), whose **Reports** tab holds the reports; `/reports`, `/settings/status` and `/settings/reports` forward there. The wall's news and widgets are gone: their old links (`#news`, `#widgets`) open the Wall display tab, where **Wall music** (`#music`) is.
 
 ## Appearance {#appearance}
 
@@ -36,10 +35,9 @@ YouTube link to every wall. See [Music on the wall](wall.md#music-on-the-wall).
 ## Account & security
 
 This is your own account. The first one is created on first start, and more
-can be added below. Here you change your password: current password, new
+can be added below. To change your password, click **Change password** and fill in the current password, the new
 password (at least 12 characters; a whole phrase is safer than a complicated
-word), confirmation. Changing it signs out
-every other session. Accounts that sign in through the identity provider have
+word) and its confirmation. You should see *Password changed*, and every other session is signed out. Accounts that sign in through the identity provider have
 no password here. **Sign out** ends this session.
 
 Login is rate-limited per client address and per account: after five failed
@@ -200,13 +198,23 @@ relay, the Active Directory kit) happens in the add flow, **New monitor →
 Agent** (`/targets/new?kind=agent`), not here. The agents themselves are on
 their own pages.
 
+Under **Enrolment approval**, choose what happens to a machine that enrols with a token (accept it, ask an administrator, or accept it when it belongs to the token's Active Directory domain), and the hourly limit per token. Waiting machines are listed there. A fleet token that enrolled nothing for 30 days goes to sleep and shows **Asleep** with a **Reactivate** button. Details: [Protecting enrolment](../install/agent-security.md#protecting-enrolment).
+
+## HTTPS and encryption {#https}
+
+Admin-only, in **Settings → System**. Shows the certificate the web port serves (self-signed or yours), its fingerprint and expiry, and a download of the certificate (PEM). It also lists every connection that still travels in clear or without certificate checks, with a link to where to change it. See [HTTPS and encryption](../install/https.md).
+
+## Network ports {#ports}
+
+Admin-only, in **Settings → System**. The ports DumbMonit listens on, computed from the running configuration: the web interface (HTTPS), the agent channel, syslog, SNMP traps, the bundled storage, and the gateway of each relay agent. For each one: who must reach it, whether it may face the Internet, and whether it is on, off or loopback only. Below the list, a ready-to-paste `ports:` block for Docker Compose and `ufw` rules. See [Network ports](../install/ports.md).
+
 ## Security score {#security-score}
 
 In **Settings → Monitoring**, below the agents: a score for how well the instance and its monitored hosts are hardened. See [Security score](security-score.md).
 
 ## Reports
 
-On its own **Reports** page (`/reports`; it used to sit in Settings → Notifications): the availability (SLA) export of a period, the periodic availability emails for the team and the history of their sends. Admin-only. See [Email reports](reports.md).
+On the **Reports** tab of the **Status** page (`/status`; it used to sit in Settings → Notifications): the availability (SLA) export of a period, the periodic availability emails for the team and the history of their sends. Admin-only. See [Email reports](reports.md).
 
 ## Data & retention {#data-retention}
 

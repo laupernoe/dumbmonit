@@ -66,8 +66,12 @@ async fn the_kit_is_a_domain_fleet_token_and_a_script_that_carries_it() {
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;
 
-    let reply =
-        kit(&app, &admin, json!({ "target_ou": "OU=Servers,DC=corp,DC=example,DC=com" })).await;
+    let reply = kit(
+        &app,
+        &admin,
+        json!({ "target_ou": "OU=Servers,DC=corp,DC=example,DC=com", "expires_in_days": 30 }),
+    )
+    .await;
     assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
     let body = &reply.body;
     let secret = body["secret"].as_str().expect("secret");
@@ -76,7 +80,7 @@ async fn the_kit_is_a_domain_fleet_token_and_a_script_that_carries_it() {
     assert_eq!(body["folder"], "Active Directory corp.example.com");
     assert_eq!(body["token"]["ad_domain"], "corp.example.com");
     assert_eq!(body["token"]["max_uses"], Value::Null, "un jeton de flotte");
-    assert!(body["token"]["expires_at"].is_string(), "30 jours par défaut");
+    assert!(body["token"]["expires_at"].is_string(), "30 jours demandés");
 
     let script = body["script"].as_str().expect("script");
     assert!(script.starts_with('\u{feff}'));
@@ -175,12 +179,18 @@ async fn a_kit_cannot_be_created_already_expired_or_capped_at_nothing() {
     // refuse une portée qui n'inscrirait rien.
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;
-    let expired = kit(&app, &admin, json!({ "expires_in_days": 0 })).await;
-    assert_eq!(expired.status, StatusCode::BAD_REQUEST, "{}", expired.body);
+    // Une validité absente ou à 0 donne un jeton qui n'expire jamais (kit « tous les serveurs »).
+    let never = kit(&app, &admin, json!({ "expires_in_days": 0 })).await;
+    assert_eq!(never.status, StatusCode::CREATED, "{}", never.body);
+    assert_eq!(never.body["token"]["expires_at"], Value::Null, "jamais");
     let empty = kit(&app, &admin, json!({ "max_uses": 0 })).await;
     assert_eq!(empty.status, StatusCode::BAD_REQUEST, "{}", empty.body);
     let tokens = app.get("/api/agent/tokens", Some(&admin)).await;
-    assert_eq!(tokens.body.as_array().map(Vec::len), Some(0), "aucun jeton à moitié créé");
+    assert_eq!(
+        tokens.body.as_array().map(Vec::len),
+        Some(1),
+        "seul le jeton sans expiration existe"
+    );
 }
 
 #[tokio::test]

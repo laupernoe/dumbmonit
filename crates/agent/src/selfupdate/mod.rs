@@ -133,7 +133,7 @@ fn now_ms() -> i64 {
 
 /// Vrai si l'agent tourne dans un conteneur : `DUMBMONIT_AGENT_CONTAINER`
 /// (posée par l'image de l'agent), ou les marqueurs de Docker et Podman.
-fn in_container() -> bool {
+pub(crate) fn in_container() -> bool {
     let flagged = dumbmonit_proto::env::var("DUMBMONIT_AGENT_CONTAINER")
         .is_some_and(|value| !matches!(value.trim(), "" | "0" | "false" | "no"));
     flagged || Path::new("/.dockerenv").exists() || Path::new("/run/.containerenv").exists()

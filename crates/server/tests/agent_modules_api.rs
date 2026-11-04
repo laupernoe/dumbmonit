@@ -125,7 +125,7 @@ async fn each_detected_service_becomes_a_device_under_its_machine() {
     assert_eq!(list.iter().filter(|t| t["kind"] == "agent_service").count(), 2);
 
     let found = modules(&app, &admin, host).await;
-    assert_eq!(found.len(), 8, "tous les modules connus sont listés");
+    assert_eq!(found.len(), 9, "tous les modules connus sont listés");
     let docker_module = module(&found, "docker");
     assert_eq!(docker_module["detected"], true);
     assert_eq!(docker_module["enabled"], true);
@@ -234,7 +234,7 @@ async fn a_module_can_be_ticked_before_it_is_found_and_goes_with_its_host() {
 
     // Un lecteur voit la liste mais ne coche rien.
     let viewer = app.viewer_cookie(&admin).await;
-    assert_eq!(modules(&app, &viewer, host).await.len(), 8);
+    assert_eq!(modules(&app, &viewer, host).await.len(), 9);
     let refused = app
         .put(
             &format!("/api/targets/{host}/agent/modules/zfs"),

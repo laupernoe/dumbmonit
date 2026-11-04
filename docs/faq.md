@@ -55,7 +55,7 @@ the `sysctls:` lines are still there, then `docker compose up -d`. See
   and restart `dumbmonit-agent`.
 - The URL in the install command is the one your browser used to reach the UI.
   From the monitored machine, that URL must reach the server: `curl
-  http://server:8080/api/health` from there tells you.
+  https://server:8080/api/health` from there tells you.
 - Behind a reverse proxy, `/api/ingest` must be forwarded and bodies of up to
   16 MB allowed (`client_max_body_size 16m` in nginx).
 - `journalctl -u dumbmonit-agent -f` shows every rejected push. The token
@@ -108,8 +108,8 @@ reports `victoria.embedded: false` once the switch is done.
 
 No. It reaches out to monitors and to notification services; nothing calls
 back, except agents, which need to reach the server's URL. Keep it on your
-LAN or behind a VPN; if you expose it, use a reverse proxy with TLS and set
-`DUMBMONIT_COOKIE_SECURE=1`.
+LAN or behind a VPN; if you expose it, use a reverse proxy with a public certificate that talks HTTPS to DumbMonit
+([HTTPS and encryption](install/https.md)).
 
 ## Is there an API token?
 

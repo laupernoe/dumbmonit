@@ -3,6 +3,115 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.17.0 — 2026-11-04
+
+### Added
+
+- **Remove an agent from the UI.** Deleting the monitor of a machine whose agent is
+  online and accepts commands offers to remove the agent automatically: it stops
+  and removes its service, binary and configuration (as `--uninstall` does), then
+  the monitor is deleted. Administrator session only, recorded in the audit log
+  (`POST /api/targets/{id}/agent/uninstall`). An agent in a container, or not
+  installed by the install scripts, refuses; the manual commands stay available.
+- **Synology package, deeper.** The DSM 7 package is attached to every release
+  (x86_64 and aarch64) and the agent reads RAID and volume health, disks (model,
+  temperature, wear, unreadable sectors), installed packages, SMB/NFS/SSH and the
+  UPS, with alert rules for a degraded array, a read-only volume, a hot disk, growing
+  bad sectors, SSD wear and a stopped package. The add-monitor page offers the package
+  or the credentials, with the pin ready to copy.
+- **Pre-releases from dev.** A tag `vX.Y.Z` on a commit that is not on main publishes
+  a pre-release (images, agent binaries, `.spk`), never `latest`.
+- **Deeper integrations and more alert rules** for Proxmox VE, Proxmox Backup Server,
+  TrueNAS, UniFi, OPNsense, Tailscale, Pi-hole, AdGuard Home, Home Assistant, Jellyfin,
+  Plex, Immich, Nextcloud, PostgreSQL and Synology (API): about 100 new default rules
+  and many new metrics (certificates, backups, replication, DHCP, quotas, jobs, safety
+  sensors, tasks and more). Field names come from the vendors' public APIs.
+- **Motion and feedback.** Shared motion tokens, softer menus, toasts and panels, and a
+  green confirmation on the action buttons when the action succeeded.
+
+### Changed
+
+- **Cleaner monitor pages.** Icon-only header actions with a gear for the settings, a
+  lighter title line, and the agent settings (relay, logs, sentinel, services to watch,
+  re-enrolment) moved to the monitor's settings. The "Allow re-enrolment" button acts
+  in one click.
+- **Simpler settings.** Six tabs (the former General tab is now in System), a password
+  form behind a button, empty blocks collapsed, and no on-call contacts or hours in My
+  account.
+- **No default site.** A device without a site stays "No site"; only devices with a site
+  appear on the map, and there is no map until a site exists. The NAS fleet view is
+  gone: filter the monitors list instead.
+- **The documentation lives on the website.** The app no longer carries help texts: each
+  screen has a link to its page on dumbmonit.app/docs, rewritten step by step.
+- **Home banner.** The pigeon is the one of the logo, sitting in the sky.
+
+### Fixed
+
+- The agent troubleshooting commands, the Docker Compose block and a one-click
+  re-enrolment on the agent install page.
+- The Synology installer's fields are readable, and its pin comes from the add-monitor page.
+
+## 0.16.0 — 2026-11-03
+
+### Added
+
+- **NAS fleet.** With two or more Synology NAS monitored, the monitors page shows
+  "N NAS, M healthy" and a one-line-per-NAS view (model, DSM version, a verdict
+  with an icon and a word, and the reason). Also a minimal Synology DSM 7 package
+  (`packaging/synology/`) that installs the agent from Package Center.
+- **Databases on agents.** Agents detect PostgreSQL, MySQL/MariaDB, SQL Server
+  (including Express and named instances), HFSQL and MongoDB, and check the age of
+  the latest backup file (read only, no credentials). Alert rules for an overdue
+  backup and a stopped service.
+- **Active Directory kit, simpler.** One command (`Unblock-File` and
+  `-ExecutionPolicy Bypass`), an interactive menu in the script, a scope chooser in
+  the wizard (all Windows servers including future ones, one OU, or a group), a
+  token that never expires as an option, and an immediate refresh of every server
+  with a live "X of N installed" check.
+- **Sentinel.** A designated agent watches the main server (or another HTTPS
+  instance) and sends its own alert through a webhook or ntfy when it stops
+  answering, with the configuration kept on the agent so it survives restarts.
+- **Network ports.** Settings > System lists the ports to open, what each is for,
+  who must reach it, and whether it may face the Internet, with ready-to-copy
+  `ports:` and `ufw` blocks.
+- **Periodic discovery.** Scheduled network scans (6 h, 24 h, 7 days) feed a
+  "To review" list; add or ignore several devices at once.
+- **Copy as Markdown** on every documentation page, and a roadmap with votes
+  (GitHub reactions) on the website.
+
+### Changed
+
+- Enrolment tokens are now opaque identifiers (`tok_…`), without a name to type or edit; existing tokens are renamed automatically, and the list shows which machine used each one.
+- The app icon is back on its grey tile (favicon, logo, PNG icons, docs and website).
+- Agent ports in the docs: readings and commands travel on 8443, 8080 serves the installer and the download.
+
+### Fixed
+
+- A push reminder for an alert already on screen replaces it silently instead of ringing again.
+- The Active Directory script no longer fails with a security group (reader list) and reports the installer's real error.
+- Install commands and the agent check that the encrypted port is reachable first, with a clear message.
+
+### Security
+
+- **Enrolment approval for new agents.** Settings > Agents > Enrolment approval:
+  accept new machines automatically, require approval, or accept automatically
+  when the host is in the AD domain of the token. New installations require
+  approval for fleet tokens and accept single-use tokens; existing instances keep
+  accepting automatically. Waiting machines get no certificate, no measurement
+  and no device until accepted (one by one or in bulk); rejected ones stay hidden
+  24 hours; at most 200 wait at once (HTTP 429 beyond). The agent logs "waiting
+  for approval" and retries.
+- **Enrolment alerts and rate limit.** One grouped notification per minute for
+  new enrolments (count and first five names), and at most 60 enrolments per
+  token per hour by default (HTTP 429 and an "enrolment burst" alert beyond).
+- **Idle fleet tokens go to sleep.** A fleet token that enrolled no machine for
+  30 days (setting) stops enrolling, a notification is sent, and "Reactivate" in
+  the token list puts it back. Enrolled machines keep reporting. See
+  docs/install/agent-security.md.
+- **The web port is HTTPS only.** Plain HTTP requests are redirected. Agent install
+  commands are `https` with the certificate pinned. Reverse proxies must connect
+  over HTTPS.
+
 ## 0.15.0 — 2026-11-02
 
 ### Removed

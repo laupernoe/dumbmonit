@@ -36,6 +36,9 @@ Toutes les métriques sont préfixées `dumbmonit_immich_`.
 | `maintenance_mode` | 1 tant qu'Immich est en mode maintenance | |
 | `storage_used_percent`, `storage_available_bytes`, `storage_size_bytes` | le disque qui contient la bibliothèque | |
 | `photos`, `videos`, `usage_bytes`, `users` | taille de la bibliothèque, tous utilisateurs ensemble | |
+| `user_usage_bytes` | espace pris par chaque compte | `user` |
+| `user_quota_used_percent` | part du quota utilisée ; seulement pour les comptes qui ont un quota | `user` |
+| `db_backups`, `db_backup_last_age_seconds`, `db_backup_last_bytes` | sauvegardes de base qu'Immich garde ; âge et taille de la plus récente (âge lu dans son nom de fichier, heure du serveur prise pour de l'UTC) ; Immich 2.5+ | |
 | `jobs_waiting`, `jobs_active`, `jobs_failed`, `queues_paused` | toutes les files ensemble | |
 | `queue_waiting`, `queue_active`, `queue_failed`, `queue_paused` | par file : en attente (y compris retardées et bloquées par une pause), en cours, en échec, en pause | `queue` |
 | `statistics_readable` | 0 quand la clé appartient à un compte ordinaire et que les compteurs et files sont ignorés | |
@@ -47,8 +50,16 @@ fois journalisées, donc `queue_failed` lit généralement 0 ; une tâche en
 
 Les [règles intégrées](../alerting/rules.md#self-hosted-applications) qui
 s'appliquent : tâches Immich bloquées, file Immich en pause, stockage
-Immich presque plein, mise à jour Immich disponible, plus Appareil
-inaccessible.
+Immich presque plein, mise à jour Immich disponible, tâches Immich en échec
+(25 tâches en échec dans une file), apprentissage automatique Immich en échec
+(10 tâches en échec dans les files d'apprentissage automatique), Immich en
+mode maintenance, quota d'un utilisateur Immich presque plein, sauvegarde de
+base Immich périmée (la plus récente date de plus de trois jours), plus
+Appareil inaccessible.
+
+Les sauvegardes de base demandent une permission de plus, facultative,
+`databaseBackup.list` (Immich 2.5 et plus). Sans elle, ou sur un Immich plus
+ancien, ces chiffres sont simplement absents et rien n'est signalé.
 
 ## Appareils
 
@@ -131,6 +142,13 @@ versions plus anciennes répondent sur `/api/jobs` avec `job.read`),
 `session.read` les appareils du compte (`/api/sessions`), `asset.read`
 l'envoi le plus récent de la bibliothèque (`/api/search/metadata`),
 `user.read` le nom d'affichage du compte (`/api/users/me`).
+
+## Dépannage
+
+- **Les règles de tâches en échec ne sonnent jamais** : les versions récentes d'Immich retirent les tâches en échec de la file une fois journalisées, donc `queue_failed` vaut 0 ; ces règles servent aux versions qui les gardent. Dans ce cas, consultez le journal d'Immich.
+- **Pas de chiffres de sauvegarde de base** : il faut Immich 2.5 ou plus et la permission `databaseBackup.list` sur la clé ; sinon ils sont absents et rien n'est signalé. Si Immich ne garde aucune sauvegarde (la tâche de nuit est coupée), seul `db_backups` = 0 est publié.
+- **Pas de quota ni de chiffres par utilisateur** : ils viennent de `server.statistics`, que seul un compte qui ouvre l'administration peut lire ; `statistics_readable` vaut alors 0.
+- **Des files attendent mais « bloquées » ne sonne pas** : elle attend une heure sans rien d'exécuté et ignore les files en pause ; relancez une file en pause dans Administration → Jobs.
 
 ## Identifiants
 

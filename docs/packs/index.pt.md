@@ -54,10 +54,10 @@ API com o âmbito `write` (Settings → **API & assistants**).
 ```bash
 # Instalar, ou atualizar para uma versão mais recente do mesmo pacote
 curl -H 'Authorization: Bearer dmt_…' -H 'Content-Type: application/yaml' \
-  --data-binary @packs/shelly-plug/pack.yaml http://localhost:8080/api/packs
+  --data-binary @packs/shelly-plug/pack.yaml https://localhost:8080/api/packs
 
 # Listar o que está instalado
-curl -H 'Authorization: Bearer dmt_…' http://localhost:8080/api/packs
+curl -H 'Authorization: Bearer dmt_…' https://localhost:8080/api/packs
 ```
 
 A resposta diz o que aconteceu (`created`, `updated` ou `unchanged`), as

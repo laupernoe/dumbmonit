@@ -18,7 +18,7 @@
 		type Schedule
 	} from '#lib/api/index.js';
 	import { m } from '#lib/paraglide/messages.js';
-	import { Button, ErrorNotice, Plate, Skeleton } from '#lib/ui/index.js';
+	import { Button, DocLink, ErrorNotice, Plate, Skeleton } from '#lib/ui/index.js';
 
 	interface Props {
 		/** IANA time zone of the instance; the rotation hands off at 09:00 there. */
@@ -127,7 +127,6 @@
 			</label>
 			<fieldset class="grid gap-1.5">
 				<legend class="mb-1.5 text-sm font-semibold text-ink">{m.wizard_oncall_people()}</legend>
-				<p class="text-[0.8125rem] text-ink-2">{m.wizard_oncall_people_help()}</p>
 				{#each people as person (person.id)}
 					<label class="flex min-h-10 items-center gap-2.5 text-sm text-ink">
 						<input type="checkbox" class="size-4" checked={picked.includes(person.id)} onchange={(event) => toggle(person.id, event.currentTarget.checked)} />
@@ -144,11 +143,10 @@
 	<div class="mt-4 grid gap-3 sm:grid-cols-2">
 		<a href="/alerts#oncall" target="_blank" rel="noopener" class="flex min-h-24 flex-col gap-1.5 rounded-[var(--radius-card)] border border-line bg-surface p-4 hover:border-line-strong">
 			<span class="inline-flex items-center gap-1 font-semibold text-ink">{m.wizard_oncall_open()}<ExternalLink class="size-3.5 text-ink-3" aria-hidden="true" /></span>
-			<span class="text-[0.8125rem] text-ink-2">{m.wizard_oncall_open_text()}</span>
 		</a>
 		<a href="/settings/team" target="_blank" rel="noopener" class="flex min-h-24 flex-col gap-1.5 rounded-[var(--radius-card)] border border-line bg-surface p-4 hover:border-line-strong">
 			<span class="inline-flex items-center gap-1 font-semibold text-ink">{m.wizard_oncall_team()}<ExternalLink class="size-3.5 text-ink-3" aria-hidden="true" /></span>
-			<span class="text-[0.8125rem] text-ink-2">{m.wizard_oncall_team_text()}</span>
 		</a>
 	</div>
+	<DocLink page="alerting/oncall/" class="mt-2" />
 {/if}

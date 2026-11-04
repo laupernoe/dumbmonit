@@ -139,6 +139,10 @@ pub struct Bundle {
     pub api_tokens: Vec<BundleApiToken>,
     #[serde(default)]
     pub push_monitors: Vec<BundlePushMonitor>,
+    /// Mode sentinelle des agents (migration 0230), canal de notification
+    /// compris : sans lui, la sentinelle restaurée n'aurait plus personne à prévenir.
+    #[serde(default)]
+    pub agent_sentinels: Vec<BundleSentinel>,
     /// Paquets d'intégration, avec leur YAML : un équipement de type `pack.x`
     /// restauré sans son paquet ne serait plus interrogé.
     #[serde(default)]
@@ -209,10 +213,11 @@ pub struct Bundle {
     /// l'instance restaurée.
     #[serde(default)]
     pub upgrade_notes_closed: Vec<BundleUpgradeNote>,
-    /// Redirection HTTP → HTTPS de l'interface (réglage `web_https_redirect`).
-    /// Le certificat, lui, ne voyage pas : il est propre à l'instance.
+    /// Garde de l'enrôlement des agents : validation des nouvelles machines,
+    /// débit par jeton, mise en veille des jetons inactifs (clé
+    /// `agent.enrolment` de `settings`, migration 0233).
     #[serde(default)]
-    pub https_redirect: Option<bool>,
+    pub agent_enrolment: Option<Value>,
 }
 
 impl Bundle {
@@ -231,6 +236,7 @@ impl Bundle {
             ("agent_tokens".to_string(), self.agent_tokens.len()),
             ("api_tokens".to_string(), self.api_tokens.len()),
             ("push_monitors".to_string(), self.push_monitors.len()),
+            ("agent_sentinels".to_string(), self.agent_sentinels.len()),
             ("packs".to_string(), self.packs.len()),
             ("locations".to_string(), self.locations.len()),
             ("teams".to_string(), self.teams.len()),
@@ -508,8 +514,6 @@ pub struct BundleLocation {
     pub longitude: f64,
     #[serde(default)]
     pub site: String,
-    #[serde(default)]
-    pub main_site: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -840,6 +844,23 @@ impl std::fmt::Debug for BundleNetconfigVersion {
             .field("bytes", &self.content.len())
             .finish()
     }
+}
+
+/// Réglage sentinelle d'un agent. Le canal part en clair dans la charge utile,
+/// que la phrase de passe chiffre tout entière.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleSentinel {
+    pub agent: String,
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub urls: Vec<String>,
+    #[serde(default)]
+    pub pins: std::collections::BTreeMap<String, String>,
+    pub interval_secs: u64,
+    pub threshold: u32,
+    #[serde(default)]
+    pub channel: Option<dumbmonit_proto::SentinelChannel>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

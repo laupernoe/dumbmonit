@@ -76,7 +76,7 @@ récupération** : un paquet dont la phrase de passe est perdue est perdu.
 | `agent_tokens` | Jetons d'enrôlement d'agent, comme des hashs. Les agents installés continuent d'envoyer après une restauration. |
 | `api_tokens` | Jetons d'API, comme des hashs. Les jetons existants continuent de fonctionner. |
 | `push_monitors` | Jetons de battement de cœur, pour que les URL que vos tâches cron appellent déjà restent les mêmes. |
-| `locations` | Emplacements de la carte du monde (nom, adresse, endroit, site, site principal) ; chaque moniteur garde son emplacement. |
+| `locations` | Emplacements de la carte du monde (nom, adresse, endroit, site) ; chaque moniteur garde son emplacement. |
 
 Les surveillances sont retrouvées par **type + adresse**, qui est aussi la
 clé unique de la table : importer le même paquet deux fois ne crée
@@ -154,19 +154,19 @@ faire à exporter chaque identifiant de l'instance.
 
 ```bash
 # Se connecter
-curl -s -c jar -X POST http://localhost:8080/api/auth/login \
+curl -s -c jar -X POST https://localhost:8080/api/auth/login \
   -H 'content-type: application/json' -H 'X-Requested-With: DumbMonit' \
   -d '{"username":"admin","password":"…"}'
 
 # Exporter
-curl -s -b jar -X POST http://localhost:8080/api/backup \
+curl -s -b jar -X POST https://localhost:8080/api/backup \
   -H 'content-type: application/json' -H 'X-Requested-With: DumbMonit' \
   -d '{"passphrase":"three words are enough"}' -o backup.json
 
 # Essai à sec, puis appliquer
 jq -n --slurpfile b backup.json \
   '{bundle: $b[0], passphrase: "three words are enough", apply: false}' > restore.json
-curl -s -b jar -X POST http://localhost:8080/api/backup/restore \
+curl -s -b jar -X POST https://localhost:8080/api/backup/restore \
   -H 'content-type: application/json' -H 'X-Requested-With: DumbMonit' \
   -d @restore.json | jq
 ```

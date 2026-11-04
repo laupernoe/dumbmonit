@@ -30,7 +30,7 @@ Une seule barre d'outils regroupe tout :
 
 - la zone de **recherche** (nom, adresse ou type) ;
 - **Filtrer**, qui ouvre les filtres d'état (Tous, À traiter, Actifs,
-  Désactivés), de type, de tri et d'étiquettes — le nombre sur le bouton
+  Désactivés), de type, de site, de tri et d'étiquettes — le nombre sur le bouton
   compte ceux qui sont actifs, et **Effacer les filtres** les remet à zéro.
   Les filtres vivent dans l'adresse : une liste filtrée se met en favori ou se
   partage ;
@@ -47,16 +47,19 @@ Une seule barre d'outils regroupe tout :
 
 ![Page d'une surveillance : état, actions, alertes, le panneau spécifique au type, métriques](../assets/screenshots/device-light.png){ loading=lazy }
 
-La page d'une surveillance montre sa plaque d'état, son adresse, son type, le
-profil détecté, les étiquettes, la dernière sonde, et pour les services
-l'état du certificat. Actions :
+La page d'une surveillance montre sa plaque d'état, son type, son adresse, son
+intervalle, la dernière sonde, et pour les services l'état du certificat. Elle
+sert à lire les données : les actions sont des icônes (nom au survol ou appui
+long), et tout ce qui modifie la surveillance se trouve derrière la roue
+crantée. Actions :
 
 | Action | Effet |
 |---|---|
-| Sonder maintenant | Lance une sonde immédiatement et indique combien d'échantillons et de séries elle a produits. La première chose à essayer quand une surveillance n'affiche aucune donnée. |
-| Modifier | Ouvre le même formulaire que pour l'ajout, prérempli. Laisser l'identifiant vide conserve celui enregistré. |
-| Silence 1 h / Silence jusqu'à… | Une fenêtre de maintenance ponctuelle sur cette surveillance. |
-| Supprimer | Demande « Supprimer définitivement ? » en place pendant cinq secondes, puis supprime la surveillance. Ses séries restent dans VictoriaMetrics jusqu'à expiration de la rétention. |
+| Sonder maintenant (icône pulsation) | Lance une sonde immédiatement et indique combien d'échantillons et de séries elle a produits. La première chose à essayer quand une surveillance n'affiche aucune donnée. |
+| Pause (icône cloche) | Un petit menu : **Pause 1 h**, ou **Pause jusqu'à…** pour une fin personnalisée. Une fenêtre de maintenance ponctuelle sur cette surveillance ; le menu permet de la lever. |
+| Journaux | Ouvre la recherche de journaux filtrée sur cette surveillance. |
+| Réglages (roue crantée) | Ouvre le même formulaire que pour l'ajout, prérempli. Laisser l'identifiant vide conserve celui enregistré. Pour un agent, on y trouve aussi le mode relais, la collecte des journaux, les services à surveiller sur sa machine et le réenrôlement. |
+| Plus (⋯), Supprimer | Demande « Supprimer définitivement ? » en place pendant cinq secondes, puis supprime la surveillance. Ses séries restent dans VictoriaMetrics jusqu'à expiration de la rétention. |
 
 En dessous : **Alertes sur cette surveillance** — chaque alerte active propose
 *Acquitter*, *Repousser* et *Ignorer*, et une règle ignorée sur cette surveillance
@@ -98,8 +101,9 @@ aussitôt, sauf les équipements SNMP, qui ouvrent le formulaire pour la
 communauté), et les types de surveillance qui conviennent au site (ceux que ses
 équipements utilisent déjà, puis les plus courants). Chaque proposition est
 préremplie avec le relais du site, son emplacement et son dossier habituel, et
-vous pouvez toujours les changer dans le formulaire. Sans aucun emplacement, la
-page reste la simple liste de types. En mode MSP, seuls les sites du client
+vous pouvez toujours les changer dans le formulaire. **Aucun site** est un choix normal : la surveillance n'est alors pas rattachée
+à un lieu de la carte. Sans aucun emplacement, la page reste la simple liste de
+types. En mode MSP, seuls les sites du client
 courant sont proposés. L'étape *Ajoutez vos premières surveillances* de
 l'assistant propose le même choix.
 

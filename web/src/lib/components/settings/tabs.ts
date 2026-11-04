@@ -5,23 +5,22 @@
  */
 import { m } from '#lib/paraglide/messages.js';
 
-export type SettingsTab = 'general' | 'account' | 'team' | 'monitoring' | 'notifications' | 'wall' | 'system';
+export type SettingsTab = 'account' | 'team' | 'monitoring' | 'notifications' | 'wall' | 'system';
 
 export const DEFAULT_TAB: SettingsTab = 'account';
 
-export const TAB_IDS: readonly SettingsTab[] = ['general', 'account', 'team', 'monitoring', 'notifications', 'wall', 'system'];
+export const TAB_IDS: readonly SettingsTab[] = ['account', 'team', 'monitoring', 'notifications', 'wall', 'system'];
 
 /** Which tab holds each section (by its anchor id). */
 export const SECTION_TAB: Record<string, SettingsTab> = {
-	general: 'general',
+	// The instance's name and time zone moved from the former General tab to System.
+	general: 'system',
 	// Former anchor of the Homelab / Enterprise choice.
-	'product-mode': 'general',
-	'setup-wizard': 'general',
+	'product-mode': 'system',
+	'setup-wizard': 'system',
 	appearance: 'account',
 	security: 'account',
 	push: 'account',
-	'oncall-contacts': 'account',
-	'oncall-hours': 'account',
 	users: 'team',
 	sso: 'team',
 	teams: 'team',
@@ -46,6 +45,7 @@ export const SECTION_TAB: Record<string, SettingsTab> = {
 	'self-monitoring': 'system',
 	logs: 'system',
 	https: 'system',
+	ports: 'system',
 	storage: 'system',
 	assistant: 'system',
 	about: 'system'
@@ -70,8 +70,6 @@ export function isTab(value: string | undefined): value is SettingsTab {
 
 export function tabLabel(tab: SettingsTab): string {
 	switch (tab) {
-		case 'general':
-			return m.settings_tab_general();
 		case 'account':
 			return m.settings_tab_account();
 		case 'team':
@@ -109,8 +107,6 @@ export function searchIndex(): SearchEntry[] {
 		entry('appearance', m['settings.section.appearance'](), m.settings_search_kw_appearance()),
 		entry('security', m['settings.section.security'](), m.settings_search_kw_security()),
 		entry('push', m.settings_nav_push(), m.settings_search_kw_push()),
-		entry('oncall-contacts', m.oncall_contacts_title(), m.oncall_search_kw_contacts()),
-		entry('oncall-hours', m.oncall_hours_title(), m.oncall_search_kw_hours()),
 		entry('users', m['settings.section.users'](), m.settings_search_kw_users()),
 		entry('sso', m['settings.section.sso'](), m.settings_search_kw_sso()),
 		entry('teams', m.settings_teams_title(), m.settings_teams_search_kw()),
@@ -130,6 +126,7 @@ export function searchIndex(): SearchEntry[] {
 		entry('self-monitoring', m.settings_selfmon_title(), m.settings_search_kw_selfmon()),
 		entry('logs', m.settings_logs_title(), m.settings_logs_search_kw()),
 		entry('https', m.settings_https_title(), m.settings_https_search_kw()),
+		entry('ports', m.settings_ports_title(), m.settings_ports_search_kw()),
 		entry('storage', m.storage_title(), m.storage_search_kw()),
 		entry('assistant', m['settings.section.assistant'](), m.settings_search_kw_assistant()),
 		entry('about', m['settings.section.about'](), m.settings_search_kw_about())

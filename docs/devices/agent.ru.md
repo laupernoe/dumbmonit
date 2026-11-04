@@ -159,7 +159,7 @@ critical**, **Hyper-V host CPU high** и **Hyper-V virtual disk errors** (см.
 === "Linux (systemd или OpenRC)"
 
     ```sh
-    curl -sSL http://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://server:8080
+    curl -sSL https://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     Скрипт написан на POSIX `sh` (работает с BusyBox и dash), скачивает с сервера бинарный файл
@@ -174,7 +174,7 @@ critical**, **Hyper-V host CPU high** и **Hyper-V virtual disk errors** (см.
     Та же команда, что и в Linux, выполняемая с `sudo`:
 
     ```sh
-    curl -sSL http://server:8080/install.sh | sudo sh -s -- --token=dmon_xxx --url=http://server:8080
+    curl -sSL https://server:8080/install.sh | sudo sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     Бинарных файлов для macOS **нет** в образе DumbMonit: для их сборки
@@ -195,8 +195,8 @@ critical**, **Hyper-V host CPU high** и **Hyper-V virtual disk errors** (см.
 
     ```sh
     curl -sSLO https://github.com/laupernoe/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
-    curl -sSL http://server:8080/install.sh | sudo sh -s -- \
-        --token=dmon_xxx --url=http://server:8080 --bin=./dumbmonit-agent-macos-aarch64
+    curl -sSL https://server:8080/install.sh | sudo sh -s -- \
+        --token=dmon_xxx --url=https://server:8080 --bin=./dumbmonit-agent-macos-aarch64
     ```
 
     Скрипт устанавливает бинарный файл в `/usr/local/bin` (и снимает
@@ -215,7 +215,7 @@ critical**, **Hyper-V host CPU high** и **Hyper-V virtual disk errors** (см.
 === "FreeBSD (rc.d)"
 
     ```sh
-    fetch -qo - http://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://server:8080
+    fetch -qo - https://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     Только x86_64. Скрипт скачивает с сервера `dumbmonit-agent-freebsd-x86_64`,
@@ -230,7 +230,7 @@ critical**, **Hyper-V host CPU high** и **Hyper-V virtual disk errors** (см.
 === "Windows (служба)"
 
     ```powershell
-    & ([scriptblock]::Create((irm http://server:8080/install.ps1))) -Token dmon_xxx -Url http://server:8080
+    & ([scriptblock]::Create((irm https://server:8080/install.ps1))) -Token dmon_xxx -Url https://server:8080
     ```
 
     Скрипт скачивает с сервера `dumbmonit-agent-windows-x86_64.exe`,
@@ -332,7 +332,7 @@ docker buildx build --target agent-dist --output type=local,dest=dist/agent .
 | `install.sh` | `install.ps1` | Действие |
 |---|---|---|
 | `--token=TOKEN` | `-Token` | Токен регистрации (обязателен). |
-| `--url=URL` | `-Url` | URL сервера, например `http://server:8080`. В Linux, если флаг отсутствует, используется `DUMBMONIT_URL` из окружения. |
+| `--url=URL` | `-Url` | URL сервера, например `https://server:8080`. В Linux, если флаг отсутствует, используется `DUMBMONIT_URL` из окружения. |
 | `--interval=N` | `-Interval` | Период опроса в секундах (по умолчанию 30). |
 | `--services=a,b,c` | `-Services @('a','b')` | Службы, состояние которых сообщается, с именами в том виде, как их называет система хоста: юниты systemd в Linux, метки launchd (`com.apple.sshd`) в macOS, имена rc.d во FreeBSD, службы Windows. |
 | `--tags=key=value,…` | `-Tags @{key='value'}` | Теги, копируемые как `tag_<key>` в каждый ряд. |
@@ -448,7 +448,7 @@ docker buildx build --target agent-dist --output type=local,dest=dist/agent .
 macOS и FreeBSD, `C:\ProgramData\DumbMonit\agent.yaml` в Windows:
 
 ```yaml
-server_url: http://server:8080
+server_url: https://server:8080
 token: dmon_...
 interval_secs: 30          # sampling period
 hostname: nas-basement     # optional: name announced to the server

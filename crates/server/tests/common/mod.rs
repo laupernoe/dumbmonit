@@ -95,6 +95,7 @@ pub async fn build_with_registry(
     let cipher = db::init_cipher(&pool, "secret-de-test-suffisamment-long")
         .await
         .expect("initialisation du chiffrement");
+    accept_enrolments(&pool).await;
 
     // L'adresse de la configuration, pour qu'un test puisse brancher un faux
     // VictoriaMetrics ; injoignable par défaut.
@@ -105,6 +106,17 @@ pub async fn build_with_registry(
     let state = AppState::new(Inner { config, pool, cipher, victoria, sink, collectors: registry });
 
     TestApp { router: api::router(state), _dir: dir }
+}
+
+/// Les tests des autres fonctions enrôlent leurs agents avec des jetons de
+/// flotte, qu'une installation neuve ferait attendre une validation : ils
+/// gardent l'acceptation automatique d'avant la garde de l'enrôlement. Les
+/// tests de la garde (`agent_enrolment_api.rs`) la règlent eux-mêmes.
+pub async fn accept_enrolments(pool: &sqlx::SqlitePool) {
+    use dumbmonit_server::collectors::agent::enrolment;
+    enrolment::save_settings(pool, &enrolment::EnrolmentSettings::legacy())
+        .await
+        .expect("garde de l'enrôlement");
 }
 
 impl TestApp {

@@ -42,7 +42,7 @@
 	/** `banner`: notices drawn above the top bar, in the page column (demo, cleartext session). */
 	let { children, banner }: { children: Snippet; banner?: Snippet } = $props();
 
-	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/';
+	const DOCS_URL = 'https://dumbmonit.app/docs/';
 	const GITHUB_URL = 'https://github.com/laupernoe/dumbmonit';
 	/** '1' once the reader unfolded the rail; folded otherwise. */
 	const RAIL_KEY = 'dumbmonit-rail-expanded';
@@ -266,7 +266,8 @@
 	<div class="flex min-w-0 flex-1 flex-col">
 		{@render banner?.()}
 		<header class="vt-nav-top sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-line bg-canvas/95 px-4 backdrop-blur sm:gap-3 sm:px-5">
-			<PigeonStatus />
+			<!-- The Overview's banner already shows the pigeon. -->
+			{#if !onOverview}<PigeonStatus />{/if}
 			<nav aria-label={m.console_breadcrumb()} class="flex min-w-0 items-center gap-2 text-sm text-ink-2">
 				<span class="truncate max-sm:hidden">{instanceStore.displayName}</span>
 				{#if current || offRail}

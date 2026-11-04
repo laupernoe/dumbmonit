@@ -154,7 +154,6 @@
 {#if ready && shown.length > 0}
 	<section aria-labelledby="add-site-title" class="mb-8 min-w-0">
 		<h2 id="add-site-title" class="text-lg font-semibold tracking-tight text-ink">{m.deviceform_site_title()}</h2>
-		<p class="mt-1 max-w-[65ch] text-sm text-ink-2">{m.deviceform_site_hint()}</p>
 
 		<div role="radiogroup" aria-labelledby="add-site-title" class="mt-3 flex flex-wrap gap-2">
 			{#each shown as location (location.id)}

@@ -24,15 +24,13 @@
 	import { listLocations } from '#lib/api/locations.js';
 	import type { MapLocation } from '#lib/api/types.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, ClickSpark, CopyBlock, ErrorNotice, Field, Led, Plate } from '#lib/ui/index.js';
+	import { Button, ClickSpark, CopyBlock, DocLink, ErrorNotice, Field, Led, Plate } from '#lib/ui/index.js';
 	import AdDeployWizard from '#lib/components/settings/AdDeployWizard.svelte';
 	import AgentChecksums from './AgentChecksums.svelte';
-	import AgentChannelNote from './AgentChannelNote.svelte';
 	import AgentChannelCheck from './AgentChannelCheck.svelte';
 	import AgentModules from './AgentModules.svelte';
 	import { withModules, type AgentModule } from './agent-modules.js';
-	import { dockerRun, installOptions } from './agent-enroll.js';
-	import RelayDiagram from './RelayDiagram.svelte';
+	import { dockerCompose, dockerRun, installOptions } from './agent-enroll.js';
 
 	interface Props {
 		cancelHref?: string;
@@ -47,6 +45,8 @@
 		/** Site (location) and folder the machine is filed in once connected. */
 		locationDefault?: number | null;
 		folderDefault?: string;
+		/** Enrol a Synology NAS through the .spk wizard: show its three values instead of install commands. */
+		spk?: boolean;
 	}
 
 	let {
@@ -56,16 +56,18 @@
 		afterKind = '',
 		viaDefault = null,
 		locationDefault = null,
-		folderDefault = ''
+		folderDefault = '',
+		spk = false
 	}: Props = $props();
+	/** Documentation page of the screen: relay, mail server on Windows, Synology package or plain agent. */
+	const docPage = $derived(
+		relay ? 'install/remote-site/' : spk ? 'devices/synology-agent/' : afterKind ? `devices/${afterKind}/` : 'devices/agent/'
+	);
 	const afterProduct = $derived(afterKind === 'securitygateway' ? 'SecurityGateway' : afterKind === 'mdaemon' ? 'MDaemon' : '');
 	/** Relay flow: from the URL (`via=relay`), or ticked in the plain form. */
 	let relay = $state(untrack(() => relayFromUrl));
 
-	const REMOTE_SITE_GUIDE = 'https://dumbmonit.readthedocs.io/en/latest/install/remote-site/';
-
 	// The form is mounted per kind and feature: its first value is the one that counts.
-	let name = $state(untrack(() => relay) ? m.deviceform_enroll_default_relay_name() : m.deviceform_enroll_default_name());
 	let site = $state('');
 	/** One token for several machines (a playbook, an image); single use by default. */
 	let reusable = $state(false);
@@ -113,14 +115,13 @@
 
 	async function create(event: SubmitEvent) {
 		event.preventDefault();
-		if (!name.trim() || creating) return;
+		if (creating) return;
 		creating = true;
 		error = null;
 		try {
 			// Single use: this flow enrols one machine and follows it to its first report.
 			origin = window.location.origin;
 			token = await createAgentToken({
-				name: name.trim(),
 				base_url: origin,
 				...(relay ? { relay: true, site: siteLabel } : {}),
 				...(reusable && !relay ? { reusable: true } : {}),
@@ -172,6 +173,7 @@
 	// Plain words stay bare; anything YAML could misread goes in double quotes (a JSON string is valid YAML).
 	const yaml = $derived(`relay: true\nsite: ${/^[\p{L}\p{N} ._-]+$/u.test(siteLabel) ? siteLabel : JSON.stringify(siteLabel)}`);
 	const docker = $derived(token && options ? dockerRun(options, token.secret, relay ? hostname : null) : '');
+	const compose = $derived(token && options ? dockerCompose(options, token.secret, relay ? hostname : null) : '');
 
 	// --- First connection, then name / folder / site -------------------------
 
@@ -286,14 +288,7 @@
 		</div>
 
 		{@render step(1, m.deviceform_agentflow_step_install())}
-		{#if relay}
-			<p class="-mt-3 text-sm leading-relaxed text-ink-2">
-				{m.deviceform_enroll_origin_note({ origin })}
-			</p>
-		{:else if throughRelay && chosenRelay}
-			<p class="-mt-3 text-sm leading-relaxed text-ink-2">
-				{m.deviceform_agentflow_through_note({ relay: chosenRelay.name, address: options?.base ?? '' })}
-			</p>
+		{#if throughRelay && chosenRelay}
 			{#if chosenRelay.gateway_port == null}
 				<p class="-mt-2 text-sm leading-relaxed text-ink">{m.deviceform_agentflow_gateway_pending({ relay: chosenRelay.name })}</p>
 			{/if}
@@ -301,7 +296,21 @@
 
 		<!-- The channel must answer where the command sends machines before the command shows. -->
 		<AgentChannelCheck baseUrl={origin} relayId={throughRelay && chosenRelay ? chosenRelay.id : null} relayHost={relayHost.trim() || null}>
-		<AgentModules bind:modules />
+{#if spk}
+			<div class="grid gap-1.5">
+				<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_spk_url()}</p>
+				<CopyBlock value={options?.base ?? origin} label={m.deviceform_enroll_spk_url()} />
+			</div>
+			<div class="grid gap-1.5">
+				<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_spk_pin()}</p>
+				{#if options?.serverPin ?? options?.caPin}
+					<CopyBlock value={options?.serverPin ?? options?.caPin ?? ''} label={m.deviceform_enroll_spk_pin()} />
+				{:else}
+					<p class="text-sm leading-relaxed text-ink-2">{m.deviceform_enroll_spk_pin_none()}</p>
+				{/if}
+			</div>
+		{:else}
+			<AgentModules bind:modules />
 
 		<div role="radiogroup" aria-label={m.deviceform_agentflow_platform_aria()} class="flex flex-wrap gap-2">
 			{#each platforms as [value, label] (value)}
@@ -318,44 +327,34 @@
 				<CopyBlock sudo value={installLinux} label={m.deviceform_enroll_copy_linux()} />
 			</div>
 		{:else if platform === 'windows'}
-			{#if windows}
-				<p class="text-sm leading-relaxed text-ink">{m.deviceform_enroll_windows_run({ product: afterProduct || m.deviceform_enroll_windows_server() })}</p>
-			{/if}
 			<div class="grid gap-1.5">
 				<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_windows()}</p>
 				<CopyBlock value={installWindows} label={m.deviceform_enroll_copy_windows()} />
 			</div>
 		{:else}
 			<div class="grid gap-1.5">
-				<p class="text-sm leading-relaxed text-ink-2">{m.deviceform_agentflow_docker_note()}</p>
 				<CopyBlock value={docker} label={m.deviceform_enroll_copy_docker()} />
+			</div>
+			<div class="grid gap-1.5">
+				<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_compose_title()}</p>
+				<CopyBlock value={compose} label={m.deviceform_enroll_copy_compose()} />
 			</div>
 		{/if}
 
+		{/if}
+
 		<div class="grid gap-1.5">
-			<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_token()} <span class="font-normal text-ink-2">— {token?.name}</span></p>
+			<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_token()} <span class="font-normal text-ink-2">— <span class="select-all font-mono">{token?.name}</span></span></p>
 			<CopyBlock value={token?.secret ?? ''} label={m.deviceform_enroll_copy_token()} secret />
 		</div>
-		<AgentChannelNote />
 		<AgentChecksums />
 		</AgentChannelCheck>
 
 		{#if relay}
-			<p class="text-sm leading-relaxed text-ink-2">
-				{m.deviceform_enroll_relay_included({ site: siteLabel })}
-			</p>
 			<!-- Only for an agent installed before, or by hand: the commands above already do it. -->
 			<details class="group rounded-[var(--radius-card)] border border-line px-3 py-2">
 				<summary class="flex min-h-10 cursor-pointer items-center text-sm font-semibold text-ink">{m.deviceform_enroll_yaml_summary()}</summary>
 				<div class="grid gap-2 pt-2 pb-1">
-					<p class="text-sm leading-relaxed text-ink-2">
-						{m.deviceform_enroll_yaml_note({
-							file: 'agent.yaml',
-							linux: '/etc/dumbmonit',
-							unix: '/usr/local/etc/dumbmonit',
-							windows: 'C:\\ProgramData\\DumbMonit'
-						})}
-					</p>
 					<CopyBlock value={yaml} label={m.deviceform_enroll_copy_yaml()} />
 				</div>
 			</details>
@@ -414,12 +413,6 @@
 		{#if relay}
 			<div class="grid gap-2 border-t border-line pt-5">
 				{@render step(3, m.deviceform_enroll_step3())}
-				<p class="text-sm leading-relaxed text-ink-2">
-					{m.deviceform_agentflow_relay_next()}
-				</p>
-				<a href={REMOTE_SITE_GUIDE} target="_blank" rel="noopener" class="justify-self-start text-sm font-semibold text-signal-ink hover:underline">
-					{m.deviceform_enroll_guide()}
-				</a>
 			</div>
 		{/if}
 
@@ -438,35 +431,13 @@
 			<Button variant="ghost" href="/targets">{m.deviceform_enroll_see_devices()}</Button>
 			<Button variant="ghost" onclick={reset}>{m.deviceform_agentflow_another()}</Button>
 		</div>
+		<DocLink page={docPage} />
 	</div>
 {:else}
 	<form onsubmit={create} class="grid gap-5">
-		{#if relay}
-			<p class="text-sm leading-relaxed text-ink-2">
-				{m.deviceform_enroll_relay_intro()}
-			</p>
-			<div class="rounded-[var(--radius-card)] border border-line bg-canvas-deep px-3 py-3 sm:px-4">
-				<RelayDiagram class="mx-auto max-w-md" />
-			</div>
-		{:else if windows && afterProduct}
-			<p class="text-sm leading-relaxed text-ink-2">
-				{m.deviceform_enroll_windows_intro({ product: afterProduct })}
-			</p>
-		{:else}
-			<p class="text-sm leading-relaxed text-ink-2">
-				{m.deviceform_enroll_intro()}
-			</p>
-		{/if}
+		<DocLink page={docPage} />
 
-		<div class={relay ? 'grid gap-4 sm:grid-cols-2' : 'contents'}>
-			<Field
-				label={m.deviceform_enroll_token_name()}
-				for="agent-token-name"
-				required
-				help={relay ? m.deviceform_agentflow_token_help_relay() : m.deviceform_enroll_token_help()}
-			>
-				<input id="agent-token-name" class="input" type="text" autocomplete="off" bind:value={name} />
-			</Field>
+		<div class="contents">
 			{#if relay}
 				<Field label={m.deviceform_enroll_site_name()} for="agent-site" help={m.deviceform_enroll_site_help()}>
 					<input id="agent-site" class="input" type="text" autocomplete="off" placeholder={m.deviceform_enroll_site_placeholder()} bind:value={site} />
@@ -493,7 +464,6 @@
 						</label>
 					{/each}
 				</div>
-				<p class="text-[0.8125rem] text-ink-2">{m.deviceform_agentflow_route_help()}</p>
 				{#if chosenRelay}
 					<Field label={m.deviceform_agentflow_relay_host()} for="agent-relay-host" help={m.deviceform_agentflow_relay_host_help({ port: String(chosenRelay.gateway_wanted ?? chosenRelay.gateway_port ?? 8443) })}>
 						<input id="agent-relay-host" class="input" type="text" autocomplete="off" spellcheck="false" placeholder="192.168.1.10" bind:value={relayHost} />
@@ -535,7 +505,7 @@
 
 		<div class="flex flex-wrap items-center gap-2">
 			<ClickSpark>
-				<Button type="submit" variant="primary" loading={creating} disabled={!name.trim()}>
+				<Button type="submit" variant="primary" loading={creating}>
 					{relay ? m.deviceform_enroll_create_relay() : m.deviceform_enroll_create()}
 				</Button>
 			</ClickSpark>

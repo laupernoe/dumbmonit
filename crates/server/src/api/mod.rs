@@ -1,9 +1,11 @@
 mod activedirectory;
 mod ad_deploy;
 pub(crate) mod agent_commands;
+mod agent_enrolment;
 mod agent_events;
 pub(crate) mod agent_files;
 mod agent_logs;
+mod agent_sentinel;
 mod agent_tls;
 mod agent_updates;
 mod alert_actions;
@@ -55,6 +57,7 @@ mod passkeys;
 mod pbs;
 mod pdm;
 mod pmg;
+mod ports;
 mod prometheus;
 mod proxies;
 mod proxmox;
@@ -186,6 +189,9 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/discovery/schedules/{id}/run", post(netinventory::run_now))
         .route("/discovery/inventory", get(netinventory::inventory))
         .route("/discovery/inventory/known", post(netinventory::all_known))
+        .route("/discovery/inventory/bulk", post(netinventory::bulk))
+        .route("/discovery/review", get(netinventory::review_state))
+        .route("/discovery/review/seen", post(netinventory::review_seen))
         .route("/discovery/inventory/devices/{id}/known", post(netinventory::device_known))
         .route("/discovery/inventory/devices/{id}/ignore", post(netinventory::device_ignore))
         .route("/discovery/inventory/ports/{id}/known", post(netinventory::port_known))
@@ -249,8 +255,12 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/agent/install", get(ingest::install_params))
         // Canal chiffré des agents : état, exigence de mTLS, rotation de l'autorité.
         .merge(agent_tls::routes())
+        // Garde de l'enrôlement : validation, débit, jetons en veille.
+        .merge(agent_enrolment::routes())
         // HTTPS de l'interface, redirection et relevé de ce qui passe en clair.
         .merge(https::routes())
+        // Ports à ouvrir dans le pare-feu, calculés depuis la configuration réelle.
+        .merge(ports::routes())
         // Mise à jour automatique des agents : réglages, état, « Update now ».
         .merge(agent_updates::routes())
         .route("/tokens", get(tokens::list).post(tokens::create))
@@ -261,6 +271,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(agent_events::routes())
         // Collecte de journaux d'une machine et état des entrées (`agent_logs.rs`).
         .merge(agent_logs::ui_routes())
+        // Mode sentinelle d'une machine : réglage, canal secret (`agent_sentinel.rs`).
+        .merge(agent_sentinel::routes())
         // Panneau Synology : vue d'ensemble et appareils Active Backup (`synology.rs`).
         .merge(synology::routes())
         // Prévisions de remplissage d'un équipement (`forecasts.rs`).
@@ -469,9 +481,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         // authentification : c'est l'application elle-même qui demande le mot de
         // passe, elle doit donc pouvoir se charger d'abord.
         .fallback(spa::serve)
-        // `Secure` sur les cookies dès que le navigateur est en HTTPS. Sous la
-        // couche qui dépose `AuthState`, dont il lit les mandataires de confiance.
-        .layer(middleware::from_fn(crate::auth::cookie::secure_when_https))
+        // `Secure` sur tous les cookies : le port ne sert que HTTPS.
+        .layer(middleware::from_fn(crate::auth::cookie::always_secure))
         .layer(Extension(auth_state))
         // État en mémoire de la musique du mur (autorisations en cours, jeton
         // d'accès, lecture en cours, rapports des murs) : voir `crate::music`.
@@ -488,9 +499,6 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         ))
         // `X-DumbMonit-Api-Version` sur toute réponse de `/api`.
         .layer(middleware::from_fn(openapi::version_header))
-        // Navigations en clair renvoyées vers HTTPS (`web_tls`). Sous la garde
-        // des domaines de page de statut, qui ne sont jamais redirigés.
-        .layer(middleware::from_fn_with_state(state.clone(), crate::web_tls::redirect))
         // Domaine public d'une page de statut : sur ce nom d'hôte, la page et
         // rien d'autre (`status_host.rs`). Sous les en-têtes de sécurité, pour
         // que ses refus les portent aussi.
@@ -508,10 +516,9 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
                 path = %loggable_path(request.uri().path()),
             )
         }))
-        // La plus externe : l'adresse du client et le chiffrement de la
-        // connexion, que tout le reste lit (`ConnectInfo`, `Transport`), et HSTS
-        // sur toute réponse servie en HTTPS.
-        .layer(middleware::from_fn_with_state(state.clone(), crate::web_tls::transport))
+        // La plus externe : l'adresse du client, que tout le reste lit
+        // (`ConnectInfo`), et HSTS sur toute réponse — le port ne sert que HTTPS.
+        .layer(middleware::from_fn(crate::web_tls::transport))
         .with_state(state)
 }
 

@@ -136,18 +136,57 @@ virtuel Hyper-V** (voir [Hôtes Hyper-V](#hyper-v-hosts)).
 
 ## Installer {#install}
 
-Les étapes ci-dessous sont celles que montre l'avis à côté du formulaire. Il n'y a aucun compte à créer sur la machine : le jeton d'enrôlement est le seul secret.
+Il n'y a aucun compte à créer sur la machine : le jeton d'enrôlement est le seul
+secret. Tout le parcours tient sur une page de DumbMonit, qui vérifie chaque
+étape pour vous.
 
-1. Dans DumbMonit, ajoutez une surveillance et choisissez **Serveur avec l'agent**. Choisissez comment la machine joint le serveur : **En direct**, ou **Via un relais** d'un site distant derrière un pare-feu (voir [Surveiller un site distant](../install/remote-site.fr.md#5-installer-des-agents-derriere-le-relais)). Un jeton d'enrôlement (dmon_…) est montré une fois, avec la commande d'installation prête à copier pour Linux/macOS, Windows et Docker.
-2. Lancez cette commande d'installation sur la machine, avec des droits élevés (sudo sur Linux et macOS, un PowerShell élevé sur Windows).
-3. La page attend le premier envoi (quelques secondes), puis permet de nommer la machine, de la ranger dans un dossier et de la placer sur un site, sur place.
-4. Facultatif, pour Docker : si l'agent tourne sous un utilisateur dédié, ajoutez cet utilisateur au groupe « docker » et redémarrez l'agent.
+### Pas à pas
 
-    ```
-    usermod -aG docker dumbmonit
-    ```
+1. Dans DumbMonit, cliquez sur **Ajouter une surveillance**, choisissez un site
+   (ou **Aucun site**), puis **Serveur avec l'agent**.
+2. Sous *Comment la machine joint-elle ce serveur ?*, gardez **En direct**, ou
+   choisissez **Via** un relais pour un site distant derrière un pare-feu (voir
+   [Surveiller un site distant](../install/remote-site.fr.md#5-installer-des-agents-derriere-le-relais)).
+3. Facultatif : choisissez les modules à activer.
+4. Choisissez le système de la machine : **Linux / macOS**, **Windows** ou
+   **Docker**.
+5. Cliquez sur **Créer la commande d'installation**. Vous devez voir la mention
+   **Affiché une seule fois**, la commande à copier et le jeton (son secret
+   commence par `dmon_` ; le jeton est ensuite listé sous la forme `tok_…`).
+   Copiez la commande maintenant.
+6. La page vérifie le canal des agents. Vous devez voir *Canal chiffré des agents
+   joignable à … (TLS 1.3)*. Un message rouge ici signifie que les machines
+   échoueront aussi : corrigez-le d'abord (voir [Erreurs courantes](#erreurs-courantes)).
+7. Lancez la commande sur la machine, avec des droits élevés :
+    - **Linux / macOS** : collez-la dans un terminal ; elle utilise `sudo`.
+    - **Windows** : collez-la dans un PowerShell ouvert en administrateur.
+    - **Docker** : collez la commande `docker run`, ou les deux lignes pour votre
+      `docker-compose.yml`, puis `docker compose up -d`.
+8. De retour dans DumbMonit, *En attente du premier envoi de l'agent…* devient
+   *« hôte » est connectée (système)* en quelques secondes.
+9. Donnez un **Nom** à la machine, éventuellement un **Dossier** et un **Site**,
+   puis cliquez sur **Enregistrer**. **Ouvrir la machine** affiche sa page, avec
+   ses premières mesures quelques secondes plus tard.
 
-5. Pour un parc (un playbook, une image de machine), cochez *Plusieurs machines avec cette commande* avant de créer la commande ; tout un domaine Windows passe par le [kit Active Directory](agent-active-directory.fr.md), proposé sur la même page. Révoquez un jeton perdu dans Réglages → Agents.
+Si la page reste sur *En attente…* pendant une heure, elle s'arrête et propose
+**Attendre encore**. Vérifiez la machine avec les commandes de
+[Pannes et diagnostics](#pannes-et-diagnostics).
+
+Facultatif, pour Docker : si l'agent tourne sous un utilisateur dédié, ajoutez
+cet utilisateur au groupe `docker` et redémarrez l'agent.
+
+```
+usermod -aG docker dumbmonit
+```
+
+Pour un parc (un playbook, une image de machine), cochez **Plusieurs machines
+avec cette commande** ; tout un domaine Windows passe par le
+[kit Active Directory](agent-active-directory.fr.md), proposé sur la même page.
+Révoquez un jeton perdu dans **Réglages → Supervision → Agents**.
+
+Pour changer quoi que ce soit plus tard, ouvrez la surveillance et utilisez la
+**roue crantée** : les réglages de l'agent (mode relais, collecte des journaux,
+services à surveiller, ré-enrôlement) y sont.
 
 !!! warning
     L'agent contacte le serveur, jamais l'inverse : aucun port n'a besoin d'être ouvert sur la machine surveillée.
@@ -192,7 +231,7 @@ vous créez un jeton.
 === "Linux (systemd ou OpenRC)"
 
     ```sh
-    curl -sSL http://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://server:8080
+    curl -sSL https://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     Le script est en `sh` POSIX (BusyBox et dash fonctionnent), télécharge
@@ -207,7 +246,7 @@ vous créez un jeton.
     La même commande que sur Linux, lancée avec `sudo` :
 
     ```sh
-    curl -sSL http://server:8080/install.sh | sudo sh -s -- --token=dmon_xxx --url=http://server:8080
+    curl -sSL https://server:8080/install.sh | sudo sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     Les binaires macOS ne sont **pas** dans l'image DumbMonit : les
@@ -230,8 +269,8 @@ vous créez un jeton.
 
     ```sh
     curl -sSLO https://github.com/laupernoe/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
-    curl -sSL http://server:8080/install.sh | sudo sh -s -- \
-        --token=dmon_xxx --url=http://server:8080 --bin=./dumbmonit-agent-macos-aarch64
+    curl -sSL https://server:8080/install.sh | sudo sh -s -- \
+        --token=dmon_xxx --url=https://server:8080 --bin=./dumbmonit-agent-macos-aarch64
     ```
 
     Le script installe le binaire dans `/usr/local/bin` (et retire
@@ -251,7 +290,7 @@ vous créez un jeton.
 === "FreeBSD (rc.d)"
 
     ```sh
-    fetch -qo - http://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://server:8080
+    fetch -qo - https://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=https://server:8080
     ```
 
     x86_64 seulement. Le script télécharge `dumbmonit-agent-freebsd-x86_64`
@@ -266,7 +305,7 @@ vous créez un jeton.
 === "Windows (service)"
 
     ```powershell
-    & ([scriptblock]::Create((irm http://server:8080/install.ps1))) -Token dmon_xxx -Url http://server:8080
+    & ([scriptblock]::Create((irm https://server:8080/install.ps1))) -Token dmon_xxx -Url https://server:8080
     ```
 
     Le script télécharge `dumbmonit-agent-windows-x86_64.exe` depuis le
@@ -375,12 +414,38 @@ chaque système.
     vérifier et le dit bruyamment ; `--bin=PATH` installe un fichier local
     tel quel, le fichier étant à vous de vérifier.
 
+### Retirer un agent {#removing-an-agent}
+
+Supprimer le moniteur d'une machine ne désinstalle pas son agent : il continue
+de tourner et redemande à s'enrôler. À la suppression du moniteur, DumbMonit
+propose **Désinstaller l'agent automatiquement** si l'agent en est capable :
+
+- il accepte les commandes (`commands: true`, la valeur par défaut ; un agent
+  réglé sur `commands: false` ne reçoit jamais la demande) ;
+- il s'est manifesté ces dernières minutes ;
+- il a été installé par `install.sh` ou `install.ps1`, hors conteneur.
+
+L'agent lance alors un assistant qui, quelques secondes plus tard, fait ce que
+fait `--uninstall` (`-Uninstall`) : il arrête et retire le service, puis efface
+le binaire et la configuration. Rien n'est téléchargé. L'agent confirme juste
+avant le ménage et s'arrête ; DumbMonit supprime ensuite le moniteur. Seul un
+administrateur connecté à l'interface peut le demander (pas un jeton d'API), et
+la demande est inscrite au journal d'audit.
+
+Un agent qui tourne dans Docker refuse : supprimez plutôt son conteneur
+(`docker rm -f dumbmonit-agent`, puis `docker volume rm dumbmonit-agent`). Si
+l'agent refuse, ne répond pas dans les deux minutes ou est hors ligne, la page
+montre les commandes à lancer sur la machine, et **Supprimer quand même le
+moniteur**. À la main, à tout moment, la commande d'installation avec
+`--uninstall` (`-Uninstall` sur Windows) à la place de ses autres options fait
+la même chose.
+
 ### Options de l'installateur
 
 | `install.sh` | `install.ps1` | Effet |
 |---|---|---|
 | `--token=TOKEN` | `-Token` | Jeton d'enrôlement (requis). |
-| `--url=URL` | `-Url` | URL du serveur, par exemple `http://server:8080`. Sur Linux, `DUMBMONIT_URL` dans l'environnement est utilisé si l'option est absente. |
+| `--url=URL` | `-Url` | URL du serveur, par exemple `https://server:8080`. Sur Linux, `DUMBMONIT_URL` dans l'environnement est utilisé si l'option est absente. |
 | `--interval=N` | `-Interval` | Période d'échantillonnage en secondes (défaut 30). |
 | `--services=a,b,c` | `-Services @('a','b')` | Services dont l'état est rapporté, nommés comme le système hôte les nomme : unités systemd sur Linux, labels launchd (`com.apple.sshd`) sur macOS, noms rc.d sur FreeBSD, services Windows. |
 | `--tags=key=value,…` | `-Tags @{key='value'}` | Étiquettes, copiées comme `tag_<key>` sur chaque série. |
@@ -659,7 +724,7 @@ des alertes (alertes résolues) reste lui aussi avec la machine.
 sur macOS et FreeBSD, `C:\ProgramData\DumbMonit\agent.yaml` sur Windows :
 
 ```yaml
-server_url: http://server:8080
+server_url: https://server:8080
 token: dmon_...
 interval_secs: 30          # période d'échantillonnage
 hostname: nas-basement     # optionnel : nom annoncé au serveur

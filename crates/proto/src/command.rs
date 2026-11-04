@@ -26,6 +26,16 @@ pub const CMD_CONTAINER_RESTART: &str = "container.restart";
 /// `{"name": "…", "prune": bool}`.
 pub const CMD_CONTAINER_UPDATE: &str = "container.update";
 
+/// Retire l'agent de la machine : service, binaire et configuration, comme
+/// `install.sh --uninstall` ou `install.ps1 -Uninstall`. Arguments : l'enveloppe
+/// anti-rejeu de la remédiation (`nonce`, `expires_at_ms`), exigée par l'agent.
+///
+/// L'agent rend compte avant que le ménage ne commence (un assistant détaché le
+/// fait quelques secondes plus tard), puis s'arrête : il ne sera plus là pour
+/// dire comment cela s'est terminé. Refusé par un agent en conteneur, ou qui
+/// n'a pas été installé par les scripts d'installation.
+pub const CMD_AGENT_UNINSTALL: &str = "agent.uninstall";
+
 /// Interroge un équipement à la place du serveur (agent relais). Arguments :
 /// un [`ProbeJob`] sérialisé.
 pub const CMD_PROBE: &str = "probe";
