@@ -1025,7 +1025,6 @@
 	"demo_tour_s8_title": "Modalità parete",
 	"deviceform_agentflow_another": "Aggiungi un'altra macchina",
 	"deviceform_agentflow_connected": "{host} è connessa ({os}).",
-	"deviceform_agentflow_fleet": "Un intero dominio Windows in una volta?",
 	"deviceform_agentflow_folder": "Cartella",
 	"deviceform_agentflow_folder_help": "Facoltativa. Le macchine nella stessa cartella sono raggruppate nell'elenco dei monitoraggi.",
 	"deviceform_agentflow_gateway_pending": "{relay} apre il suo gateway al prossimo invio, entro un minuto. Esegui il comando quando è in ascolto.",
@@ -1125,7 +1124,6 @@
 	"deviceform_enroll_create_relay": "Crea il comando di installazione del relay",
 	"deviceform_enroll_default_site": "Sito remoto",
 	"deviceform_enroll_linux": "Linux / macOS",
-	"deviceform_enroll_relay_checkbox": "Questo agente è un relay per un sito remoto",
 	"deviceform_enroll_see_devices": "Vedi i monitor",
 	"deviceform_enroll_shown_once": "Mostrato una sola volta",
 	"deviceform_enroll_single_use": "Monouso",
@@ -9195,5 +9193,12 @@
 	"deviceform_synology_api_point_login": "DumbMonit accede a DSM con un account dedicato in sola lettura.",
 	"deviceform_synology_api_cta": "Usa le credenziali DSM",
 	"deviceform_synology_dl_title": "Scarica il pacchetto per il tuo NAS",
-	"deviceform_synology_dl_arch": "Scarica {arch}"
+	"deviceform_synology_dl_arch": "Scarica {arch}",
+	"deviceform_feature_ad_label": "Distribuisci con Active Directory (GPO)",
+	"deviceform_feature_ad_summary": "Installa l’agent su tutti i server Windows di un dominio con un criterio di gruppo.",
+	"deviceform_new_desc_ad": "Distribuisci l’agent su un intero dominio Windows con un criterio di gruppo, da un controller di dominio.",
+	"deviceform_new_ad_admin_only": "Solo gli amministratori possono distribuire con Active Directory.",
+	"deviceform_agentflow_advanced": "Avanzate",
+	"deviceform_agentflow_synology_hint": "Su un NAS Synology?",
+	"deviceform_agentflow_synology_link": "Usa il pacchetto DSM"
 }
