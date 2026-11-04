@@ -25,7 +25,7 @@ name: dumbmonit
 
 services:
   dumbmonit:
-    image: ghcr.io/laupernoe/dumbmonit:latest
+    image: ghcr.io/selfhostr/dumbmonit:latest
     network_mode: host
     # No `ports:` — forbidden in host mode (the UI is reachable on host :8080).
     # No `sysctls: net.ipv4.ping_group_range` — forbidden in host mode; ICMP

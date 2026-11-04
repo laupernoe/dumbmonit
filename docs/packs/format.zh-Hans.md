@@ -156,7 +156,7 @@ rules:
 
 ## SNMP profiles {#snmp-profiles}
 
-一个 pack 可以带 SNMP profiles，写法完全像 [`profiles/`](https://github.com/laupernoe/dumbmonit/tree/main/profiles) 中的内置 ones。它们加入 SNMP 目录，并像其他的一样由 `sysObjectID` 应用；它们不创建自己的监控项类型。
+一个 pack 可以带 SNMP profiles，写法完全像 [`profiles/`](https://github.com/selfhostr/dumbmonit/tree/main/profiles) 中的内置 ones。它们加入 SNMP 目录，并像其他的一样由 `sysObjectID` 应用；它们不创建自己的监控项类型。
 
 ```yaml
 snmp_profiles:

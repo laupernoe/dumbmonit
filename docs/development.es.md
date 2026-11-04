@@ -109,7 +109,7 @@ necesita internet para reconstruirse es una mala señal.
 4. la imagen (`linux/amd64`), solo compilación.
 
 `.github/workflows/release.yml` publica la misma imagen en
-`ghcr.io/laupernoe/dumbmonit`: `:edge` en cada push a `main`, `:X.Y.Z`,
+`ghcr.io/selfhostr/dumbmonit`: `:edge` en cada push a `main`, `:X.Y.Z`,
 `:X.Y`, `:X` y `:latest` en cada etiqueta `v*`.
 
 Los tests de integración viven en `crates/server/tests/`; los módulos

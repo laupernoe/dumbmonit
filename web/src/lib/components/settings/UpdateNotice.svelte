@@ -83,7 +83,7 @@
 		{#if !info.enabled}
 			<p class="text-ink-2">
 				{info.locked_by_env ? m.settings_update_off_env() : m.settings_update_off()}
-				<a href="https://github.com/laupernoe/dumbmonit/releases" target="_blank" rel="noopener" class="font-medium text-signal-ink hover:underline">{m.settings_update_off_releases()}</a>
+				<a href="https://github.com/selfhostr/dumbmonit/releases" target="_blank" rel="noopener" class="font-medium text-signal-ink hover:underline">{m.settings_update_off_releases()}</a>
 			</p>
 		{:else if info.update_available && info.latest}
 			<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -100,7 +100,7 @@
 				<div class="mt-3 grid gap-3 rounded-lg border border-line bg-surface-2 p-4" data-testid="update-guide">
 					<CopyBlock sudo value={COMMAND} label={m.settings_update_copy_command()} />
 					<div class="flex flex-wrap gap-x-4 gap-y-1 font-medium">
-						<a href={info.release_url ?? 'https://github.com/laupernoe/dumbmonit/releases'} target="_blank" rel="noopener" class="text-signal-ink hover:underline">{m.settings_update_release_notes()}</a>
+						<a href={info.release_url ?? 'https://github.com/selfhostr/dumbmonit/releases'} target="_blank" rel="noopener" class="text-signal-ink hover:underline">{m.settings_update_release_notes()}</a>
 						<DocLink page="install/update/" class="min-h-0" />
 					</div>
 				</div>

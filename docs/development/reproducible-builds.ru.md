@@ -15,7 +15,7 @@
 
 Это проверяется для каждого pull request, затрагивающего код, и при каждом push
 в `main` рабочим процессом
-[Reproducible builds](https://github.com/laupernoe/dumbmonit/actions/workflows/reproducible.yml):
+[Reproducible builds](https://github.com/selfhostr/dumbmonit/actions/workflows/reproducible.yml):
 два раннера независимо собирают коммит, и задание завершается ошибкой, если
 отличается хотя бы один файл, а отчёт [diffoscope](https://diffoscope.org/)
 прикладывается как артефакт.
@@ -54,7 +54,7 @@
 коммит и его дату:
 
 ```sh
-git clone https://github.com/laupernoe/dumbmonit && cd dumbmonit
+git clone https://github.com/selfhostr/dumbmonit && cd dumbmonit
 git checkout v0.9.1    # or any commit
 export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
 set -- --build-arg DUMBMONIT_BUILD=$(git rev-parse HEAD) --platform linux/amd64 \
@@ -75,7 +75,7 @@ sha256sum out/server/* out/agent/*
 - **Бинарный файл сервера:** извлеките его из опубликованного образа и сравните:
 
     ```sh
-    docker create --name dm ghcr.io/laupernoe/dumbmonit:0.9.1
+    docker create --name dm ghcr.io/selfhostr/dumbmonit:0.9.1
     docker cp dm:/dumbmonit published-dumbmonit && docker rm dm
     sha256sum published-dumbmonit out/server/dumbmonit
     ```
@@ -83,7 +83,7 @@ sha256sum out/server/* out/agent/*
 - **Образы:** соберите образ как архив OCI и сравните его слои с опубликованными
   (опубликованный образ также несёт метки, происхождение сборки и SBOM, которые
   меняют дайджест его манифеста, но не слои; образ агента: те же команды с
-  `--target agent-image` и `ghcr.io/laupernoe/dumbmonit-agent`):
+  `--target agent-image` и `ghcr.io/selfhostr/dumbmonit-agent`):
 
     ```sh
     docker buildx build "$@" --output type=oci,dest=image.tar,rewrite-timestamp=true .
@@ -94,7 +94,7 @@ sha256sum out/server/* out/agent/*
     # Layers of the local build (uncompressed digests):
     jq -r '.rootfs.diff_ids[]' "$(blob "$config")"
     # Layers of the published image:
-    docker buildx imagetools inspect ghcr.io/laupernoe/dumbmonit:0.9.1 \
+    docker buildx imagetools inspect ghcr.io/selfhostr/dumbmonit:0.9.1 \
       --format '{{range .Image.RootFS.DiffIDs}}{{println .}}{{end}}'
     ```
 

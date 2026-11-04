@@ -21,6 +21,24 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '0.17.1',
+		date: '2026-11-04',
+		highlights: [
+			{
+				title: 'New home: selfhostr',
+				text: 'DumbMonit now lives in the selfhostr organization. The image is ghcr.io/selfhostr/dumbmonit: change the name in your docker-compose.yml (Settings shows the line).'
+			},
+			{
+				title: 'Synology agent updates itself',
+				text: 'The package keeps the agent up to date with your server, with no reinstall, and its certificate pin follows a changed port or a reverse proxy.'
+			},
+			{
+				title: 'Simpler Add monitor',
+				text: 'The Synology flow no longer offers relay or fleet options, and Active Directory deployment is its own choice.'
+			}
+		]
+	},
+	{
 		version: '0.17.0',
 		date: '2026-11-04',
 		highlights: [
@@ -38,7 +56,7 @@ export const RELEASES: Release[] = [
 			},
 			{
 				title: 'Documentation on the website',
-				text: 'Every screen links to its page on dumbmonit.app/docs, rewritten step by step. Sites and the map no longer have a default site.'
+				text: 'Every screen links to its page on dumbmonit.selfhostr.io/docs, rewritten step by step. Sites and the map no longer have a default site.'
 			}
 		]
 	},
@@ -367,5 +385,5 @@ export function releaseFor(version: string): Release | undefined {
 }
 
 export function releaseNotesUrl(version: string): string {
-	return `https://github.com/laupernoe/dumbmonit/releases/tag/v${encodeURIComponent(version)}`;
+	return `https://github.com/selfhostr/dumbmonit/releases/tag/v${encodeURIComponent(version)}`;
 }

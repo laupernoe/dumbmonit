@@ -13,7 +13,7 @@
 - macOS agent 二进制文件,前提是在相同的 macOS 和 Xcode 版本上构建。
 
 每个涉及代码的拉取请求以及每次推送到 `main` 时,
-[Reproducible builds](https://github.com/laupernoe/dumbmonit/actions/workflows/reproducible.yml)
+[Reproducible builds](https://github.com/selfhostr/dumbmonit/actions/workflows/reproducible.yml)
 工作流都会进行检查:两个运行器各自独立构建该提交,只要有一个文件不同,
 任务就会失败,并将 [diffoscope](https://diffoscope.org/) 报告作为产物
 提供。
@@ -48,7 +48,7 @@
 的提交或标签的检出。传入与发布工作流相同的两个输入,即提交及其日期:
 
 ```sh
-git clone https://github.com/laupernoe/dumbmonit && cd dumbmonit
+git clone https://github.com/selfhostr/dumbmonit && cd dumbmonit
 git checkout v0.9.1    # or any commit
 export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
 set -- --build-arg DUMBMONIT_BUILD=$(git rev-parse HEAD) --platform linux/amd64 \
@@ -69,7 +69,7 @@ sha256sum out/server/* out/agent/*
 - **服务器二进制文件:** 从已发布的镜像中取出并比较:
 
     ```sh
-    docker create --name dm ghcr.io/laupernoe/dumbmonit:0.9.1
+    docker create --name dm ghcr.io/selfhostr/dumbmonit:0.9.1
     docker cp dm:/dumbmonit published-dumbmonit && docker rm dm
     sha256sum published-dumbmonit out/server/dumbmonit
     ```
@@ -77,7 +77,7 @@ sha256sum out/server/* out/agent/*
 - **镜像:** 将镜像构建为 OCI 归档,并把它的各层与已发布的各层比较
   (已发布的镜像还带有标签、构建来源证明和 SBOM,它们会改变清单摘要,
   但不会改变各层;agent 镜像:同样的命令,换成
-  `--target agent-image` 和 `ghcr.io/laupernoe/dumbmonit-agent`):
+  `--target agent-image` 和 `ghcr.io/selfhostr/dumbmonit-agent`):
 
     ```sh
     docker buildx build "$@" --output type=oci,dest=image.tar,rewrite-timestamp=true .
@@ -88,7 +88,7 @@ sha256sum out/server/* out/agent/*
     # Layers of the local build (uncompressed digests):
     jq -r '.rootfs.diff_ids[]' "$(blob "$config")"
     # Layers of the published image:
-    docker buildx imagetools inspect ghcr.io/laupernoe/dumbmonit:0.9.1 \
+    docker buildx imagetools inspect ghcr.io/selfhostr/dumbmonit:0.9.1 \
       --format '{{range .Image.RootFS.DiffIDs}}{{println .}}{{end}}'
     ```
 

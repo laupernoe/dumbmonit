@@ -10,7 +10,7 @@ DumbMonit converger vers eux. Trois façons d’utiliser le même format :
 - **un dossier surveillé** : `DUMBMONIT_CONFIG_DIR` est appliqué au démarrage et
   à chaque changement, idéal pour un dépôt Git monté dans le conteneur.
 
-Un [fournisseur Terraform](https://github.com/laupernoe/dumbmonit/tree/main/integrations/terraform-provider-dumbmonit)
+Un [fournisseur Terraform](https://github.com/selfhostr/dumbmonit/tree/main/integrations/terraform-provider-dumbmonit)
 gère les mêmes objets un par un par l’API REST.
 
 ## Le fichier

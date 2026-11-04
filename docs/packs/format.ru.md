@@ -198,7 +198,7 @@ rules:
 ## Профили SNMP
 
 Пак может содержать профили SNMP, написанные точно так же, как встроенные в
-[`profiles/`](https://github.com/laupernoe/dumbmonit/tree/main/profiles). Они
+[`profiles/`](https://github.com/selfhostr/dumbmonit/tree/main/profiles). Они
 присоединяются к каталогу SNMP и применяются по `sysObjectID`, как и остальные;
 собственный тип монитора они не создают.
 

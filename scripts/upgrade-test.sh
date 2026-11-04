@@ -6,7 +6,7 @@
 #
 # Variables :
 #   OLD_IMAGE   image de départ (défaut : dernière release publiée, voir plus bas)
-#   NEW_IMAGE   image candidate (défaut : ghcr.io/laupernoe/dumbmonit:edge)
+#   NEW_IMAGE   image candidate (défaut : ghcr.io/selfhostr/dumbmonit:edge)
 #   KEEP=1      garde le volume et les conteneurs après coup (débogage)
 #
 # Prérequis : docker, curl, python3. Les images sont lancées comme en production
@@ -14,7 +14,7 @@
 # docker-compose.yml d'alpha.8 tel quel, qui doit continuer de démarrer sans retouche.
 set -euo pipefail
 
-REPO=laupernoe/dumbmonit
+REPO=selfhostr/dumbmonit
 NEW_IMAGE=${1:-${NEW_IMAGE:-ghcr.io/$REPO:edge}}
 PASSWORD='correct horse battery 42'
 USER_NAME=upgrader

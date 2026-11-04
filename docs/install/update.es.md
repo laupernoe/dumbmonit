@@ -6,7 +6,7 @@ de la actualización. Nunca instala nada por sí mismo.
 ## Detectar una nueva versión {#spotting-a-new-version}
 
 Como máximo una vez al día, el servidor consulta la API pública de releases
-de GitHub (`api.github.com/repos/laupernoe/dumbmonit/releases`) para
+de GitHub (`api.github.com/repos/selfhostr/dumbmonit/releases`) para
 obtener la última versión y la compara con la que estás ejecutando. Las
 versiones previas como `0.1.0-alpha.7` se comparan correctamente:
 `alpha.10` es más reciente que `alpha.9`, y `0.1.0` es más reciente que
@@ -58,7 +58,7 @@ La misma información está disponible para scripts y tokens de API en
 
 Para fijar una versión en lugar de seguir `:latest`, cambia la etiqueta de
 la imagen en el archivo Compose (por ejemplo
-`ghcr.io/laupernoe/dumbmonit:0.1.0-alpha.7`) y ejecuta el mismo comando.
+`ghcr.io/selfhostr/dumbmonit:0.1.0-alpha.7`) y ejecuta el mismo comando.
 
 Para volver atrás, restaura la copia de seguridad hecha en el paso 1 sobre
 la imagen anterior.

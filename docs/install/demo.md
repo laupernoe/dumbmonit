@@ -1,6 +1,6 @@
 # Run a demo instance
 
-The public demo at **[demo.dumbmonit.app](https://demo.dumbmonit.app)** is an
+The public demo at **[demo.dumbmonit.selfhostr.io](https://demo.dumbmonit.selfhostr.io)** is an
 ordinary DumbMonit image started with `DUMBMONIT_DEMO=1`. You can run the same
 thing yourself — to show DumbMonit to a team before installing it for real, or
 to put a showcase on your own site.
@@ -56,7 +56,7 @@ set `DUMBMONIT_TRUSTED_PROXIES` as for any public instance.
 ```bash
 docker run -d --name dumbmonit-demo -p 8080:8080 \
   -e DUMBMONIT_DEMO=1 \
-  ghcr.io/laupernoe/dumbmonit:latest
+  ghcr.io/selfhostr/dumbmonit:latest
 ```
 
 Or with Compose, without a volume so every restart starts clean:
@@ -64,7 +64,7 @@ Or with Compose, without a volume so every restart starts clean:
 ```yaml
 services:
   dumbmonit-demo:
-    image: ghcr.io/laupernoe/dumbmonit:latest
+    image: ghcr.io/selfhostr/dumbmonit:latest
     restart: unless-stopped
     ports:
       - "8080:8080"

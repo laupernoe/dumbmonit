@@ -113,7 +113,7 @@ aus.
 ## 5. Prüfen
 
 ```bash
-docker run --rm -v "$PWD:/work" --user "$(id -u)" ghcr.io/laupernoe/dumbmonit:latest \
+docker run --rm -v "$PWD:/work" --user "$(id -u)" ghcr.io/selfhostr/dumbmonit:latest \
   pack test /work/shelly-plug --update
 ```
 
@@ -169,7 +169,7 @@ existierende Option oder ein anderswohin zeigender Pfad werden mit
 ihrer Stelle gemeldet.
 
 ```bash
-docker run --rm -v "$PWD:/work:ro" ghcr.io/laupernoe/dumbmonit:latest pack lint /work/shelly-plug
+docker run --rm -v "$PWD:/work:ro" ghcr.io/selfhostr/dumbmonit:latest pack lint /work/shelly-plug
 ```
 
 ## 7. Installieren
@@ -192,6 +192,6 @@ Extraktion wird ersetzt, die von Ihnen angepasste Regel bleibt
 erhalten.
 
 Das vollständige Pack, mit seinem Einrichtungshinweis, liegt in
-[`packs/shelly-plug`](https://github.com/laupernoe/dumbmonit/tree/main/packs/shelly-plug).
+[`packs/shelly-plug`](https://github.com/selfhostr/dumbmonit/tree/main/packs/shelly-plug).
 Alles, was das Format akzeptiert, steht in der
 [Referenz](format.md).

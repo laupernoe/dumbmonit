@@ -10,7 +10,7 @@ them. Three ways to use the same format:
 - **a watched folder**: `DUMBMONIT_CONFIG_DIR` is applied at startup and on
   every change, which suits a Git checkout mounted into the container.
 
-A [Terraform provider](https://github.com/laupernoe/dumbmonit/tree/main/integrations/terraform-provider-dumbmonit)
+A [Terraform provider](https://github.com/selfhostr/dumbmonit/tree/main/integrations/terraform-provider-dumbmonit)
 manages the same objects one by one through the REST API.
 
 ## The file

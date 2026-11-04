@@ -252,7 +252,7 @@ vous créez un jeton.
     Les binaires macOS ne sont **pas** dans l'image DumbMonit : les
     construire demande le SDK d'Apple, dont la licence interdit la
     redistribution. Ils sont attachés à chaque
-    [release GitHub](https://github.com/laupernoe/dumbmonit/releases/latest)
+    [release GitHub](https://github.com/selfhostr/dumbmonit/releases/latest)
     à la place — `dumbmonit-agent-macos-aarch64` (Apple silicon) et
     `dumbmonit-agent-macos-x86_64` (Intel), chacun avec son `.sha256` — et
     le serveur redirige `/download/dumbmonit-agent-macos-…` là, le script
@@ -268,7 +268,7 @@ vous créez un jeton.
     `.sha256` de la release : `--bin` installe ce que vous donnez) :
 
     ```sh
-    curl -sSLO https://github.com/laupernoe/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
+    curl -sSLO https://github.com/selfhostr/dumbmonit/releases/latest/download/dumbmonit-agent-macos-aarch64
     curl -sSL https://server:8080/install.sh | sudo sh -s -- \
         --token=dmon_xxx --url=https://server:8080 --bin=./dumbmonit-agent-macos-aarch64
     ```
@@ -351,7 +351,7 @@ Les binaires Linux sont liés statiquement contre musl : ils tournent sur
 n'importe quelle distribution, glibc ou pas (Alpine, firmwares de NAS),
 sans bibliothèque à faire correspondre. Chaque fichier a sa somme de
 contrôle à côté, `<file>.sha256`, au format `sha256sum`. Chaque
-[release GitHub](https://github.com/laupernoe/dumbmonit/releases/latest)
+[release GitHub](https://github.com/selfhostr/dumbmonit/releases/latest)
 porte les six binaires et leurs sommes de contrôle, pour les machines qui
 ne peuvent pas atteindre le `/download/` du serveur ou pour installer avec
 `--bin`.
@@ -365,9 +365,9 @@ bien été construit par le workflow de release de ce dépôt :
 cosign verify-blob dumbmonit-agent-linux-x86_64 \
   --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
+  --certificate-identity-regexp '^https://github.com/selfhostr/dumbmonit/\.github/workflows/release\.yml@refs/tags/v'
 # ou, avec la CLI GitHub :
-gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+gh attestation verify dumbmonit-agent-linux-x86_64 -R selfhostr/dumbmonit
 ```
 
 Pour construire vous-même les binaires Linux, Windows et FreeBSD, depuis
@@ -615,7 +615,7 @@ pas un agent planté : le retour arrière a alors lieu à son prochain démarrag
 ### Docker et autres cas {#automatic-updates-other-cases}
 
 - **Docker** : un agent dans un conteneur ne se remplace jamais (l'image
-  `ghcr.io/laupernoe/dumbmonit-agent` définit `DUMBMONIT_AGENT_CONTAINER=1` ;
+  `ghcr.io/selfhostr/dumbmonit-agent` définit `DUMBMONIT_AGENT_CONTAINER=1` ;
   `/.dockerenv` et `/run/.containerenv` sont aussi détectés). L'interface dit de
   mettre à jour son image : `docker compose pull && docker compose up -d`.
 - **macOS** : l'image du serveur ne livre pas d'agent macOS. Mettez-les à jour
@@ -985,7 +985,7 @@ n'existe par défaut. Voir
 ## Faire tourner l'agent dans Docker / sur un autre réseau {#run-the-agent-in-docker--on-another-network}
 
 L'agent est aussi publié comme image conteneur, avec les mêmes tags que
-le serveur : `ghcr.io/laupernoe/dumbmonit-agent:latest` (dernière
+le serveur : `ghcr.io/selfhostr/dumbmonit-agent:latest` (dernière
 release), `:edge` (dernier commit sur `main`). C'est une image
 `FROM scratch` contenant le binaire d'agent et le paquet de CA Mozilla,
 configurée entièrement par variables d'environnement. Le dépôt fournit un
