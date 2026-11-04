@@ -11602,6 +11602,14 @@ components:
             anything (`curl --pinnedpubkey`, a PowerShell validation callback), and the
             agent keeps it (`server_pin`). `null`: a provided certificate, checked by the
             system's authorities.
+        pin_source:
+          type: [string, "null"]
+          enum: [own, proxy, trusted, null]
+          description: >-
+            Set when the server probed the address the browser opened: `own` (DumbMonit's
+            certificate), `proxy` (a reverse proxy presents another certificate, whose key
+            is pinned) or `trusted` (a certificate from a trusted authority: no pin).
+            `null`: no probe (relay, typed address, probe failed).
         via_relay:
           oneOf:
             - type: "null"
@@ -11736,6 +11744,10 @@ components:
             secret: { type: string, description: Shown once. }
             install_linux: { type: string }
             install_windows: { type: string }
+            pin_source:
+              type: [string, "null"]
+              enum: [own, proxy, trusted, null]
+              description: Where the pin in the commands comes from; see `pin_source` of the install parameters.
     AgentAdKitCreate:
       type: object
       required: [domain]

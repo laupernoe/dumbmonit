@@ -1025,7 +1025,6 @@
 	"demo_tour_s8_title": "Wandmodus",
 	"deviceform_agentflow_another": "Weitere Maschine hinzufügen",
 	"deviceform_agentflow_connected": "{host} ist verbunden ({os}).",
-	"deviceform_agentflow_fleet": "Eine ganze Windows-Domäne auf einmal?",
 	"deviceform_agentflow_folder": "Ordner",
 	"deviceform_agentflow_folder_help": "Optional. Maschinen im selben Ordner werden in der Überwachungsliste gruppiert.",
 	"deviceform_agentflow_gateway_pending": "{relay} öffnet sein Gateway bei der nächsten Meldung, innerhalb einer Minute. Führen Sie den Befehl aus, sobald es lauscht.",
@@ -1125,7 +1124,6 @@
 	"deviceform_enroll_create_relay": "Installationsbefehl für das Relay erstellen",
 	"deviceform_enroll_default_site": "Entfernter Standort",
 	"deviceform_enroll_linux": "Linux / macOS",
-	"deviceform_enroll_relay_checkbox": "Dieser Agent ist ein Relay für einen entfernten Standort",
 	"deviceform_enroll_see_devices": "Monitore ansehen",
 	"deviceform_enroll_shown_once": "Wird nur einmal angezeigt",
 	"deviceform_enroll_single_use": "Einmalig verwendbar",
@@ -9185,6 +9183,8 @@
 	"deviceform_enroll_spk_url": "Server-URL (Feld im Assistenten)",
 	"deviceform_enroll_spk_pin": "Zertifikat-Pin (Feld im Assistenten)",
 	"deviceform_enroll_spk_pin_none": "Dieser Server hat ein Zertifikat einer vertrauenswürdigen Stelle: Das Pin-Feld bleibt leer.",
+	"deviceform_enroll_spk_pin_proxy": "Reverse-Proxy erkannt: Dies ist der Pin des Zertifikats, das er ausliefert, nicht der von DumbMonit selbst.",
+	"deviceform_enroll_spk_pin_trusted": "Die geöffnete Adresse hat ein vertrauenswürdiges Zertifikat: Das Pin-Feld bleibt leer.",
 	"deviceform_synology_pkg_title": "DumbMonit-Agent-Paket",
 	"deviceform_synology_pkg_recommended": "Empfohlen für mehrere NAS",
 	"deviceform_synology_pkg_point_install": "Ein .spk über das DSM-Paketzentrum installieren.",
@@ -9193,5 +9193,12 @@
 	"deviceform_synology_api_point_login": "DumbMonit meldet sich mit einem eigenen Nur-Lese-Konto bei DSM an.",
 	"deviceform_synology_api_cta": "DSM-Zugangsdaten verwenden",
 	"deviceform_synology_dl_title": "Paket für Ihr NAS herunterladen",
-	"deviceform_synology_dl_arch": "{arch} herunterladen"
+	"deviceform_synology_dl_arch": "{arch} herunterladen",
+	"deviceform_feature_ad_label": "Mit Active Directory (GPO) verteilen",
+	"deviceform_feature_ad_summary": "Installiert den Agent per Gruppenrichtlinie auf allen Windows-Servern einer Domäne.",
+	"deviceform_new_desc_ad": "Verteilen Sie den Agent per Gruppenrichtlinie von einem Domänencontroller aus auf eine ganze Windows-Domäne.",
+	"deviceform_new_ad_admin_only": "Nur Administratoren können mit Active Directory verteilen.",
+	"deviceform_agentflow_advanced": "Erweitert",
+	"deviceform_agentflow_synology_hint": "Auf einem Synology-NAS?",
+	"deviceform_agentflow_synology_link": "Das DSM-Paket verwenden"
 }
