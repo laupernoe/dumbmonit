@@ -156,7 +156,7 @@ DumbMonit holds the credentials of every monitor it watches, so changes are
 reviewed with secure design principles in mind: least privilege, secure
 defaults, no secret ever returned by the API, vetted cryptography only, and
 untrusted input from monitors and agents. The
-[security model](https://dumbmonit.readthedocs.io/en/latest/development/security-model/)
+[security model](https://dumbmonit.app/docs/development/security-model/)
 lists the trust boundaries and where each countermeasure lives. Report
 vulnerabilities privately, as described in [SECURITY.md](SECURITY.md). The
 release notes list every fixed vulnerability with its CVE or GHSA identifier.

@@ -1602,7 +1602,7 @@ export interface ChannelKindInfo {
 	kind: string;
 	label: string;
 	summary: string;
-	/** Documentation link, for example `https://dumbmonit.readthedocs.io/en/latest/notifications/#discord`. */
+	/** Documentation link, for example `https://dumbmonit.app/docs/notifications/#discord`. */
 	doc_url: string;
 	settings: ChannelField[];
 	secrets: ChannelField[];

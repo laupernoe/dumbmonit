@@ -3,7 +3,7 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## Unreleased
+## 0.17.0 — 2026-11-04
 
 ### Added
 
@@ -13,6 +13,43 @@ All notable changes to this project are documented here. The format follows
   the monitor is deleted. Administrator session only, recorded in the audit log
   (`POST /api/targets/{id}/agent/uninstall`). An agent in a container, or not
   installed by the install scripts, refuses; the manual commands stay available.
+- **Synology package, deeper.** The DSM 7 package is attached to every release
+  (x86_64 and aarch64) and the agent reads RAID and volume health, disks (model,
+  temperature, wear, unreadable sectors), installed packages, SMB/NFS/SSH and the
+  UPS, with alert rules for a degraded array, a read-only volume, a hot disk, growing
+  bad sectors, SSD wear and a stopped package. The add-monitor page offers the package
+  or the credentials, with the pin ready to copy.
+- **Pre-releases from dev.** A tag `vX.Y.Z` on a commit that is not on main publishes
+  a pre-release (images, agent binaries, `.spk`), never `latest`.
+- **Deeper integrations and more alert rules** for Proxmox VE, Proxmox Backup Server,
+  TrueNAS, UniFi, OPNsense, Tailscale, Pi-hole, AdGuard Home, Home Assistant, Jellyfin,
+  Plex, Immich, Nextcloud, PostgreSQL and Synology (API): about 100 new default rules
+  and many new metrics (certificates, backups, replication, DHCP, quotas, jobs, safety
+  sensors, tasks and more). Field names come from the vendors' public APIs.
+- **Motion and feedback.** Shared motion tokens, softer menus, toasts and panels, and a
+  green confirmation on the action buttons when the action succeeded.
+
+### Changed
+
+- **Cleaner monitor pages.** Icon-only header actions with a gear for the settings, a
+  lighter title line, and the agent settings (relay, logs, sentinel, services to watch,
+  re-enrolment) moved to the monitor's settings. The "Allow re-enrolment" button acts
+  in one click.
+- **Simpler settings.** Six tabs (the former General tab is now in System), a password
+  form behind a button, empty blocks collapsed, and no on-call contacts or hours in My
+  account.
+- **No default site.** A device without a site stays "No site"; only devices with a site
+  appear on the map, and there is no map until a site exists. The NAS fleet view is
+  gone: filter the monitors list instead.
+- **The documentation lives on the website.** The app no longer carries help texts: each
+  screen has a link to its page on dumbmonit.app/docs, rewritten step by step.
+- **Home banner.** The pigeon is the one of the logo, sitting in the sky.
+
+### Fixed
+
+- The agent troubleshooting commands, the Docker Compose block and a one-click
+  re-enrolment on the agent install page.
+- The Synology installer's fields are readable, and its pin comes from the add-monitor page.
 
 ## 0.16.0 — 2026-11-03
 

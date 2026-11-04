@@ -83,7 +83,7 @@
         "Monitor active directory replication\nOptional: inbound replication status"
       ],
       "warning": "Plain LDAP on port 389 sends the password in clear and is refused by default: use LDAPS, or StartTLS on port 389.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/activedirectory/"
+      "doc_url": "https://dumbmonit.app/docs/devices/activedirectory/"
     },
     "options": [
       {
@@ -589,7 +589,7 @@
         }
       ],
       "warning": "AdGuard Home has no read-only user, so dumbmonit can change every setting: keep its password to DumbMonit alone, and turn on HTTPS in Settings → Encryption settings across an untrusted network.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/adguard/"
+      "doc_url": "https://dumbmonit.app/docs/devices/adguard/"
     },
     "options": [
       {
@@ -945,7 +945,7 @@
         }
       ],
       "warning": "The agent contacts the server, never the other way round: no port needs to be opened on the monitored machine.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/agent/"
+      "doc_url": "https://dumbmonit.app/docs/devices/agent/"
     },
     "options": [],
     "metrics": [
@@ -1522,7 +1522,7 @@
         }
       ],
       "warning": "If the machine stops reporting, its services are shown as hidden behind it rather than raising alerts of their own.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/agent/"
+      "doc_url": "https://dumbmonit.app/docs/devices/agent/"
     },
     "options": []
   },
@@ -1600,7 +1600,7 @@
         }
       ],
       "warning": "Without ExtendedStatus, requests and bytes are not reported at all: the chart stays empty rather than flat.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/apache/"
+      "doc_url": "https://dumbmonit.app/docs/devices/apache/"
     },
     "options": [
       {
@@ -1876,7 +1876,7 @@
         "Read access to Central monitoring\nDevices, alerts and health overviews: DumbMonit never changes anything"
       ],
       "warning": "Beta: written from HPE's published API reference, not yet tested on a real Central account. It reads the new Central API with Central credentials; credentials scoped to the GreenLake platform and classic Central are not supported.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/arubacentral/"
+      "doc_url": "https://dumbmonit.app/docs/devices/arubacentral/"
     },
     "options": [
       {
@@ -2139,7 +2139,7 @@
         }
       ],
       "warning": "authentik has no read-only role for its system pages: the token's user must be allowed into the interface, so keep the key only in DumbMonit. Pages the token cannot read are skipped, not failed.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/authentik/"
+      "doc_url": "https://dumbmonit.app/docs/devices/authentik/"
     },
     "options": [
       {
@@ -2359,7 +2359,7 @@
         "sts:AssumeRole (only with a role ARN)\nLets the user assume the read-only role; allow it on that role only."
       ],
       "warning": "Use a dedicated IAM user with only these read permissions, never a key that can change resources. AWS bills GetMetricData per metric requested (USD 0.01 per 1,000): a long check interval keeps the cost low on large accounts.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/aws/"
+      "doc_url": "https://dumbmonit.app/docs/devices/aws/"
     },
     "options": [
       {
@@ -2584,7 +2584,7 @@
         "Reader (role on the subscription)\nReads Resource Health and the active Azure Monitor alerts; changes nothing."
       ],
       "warning": "A stopped or deallocated virtual machine is reported by Azure as unavailable on the user's request: it is counted apart and raises no alert. Azure Monitor alerts need the Microsoft.AlertsManagement resource provider registered on the subscription; without it only Resource Health is monitored.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/azure/"
+      "doc_url": "https://dumbmonit.app/docs/devices/azure/"
     },
     "options": [
       {
@@ -2796,7 +2796,7 @@
         "GET on /metrics\nRequest counters (optional)"
       ],
       "warning": "Never expose the admin API itself: whoever reaches port 2019 can replace the configuration or stop Caddy.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/caddy/"
+      "doc_url": "https://dumbmonit.app/docs/devices/caddy/"
     },
     "options": [
       {
@@ -3051,7 +3051,7 @@
         "read-only role\nReads the state of the cluster, changes nothing"
       ],
       "warning": "A standby manager redirects to the active one: use the address of the active manager. The dashboard ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/ceph/"
+      "doc_url": "https://dumbmonit.app/docs/devices/ceph/"
     },
     "options": [
       {
@@ -3444,7 +3444,7 @@
         "Account > Load Balancing: Monitors And Pools > Read\nReads the health of the load balancer pools."
       ],
       "warning": "A part whose permission is missing (or that the plan does not include) is skipped and its readable metric is 0; it does not make the monitor fail. Only the zones the token can see are watched.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/cloudflare/"
+      "doc_url": "https://dumbmonit.app/docs/devices/cloudflare/"
     },
     "options": [
       {
@@ -3793,7 +3793,7 @@
         "Machine login (optional)\nReads the alerts; a machine can also send alerts, so keep it for DumbMonit only"
       ],
       "warning": "A bouncer that stops pulling keeps enforcing a frozen list: DumbMonit warns when a bouncer's requests stop for 30 minutes.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/crowdsec/"
+      "doc_url": "https://dumbmonit.app/docs/devices/crowdsec/"
     },
     "options": [
       {
@@ -4040,7 +4040,7 @@
         }
       ],
       "warning": "Give the DNS server by its IP address, not by a name.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#dns"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#dns"
     },
     "options": [
       {
@@ -4229,7 +4229,7 @@
         }
       ],
       "warning": "A domain in clientHold or serverHold is taken out of the DNS: every site and mailbox under it stops.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/domain/"
+      "doc_url": "https://dumbmonit.app/docs/devices/domain/"
     },
     "options": [
       {
@@ -4424,7 +4424,7 @@
         "Interface password\nDuplicati has no accounts or read-only mode"
       ],
       "warning": "Duplicati 2.1 or later is required: version 2.0 signs in through a different mechanism that DumbMonit does not use. The password gives full access, so keep port 8200 on your local network.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/duplicati/"
+      "doc_url": "https://dumbmonit.app/docs/devices/duplicati/"
     },
     "options": [
       {
@@ -4707,7 +4707,7 @@
         "cluster_monitor (OpenSearch)\nThe same permission on OpenSearch"
       ],
       "warning": "The account needs no index privilege: DumbMonit never reads a document. One node reports the whole cluster, so enter a node that is not the one you expect to fail.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/elasticsearch/"
+      "doc_url": "https://dumbmonit.app/docs/devices/elasticsearch/"
     },
     "options": [
       {
@@ -4975,7 +4975,7 @@
         "Reports.Read.All\nReads admin MFA registration; needs Entra ID P1 or P2 (optional)."
       ],
       "warning": "Admin consent gives the application tenant-wide read access to the data above. Use a dedicated app registration with only these permissions, and renew its client secret before it expires: DumbMonit watches its own secret like any other.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/entra/"
+      "doc_url": "https://dumbmonit.app/docs/devices/entra/"
     },
     "options": [
       {
@@ -5155,7 +5155,7 @@
         "read:user\nThe token's own account"
       ],
       "warning": "Forgejo and Gitea have no read-only administrator role, so the token can do whatever its account can: use a dedicated bot account, not your own.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/forgejo/"
+      "doc_url": "https://dumbmonit.app/docs/devices/forgejo/"
     },
     "options": [
       {
@@ -5364,7 +5364,7 @@
         "Every other permission: None\nNothing else is needed"
       ],
       "warning": "FortiGate ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/fortigate/"
+      "doc_url": "https://dumbmonit.app/docs/devices/fortigate/"
     },
     "options": [
       {
@@ -5738,7 +5738,7 @@
         }
       ],
       "warning": "Port 5000 has no login and gives full control of Frigate: expose it only to DumbMonit, never to the internet. A camera you turned off in Frigate's settings also reads as offline.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/frigate/"
+      "doc_url": "https://dumbmonit.app/docs/devices/frigate/"
     },
     "options": [
       {
@@ -5966,7 +5966,7 @@
         "Administrator account\nSidekiq, runners, migrations, statistics, settings and licence need it"
       ],
       "warning": "GitLab has no read-only administrator role, so the token can read everything its account can: use a dedicated bot account, not your own.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/gitlab/"
+      "doc_url": "https://dumbmonit.app/docs/devices/gitlab/"
     },
     "options": [
       {
@@ -6250,7 +6250,7 @@
         "notifications:read\nOptional: Graylog's own notifications"
       ],
       "warning": "Do not reuse your own account: a leaked token carries every right of its user. Graylog serves plain HTTP unless TLS is configured: across an untrusted network, put it behind HTTPS.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/graylog/"
+      "doc_url": "https://dumbmonit.app/docs/devices/graylog/"
     },
     "options": [
       {
@@ -6544,7 +6544,7 @@
         }
       ],
       "warning": "The check only sees what the health service reports: a server that always answers SERVING proves nothing about the methods behind it.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#grpc"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#grpc"
     },
     "options": [
       {
@@ -6757,7 +6757,7 @@
         "Read (project token)\nLists servers, volumes and backups and reads server metrics; changes nothing."
       ],
       "warning": "A server that is powered off is reported as not running, on purpose or not: mute the rule for it if that is expected. The API allows 3600 requests per hour and project, so server metrics are read for 10 servers by default.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/hetzner/"
+      "doc_url": "https://dumbmonit.app/docs/devices/hetzner/"
     },
     "options": [
       {
@@ -6992,7 +6992,7 @@
         "Regular user (Administrator toggle off)\nReads every entity and the repairs list"
       ],
       "warning": "A long-lived token carries every right of its user and lasts ten years: create it for the dedicated user, never your own. Home Assistant serves plain HTTP unless TLS is configured: across an untrusted network, use HTTPS.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/homeassistant/"
+      "doc_url": "https://dumbmonit.app/docs/devices/homeassistant/"
     },
     "options": [
       {
@@ -7323,7 +7323,7 @@
         "Read access to the monitored URL\nOnly if the page requires a login"
       ],
       "warning": "Never write a password or a token in the options: use the credential field, which is encrypted.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#http"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#http"
     },
     "options": [
       {
@@ -7702,7 +7702,7 @@
         "A mailbox account that may log in\nOnly if you fill in a credential"
       ],
       "warning": "The check never opens a mailbox: a server that logs in but cannot read its storage answers perfectly here.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#imap"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#imap"
     },
     "options": [
       {
@@ -7940,7 +7940,7 @@
         "user.read\nThe account that owns the key"
       ],
       "warning": "Create the key from an account that can open Administration, or photo counts and job queues are skipped; \"last backup\" is the whole library's latest upload, the same for every device.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/immich/"
+      "doc_url": "https://dumbmonit.app/docs/devices/immich/"
     },
     "options": [
       {
@@ -8263,7 +8263,7 @@
         }
       ],
       "warning": "InfluxDB 3 answers 401 on /health without a token unless it runs with --disable-authz. The token is only used to read health and metrics.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/influxdb/"
+      "doc_url": "https://dumbmonit.app/docs/devices/influxdb/"
     },
     "options": [
       {
@@ -8461,7 +8461,7 @@
         "Accounts (scope: accounts)\nLists the account IDs of the token; optional when the Account ID option is filled."
       ],
       "warning": "The Infomaniak API gives no finer state than the expiry date, the lock and the maintenance flags of each product: it does not tell whether a site or a mailbox is up. Use an HTTP monitor for that.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/infomaniak/"
+      "doc_url": "https://dumbmonit.app/docs/devices/infomaniak/"
     },
     "options": [
       {
@@ -8647,7 +8647,7 @@
         }
       ],
       "warning": "Spamhaus PBL lists end-user ranges that should not send mail directly: a listing there only matters for an address that runs a mail server.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/ip_blacklist/"
+      "doc_url": "https://dumbmonit.app/docs/devices/ip_blacklist/"
     },
     "options": [
       {
@@ -9042,7 +9042,7 @@
         }
       ],
       "warning": "Jellyfin keys cannot be limited, so this one has every right on the server: keep it to DumbMonit and revoke it on the same page if it leaks.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/jellyfin/"
+      "doc_url": "https://dumbmonit.app/docs/devices/jellyfin/"
     },
     "options": [
       {
@@ -9356,7 +9356,7 @@
         "Describe on groups\nRead the offsets each group committed"
       ],
       "warning": "Each broker must be reachable at the address it advertises (advertised.listeners): a broker DumbMonit cannot reach leaves the consumer lag incomplete. SASL/PLAIN is accepted only over TLS; SCRAM and Kerberos are not supported.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/kafka/"
+      "doc_url": "https://dumbmonit.app/docs/devices/kafka/"
     },
     "options": [
       {
@@ -9591,7 +9591,7 @@
         "view-users\nMaster-realm client role: user counts"
       ],
       "warning": "Keycloak 24 and earlier serve the health checks on the main port: set the health port option to same. Health checks must be enabled on the server, or DumbMonit reports a missing /health/ready.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/keycloak/"
+      "doc_url": "https://dumbmonit.app/docs/devices/keycloak/"
     },
     "options": [
       {
@@ -9874,7 +9874,7 @@
         "Server user name and password\nKopia has no read-only API account"
       ],
       "warning": "Kopia's API has no read-only account: the server password also lets its holder start and delete snapshots. DumbMonit only reads, but keep port 51515 on your local network.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/kopia/"
+      "doc_url": "https://dumbmonit.app/docs/devices/kopia/"
     },
     "options": [
       {
@@ -10116,7 +10116,7 @@
         "get, list on deployments, statefulsets, daemonsets\nWorkloads missing replicas (apps group)"
       ],
       "warning": "On k3s, run each command as sudo k3s kubectl. The API server certificate only lists its own names and addresses: use one it lists, or tick Accept an unverifiable certificate.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/kubernetes/"
+      "doc_url": "https://dumbmonit.app/docs/devices/kubernetes/"
     },
     "options": [
       {
@@ -10427,7 +10427,7 @@
         }
       ],
       "warning": "A Lidarr API key cannot be limited to reading: keep it only in DumbMonit, which sends GET requests and nothing else.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/lidarr/"
+      "doc_url": "https://dumbmonit.app/docs/devices/lidarr/"
     },
     "options": [
       {
@@ -10665,7 +10665,7 @@
         }
       ],
       "warning": "Refused lines are the failure to watch: when Loki refuses a line (too old, over a rate or stream limit, too long), the sender usually drops the batch and Grafana only shows a gap in the logs.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/loki/"
+      "doc_url": "https://dumbmonit.app/docs/devices/loki/"
     },
     "options": [
       {
@@ -10884,7 +10884,7 @@
         "AuditLog.Read.All\nCounts failed sign-ins when risk data is unavailable; needs Entra ID P1 (optional)."
       ],
       "warning": "Admin consent gives the application tenant-wide read access to the data above. Use a dedicated app registration with only these permissions, and renew its client secret before it expires.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/m365/"
+      "doc_url": "https://dumbmonit.app/docs/devices/m365/"
     },
     "options": [
       {
@@ -11129,7 +11129,7 @@
         }
       ],
       "warning": "A blocklist that does not answer is shown as unknown, never as clean.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/mail_blacklist/"
+      "doc_url": "https://dumbmonit.app/docs/devices/mail_blacklist/"
     },
     "options": [
       {
@@ -11536,7 +11536,7 @@
         }
       ],
       "warning": "mailcow only answers the addresses allowed on its API page: if DumbMonit reaches it through NAT or a relay agent, allow that address instead.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/mailcow/"
+      "doc_url": "https://dumbmonit.app/docs/devices/mailcow/"
     },
     "options": [
       {
@@ -11850,7 +11850,7 @@
         "XML API address restriction\nOptional: allow the address DumbMonit connects from"
       ],
       "warning": "The queues, sessions and Windows services of MDaemon can only be read on the server itself: without the agent, DumbMonit sees the mail ports and nothing else. The XML API account is optional and only brings the version; MDaemon has no read-only role for it, so never reuse your own account, and use a password found nowhere else, as repeated failures can get DumbMonit blocked.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/mdaemon/"
+      "doc_url": "https://dumbmonit.app/docs/devices/mdaemon/"
     },
     "options": [
       {
@@ -12016,7 +12016,7 @@
         "Organization access: Read-only\nLists devices, uplinks, licensing and clients, changes nothing"
       ],
       "warning": "A dormant device (not seen for a long time) is counted but never reported as down, and a WAN socket without a cable is not a failed uplink: only an uplink that lost its Internet access is.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/meraki/"
+      "doc_url": "https://dumbmonit.app/docs/devices/meraki/"
     },
     "options": [
       {
@@ -12239,7 +12239,7 @@
         "rest-api\nOpen the REST API under /rest"
       ],
       "warning": "RouterOS 7.1 or later is required (RouterOS 6 has no REST API); with a self-signed certificate, tick \"Accept an unverifiable certificate\" in the options.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/mikrotik/"
+      "doc_url": "https://dumbmonit.app/docs/devices/mikrotik/"
     },
     "options": [
       {
@@ -12610,7 +12610,7 @@
         "Prometheus token\nOpens the metrics pages only, no S3 or console access"
       ],
       "warning": "The token only opens the metrics pages, but anyone holding it can read them. If MinIO runs with MINIO_PROMETHEUS_AUTH_TYPE=public, the metrics need no token: choose No authentication.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/minio/"
+      "doc_url": "https://dumbmonit.app/docs/devices/minio/"
     },
     "options": [
       {
@@ -12857,7 +12857,7 @@
         "clusterMonitor (built-in role)\nRead server and replica set status"
       ],
       "warning": "A mongodb+srv:// address is not resolved (enter each member's host), and MongoDB older than 3.6 and mongos routers are not supported.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/mongodb/"
+      "doc_url": "https://dumbmonit.app/docs/devices/mongodb/"
     },
     "options": [
       {
@@ -13202,7 +13202,7 @@
         "Subscribe (read) on the topic you name\nOnly if you name a topic"
       ],
       "warning": "The check never publishes, and it cannot tell how old a retained message is: MQTT does not date them.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#mqtt"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#mqtt"
     },
     "options": [
       {
@@ -13482,7 +13482,7 @@
         "SQLAgentReaderRole (msdb)\nOptional: read the Agent job history"
       ],
       "warning": "Windows authentication is not supported: use a SQL Server login, on an instance that allows SQL Server authentication (mixed mode). Named instances need their fixed TCP port in the address.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/mssql/"
+      "doc_url": "https://dumbmonit.app/docs/devices/mssql/"
     },
     "options": [
       {
@@ -13742,7 +13742,7 @@
         "USAGE (no privilege)\nConnect and run SELECT 1, nothing more"
       ],
       "warning": "The check opens a real connection on every poll: on an instance close to its connection limit, give it a longer interval.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#mysql-and-mariadb"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#mysql-and-mariadb"
     },
     "options": [
       {
@@ -14009,7 +14009,7 @@
         "A read-only account\nAllowed to log in over SSH and to show the configuration"
       ],
       "warning": "Configurations hold secrets: they are stored encrypted, shown with their secrets masked, and only an administrator signed in can reveal or download them.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/netconfig/"
+      "doc_url": "https://dumbmonit.app/docs/devices/netconfig/"
     },
     "options": [
       {
@@ -14150,7 +14150,7 @@
         }
       ],
       "warning": "Use an address listed in Nextcloud's trusted domains, or Nextcloud refuses the request.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/nextcloud/"
+      "doc_url": "https://dumbmonit.app/docs/devices/nextcloud/"
     },
     "options": [
       {
@@ -14565,7 +14565,7 @@
         }
       ],
       "warning": "stub_status only counts connections and requests: a configuration error in a server block or an unreachable backend does not show there.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/nginx/"
+      "doc_url": "https://dumbmonit.app/docs/devices/nginx/"
     },
     "options": [
       {
@@ -14783,7 +14783,7 @@
         "Access Lists, SSL Certificates: Hidden\nKeeps private keys out of reach"
       ],
       "warning": "Leave SSL Certificates on Hidden: Nginx Proxy Manager hands private keys to any user allowed to view them.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/npm/"
+      "doc_url": "https://dumbmonit.app/docs/devices/npm/"
     },
     "options": [
       {
@@ -14965,7 +14965,7 @@
         }
       ],
       "warning": "Keep the DumbMonit host itself in sync: its own drift is added to the measured offset.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#ntp"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#ntp"
     },
     "options": [
       {
@@ -15184,7 +15184,7 @@
         }
       ],
       "warning": "DumbMonit watches the UPS; it shuts nothing down: the machines it powers still need their own NUT client (upsmon) to shut down cleanly.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/nut/"
+      "doc_url": "https://dumbmonit.app/docs/devices/nut/"
     },
     "options": [
       {
@@ -15557,7 +15557,7 @@
         "Prism Viewer, all entities\nSees clusters, hosts, VMs, storage containers, alerts"
       ],
       "warning": "Needs Prism Central pc.2024.3 or later (v4 API); Prism Element alone is not supported. Prism Central uses a self-signed certificate: enable \"Accept an unverifiable certificate\" unless DumbMonit trusts it.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/nutanix/"
+      "doc_url": "https://dumbmonit.app/docs/devices/nutanix/"
     },
     "options": [
       {
@@ -15819,7 +15819,7 @@
         "Viewer role on the sites\nReads sites, devices and client counts, changes nothing"
       ],
       "warning": "The Omada controller ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own. The OpenAPI exists from controller version 5.9.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/omada/"
+      "doc_url": "https://dumbmonit.app/docs/devices/omada/"
     },
     "options": [
       {
@@ -16122,7 +16122,7 @@
         }
       ],
       "warning": "Anyone who reaches the management port and knows the password can disconnect clients and reconfigure the running server: allow only the DumbMonit host in the firewall and set a password.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/openvpn/"
+      "doc_url": "https://dumbmonit.app/docs/devices/openvpn/"
     },
     "options": [
       {
@@ -16291,7 +16291,7 @@
         "Diagnostics: Logs: Firewall: Live View\nOnly for the live firewall map option"
       ],
       "warning": "An API key is a password that never expires: restrict the group's source networks to the DumbMonit host and never grant All pages. OPNsense ships a self-signed certificate: tick \"Accept an unverifiable certificate\" if the connection is refused.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/opnsense/"
+      "doc_url": "https://dumbmonit.app/docs/devices/opnsense/"
     },
     "options": [
       {
@@ -17021,7 +17021,7 @@
         "SELECT_CATALOG_ROLE\nRead the V$ and DBA_ views, no data"
       ],
       "warning": "There is no native Oracle client: DumbMonit reads the database through ORDS over HTTP, and never contacts the listener on port 1521. The REST-enabled SQL settings vary between ORDS versions: check the ORDS documentation of yours.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/oracle/"
+      "doc_url": "https://dumbmonit.app/docs/devices/oracle/"
     },
     "options": [
       {
@@ -17224,7 +17224,7 @@
         }
       ],
       "warning": "OTLP over gRPC is not supported: configure the otlphttp exporter, not otlp. The token can write to the whole API: keep it in the collector's secrets.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/otlp/"
+      "doc_url": "https://dumbmonit.app/docs/devices/otlp/"
     },
     "options": []
   },
@@ -17290,7 +17290,7 @@
         "GET /dedicated/server*\nLists the dedicated servers and reads their state and tasks; changes nothing."
       ],
       "warning": "The OVHcloud API publishes no calendar of planned maintenance: DumbMonit sees an intervention only once it has started, as a running task. A VPS you stopped yourself counts as down. A dedicated server is reported in error only if OVHcloud monitoring is enabled on it. Either right may be omitted to watch only the other family.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/ovh/"
+      "doc_url": "https://dumbmonit.app/docs/devices/ovh/"
     },
     "options": [
       {
@@ -17495,7 +17495,7 @@
         "Web UI and Command Line: disabled\nThe account never signs in interactively"
       ],
       "warning": "The management interface ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/paloalto/"
+      "doc_url": "https://dumbmonit.app/docs/devices/paloalto/"
     },
     "options": [
       {
@@ -17771,7 +17771,7 @@
         "View on GlobalStatistics\nDocument counts"
       ],
       "warning": "When Redis or Celery stops, Paperless keeps serving its pages and documents, but nothing new is imported, from the consume folder or from mail, until someone looks. DumbMonit alerts on both.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/paperless/"
+      "doc_url": "https://dumbmonit.app/docs/devices/paperless/"
     },
     "options": [
       {
@@ -18025,7 +18025,7 @@
         "Sys.Modify on /system/certificates (optional)\nOnly for the certificate expiry option"
       ],
       "warning": "Both the user and the token need the permission: given to the token alone, it grants nothing and PBS reports nothing. The server uses a self-signed certificate by default: tick \"Accept an unverifiable certificate\" in the options if the connection is refused.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/pbs/"
+      "doc_url": "https://dumbmonit.app/docs/devices/pbs/"
     },
     "options": [
       {
@@ -18783,7 +18783,7 @@
         "Resource.Modify on /resource (optional)\nOnly for the update summary of the instances"
       ],
       "warning": "The console uses a self-signed certificate by default: tick \"Accept an unverifiable certificate\" in the options if the connection is refused.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/pdm/"
+      "doc_url": "https://dumbmonit.app/docs/devices/pdm/"
     },
     "options": [
       {
@@ -19414,7 +19414,7 @@
         "/api/v2/auth/key POST\nOnly while creating the key, then remove it"
       ],
       "warning": "The REST API package is a community project, not part of pfSense: reinstall it after each pfSense upgrade. pfSense ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you replaced it.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/pfsense/"
+      "doc_url": "https://dumbmonit.app/docs/devices/pfsense/"
     },
     "options": [
       {
@@ -19773,7 +19773,7 @@
         }
       ],
       "warning": "Pi-hole v6 or later is required; the app password can still pause blocking and edit lists through the API, so keep it for DumbMonit only.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/pihole/"
+      "doc_url": "https://dumbmonit.app/docs/devices/pihole/"
     },
     "options": [
       {
@@ -20089,7 +20089,7 @@
         "Lower \"Tolerated loss\" in the options to be warned before the loss is total."
       ],
       "warning": "In Docker, keep the sysctls lines of the shipped docker-compose.yml, or the check cannot send pings.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#ping"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#ping"
     },
     "options": [
       {
@@ -20305,7 +20305,7 @@
         }
       ],
       "warning": "The token is your Plex account's and can manage the server and every library: prefer the allowed network when DumbMonit is on your own network.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/plex/"
+      "doc_url": "https://dumbmonit.app/docs/devices/plex/"
     },
     "options": [
       {
@@ -20614,7 +20614,7 @@
         "Audit role\nRead-only: status, queues, statistics, quarantine counts"
       ],
       "warning": "Proxmox Mail Gateway has no API tokens, so DumbMonit signs in with this password. It uses a self-signed certificate by default: tick \"Accept an unverifiable certificate\" in the options if the connection is refused.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/pmg/"
+      "doc_url": "https://dumbmonit.app/docs/devices/pmg/"
     },
     "options": [
       {
@@ -21270,7 +21270,7 @@
         "A mailbox account that may log in\nOnly if you fill in a credential"
       ],
       "warning": "The check never lists or reads messages: it logs in, then says goodbye.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#pop3"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#pop3"
     },
     "options": [
       {
@@ -21509,7 +21509,7 @@
         "pg_monitor (optional role membership)\nRead the statistics views, nothing else; without it the health metrics only cover the role's own sessions"
       ],
       "warning": "The check opens a real connection on every poll: on an instance close to its connection limit, give it a longer interval.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#postgresql"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#postgresql"
     },
     "options": [
       {
@@ -22016,7 +22016,7 @@
         }
       ],
       "warning": "Metrics pages are usually unauthenticated: filter the port so that only the DumbMonit host reaches it.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/prometheus/"
+      "doc_url": "https://dumbmonit.app/docs/devices/prometheus/"
     },
     "options": [
       {
@@ -22176,7 +22176,7 @@
         }
       ],
       "warning": "The monitor reads what the provider chooses to publish, often minutes after the fact: it complements your own checks and never replaces them.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/provider/"
+      "doc_url": "https://dumbmonit.app/docs/devices/provider/"
     },
     "options": [
       {
@@ -22357,7 +22357,7 @@
         }
       ],
       "warning": "A Prowlarr API key cannot be limited to reading: keep it only in DumbMonit, which sends GET requests and nothing else.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/prowlarr/"
+      "doc_url": "https://dumbmonit.app/docs/devices/prowlarr/"
     },
     "options": [
       {
@@ -22604,7 +22604,7 @@
         "VM.Monitor on / (optional, Proxmox VE 8)\nOnly for the QEMU guest agent options"
       ],
       "warning": "Proxmox VE uses a self-signed certificate by default: tick \"Accept an unverifiable certificate\" in the options if the connection is refused. On Proxmox VE 8, guest agent details also need VM.Monitor (see the guide).",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/proxmox/"
+      "doc_url": "https://dumbmonit.app/docs/devices/proxmox/"
     },
     "options": [
       {
@@ -24061,7 +24061,7 @@
         }
       ],
       "warning": "Call the URL at the end of the job, after the part that matters: a call at the top would report a success even when the job fails.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/push/"
+      "doc_url": "https://dumbmonit.app/docs/devices/push/"
     },
     "options": [
       {
@@ -24191,7 +24191,7 @@
         }
       ],
       "warning": "qBittorrent bans an address for an hour after five failed logins (HTTP 403): fix the password before the next probe, or the probe stays refused.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/qbittorrent/"
+      "doc_url": "https://dumbmonit.app/docs/devices/qbittorrent/"
     },
     "options": [
       {
@@ -24394,7 +24394,7 @@
         "No share, no application privilege\nNothing else is needed"
       ],
       "warning": "QTS has no read-only role for its system status, so the account sits in the administrators group: give it a unique password, and an account without 2-step verification. Over HTTP the password travels base64-encoded, not encrypted: prefer HTTPS.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/qnap/"
+      "doc_url": "https://dumbmonit.app/docs/devices/qnap/"
     },
     "options": [
       {
@@ -24674,7 +24674,7 @@
         "Configure, Write, Read = ^$ on each virtual host\nLets it list that host's queues"
       ],
       "warning": "A memory or disk alarm blocks every publisher in the cluster, and clients get no error.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/rabbitmq/"
+      "doc_url": "https://dumbmonit.app/docs/devices/rabbitmq/"
     },
     "options": [
       {
@@ -24997,7 +24997,7 @@
         }
       ],
       "warning": "A Radarr API key cannot be limited to reading: keep it only in DumbMonit, which sends GET requests and nothing else.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/radarr/"
+      "doc_url": "https://dumbmonit.app/docs/devices/radarr/"
     },
     "options": [
       {
@@ -25225,7 +25225,7 @@
         "A test account that may authenticate\nNo network access or admin right is needed"
       ],
       "warning": "A wrong shared secret, or a host not declared as a client, usually makes the server stay silent: the check then reports a timeout.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#radius"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#radius"
     },
     "options": [
       {
@@ -25416,7 +25416,7 @@
         "ASRock Rack: privilege User\nSettings → User Management"
       ],
       "warning": "Do not reuse the controller's factory account, which can power the server off and reflash the firmware; a self-signed certificate needs \"Accept an unverifiable certificate\" ticked.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/redfish/"
+      "doc_url": "https://dumbmonit.app/docs/devices/redfish/"
     },
     "options": [
       {
@@ -25791,7 +25791,7 @@
         "-@all\nNo other command, no access to any key"
       ],
       "warning": "On Redis 5 or older, or with only requirepass set, pick Password only: that password carries every right.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/redis/"
+      "doc_url": "https://dumbmonit.app/docs/devices/redis/"
     },
     "options": [
       {
@@ -26242,7 +26242,7 @@
         "Domain Administrator\nUse Global Administrator if the counters stay empty"
       ],
       "warning": "The Windows services, mail queue folders and disk space of SecurityGateway can only be read on the server itself: without the agent, DumbMonit sees the gateway ports and, with a key, the REST API counters. SecurityGateway has no read-only role or narrower key: create the key from the dedicated account, never your own, and give it an expiry date.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/securitygateway/"
+      "doc_url": "https://dumbmonit.app/docs/devices/securitygateway/"
     },
     "options": [
       {
@@ -26485,7 +26485,7 @@
         "A mail account that may log in (AUTH)\nOnly if you fill in a credential"
       ],
       "warning": "An accepted session does not prove mail leaves: watch the relay's queues for that.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#smtp"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#smtp"
     },
     "options": [
       {
@@ -26805,7 +26805,7 @@
         }
       ],
       "warning": "A community is not encrypted on the network: on a shared network, prefer SNMP v3, which authenticates and encrypts.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/snmp/"
+      "doc_url": "https://dumbmonit.app/docs/devices/snmp/"
     },
     "options": [],
     "metrics": [
@@ -27682,7 +27682,7 @@
         "Read access to the object\nA read-only community or v3 user is enough"
       ],
       "warning": "An object the agent does not know, or that its SNMP view hides, is reported down with the reason not_found.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#snmp-oid"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#snmp-oid"
     },
     "options": [
       {
@@ -27868,7 +27868,7 @@
         }
       ],
       "warning": "A Sonarr API key cannot be limited to reading: keep it only in DumbMonit, which sends GET requests and nothing else.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/sonarr/"
+      "doc_url": "https://dumbmonit.app/docs/devices/sonarr/"
     },
     "options": [
       {
@@ -28086,7 +28086,7 @@
         "Group SonicWall Read-Only Admins\nThe account reads and changes nothing"
       ],
       "warning": "The management interface ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/sonicwall/"
+      "doc_url": "https://dumbmonit.app/docs/devices/sonicwall/"
     },
     "options": [
       {
@@ -28230,7 +28230,7 @@
         "Device access profile: Read-only on every permission\nThe firewall enforces it on the API too"
       ],
       "warning": "The API listens on the administration port (4444 by default) with a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/sophos/"
+      "doc_url": "https://dumbmonit.app/docs/devices/sophos/"
     },
     "options": [
       {
@@ -28371,7 +28371,7 @@
         }
       ],
       "warning": "The check never logs in and does not verify the server's signature: it reads the key the server shows, like ssh-keyscan.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#ssh"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#ssh"
     },
     "options": [
       {
@@ -28606,7 +28606,7 @@
         "Application: Active Backup for Business\nOptional: to read its tasks"
       ],
       "warning": "The administrators group is required by DSM's storage API, not by DumbMonit: that is why the account gets no shared folder and no other application.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/synology/"
+      "doc_url": "https://dumbmonit.app/docs/devices/synology/"
     },
     "options": [
       {
@@ -29354,7 +29354,7 @@
         "devices:core:read\nLists the devices of the tailnet, changes nothing"
       ],
       "warning": "Only tagged devices (servers, subnet routers, exit nodes) are expected to stay online: name the ones to watch in the Devices to keep online option, or enter all.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/tailscale/"
+      "doc_url": "https://dumbmonit.app/docs/devices/tailscale/"
     },
     "options": [
       {
@@ -29564,7 +29564,7 @@
         "Or leave the port out of the address and fill in the \"Port\" option."
       ],
       "warning": "An open port does not prove the application works: for a web service, use the \"Website or web API\" type.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#tcp"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#tcp"
     },
     "options": [
       {
@@ -29680,7 +29680,7 @@
         }
       ],
       "warning": "For a website, the \"Website or web API\" type already reads the certificate: use this type for services that do not speak HTTP.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#tls"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#tls"
     },
     "options": [
       {
@@ -29871,7 +29871,7 @@
         }
       ],
       "warning": "Port 8080 answers without a password: filter it so that only the DumbMonit host reaches it.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/traefik/"
+      "doc_url": "https://dumbmonit.app/docs/devices/traefik/"
     },
     "options": [
       {
@@ -30151,7 +30151,7 @@
         "Local Administrator (group privilege)\nThe only privilege the REST API accepts for a key"
       ],
       "warning": "This key can change anything on the NAS, because TrueNAS offers no read-only key over its REST API: keep it for DumbMonit alone and revoke it if it leaks. TrueNAS ships a self-signed certificate: if the connection is refused, tick \"Accept an unverifiable certificate\" in the options.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/truenas/"
+      "doc_url": "https://dumbmonit.app/docs/devices/truenas/"
     },
     "options": [
       {
@@ -30552,7 +30552,7 @@
         }
       ],
       "warning": "UDP has no connection: without an expected reply, a firewall that silently drops the datagrams looks healthy.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#udp"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#udp"
     },
     "options": [
       {
@@ -30762,7 +30762,7 @@
         "View Only (UniFi Network role)\nReads everything and changes nothing"
       ],
       "warning": "Use a local account, never the owner or a UI.com cloud account, and accept the console's self-signed certificate in the options unless you installed your own.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/unifi/"
+      "doc_url": "https://dumbmonit.app/docs/devices/unifi/"
     },
     "options": [
       {
@@ -31113,7 +31113,7 @@
         }
       ],
       "warning": "Use a local account: UniFi OS refuses Ubiquiti cloud accounts here. The console's certificate is usually self-signed: turn on the certificate option.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/unifiprotect/"
+      "doc_url": "https://dumbmonit.app/docs/devices/unifiprotect/"
     },
     "options": [
       {
@@ -31316,7 +31316,7 @@
         "Viewer role\nReads everything, changes nothing"
       ],
       "warning": "Unraid reports no temperature for a disk that is spun down, and DumbMonit never wakes one: a sleeping disk simply has no temperature until it spins up.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/unraid/"
+      "doc_url": "https://dumbmonit.app/docs/devices/unraid/"
     },
     "options": [
       {
@@ -31687,7 +31687,7 @@
         }
       ],
       "warning": "The admin token opens Vaultwarden's admin page and can change every setting: store it only in DumbMonit, or leave it out if you do not need the counts. DumbMonit reads counters only, never a name, e-mail address or vault item.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/vaultwarden/"
+      "doc_url": "https://dumbmonit.app/docs/devices/vaultwarden/"
     },
     "options": [
       {
@@ -31866,7 +31866,7 @@
         "Veeam Backup Viewer\nReads jobs, sessions, repositories and restore points"
       ],
       "warning": "Veeam keeps some REST API routes for the Backup Administrator role, the license among them on current versions: with the Viewer role DumbMonit shows the license as not readable and never asks for more.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/veeam/"
+      "doc_url": "https://dumbmonit.app/docs/devices/veeam/"
     },
     "options": [
       {
@@ -32215,7 +32215,7 @@
         }
       ],
       "warning": "Free disk space is what to watch: below -storage.minFreeDiskSpaceBytes (10 MB by default) VictoriaLogs turns read-only and refuses every new log line. DumbMonit shows the headroom left and warns under 10%.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/victoriametrics/"
+      "doc_url": "https://dumbmonit.app/docs/devices/victoriametrics/"
     },
     "options": [
       {
@@ -32478,7 +32478,7 @@
         }
       ],
       "warning": "Free disk space is what to watch: below -storage.minFreeDiskSpaceBytes (100 MB by default) VictoriaMetrics turns read-only and refuses every new sample. DumbMonit shows the headroom left and warns under 10%.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/victoriametrics/"
+      "doc_url": "https://dumbmonit.app/docs/devices/victoriametrics/"
     },
     "options": [
       {
@@ -32738,7 +32738,7 @@
         "Read-only, propagated to children\nSees hosts, VMs, datastores and alarms"
       ],
       "warning": "vCenter and ESXi use a self-signed certificate by default: enable \"Accept an unverifiable certificate\" unless the DumbMonit host trusts their certificate authority.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/vsphere/"
+      "doc_url": "https://dumbmonit.app/docs/devices/vsphere/"
     },
     "options": [
       {
@@ -33027,7 +33027,7 @@
         }
       ],
       "warning": "Only the text the server sends is compared: pages drawn by JavaScript or behind a login are not followed.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/webchange/"
+      "doc_url": "https://dumbmonit.app/docs/devices/webchange/"
     },
     "options": [
       {
@@ -33226,7 +33226,7 @@
         }
       ],
       "warning": "Only what the server sends is read: for a page drawn by JavaScript, set \"Blank page below\" to 0.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/website/"
+      "doc_url": "https://dumbmonit.app/docs/devices/website/"
     },
     "options": [
       {
@@ -33552,7 +33552,7 @@
         }
       ],
       "warning": "The check hangs up within a second: a connection that a firewall or proxy cuts after thirty seconds looks healthy here.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#websocket"
+      "doc_url": "https://dumbmonit.app/docs/devices/services/#websocket"
     },
     "options": [
       {
@@ -33837,7 +33837,7 @@
         "WMI root/cimv2: Enable Account, Remote Enable\nReads the WMI classes"
       ],
       "warning": "The account runs no command on the server, it only reads WMI. NTLM and Basic (HTTPS only) are supported, Kerberos is not. Pending Windows updates cannot be read this way. A self-signed certificate needs the option Accept an unverifiable certificate.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/winrm/"
+      "doc_url": "https://dumbmonit.app/docs/devices/winrm/"
     },
     "options": [
       {
@@ -34212,7 +34212,7 @@
         "read-only role (XAPI)\nSees hosts, VMs, storage repositories and HA"
       ],
       "warning": "If the pool already uses Active Directory, create the account there and skip steps 1 and 2. XCP-ng uses a self-signed certificate: enable \"Accept an unverifiable certificate\" unless the DumbMonit host trusts it.",
-      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/xcpng/"
+      "doc_url": "https://dumbmonit.app/docs/devices/xcpng/"
     },
     "options": [
       {
