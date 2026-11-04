@@ -73,7 +73,7 @@ pub const SCORE_INTERVAL: Duration = Duration::from_secs(15 * 60);
 pub const SETTING_KEY: &str = "security_score";
 
 /// Page de documentation ; chaque [`Guide`] y ajoute son ancre.
-pub const DOCS_URL: &str = "https://dumbmonit.app/docs/using/security-score/";
+pub const DOCS_URL: &str = "https://dumbmonit.selfhostr.io/docs/using/security-score/";
 
 /// La note est-elle activée sur cette instance ?
 pub async fn setting_enabled(pool: &SqlitePool) -> sqlx::Result<bool> {

@@ -100,9 +100,12 @@ package`) et ne demande rien de plus. Sans root :
 L'agent est l'agent DumbMonit habituel : il suit la version de votre serveur par
 les [mises à jour automatiques](agent.md#automatic-updates) et vérifie chaque
 mise à jour avec la clé de signature de DumbMonit. Vous n'installez pas un
-nouveau `.spk` après chaque mise à jour de DumbMonit. Si le NAS cesse de
-remonter après une mise à jour, réinstallez le paquet avec un nouveau jeton
-(désinstallez d'abord).
+nouveau `.spk` après chaque mise à jour de DumbMonit : le paquet se met à jour
+tout seul avec le serveur. Le binaire mis à jour vit dans le dossier `var`
+inscriptible du paquet, et c'est lui que le Centre de paquets démarre. Un NAS
+qui a encore un paquet antérieur à 0.17.1 ne peut pas encore le faire :
+installez une fois le `.spk` actuel par-dessus (la configuration est
+conservée), il suit ensuite le serveur.
 
 ## Désinstallation
 

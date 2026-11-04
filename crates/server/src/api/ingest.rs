@@ -23,6 +23,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use crate::agent_tls::AgentCert;
+use crate::api::pin_probe;
 use crate::api::{ApiError, ApiResult};
 use crate::auth::audit;
 use crate::auth::client_ip::ClientIp;
@@ -335,6 +336,8 @@ pub struct CreatedToken {
     pub secret: String,
     pub install_linux: String,
     pub install_windows: String,
+    /// Origine de l'empreinte `--pinned-key` (voir [`InstallParams::pin_source`]).
+    pub pin_source: Option<&'static str>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -435,6 +438,7 @@ pub async fn create_token(
     State(state): State<AppState>,
     Authenticated(me): Authenticated,
     ClientIp(ip): ClientIp,
+    headers: HeaderMap,
     Json(payload): Json<TokenPayload>,
 ) -> ApiResult<(StatusCode, Json<CreatedToken>)> {
     let site = agent::clean_site(payload.site.as_deref());
@@ -476,7 +480,8 @@ pub async fn create_token(
     }
     audit::record(&state.pool, Some(&me.username), "agent_token.created", Some(&record.name), ip)
         .await;
-    let params = install_parameters_via(&state, payload.base_url.as_deref(), route).await;
+    let params =
+        install_parameters_probed(&state, payload.base_url.as_deref(), route, Some(&headers)).await;
 
     let mut token = TokenView::from(record);
     token.client_id = client;
@@ -487,6 +492,7 @@ pub async fn create_token(
             install_windows: params.windows_command(&secret),
             token,
             secret,
+            pin_source: params.pin_source,
         }),
     ))
 }
@@ -523,6 +529,12 @@ pub struct InstallParams {
     /// lire le moindre octet, puis l'agent la garde (`server_pin`). `None` :
     /// certificat fourni, vérifié par les autorités du système.
     pub https_pin: Option<String>,
+    /// D'où vient `https_pin`, quand le serveur a sondé l'adresse ouverte par le
+    /// navigateur : `own` (certificat de DumbMonit), `proxy` (un mandataire
+    /// inverse en présente un autre : c'est le sien qui est épinglé) ou
+    /// `trusted` (certificat de confiance : aucune empreinte). Absent : pas de
+    /// sondage (relais, adresse saisie à la main, échec).
+    pub pin_source: Option<&'static str>,
 }
 
 /// Passage par un agent relais : sa passerelle, telle que les machines du site
@@ -641,13 +653,37 @@ pub async fn install_parameters_via(
     base_url: Option<&str>,
     route: Option<RelayRoute>,
 ) -> InstallParams {
+    install_parameters_probed(state, base_url, route, None).await
+}
+
+/// Comme [`install_parameters_via`], avec les en-têtes de la requête HTTP
+/// entrante : sans relais, le serveur sonde alors l'adresse que le navigateur a
+/// ouverte pour y relever le certificat réellement présenté (mandataire inverse,
+/// redirection de port) au lieu de supposer le sien.
+pub async fn install_parameters_probed(
+    state: &AppState,
+    base_url: Option<&str>,
+    route: Option<RelayRoute>,
+    headers: Option<&HeaderMap>,
+) -> InstallParams {
     let base_url = match &route {
         Some(route) => format!("https://{}:{}", route.host, route.port),
         None => normalise_base_url(base_url, state.config.bind),
     };
+    let mut pin_source = None;
     let https_pin = match &route {
         Some(_) => state.agent_tls().server_pin(),
-        None => web_pin(state),
+        None => {
+            let own = web_pin(state);
+            let target = headers.and_then(|headers| pin_probe::probe_target(&base_url, headers));
+            let seen = match target {
+                Some((host, port)) => pin_probe::probe(&host, port).await,
+                None => None,
+            };
+            let (pin, source) = pin_probe::decide(seen.as_ref(), own);
+            pin_source = source.map(pin_probe::PinSource::as_str);
+            pin
+        }
     };
     let checksums = crate::api::agent_files::platform_checksums(&state.config.agent_dir)
         .await
@@ -672,6 +708,7 @@ pub async fn install_parameters_via(
         linux_template: String::new(),
         windows_template: String::new(),
         https_pin,
+        pin_source,
         via_relay: route,
     };
     params.linux_template = params.linux_command(TOKEN_PLACEHOLDER);
@@ -707,13 +744,16 @@ pub struct InstallQuery {
 /// binaires. Ouverte à toute session et aux jetons `read`.
 pub async fn install_params(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Query(query): Query<InstallQuery>,
 ) -> ApiResult<Json<InstallParams>> {
     let route = match query.relay_id {
         Some(relay) => Some(relay_route(&state, relay, query.relay_host.as_deref(), None).await?),
         None => None,
     };
-    Ok(Json(install_parameters_via(&state, query.base_url.as_deref(), route).await))
+    Ok(Json(
+        install_parameters_probed(&state, query.base_url.as_deref(), route, Some(&headers)).await,
+    ))
 }
 
 /// `GET /api/agent/tokens/{id}/machines` : machines enrôlées par ce jeton, la
@@ -964,6 +1004,7 @@ mod tests {
             windows_template: String::new(),
             via_relay: None,
             https_pin: None,
+            pin_source: None,
         };
         let linux = params.linux_command("dmon_abc");
         assert!(linux.ends_with(&format!(" --tls-url=https://s:8443 --ca-pin={pin}")), "{linux}");
@@ -984,6 +1025,7 @@ mod tests {
             windows_template: String::new(),
             via_relay: None,
             https_pin: Some(PIN.into()),
+            pin_source: None,
         };
         let linux = params.linux_command("dmon_abc");
         assert!(

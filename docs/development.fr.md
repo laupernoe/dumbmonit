@@ -23,7 +23,7 @@ crates/server    le binaire
 crates/agent     Agent Linux/macOS/FreeBSD/Windows ; install/ détient install.sh/.ps1 servi par le serveur
 web/             SvelteKit (runes Svelte 5, Tailwind 4, uPlot, Leaflet), adaptateur-statique repli SPA, ssr=false
 profiles/        Profils de collection SNMP, auto-appliqués par sysObjectID
-docs/            cette documentation (MkDocs, publiée sur Read the Docs)
+docs/            cette documentation (sources MkDocs, publiée avec Starlight)
 \`\`\`
 
 ## Construction sans chaîne d'outils Rust locale
@@ -102,7 +102,7 @@ pour se reconstruire est une mauvaise apparence.
 4. l'image (`linux/amd64`), construction uniquement.
 
 `.github/workflows/release.yml` pousse la même image vers
-`ghcr.io/laupernoe/dumbmonit` : `:edge` à chaque tirage vers `main`, `:X.Y.Z`,
+`ghcr.io/selfhostr/dumbmonit` : `:edge` à chaque tirage vers `main`, `:X.Y.Z`,
 `:X.Y`, `:X` et `:latest` à chaque étiquette `v*`.
 
 Les tests d'intégration vivent dans `crates/server/tests/` ; les modules purs
@@ -157,7 +157,7 @@ comme `tag_*`.
    Web n'est nécessaire.
 4. Documentez-le dans `docs/notifications.md` sous *Canaux soutenus*, avec une
    rubrique dont le slug correspond à l'ancre `doc_url` : l'interface Web
-   établit directement un lien vers cette ancre sur Read the Docs.
+   établit directement un lien vers cette ancre dans la documentation en ligne.
 
 ## Captures d'écran sans tête
 
@@ -173,20 +173,12 @@ un changement et comment les captures d'écran de cette documentation ont été 
 ## Documentation
 
 Ce site est construit avec MkDocs et Material for MkDocs à partir de `docs/`
-(`mkdocs.yml` à la racine, `.readthedocs.yaml` pour Read the Docs). Pour
-obtenir un aperçu :
+(`mkdocs.yml` à la racine). Pour obtenir un aperçu :
 
 \`\`\`bash
 pip install -r docs/requirements.txt
 mkdocs serve
-mkdocs build --strict   # ce que Read the Docs exécute ; doit réussir sans avertissements
+mkdocs build --strict   # doit réussir sans avertissements
 \`\`\`
 
-Chaque langue est un projet Read the Docs distinct (`dumbmonit` pour l'anglais, puis
-`dumbmonit-fr`, `dumbmonit-de`, ... liés comme traductions), tous construits depuis le même
-`mkdocs.yml`. `hooks/rtd_language.py` lit `READTHEDOCS_LANGUAGE` et construit cette seule langue
-à la racine du site : les fichiers `page.<lang>.md` remplacent les pages anglaises, une page non
-traduite reste en anglais avec un bandeau, et les titres de navigation viennent de
-`hooks/nav_translations.yml`. En local la variable est absente et le build est en anglais ;
-pour prévisualiser une autre langue : `READTHEDOCS_LANGUAGE=fr mkdocs serve` (`de`, `es`, `it`,
-`pt`, `pt-br`, `ru`, `zh-cn`).
+La documentation est publiée avec Starlight sur https://dumbmonit.selfhostr.io/docs/. Les fichiers `page.<lang>.md` remplacent les pages anglaises dans chaque langue ; une page non traduite reste en anglais.

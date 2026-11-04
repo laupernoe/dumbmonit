@@ -1,7 +1,7 @@
 name: Release
 
 # Builds the images (amd64 only for now; arm64 comes back later) with the repository Dockerfile and pushes them to
-# ghcr.io/laupernoe/dumbmonit (server) and ghcr.io/laupernoe/dumbmonit-agent (agent,
+# ghcr.io/selfhostr/dumbmonit (server) and ghcr.io/selfhostr/dumbmonit-agent (agent,
 # `--target agent-image`), with the same tags:
 #   - every push to dev    -> :edge (development; main only gets dev through a PR)
 #   - every tag vX.Y.Z     -> :X.Y.Z, :X.Y, :X and :latest
@@ -51,8 +51,8 @@ permissions:
   contents: read
 
 env:
-  IMAGE: ghcr.io/laupernoe/dumbmonit
-  AGENT_IMAGE: ghcr.io/laupernoe/dumbmonit-agent
+  IMAGE: ghcr.io/selfhostr/dumbmonit
+  AGENT_IMAGE: ghcr.io/selfhostr/dumbmonit-agent
   RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
 
 # Only the newest :edge matters: a newer push to dev cancels the build in
@@ -313,7 +313,7 @@ jobs:
           sbom: true
           provenance: mode=max
 
-      # `gh attestation verify oci://ghcr.io/laupernoe/dumbmonit:<tag> -R laupernoe/dumbmonit`
+      # `gh attestation verify oci://ghcr.io/selfhostr/dumbmonit:<tag> -R selfhostr/dumbmonit`
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE }}
@@ -541,7 +541,7 @@ jobs:
           done
 
       # SLSA build provenance of every binary, stored by GitHub
-      # (`gh attestation verify <file> -R laupernoe/dumbmonit`) and attached
+      # (`gh attestation verify <file> -R selfhostr/dumbmonit`) and attached
       # to the release as well.
       - id: provenance
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2

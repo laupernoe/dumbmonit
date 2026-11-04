@@ -9,7 +9,7 @@ name: dumbmonit-agent
 
 services:
   agent:
-    image: ghcr.io/laupernoe/dumbmonit-agent:latest
+    image: ghcr.io/selfhostr/dumbmonit-agent:latest
     environment:
       DUMBMONIT_AGENT_URL: ${DUMBMONIT_AGENT_URL:?set the server URL}
       DUMBMONIT_AGENT_TOKEN: ${DUMBMONIT_AGENT_TOKEN:?copy the token shown when adding a server with the agent}

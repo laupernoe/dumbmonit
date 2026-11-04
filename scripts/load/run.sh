@@ -6,7 +6,7 @@
 #   MONITORS=1000 DURATION_MIN=30 scripts/load/run.sh [répertoire-de-sortie]
 #
 # Variables : MONITORS (1000), DURATION_MIN (30), DUMBMONIT_IMAGE
-# (ghcr.io/laupernoe/dumbmonit:edge), DUMBMONIT_LOAD_PORT (18080),
+# (ghcr.io/selfhostr/dumbmonit:edge), DUMBMONIT_LOAD_PORT (18080),
 # SAMPLE_SECONDS (60), KEEP=1 pour garder l'instance et son volume à la fin.
 set -eu
 
@@ -14,7 +14,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 OUT=${1:-"$HERE/out"}
 MONITORS=${MONITORS:-1000}
 DURATION_MIN=${DURATION_MIN:-30}
-export DUMBMONIT_IMAGE=${DUMBMONIT_IMAGE:-ghcr.io/laupernoe/dumbmonit:edge}
+export DUMBMONIT_IMAGE=${DUMBMONIT_IMAGE:-ghcr.io/selfhostr/dumbmonit:edge}
 export DUMBMONIT_LOAD_PORT=${DUMBMONIT_LOAD_PORT:-18080}
 export DUMBMONIT_LOAD_SETUP_CODE=${DUMBMONIT_LOAD_SETUP_CODE:-LOADT-EST42}
 ALPINE='alpine:3.24@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a'

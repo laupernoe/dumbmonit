@@ -21,7 +21,7 @@
 	import { afterNavigate, goto } from '$app/navigation';
 	import { ArrowLeft, BookOpen, CalendarClock, ChevronRight, FileSpreadsheet, Globe, Plug, Radar, Upload } from 'lucide-svelte';
 	import { ApiError, listCollectors, listTargets, type CollectorInfo, type Target } from '#lib/api/index.js';
-	import { Button, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { Button, DocLink, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import ImportWebsites from '#lib/components/device-form/ImportWebsites.svelte';
 	import ImportKuma from '#lib/components/device-form/ImportKuma.svelte';
 	import ImportServices from '#lib/components/device-form/ImportServices.svelte';
@@ -29,6 +29,7 @@
 	import CollectorPicker from '#lib/components/device-form/CollectorPicker.svelte';
 	import TargetForm from '#lib/components/device-form/TargetForm.svelte';
 	import AgentEnroll from '#lib/components/device-form/AgentEnroll.svelte';
+	import AdDeployWizard from '#lib/components/settings/AdDeployWizard.svelte';
 	import SynologyChoice from '#lib/components/device-form/SynologyChoice.svelte';
 	import SynologyPackage from '#lib/components/device-form/SynologyPackage.svelte';
 	import { isMailKind } from '#lib/components/devices/mdaemon/agent-link.js';
@@ -259,10 +260,14 @@
 	const SelectedIcon = $derived(feature ? feature.icon : selected ? kindIcon(selected.kind) : null);
 	const selectedLabel = $derived(feature ? feature.label : (selected?.label ?? ''));
 	const relaying = $derived(feature?.id === 'relay');
+	/** `?via=ad`: the group-policy rollout, not an agent install form. */
+	const deploying = $derived(feature?.id === 'ad');
 	const selectedSummary = $derived(
 		relaying
 			? m.deviceform_new_summary_relay()
-			: feature
+			: deploying
+				? m.deviceform_feature_ad_summary()
+				: feature
 				? m.deviceform_new_summary_agent()
 				: (selected?.summary ?? '')
 	);
@@ -274,7 +279,9 @@
 				? m.deviceform_new_desc_scan()
 				: relaying
 					? m.deviceform_new_desc_relay()
-					: selected?.kind === AGENT_KIND
+					: deploying
+						? m.deviceform_new_desc_ad()
+						: selected?.kind === AGENT_KIND
 						? m.deviceform_new_desc_agent()
 						: m.deviceform_new_desc_form()
 	);
@@ -482,7 +489,16 @@
 					</div>
 					<!-- Re-mounted per kind: the form seeds itself once from its collector. -->
 					{#key selected.kind}
-						{#if selected.kind === AGENT_KIND}
+						{#if selected.kind === AGENT_KIND && deploying}
+							<div class="grid gap-4">
+								{#if auth.isAdmin}
+									<AdDeployWizard class="self-start" />
+								{:else}
+									<p class="text-sm text-ink-2">{m.deviceform_new_ad_admin_only()}</p>
+								{/if}
+								<DocLink page="devices/agent-active-directory/" />
+							</div>
+						{:else if selected.kind === AGENT_KIND}
 							{#key relaying}
 								<AgentEnroll
 									cancelHref="/targets"

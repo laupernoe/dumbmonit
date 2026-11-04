@@ -208,6 +208,56 @@ pub fn spki_pin(key_der: &[u8]) -> Result<String> {
     ))
 }
 
+/// Épingle de la clé publique d'un certificat DER quelconque (`sha256//…`,
+/// comme curl) : l'empreinte SHA-256 de son `SubjectPublicKeyInfo`, quel que
+/// soit le type de clé. Sert à reconnaître le certificat qu'un mandataire
+/// présente à la place du nôtre.
+pub fn certificate_key_pin(cert: &[u8]) -> Option<String> {
+    let spki = subject_public_key_info(cert)?;
+    let digest = Sha256::digest(spki);
+    Some(format!("sha256//{}", base64::engine::general_purpose::STANDARD.encode(digest)))
+}
+
+/// Un élément DER : étiquette, contenu, élément entier, suite.
+type DerElement<'a> = (u8, &'a [u8], &'a [u8], &'a [u8]);
+
+fn der_element(input: &[u8]) -> Option<DerElement<'_>> {
+    let (&tag, after) = input.split_first()?;
+    let (&first, after) = after.split_first()?;
+    let (len, after) = if first < 0x80 {
+        (usize::from(first), after)
+    } else {
+        let count = usize::from(first & 0x7f);
+        if count == 0 || count > 4 || after.len() < count {
+            return None;
+        }
+        let len = after[..count].iter().fold(0usize, |acc, &b| (acc << 8) | usize::from(b));
+        (len, &after[count..])
+    };
+    if after.len() < len {
+        return None;
+    }
+    let header = input.len() - after.len();
+    Some((tag, &after[..len], &input[..header + len], &after[len..]))
+}
+
+/// `SubjectPublicKeyInfo` d'un certificat X.509, tel quel : septième champ de
+/// `tbsCertificate`, après la version facultative, le numéro de série,
+/// l'algorithme, l'émetteur, la validité et le sujet.
+fn subject_public_key_info(cert: &[u8]) -> Option<&[u8]> {
+    let (0x30, certificate, _, _) = der_element(cert)? else { return None };
+    let (0x30, tbs, _, _) = der_element(certificate)? else { return None };
+    let mut rest = tbs;
+    if rest.first() == Some(&0xa0) {
+        rest = der_element(rest)?.3;
+    }
+    for _ in 0..5 {
+        rest = der_element(rest)?.3;
+    }
+    let (tag, _, spki, _) = der_element(rest)?;
+    (tag == 0x30).then_some(spki)
+}
+
 /// Certificat en PEM, pour le téléchargement depuis les réglages.
 pub fn to_pem(der: &[u8]) -> String {
     let body = base64::engine::general_purpose::STANDARD.encode(der);
@@ -223,6 +273,15 @@ pub fn to_pem(der: &[u8]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_pin_of_a_certificate_matches_the_pin_of_its_key() {
+        let made = self_signed(None, &["nas.lan".to_string()]).unwrap();
+        let from_key = spki_pin(&made.key_der).unwrap();
+        assert_eq!(certificate_key_pin(&made.cert_der).unwrap(), from_key);
+        assert_eq!(certificate_key_pin(b"not a certificate"), None);
+        assert_eq!(certificate_key_pin(&made.cert_der[..20]), None);
+    }
 
     #[test]
     fn names_are_host_names_or_addresses() {

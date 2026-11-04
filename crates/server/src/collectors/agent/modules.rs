@@ -58,6 +58,25 @@ pub const MODULES: &[Module] = &[
     Module { id: "speedtest", label: "Speed test", prefixes: &["agent_speedtest_"] },
 ];
 
+/// Modules qu'un NAS Synology (DSM) ne propose pas d'office : DSM n'a ni
+/// systemd, ni ZFS, ni libvirt, ni WireGuard/IPsec gérés par l'agent, et ses
+/// outils de sauvegarde (Hyper Backup, ABB) sont lus par la collecte DSM. Un
+/// module de cette liste n'apparaît que s'il a été détecté ou coché.
+const NOT_OFFERED_ON_DSM: &[&str] =
+    &["plakar", "backup_repos", "databases", "zfs", "libvirt", "wireguard", "ipsec"];
+
+/// Vrai si `module` vaut d'être proposé à l'utilisateur sur une machine de ce
+/// fabricant (étiquette `vendor`). `detected` : l'agent en a déjà rapporté des
+/// mesures ; `enabled` : l'utilisateur l'a coché. Dans les deux cas, on le
+/// montre toujours.
+pub fn offered(vendor: Option<&str>, module: &str, detected: bool, enabled: bool) -> bool {
+    if detected || enabled {
+        return true;
+    }
+    let dsm = vendor.is_some_and(|v| v.trim().eq_ignore_ascii_case("synology"));
+    !(dsm && NOT_OFFERED_ON_DSM.contains(&module))
+}
+
 /// Le module d'un identifiant, s'il existe.
 pub fn find(id: &str) -> Option<&'static Module> {
     MODULES.iter().find(|module| module.id == id)
@@ -428,6 +447,18 @@ impl Collector for AgentServiceCollector {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_synology_hides_the_modules_it_cannot_have_unless_found_or_ticked() {
+        assert!(!offered(Some("synology"), "zfs", false, false));
+        assert!(!offered(Some(" Synology "), "plakar", false, false));
+        assert!(offered(Some("synology"), "zfs", true, false));
+        assert!(offered(Some("synology"), "zfs", false, true));
+        assert!(offered(Some("synology"), "docker", false, false));
+        assert!(offered(Some("synology"), "speedtest", false, false));
+        assert!(offered(None, "zfs", false, false));
+        assert!(offered(Some("dell"), "libvirt", false, false));
+    }
 
     #[test]
     fn each_service_metric_finds_its_module_and_machine_metrics_stay_on_the_host() {

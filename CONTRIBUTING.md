@@ -156,7 +156,7 @@ DumbMonit holds the credentials of every monitor it watches, so changes are
 reviewed with secure design principles in mind: least privilege, secure
 defaults, no secret ever returned by the API, vetted cryptography only, and
 untrusted input from monitors and agents. The
-[security model](https://dumbmonit.app/docs/development/security-model/)
+[security model](https://dumbmonit.selfhostr.io/docs/development/security-model/)
 lists the trust boundaries and where each countermeasure lives. Report
 vulnerabilities privately, as described in [SECURITY.md](SECURITY.md). The
 release notes list every fixed vulnerability with its CVE or GHSA identifier.
@@ -325,7 +325,7 @@ Before tagging `vX.Y.Z`:
    candidate image on the same `/data` volume and checks that health, login,
    every object and the VictoriaMetrics history survived. Run it by hand
    against any image with `scripts/upgrade-test.sh [IMAGE]` (needs docker,
-   curl and python3; default image `ghcr.io/laupernoe/dumbmonit:edge`;
+   curl and python3; default image `ghcr.io/selfhostr/dumbmonit:edge`;
    `OLD_IMAGE=…` picks another starting point). A failure means an existing
    install would lose data when updating: fix it before tagging.
 

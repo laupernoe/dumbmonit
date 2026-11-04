@@ -23,7 +23,7 @@ crates/server    the binary
 crates/agent     Linux/macOS/FreeBSD/Windows agent; install/ holds install.sh/.ps1 served by the server
 web/             SvelteKit (Svelte 5 runes, Tailwind 4, uPlot), adapter-static SPA fallback, ssr=false
 profiles/        SNMP collection profiles, auto-applied by sysObjectID
-docs/            this documentation (MkDocs, published on Read the Docs)
+docs/            esta documentação (fontes MkDocs, publicada com Starlight)
 ```
 
 ## Compilar sem toolchain Rust {#building-without-a-rust-toolchain}
@@ -105,7 +105,7 @@ O `.github/workflows/ci.yml` executa, em cada push e pull request:
 4. a imagem (`linux/amd64`), apenas build.
 
 O `.github/workflows/release.yml` publica a mesma imagem em
-`ghcr.io/laupernoe/dumbmonit`: `:edge` em cada push para `main`, `:X.Y.Z`,
+`ghcr.io/selfhostr/dumbmonit`: `:edge` em cada push para `main`, `:X.Y.Z`,
 `:X.Y`, `:X` e `:latest` em cada tag `v*`.
 
 Os testes de integração vivem em `crates/server/tests/`; os módulos puros
@@ -158,7 +158,7 @@ opções listadas para o tipo em `api/collectors.rs` não são copiadas como
    interface.
 4. Documente-o em `docs/notifications.md` em *Canais suportados*, com um título
    cujo slug corresponda à âncora `doc_url`: a interface liga diretamente a essa
-   âncora no Read the Docs.
+   âncora na documentação online.
 
 ## Capturas de ecrã sem interface {#headless-screenshots}
 
@@ -174,11 +174,13 @@ e como foram feitas as capturas de ecrã desta documentação.
 ## Documentação {#documentation}
 
 Este site é construído com MkDocs e Material for MkDocs a partir de `docs/`
-(`mkdocs.yml` na raiz, `.readthedocs.yaml` para o Read the Docs). Para
+(`mkdocs.yml` na raiz). Para
 pré-visualizar:
 
 ```bash
 pip install -r docs/requirements.txt
 mkdocs serve
-mkdocs build --strict   # what Read the Docs runs; must pass with no warnings
+mkdocs build --strict   # tem de passar sem avisos
 ```
+
+A documentação é publicada com Starlight em https://dumbmonit.selfhostr.io/docs/.

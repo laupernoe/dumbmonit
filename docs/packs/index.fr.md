@@ -30,7 +30,7 @@ vérifications HTTP. Les adresses LAN privées sont toujours autorisées.
 ## Packs de référence
 
 Le dépôt fournit trois packs sous
-[`packs/`](https://github.com/laupernoe/dumbmonit/tree/main/packs), chacun
+[`packs/`](https://github.com/selfhostr/dumbmonit/tree/main/packs), chacun
 avec ses fixtures et sa sortie attendue :
 
 | Pack | Lit | Règles |
@@ -108,11 +108,11 @@ Le binaire du serveur valide et teste les packs hors ligne :
 
 ```bash
 # Vérifications de schéma et de cohérence, sans serveur ni base de données
-docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/laupernoe/dumbmonit:latest \
+docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/selfhostr/dumbmonit:latest \
   pack lint /packs/shelly-plug
 
 # Rejoue fixtures/ à travers la vraie extraction et compare avec expected.prom
-docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/laupernoe/dumbmonit:latest \
+docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/selfhostr/dumbmonit:latest \
   pack test /packs/shelly-plug
 ```
 

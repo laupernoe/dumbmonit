@@ -48,7 +48,7 @@ pub const CLICK_URL: &str = "/alerts";
 
 /// Contact VAPID par défaut, quand ni le canal ni `DUMBMONIT_PUBLIC_URL` (en
 /// HTTPS) n'en donnent un. Apple refuse une signature sans contact valide.
-pub const DEFAULT_CONTACT: &str = "https://github.com/laupernoe/dumbmonit";
+pub const DEFAULT_CONTACT: &str = "https://github.com/selfhostr/dumbmonit";
 
 /// Durée de conservation par défaut chez le service de push quand l'appareil
 /// est éteint : au-delà d'une journée, une alerte n'a plus rien d'urgent.

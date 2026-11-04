@@ -112,7 +112,7 @@ que croître, c'est donc un `counter` : graphiques et règles le lisent avec
 ## 5. Vérifier
 
 ```bash
-docker run --rm -v "$PWD:/work" --user "$(id -u)" ghcr.io/laupernoe/dumbmonit:latest \
+docker run --rm -v "$PWD:/work" --user "$(id -u)" ghcr.io/selfhostr/dumbmonit:latest \
   pack test /work/shelly-plug --update
 ```
 
@@ -167,7 +167,7 @@ métrique que le pack ne produit pas, une option qui n'existe pas ou un
 chemin qui pointe ailleurs sont rapportés avec leur emplacement.
 
 ```bash
-docker run --rm -v "$PWD:/work:ro" ghcr.io/laupernoe/dumbmonit:latest pack lint /work/shelly-plug
+docker run --rm -v "$PWD:/work:ro" ghcr.io/selfhostr/dumbmonit:latest pack lint /work/shelly-plug
 ```
 
 ## 7. L'installer
@@ -189,5 +189,5 @@ Pour publier une nouvelle version, augmentez `version`, lancez
 règle que vous avez pu ajuster est conservée.
 
 Le pack complet, avec son avis de configuration, est dans
-[`packs/shelly-plug`](https://github.com/laupernoe/dumbmonit/tree/main/packs/shelly-plug).
+[`packs/shelly-plug`](https://github.com/selfhostr/dumbmonit/tree/main/packs/shelly-plug).
 Tout ce que le format accepte est dans la [référence](format.md).

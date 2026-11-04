@@ -3,7 +3,7 @@
 Esta página describe qué protege DumbMonit, en quién confía, cómo el diseño
 limita el daño de un error y dónde mirar en el código y en las pruebas. Para
 informar de una vulnerabilidad, sigue la
-[política de seguridad](https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md).
+[política de seguridad](https://github.com/selfhostr/dumbmonit/blob/main/SECURITY.md).
 
 ## Qué está en juego
 

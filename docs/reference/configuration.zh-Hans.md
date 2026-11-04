@@ -42,7 +42,7 @@
 | `DUMBMONIT_UPDATE_CHECK` | `1` | `off` 停止对最新 GitHub release 的每日查看（air-gapped 实例）。请参阅 [Update](../install/update.md)。 |
 | `DUMBMONIT_BACKUP_DIR` | `<data dir>/backups` | 计划备份写入的位置。指向第二卷以在失去第一个时存活。 |
 | `DUMBMONIT_BACKUP_INTERVAL_HOURS` | `24` | 两个备份之间的小时，1 到 8760。第一个发生一个间隔在启动之后，不是启动。 |
-| `DUMBMONIT_DEMO` | *(off)* | `1` 对于公开、只读演示有一个固定虚构地产，签入 `demo` / `demo`。**在每个启动时重新创建数据库**：从不在真实数据卷上。请参阅 [Run a demo instance](../install/demo.md)。 |
+| `DUMBMONIT_DEMO` | *(off)* | `1` 对于只读演示有一个固定虚构地产，签入 `demo` / `demo`。**在每个启动时重新创建数据库**：从不在真实数据卷上。请参阅 [Run a demo instance](../install/demo.md)。 |
 | `DUMBMONIT_BACKUP_KEEP` | `7` | 多少备份被保留，1 到 365。最旧的被移除其 `.key`。 |
 | `DUMBMONIT_BROWSER_URL` | *(unset)* | [website changes](../devices/webchange.md#screenshots) 的屏幕截图用的 Headless Chromium，如 `http://host:9222`（其 DevTools 端口）。在你的 Compose 文件中添加一个 `chromedp/headless-shell` 服务，如 [Screenshots](../devices/webchange.md#screenshots) 所示。未设置：仅文本比较。 |
 

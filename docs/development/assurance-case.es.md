@@ -6,7 +6,7 @@ daño de un error, cómo se contrarresta cada clase habitual de debilidad y qué
 pruebas respaldan cada afirmación. Amplía el [modelo de seguridad](security-model.md),
 que enumera las mismas medidas de forma más breve. Para informar de una
 vulnerabilidad, sigue la
-[política de seguridad](https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md).
+[política de seguridad](https://github.com/selfhostr/dumbmonit/blob/main/SECURITY.md).
 
 Las rutas de archivo que siguen son relativas a la raíz del repositorio.
 

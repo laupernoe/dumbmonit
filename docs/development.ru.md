@@ -19,7 +19,7 @@ crates/server    бинарный файл
 crates/agent     агент Linux/macOS/FreeBSD/Windows; install/ содержит install.sh/.ps1, обслуживаемые сервером
 web/             SvelteKit (Svelte 5 runes, Tailwind 4, uPlot), adapter-static SPA fallback, ssr=false
 profiles/        профили сбора SNMP, автоматически применяются по sysObjectID
-docs/            эта документация (MkDocs, опубликована на Read the Docs)
+docs/            эта документация (исходники MkDocs, опубликована с помощью Starlight)
 ```
 
 ## Построение без локального набора инструментов Rust
@@ -78,7 +78,7 @@ cd web && npm run build      # статическая сборка в web/build,
 3. `npm run check` и `npm run build`;
 4. образ (`linux/amd64`), только сборка.
 
-`.github/workflows/release.yml` отправляет тот же образ на `ghcr.io/laupernoe/dumbmonit`: `:edge` при каждом push на `main`, `:X.Y.Z`, `:X.Y`, `:X` и `:latest` при каждом теге `v*`.
+`.github/workflows/release.yml` отправляет тот же образ на `ghcr.io/selfhostr/dumbmonit`: `:edge` при каждом push на `main`, `:X.Y.Z`, `:X.Y`, `:X` и `:latest` при каждом теге `v*`.
 
 Интеграционные тесты находятся в `crates/server/tests/`; чистые модули (преобразование метрик, разбор опций, конечный автомат состояния оповещения, молчание) тестируются на месте без сети.
 
@@ -98,7 +98,7 @@ cd web && npm run build      # статическая сборка в web/build,
 1. Реализуйте `Notifier` (`crates/server/src/notify/mod.rs`): `kind()` и `async fn send(&Message) -> Result<(), NotifyError>`. Веб-каналы совместно используют HTTP-клиент и помощников в `notify/http.rs`; посмотрите на `services.rs`, `chat.rs`, `push.rs`, `oncall.rs` и `smtp.rs` для товарищей.
 2. Добавьте тип в `CHANNEL_KINDS` и в матч `build` в `notify/mod.rs`, который превращает сохраненную `ChannelConfig` (параметры + расшифрованные секреты) в `Notifier`.
 3. Опишите его в `notify/catalog.rs`: метка, резюме, якорь `doc_url` и поля `settings` и `secrets` (ключ, метка, требуется, ввод, справка, заполнитель, опции, форма, по умолчанию). Интерфейс визуализирует форму на основе этого описания, поэтому выпуск пользовательского интерфейса не требуется.
-4. Документируйте его в `docs/notifications.md` под *Supported channels*, с заголовком, слаг которого совпадает с якорем `doc_url`: интерфейс ссылается прямо на этот якорь на Read the Docs.
+4. Документируйте его в `docs/notifications.md` под *Supported channels*, с заголовком, слаг которого совпадает с якорем `doc_url`: интерфейс ссылается прямо на этот якорь в онлайн-документации.
 
 ## Снимки экрана без головы
 
@@ -106,10 +106,12 @@ cd web && npm run build      # статическая сборка в web/build,
 
 ## Документация
 
-Этот сайт построен с помощью MkDocs и Material for MkDocs из `docs/` (`mkdocs.yml` в корне, `.readthedocs.yaml` для Read the Docs). Для предварительного просмотра:
+Этот сайт построен с помощью MkDocs и Material for MkDocs из `docs/` (`mkdocs.yml` в корне). Для предварительного просмотра:
 
 ```bash
 pip install -r docs/requirements.txt
 mkdocs serve
-mkdocs build --strict   # то, что запускает Read the Docs; должен пройти без предупреждений
+mkdocs build --strict   # должен пройти без предупреждений
 ```
+
+Документация публикуется с помощью Starlight на https://dumbmonit.selfhostr.io/docs/.

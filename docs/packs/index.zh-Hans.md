@@ -27,7 +27,7 @@ Prometheus `/metrics` 页面)、提取什么内容,以及随之附带哪些告�
 ## 参考集成包 {#reference-packs}
 
 仓库在
-[`packs/`](https://github.com/laupernoe/dumbmonit/tree/main/packs)
+[`packs/`](https://github.com/selfhostr/dumbmonit/tree/main/packs)
 下附带了三个集成包,各自带有测试样例和预期输出:
 
 | 集成包 | 读取内容 | 规则 |
@@ -99,11 +99,11 @@ curl -H 'Authorization: Bearer dmt_…' https://localhost:8080/api/packs
 
 ```bash
 # 模式和一致性检查,无需服务器或数据库
-docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/laupernoe/dumbmonit:latest \
+docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/selfhostr/dumbmonit:latest \
   pack lint /packs/shelly-plug
 
 # 通过真实的提取逻辑重放 fixtures/ 并与 expected.prom 对比
-docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/laupernoe/dumbmonit:latest \
+docker run --rm -v "$PWD/packs:/packs:ro" ghcr.io/selfhostr/dumbmonit:latest \
   pack test /packs/shelly-plug
 ```
 

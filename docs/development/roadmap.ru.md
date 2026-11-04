@@ -5,20 +5,20 @@
 Приоритеты и сроки могут меняться; доска — живой план, а не обещание.
 
 - **Выпущенные изменения** описаны в
-  [журнале изменений](https://github.com/laupernoe/dumbmonit/blob/main/CHANGELOG.md)
+  [журнале изменений](https://github.com/selfhostr/dumbmonit/blob/main/CHANGELOG.md)
   и в примечаниях к каждому
-  [релизу на GitHub](https://github.com/laupernoe/dumbmonit/releases).
+  [релизу на GitHub](https://github.com/selfhostr/dumbmonit/releases).
 - **Идеи и ошибки** собраны в
-  [трекере задач](https://github.com/laupernoe/dumbmonit/issues). Прежде чем
+  [трекере задач](https://github.com/selfhostr/dumbmonit/issues). Прежде чем
   писать код для чего-то крупного, откройте задачу.
 - **Исправления безопасности** объявляются в примечаниях к релизу и в виде
   security advisories на GitHub с идентификатором CVE или GHSA.
 
 DumbMonit находится в стадии до 1.0: API и модель данных будут развиваться,
 пока не будет объявлена стабильная линия. Чтобы принять участие, см.
-[руководство для участников](https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md)
+[руководство для участников](https://github.com/selfhostr/dumbmonit/blob/main/CONTRIBUTING.md)
 и
-[правила управления проектом](https://github.com/laupernoe/dumbmonit/blob/main/GOVERNANCE.md).
+[правила управления проектом](https://github.com/selfhostr/dumbmonit/blob/main/GOVERNANCE.md).
 
 ## Направление на ближайшие двенадцать месяцев
 
@@ -29,7 +29,7 @@ DumbMonit находится в стадии до 1.0: API и модель да�
   менять, с примечаниями по обновлению в журнале изменений.
 - **Больше людей с доступом.** Второй администратор репозитория, реестра,
   хостинга документации и доменов (см.
-  [правила управления проектом](https://github.com/laupernoe/dumbmonit/blob/main/GOVERNANCE.md)).
+  [правила управления проектом](https://github.com/selfhostr/dumbmonit/blob/main/GOVERNANCE.md)).
 - **Цепочка поставок.** Воспроизводимые сборки релизов
   ([текущее состояние](reproducible-builds.md)) и подписанные теги версий.
 - **Образы arm64.** Образы сервера пока только для amd64; arm64 вернётся с

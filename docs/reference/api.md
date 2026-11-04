@@ -745,7 +745,7 @@ good, reversibly, without disabling the rule for anyone else.
 
 | Method | Route | Purpose |
 |---|---|---|
-| `GET` | `/api/notify/kinds` | Every channel type with its `settings` and `secrets` fields (`key`, `label`, `required`, `input`, `help`, `placeholder`, `options`, `shape`, `default`) and a `doc_url` such as `https://dumbmonit.readthedocs.io/en/latest/notifications/#discord`. |
+| `GET` | `/api/notify/kinds` | Every channel type with its `settings` and `secrets` fields (`key`, `label`, `required`, `input`, `help`, `placeholder`, `options`, `shape`, `default`) and a `doc_url` such as `https://dumbmonit.selfhostr.io/docs/notifications/#discord`. |
 | `GET` | `/api/notify/channels` | Every channel: `id`, `name`, `kind`, `enabled`, `settings`, `has_secret`, `last_error`, `last_sent_at`, `policy` (`min_severity`, `notify_resolved`, `min_interval_secs`, `quiet_hours`, `matcher`). Secrets are never returned. |
 | `POST` | `/api/notify/channels` | Create. `201`. |
 | `PUT` | `/api/notify/channels/{id}` | Update. Omitting `secrets` keeps the stored ones; `"secrets": {}` clears them. In `policy`, omitting `matcher` keeps the routing filter and `"matcher": null` clears it. |

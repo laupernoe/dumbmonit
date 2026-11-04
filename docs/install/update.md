@@ -6,7 +6,7 @@ update. It never installs anything by itself.
 ## Spotting a new version
 
 Once a day at most, the server asks GitHub's public releases API
-(`api.github.com/repos/laupernoe/dumbmonit/releases`) for the latest release
+(`api.github.com/repos/selfhostr/dumbmonit/releases`) for the latest release
 and compares it with the version you run. Pre-releases such as
 `0.1.0-alpha.7` are compared properly: `alpha.10` is newer than `alpha.9`, and
 `0.1.0` is newer than any `0.1.0-alpha.N`. Drafts are ignored, and an instance
@@ -53,7 +53,7 @@ The same information is available to scripts and API tokens at
    *You are up to date*.
 
 To pin a version instead of following `:latest`, change the image tag in the
-Compose file (for example `ghcr.io/laupernoe/dumbmonit:0.1.0-alpha.7`) and run
+Compose file (for example `ghcr.io/selfhostr/dumbmonit:0.1.0-alpha.7`) and run
 the same command.
 
 To go back, restore the backup taken in step 1 on the previous image.
@@ -80,7 +80,7 @@ afterwards, a window lists what to change, each with the block to copy:
 **Settings → About → Configuration changes → View the list** shows every change
 a release has asked for (to apply, closed, or not needed on this instance) with
 its block, whenever you want to read it again. Only administrators see it, and
-it is switched off in the public demo.
+it is switched off in demo mode.
 
 | Since | Change | What to do |
 |---|---|---|

@@ -7,7 +7,7 @@ SQLite. Один том, `/data`, содержит базу данных, сек
 временные ряды.
 
 !!! note "Теги образа"
-    `ghcr.io/laupernoe/dumbmonit:latest` — последний помеченный релиз (amd64;
+    `ghcr.io/selfhostr/dumbmonit:latest` — последний помеченный релиз (amd64;
     образы arm64 пока приостановлены); `:edge` следует за последним коммитом в `dev`. Чтобы запустить из исходников,
     `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
     --build` собирает тот же образ локально (около десяти минут в первый раз;
@@ -29,7 +29,7 @@ SQLite. Один том, `/data`, содержит базу данных, сек
 ```yaml
 services:
   dumbmonit:
-    image: ghcr.io/laupernoe/dumbmonit:latest
+    image: ghcr.io/selfhostr/dumbmonit:latest
     ports:
       - "8080:8080"
     volumes:

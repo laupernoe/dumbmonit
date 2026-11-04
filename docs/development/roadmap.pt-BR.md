@@ -5,20 +5,20 @@ no quadro público do projeto: [DumbMonit Roadmap](https://github.com/users/laup
 Prioridades e prazos podem mudar; o quadro é um plano vivo, não uma promessa.
 
 - **As mudanças entregues** estão no
-  [changelog](https://github.com/laupernoe/dumbmonit/blob/main/CHANGELOG.md)
+  [changelog](https://github.com/selfhostr/dumbmonit/blob/main/CHANGELOG.md)
   e nas notas de cada
-  [lançamento do GitHub](https://github.com/laupernoe/dumbmonit/releases).
+  [lançamento do GitHub](https://github.com/selfhostr/dumbmonit/releases).
 - **Ideias e bugs** ficam no
-  [rastreador de issues](https://github.com/laupernoe/dumbmonit/issues). Abra
+  [rastreador de issues](https://github.com/selfhostr/dumbmonit/issues). Abra
   uma issue antes de escrever código para algo grande.
 - **Correções de segurança** são anunciadas nas notas de lançamento e como
   avisos de segurança do GitHub, com seu identificador CVE ou GHSA.
 
 O DumbMonit está antes da 1.0: espere que a API e o modelo de dados continuem
 evoluindo até que uma linha estável seja anunciada. Veja o
-[guia de contribuição](https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md)
+[guia de contribuição](https://github.com/selfhostr/dumbmonit/blob/main/CONTRIBUTING.md)
 e a
-[governança](https://github.com/laupernoe/dumbmonit/blob/main/GOVERNANCE.md)
+[governança](https://github.com/selfhostr/dumbmonit/blob/main/GOVERNANCE.md)
 para participar.
 
 ## Direção para os próximos doze meses {#direction-for-the-next-twelve-months}
@@ -30,7 +30,7 @@ São intenções, não compromissos, em ordem aproximada.
   alterá-los, com notas de atualização no changelog.
 - **Mais pessoas com acesso.** Um segundo administrador do repositório, do
   registro, da hospedagem da documentação e dos domínios (veja a
-  [governança](https://github.com/laupernoe/dumbmonit/blob/main/GOVERNANCE.md)).
+  [governança](https://github.com/selfhostr/dumbmonit/blob/main/GOVERNANCE.md)).
 - **Cadeia de suprimentos.** Builds de release reproduzíveis
   ([estado atual](reproducible-builds.md)) e tags de versão assinadas.
 - **Imagens arm64.** As imagens do servidor são apenas amd64 por enquanto; o

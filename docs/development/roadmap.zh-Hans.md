@@ -5,18 +5,18 @@
 优先级和时间可能调整;该看板是一份动态计划,而不是承诺。
 
 - **已发布的变更**见
-  [变更日志](https://github.com/laupernoe/dumbmonit/blob/main/CHANGELOG.md)
-  以及每个 [GitHub 发行版](https://github.com/laupernoe/dumbmonit/releases)的说明。
+  [变更日志](https://github.com/selfhostr/dumbmonit/blob/main/CHANGELOG.md)
+  以及每个 [GitHub 发行版](https://github.com/selfhostr/dumbmonit/releases)的说明。
 - **想法和缺陷**请提交到
-  [问题跟踪器](https://github.com/laupernoe/dumbmonit/issues)。在为较大的改动编写代码之前,
+  [问题跟踪器](https://github.com/selfhostr/dumbmonit/issues)。在为较大的改动编写代码之前,
   请先开一个 issue。
 - **安全修复**会在发行说明和 GitHub 安全公告中公布,并附有 CVE 或 GHSA 编号。
 
 DumbMonit 目前尚未到达 1.0:在宣布稳定版本线之前,API 和数据模型会持续演进。
 如需参与,请参阅
-[贡献指南](https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md)
+[贡献指南](https://github.com/selfhostr/dumbmonit/blob/main/CONTRIBUTING.md)
 和
-[治理说明](https://github.com/laupernoe/dumbmonit/blob/main/GOVERNANCE.md)。
+[治理说明](https://github.com/selfhostr/dumbmonit/blob/main/GOVERNANCE.md)。
 
 ## 未来十二个月的方向 {#direction-for-the-next-twelve-months}
 
@@ -25,7 +25,7 @@ DumbMonit 目前尚未到达 1.0:在宣布稳定版本线之前,API 和数据模
 - **迈向 1.0。** 确定 HTTP API 和数据库架构,以便宣布稳定版本线;在此
   之前,次要版本仍可能更改它们,升级说明会写在变更日志中。
 - **更多有权限的人。** 仓库、镜像仓库、文档托管和域名各增加第二位管理员
-  (参见[治理说明](https://github.com/laupernoe/dumbmonit/blob/main/GOVERNANCE.md))。
+  (参见[治理说明](https://github.com/selfhostr/dumbmonit/blob/main/GOVERNANCE.md))。
 - **供应链。** 可复现的发布构建([当前状态](reproducible-builds.md))和
   已签名的版本标签。
 - **arm64 镜像。** 服务器镜像目前仅有 amd64;arm64 将随原生构建运行器

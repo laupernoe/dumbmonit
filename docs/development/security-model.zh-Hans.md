@@ -2,7 +2,7 @@
 
 本页说明 DumbMonit 保护什么、信任谁、设计如何限制失误造成的损害,以及可以在代码和测试中的
 哪里查证。如需报告漏洞,请遵循
-[安全策略](https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md)。
+[安全策略](https://github.com/selfhostr/dumbmonit/blob/main/SECURITY.md)。
 
 ## 风险所在
 

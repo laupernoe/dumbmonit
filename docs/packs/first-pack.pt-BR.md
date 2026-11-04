@@ -114,7 +114,7 @@ reinício da tomada não parece uma queda.
 ## 5. Verifique-o {#5-check-it}
 
 ```bash
-docker run --rm -v "$PWD:/work" --user "$(id -u)" ghcr.io/laupernoe/dumbmonit:latest \
+docker run --rm -v "$PWD:/work" --user "$(id -u)" ghcr.io/selfhostr/dumbmonit:latest \
   pack test /work/shelly-plug --update
 ```
 
@@ -168,7 +168,7 @@ métrica que o pacote não produz, uma opção que não existe ou um caminho
 que apontar para outro lugar são reportados com onde estão.
 
 ```bash
-docker run --rm -v "$PWD:/work:ro" ghcr.io/laupernoe/dumbmonit:latest pack lint /work/shelly-plug
+docker run --rm -v "$PWD:/work:ro" ghcr.io/selfhostr/dumbmonit:latest pack lint /work/shelly-plug
 ```
 
 ## 7. Instale-o {#7-install-it}
@@ -190,5 +190,5 @@ instale de novo: a extração é substituída, a regra que você possa ter
 ajustado é mantida.
 
 O pacote completo, com seu aviso de configuração, está em
-[`packs/shelly-plug`](https://github.com/laupernoe/dumbmonit/tree/main/packs/shelly-plug).
+[`packs/shelly-plug`](https://github.com/selfhostr/dumbmonit/tree/main/packs/shelly-plug).
 Tudo que o formato aceita está na [referência](format.md).
