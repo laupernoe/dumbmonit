@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * The signed-in account: a round avatar with the initials, and a small menu
 	 * (name and role, "My account", sign out). `placement="rail"` is for the
@@ -153,7 +154,7 @@
 					</p>
 				</div>
 				<a
-					href="/settings/account"
+					href={withBase('/settings/account')}
 					role="menuitem"
 					class="mt-1 flex h-10 items-center gap-2.5 rounded-lg px-3 text-sm font-semibold text-ink-2 outline-none hover:bg-surface-2 hover:text-ink focus-visible:bg-surface-2 focus-visible:text-ink"
 					onclick={() => hide()}

@@ -8,7 +8,7 @@
 	 * instant. Matching and ranking live in `#lib/palette/logic.ts`. Actions the
 	 * current role may not do are left out. ARIA: combobox input + listbox.
 	 */
-	import { goto } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import { tick } from 'svelte';
 	import type { Icon as LucideIcon } from 'lucide-svelte';
 	import {

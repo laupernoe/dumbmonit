@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Adding a machine with the agent, start to finish, without leaving the flow.
@@ -514,7 +515,7 @@
 		{#if !relay && !spk && !windows}
 			<p class="text-sm text-ink-2">
 				{m.deviceform_agentflow_synology_hint()}
-				<a href="/targets/new?kind=synology&mode=agent" class="font-semibold text-ink underline underline-offset-2">{m.deviceform_agentflow_synology_link()}</a>
+				<a href={withBase('/targets/new?kind=synology&mode=agent')} class="font-semibold text-ink underline underline-offset-2">{m.deviceform_agentflow_synology_link()}</a>
 			</p>
 		{/if}
 	</form>

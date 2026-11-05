@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * A monitor's active alerts as a small bell with a count, linking to the
 	 * alerts section of its page. Renders nothing at 0. The count is text and
@@ -36,7 +37,7 @@
 
 {#if counts && counts.total > 0}
 	<a
-		href={`/targets/${targetId}#device-alerts`}
+		href={withBase(`/targets/${targetId}#device-alerts`)}
 		class={`group relative z-[1] inline-flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-[var(--radius-plate)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal ${className}`}
 		aria-label={label}
 		{title}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Escalation policies: who gets paged, in which order, after how long. A
 	 * policy does nothing until an "on-call" notification channel points to it,
@@ -64,7 +65,7 @@
 		<div class="rounded-lg border border-line bg-canvas-deep px-4 py-3 text-[0.8125rem] leading-relaxed text-ink-2">
 			<p class="font-semibold text-ink">{m.oncall_policies_help_title()}</p>
 			<p class="mt-1">{m.oncall_policies_help_body()}</p>
-			<a href="/settings/notifications#notifications-channels" class="mt-1.5 inline-flex min-h-10 items-center font-semibold text-signal-ink hover:underline sm:min-h-0">{m.oncall_policies_help_link()}</a>
+			<a href={withBase('/settings/notifications#notifications-channels')} class="mt-1.5 inline-flex min-h-10 items-center font-semibold text-signal-ink hover:underline sm:min-h-0">{m.oncall_policies_help_link()}</a>
 		</div>
 
 		{#if actionError}<ErrorNotice error={actionError} title={m.oncall_policy_error_delete()} />{/if}

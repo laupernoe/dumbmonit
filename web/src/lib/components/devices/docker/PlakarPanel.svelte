@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Plakar backups seen by the agent: one block per kloset, one line per
@@ -174,7 +175,7 @@
 	{:else if klosets.length === 0}
 		<p class="px-4 py-4 text-sm text-ink-2 sm:px-5">
 			{m.devices_plakar_no_kloset()}
-			<a href={GUIDE_URL} class="inline-flex min-h-10 items-center sm:min-h-0 gap-1 text-ink underline decoration-line-strong underline-offset-2 hover:text-signal-ink" target="_blank" rel="noreferrer">
+			<a href={withBase(GUIDE_URL)} class="inline-flex min-h-10 items-center sm:min-h-0 gap-1 text-ink underline decoration-line-strong underline-offset-2 hover:text-signal-ink" target="_blank" rel="noreferrer">
 				{m.devices_plakar_guide()}
 				<ExternalLink class="size-3.5" aria-hidden="true" />
 			</a>.

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Strip shown while this session travels in clear: the page is on plain
 	 * HTTP (neither HTTPS to this server nor through an HTTPS reverse proxy),
@@ -63,9 +64,9 @@
 			</p>
 			<div class="flex flex-wrap items-center gap-1">
 				{#if https?.available}
-					<a class={link} href={target}>{m.app_cleartext_switch()}</a>
+					<a class={link} href={withBase(target)}>{m.app_cleartext_switch()}</a>
 				{:else}
-					<a class={link} href={DOC} target="_blank" rel="noopener">{m.app_cleartext_how()}</a>
+					<a class={link} href={withBase(DOC)} target="_blank" rel="noopener">{m.app_cleartext_how()}</a>
 				{/if}
 				<button type="button" class="inline-flex min-h-10 items-center rounded-md px-2 text-ink-2 hover:bg-surface-2 hover:text-ink" onclick={dismiss}>
 					{m.app_cleartext_dismiss()}

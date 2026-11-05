@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { routePath, withBase } from '#lib/paths.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * The demo's guided tour: eight stops, each one a page and, when it has
@@ -6,7 +7,7 @@
 	 * closes, arrow keys step — docked bottom-right on desktop and as a bottom
 	 * sheet on phones, so the highlighted part of the page stays visible.
 	 */
-	import { goto } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import { page } from '$app/state';
 	import { tick, untrack } from 'svelte';
 	import { X, ArrowLeft, ArrowRight } from 'lucide-svelte';
@@ -120,7 +121,7 @@
 		if (mine !== serial) return;
 		if (target) {
 			const [path, hash] = target.split('#');
-			if (page.url.pathname !== path) {
+			if (routePath(page.url) !== path) {
 				// Scroll to the top of the new page, focus stays on the tour (SvelteKit 3
 				// merged `keepFocus`/`noScroll` into `reset`); the anchor is scrolled to below.
 				await goto(target, { reset: false });
@@ -262,7 +263,7 @@
 		<h2 id="tour-title" class="mt-1 text-lg font-bold tracking-tight">{step.title}</h2>
 		<p id="tour-body" class="mt-2 text-sm leading-relaxed text-ink-2">{step.body}</p>
 		{#if step.link}
-			<a href={step.link.href} class="mt-2 inline-block text-sm font-semibold text-signal-ink hover:underline" onclick={close}>{step.link.label}</a>
+			<a href={withBase(step.link.href)} class="mt-2 inline-block text-sm font-semibold text-signal-ink hover:underline" onclick={close}>{step.link.label}</a>
 		{/if}
 
 		<div class="mt-4 flex items-center gap-2">

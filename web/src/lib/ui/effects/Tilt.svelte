@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Tilt — a card that leans toward the cursor on a gimbal and settles flat
 	 * when it leaves. Svelte 5 port of the React Bits "TiltedCard" component
@@ -70,7 +71,7 @@
 
 <svelte:element
 	this={tag}
-	{href}
+	href={withBase(href)}
 	class={`[transform-style:preserve-3d] transition-transform duration-200 ease-out-expo will-change-transform ${className}`}
 	style={fullStyle}
 	onpointermove={move}

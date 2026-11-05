@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Settings → Monitoring → Locations: the places shown on the world map
 	 * (Map → World), and the map's background.
@@ -442,7 +443,7 @@
 					</Field>
 					<p class="text-[0.8125rem] text-ink-2" role="status">
 						{geoipState}
-						{#if geoip.enabled}· <a href={geoip.source_url} rel="noopener noreferrer" target="_blank" class="underline decoration-dotted underline-offset-2 hover:text-ink">IP Geolocation by DB-IP</a>{/if}
+						{#if geoip.enabled}· <a href={withBase(geoip.source_url)} rel="noopener noreferrer" target="_blank" class="underline decoration-dotted underline-offset-2 hover:text-ink">IP Geolocation by DB-IP</a>{/if}
 					</p>
 					{#if geoipError}<ErrorNotice error={geoipError} title={m.locations_geoip_err()} />{/if}
 				</div>

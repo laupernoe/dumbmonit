@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Monitors › Logs — log search (administrators): LogsQL over the embedded log store. The
 	 * server's own logs plus what agents, the syslog server and the SNMP trap
@@ -180,7 +181,7 @@
 
 <div class="mb-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-1">
 	<p class="max-w-2xl text-sm text-ink-2 max-sm:hidden">{m.logsearch_description()}</p>
-	<a href="/settings/system#storage" class="inline-flex min-h-10 items-center text-sm text-ink-2 hover:text-ink hover:underline">{m.logsearch_settings_link()}</a>
+	<a href={withBase('/settings/system#storage')} class="inline-flex min-h-10 items-center text-sm text-ink-2 hover:text-ink hover:underline">{m.logsearch_settings_link()}</a>
 </div>
 
 {#if !auth.isAdmin}
@@ -305,7 +306,7 @@
 				{#if alertDone}
 					<p class="text-sm text-ink" role="status">
 						{m.logalert_created()}
-						<a href="/alerts" class="font-semibold text-signal-ink hover:underline">{m.logalert_created_link()}</a>
+						<a href={withBase('/alerts')} class="font-semibold text-signal-ink hover:underline">{m.logalert_created_link()}</a>
 					</p>
 				{/if}
 				<div><Button type="submit" variant="secondary" loading={alertSaving}>{m.logalert_create()}</Button></div>
@@ -320,7 +321,7 @@
 			{#if status === 409}
 				<div class="rounded-[var(--radius-card)] border border-line bg-surface p-4">
 					<p class="text-sm text-ink">{m.logsearch_store_off()}</p>
-					<a href="/settings/system#storage" class="mt-2 inline-flex min-h-10 items-center text-sm font-semibold text-signal-ink hover:underline">{m.logsearch_store_off_link()}</a>
+					<a href={withBase('/settings/system#storage')} class="mt-2 inline-flex min-h-10 items-center text-sm font-semibold text-signal-ink hover:underline">{m.logsearch_store_off_link()}</a>
 				</div>
 			{:else if status === 400}
 				<div class="rounded-[var(--radius-card)] border border-warning bg-surface p-4" role="alert">
@@ -370,7 +371,7 @@
 									{#if entry.target_name}
 										<dt class="text-ink-3">{m.logsearch_field_device()}</dt>
 										<dd class="break-all text-ink">
-											{#if entry.fields.target}<a href={`/targets/${entry.fields.target}`} class="underline decoration-line underline-offset-2 hover:text-ink">{entry.target_name}</a>{:else}{entry.target_name}{/if}
+											{#if entry.fields.target}<a href={withBase(`/targets/${entry.fields.target}`)} class="underline decoration-line underline-offset-2 hover:text-ink">{entry.target_name}</a>{:else}{entry.target_name}{/if}
 										</dd>
 									{/if}
 									{#if entry.host}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Settings → API & assistants: API tokens for MCP clients (Claude, ChatGPT,
 	 * Cursor, VS Code…) and for the REST API, with the ready-to-paste snippets.
@@ -373,7 +374,7 @@
 				</div>
 			</div>
 			<div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-2">
-				<a class={`inline-flex items-center gap-1.5 ${linkClass}`} href={OPENAPI_PATH} target="_blank" rel="noreferrer">
+				<a class={`inline-flex items-center gap-1.5 ${linkClass}`} href={withBase(OPENAPI_PATH)} target="_blank" rel="noreferrer">
 					<FileJson class="size-4 shrink-0" aria-hidden="true" />
 					{m.settings_assistant_openapi()}
 				</a>

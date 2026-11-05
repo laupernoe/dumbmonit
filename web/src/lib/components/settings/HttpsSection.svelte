@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Settings → System → HTTPS and encryption: the certificate the web port
 	 * serves (provided or self-signed, its fingerprint to compare with the
@@ -81,7 +82,7 @@
 				<Plate {tone} label={tone === 'warning' ? m.settings_https_severity_warning() : m.settings_https_severity_info()} />
 				<p class="min-w-0 flex-1 text-sm break-words text-ink">{describe(finding)}</p>
 				{#if finding.link}
-					<a href={finding.link} class="inline-flex min-h-10 items-center text-sm font-semibold text-signal-ink hover:underline">{m.settings_https_fix()}</a>
+					<a href={withBase(finding.link)} class="inline-flex min-h-10 items-center text-sm font-semibold text-signal-ink hover:underline">{m.settings_https_fix()}</a>
 				{/if}
 			</li>
 		{/each}
@@ -126,7 +127,7 @@
 							<dd class="break-words text-ink">{data.certificate.issuer}</dd>
 						{/if}
 					</dl>
-					<a href={HTTPS_CERTIFICATE_URL} download class="inline-flex min-h-10 items-center gap-1.5 justify-self-start text-sm font-semibold text-signal-ink hover:underline">
+					<a href={withBase(HTTPS_CERTIFICATE_URL)} download class="inline-flex min-h-10 items-center gap-1.5 justify-self-start text-sm font-semibold text-signal-ink hover:underline">
 						<Download class="size-4" aria-hidden="true" />
 						{m.settings_https_download()}
 					</a>

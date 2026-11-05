@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * The security report of one device, opened from its badge: the grade,
 	 * an unmissable "indicative, not an audit" notice, what fails (with the
@@ -87,7 +88,7 @@
 							<p class="text-sm break-words text-ink-2">{check.evidence}</p>
 							<p class="text-sm break-words text-ink">{check.remediation}</p>
 							{#if check.reference}
-								<a href={check.reference} target="_blank" rel="noopener" class={linkClass}>
+								<a href={withBase(check.reference)} target="_blank" rel="noopener" class={linkClass}>
 									{m.devices_security_guidance()}
 									<ExternalLink class="size-3.5" aria-hidden="true" />
 								</a>
@@ -147,7 +148,7 @@
 						<li class="break-words">{step}</li>
 					{/each}
 				</ol>
-				<a href={report.guide.doc_url} target="_blank" rel="noopener" class={`${linkClass} mt-2`}>
+				<a href={withBase(report.guide.doc_url)} target="_blank" rel="noopener" class={`${linkClass} mt-2`}>
 					{m.devices_security_docs()}
 					<ExternalLink class="size-3.5" aria-hidden="true" />
 				</a>

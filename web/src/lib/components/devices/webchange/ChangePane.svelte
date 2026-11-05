@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * The change selected in the device panel's timeline, shown beside it:
 	 * what moved in the text first (the quickest answer to "what changed?"),
@@ -63,7 +64,7 @@
 				<h3 class="flex min-w-0 items-center gap-1.5 text-base font-semibold text-ink">
 					<span class="truncate" title={detail.url}>{pagePath(detail.url)}</span>
 					<a
-						href={detail.url}
+						href={withBase(detail.url)}
 						target="_blank"
 						rel="noopener noreferrer"
 						class="-m-2 inline-flex shrink-0 items-center justify-center p-2 text-ink-3 hover:text-ink"
@@ -94,7 +95,7 @@
 					{#each sameEdit as change (change.id)}
 						<li>
 							<a
-								href={`/targets/${targetId}/changes/${change.id}`}
+								href={withBase(`/targets/${targetId}/changes/${change.id}`)}
 								class="text-[0.8125rem] text-ink-2 underline decoration-line underline-offset-2 hover:text-ink"
 								title={change.url}
 								onclick={(event) => {

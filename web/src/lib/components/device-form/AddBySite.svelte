@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * "Where is it?" — first step of adding a monitor: pick a site (a location
 	 * of the world map, or none), then add what fits there in one click.
@@ -218,7 +219,7 @@
 							<li class="flex items-center gap-2 text-sm text-ink">
 								<Check class="size-4 text-signal-ink" aria-hidden="true" />
 								<span>{m.deviceform_site_added({ name: item.name })}</span>
-								<a href={`/targets/${item.id}`} {target} class="text-ink-2 underline hover:text-ink">{m.deviceform_site_open()}</a>
+								<a href={withBase(`/targets/${item.id}`)} {target} class="text-ink-2 underline hover:text-ink">{m.deviceform_site_open()}</a>
 							</li>
 						{/each}
 					</ul>

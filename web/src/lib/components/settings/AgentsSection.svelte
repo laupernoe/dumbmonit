@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Settings → Agents: only what is an instance setting. The encrypted agent
 	 * channel (mTLS, CA rotation), automatic agent updates, and the enrolment
@@ -235,7 +236,7 @@
 									{#if token.max_uses === 1 || token.uses === 1}
 										<p class="mt-1 text-sm text-ink-2">
 											{#if machines[token.id]}
-												{m.settings_agents_used_by_lead()} <a class="font-semibold text-ink underline-offset-2 hover:underline" href={`/targets/${machines[token.id].id}`}>{machines[token.id].name}</a>
+												{m.settings_agents_used_by_lead()} <a class="font-semibold text-ink underline-offset-2 hover:underline" href={withBase(`/targets/${machines[token.id].id}`)}>{machines[token.id].name}</a>
 											{:else if token.uses === 0}
 												{m.settings_agents_not_used_yet()}
 											{/if}

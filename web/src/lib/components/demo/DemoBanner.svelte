@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Slim strip above the navigation in the public demo: what this is, where to
@@ -28,11 +29,11 @@
 				<Compass class="size-3.5" aria-hidden="true" />
 				{m.demo_banner_tour()}
 			</button>
-			<a class={link} href={INSTALL_URL} target="_blank" rel="noopener">
+			<a class={link} href={withBase(INSTALL_URL)} target="_blank" rel="noopener">
 				<BookOpen class="size-3.5" aria-hidden="true" />
 				{m.demo_banner_install()}
 			</a>
-			<a class={link} href={GITHUB_URL} target="_blank" rel="noopener">
+			<a class={link} href={withBase(GITHUB_URL)} target="_blank" rel="noopener">
 				<GitBranch class="size-3.5" aria-hidden="true" />
 				{m.demo_banner_github()}
 			</a>

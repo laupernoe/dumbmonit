@@ -3,7 +3,7 @@
 	 * Settings → System: the instance's name and time zone, and a
 	 * way back into the setup wizard.
 	 */
-	import { goto } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import { getInstanceSettings, updateInstanceSettings } from '#lib/api/instance.js';
 	import type { InstanceSettings } from '#lib/api/index.js';
 	import { m } from '#lib/paraglide/messages.js';

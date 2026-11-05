@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Monitors › Security: where the stopped attacks come from (the threat map,
 	 * by country), then CVE & vulnerabilities for the software inventoried on
@@ -12,7 +13,7 @@
 
 <div class="mb-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-1">
 	<p class="max-w-2xl text-sm text-ink-2 max-sm:hidden">{m.security_page_description()}</p>
-	<a href="/settings/monitoring#security-score" class="inline-flex min-h-10 items-center text-sm text-ink-2 hover:text-ink hover:underline">{m.security_page_score_link()}</a>
+	<a href={withBase('/settings/monitoring#security-score')} class="inline-flex min-h-10 items-center text-sm text-ink-2 hover:text-ink hover:underline">{m.security_page_score_link()}</a>
 </div>
 <ThreatMap class="mb-4" />
 <CveSection />

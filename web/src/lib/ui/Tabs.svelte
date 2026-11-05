@@ -35,7 +35,7 @@
 	 */
 	import type { Snippet } from 'svelte';
 	import { tick } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import { page } from '$app/state';
 	import { rovingIndex } from './roving.js';
 

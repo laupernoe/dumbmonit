@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Settings → Integration packs: device types declared in YAML. Lists what
 	 * is installed, installs a pasted or uploaded pack.yaml, turns packs on and
@@ -172,7 +173,7 @@
 		<div class="flex flex-wrap items-center gap-2">
 			{#if !auth.isAdmin}<Plate tone="ghost" label={m.settings_packs_admins_only()} />{/if}
 			<a
-				href={PACKS_DOC_URL}
+				href={withBase(PACKS_DOC_URL)}
 				target="_blank"
 				rel="noreferrer"
 				class="inline-flex items-center gap-1 text-sm font-semibold text-ink-2 hover:text-ink hover:underline"
@@ -325,7 +326,7 @@
 							{/if}
 							<p class="mt-2 text-sm text-ink-2">
 								{m.settings_packs_val_note()}
-								<a href={PACKS_DOC_URL} target="_blank" rel="noreferrer" class="font-semibold text-ink underline underline-offset-2">{m.settings_packs_val_link()}</a>
+								<a href={withBase(PACKS_DOC_URL)} target="_blank" rel="noreferrer" class="font-semibold text-ink underline underline-offset-2">{m.settings_packs_val_link()}</a>
 								{m.settings_packs_val_link_tail()}
 							</p>
 						</div>

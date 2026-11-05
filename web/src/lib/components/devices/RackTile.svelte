@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { viewport } from '#lib/stores/viewport.svelte.js';
 	/**
 	 * One monitor as a tile, for the tiles view of /targets: the same label
@@ -57,7 +58,7 @@
 		</span>
 		<div class="min-w-0 flex-1">
 			<a
-				href={`/targets/${target.id}`}
+				href={withBase(`/targets/${target.id}`)}
 				class="block truncate font-semibold text-ink after:absolute after:inset-0 after:rounded-[var(--radius-card)] after:content-[''] focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-signal"
 				aria-label={`${target.name}, ${STATE_LABEL[state]}`}
 			>{target.name}</a>

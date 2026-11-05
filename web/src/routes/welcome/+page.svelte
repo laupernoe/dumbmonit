@@ -11,7 +11,7 @@
 	 * on the server, for every browser.
 	 */
 	import { tick } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import { page } from '$app/state';
 	import { Check } from 'lucide-svelte';
 	import { getInstanceSettings, updateInstanceSettings } from '#lib/api/instance.js';

@@ -27,8 +27,10 @@
 			// src/lib/stores/theme-choice.ts); the wall stays dark. Public status
 			// pages (`/s/…`, or a status page's own domain) keep their light and
 			// dark versions.
+			// The static demo lives under /demo: routes are compared without it.
+			var route = location.pathname.replace(/^\/demo(?=\/|$)/, '') || '/';
 			var statusPage =
-				location.pathname.indexOf('/s/') === 0 ||
+				route.indexOf('/s/') === 0 ||
 				!!document.querySelector('meta[name="dumbmonit-status-page"]');
 			var dark = !statusPage;
 			if (!statusPage) document.documentElement.classList.add('obsidian');
@@ -39,7 +41,7 @@
 					dark =
 						choice === 'dark' ||
 						(choice !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-				} else if (location.pathname !== '/wall' && location.pathname.indexOf('/wall/') !== 0) {
+				} else if (route !== '/wall' && route.indexOf('/wall/') !== 0) {
 					const pick = localStorage.getItem('dumbmonit-console-theme');
 					dark =
 						pick !== 'light' &&

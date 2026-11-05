@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * "Deploy with Active Directory": a trigger button and its modal wizard.
 	 *
@@ -557,7 +558,7 @@
 					<ul class="grid gap-1.5" role="list">
 						{#each servers as server (server.id)}
 							<li class="min-w-0 truncate rounded-lg border border-line px-3 py-2 text-sm">
-								<a href={`/targets/${server.id}`} class="font-semibold text-ink hover:underline">{server.name}</a>
+								<a href={withBase(`/targets/${server.id}`)} class="font-semibold text-ink hover:underline">{server.name}</a>
 							</li>
 						{/each}
 					</ul>

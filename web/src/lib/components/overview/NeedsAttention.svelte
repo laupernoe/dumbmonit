@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * "Needs attention": only what is broken now (see `attention.ts`), worst
 	 * first, each row with its quick action: acknowledge or snooze an alert,
@@ -100,7 +101,7 @@
 		{#if rows.length > 0}
 			<span class="font-mono text-xs text-ink-2 tabular-nums">{rows.length}</span>
 		{/if}
-		<a href="/targets" class="ml-auto inline-flex min-h-10 items-center gap-1 text-sm font-medium text-ink-2 hover:text-ink max-sm:-my-2">
+		<a href={withBase('/targets')} class="ml-auto inline-flex min-h-10 items-center gap-1 text-sm font-medium text-ink-2 hover:text-ink max-sm:-my-2">
 			{m.overview_needs_see_all({ count: monitors })}<ArrowRight class="size-3.5" aria-hidden="true" />
 		</a>
 	</div>
@@ -123,7 +124,7 @@
 								<span class="ml-auto shrink-0 font-mono text-xs text-ink-3 tabular-nums md:hidden">{formatRelative(row.since)}</span>
 							{/if}
 						</div>
-						<a href={href(row)} class="mt-1 flex min-w-0 items-baseline gap-1.5 text-sm font-semibold text-ink hover:underline md:mt-0">
+						<a href={withBase(href(row))} class="mt-1 flex min-w-0 items-baseline gap-1.5 text-sm font-semibold text-ink hover:underline md:mt-0">
 							<span class="truncate">{title(row)}</span>
 							{#if held > 0}
 								<span class="shrink-0 text-xs font-normal text-ink-2">{m.overview_needs_held({ count: held })}</span>
@@ -156,7 +157,7 @@
 			{/each}
 		</ul>
 		{#if rows.length > PHONE_LIMIT}
-			<a href="/alerts" class={`flex min-h-10 items-center gap-1 border-t border-line px-4 text-sm font-medium text-ink-2 hover:text-ink ${rows.length > LIMIT ? '' : 'sm:hidden'}`}>
+			<a href={withBase('/alerts')} class={`flex min-h-10 items-center gap-1 border-t border-line px-4 text-sm font-medium text-ink-2 hover:text-ink ${rows.length > LIMIT ? '' : 'sm:hidden'}`}>
 				{m.overview_needs_more({ count: rows.length })}<ArrowRight class="size-3.5" aria-hidden="true" />
 			</a>
 		{/if}
@@ -168,14 +169,14 @@
 			<span class="flex min-h-10 items-center">{m.overview_week_none()}</span>
 		{:else}
 			{#each week.slice(0, WEEK_SHOWN) as item (`${item.target}:${item.kind}:${item.what}`)}
-				<a href={`/targets/${item.target}`} class="inline-flex min-h-10 min-w-0 items-center gap-1.5 hover:text-ink">
+				<a href={withBase(`/targets/${item.target}`)} class="inline-flex min-h-10 min-w-0 items-center gap-1.5 hover:text-ink">
 					<span>{kindName(item.kind)}</span>
 					<span class="max-w-[12rem] truncate font-medium text-ink">{item.what || item.target_name}</span>
 					<span class={item.days_left < 3 ? 'text-warning-ink' : ''}>{whenLabel(item.days_left)}</span>
 				</a>
 			{/each}
 			{#if week.length > WEEK_SHOWN}
-				<a href="/status?tab=reports" class="inline-flex min-h-10 items-center font-medium hover:text-ink">{m.overview_week_more({ count: week.length - WEEK_SHOWN })}</a>
+				<a href={withBase('/status?tab=reports')} class="inline-flex min-h-10 items-center font-medium hover:text-ink">{m.overview_week_more({ count: week.length - WEEK_SHOWN })}</a>
 			{/if}
 		{/if}
 	</div>
