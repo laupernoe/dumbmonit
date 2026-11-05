@@ -11,8 +11,6 @@
 
 </div>
 
-Screenshots: [screenshots/](screenshots/)
-
 ## Overview
 
 DumbMonit watches servers, network gear, hypervisors, storage, applications and websites from a single console. No Zabbix to operate, no Prometheus, Grafana and Alertmanager to assemble.
