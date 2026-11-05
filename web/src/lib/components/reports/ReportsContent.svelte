@@ -42,7 +42,7 @@
 	const timezones = (() => {
 		try {
 			const list = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf?.('timeZone');
-			return list ? ['UTC', ...list] : ['UTC'];
+			return list ? [...new Set(['UTC', ...list])] : ['UTC'];
 		} catch {
 			return ['UTC'];
 		}
