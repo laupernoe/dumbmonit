@@ -63,7 +63,7 @@ const DENIED_PATH = /(token|secret|password|api[-_]?key|credential|enrol|private
 /** Keys whose non-empty string value looks like a secret. */
 const SECRET_KEY = /(password|passwd|secret|token|api[-_]?key|private[-_]?key|authorization|cookie|bearer|otp|recovery[-_]?code|webhook)/i;
 /** Keys that match above but only describe a kind, never carry a value. */
-const SAFE_KEYS = new Set(['credential_kind', 'token_id']);
+const SAFE_KEYS = new Set(['credential_kind', 'token_id', 'secret_source']);
 /** Keys holding help text: an example value there is not a credential. */
 const TEXT_KEYS = new Set(['placeholder', 'help', 'hint', 'description', 'label']);
 /** Values that look like credentials, wherever they sit. */
