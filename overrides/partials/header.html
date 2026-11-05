@@ -20,6 +20,12 @@
       {% set icon = config.theme.icon.menu or "material/menu" %}
       {% include ".icons/" ~ icon ~ ".svg" %}
     </label>
+    {% if config.extra.site %}
+      <a href="{{ config.extra.site.home }}" class="dm-back" title="{{ config.extra.site.home_label | e }}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>{{ config.site_name | e }}</span>
+      </a>
+    {% endif %}
     <div class="md-header__title" data-md-component="header-title">
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
