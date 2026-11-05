@@ -1,19 +1,24 @@
 <div align="center">
 
-<img src=".github/assets/banner.svg" alt="DumbMonit: self-hosted monitoring and alerting" width="900">
+<a href="https://dumbmonit.selfhostr.io"><img src=".github/assets/banner.svg" alt="DumbMonit: monitoring in one container" width="100%"></a>
 
-**Self-hosted monitoring for homelabs, small teams and mid-sized companies.**
-One container, graphs and alerts in under a minute.
+<h3>Self-hosted monitoring for homelabs, small teams and mid-sized companies.</h3>
+
+<a href="https://dumbmonit.selfhostr.io"><img src="https://raw.githubusercontent.com/selfhostr/.github/main/profile/assets/btn-site.svg" alt="Website" height="40"></a>
+<a href="https://dumbmonit.selfhostr.io/docs/"><img src="https://raw.githubusercontent.com/selfhostr/.github/main/profile/assets/btn-docs.svg" alt="Documentation" height="40"></a>
+<a href="https://dumbmonit.selfhostr.io/demo/"><img src="https://raw.githubusercontent.com/selfhostr/.github/main/profile/assets/btn-demo.svg" alt="Live demo" height="40"></a>
+<a href="https://github.com/selfhostr/dumbmonit/releases"><img src="https://raw.githubusercontent.com/selfhostr/.github/main/profile/assets/btn-releases.svg" alt="Releases" height="40"></a>
+
+<br><br>
 
 [![CI](https://github.com/selfhostr/dumbmonit/actions/workflows/ci.yml/badge.svg)](https://github.com/selfhostr/dumbmonit/actions/workflows/ci.yml)
-[![Documentation](https://img.shields.io/badge/docs-dumbmonit.selfhostr.io-blue)](https://dumbmonit.selfhostr.io/docs/)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15486/badge)](https://www.bestpractices.dev/projects/15486)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/selfhostr/dumbmonit/badge)](https://scorecard.dev/viewer/?uri=github.com/selfhostr/dumbmonit)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**[Website](https://dumbmonit.selfhostr.io)** · **[Documentation](https://dumbmonit.selfhostr.io/docs/)** · **[Roadmap](https://github.com/users/laupernoe/projects/2)**
+<br><br>
 
-<img src="docs/assets/screenshots/overview.png" alt="DumbMonit console: fleet status, active alerts and monitors" width="900">
+<img src="docs/assets/screenshots/overview.png" alt="DumbMonit console: fleet status, active alerts and monitors" width="100%">
 
 </div>
 
@@ -23,7 +28,8 @@ DumbMonit watches servers, network gear, hypervisors, storage, applications and 
 
 - **Fast to set up.** Pick a type, read what to prepare on the device, fill the few fields that matter. SNMP profiles are detected automatically.
 - **Quiet by default.** Useful rules from the start, and one notification instead of thirty when a switch goes down.
-- **Free, for good.** MIT licence, no paid edition, no feature held back.
+
+Free, for good. MIT licence, no paid edition.
 
 ## Quick start
 
@@ -40,7 +46,9 @@ docker compose up -d
 Back up *Settings → Backup* **and** `/data/secret.key`. Updating, ports, lost password: see the
 [installation guide](https://dumbmonit.selfhostr.io/docs/install/docker/).
 
-## What it watches
+## Features
+
+### What it watches
 
 Over 100 integrations (monitor types), each with its own page in [the documentation](https://dumbmonit.selfhostr.io/docs/devices/):
 
@@ -49,7 +57,7 @@ Over 100 integrations (monitor types), each with its own page in [the documentat
 - **Apps and services**: Nextcloud, Immich, Jellyfin, GitLab, Kubernetes, databases, HTTP/TCP/DNS/ping/TLS checks, heartbeats, **mail server and IP range blocklists** (Spamhaus, Barracuda, SpamCop…, with delisting links), and **website health and SEO** (blank page, `noindex`, title or canonical changes, redirects, slowness) with bulk CSV import sorted by platform.
 - **Anything else**: network discovery (one-off or **scheduled**, with an inventory that flags new devices and ports) and YAML **integration packs**, no release needed.
 
-## What it does
+### What it does
 
 - **Alerting that does not cry wolf**: a parent that is down hides its children, maintenance windows and silences (recoveries stay quiet too), forecasts, a seasonal baseline, and a bell on each monitor counting its active alerts.
 - **38 notification channels**: Discord, Slack, Telegram, Matrix, ntfy, email, PagerDuty, webhook and more.
@@ -60,18 +68,24 @@ Over 100 integrations (monitor types), each with its own page in [the documentat
 - **A sentinel agent** that warns you from inside your network when DumbMonit itself stops answering.
 - **Encrypted backup**, accounts with TOTP and passkeys, OIDC and SAML single sign-on, **LDAP / Active Directory** sign-in, an installable phone app (PWA), and remote sites through an outbound-only relay agent.
 
+## Architecture
+
 One Rust binary with the UI embedded, VictoriaMetrics started by it, SQLite for configuration.
+
+## Limits
+
+Some integrations have only met test instances, not years-old production hardware. Validate DumbMonit in your own environment before you rely on it.
+
+## Status
+
+It runs daily on the author's own network. Before 1.0 the HTTP API and the database schema can still change between minor versions (the [changelog](CHANGELOG.md) lists every change and how to upgrade).
+Formerly called EzyMonit; the old `EZYMONIT_*` variables are still accepted.
 
 ## Contributing
 
 Bug reports, device profiles and integrations are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) (Docker only, no Rust toolchain needed).
 The interface and the [documentation](https://dumbmonit.selfhostr.io/docs/) come in English, French, German, Spanish, Italian, Portuguese (Portugal and Brazil), Russian and Simplified Chinese. To fix or add a translation, open a pull request: see [Translating DumbMonit](CONTRIBUTING.md#translating-dumbmonit).
 Security issues: [SECURITY.md](SECURITY.md). Roadmap: [public project](https://github.com/users/laupernoe/projects/2).
-
-## Status
-
-It runs daily on the author's own network. Before 1.0 the HTTP API and the database schema can still change between minor versions (the [changelog](CHANGELOG.md) lists every change and how to upgrade), and some integrations have only met test instances, not years-old production hardware.
-Formerly called EzyMonit; the old `EZYMONIT_*` variables are still accepted.
 
 ## License
 
@@ -81,11 +95,6 @@ DumbMonit is provided "as is", without warranty of any kind. The author and cont
 
 ## Support DumbMonit
 
-DumbMonit is free and has no company behind it. If it saves you time, you can support its development:
-
-- **GitHub Sponsors** (recurring or one-off): [github.com/sponsors/selfhostr](https://github.com/sponsors/selfhostr)
-- **Bitcoin**: `bc1phcqfc46ev9ztpuxyh3fmz6aaktshnz8z4ve9jk7pxdcyu9ks37wqq2kjgd`
-- **Ethereum**: `0x67Cd93028943308B8c12782C9ad078D253278f40`
-- **Solana**: `63u8bhkf63HBcNYbRRyaHPtfRtSUmbugtwaauzAxHtb3`
+DumbMonit is free and has no company behind it. If it saves you time, you can [sponsor us on GitHub](https://github.com/sponsors/selfhostr), recurring or one-off.
 
 Bug reports, translations and device profiles help just as much.
