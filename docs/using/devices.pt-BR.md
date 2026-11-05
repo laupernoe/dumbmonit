@@ -1,7 +1,5 @@
 # A página de monitores {#the-devices-page}
 
-![O rack: uma placa de identificação por monitor](../assets/screenshots/devices-light.png){ loading=lazy }
-
 ## O rack {#the-rack}
 
 Cada monitor é uma placa de identificação de rack 1U: um LED de status, o
@@ -26,8 +24,6 @@ por monitor e uma barra flutuante na parte inferior com as ações em lote;
 **Concluir** ou Escape sai do modo.
 
 ## Um monitor {#a-device}
-
-![Uma página de monitor: estado, ações, alertas, o painel específico do tipo, métricas](../assets/screenshots/device-light.png){ loading=lazy }
 
 A página do monitor mostra sua placa de estado, endereço, tipo, perfil
 detectado, tags, última sondagem, e para serviços o status do certificado.

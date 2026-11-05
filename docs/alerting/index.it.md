@@ -6,8 +6,6 @@ quello che mantiene basso il rumore: soppressione per dipendenza,
 raggruppamento per host, finestre di manutenzione, e una baseline che
 apprende prima di parlare.
 
-![La pagina Alerts: cosa succede ora, la manutenzione, la cronologia e le regole](../assets/screenshots/alerts-light.png){ loading=lazy }
-
 ## Severità {#severities}
 
 L'interfaccia parla la scala del bollettino meteo. L'API e l'editor delle

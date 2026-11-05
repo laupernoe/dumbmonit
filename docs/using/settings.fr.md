@@ -1,7 +1,5 @@
 # Réglages
 
-![Réglages : six onglets, ici Mon compte avec apparence, compte et sécurité et notifications push](../assets/screenshots/settings-light.png){ loading=lazy }
-
 Réglages contient ce qui est administratif : l'instance elle-même, votre compte, qui peut se connecter et comment, les agents, les canaux de notification, la sauvegarde de l'instance et la santé du serveur. Il est découpé en six onglets, chacun avec sa propre adresse. Un rail sur grand écran, une bande de puces sur téléphone et une recherche sur les noms de sections aident à trouver une section.
 
 | Onglet | Adresse | Contenu |

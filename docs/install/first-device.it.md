@@ -30,8 +30,6 @@ parla. Switch, router, NAS, UPS e stampanti sono i soliti sospetti.
 4. Inserisci un **name**, l'**address** (IP o nome host) e la **community**. Per SNMP v3, cambia la credenziale in *SNMP v3* e compila il nome utente e le passphrase di autenticazione e privacy.
 5. Clicca **Add device**.
 
-![Aggiungere un dispositivo SNMP: il modulo a sinistra, la nota di configurazione a destra](../assets/screenshots/add-device-light.png){ loading=lazy }
-
 Il profilo di raccolta viene rilevato automaticamente dal `sysObjectID`
 del monitor, in background, così il modulo non attende mai un
 monitor irraggiungibile. Le interfacce, e su server e NAS CPU,

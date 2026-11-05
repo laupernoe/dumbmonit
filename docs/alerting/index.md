@@ -5,8 +5,6 @@ the difference in daily use is what keeps the noise down: dependency
 suppression, grouping by host, maintenance windows, and a baseline that learns
 before it speaks.
 
-![The Alerts page: what is happening now, maintenance, history and the rules](../assets/screenshots/alerts-light.png){ loading=lazy }
-
 ## Severities
 
 The interface speaks the weather bulletin's ladder. The API and the rule editor

@@ -58,8 +58,6 @@ dernière sonde dans le magasin de métriques.
 
 ## Le panneau des invités
 
-![Le panneau Invités : une ligne par VM et conteneur, groupée par nœud](../assets/screenshots/device-proxmox-light.png){ loading=lazy }
-
 Sous les nœuds, le panneau **Invités** : une ligne par machine virtuelle
 et conteneur, groupée par nœud, qui répond aux questions qu'un
 administrateur pose en premier — est-ce que ça tourne, est-ce que c'est

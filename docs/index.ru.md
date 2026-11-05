@@ -12,8 +12,6 @@ DumbMonit читает сеть как **метеосводку**: главна�
 метеорологической шкале (info → advisory → warning), предсказания — это прогнозы, а окна
 обслуживания — плановые.
 
-![Страница обзора: предложение-сводка, список «Needs you» и прогнозы](assets/screenshots/overview-light.png){ loading=lazy }
-
 <div class="dm-links" markdown>
 <a href="install/docker/">Установка<small>Docker Compose, первый запуск, резервные копии</small></a>
 <a href="install/first-device/">Добавьте первый монитор<small>SNMP, сканирование сети, что будет дальше</small></a>

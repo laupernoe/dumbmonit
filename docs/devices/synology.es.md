@@ -70,8 +70,6 @@ sonda.
 
 ## La página del monitor {#the-device-page}
 
-![Un dispositivo Synology: de un vistazo, volúmenes, discos y Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
-
 Un monitor Synology obtiene su propio panel sobre las gráficas:
 
 * **At a glance** — CPU, memoria (usada del total), temperatura y

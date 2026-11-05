@@ -118,8 +118,6 @@ docker compose logs dumbmonit | grep -A1 "setup code"
 попытки ограничиваются по частоте. Для автоматизированного развёртывания задайте
 `DUMBMONIT_SETUP_CODE`, чтобы выбрать код самостоятельно.
 
-![Экран входа](../assets/screenshots/login-light.png){ loading=lazy }
-
 Затем добавьте первый монитор: см. [Добавьте первый монитор](first-device.md).
 
 ## Переменные окружения {#environment-variables}

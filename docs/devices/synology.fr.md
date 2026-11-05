@@ -95,8 +95,6 @@ l'appel de découverte d'API ou sur la connexion condamne toute la sonde.
 
 ## La page de la surveillance
 
-![Une surveillance Synology : vue d'ensemble, volumes, disques et Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
-
 Une surveillance Synology obtient son propre panneau au-dessus des
 graphiques :
 

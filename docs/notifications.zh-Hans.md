@@ -85,7 +85,7 @@
   "severity": "warning",
   "status": "firing",
   "title": "nas — Disk full",
-  "text": "⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)",
+  "text": "Warning · Disk full — /data — 95 % (threshold > 90 %)",
   "value": 95.0,
   "threshold": 90.0,
   "unit": "%",
@@ -125,8 +125,8 @@ DumbMonit仅追踪重定向到同一主机（或在该主机上从 `http` 到 `h
 | 变量 | 它包含什么 | 示例 |
 |---|---|---|
 | `{{title}}` | 完整消息标题 | `nas — Disk full` |
-| `{{message}}` | 纯文本主体，每个警报一行 | `⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)` |
-| `{{message_markdown}}` | 相同主体在Markdown | `**nas — Disk full**\n• ⚠️ …` |
+| `{{message}}` | 纯文本主体，每个警报一行 | `Warning · Disk full — /data — 95 % (threshold > 90 %)` |
+| `{{message_markdown}}` | 相同主体在Markdown | `**nas — Disk full**\n• …` |
 | `{{rule}}` | 警报规则的名称 | `Disk full` |
 | `{{target}}` | 监控监控项的名称 | `nas` |
 | `{{target_id}}` | 监控项的数字标识符 | `42` |
@@ -148,7 +148,7 @@ DumbMonit仅追踪重定向到同一主机（或在该主机上从 `http` 到 `h
 | `{{priority}}` | 优先级从1（低）到5（高） | `4` |
 | `{{color}}` | 强调颜色，不有散列 | `D98A00` |
 | `{{color_hex}}` | 强调颜色，有散列 | `#D98A00` |
-| `{{emoji}}` | 状态象形文字 | `🔴`、`⚠️`、`ℹ️`或`✅` |
+| `{{emoji}}` | 状态象形文字 | emoji |
 | `{{link}}` | DumbMonit中的监控项链接 | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | 总是 `dumbmonit` | `dumbmonit` |
 | `{{token}}` | 通道的 `token` 密钥 | *（你的令牌）* |
@@ -195,7 +195,7 @@ DumbMonit仅追踪重定向到同一主机（或在该主机上从 `http` 到 `h
   "state": "firing",
   "value": 95,
   "threshold": 90,
-  "detail": "⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)",
+  "detail": "Warning · Disk full — /data — 95 % (threshold > 90 %)",
   "link": "https://dumbmonit.home/targets/42",
   "seen_at": "2026-09-01T14:12:05+00:00"
 }
@@ -242,7 +242,7 @@ DumbMonit仅追踪重定向到同一主机（或在该主机上从 `http` 到 `h
 消息发送，不有任何逃脱：
 
 ```
-⚠️ warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
+warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
 ```
 
 ### 示例4——没有主体的GET请求 {#example-4--a-get-request-without-a-body}

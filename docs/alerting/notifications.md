@@ -170,7 +170,7 @@ PUT /api/notify/policy
 - It crosses that channel's own severity floor, routing filter and quiet hours:
   you named this channel to be woken up, so it is not held back at the one
   moment it matters.
-- The line says so: `🔴 Critical · Disk full — /data — 95 % … — still
+- The line says so: `Critical · Disk full — /data — 95 % … — still
   unacknowledged`.
 
 `"escalate_channel": null` switches escalation off; a delay of `0` does the
@@ -211,9 +211,9 @@ Each alert is one line, the same in mail, ntfy, chat and the `{{message}}`
 variable of a custom webhook:
 
 ```
-🔴 Critical · Disk full — /data — 95 % (threshold > 90 %), for 12 min
-⚠️ Warning · VM or container stopped — win11-desktop (101), for 59 s
-✅ Resolved · Service down — https://example.lan/
+Critical · Disk full — /data — 95 % (threshold > 90 %), for 12 min
+Warning · VM or container stopped — win11-desktop (101), for 59 s
+Resolved · Service down — https://example.lan/
 ```
 
 - The glyph is followed by the state word (Critical / Warning / Info,

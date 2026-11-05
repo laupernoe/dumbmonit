@@ -38,8 +38,6 @@ Switches, routers, NAS, SAI e impresoras son los sospechosos habituales.
    privacidad.
 5. Haz clic en **Add device**.
 
-![Añadir un dispositivo SNMP: el formulario a la izquierda, el aviso de configuración a la derecha](../assets/screenshots/add-device-light.png){ loading=lazy }
-
 El perfil de recolección se detecta automáticamente a partir del
 `sysObjectID` del monitor, en segundo plano, así que el formulario
 nunca espera a un monitor inaccesible. Las interfaces, y en

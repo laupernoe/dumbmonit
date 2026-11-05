@@ -1,7 +1,5 @@
 # 告警页面 {#alerts-page}
 
-![告警页面:当前正在发生的事、维护、历史和规则](../assets/screenshots/alerts-light.png){ loading=lazy }
-
 关于告警的一切都集中在这一页,分为四个标签。标签会体现在 URL 中
 (`/alerts#rules`),因此某个视图可以直接被链接。**计划维护**
 按钮在右上角,可从任意标签打开该窗口的表单。

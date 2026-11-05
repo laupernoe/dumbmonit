@@ -31,8 +31,6 @@ habituais.
 4. Introduza um **nome**, o **endereço** (IP ou nome de anfitrião) e a **comunidade**. Para SNMP v3, mude a credencial para *SNMP v3* e preencha o nome de utilizador e as frases-passe de autenticação e privacidade.
 5. Clique em **Add device**.
 
-![Adicionar um dispositivo SNMP: o formulário à esquerda, o aviso de configuração à direita](../assets/screenshots/add-device-light.png){ loading=lazy }
-
 O perfil de coleta é detetado automaticamente a partir do `sysObjectID`
 do monitor, em segundo plano, por isso o formulário nunca espera
 por um monitor inacessível. Interfaces, e em servidores e NAS a

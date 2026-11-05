@@ -4,8 +4,6 @@
 
 ## 监控项页面 {#the-device-page}
 
-![PBS 监控项：故障、30 天备份日历、作业和健康](../assets/screenshots/device-pbs-light.png){ loading=lazy }
-
 超越通用图表，PBS 监控项显示六个面板，从探针存储的内容读取——打开页面从不查询 PBS 本身：
 
 * **故障** — 过去 30 天内失败的每个任务（备份、同步、验证、修剪、GC），最新在前，及其类型、其所针对的内容、何时启动以及 PBS 自己的错误消息。*显示日志*从 PBS 按需获取任务日志的最后行（`/nodes/localhost/tasks/{upid}/log`）。

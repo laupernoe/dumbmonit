@@ -1,7 +1,5 @@
 # Configurações {#settings}
 
-![Configurações: sete abas, aqui Minha conta com aparência, conta e segurança e notificações push](../assets/screenshots/settings-light.png){ loading=lazy }
-
 As Configurações reúnem o que é administrativo: a própria instância, sua conta, quem pode entrar e como, os agentes, os canais de notificação, o backup da instância e a saúde do servidor. Elas são divididas em sete abas, cada uma com seu próprio endereço. Uma barra em tela larga, uma fileira de chips no celular e uma busca pelos nomes das seções ajudam a encontrar uma seção.
 
 | Aba | Endereço | O que contém |

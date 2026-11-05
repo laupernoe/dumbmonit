@@ -1,7 +1,5 @@
 # La página de monitores {#the-devices-page}
 
-![El rack: una placa frontal por monitor](../assets/screenshots/devices-light.png){ loading=lazy }
-
 ## El rack {#the-rack}
 
 Cada monitor es una placa frontal de rack de 1U: un LED de estado, el
@@ -26,8 +24,6 @@ monitor y una barra flotante abajo con las acciones en bloque; **Done**
 o Escape salen del modo.
 
 ## Un monitor {#a-device}
-
-![Página de un monitor: estado, acciones, alertas, el panel específico del tipo, métricas](../assets/screenshots/device-light.png){ loading=lazy }
 
 La página del monitor muestra su placa de estado, dirección, tipo,
 perfil detectado, etiquetas, última sonda, y para los servicios el estado

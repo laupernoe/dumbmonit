@@ -68,8 +68,6 @@ chamada de descoberta de API ou na conexão condena toda a sondagem.
 
 ## A página do monitor {#the-device-page}
 
-![Um monitor Synology: visão geral, volumes, discos e Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
-
 Um monitor Synology recebe seu próprio painel acima dos gráficos:
 
 * **Visão geral** — CPU, memória (usada do total), temperatura e tempo

@@ -8,8 +8,6 @@ il livello tape quando presente.
 
 ## La pagina del monitor
 
-![Un monitor PBS: fallimenti, il calendario di backup su 30 giorni, job e stato di salute](../assets/screenshots/device-pbs-light.png){ loading=lazy }
-
 Oltre ai grafici generici, un monitor PBS mostra sei pannelli,
 letti da ciò che la sonda ha memorizzato — aprire la pagina non
 interroga mai PBS stesso:

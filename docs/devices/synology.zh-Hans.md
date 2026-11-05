@@ -38,8 +38,6 @@ Active Backup for Business 指标是例外：它们以 `dumbmonit_abb_` 为前�
 
 ## 监控项页面 {#the-device-page}
 
-![一个 Synology 监控项：一目了然，卷、磁盘和 Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
-
 一个 Synology 监控项在图表上方获得它自己的面板：
 
 * **一目了然** — CPU、内存（已用的总共）、温度和正常运行时间，带 DSM 自己的存储判决作为板（健康、注意、崩溃、修复需要）；
