@@ -161,7 +161,7 @@ utile JSON structurée qu'un script peut utiliser :
   "severity": "warning",
   "status": "firing",
   "title": "nas — Disk full",
-  "text": "⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)",
+  "text": "Warning · Disk full — /data — 95 % (threshold > 90 %)",
   "value": 95.0,
   "threshold": 90.0,
   "unit": "%",
@@ -200,8 +200,8 @@ votre JSON normalement.
 | Variable | Ce qu'elle contient | Exemple |
 |---|---|---|
 | `{{title}}` | Titre complet du message | `nas — Disk full` |
-| `{{message}}` | Corps en texte brut, une ligne par alerte | `⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)` |
-| `{{message_markdown}}` | Le même corps en Markdown | `**nas — Disk full**\n• ⚠️ …` |
+| `{{message}}` | Corps en texte brut, une ligne par alerte | `Warning · Disk full — /data — 95 % (threshold > 90 %)` |
+| `{{message_markdown}}` | Le même corps en Markdown | `**nas — Disk full**\n• Warning · …` |
 | `{{rule}}` | Nom de la règle d'alerte | `Disk full` |
 | `{{target}}` | Nom de la surveillance | `nas` |
 | `{{target_id}}` | Identifiant numérique de la surveillance | `42` |
@@ -223,7 +223,7 @@ votre JSON normalement.
 | `{{priority}}` | Priorité de 1 (basse) à 5 (haute) | `4` |
 | `{{color}}` | Couleur d'accent, sans dièse | `D98A00` |
 | `{{color_hex}}` | Couleur d'accent, avec dièse | `#D98A00` |
-| `{{emoji}}` | Pictogramme de statut | `🔴`, `⚠️`, `ℹ️` ou `✅` |
+| `{{emoji}}` | Pictogramme de statut | `CRIT`, `WARN`, `INFO` ou `OK` |
 | `{{link}}` | Lien vers la surveillance dans DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Toujours `dumbmonit` | `dumbmonit` |
 | `{{token}}` | Le secret `token` du canal | *(votre jeton)* |
@@ -285,7 +285,7 @@ Le jeton est envoyé automatiquement comme en-tête
   "state": "firing",
   "value": 95,
   "threshold": 90,
-  "detail": "⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)",
+  "detail": "Warning · Disk full — /data — 95 % (threshold > 90 %)",
   "link": "https://dumbmonit.home/targets/42",
   "seen_at": "2026-09-01T14:12:05+00:00"
 }
@@ -339,7 +339,7 @@ maison, veulent une seule ligne de texte.
 Le message envoyé, sans aucun échappement :
 
 ```
-⚠️ warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
+WARN warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
 ```
 
 ### Exemple 4 — une requête GET sans corps {#example-4--a-get-request-without-a-body}

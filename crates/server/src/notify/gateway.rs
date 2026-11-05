@@ -302,8 +302,8 @@ mod tests {
         assert_eq!(
             notifier.payload(&sample_message(false)),
             json!({
-                "title": "⚠️ nas — Disk full",
-                "body": "⚠️ Disk full — 95 % (threshold > 90 %)",
+                "title": "WARN nas — Disk full",
+                "body": "Warning · Disk full — 95 % (threshold > 90 %)",
                 "type": "warning",
                 "format": "text",
                 "urls": "mailto://utilisateur:motdepasse@exemple.org",
@@ -375,8 +375,8 @@ mod tests {
         assert_eq!(
             notifier.payload(&sample_message(false)),
             json!({
-                "title": "⚠️ nas — Disk full",
-                "message": "⚠️ Disk full — 95 % (threshold > 90 %)",
+                "title": "WARN nas — Disk full",
+                "message": "Warning · Disk full — 95 % (threshold > 90 %)",
                 "notification_id": "target-42",
             })
         );

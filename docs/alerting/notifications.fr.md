@@ -187,7 +187,7 @@ PUT /api/notify/policy
 - Il traverse le propre plancher de gravité, filtre de routage et heures
   calmes de ce canal : vous avez nommé ce canal pour être réveillé, il
   n'est donc pas retenu au seul moment où ça compte.
-- La ligne le dit : `🔴 Critical · Disk full — /data — 95 % … — still
+- La ligne le dit : `Critical · Disk full — /data — 95 % … — still
   unacknowledged`.
 
 `"escalate_channel": null` désactive l'escalade ; un délai de `0` fait
@@ -232,9 +232,9 @@ Chaque alerte est une ligne, la même par mail, ntfy, chat et la variable
 `{{message}}` d'un webhook personnalisé :
 
 ```
-🔴 Critical · Disk full — /data — 95 % (threshold > 90 %), for 12 min
-⚠️ Warning · VM or container stopped — win11-desktop (101), for 59 s
-✅ Resolved · Service down — https://example.lan/
+Critical · Disk full — /data — 95 % (threshold > 90 %), for 12 min
+Warning · VM or container stopped — win11-desktop (101), for 59 s
+Resolved · Service down — https://example.lan/
 ```
 
 - Le glyphe est suivi du mot d'état (Critical / Warning / Info,

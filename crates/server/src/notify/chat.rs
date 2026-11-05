@@ -578,12 +578,12 @@ mod tests {
                             "weight": "Bolder",
                             "color": "warning",
                             "wrap": true,
-                            "text": "⚠️ nas — Disk full",
+                            "text": "WARN nas — Disk full",
                         },
                         {
                             "type": "TextBlock",
                             "wrap": true,
-                            "text": "⚠️ Disk full — 95 % (threshold > 90 %)",
+                            "text": "Warning · Disk full — 95 % (threshold > 90 %)",
                         },
                         {"type": "FactSet", "facts": [
                             {"title": "Monitor", "value": "nas"},
@@ -650,11 +650,11 @@ mod tests {
     fn matrix_produit_un_message_texte_et_html() {
         let attendu = json!({
             "msgtype": "m.text",
-            "body": "⚠️ nas — Disk full\n⚠️ Disk full — 95 % (threshold > 90 %)",
+            "body": "WARN nas — Disk full\nWarning · Disk full — 95 % (threshold > 90 %)",
             "format": "org.matrix.custom.html",
             "formatted_body":
-                "<p><strong>⚠️ nas — Disk full</strong></p>\
-                 <pre>⚠️ Disk full — 95 % (threshold &gt; 90 %)</pre>",
+                "<p><strong>WARN nas — Disk full</strong></p>\
+                 <pre>Warning · Disk full — 95 % (threshold &gt; 90 %)</pre>",
         });
         assert_eq!(Matrix::payload(&sample_message(false)), attendu);
     }
@@ -684,12 +684,12 @@ mod tests {
         let notifier = Mattermost::new(client(), &config).expect("valid configuration");
         let attendu = json!({
             "username": "DumbMonit",
-            "text": "⚠️ **nas — Disk full**",
+            "text": "WARN **nas — Disk full**",
             "attachments": [{
-                "fallback": "⚠️ Disk full — 95 % (threshold > 90 %)",
+                "fallback": "Warning · Disk full — 95 % (threshold > 90 %)",
                 "color": "#D98A00",
                 "title": "nas — Disk full",
-                "text": "⚠️ Disk full — 95 % (threshold > 90 %)",
+                "text": "Warning · Disk full — 95 % (threshold > 90 %)",
                 "fields": [
                     {"title": "Monitor", "value": "nas", "short": true},
                     {"title": "Severity", "value": "warning", "short": true},
@@ -722,9 +722,9 @@ mod tests {
         let notifier = RocketChat::new(client(), &config).expect("valid configuration");
         let attendu = json!({
             "alias": "DumbMonit",
-            "text": "⚠️ nas — Disk full",
+            "text": "WARN nas — Disk full",
             "attachments": [{
-                "text": "⚠️ Disk full — 95 % (threshold > 90 %)",
+                "text": "Warning · Disk full — 95 % (threshold > 90 %)",
                 "color": "#D98A00",
                 "ts": "2025-09-01T14:12:05+00:00",
             }],
@@ -737,12 +737,12 @@ mod tests {
     #[test]
     fn googlechat_double_la_carte_d_un_texte_brut() {
         let charge = GoogleChat::payload(&sample_message(false));
-        assert_eq!(charge["text"], "⚠️ nas — Disk full");
-        assert_eq!(charge["cardsV2"][0]["card"]["header"]["title"], "⚠️ nas — Disk full");
+        assert_eq!(charge["text"], "WARN nas — Disk full");
+        assert_eq!(charge["cardsV2"][0]["card"]["header"]["title"], "WARN nas — Disk full");
         assert_eq!(charge["cardsV2"][0]["card"]["header"]["subtitle"], "nas — warning");
         assert_eq!(
             charge["cardsV2"][0]["card"]["sections"][0]["widgets"][0]["textParagraph"]["text"],
-            "⚠️ Disk full — 95 % (threshold > 90 %)"
+            "Warning · Disk full — 95 % (threshold > 90 %)"
         );
     }
 
@@ -770,7 +770,7 @@ mod tests {
                 ("topic".to_string(), "nas".to_string()),
                 (
                     "content".to_string(),
-                    "⚠️ **nas — Disk full**\n⚠️ Disk full — 95 % (threshold > 90 %)".to_string()
+                    "WARN **nas — Disk full**\nWarning · Disk full — 95 % (threshold > 90 %)".to_string()
                 ),
             ]
         );

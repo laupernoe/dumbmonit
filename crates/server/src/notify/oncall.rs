@@ -300,7 +300,7 @@ mod tests {
                     "component": "nas",
                     "custom_details": {
                         "rule": "Disk full",
-                        "detail": "⚠️ Disk full — 95 % (threshold > 90 %)",
+                        "detail": "Warning · Disk full — 95 % (threshold > 90 %)",
                         "alert count": 1,
                     },
                 },
@@ -376,7 +376,7 @@ mod tests {
             json!({
                 "message": "nas — Disk full",
                 "alias": "dumbmonit-target-42",
-                "description": "⚠️ Disk full — 95 % (threshold > 90 %)",
+                "description": "Warning · Disk full — 95 % (threshold > 90 %)",
                 "priority": "P3",
                 "source": "DumbMonit",
                 "entity": "nas",

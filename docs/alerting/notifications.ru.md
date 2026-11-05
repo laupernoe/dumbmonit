@@ -173,7 +173,7 @@ PUT /api/notify/policy
 - Оно пересекает собственный порог серьёзности канала, фильтр маршрутизации и
   тихие часы: вы назвали этот канал, чтобы он разбудил кого-то, поэтому он не
   сдерживается в тот самый момент, когда это важно.
-- В строке это отражено так: `🔴 Critical · Disk full — /data — 95 % … — still
+- В строке это отражено так: `Critical · Disk full — /data — 95 % … — still
   unacknowledged`.
 
 `"escalate_channel": null` отключает эскалацию; задержка `0` делает то же самое.
@@ -215,9 +215,9 @@ DumbMonit намеренно останавливается здесь: один
 `{{message}}` произвольного вебхука:
 
 ```
-🔴 Critical · Disk full — /data — 95 % (threshold > 90 %), for 12 min
-⚠️ Warning · VM or container stopped — win11-desktop (101), for 59 s
-✅ Resolved · Service down — https://example.lan/
+Critical · Disk full — /data — 95 % (threshold > 90 %), for 12 min
+Warning · VM or container stopped — win11-desktop (101), for 59 s
+Resolved · Service down — https://example.lan/
 ```
 
 - За значком следует слово состояния (Critical / Warning / Info, Resolved,

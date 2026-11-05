@@ -524,7 +524,7 @@ mod tests {
                 ("token".to_string(), "jeton-application".to_string()),
                 ("user".to_string(), "cle-utilisateur".to_string()),
                 ("title".to_string(), "nas — Disk full".to_string()),
-                ("message".to_string(), "⚠️ Disk full — 95 % (threshold > 90 %)".to_string()),
+                ("message".to_string(), "Warning · Disk full — 95 % (threshold > 90 %)".to_string()),
                 ("priority".to_string(), "0".to_string()),
             ]
         );
@@ -602,8 +602,8 @@ mod tests {
             notifier.payload(&sample_message(false)),
             json!({
                 "type": "note",
-                "title": "⚠️ nas — Disk full",
-                "body": "⚠️ Disk full — 95 % (threshold > 90 %)",
+                "title": "WARN nas — Disk full",
+                "body": "Warning · Disk full — 95 % (threshold > 90 %)",
             })
         );
     }
@@ -633,8 +633,8 @@ mod tests {
         assert_eq!(
             bark(json!({})).payload(&sample_message(false)),
             json!({
-                "title": "⚠️ nas — Disk full",
-                "body": "⚠️ Disk full — 95 % (threshold > 90 %)",
+                "title": "WARN nas — Disk full",
+                "body": "Warning · Disk full — 95 % (threshold > 90 %)",
                 "group": "DumbMonit",
                 "level": "active",
                 "id": "target-42",
@@ -670,7 +670,7 @@ mod tests {
         assert_eq!(
             notifier.payload(&sample_message(false)),
             json!({
-                "message": "⚠️ nas — Disk full\n⚠️ Disk full — 95 % (threshold > 90 %)",
+                "message": "WARN nas — Disk full\nWarning · Disk full — 95 % (threshold > 90 %)",
                 "number": "+33600000000",
                 "recipients": ["+33611111111", "+33622222222"],
             })
@@ -713,7 +713,7 @@ mod tests {
                 ("From".to_string(), "+15017122661".to_string()),
                 (
                     "Body".to_string(),
-                    "⚠️ nas — Disk full\n⚠️ Disk full — 95 % (threshold > 90 %)".to_string()
+                    "WARN nas — Disk full\nWarning · Disk full — 95 % (threshold > 90 %)".to_string()
                 ),
             ]
         );
