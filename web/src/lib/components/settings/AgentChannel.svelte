@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Settings → Agents → Agent channel: the encrypted port agents report to
 	 * (TLS 1.3, a client certificate per machine, post-quantum key exchange),
@@ -56,7 +57,7 @@
 					<p class="mt-1 flex flex-wrap items-center gap-x-3 text-sm text-ink-2">
 						<span class="font-semibold text-ink">{m.settings_agents_tls_legacy()}</span>
 						{#each plainAgents as agent (agent.id)}
-							<a class="inline-flex min-h-10 items-center underline decoration-line underline-offset-2 hover:text-ink" href={`/targets/${agent.id}`}>{agent.name}</a>
+							<a class="inline-flex min-h-10 items-center underline decoration-line underline-offset-2 hover:text-ink" href={withBase(`/targets/${agent.id}`)}>{agent.name}</a>
 						{/each}
 					</p>
 				{/if}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * The Docker line under an agent's header: how many containers, how many
@@ -153,7 +154,7 @@
 				{/if}
 				<p class="text-sm text-ink-2">
 					{m.devices_docker_window_note()}
-					<a href="/alerts?maintenance=1" class="text-ink underline decoration-line-strong underline-offset-2 hover:text-signal-ink">{m.devices_docker_window_link()}</a>.
+					<a href={withBase('/alerts?maintenance=1')} class="text-ink underline decoration-line-strong underline-offset-2 hover:text-signal-ink">{m.devices_docker_window_link()}</a>.
 					{m.devices_docker_update_how()}
 				</p>
 

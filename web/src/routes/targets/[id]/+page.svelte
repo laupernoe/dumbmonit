@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { kindLabel as kindLabelOf } from '#lib/kind-label.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
@@ -11,7 +12,7 @@
 	 */
 	import { tick, untrack } from 'svelte';
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import {
 		ApiError,
 		deleteTarget,
@@ -663,7 +664,7 @@
 <svelte:head><title>{m.devices_target_page_title({ name: target?.name ?? m.devices_target_title_fallback() })}</title></svelte:head>
 
 <nav class="mb-4 text-sm max-sm:-mt-1 max-sm:mb-1">
-	<a href="/targets" class="inline-flex min-h-10 items-center gap-1 text-ink-2 hover:text-ink hover:underline sm:min-h-0">{m.devices_target_back()}</a>
+	<a href={withBase('/targets')} class="inline-flex min-h-10 items-center gap-1 text-ink-2 hover:text-ink hover:underline sm:min-h-0">{m.devices_target_back()}</a>
 </nav>
 
 {#if missing}
@@ -704,7 +705,7 @@
 						<span class="tnum text-ink-3">{m.devices_target_every({ interval: formatDuration(target.interval_secs) })}</span>
 						{#if target.parent_id !== null}
 							<span class="text-ink-3" aria-hidden="true">·</span>
-							<a href={`/targets/${target.parent_id}`} class="inline-flex items-center gap-1 hover:text-ink hover:underline">
+							<a href={withBase(`/targets/${target.parent_id}`)} class="inline-flex items-center gap-1 hover:text-ink hover:underline">
 								{m.devices_target_behind({ name: parent?.name ?? m.devices_target_behind_unknown({ id: target.parent_id }) })}
 								<ArrowUpRight class="size-3.5" aria-hidden="true" />
 							</a>
@@ -712,7 +713,7 @@
 						{#if target.via_agent !== null}
 							<span class="text-ink-3" aria-hidden="true">·</span>
 							<a
-								href={`/targets/${target.via_agent}`}
+								href={withBase(`/targets/${target.via_agent}`)}
 								class="inline-flex items-center gap-1 hover:text-ink hover:underline"
 								title={m.devices_target_via_title()}
 							>
@@ -772,10 +773,10 @@
 					{#if target.enabled}
 						<SilenceControl {target} {refreshKey} />
 					{/if}
-					<a href={`/targets?tab=logs&target=${target.id}`} class={ICON_BUTTON} aria-label={m.devices_target_logs()} title={m.devices_target_logs()}>
+					<a href={withBase(`/targets?tab=logs&target=${target.id}`)} class={ICON_BUTTON} aria-label={m.devices_target_logs()} title={m.devices_target_logs()}>
 						<ScrollText class="size-4" aria-hidden="true" />
 					</a>
-					<a href={`/targets/${target.id}/edit`} class={ICON_BUTTON} aria-label={m.devices_target_settings()} title={m.devices_target_settings()}>
+					<a href={withBase(`/targets/${target.id}/edit`)} class={ICON_BUTTON} aria-label={m.devices_target_settings()} title={m.devices_target_settings()}>
 						<Settings class="size-4" aria-hidden="true" />
 					</a>
 					<!-- Rare and heavier actions: switching the monitor off, deleting it. -->
@@ -842,7 +843,7 @@
 		{#if collector?.setup.doc_url && target.last_error}
 			<p class="mt-3 text-sm text-ink-2">
 				{m.devices_target_check_reachable()}
-				<a href={collector.setup.doc_url} class="inline-flex min-h-10 items-center gap-1 text-ink hover:underline sm:min-h-0" target="_blank" rel="noreferrer">
+				<a href={withBase(collector.setup.doc_url)} class="inline-flex min-h-10 items-center gap-1 text-ink hover:underline sm:min-h-0" target="_blank" rel="noreferrer">
 					{m.devices_target_setup_notes({ kind: kindLabel })}
 					<ExternalLink class="size-3.5" aria-hidden="true" />
 				</a>

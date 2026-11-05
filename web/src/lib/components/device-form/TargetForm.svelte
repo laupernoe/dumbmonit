@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * The device form, shared by "Add a device" and "Edit".
@@ -662,7 +663,7 @@
 				{:else if canRelay && relaysRead && !editing}
 					<!-- No relay yet: say once that a device on another network is reachable too. -->
 					<p class="text-[0.8125rem] leading-relaxed text-ink-2 sm:col-span-2">
-						<a href="/targets/new?kind=agent&via=relay" class="font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">{m.deviceform_form_remote_link()}</a>
+						<a href={withBase('/targets/new?kind=agent&via=relay')} class="font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">{m.deviceform_form_remote_link()}</a>
 					</p>
 				{/if}
 

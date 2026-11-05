@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * One service found on an address: product, version, port, and what to do
@@ -52,7 +53,7 @@
 	<div class="shrink-0">
 		{#if service.monitored_target_id}
 			<a
-				href={`/targets/${service.monitored_target_id}`}
+				href={withBase(`/targets/${service.monitored_target_id}`)}
 				class="inline-flex max-sm:min-h-10 items-center rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
 				aria-label={m.deviceform_scan_monitored_open({ name: service.product })}
 			>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Overview: the night-sky banner with its pigeon and one line of status,
 	 * four figures, then what needs attention (only what is broken, with its
@@ -211,7 +212,7 @@
 				<Button variant="primary" href="/targets/new">{m.overview_first_device_action()}</Button>
 				{#if auth.isAdmin}
 					<p class="mt-4 text-sm text-ink-2">
-						{orParts[0]}<a href="/targets/new?kind=agent" class="inline-block py-1 font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">{orParts[1]}</a>{orParts[2]}<a href="/targets/new?kind=agent&via=relay" class="inline-block py-1 font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">{orParts[3]}</a>{orParts[4]}
+						{orParts[0]}<a href={withBase('/targets/new?kind=agent')} class="inline-block py-1 font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">{orParts[1]}</a>{orParts[2]}<a href={withBase('/targets/new?kind=agent&via=relay')} class="inline-block py-1 font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">{orParts[3]}</a>{orParts[4]}
 					</p>
 				{/if}
 			{/snippet}

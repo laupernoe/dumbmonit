@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Settings → the security score switch (off by default). On, rated devices
 	 * get a grade badge in the device list and on their page, opening a report
@@ -55,7 +56,7 @@
 		<div class="min-w-0">
 			<p class="max-w-prose text-[0.8125rem] text-ink-2">{m.settings_security_score_disclaimer()}</p>
 			<a
-				href={DOCS_URL}
+				href={withBase(DOCS_URL)}
 				target="_blank"
 				rel="noopener"
 				class="mt-1 inline-flex min-h-10 items-center gap-1 text-[0.8125rem] font-semibold text-ink-2 hover:text-ink hover:underline"

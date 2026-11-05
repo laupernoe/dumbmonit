@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * The health river: one strip per monitor, one cell per slot of the range,
 	 * oldest on the left. Worst monitors on top, so a bad night reads as a red
@@ -92,7 +93,7 @@
 		</div>
 		{#if rows.length > shown.length}
 			{#if moreHref}
-				<a href={moreHref} class="mt-1 inline-flex min-h-10 items-center text-xs font-medium text-ink-2 hover:text-ink hover:underline">{m.overview_river_more({ count: rows.length - shown.length })}</a>
+				<a href={withBase(moreHref)} class="mt-1 inline-flex min-h-10 items-center text-xs font-medium text-ink-2 hover:text-ink hover:underline">{m.overview_river_more({ count: rows.length - shown.length })}</a>
 			{:else}
 				<p class="mt-2 text-xs text-ink-3">{m.overview_river_more({ count: rows.length - shown.length })}</p>
 			{/if}

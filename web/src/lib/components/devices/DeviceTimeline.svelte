@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { isDistinctiveLabel } from '#lib/metrics.js';
 	/**
@@ -459,7 +460,7 @@
 	<div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-ink-2">
 		{#if rows.length > 0}
 			<!-- Five rows here; the whole story, filtered to this monitor, is one click away. -->
-			<a href={`/alerts?tab=history&monitor=${targetId}`} class="inline-flex min-h-10 items-center rounded-lg px-2 font-semibold text-ink hover:bg-surface-2 hover:underline">
+			<a href={withBase(`/alerts?tab=history&monitor=${targetId}`)} class="inline-flex min-h-10 items-center rounded-lg px-2 font-semibold text-ink hover:bg-surface-2 hover:underline">
 				{m.devices_timeline_full_history()}
 			</a>
 		{/if}

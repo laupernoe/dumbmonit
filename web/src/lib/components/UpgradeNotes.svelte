@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Configuration changes an update asks for (a port to publish in the
 	 * Compose file, a variable to add). Mounted once by the root layout for a
@@ -202,7 +203,7 @@
 {#snippet docs(note: UpgradeNote)}
 	{#if note.docs_url}
 		<a
-			href={note.docs_url}
+			href={withBase(note.docs_url)}
 			target="_blank"
 			rel="noopener"
 			class="inline-flex min-h-10 items-center gap-1.5 text-sm font-medium text-signal-ink hover:underline"

@@ -6,7 +6,7 @@
 	 * edit. The section lives in `?view=` so a link can open it.
 	 */
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import { page } from '$app/state';
 	import type { RemediationRun } from '#lib/api/index.js';
 	import { listRemediationRuns } from '#lib/api/remediation.js';

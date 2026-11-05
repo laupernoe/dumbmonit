@@ -108,6 +108,13 @@ export function setUnauthorizedHandler(handler: UnauthorizedHandler | null): voi
 const BASE = '/api';
 
 /**
+ * Static demo build (`VITE_STATIC_DEMO=1`): calls are answered from recorded
+ * JSON instead of the network. A build-time constant, so a normal build drops
+ * the branch and never bundles `static-demo.ts`.
+ */
+const STATIC_DEMO = import.meta.env.VITE_STATIC_DEMO === '1';
+
+/**
  * MSP mode: the client picked in the header, sent with every request. The
  * server narrows lists to it for the MSP administrator, and never widens
  * anyone's access with it.
@@ -214,6 +221,12 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 			? {}
 			: { 'content-type': body instanceof Blob ? 'application/octet-stream' : 'application/json' })
 	};
+	const settle = (target: string, init: RequestInit): Promise<Settled> =>
+		STATIC_DEMO
+			? import('./static-demo.js').then((demoData) =>
+					demoData.staticFetch(target, init.method ?? 'GET', anticipated)
+				)
+			: fetchSettled(target, init);
 	let response: Settled;
 	try {
 		response =
@@ -221,10 +234,10 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 				? // The same read asked again while it is in flight costs no new request.
 					await shareFlight(
 						`${url}\n${headers['x-dumbmonit-client'] ?? ''}`,
-						(shared) => fetchSettled(url, { method, signal: shared, headers }),
+						(shared) => settle(url, { method, signal: shared, headers }),
 						signal
 					)
-				: await fetchSettled(url, {
+				: await settle(url, {
 						method,
 						signal,
 						headers,

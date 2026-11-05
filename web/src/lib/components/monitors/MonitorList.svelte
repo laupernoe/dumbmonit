@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { kindLabel } from '#lib/kind-label.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
@@ -14,7 +15,7 @@
 	 */
 	import { untrack } from 'svelte';
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import {
 		deleteTarget,
 		listCollectors,
@@ -1237,9 +1238,9 @@
 				<p class="mt-4 text-sm text-ink-2">
 					{#each m.devices_targets_empty_or({ agent: '\u0001', relay: '\u0002' }).split(/(\u0001|\u0002)/) as part, i (i)}
 						{#if part === '\u0001'}
-							<a href="/targets/new?kind=agent" class={linkClass}>{m.devices_targets_empty_agent_link()}</a>
+							<a href={withBase('/targets/new?kind=agent')} class={linkClass}>{m.devices_targets_empty_agent_link()}</a>
 						{:else if part === '\u0002'}
-							<a href="/targets/new?kind=agent&via=relay" class={linkClass}>{m.devices_targets_empty_relay_link()}</a>
+							<a href={withBase('/targets/new?kind=agent&via=relay')} class={linkClass}>{m.devices_targets_empty_relay_link()}</a>
 						{:else}{part}{/if}
 					{/each}
 				</p>

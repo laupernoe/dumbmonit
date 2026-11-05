@@ -3,7 +3,9 @@
 	import '../app.css';
 	import type { Component } from 'svelte';
 	import { page } from '$app/state';
-	import { goto, onNavigate } from '$app/navigation';
+	import { onNavigate } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
+	import { routePath } from '#lib/paths.js';
 	import { theme } from '#lib/stores/theme.svelte.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { palette } from '#lib/stores/palette.svelte.js';
@@ -36,7 +38,7 @@
 	// kiosk display that owns its own Escape handling and has no use for it,
 	// and is otherwise loaded only on its first open: forty-odd icons and the
 	// device catalogue it searches are not worth shipping to every page.
-	const onWall = $derived(page.url.pathname.startsWith('/wall'));
+	const onWall = $derived(routePath(page.url).startsWith('/wall'));
 	let CommandPalette = $state<Component | null>(null);
 	$effect(() => {
 		if (statusHost || onWall || CommandPalette || !palette.isOpen) return;
@@ -92,13 +94,13 @@
 		void instanceStore.init();
 	});
 	// The setup wizard owns the whole screen, outside the shell.
-	const onWelcome = $derived(page.url.pathname.startsWith('/welcome'));
+	const onWelcome = $derived(routePath(page.url).startsWith('/welcome'));
 	// First sign-in of an administrator on a fresh instance: the setup wizard.
 	// Asked once per page load; "Skip" or the last step marks it done on the server.
 	let wizardOffered = false;
 	$effect(() => {
 		if (!auth.canUseApi || !auth.isAdmin || auth.demo || instanceStore.setupCompleted !== false) return;
-		if (wizardOffered || onWelcome || onWall || isPublicRoute(page.url.pathname)) return;
+		if (wizardOffered || onWelcome || onWall || isPublicRoute(routePath(page.url))) return;
 		wizardOffered = true;
 		void goto('/welcome', { replace: true });
 	});
@@ -110,14 +112,14 @@
 		void auth.init();
 	});
 
-	const publicPath = $derived(isPublicRoute(page.url.pathname));
+	const publicPath = $derived(isPublicRoute(routePath(page.url)));
 	// The branch below that renders `EnterpriseShell`.
 	const inShell = $derived(!statusHost && !publicPath && auth.canUseApi && !onWelcome);
 
 	// Three situations: fresh instance, no session, valid session.
 	$effect(() => {
 		if (!auth.checked) return;
-		const path = page.url.pathname;
+		const path = routePath(page.url);
 		// A public status page is the same for everyone: no redirect either way.
 		if (isStandaloneRoute(path)) return;
 
@@ -156,7 +158,7 @@
 	$effect(() => {
 		if (!auth.demo || !auth.canUseApi) return;
 		demo.install();
-		if (!demo.tourSeen && !isPublicRoute(page.url.pathname)) demo.openTour();
+		if (!demo.tourSeen && !isPublicRoute(routePath(page.url))) demo.openTour();
 	});
 
 	// Page changes cross-fade through the View Transitions API: the bars stay,
@@ -173,7 +175,7 @@
 		if (samePage && !tabChange) return;
 		// Wall mode covers the bars with its own overlay: a captured bar would
 		// float above it for the length of the fade.
-		if ([navigation.from, navigation.to].some((end) => end.url.pathname.startsWith('/wall'))) return;
+		if ([navigation.from, navigation.to].some((end) => routePath(end.url).startsWith('/wall'))) return;
 		// Phones swap pages at once: a full-screen snapshot cross-fade costs more than it shows.
 		if (calmMotion()) return;
 		const root = document.documentElement;
@@ -208,13 +210,13 @@
 	<!-- Opaque strip under the status bar: pages scroll beneath it, never behind the clock. -->
 	<div class="pointer-events-none fixed inset-x-0 top-0 z-[45] h-[var(--safe-top)] bg-canvas" aria-hidden="true"></div>
 	{#if statusHost}
-		{#if page.url.pathname === '/'}
+		{#if routePath(page.url) === '/'}
 			<PublicStatusPage slug={statusHost} />
 		{:else}
 			{@render children()}
 		{/if}
 	{:else if publicPath}
-		{#if !page.url.pathname.startsWith('/s/')}
+		{#if !routePath(page.url).startsWith('/s/')}
 			<!-- Sign-in and first setup: a password is about to be typed. -->
 			<CleartextBanner />
 		{/if}
@@ -265,7 +267,7 @@
 		<DemoNotice />
 	{/if}
 	<!-- Inside the shell the tag sits in the page column (see EnterpriseShell): under the shell it would shorten the rail's sticky course. -->
-	{#if !onWall && !statusHost && !page.url.pathname.startsWith('/status') && !inShell}
+	{#if !onWall && !statusHost && !routePath(page.url).startsWith('/status') && !inShell}
 		<VersionTag />
 	{/if}
 </div>

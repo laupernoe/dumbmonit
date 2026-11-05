@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Status pages: the public status pages and the announcements shown on them
 	 * (the `/status` page; they sat in Settings between October 2026 and 0.15).
@@ -127,7 +128,7 @@
 								<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
 									<div class="min-w-0 flex-[1_1_14rem]">
 										<div class="flex flex-wrap items-center gap-2">
-											<a href={`/status/${item.id}`} class="font-semibold text-ink hover:underline">{item.title}</a>
+											<a href={withBase(`/status/${item.id}`)} class="font-semibold text-ink hover:underline">{item.title}</a>
 											<code class="rounded-md border border-line bg-canvas-deep px-1.5 py-0.5 font-mono text-[0.75rem] text-ink-2">/s/{item.slug}</code>
 											<Plate tone={item.published ? 'signal' : 'ghost'} label={item.published ? m.status_list_published() : m.status_list_draft()} />
 											{#if item.domain}<Plate tone="info" label={item.domain} />{/if}

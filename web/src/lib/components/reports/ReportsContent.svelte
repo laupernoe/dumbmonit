@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * The Reports page: the availability (SLA) export of a period on demand,
 	 * the scheduled reports (periodic emails for the team — mostly one, weekly
@@ -41,7 +42,7 @@
 	const timezones = (() => {
 		try {
 			const list = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf?.('timeZone');
-			return list ? ['UTC', ...list] : ['UTC'];
+			return list ? [...new Set(['UTC', ...list])] : ['UTC'];
 		} catch {
 			return ['UTC'];
 		}
@@ -123,7 +124,7 @@
 			</ul>
 			<p class="mt-2">
 				{m.settings_reports_info_footer()}
-				<a href={DOCS_URL} target="_blank" rel="noreferrer" class="font-semibold text-ink underline decoration-line underline-offset-2">{m.settings_reports_read_more()}</a>
+				<a href={withBase(DOCS_URL)} target="_blank" rel="noreferrer" class="font-semibold text-ink underline decoration-line underline-offset-2">{m.settings_reports_read_more()}</a>
 			</p>
 		</div>
 	{/if}
@@ -137,7 +138,7 @@
 			<p class="mb-4 flex flex-wrap items-center gap-2 text-sm text-ink-2">
 				<Plate tone="advisory" label={m.settings_reports_no_channel_plate()} />
 				{m.settings_reports_no_channel_text()}
-				<a href="/settings/notifications#notifications-channels" class="font-semibold text-ink underline decoration-line underline-offset-2">{m.settings_reports_no_channel_link()}</a>
+				<a href={withBase('/settings/notifications#notifications-channels')} class="font-semibold text-ink underline decoration-line underline-offset-2">{m.settings_reports_no_channel_link()}</a>
 			</p>
 		{/if}
 

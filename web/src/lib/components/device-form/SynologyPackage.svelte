@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/** Download and install steps of the DSM 7 agent package, above the token enrolment. */
 	import { Download } from 'lucide-svelte';
@@ -24,7 +25,7 @@
 	{#if version}
 		<div class="flex flex-wrap gap-2">
 			{#each SPK_ARCHES as arch (arch)}
-				<a class={button} href={spkUrl(version, arch)} rel="noopener">
+				<a class={button} href={withBase(spkUrl(version, arch))} rel="noopener">
 					<Download class="size-4" aria-hidden="true" />
 					{m.deviceform_synology_dl_arch({ arch })}
 				</a>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * "Update available: vX", a discreet pill above the version tag that opens
 	 * Settings → About, where the guided update lives. Silent when up to date,
@@ -21,7 +22,7 @@
 
 {#if latest}
 	<a
-		href="/settings/system#about"
+		href={withBase('/settings/system#about')}
 		class="fixed right-3 bottom-3 z-20 hidden items-center gap-1 rounded-full border border-line bg-surface px-2.5 py-1 text-[0.75rem] font-medium text-advisory-ink shadow-sm transition-colors hover:border-line-strong sm:inline-flex"
 		title={m.misc_update_title()}
 	>

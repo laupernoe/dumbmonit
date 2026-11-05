@@ -20,7 +20,7 @@
 	 */
 	import { untrack } from 'svelte';
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import { ExternalLink, Link2, Music2 } from 'lucide-svelte';
 	import {
 		completeSpotifyConnection,

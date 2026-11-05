@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Inline editor for one rule: the knobs an operator actually turns —
 	 * threshold, hold, severity, who gets told, how often — never the query
@@ -365,7 +366,7 @@
 			</p>
 		{:else if channels.length === 0}
 			<p class="text-[0.8125rem] text-ink-2">
-				{noChannelParts[0]}<a href="/settings/notifications#notifications-channels" class="text-ink hover:underline">{noChannelParts[1]}</a>{noChannelParts[2]}
+				{noChannelParts[0]}<a href={withBase('/settings/notifications#notifications-channels')} class="text-ink hover:underline">{noChannelParts[1]}</a>{noChannelParts[2]}
 			</p>
 		{:else}
 			<div class="flex flex-wrap gap-x-4 gap-y-1.5">
