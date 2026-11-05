@@ -2,8 +2,8 @@
 	import { withBase } from '#lib/paths.js';
 	/**
 	 * The only help a screen carries: a discreet link to the matching page of the
-	 * documentation (Read the Docs, in the language of the UI), in a new tab.
-	 * `page` is the path after `/latest/`, for example `devices/agent/`.
+	 * documentation site (in the language of the UI), in a new tab.
+	 * `page` is the path after `/docs/`, for example `devices/agent/`.
 	 */
 	import { BookOpen } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';

@@ -62,7 +62,7 @@ to do so:
 - **Releases:** they are built and signed by GitHub Actions (keyless Sigstore
   signing through the workflow's OIDC identity), so no personal key is needed
   to publish a release; release tags are pushed by repository administrators.
-- **Documentation:** maintainer of the Read the Docs project.
+- **Documentation:** maintainer of the documentation site, <https://dumbmonit.selfhostr.io/docs/>.
 - **Domain names:** access to the DNS of `dumbmonit.selfhostr.io`.
 
 The source code is MIT licensed and can be forked by anyone if the
