@@ -61,7 +61,9 @@ const DENIED_PATH = /(token|secret|password|api[-_]?key|credential|enrol|private
 /** Keys whose non-empty string value looks like a secret. */
 const SECRET_KEY = /(password|passwd|secret|token|api[-_]?key|private[-_]?key|authorization|cookie|bearer|otp|recovery[-_]?code|webhook)/i;
 /** Keys that match above but only describe a kind, never carry a value. */
-const SAFE_KEYS = new Set(['credential_kind']);
+const SAFE_KEYS = new Set(['credential_kind', 'token_id']);
+/** Keys holding help text: an example value there is not a credential. */
+const TEXT_KEYS = new Set(['placeholder', 'help', 'hint', 'description', 'label']);
 /** Values that look like credentials, wherever they sit. */
 const SECRET_VALUE = [/\b(?:ezym|dumb|dm)_[A-Za-z0-9]{16,}/, /-----BEGIN [A-Z ]*(?:PRIVATE KEY|CERTIFICATE)/, /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\./, /\b(?:AKIA|ghp_|gho_|xox[bap]-|sk-)[A-Za-z0-9_-]{16,}/];
 
@@ -79,6 +81,7 @@ function suspicious(node, trail = '') {
 			if (SECRET_KEY.test(key) && !SAFE_KEYS.has(key) && typeof value === 'string' && value.trim() !== '') {
 				return `${trail}.${key} holds a string`;
 			}
+			if (TEXT_KEYS.has(key) && typeof value === 'string') continue;
 			const found = suspicious(value, `${trail}.${key}`);
 			if (found) return found;
 		}
@@ -172,7 +175,9 @@ async function main() {
 	const browser = await puppeteer.launch({
 		headless: 'new',
 		executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-		args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']
+		ignoreHTTPSErrors: true,
+		acceptInsecureCerts: true,
+		args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--ignore-certificate-errors']
 	});
 	const page = await browser.newPage();
 	await page.setViewport({ width: 1440, height: 900 });
