@@ -57,6 +57,8 @@ const PASSWORD = process.env.DUMBMONIT_DEMO_PASSWORD ?? 'demo';
 // --- Secret refusal ---------------------------------------------------------
 
 /** Paths never recorded, whatever they contain. */
+/** Settings screens need these lists to render; the demo server only holds fictional metadata, and their content is still checked. */
+const ALLOWED_PATHS = new Set(['/api/backup', '/api/tokens', '/api/auth/totp', '/api/auth/passkeys']);
 const DENIED_PATH = /(token|secret|password|api[-_]?key|credential|enrol|private|session|cookie|backup|certificate|\/keys?(\/|$)|\/audit|oidc|saml|passkey|totp|ingest|mcp)/i;
 /** Keys whose non-empty string value looks like a secret. */
 const SECRET_KEY = /(password|passwd|secret|token|api[-_]?key|private[-_]?key|authorization|cookie|bearer|otp|recovery[-_]?code|webhook)/i;
@@ -219,7 +221,8 @@ async function main() {
 	const { statics, dynamic } = await discoverRoutes();
 	// Public/auth pages have no place in a demo that opens signed in.
 	const skip = new Set(['/login', '/setup', '/alert-action']);
-	const queue = ['/', '/settings', ...statics.filter((route) => !skip.has(route))];
+	const tabs = ['/targets?tab=map', '/targets?tab=logs', '/targets?tab=security', '/status?tab=reports', '/alerts?tab=history', '/alerts?tab=rules', '/alerts?tab=automation', '/alerts?tab=oncall', '/alerts?tab=maintenance'];
+	const queue = ['/', '/settings', ...statics.filter((route) => !skip.has(route)), ...tabs];
 	const patterns = dynamic.map((route) => ({ route, regexp: toPattern(route), taken: 0 }));
 	const seen = new Set();
 	let visited = 0;
