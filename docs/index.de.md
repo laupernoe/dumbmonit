@@ -12,8 +12,6 @@ listet vor allem anderen auf, was Ihre Aufmerksamkeit braucht. Die Schweregrade 
 der meteorologischen Stufenleiter (info → advisory → warning), Vorhersagen sind Prognosen, und Wartungsfenster
 sind geplant.
 
-![Die Übersichtsseite: der Berichtssatz, die Liste „Needs you" und die Prognosen](assets/screenshots/overview-light.png){ loading=lazy }
-
 <div class="dm-links" markdown>
 <a href="install/docker/">Installation<small>Docker Compose, erster Start, Backups</small></a>
 <a href="install/first-device/">Ersten Monitor hinzufügen<small>SNMP, Netzwerk-Scan, wie es danach weitergeht</small></a>

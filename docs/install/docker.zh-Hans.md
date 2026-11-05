@@ -114,8 +114,6 @@ docker compose logs dumbmonit | grep -A1 "setup code"
 变化，输错会受到速率限制。对于自动化部署，可设置
 `DUMBMONIT_SETUP_CODE` 来自行指定。
 
-![登录界面](../assets/screenshots/login-light.png){ loading=lazy }
-
 然后添加你的第一个监控项：参见[添加第一个监控项](first-device.md)。
 
 ## 环境变量 {#environment-variables}

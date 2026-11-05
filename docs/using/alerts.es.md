@@ -1,7 +1,5 @@
 # Página de alertas {#alerts-page}
 
-![La página de alertas: qué ocurre ahora, el mantenimiento, el historial y las reglas](../assets/screenshots/alerts-light.png){ loading=lazy }
-
 Todo sobre las alertas en una página, detrás de cuatro pestañas. La
 pestaña está en la URL (`/alerts#rules`), así que una vista se puede
 enlazar. **Schedule maintenance**, arriba a la derecha, abre el

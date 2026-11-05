@@ -1,7 +1,5 @@
 # Die Alerts-Seite
 
-![Die Alerts-Seite: was gerade passiert, Wartung, Historie und die Regeln](../assets/screenshots/alerts-light.png){ loading=lazy }
-
 Alles zur Alarmierung auf einer Seite, hinter vier Tabs. Der Tab steht in
 der URL (`/alerts#rules`), sodass eine Ansicht verlinkbar ist.
 **Schedule maintenance**, oben rechts, öffnet das Formular für ein

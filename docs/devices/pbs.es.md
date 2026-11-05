@@ -9,8 +9,6 @@ hay.
 
 ## La página del monitor {#the-device-page}
 
-![Un dispositivo PBS: fallos, el calendario de copias de 30 días, trabajos y salud](../assets/screenshots/device-pbs-light.png){ loading=lazy }
-
 Más allá de las gráficas genéricas, un monitor PBS muestra seis
 paneles, leídos de lo que guardó la sonda — abrir la página nunca
 consulta al propio PBS:

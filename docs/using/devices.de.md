@@ -1,7 +1,5 @@
 # Die Monitorseite
 
-![Das Rack: eine Frontblende pro Monitor](../assets/screenshots/devices-light.png){ loading=lazy }
-
 ## Das Rack {#the-rack}
 
 Jeder Monitor ist eine 1U-Rack-Frontblende: eine Status-LED, der Name, der
@@ -26,8 +24,6 @@ Monitor und unten eine schwebende Leiste mit den Sammelaktionen ein; **Done**
 oder Escape verlässt den Modus.
 
 ## Ein Monitor {#a-device}
-
-![Eine Monitorseite: Zustand, Aktionen, Alarme, das art-spezifische Panel, Metriken](../assets/screenshots/device-light.png){ loading=lazy }
 
 Die Monitorseite zeigt ihre Zustandsanzeige, Adresse, Art, erkanntes
 Profil, Tags, letzte Abfrage, und für Services den Zertifikatsstatus.

@@ -12,8 +12,6 @@ elenca ciò che richiede la tua attenzione, prima di qualsiasi altra cosa. Le se
 meteorologica (info → advisory → warning), le previsioni sono forecast e le finestre
 di manutenzione sono pianificate.
 
-![La pagina di panoramica: la frase del bollettino, l'elenco "Needs you" e le previsioni](assets/screenshots/overview-light.png){ loading=lazy }
-
 <div class="dm-links" markdown>
 <a href="install/docker/">Installazione<small>Docker Compose, primo avvio, backup</small></a>
 <a href="install/first-device/">Aggiungi il tuo primo monitor<small>SNMP, scansione di rete, cosa succede dopo</small></a>

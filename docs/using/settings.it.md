@@ -1,7 +1,5 @@
 # Impostazioni
 
-![Impostazioni: sette schede, qui Il mio account con aspetto, account e sicurezza e notifiche push](../assets/screenshots/settings-light.png){ loading=lazy }
-
 Le Impostazioni raccolgono ciò che è amministrativo: l'istanza stessa, il tuo account, chi può accedere e come, gli agent, i canali di notifica, il backup dell'istanza e la salute del server. Sono divise in sette schede, ognuna con il proprio indirizzo. Una barra su schermo largo, una fila di chip sul telefono e una ricerca sui nomi delle sezioni aiutano a trovare una sezione.
 
 | Scheda | Indirizzo | Contenuto |

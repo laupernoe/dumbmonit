@@ -1,7 +1,5 @@
 # Page Alertes
 
-![La page Alertes : ce qui se passe maintenant, la maintenance, l'historique et les règles](../assets/screenshots/alerts-light.png){ loading=lazy }
-
 Tout sur les alertes sur une page, derrière quatre onglets. L'onglet est dans
 l'URL (`/alerts#rules`), une vue est donc partageable par lien. **Planifier
 une maintenance**, en haut à droite, ouvre le formulaire pour une fenêtre

@@ -1,7 +1,5 @@
 # Pagine di stato
 
-![La pagina Status: le tue pagine, e gli annunci sotto di esse](../assets/screenshots/status-light.png){ loading=lazy }
-
 Una pagina di stato è la faccia pubblica del tuo monitoraggio: una
 pagina che chiunque può aprire — nessun accesso, nessun cookie — che
 dice se i tuoi servizi sono attivi, mostra fino a 90 giorni di

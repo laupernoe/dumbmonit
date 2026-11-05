@@ -45,8 +45,6 @@ sonda nell'archivio delle metriche.
 
 ## Il pannello ospiti
 
-![Il pannello Ospiti: una riga per VM e contenitore, raggruppato per nodo](../assets/screenshots/device-proxmox-light.png){ loading=lazy }
-
 Sotto i nodi, il pannello **Ospiti**: una riga per macchina virtuale e
 contenitore, raggruppato per nodo, che risponde alle domande che un amministratore
 chiede per primo — sta funzionando, è occupato, il suo disco è pieno, quando è stato

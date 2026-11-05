@@ -38,8 +38,6 @@ habituais.
    privacidade.
 5. Clique em **Adicionar monitor**.
 
-![Adicionando um monitor SNMP: o formulário à esquerda, o aviso de configuração à direita](../assets/screenshots/add-device-light.png){ loading=lazy }
-
 O perfil de coleta é detectado automaticamente a partir do `sysObjectID` do
 monitor, em segundo plano, então o formulário nunca espera por um
 monitor inacessível. Interfaces, e em servidores e NAS a CPU, memória e

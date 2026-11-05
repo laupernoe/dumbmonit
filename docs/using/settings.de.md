@@ -1,7 +1,5 @@
 # Einstellungen {#settings}
 
-![Einstellungen: sieben Tabs, hier Mein Konto mit Darstellung, Konto und Sicherheit und Push-Benachrichtigungen](../assets/screenshots/settings-light.png){ loading=lazy }
-
 Die Einstellungen enthalten das Administrative: die Instanz selbst, Ihr Konto, wer sich wie anmelden kann, die Agenten, die Benachrichtigungskanäle, die Sicherung der Instanz und den Zustand des Servers. Sie sind in sieben Tabs gegliedert, jeder mit eigener Adresse. Eine Leiste auf breitem Bildschirm, eine Reihe von Chips auf dem Telefon und ein Suchfeld über den Abschnittsnamen helfen, einen Abschnitt zu finden.
 
 | Tab | Adresse | Inhalt |

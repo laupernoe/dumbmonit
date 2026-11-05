@@ -12,8 +12,6 @@ lists what needs you, before anything else. Severities follow the meteorological
 ladder (info → advisory → warning), predictions are forecasts, and maintenance
 windows are scheduled.
 
-![The overview page: the bulletin sentence, the "Needs you" list and the forecasts](assets/screenshots/overview-light.png){ loading=lazy }
-
 <div class="dm-links" markdown>
 <a href="install/docker/">Install<small>Docker Compose, first start, backups</small></a>
 <a href="install/first-device/">Add your first monitor<small>SNMP, network scan, what happens next</small></a>

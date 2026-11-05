@@ -118,8 +118,6 @@ em memória, muda a cada reinício até existir um administrador, e as tentativa
 erradas têm limitação de taxa. Numa implementação automatizada, defina
 `DUMBMONIT_SETUP_CODE` para o escolher você mesmo.
 
-![O ecrã de início de sessão](../assets/screenshots/login-light.png){ loading=lazy }
-
 Depois adicione o seu primeiro monitor: veja [Adicionar o primeiro monitor](first-device.md).
 
 ## Variáveis de ambiente {#environment-variables}

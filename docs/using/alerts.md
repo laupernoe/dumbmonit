@@ -1,7 +1,5 @@
 # Alerts page
 
-![The Alerts page: what is happening now, maintenance, history and the rules](../assets/screenshots/alerts-light.png){ loading=lazy }
-
 Everything about alerting on one page, behind four tabs. The tab is in the
 URL (`/alerts#rules`), so a view is linkable. **Schedule maintenance**, top
 right, opens the form for a window from any tab.

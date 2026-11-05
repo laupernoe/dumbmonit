@@ -8,8 +8,6 @@ selbst, und die Tape-Stufe, falls vorhanden.
 
 ## Die Monitorseite
 
-![Ein PBS-Monitor: Fehlschläge, der 30-Tage-Backup-Kalender, Jobs und Gesundheit](../assets/screenshots/device-pbs-light.png){ loading=lazy }
-
 Über die generischen Diagramme hinaus zeigt ein PBS-Monitor sechs
 Panels, aus dem gelesen, was die Abfrage gespeichert hat — das Öffnen
 der Seite fragt PBS selbst nie ab:

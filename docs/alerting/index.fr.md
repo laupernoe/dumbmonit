@@ -5,8 +5,6 @@ réglé. Ce qui fait la différence à l'usage quotidien, c'est ce qui garde le
 bruit bas : suppression par dépendance, groupement par hôte, fenêtres de
 maintenance, et une référence qui apprend avant de parler.
 
-![La page Alertes : ce qui se passe maintenant, la maintenance, l'historique et les règles](../assets/screenshots/alerts-light.png){ loading=lazy }
-
 ## Gravités {#severities}
 
 L'interface parle l'échelle du bulletin météo. L'API et l'éditeur de règles

@@ -116,7 +116,7 @@ JSON-нагрузку, которую может использовать скр
   "severity": "warning",
   "status": "firing",
   "title": "nas — Disk full",
-  "text": "⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)",
+  "text": "Warning · Disk full — /data — 95 % (threshold > 90 %)",
   "value": 95.0,
   "threshold": 90.0,
   "unit": "%",
@@ -164,8 +164,8 @@ DumbMonit следует за перенаправлением только на
 | Переменная | Что содержит | Пример |
 |---|---|---|
 | `{{title}}` | Полный заголовок сообщения | `nas — Disk full` |
-| `{{message}}` | Тело обычным текстом, одна строка на оповещение | `⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)` |
-| `{{message_markdown}}` | То же тело в Markdown | `**nas — Disk full**\n• ⚠️ …` |
+| `{{message}}` | Тело обычным текстом, одна строка на оповещение | `Warning · Disk full — /data — 95 % (threshold > 90 %)` |
+| `{{message_markdown}}` | То же тело в Markdown | `**nas — Disk full**\n• …` |
 | `{{rule}}` | Имя правила оповещения | `Disk full` |
 | `{{target}}` | Имя отслеживаемого монитора | `nas` |
 | `{{target_id}}` | Числовой идентификатор монитора | `42` |
@@ -187,7 +187,7 @@ DumbMonit следует за перенаправлением только на
 | `{{priority}}` | Приоритет от 1 (низкий) до 5 (высокий) | `4` |
 | `{{color}}` | Акцентный цвет без решётки | `D98A00` |
 | `{{color_hex}}` | Акцентный цвет с решёткой | `#D98A00` |
-| `{{emoji}}` | Пиктограмма статуса | `🔴`, `⚠️`, `ℹ️` или `✅` |
+| `{{emoji}}` | Пиктограмма статуса | emoji |
 | `{{link}}` | Ссылка на монитор в DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Всегда `dumbmonit` | `dumbmonit` |
 | `{{token}}` | Секрет `token` канала | *(ваш токен)* |
@@ -245,7 +245,7 @@ DumbMonit следует за перенаправлением только на
   "state": "firing",
   "value": 95,
   "threshold": 90,
-  "detail": "⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)",
+  "detail": "Warning · Disk full — /data — 95 % (threshold > 90 %)",
   "link": "https://dumbmonit.home/targets/42",
   "seen_at": "2026-09-01T14:12:05+00:00"
 }
@@ -297,7 +297,7 @@ JSON, с токеном в теле.
 Отправляемое сообщение, без какого-либо экранирования:
 
 ```
-⚠️ warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
+warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
 ```
 
 ### Пример 4 — GET-запрос без тела {#example-4--a-get-request-without-a-body}

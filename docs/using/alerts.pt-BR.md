@@ -1,7 +1,5 @@
 # A página de alertas {#alerts-page}
 
-![A página de alertas: o que está acontecendo agora, manutenção, histórico e as regras](../assets/screenshots/alerts-light.png){ loading=lazy }
-
 Tudo sobre alertas em uma página, por trás de quatro abas. A aba está na URL
 (`/alerts#rules`), então uma visão pode ser compartilhada por link.
 **Programar manutenção**, no canto superior direito, abre o formulário para

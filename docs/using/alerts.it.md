@@ -1,7 +1,5 @@
 # Pagina Alerts
 
-![La pagina Alerts: cosa succede ora, la manutenzione, la cronologia e le regole](../assets/screenshots/alerts-light.png){ loading=lazy }
-
 Tutto ciò che riguarda gli avvisi su una pagina, dietro quattro tab. Il tab
 è nell'URL (`/alerts#rules`), così una vista è collegabile tramite link.
 **Schedule maintenance**, in alto a destra, apre il modulo per una

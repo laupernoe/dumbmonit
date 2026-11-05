@@ -12,8 +12,6 @@ lista o que precisa de você, antes de qualquer outra coisa. As severidades segu
 a escala meteorológica (info → aviso → alerta), as previsões são prognósticos, e as
 janelas de manutenção são programadas.
 
-![A página de visão geral: a frase do boletim, a lista "Precisa de você" e as previsões](assets/screenshots/overview-light.png){ loading=lazy }
-
 <div class="dm-links" markdown>
 <a href="install/docker/">Instalar<small>Docker Compose, primeira inicialização, backups</small></a>
 <a href="install/first-device/">Adicione seu primeiro monitor<small>SNMP, varredura de rede, o que acontece depois</small></a>
