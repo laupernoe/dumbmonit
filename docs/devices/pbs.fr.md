@@ -16,8 +16,6 @@ Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
 
 ## La page de la surveillance
 
-![Une surveillance PBS : échecs, le calendrier de sauvegarde sur 30 jours, jobs et santé](../assets/screenshots/device-pbs-light.png){ loading=lazy }
-
 Au-delà des graphiques génériques, une surveillance PBS montre six panneaux,
 lus depuis ce que la sonde a stocké — ouvrir la page n'interroge jamais
 PBS lui-même :

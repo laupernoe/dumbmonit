@@ -42,8 +42,6 @@ Metrikspeicher.
 
 ## Das Gäste-Panel {#the-guests-panel}
 
-![Das Panel Gäste: eine Zeile pro VM und Container, nach Knoten gruppiert](../assets/screenshots/device-proxmox-light.png){ loading=lazy }
-
 Unterhalb der Knoten das Panel **Gäste**: eine Zeile pro virtueller Maschine und Container, nach
 Knoten gruppiert, das die Fragen beantwortet, die ein Administrator zuerst stellt — läuft sie,
 ist sie ausgelastet, ist ihre Platte voll, wann wurde sie zuletzt gesichert. Jede Zeile zeigt:

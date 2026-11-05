@@ -12,8 +12,6 @@ DumbMonit 像**天气预报**一样解读网络：首页用一句话说明
 （info → advisory → warning），预测就是预报，
 维护窗口则是预先安排好的。
 
-![概览页面：天气预报式的一句话、“Needs you”列表和预报](assets/screenshots/overview-light.png){ loading=lazy }
-
 <div class="dm-links" markdown>
 <a href="install/docker/">安装<small>Docker Compose、首次启动、备份</small></a>
 <a href="install/first-device/">添加第一个监控项<small>SNMP、网络扫描、接下来会发生什么</small></a>

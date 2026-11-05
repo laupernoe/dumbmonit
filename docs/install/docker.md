@@ -135,8 +135,6 @@ memory only, changes at every restart until an admin exists, and wrong
 attempts are rate-limited. For an automated deployment, set
 `DUMBMONIT_SETUP_CODE` to choose it yourself.
 
-![The login screen](../assets/screenshots/login-light.png){ loading=lazy }
-
 Then add your first monitor: see [Add your first monitor](first-device.md).
 
 ## Container health

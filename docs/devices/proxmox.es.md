@@ -52,8 +52,6 @@ la última sonda en el almacén de métricas.
 
 ## El panel de invitados {#the-guests-panel}
 
-![El panel Guests: una fila por VM y contenedor, agrupados por nodo](../assets/screenshots/device-proxmox-light.png){ loading=lazy }
-
 Bajo los nodos, el panel **Guests**: una fila por máquina virtual y
 contenedor, agrupados por nodo, que responde las preguntas que un
 administrador hace primero — ¿está en ejecución, está ocupado, su

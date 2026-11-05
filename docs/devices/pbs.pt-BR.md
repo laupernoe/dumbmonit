@@ -8,8 +8,6 @@ quando houver um.
 
 ## A página do monitor {#the-device-page}
 
-![Um monitor PBS: falhas, o calendário de backup de 30 dias, jobs e saúde](../assets/screenshots/device-pbs-light.png){ loading=lazy }
-
 Além dos gráficos genéricos, um monitor PBS mostra seis painéis,
 lidos do que a sondagem armazenou — abrir a página nunca consulta o
 próprio PBS:

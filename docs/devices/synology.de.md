@@ -71,8 +71,6 @@ Verbindung verurteilt die gesamte Abfrage.
 
 ## Die Monitorseite
 
-![Ein Synology-Monitor: auf einen Blick, Volumes, Platten und Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
-
 Ein Synology-Monitor erhält sein eigenes Panel über den Diagrammen:
 
 * **At a glance** — CPU, Speicher (genutzt vom Total), Temperatur und

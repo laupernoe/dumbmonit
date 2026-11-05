@@ -5,8 +5,6 @@ que faz a diferença no uso diário é o que mantém o ruído baixo: supressão
 por dependência, agrupamento por host, janelas de manutenção, e uma linha
 de base que aprende antes de falar.
 
-![A página de alertas: o que está acontecendo agora, manutenção, histórico e as regras](../assets/screenshots/alerts-light.png){ loading=lazy }
-
 ## Severidades {#severities}
 
 A interface fala a escada do boletim meteorológico. A API e o editor de

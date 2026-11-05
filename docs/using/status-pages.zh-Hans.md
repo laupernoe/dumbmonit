@@ -1,7 +1,5 @@
 # 状态页面 {#status-pages}
 
-![The Status page: your pages, and the announcements under them](../assets/screenshots/status-light.png){ loading=lazy }
-
 状态页面是你监控系统的公开门面：任何人都能打开的页面——无需登录，没有 cookie——它说明你的服务是否正常，为每个服务显示最多 90 天的每日历史，承载你的事故和维护公告，并让访客通过 RSS 或电子邮件关注它们。徽章可以把同样的答案放进 README；紧凑视图则可嵌入内网页面。
 
 它只显示你放上去的内容：你给每个服务设定的标签、其状态、可用率和响应时间。监控项名称、地址、类型和标识符绝不会离开服务器——不会出现在页面中、徽章中或电子邮件中。

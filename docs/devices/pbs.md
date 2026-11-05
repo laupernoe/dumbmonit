@@ -15,8 +15,6 @@ From the DumbMonit server (or its relay agent) to the device:
 
 ## The monitor page
 
-![A PBS monitor: failures, the 30-day backup calendar, jobs and health](../assets/screenshots/device-pbs-light.png){ loading=lazy }
-
 Beyond the generic charts, a PBS monitor shows six panels, read from what the
 probe stored — opening the page never queries PBS itself:
 

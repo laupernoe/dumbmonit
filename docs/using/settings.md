@@ -1,7 +1,5 @@
 # Settings
 
-![Settings: six tabs, here My account with appearance, account & security and push notifications](../assets/screenshots/settings-light.png){ loading=lazy }
-
 Settings holds what is administrative: the instance itself, your account, who can sign in and how, the agents, the notification channels, backing the instance up, and the server's health. It is split into six tabs, each with its own address. A rail on a wide screen, a strip of chips on a phone and a search box over the section names help you find a section.
 
 | Tab | Address | What it holds |

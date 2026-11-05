@@ -137,8 +137,6 @@ it. Switches, routers, NAS, UPS and printers are the usual suspects.
 5. Click **Add monitor**. You should see the monitor page, then interfaces and,
    on servers and NAS, CPU, memory and storage within a minute.
 
-![Adding an SNMP device: the form on the left, the setup notice on the right](../assets/screenshots/add-device-light.png){ loading=lazy }
-
 The collection profile is detected automatically from the device's
 `sysObjectID`, in the background, so the form never waits for an unreachable
 device. Interfaces, and on servers and NAS the CPU, memory and storage, appear

@@ -1,7 +1,5 @@
 # Página de alertas {#alerts-page}
 
-![A página Alerts: o que se passa agora, a manutenção, o histórico e as regras](../assets/screenshots/alerts-light.png){ loading=lazy }
-
 Tudo sobre alertas numa página, atrás de quatro separadores. O separador está
 no URL (`/alerts#rules`), por isso uma vista pode ser ligada. **Schedule
 maintenance**, no canto superior direito, abre o formulário para uma janela

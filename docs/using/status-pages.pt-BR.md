@@ -1,7 +1,5 @@
 # Páginas de status {#status-pages}
 
-![A página Páginas de status: suas páginas, e os anúncios abaixo delas](../assets/screenshots/status-light.png){ loading=lazy }
-
 Uma página de status é a face pública do seu monitoramento: uma página
 que qualquer um pode abrir — sem login, sem cookie — que diz se seus
 serviços estão ativos, mostra até 90 dias de histórico diário para cada
