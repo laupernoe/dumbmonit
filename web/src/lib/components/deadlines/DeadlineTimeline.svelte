@@ -58,7 +58,7 @@
 				{tick === 0 ? m.deadlines_today() : m.misc_dur_d({ n: tick })}
 			</span>
 		{/each}
-		{#each placed as { item, at, lane } (`${item.target}|${item.kind}|${item.what}|${item.expires_at}`)}
+		{#each placed as { item, at, lane }, index (`${item.target}|${item.kind}|${item.what}|${item.expires_at}|${index}`)}
 			{@const tone = deadlineTone(item.days_left)}
 			<a
 				href={withBase(`/targets/${item.target}`)}

@@ -23,7 +23,7 @@
 </script>
 
 <ul class={`m-0 flex list-none flex-col p-0 ${cls}`} aria-label={m.deadlines_list_label()}>
-	{#each items as item (`${item.target}|${item.kind}|${item.what}|${item.expires_at}`)}
+	{#each items as item, index (`${item.target}|${item.kind}|${item.what}|${item.expires_at}|${index}`)}
 		{@const tone = deadlineTone(item.days_left)}
 		<li class="graticule min-w-0">
 			<a
