@@ -524,7 +524,10 @@ mod tests {
                 ("token".to_string(), "jeton-application".to_string()),
                 ("user".to_string(), "cle-utilisateur".to_string()),
                 ("title".to_string(), "nas — Disk full".to_string()),
-                ("message".to_string(), "Warning · Disk full — 95 % (threshold > 90 %)".to_string()),
+                (
+                    "message".to_string(),
+                    "Warning · Disk full — 95 % (threshold > 90 %)".to_string()
+                ),
                 ("priority".to_string(), "0".to_string()),
             ]
         );
@@ -713,7 +716,8 @@ mod tests {
                 ("From".to_string(), "+15017122661".to_string()),
                 (
                     "Body".to_string(),
-                    "WARN nas — Disk full\nWarning · Disk full — 95 % (threshold > 90 %)".to_string()
+                    "WARN nas — Disk full\nWarning · Disk full — 95 % (threshold > 90 %)"
+                        .to_string()
                 ),
             ]
         );

@@ -770,7 +770,8 @@ mod tests {
                 ("topic".to_string(), "nas".to_string()),
                 (
                     "content".to_string(),
-                    "WARN **nas — Disk full**\nWarning · Disk full — 95 % (threshold > 90 %)".to_string()
+                    "WARN **nas — Disk full**\nWarning · Disk full — 95 % (threshold > 90 %)"
+                        .to_string()
                 ),
             ]
         );
