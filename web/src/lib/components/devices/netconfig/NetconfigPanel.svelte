@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * What a `netconfig` device has to show: its stored configuration versions,
 	 * the line diff of the selected one, and the SSH host key it is pinned to.
@@ -353,7 +354,7 @@
 									<span aria-hidden="true">{m.devicesb_netconfig_diff_reveal()}</span>
 								</div>
 								<a
-									href={netconfigDownloadUrl(target.id, selected.id)}
+									href={withBase(netconfigDownloadUrl(target.id, selected.id))}
 									download
 									class="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-line px-3 text-sm text-ink hover:bg-surface-2"
 								>

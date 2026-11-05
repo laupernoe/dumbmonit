@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Relay mode of an agent device, switched from here: the server sends the
 	 * setting to the agent in its next acknowledgement and the agent applies it
@@ -136,7 +137,7 @@
 			<p class="mb-3 flex flex-wrap items-center gap-2 text-sm text-ink">
 				<Server class="size-4 text-ink-2" aria-hidden="true" />
 				<span>{m.devicesb_relay_panel_through({ relay: through.name })}</span>
-				<a class="inline-flex min-h-10 items-center underline decoration-line underline-offset-2 hover:text-ink" href={`/targets/${through.id}`}>{m.devicesb_relay_panel_through_open()}</a>
+				<a class="inline-flex min-h-10 items-center underline decoration-line underline-offset-2 hover:text-ink" href={withBase(`/targets/${through.id}`)}>{m.devicesb_relay_panel_through_open()}</a>
 			</p>
 		{/if}
 
@@ -229,7 +230,7 @@
 					{#if count > 0}
 						<ul class="mt-1 flex flex-wrap gap-x-4 gap-y-0">
 							{#each relayed as device (device.id)}
-								<li><a class="inline-flex min-h-10 items-center underline decoration-line underline-offset-2 hover:text-ink" href={`/targets/${device.id}`}>{device.name}</a></li>
+								<li><a class="inline-flex min-h-10 items-center underline decoration-line underline-offset-2 hover:text-ink" href={withBase(`/targets/${device.id}`)}>{device.name}</a></li>
 							{/each}
 						</ul>
 					{/if}

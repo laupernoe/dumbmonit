@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * The one button. `primary` is the solid one (one per view, the thing to do
 	 * next) and answers a click with the green spark burst; `secondary` is an
@@ -98,7 +99,7 @@
 </script>
 
 {#if href && !disabled}
-	<a {href} class={classes} {onclick} {...rest} use:sparkle={{ enabled: variant === 'primary' }}>
+	<a href={withBase(href)} class={classes} {onclick} {...rest} use:sparkle={{ enabled: variant === 'primary' }}>
 		{@render children()}
 	</a>
 {:else}

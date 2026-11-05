@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * The watched pages of a `webchange` device, in one list. Pages that
 	 * changed come first, the most recently changed on top; each row carries
@@ -219,7 +220,7 @@
 	{@const selected = change.id === selectedId}
 	{@const status = page ? statusOf(page) : null}
 	<a
-		href={hrefOf(change)}
+		href={withBase(hrefOf(change))}
 		data-change={change.id}
 		onclick={(event) => click(event, change, false)}
 		aria-current={selected ? 'true' : undefined}
@@ -248,7 +249,7 @@
 		</span>
 		{#if status}<Plate tone={status.tone} label={status.label} />{/if}
 		<a
-			href={page.url}
+			href={withBase(page.url)}
 			target="_blank"
 			rel="noopener noreferrer"
 			class={actionClass}
@@ -280,7 +281,7 @@
 		{/if}
 		{#if hasShots(item.url)}
 			<a
-				href={`${hrefOf(item.latest)}#screenshots`}
+				href={withBase(`${hrefOf(item.latest)}#screenshots`)}
 				class={actionClass}
 				title={m.devicesb_webchange_list_screenshots({ path: pagePath(item.url) })}
 				onclick={(event) => click(event, item.latest, true)}

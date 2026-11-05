@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Settings, in six tabs, each its own URL: My account (language,
 	 * password, two-factor, push), Team & access (users, single sign-on),
@@ -12,7 +13,7 @@
 	 * here too; `/settings/status` and `/settings/reports` (and their anchors)
 	 * forward to the Status pages and Reports pages.
 	 */
-	import { goto } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import { page } from '$app/state';
 	import type { Component } from 'svelte';
 	import { BellRing, HardDrive, Search, Server, Tv, UserRound, Users } from 'lucide-svelte';
@@ -188,7 +189,7 @@
 					{#each results as entry (entry.id)}
 						<li>
 							<a
-								href={href(entry)}
+								href={withBase(href(entry))}
 								class="flex min-h-10 flex-col justify-center rounded-md px-2.5 py-1.5 text-sm hover:bg-surface-2"
 								onclick={() => (query = '')}
 							>
@@ -226,7 +227,7 @@
 		{#each tabs as id (id)}
 			<li class="min-w-0">
 				<a
-					href="/settings/{id}"
+					href={withBase('/settings/{id}')}
 					data-tab={id}
 					class={`inline-flex h-10 items-center rounded-full border px-3.5 text-[0.8125rem] font-semibold transition-colors ${tab === id ? 'border-line-strong bg-surface-2 text-ink' : 'border-line text-ink-2 hover:text-ink'}`}
 					aria-current={tab === id ? 'page' : undefined}
@@ -248,7 +249,7 @@
 						{@const Icon = ICONS[id]}
 						<li>
 							<a
-								href="/settings/{id}"
+								href={withBase('/settings/{id}')}
 								class={`flex h-10 items-center gap-2.5 rounded-md px-2.5 transition-colors hover:bg-surface-2 hover:text-ink ${tab === id ? 'bg-surface-2 font-semibold text-ink' : 'text-ink-2'}`}
 								aria-current={tab === id ? 'page' : undefined}
 							>

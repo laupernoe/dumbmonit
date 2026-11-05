@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Add a device — the one way to add anything.
@@ -18,7 +19,8 @@
 	 */
 	import { tick, untrack } from 'svelte';
 	import { page } from '$app/state';
-	import { afterNavigate, goto } from '$app/navigation';
+	import { afterNavigate } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import { ArrowLeft, BookOpen, CalendarClock, ChevronRight, FileSpreadsheet, Globe, Plug, Radar, Upload } from 'lucide-svelte';
 	import { ApiError, listCollectors, listTargets, type CollectorInfo, type Target } from '#lib/api/index.js';
 	import { Button, DocLink, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
@@ -325,7 +327,7 @@
 	<!-- Phones: only the way back; the page title says where this is. -->
 	<ol class="flex flex-wrap items-center gap-1 text-sm text-ink-2 max-sm:[&>li:not(:first-child)]:hidden">
 		<li class="flex">
-			<a href="/targets" class="inline-flex items-center gap-1 rounded max-sm:min-h-10 hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal">
+			<a href={withBase('/targets')} class="inline-flex items-center gap-1 rounded max-sm:min-h-10 hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal">
 				<ArrowLeft class="size-3.5" aria-hidden="true" />
 				{m.deviceform_new_devices()}
 			</a>
@@ -334,7 +336,7 @@
 		{#if crumb}
 			<li>
 				<a
-					href="/targets/new"
+					href={withBase('/targets/new')}
 					onclick={(event) => {
 						event.preventDefault();
 						toPicker();

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * A surface whose hover spotlight follows the cursor. Use it on cards that
 	 * are themselves links or buttons; the light is decoration, the border and
@@ -31,7 +32,7 @@
 
 <svelte:element
 	this={tag}
-	{href}
+	href={withBase(href)}
 	class={`relative overflow-hidden ${className}`}
 	onpointermove={move}
 	onpointerenter={(e) => (on = e.pointerType === 'mouse')}

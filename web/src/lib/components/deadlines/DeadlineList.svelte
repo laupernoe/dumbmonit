@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Deadlines as a list, soonest first: one row per expiry, a glyph and the
 	 * time left in words (never colour alone), the object and where it lives,
@@ -26,7 +27,7 @@
 		{@const tone = deadlineTone(item.days_left)}
 		<li class="graticule min-w-0">
 			<a
-				href={`/targets/${item.target}`}
+				href={withBase(`/targets/${item.target}`)}
 				class="flex min-h-11 min-w-0 items-center gap-3 py-1.5 hover:bg-surface-2"
 				aria-label={m.deadlines_open({ name: item.target_name })}
 			>

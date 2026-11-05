@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * "Monitored alerts" on the edit form: every alert rule that reads a metric
 	 * this monitor has written, each with a switch. Turning one off stops that
@@ -133,7 +134,7 @@
 									{#if !rule.enabled}
 										<p class="text-[0.75rem] text-ink-3">
 											{m.deviceform_rules_disabled_everywhere()}
-											<a href="/alerts?tab=rules" class="font-semibold text-ink-2 underline decoration-line-strong underline-offset-2 hover:text-ink">{m.deviceform_rules_disabled_link()}</a>
+											<a href={withBase('/alerts?tab=rules')} class="font-semibold text-ink-2 underline decoration-line-strong underline-offset-2 hover:text-ink">{m.deviceform_rules_disabled_link()}</a>
 										</p>
 									{:else if rule.custom_threshold}
 										<p class="text-[0.75rem] text-ink-3">{m.deviceform_rules_custom_threshold()}</p>

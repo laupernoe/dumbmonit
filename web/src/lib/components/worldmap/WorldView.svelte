@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * The "World" view of the Map page: one pin per location with the state of
 	 * its monitors, and beside it the same locations as a list, worst first —
@@ -182,7 +183,7 @@
 							{#each currentMonitors as monitor (monitor.target.id)}
 								<li>
 									<a
-										href={`/targets/${monitor.target.id}`}
+										href={withBase(`/targets/${monitor.target.id}`)}
 										class="flex min-h-10 items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-ink hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-signal"
 									>
 										<Led tone={STATE_TONE[monitor.state]} size="sm" />
@@ -221,7 +222,7 @@
 				<footer class="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line px-4 py-2.5 text-xs text-ink-2">
 					{#if unplaced > 0}<span>{m.worldmap_unplaced({ count: unplaced })}</span>{/if}
 					{#if auth.isAdmin}
-						<a href={settingsHref} class="inline-flex min-h-10 items-center font-semibold text-ink underline decoration-dotted underline-offset-4 hover:text-signal-ink">{m.worldmap_edit_locations()}</a>
+						<a href={withBase(settingsHref)} class="inline-flex min-h-10 items-center font-semibold text-ink underline decoration-dotted underline-offset-4 hover:text-signal-ink">{m.worldmap_edit_locations()}</a>
 					{/if}
 				</footer>
 			{/if}

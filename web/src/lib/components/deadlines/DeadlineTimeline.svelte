@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * The next 90 days on one axis: a marker per deadline, banded by the alert
 	 * tiers (7, 30 and 60 days), neighbours stacked on lanes so none hides
@@ -60,7 +61,7 @@
 		{#each placed as { item, at, lane } (`${item.target}|${item.kind}|${item.what}|${item.expires_at}`)}
 			{@const tone = deadlineTone(item.days_left)}
 			<a
-				href={`/targets/${item.target}`}
+				href={withBase(`/targets/${item.target}`)}
 				class="absolute grid size-10 -translate-x-1/2 place-items-center"
 				style:left={`${at * 100}%`}
 				style:top={`${lane * LANE_REM - 0.25}rem`}

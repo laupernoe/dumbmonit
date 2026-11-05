@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * CVE & vulnerabilities, the page body: off (explanation and the switch),
 	 * or on (counters, a pivot between CVEs and machines, quick filters, dense
@@ -9,7 +10,7 @@
 	 * administrators.
 	 */
 	import { untrack } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import { page } from '$app/state';
 	import { ChevronRight, ExternalLink, EyeOff, Flame, RefreshCw, Search, Server, ShieldAlert, Undo2, Wrench, X } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
@@ -424,9 +425,9 @@
 	<li class={`grid gap-1.5 py-2 ${f.ignored ? 'opacity-70' : ''}`}>
 		<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
 			{#if who === 'machine'}
-				<a href={`/targets/${f.target_id}`} class="inline-flex min-h-10 items-center text-sm font-semibold text-ink hover:underline sm:min-h-0" aria-label={m.security_cves_open_device({ name: f.target_name })}>{f.target_name}</a>
+				<a href={withBase(`/targets/${f.target_id}`)} class="inline-flex min-h-10 items-center text-sm font-semibold text-ink hover:underline sm:min-h-0" aria-label={m.security_cves_open_device({ name: f.target_name })}>{f.target_name}</a>
 			{:else}
-				<a href={f.link} target="_blank" rel="noopener" class="inline-flex min-h-10 items-center gap-1 font-mono text-sm font-semibold text-ink hover:underline sm:min-h-0">{f.cve_id}<ExternalLink class="size-3.5" aria-hidden="true" /></a>
+				<a href={withBase(f.link)} target="_blank" rel="noopener" class="inline-flex min-h-10 items-center gap-1 font-mono text-sm font-semibold text-ink hover:underline sm:min-h-0">{f.cve_id}<ExternalLink class="size-3.5" aria-hidden="true" /></a>
 				<Plate tone={severityTone(f.severity)} size="sm">{SEVERITY[f.severity]()}</Plate>
 				{#if f.exploited}<Plate tone="warning" title={m.security_cves_exploited_hint()}>{m.security_cves_exploited()}</Plate>{/if}
 			{/if}
@@ -488,7 +489,7 @@
 				aria-label={m.security_view_card_machines({ cve: g.cve_id })}
 				onclick={() => focusCve(g.cve_id)}
 			>{g.cve_id}</button>
-			<a href={g.link} target="_blank" rel="noopener" class="inline-flex size-8 items-center justify-center rounded text-ink-3 hover:text-ink" aria-label={m.security_view_external({ cve: g.cve_id })}><ExternalLink class="size-3.5" aria-hidden="true" /></a>
+			<a href={withBase(g.link)} target="_blank" rel="noopener" class="inline-flex size-8 items-center justify-center rounded text-ink-3 hover:text-ink" aria-label={m.security_view_external({ cve: g.cve_id })}><ExternalLink class="size-3.5" aria-hidden="true" /></a>
 			<span class="tnum ml-auto flex items-center gap-1.5 text-[0.75rem] text-ink-2">
 				{#if g.cvss !== null}{g.cvss.toFixed(1)}{/if}
 				<Plate tone={severityTone(g.severity)} size="sm">{SEVERITY[g.severity]()}</Plate>
@@ -535,7 +536,7 @@
 				aria-label={m.security_view_card_cves({ name: g.target_name })}
 				onclick={() => focusMachine(g.target_id)}
 			><Server class="size-3.5 shrink-0 text-ink-3" aria-hidden="true" /><span class="truncate">{g.target_name}</span></button>
-			<a href={`/targets/${g.target_id}`} class="inline-flex size-8 items-center justify-center rounded text-ink-3 hover:text-ink" aria-label={m.security_cves_open_device({ name: g.target_name })}><ExternalLink class="size-3.5" aria-hidden="true" /></a>
+			<a href={withBase(`/targets/${g.target_id}`)} class="inline-flex size-8 items-center justify-center rounded text-ink-3 hover:text-ink" aria-label={m.security_cves_open_device({ name: g.target_name })}><ExternalLink class="size-3.5" aria-hidden="true" /></a>
 			<span class="ml-auto"><Plate tone={severityTone(g.worst)} size="sm">{SEVERITY[g.worst]()}</Plate></span>
 		</div>
 		<div class="flex flex-wrap items-center gap-x-2.5 gap-y-1">

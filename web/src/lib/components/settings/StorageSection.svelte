@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Settings → System → Data & retention (administrators): what the disk
 	 * holds and how fast it grows, the raw metrics retention, the long-term
@@ -194,7 +195,7 @@
 						<p class="text-[0.8125rem] text-ink-3">{m.storage_source({ source: sourceLabel(view.metrics.retention_source) })}</p>
 					{:else}
 						<p class="max-w-prose text-sm text-ink-2">{m.storage_metrics_external({ days: view.metrics.retention_days })}</p>
-						<a href={localizedDocsUrl(EXTERNAL_VM_DOCS)} target="_blank" rel="noopener" class="inline-flex min-h-10 items-center gap-1 text-[0.8125rem] font-semibold text-ink-2 hover:text-ink hover:underline">
+						<a href={withBase(localizedDocsUrl(EXTERNAL_VM_DOCS))} target="_blank" rel="noopener" class="inline-flex min-h-10 items-center gap-1 text-[0.8125rem] font-semibold text-ink-2 hover:text-ink hover:underline">
 							{m.storage_docs_external()}
 							<ExternalLink class="size-3.5" aria-hidden="true" />
 						</a>
@@ -267,7 +268,7 @@
 							<div class="flex flex-wrap items-center gap-3" aria-live="polite">
 								<Plate tone={view.logs_store.running ? 'signal' : 'warning'} label={view.logs_store.running ? m.storage_running() : m.storage_stopped()} />
 								{#if view.logs_store.running}
-									<a href="/targets?tab=logs" class="inline-flex min-h-10 items-center text-sm font-semibold text-signal-ink hover:underline">{m.storage_open_logs()}</a>
+									<a href={withBase('/targets?tab=logs')} class="inline-flex min-h-10 items-center text-sm font-semibold text-signal-ink hover:underline">{m.storage_open_logs()}</a>
 								{/if}
 							</div>
 							{#if view.logs_store.last_error}

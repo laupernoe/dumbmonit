@@ -6,7 +6,7 @@
 	 * Reloaded at once when the range changes, then every minute while LIVE
 	 * is on. The chart code (uPlot) loads only with this card.
 	 */
-	import { goto } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import type ChartComponent from '#lib/components/Chart.svelte';
 	import { formatDuration } from '#lib/format.js';
 	import { m } from '#lib/paraglide/messages.js';
