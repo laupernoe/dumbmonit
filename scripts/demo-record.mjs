@@ -117,7 +117,7 @@ async function record(response) {
 	if (!path.startsWith('/api/') || response.status() !== 200) return;
 	if (!(response.headers()['content-type'] ?? '').includes('json')) return;
 	const entryKey = key('GET', url);
-	if (DENIED_PATH.test(path) && !/^\/api\/auth\/(status|me)$/.test(path)) {
+	if (!ALLOWED_PATHS.has(path) && DENIED_PATH.test(path) && !/^\/api\/auth\/(status|me)$/.test(path)) {
 		refused.push({ key: entryKey, reason: 'path looks sensitive' });
 		return;
 	}
