@@ -8174,7 +8174,7 @@ fn generic(kind: &str) -> KindDescription {
     }
 }
 
-/// Page de la documentation (Read the Docs, en anglais : l'interface choisit la
+/// Page de la documentation du site (en anglais : l'interface choisit la
 /// langue) qui détaille le type ; vide s'il n'en a pas.
 fn guide_url(kind: &str) -> String {
     let page = match kind {

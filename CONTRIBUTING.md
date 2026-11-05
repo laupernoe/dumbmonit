@@ -169,7 +169,7 @@ crates/server    the binary — api/, auth/, collectors/, scheduler.rs, tsdb/, d
 crates/agent     Linux/Windows agent; install/ holds install.sh and install.ps1
 web/             SvelteKit UI (Svelte 5 runes, Tailwind 4, uPlot, Leaflet)
 profiles/        SNMP collection profiles (YAML), auto-applied by sysObjectID
-docs/            user documentation (MkDocs, published on Read the Docs)
+docs/            user documentation (Markdown, published at dumbmonit.selfhostr.io/docs)
 ```
 
 A few mechanics span several files and are worth knowing before you dig in:
@@ -212,7 +212,7 @@ For an SNMP device that only needs a new profile, add a YAML file under
    the API). The UI renders the form from this description.
 3. Add its kind to `CHANNEL_KINDS` in `notify/channel.rs` (a test there checks
    every kind has a catalog entry).
-4. Document it in `docs/notifications.md` (published on Read the Docs; the UI
+4. Document it in `docs/notifications.md` (published on the documentation site; the UI
    links to its anchors).
 5. Test it with the "Send test message" button in *Settings → Notifications*.
 
@@ -255,7 +255,7 @@ For developers:
 
 ### Translating the documentation
 
-The docs (MkDocs, published on Read the Docs) are multilingual through the
+The docs (Markdown, published at <https://dumbmonit.selfhostr.io/docs/>) are multilingual through the
 [`mkdocs-static-i18n`](https://github.com/ultrabug/mkdocs-static-i18n) plugin,
 with the same languages as the UI: `fr`, `de`, `es`, `it`, `pt`, `pt-BR`, `ru`,
 `zh-Hans` (English is the source). A translation is a sibling file with the

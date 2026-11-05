@@ -60,7 +60,7 @@ pub struct KindInfo {
     pub label: &'static str,
     pub summary: &'static str,
     /// Lien absolu vers la section du canal dans la documentation en ligne
-    /// (Read the Docs), qui publie `docs/notifications.md`.
+    /// (dumbmonit.selfhostr.io/docs), qui publie `docs/notifications.md`.
     pub doc_url: &'static str,
     pub settings: Vec<Field>,
     pub secrets: Vec<Field>,
