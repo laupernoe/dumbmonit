@@ -1,0 +1,17 @@
+# Vulnerabilities with no fix available today, each with its reason. Review on every dependency update.
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0387"
+reason = "crypto-bigint 0.5 comes through p256 0.13, required by web-push-native 0.5 (latest). Only the internal VAPID signature uses a private key. Remove when web-push-native moves to p256 0.14."
+
+[[IgnoredVulns]]
+id = "CVE-2023-49092"
+reason = "rsa is pinned by russh 0.65 (latest) and has no fixed release. DumbMonit verifies host keys, a public operation, and signs in with a password, so no private RSA key is used."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2023-0071"
+reason = "Same advisory as CVE-2023-49092."
+
+[[IgnoredVulns]]
+id = "CVE-2026-93753"
+reason = "deepmerge 4.3.1 is the latest release. It is a build-time dependency of vite-plugin-svelte and is not shipped in the web bundle."
