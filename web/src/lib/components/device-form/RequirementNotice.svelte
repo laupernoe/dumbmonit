@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * What the server's deployment is missing for a device type to work fully.
@@ -49,7 +50,7 @@
 		{/if}
 		{#if requirement.doc_url}
 			<a
-				href={requirement.doc_url}
+				href={withBase(requirement.doc_url)}
 				target="_blank"
 				rel="noreferrer noopener"
 				class="mt-2.5 inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-signal-ink hover:underline"

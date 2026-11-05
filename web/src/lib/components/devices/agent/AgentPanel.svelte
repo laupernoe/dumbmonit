@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * Agent panel of a device, on the data page: a compact read-only summary of
@@ -71,7 +72,7 @@
 			<p class="mt-2 text-sm text-ink-2">
 				{m.devices_agent_unbound_detail()}
 				{#if auth.isAdmin}
-					<a href={`/targets/${target.id}/edit`} class="inline-flex min-h-10 items-center text-ink underline decoration-line-strong underline-offset-2 hover:text-signal-ink">{m.devices_agent_open_settings()}</a>
+					<a href={withBase(`/targets/${target.id}/edit`)} class="inline-flex min-h-10 items-center text-ink underline decoration-line-strong underline-offset-2 hover:text-signal-ink">{m.devices_agent_open_settings()}</a>
 				{/if}
 			</p>
 		{/if}

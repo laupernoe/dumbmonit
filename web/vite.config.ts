@@ -7,9 +7,15 @@ import { defineConfig } from 'vite';
 
 // Node's `process`, read through globalThis: the web project has no Node type definitions.
 const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env;
+// Démo statique : l'application vit sous un sous-chemin (`/demo`). Lu une seule fois ici et
+// transmis au code (`VITE_BASE_PATH`, voir `src/lib/paths.ts`) ; vide pour le build normal.
+const BASE_PATH = (env?.DUMBMONIT_BASE_PATH ?? '').replace(/\/+$/, '');
+if (BASE_PATH && !BASE_PATH.startsWith('/')) throw new Error('DUMBMONIT_BASE_PATH must start with "/"');
 const PROXY = { target: env?.DUMBMONIT_DEV_API ?? 'http://localhost:8080', changeOrigin: true };
 
 export default defineConfig({
+	// Lu par `import.meta.env.VITE_BASE_PATH` ; la valeur vide laisse le build normal inchangé.
+	define: { 'import.meta.env.VITE_BASE_PATH': JSON.stringify(BASE_PATH) },
 	plugins: [
 		tailwindcss(),
 		sveltekit({
@@ -24,6 +30,9 @@ export default defineConfig({
 				precompress: false,
 				strict: false
 			}),
+			// Sous-chemin de la démo statique ; rien du tout pour le build normal. Chemins
+			// absolus : la page de repli sert aussi des routes profondes (/demo/targets/3).
+			...(BASE_PATH ? { paths: { base: BASE_PATH, relative: false } } : {}),
 			// Aucune page n'est pré-rendue par défaut : tout dépend de l'API au runtime.
 			prerender: { entries: [] },
 			// Identifiant de version de l'application (`_app/version.json`, recopié dans

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * The wall's problems, read from across the room, always whole: what is
 	 * down first, then warnings, then what its parent masks, then what is
@@ -219,12 +220,12 @@
 				{/each}
 				{#if hiddenCount > 0}
 					<li class="shrink-0 px-4 text-[1.0625rem] font-semibold text-ink" data-row>
-						<a href="/alerts" class="underline decoration-line-strong underline-offset-4">{m.wall_problems_more({ count: hiddenCount })}</a>
+						<a href={withBase('/alerts')} class="underline decoration-line-strong underline-offset-4">{m.wall_problems_more({ count: hiddenCount })}</a>
 					</li>
 				{/if}
 				{#if summary}
 					<li class="shrink-0" data-row>
-						<a href="/alerts" class="summary flex min-w-0 items-center gap-3 rounded-[10px] bg-surface/80 px-4 py-2 text-ink-2 shadow-lift">
+						<a href={withBase('/alerts')} class="summary flex min-w-0 items-center gap-3 rounded-[10px] bg-surface/80 px-4 py-2 text-ink-2 shadow-lift">
 							<span class="line-clamp-2 min-w-0" title={summary}>{summary}</span>
 						</a>
 					</li>

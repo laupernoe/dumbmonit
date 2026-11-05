@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Runbooks: list for everyone, editor for administrators. A runbook is
 	 * Markdown (shown with HTML escaped) linked to alert rules, folders or
@@ -189,7 +190,7 @@
 		<ul class="divide-y divide-line">
 			{#each runbooks as runbook (runbook.id)}
 				<li class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 py-2.5">
-					<a href={`/runbooks/${runbook.id}`} class="min-h-10 min-w-0 flex-1 py-2 font-medium text-ink hover:underline">
+					<a href={withBase(`/runbooks/${runbook.id}`)} class="min-h-10 min-w-0 flex-1 py-2 font-medium text-ink hover:underline">
 						<span class="block truncate">{runbook.title}</span>
 					</a>
 					<ClientAssign kind="runbook" id={runbook.id} />

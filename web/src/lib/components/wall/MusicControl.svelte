@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * "Music" on the wall: a quiet button beside Backdrop and Exit that opens a
 	 * small panel. It shows only once music is set up (Spotify connected, or a
@@ -268,7 +269,7 @@
 					</Button>
 				{/if}
 				{#if isAdmin}
-					<p class="mt-2 text-[0.8125rem]"><a href="/settings/wall#music" class="font-semibold text-ink hover:underline">{m.wall_music_settings()}</a></p>
+					<p class="mt-2 text-[0.8125rem]"><a href={withBase('/settings/wall#music')} class="font-semibold text-ink hover:underline">{m.wall_music_settings()}</a></p>
 				{/if}
 			</div>
 		</div>

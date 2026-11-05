@@ -6,7 +6,7 @@
 	 * when retyped — the server keeps the saved ones otherwise.
 	 */
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import {
 		getTarget,
 		listCollectors,

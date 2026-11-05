@@ -13,7 +13,7 @@
 	 * come from the shared store (polled app-wide, see `alertsStore`); the rest
 	 * is loaded here and refreshed after each action.
 	 */
-	import { goto } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import {

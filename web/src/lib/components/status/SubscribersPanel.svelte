@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Subscribers of a page, by email, SMS, signed webhook or Slack: the channels
 	 * the page opens, who is confirmed, who is still pending, a CSV export and a
@@ -173,7 +174,7 @@
 			</div>
 			<a
 				class="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
-				href={`/api/status-pages/${page.id}/subscribers.csv`}
+				href={withBase(`/api/status-pages/${page.id}/subscribers.csv`)}
 				download
 			>
 				<Download class="size-4" aria-hidden="true" />

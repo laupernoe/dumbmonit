@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Public status page. Rendered by `/s/<slug>`, and by the root layout at `/`
 	 * when the request came in on the page's own public domain. No session, no
@@ -385,12 +386,12 @@
 							<span class="hidden sm:inline">{m.status_public_checked()} <time class="tnum" datetime={lastChecked.toISOString()} title={formatDateTime(lastChecked)}>{formatRelative(lastChecked)}</time></span>
 						{/if}
 						{#if status.page.homepage_url}
-							<a class="inline-flex min-h-10 items-center gap-1 font-semibold text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-ink sm:min-h-0" href={status.page.homepage_url} rel="noopener noreferrer nofollow">
+							<a class="inline-flex min-h-10 items-center gap-1 font-semibold text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-ink sm:min-h-0" href={withBase(status.page.homepage_url)} rel="noopener noreferrer nofollow">
 								{homepageHost(status.page.homepage_url)}
 								<ExternalLink class="size-3" aria-hidden="true" />
 							</a>
 						{/if}
-						<a class="inline-flex min-h-10 items-center font-semibold text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-ink sm:min-h-0" href={`/api/public/status/${encodeURIComponent(status.page.slug)}/rss`}>{m.status_public_rss()}</a>
+						<a class="inline-flex min-h-10 items-center font-semibold text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-ink sm:min-h-0" href={withBase(`/api/public/status/${encodeURIComponent(status.page.slug)}/rss`)}>{m.status_public_rss()}</a>
 						{#if status.page.subscribe}
 							<a class="inline-flex min-h-10 items-center font-semibold text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-ink sm:min-h-0" href="#updates">{m.status_public_email()}</a>
 						{/if}
@@ -456,7 +457,7 @@
 					{#if status.page.homepage_url}
 						<a
 							class="inline-flex min-h-10 items-center gap-1.5 rounded-md py-1 text-sm font-semibold text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
-							href={status.page.homepage_url}
+							href={withBase(status.page.homepage_url)}
 							rel="noopener noreferrer nofollow"
 						>
 							{homepageHost(status.page.homepage_url)}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * The demo's answer to a refused change: the server's 403 message, shown
@@ -25,7 +26,7 @@
 			<div class="min-w-0">
 				<p class="font-semibold">{m.demo_notice_title()}</p>
 				<p class="mt-0.5 text-ink-2">{demo.notice}</p>
-				<a class="mt-1 inline-block font-semibold text-signal-ink hover:underline" href={INSTALL_URL} target="_blank" rel="noopener">{m.demo_notice_install()}</a>
+				<a class="mt-1 inline-block font-semibold text-signal-ink hover:underline" href={withBase(INSTALL_URL)} target="_blank" rel="noopener">{m.demo_notice_install()}</a>
 			</div>
 			<button type="button" class="-mt-1 -mr-2 inline-flex size-10 shrink-0 sm:size-8 items-center justify-center rounded-md text-ink-3 hover:bg-surface-2 hover:text-ink" aria-label={m.demo_notice_dismiss()} onclick={() => demo.dismissNotice()}>
 				<X class="size-4" aria-hidden="true" />

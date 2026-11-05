@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * The live map of an OPNsense firewall: where the connections its rules
 	 * block or let through come from, over the last fifteen minutes.
@@ -167,7 +168,7 @@
 			<p>{m.livemap_off()}</p>
 			<p>{m.livemap_off_privilege()}</p>
 			{#if auth.isAdmin}
-				<a href={editHref} class="inline-flex min-h-10 items-center font-semibold text-ink underline decoration-dotted underline-offset-4 hover:text-signal-ink">{m.livemap_turn_on()}</a>
+				<a href={withBase(editHref)} class="inline-flex min-h-10 items-center font-semibold text-ink underline decoration-dotted underline-offset-4 hover:text-signal-ink">{m.livemap_turn_on()}</a>
 			{/if}
 		</div>
 	{:else if live.relayed}
@@ -263,7 +264,7 @@
 						<p class="text-advisory-ink">{m.livemap_geoip_failed()}</p>
 					{/if}
 					{#if live.geoip.enabled}
-						<p><a href={live.geoip.source_url} rel="noopener noreferrer" target="_blank" class="underline decoration-dotted underline-offset-2 hover:text-ink">IP Geolocation by DB-IP</a></p>
+						<p><a href={withBase(live.geoip.source_url)} rel="noopener noreferrer" target="_blank" class="underline decoration-dotted underline-offset-2 hover:text-ink">IP Geolocation by DB-IP</a></p>
 					{/if}
 				</footer>
 			</div>

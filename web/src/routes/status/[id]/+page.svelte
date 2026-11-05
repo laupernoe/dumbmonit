@@ -8,7 +8,7 @@
 	 * need and goes back to the list once saved.
 	 */
 	import { m } from '#lib/paraglide/messages.js';
-	import { goto } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import { page as route } from '$app/state';
 	import { ExternalLink } from 'lucide-svelte';
 	import { getStatusPage, listChannels, listTargets, type Channel, type StatusPage, type Target } from '#lib/api/index.js';
