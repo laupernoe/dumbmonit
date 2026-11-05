@@ -33,8 +33,6 @@ NAS、UPS 和打印机是最常见的对象。
    密码。
 5. 点击**添加监控项**。
 
-![添加一台 SNMP 设备:左侧是表单,右侧是设置提示](../assets/screenshots/add-device-light.png){ loading=lazy }
-
 采集配置档案会在后台根据监控项的 `sysObjectID` 自动检测,因此表单
 从不会因为一个不可达的监控项而等待。接口,以及在服务器和 NAS 上的
 CPU、内存和存储,会在一分钟内出现。

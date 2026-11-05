@@ -1,7 +1,5 @@
 # The monitors page
 
-![The rack: one faceplate per monitor](../assets/screenshots/devices-light.png){ loading=lazy }
-
 ## The list
 
 The **Monitors** page shows every monitor in one of two layouts, remembered in
@@ -42,8 +40,6 @@ One toolbar holds everything:
 - **Add a monitor**, the primary action.
 
 ## A monitor
-
-![A monitor page: state, actions, alerts, the kind-specific panel, metrics](../assets/screenshots/device-light.png){ loading=lazy }
 
 The monitor page shows its state plate, kind, address, interval, last probe, and
 for services the certificate status. It is for reading data: actions are icon

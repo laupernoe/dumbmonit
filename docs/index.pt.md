@@ -12,8 +12,6 @@ lista o que precisa de si, antes de mais nada. As severidades seguem a escala
 meteorológica (info → aviso → alerta), as previsões são previsões do tempo e as
 janelas de manutenção são agendadas.
 
-![A página de visão geral: a frase do boletim, a lista «Precisa de si» e as previsões](assets/screenshots/overview-light.png){ loading=lazy }
-
 <div class="dm-links" markdown>
 <a href="install/docker/">Instalar<small>Docker Compose, primeiro arranque, cópias de segurança</small></a>
 <a href="install/first-device/">Adicionar o primeiro monitor<small>SNMP, análise de rede, o que acontece a seguir</small></a>

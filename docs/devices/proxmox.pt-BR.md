@@ -50,8 +50,6 @@ sondagem no armazenamento de métricas.
 
 ## O painel de guests {#the-guests-panel}
 
-![O painel Guests: uma linha por VM e contêiner, agrupados por nó](../assets/screenshots/device-proxmox-light.png){ loading=lazy }
-
 Abaixo dos nós, o painel **Guests**: uma linha por máquina virtual e
 contêiner, agrupados por nó, que responde as perguntas que um
 administrador faz primeiro — está rodando, está ocupado, seu disco está

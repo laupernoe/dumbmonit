@@ -1,7 +1,5 @@
 # Páginas de estado {#status-pages}
 
-![A página Status pages: as suas páginas, e os anúncios sob elas](../assets/screenshots/status-light.png){ loading=lazy }
-
 Uma página de estado é a face pública da sua monitorização: uma página
 que qualquer um pode abrir — sem iniciar sessão, sem cookie — que diz
 se os seus serviços estão ativos, mostra até 90 dias de histórico

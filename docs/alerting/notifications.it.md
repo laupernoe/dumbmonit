@@ -186,7 +186,7 @@ PUT /api/notify/policy
   le ore silenziose proprie di quel canale: hai nominato questo canale
   per essere svegliato, quindi non viene trattenuto nel momento esatto
   in cui conta.
-- La riga lo dice: `🔴 Critical · Disk full — /data — 95 % … — still
+- La riga lo dice: `Critical · Disk full — /data — 95 % … — still
   unacknowledged`.
 
 `"escalate_channel": null` disattiva l'escalation; un ritardo di `0`
@@ -231,9 +231,9 @@ Ogni avviso è una riga, la stessa in mail, ntfy, chat e la variabile
 `{{message}}` di un webhook personalizzato:
 
 ```
-🔴 Critical · Disk full — /data — 95 % (threshold > 90 %), for 12 min
-⚠️ Warning · VM or container stopped — win11-desktop (101), for 59 s
-✅ Resolved · Service down — https://example.lan/
+Critical · Disk full — /data — 95 % (threshold > 90 %), for 12 min
+Warning · VM or container stopped — win11-desktop (101), for 59 s
+Resolved · Service down — https://example.lan/
 ```
 
 - Il glifo è seguito dalla parola di stato (Critical / Warning / Info,

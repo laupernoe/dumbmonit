@@ -136,8 +136,6 @@ qu'en mémoire, change à chaque redémarrage tant qu'un admin n'existe pas, et 
 tentatives erronées sont limitées en débit. Pour un déploiement automatisé, définissez
 `DUMBMONIT_SETUP_CODE` pour le choisir vous-même.
 
-![L'écran de connexion](../assets/screenshots/login-light.png){ loading=lazy }
-
 Ajoutez ensuite votre première surveillance : voir [Ajouter votre première surveillance](first-device.md).
 
 ## Santé du conteneur {#container-health}

@@ -1,7 +1,5 @@
 # La pagina dei monitor {#the-devices-page}
 
-![Il rack: una targhetta per monitor](../assets/screenshots/devices-light.png){ loading=lazy }
-
 ## Il rack {#the-rack}
 
 Ogni monitor è una targhetta da rack 1U: un LED di stato, il nome, il
@@ -26,8 +24,6 @@ monitor e una barra flottante in basso con le azioni di gruppo; **Done**
 o Escape escono dalla modalità.
 
 ## Un monitor {#a-device}
-
-![Pagina di un monitor: stato, azioni, avvisi, il pannello specifico del tipo, metriche](../assets/screenshots/device-light.png){ loading=lazy }
 
 La pagina del monitor mostra la sua targhetta di stato, indirizzo, tipo,
 profilo rilevato, tag, ultima sonda, e per i servizi lo stato del

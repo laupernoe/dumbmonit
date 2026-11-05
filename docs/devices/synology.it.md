@@ -70,8 +70,6 @@ l'intera sonda.
 
 ## La pagina del monitor
 
-![Un monitor Synology: a colpo d'occhio, volumi, dischi e Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
-
 Un monitor Synology ottiene un proprio pannello sopra i grafici:
 
 * **At a glance** — CPU, memoria (usata del totale), temperatura e

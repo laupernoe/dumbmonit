@@ -1,7 +1,5 @@
 # Pages d'état
 
-![La page État : vos pages, et les annonces en dessous](../assets/screenshots/status-light.png){ loading=lazy }
-
 Une page d'état est le visage public de votre surveillance : une page
 que n'importe qui peut ouvrir — sans connexion, sans cookie — qui dit si
 vos services tournent, montre jusqu'à 90 jours d'historique quotidien

@@ -63,8 +63,6 @@ Synology Drive и Photos. Первая причина следить за NAS �
 
 ## Страница монитора
 
-![Монитор Synology: обзор, тома, диски и Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
-
 Монитор Synology получает собственную панель над графиками:
 
 * **Обзор** — CPU, память (занято из общего), температура и время работы, с

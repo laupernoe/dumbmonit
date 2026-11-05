@@ -1,7 +1,5 @@
 # Definições {#settings}
 
-![Definições: sete separadores, aqui A minha conta com aparência, conta e segurança e notificações push](../assets/screenshots/settings-light.png){ loading=lazy }
-
 As Definições reúnem o que é administrativo: a própria instância, a sua conta, quem pode iniciar sessão e como, os agentes, os canais de notificação, a cópia de segurança da instância e a saúde do servidor. Estão divididas em sete separadores, cada um com o seu endereço. Uma barra num ecrã largo, uma fila de chips no telemóvel e uma pesquisa sobre os nomes das secções ajudam a encontrar uma secção.
 
 | Separador | Endereço | O que contém |

@@ -1,6 +1,5 @@
 # Synology DSM
 
-
 Synology NAS through the DSM web API: volumes, storage pools, disk health,
 temperature, Hyper Backup tasks, Active Backup for Business tasks, and
 Synology Drive and Photos. The first reason to monitor a NAS is its disks: a
@@ -91,8 +90,6 @@ condemns the whole probe.
       place.
 
 ## The monitor page
-
-![A Synology monitor: at a glance, volumes, disks and Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
 
 A Synology monitor gets its own panel above the charts:
 

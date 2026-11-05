@@ -1,7 +1,5 @@
 # La page des surveillances
 
-![Le rack : une façade par surveillance](../assets/screenshots/devices-light.png){ loading=lazy }
-
 ## La liste
 
 La page **Surveillances** montre chaque surveillance dans l'une de deux dispositions,
@@ -44,8 +42,6 @@ Une seule barre d'outils regroupe tout :
 - **Ajouter une surveillance**, l’action principale.
 
 ## Une surveillance
-
-![Page d'une surveillance : état, actions, alertes, le panneau spécifique au type, métriques](../assets/screenshots/device-light.png){ loading=lazy }
 
 La page d'une surveillance montre sa plaque d'état, son type, son adresse, son
 intervalle, la dernière sonde, et pour les services l'état du certificat. Elle

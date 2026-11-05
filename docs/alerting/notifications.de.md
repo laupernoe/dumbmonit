@@ -184,7 +184,7 @@ PUT /api/notify/policy
   und die Ruhezeiten dieses Kanals: Sie haben diesen Kanal benannt, um
   genau in diesem Moment geweckt zu werden, daher wird er nicht
   zurückgehalten.
-- Die Zeile sagt es: `🔴 Critical · Disk full — /data — 95 % … — still
+- Die Zeile sagt es: `Critical · Disk full — /data — 95 % … — still
   unacknowledged`.
 
 `"escalate_channel": null` schaltet die Eskalation aus; eine Verzögerung
@@ -230,9 +230,9 @@ Jeder Alarm ist eine Zeile, dieselbe in Mail, ntfy, Chat und der
 `{{message}}`-Variable eines benutzerdefinierten Webhooks:
 
 ```
-🔴 Critical · Disk full — /data — 95 % (threshold > 90 %), for 12 min
-⚠️ Warning · VM or container stopped — win11-desktop (101), for 59 s
-✅ Resolved · Service down — https://example.lan/
+Critical · Disk full — /data — 95 % (threshold > 90 %), for 12 min
+Warning · VM or container stopped — win11-desktop (101), for 59 s
+Resolved · Service down — https://example.lan/
 ```
 
 - Dem Symbol folgt das Zustandswort (Critical / Warning / Info, Resolved,

@@ -71,8 +71,6 @@ verificação.
 
 ## A página do monitor {#the-device-page}
 
-![Um monitor Synology: num olhar, volumes, discos e Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
-
 Um monitor Synology recebe o seu próprio painel acima dos
 gráficos:
 

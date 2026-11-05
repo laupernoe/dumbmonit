@@ -5,8 +5,6 @@ necesita ajustes. Lo que marca la diferencia en el uso diario es lo que
 mantiene bajo el ruido: supresión por dependencia, agrupación por host,
 ventanas de mantenimiento, y una referencia que aprende antes de hablar.
 
-![La página de alertas: qué ocurre ahora, el mantenimiento, el historial y las reglas](../assets/screenshots/alerts-light.png){ loading=lazy }
-
 ## Severidades {#severities}
 
 La interfaz habla la escala del boletín meteorológico. La API y el

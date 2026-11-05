@@ -53,8 +53,6 @@ probe in the metrics store.
 
 ## The guests panel
 
-![The Guests panel: one row per VM and container, grouped by node](../assets/screenshots/device-proxmox-light.png){ loading=lazy }
-
 Below the nodes, the **Guests** panel: one row per virtual machine and
 container, grouped by node, that answers the questions an administrator asks
 first — is it running, is it busy, is its disk full, when was it last backed

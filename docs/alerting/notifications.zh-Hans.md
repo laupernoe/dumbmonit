@@ -161,7 +161,7 @@ PUT /api/notify/policy
   不被告诉两次。
 - 它超过该通道自己的严重级别下限、路由过滤器和安静时间:
   你命名这个通道被唤醒,所以在它重要的那一刻不被保持。
-- 这行说:🔴 Critical · Disk full — /data — 95% … — still
+- 这行说:Critical · Disk full — /data — 95% … — still
   unacknowledged`。
 
 `"escalate_channel": null`关闭升级;延迟为`0`做
@@ -200,9 +200,9 @@ DumbMonit 故意停止在这里:一个跳跃,无轮换,无
 自定义 webhook 的`{{message}}`变量中相同:
 
 ```
-🔴 Critical · Disk full — /data — 95 % (threshold > 90 %), for 12 min
-⚠️ Warning · VM or container stopped — win11-desktop (101), for 59 s
-✅ Resolved · Service down — https://example.lan/
+Critical · Disk full — /data — 95 % (threshold > 90 %), for 12 min
+Warning · VM or container stopped — win11-desktop (101), for 59 s
+Resolved · Service down — https://example.lan/
 ```
 
 - 字形之后是状态词(Critical / Warning / Info,
