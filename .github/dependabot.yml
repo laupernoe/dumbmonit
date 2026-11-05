@@ -38,3 +38,66 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
     labels: ["dependencies", "ci"]
+
+  - package-ecosystem: cargo
+    directory: /fuzz
+    schedule:
+      interval: monthly
+    groups:
+      cargo-fuzz-minor:
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    labels: ["dependencies", "rust"]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    labels: ["dependencies", "docker"]
+
+  - package-ecosystem: docker
+    directory: /.clusterfuzzlite
+    schedule:
+      interval: monthly
+    labels: ["dependencies", "docker"]
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: monthly
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    labels: ["dependencies", "docker"]
+
+  - package-ecosystem: docker-compose
+    directory: /scripts/load
+    schedule:
+      interval: monthly
+    labels: ["dependencies", "docker"]
+
+  - package-ecosystem: pip
+    directory: /docs
+    schedule:
+      interval: monthly
+    groups:
+      docs-python:
+        update-types: ["minor", "patch"]
+    labels: ["dependencies", "docs"]
+
+  - package-ecosystem: gomod
+    directory: /integrations/terraform-provider-dumbmonit
+    schedule:
+      interval: monthly
+    groups:
+      go-minor:
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    labels: ["dependencies", "terraform"]
