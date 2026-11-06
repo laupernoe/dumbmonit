@@ -126,7 +126,7 @@ DumbMonit仅追踪重定向到同一主机（或在该主机上从 `http` 到 `h
 |---|---|---|
 | `{{title}}` | 完整消息标题 | `nas — Disk full` |
 | `{{message}}` | 纯文本主体，每个警报一行 | `Warning · Disk full — /data — 95 % (threshold > 90 %)` |
-| `{{message_markdown}}` | 相同主体在Markdown | `**nas — Disk full**\n• …` |
+| `{{message_markdown}}` | 相同主体在Markdown | `**nas — Disk full**\n• Warning · …` |
 | `{{rule}}` | 警报规则的名称 | `Disk full` |
 | `{{target}}` | 监控监控项的名称 | `nas` |
 | `{{target_id}}` | 监控项的数字标识符 | `42` |
@@ -148,7 +148,7 @@ DumbMonit仅追踪重定向到同一主机（或在该主机上从 `http` 到 `h
 | `{{priority}}` | 优先级从1（低）到5（高） | `4` |
 | `{{color}}` | 强调颜色，不有散列 | `D98A00` |
 | `{{color_hex}}` | 强调颜色，有散列 | `#D98A00` |
-| `{{emoji}}` | 状态象形文字 | emoji |
+| `{{emoji}}` | 状态象形文字 | `CRIT`、`WARN`、`INFO`或`OK` |
 | `{{link}}` | DumbMonit中的监控项链接 | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | 总是 `dumbmonit` | `dumbmonit` |
 | `{{token}}` | 通道的 `token` 密钥 | *（你的令牌）* |
@@ -242,7 +242,7 @@ DumbMonit仅追踪重定向到同一主机（或在该主机上从 `http` 到 `h
 消息发送，不有任何逃脱：
 
 ```
-warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
+WARN warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
 ```
 
 ### 示例4——没有主体的GET请求 {#example-4--a-get-request-without-a-body}

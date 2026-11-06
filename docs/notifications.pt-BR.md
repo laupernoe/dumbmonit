@@ -156,7 +156,7 @@ escrever seu JSON normalmente.
 |---|---|---|
 | `{{title}}` | Título completo da mensagem | `nas — Disco cheio` |
 | `{{message}}` | Corpo de texto simples, uma linha por alerta | `Aviso · Disco cheio — /data — 95 % (limite > 90 %)` |
-| `{{message_markdown}}` | O mesmo corpo em Markdown | `**nas — Disco cheio**\n• …` |
+| `{{message_markdown}}` | O mesmo corpo em Markdown | `**nas — Disco cheio**\n• Warning · …` |
 | `{{rule}}` | Nome da regra de alerta | `Disco cheio` |
 | `{{target}}` | Nome do monitor | `nas` |
 | `{{target_id}}` | Identificador numérico do monitor | `42` |
@@ -178,7 +178,7 @@ escrever seu JSON normalmente.
 | `{{priority}}` | Prioridade de 1 (baixa) a 5 (alta) | `4` |
 | `{{color}}` | Cor de destaque, sem hash | `D98A00` |
 | `{{color_hex}}` | Cor de destaque, com hash | `#D98A00` |
-| `{{emoji}}` | Pictograma de status | emoji |
+| `{{emoji}}` | Pictograma de status | `CRIT`, `WARN`, `INFO` ou `OK` |
 | `{{link}}` | Link para o monitor em DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Sempre `dumbmonit` | `dumbmonit` |
 | `{{token}}` | O segredo `token` do canal | *(seu token)* |
@@ -285,7 +285,7 @@ linha de texto.
 A mensagem enviada, sem nenhuma escapa:
 
 ```
-aviso em nas: Disco cheio (95 %, limite > 90 %) — 01/09/2026 14:12 UTC
+WARN aviso em nas: Disco cheio (95 %, limite > 90 %) — 01/09/2026 14:12 UTC
 ```
 
 ### Exemplo 4 — uma solicitação GET sem corpo {#example-4--a-get-request-without-a-body}

@@ -201,7 +201,7 @@ votre JSON normalement.
 |---|---|---|
 | `{{title}}` | Titre complet du message | `nas — Disk full` |
 | `{{message}}` | Corps en texte brut, une ligne par alerte | `Warning · Disk full — /data — 95 % (threshold > 90 %)` |
-| `{{message_markdown}}` | Le même corps en Markdown | `**nas — Disk full**\n• …` |
+| `{{message_markdown}}` | Le même corps en Markdown | `**nas — Disk full**\n• Warning · …` |
 | `{{rule}}` | Nom de la règle d'alerte | `Disk full` |
 | `{{target}}` | Nom de la surveillance | `nas` |
 | `{{target_id}}` | Identifiant numérique de la surveillance | `42` |
@@ -223,7 +223,7 @@ votre JSON normalement.
 | `{{priority}}` | Priorité de 1 (basse) à 5 (haute) | `4` |
 | `{{color}}` | Couleur d'accent, sans dièse | `D98A00` |
 | `{{color_hex}}` | Couleur d'accent, avec dièse | `#D98A00` |
-| `{{emoji}}` | Pictogramme de statut | emoji |
+| `{{emoji}}` | Pictogramme de statut | `CRIT`, `WARN`, `INFO` ou `OK` |
 | `{{link}}` | Lien vers la surveillance dans DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Toujours `dumbmonit` | `dumbmonit` |
 | `{{token}}` | Le secret `token` du canal | *(votre jeton)* |
@@ -339,7 +339,7 @@ maison, veulent une seule ligne de texte.
 Le message envoyé, sans aucun échappement :
 
 ```
-warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
+WARN warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
 ```
 
 ### Exemple 4 — une requête GET sans corps {#example-4--a-get-request-without-a-body}

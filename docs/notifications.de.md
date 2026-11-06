@@ -162,7 +162,7 @@ JSON-Body bleiben wörtlich, Sie können Ihr JSON also normal schreiben.
 |---|---|---|
 | `{{title}}` | Vollständiger Nachrichtentitel | `nas — Disk full` |
 | `{{message}}` | Klartext-Body, eine Zeile pro Alarm | `Warning · Disk full — /data — 95 % (threshold > 90 %)` |
-| `{{message_markdown}}` | Derselbe Body in Markdown | `**nas — Disk full**\n• …` |
+| `{{message_markdown}}` | Derselbe Body in Markdown | `**nas — Disk full**\n• Warning · …` |
 | `{{rule}}` | Name der Alarmregel | `Disk full` |
 | `{{target}}` | Name des Monitors | `nas` |
 | `{{target_id}}` | Numerische Kennung des Monitors | `42` |
@@ -184,7 +184,7 @@ JSON-Body bleiben wörtlich, Sie können Ihr JSON also normal schreiben.
 | `{{priority}}` | Priorität von 1 (niedrig) bis 5 (hoch) | `4` |
 | `{{color}}` | Akzentfarbe, ohne Raute | `D98A00` |
 | `{{color_hex}}` | Akzentfarbe, mit Raute | `#D98A00` |
-| `{{emoji}}` | Statuspiktogramm | emoji |
+| `{{emoji}}` | Statuspiktogramm | `CRIT`, `WARN`, `INFO` oder `OK` |
 | `{{link}}` | Link zum Monitor in DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Immer `dumbmonit` | `dumbmonit` |
 | `{{token}}` | Das Geheimnis `token` des Kanals | *(Ihr Token)* |
@@ -291,7 +291,7 @@ wollen eine einzelne Textzeile.
 Die gesendete Nachricht, ohne jegliche Maskierung:
 
 ```
-warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
+WARN warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
 ```
 
 ### Beispiel 4 — eine GET-Anfrage ohne Body {#example-4--a-get-request-without-a-body}

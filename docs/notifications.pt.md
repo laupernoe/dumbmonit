@@ -163,7 +163,7 @@ literais, pelo que pode escrever o seu JSON normalmente.
 |---|---|---|
 | `{{title}}` | Título completo da mensagem | `nas — Disk full` |
 | `{{message}}` | Corpo em texto simples, uma linha por alerta | `Warning · Disk full — /data — 95 % (threshold > 90 %)` |
-| `{{message_markdown}}` | O mesmo corpo em Markdown | `**nas — Disk full**\n• …` |
+| `{{message_markdown}}` | O mesmo corpo em Markdown | `**nas — Disk full**\n• Warning · …` |
 | `{{rule}}` | Nome da regra de alerta | `Disk full` |
 | `{{target}}` | Nome do monitor | `nas` |
 | `{{target_id}}` | Identificador numérico do monitor | `42` |
@@ -185,7 +185,7 @@ literais, pelo que pode escrever o seu JSON normalmente.
 | `{{priority}}` | Prioridade de 1 (baixa) a 5 (alta) | `4` |
 | `{{color}}` | Cor de destaque, sem cardinal | `D98A00` |
 | `{{color_hex}}` | Cor de destaque, com cardinal | `#D98A00` |
-| `{{emoji}}` | Pictograma do estado | emoji |
+| `{{emoji}}` | Pictograma do estado | `CRIT`, `WARN`, `INFO` ou `OK` |
 | `{{link}}` | Ligação para o monitor no DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Sempre `dumbmonit` | `dumbmonit` |
 | `{{token}}` | O segredo `token` do canal | *(o seu token)* |
@@ -294,7 +294,7 @@ querem uma única linha de texto.
 A mensagem enviada, sem qualquer escape:
 
 ```
-warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
+WARN warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
 ```
 
 ### Exemplo 4 — um pedido GET sem corpo {#example-4--a-get-request-without-a-body}

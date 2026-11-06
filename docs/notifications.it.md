@@ -126,7 +126,7 @@ Una variabile viene scritta tra **doppie graffe**: `{{title}}`. Gli spazi attorn
 |---|---|---|
 | `{{title}}` | Titolo del messaggio completo | `nas — Disk full` |
 | `{{message}}` | Corpo in testo semplice, una riga per avviso | `Warning · Disk full — /data — 95 % (threshold > 90 %)` |
-| `{{message_markdown}}` | Lo stesso corpo in Markdown | `**nas — Disk full**\n• …` |
+| `{{message_markdown}}` | Lo stesso corpo in Markdown | `**nas — Disk full**\n• Warning · …` |
 | `{{rule}}` | Nome della regola di avviso | `Disk full` |
 | `{{target}}` | Nome del monitor | `nas` |
 | `{{target_id}}` | Identificatore numerico del monitor | `42` |
@@ -148,7 +148,7 @@ Una variabile viene scritta tra **doppie graffe**: `{{title}}`. Gli spazi attorn
 | `{{priority}}` | Priorità da 1 (bassa) a 5 (alta) | `4` |
 | `{{color}}` | Colore di accento, senza hash | `D98A00` |
 | `{{color_hex}}` | Colore di accento, con hash | `#D98A00` |
-| `{{emoji}}` | Pittogramma di stato | emoji |
+| `{{emoji}}` | Pittogramma di stato | `CRIT`, `WARN`, `INFO` o `OK` |
 | `{{link}}` | Collegamento al monitor in DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Sempre `dumbmonit` | `dumbmonit` |
 | `{{token}}` | Il segreto `token` del canale | *(your token)* |
@@ -242,7 +242,7 @@ Alcuni servizi, come l'API SMS di un operatore o un'automazione homemade, voglio
 Il messaggio inviato, senza alcuna fuga:
 
 ```
-warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
+WARN warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
 ```
 
 ### Esempio 4 — una richiesta GET senza corpo

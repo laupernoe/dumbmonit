@@ -214,7 +214,7 @@ write your JSON normally.
 |---|---|---|
 | `{{title}}` | Full message title | `nas — Disk full` |
 | `{{message}}` | Plain-text body, one line per alert | `Warning · Disk full — /data — 95 % (threshold > 90 %)` |
-| `{{message_markdown}}` | The same body in Markdown | `**nas — Disk full**\n• …` |
+| `{{message_markdown}}` | The same body in Markdown | `**nas — Disk full**\n• Warning · …` |
 | `{{rule}}` | Name of the alert rule | `Disk full` |
 | `{{target}}` | Name of the monitor | `nas` |
 | `{{target_id}}` | Numeric identifier of the monitor | `42` |
@@ -236,7 +236,7 @@ write your JSON normally.
 | `{{priority}}` | Priority from 1 (low) to 5 (high) | `4` |
 | `{{color}}` | Accent colour, without hash | `D98A00` |
 | `{{color_hex}}` | Accent colour, with hash | `#D98A00` |
-| `{{emoji}}` | Status pictogram | emoji |
+| `{{emoji}}` | Status pictogram | `CRIT`, `WARN`, `INFO` or `OK` |
 | `{{link}}` | Link to the monitor in DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Always `dumbmonit` | `dumbmonit` |
 | `{{token}}` | The channel's `token` secret | *(your token)* |
@@ -347,7 +347,7 @@ line of text.
 The message sent, without any escaping:
 
 ```
-warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
+WARN warning on nas: Disk full (95 %, threshold > 90 %) — 01/09/2026 14:12 UTC
 ```
 
 ### Example 4 — a GET request without a body
