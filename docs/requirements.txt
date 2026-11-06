@@ -3,4 +3,4 @@ mkdocs-material==9.8.0
 idna>=3.20
 # certifi < 2026.10.18 : PYSEC-2026-4320, racines emSign compromises (dépendance de
 # mkdocs-material, via requests). 2026.10.19 rétablit les racines emSign saines.
-certifi>=2026.10.19
+certifi>=2026.10.23
