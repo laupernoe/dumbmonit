@@ -13,19 +13,19 @@
     "i18n:check": "node scripts/merge-messages.mjs --check"
   },
   "devDependencies": {
-    "@inlang/paraglide-js": "^2.26.0",
-    "@inlang/plugin-message-format": "^4.4.5",
-    "@sveltejs/adapter-static": "^4.0.0",
-    "@sveltejs/kit": "^3.0.1",
+    "@inlang/paraglide-js": "^2.29.3",
+    "@inlang/plugin-message-format": "^4.5.7",
+    "@sveltejs/adapter-static": "^4.0.1",
+    "@sveltejs/kit": "^3.1.1",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
-    "@tailwindcss/vite": "^4.0.0",
+    "@tailwindcss/vite": "^4.3.4",
     "@types/leaflet": "^1.9.22",
-    "simple-icons": "^16.35.0",
-    "svelte": "^5.57.2",
-    "svelte-check": "^4.7.5",
+    "simple-icons": "^16.36.0",
+    "svelte": "^5.57.3",
+    "svelte-check": "^4.7.8",
     "tailwindcss": "^4.0.0",
     "typescript": "^6.0.3",
-    "vite": "^8.3.3"
+    "vite": "^8.3.5"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
