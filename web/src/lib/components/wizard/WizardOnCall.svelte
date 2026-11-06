@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Setup wizard, step "On-call": a first weekly rotation over the built-in
 	 * on-call schedules, and the escalation policy that calls whoever holds it.
@@ -141,10 +142,10 @@
 	{/if}
 	{#if error}<ErrorNotice {error} class="mt-4" />{/if}
 	<div class="mt-4 grid gap-3 sm:grid-cols-2">
-		<a href="/alerts#oncall" target="_blank" rel="noopener" class="flex min-h-24 flex-col gap-1.5 rounded-[var(--radius-card)] border border-line bg-surface p-4 hover:border-line-strong">
+		<a href={withBase('/alerts#oncall')} target="_blank" rel="noopener" class="flex min-h-24 flex-col gap-1.5 rounded-[var(--radius-card)] border border-line bg-surface p-4 hover:border-line-strong">
 			<span class="inline-flex items-center gap-1 font-semibold text-ink">{m.wizard_oncall_open()}<ExternalLink class="size-3.5 text-ink-3" aria-hidden="true" /></span>
 		</a>
-		<a href="/settings/team" target="_blank" rel="noopener" class="flex min-h-24 flex-col gap-1.5 rounded-[var(--radius-card)] border border-line bg-surface p-4 hover:border-line-strong">
+		<a href={withBase('/settings/team')} target="_blank" rel="noopener" class="flex min-h-24 flex-col gap-1.5 rounded-[var(--radius-card)] border border-line bg-surface p-4 hover:border-line-strong">
 			<span class="inline-flex items-center gap-1 font-semibold text-ink">{m.wizard_oncall_team()}<ExternalLink class="size-3.5 text-ink-3" aria-hidden="true" /></span>
 		</a>
 	</div>

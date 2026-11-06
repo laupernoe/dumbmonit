@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Setup wizard, step "Add your first monitors": the network scan in place,
 	 * or the import and add-by-hand pages in a new tab — the wizard stays where
@@ -47,12 +48,12 @@
 		<span class="font-semibold text-ink">{m.wizard_monitors_scan()}</span>
 		<span class="text-[0.8125rem] text-ink-2">{m.wizard_monitors_scan_text()}</span>
 	</button>
-	<a class={card} href="/targets/new" target="_blank" rel="noopener">
+	<a class={card} href={withBase('/targets/new')} target="_blank" rel="noopener">
 		<Upload class="size-5 text-ink-2" aria-hidden="true" />
 		<span class="inline-flex items-center gap-1 font-semibold text-ink">{m.wizard_monitors_import()}<ExternalLink class="size-3.5 text-ink-3" aria-hidden="true" /></span>
 		<span class="text-[0.8125rem] text-ink-2">{m.wizard_monitors_import_text()}</span>
 	</a>
-	<a class={card} href="/targets/new" target="_blank" rel="noopener">
+	<a class={card} href={withBase('/targets/new')} target="_blank" rel="noopener">
 		<Plus class="size-5 text-ink-2" aria-hidden="true" />
 		<span class="inline-flex items-center gap-1 font-semibold text-ink">{m.wizard_monitors_manual()}<ExternalLink class="size-3.5 text-ink-3" aria-hidden="true" /></span>
 		<span class="text-[0.8125rem] text-ink-2">{m.wizard_monitors_manual_text()}</span>

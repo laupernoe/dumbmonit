@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * "What's new in vX.Y.Z": a small modal dialog listing the headline changes
 	 * of the running version, shown once after an update. Mounted by the root
@@ -124,7 +125,7 @@
 
 		<div class="mt-5 flex flex-wrap items-center justify-between gap-3">
 			<a
-				href={releaseNotesUrl(release.version)}
+				href={withBase(releaseNotesUrl(release.version))}
 				target="_blank"
 				rel="noopener"
 				class="inline-flex items-center gap-1.5 text-sm font-medium text-signal-ink hover:underline"

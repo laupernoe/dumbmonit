@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * One line of the Alerts "Now" list: what is wrong, where, why, since when,
 	 * and the actions that matter: Dismiss, a "…" menu (Ack, Snooze, "Never for
@@ -325,7 +326,7 @@
 				<p class="mt-2 text-ink-2">{m.alerts_row_suppressed_self()}</p>
 			{:else if suppressed && row.kind === 'alert' && row.parent}
 				<p class="mt-2 text-ink-2">
-					{suppressedParts[0]}<a href={`/targets/${row.parent.id}`} class="font-medium text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">{row.parent.name}</a>{suppressedParts[1]}
+					{suppressedParts[0]}<a href={withBase(`/targets/${row.parent.id}`)} class="font-medium text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">{row.parent.name}</a>{suppressedParts[1]}
 				</p>
 			{/if}
 			{#if alert?.acked}
@@ -344,7 +345,7 @@
 					{#each tickets as ticket (`${ticket.channel_id}:${ticket.label}`)}
 						{#if /^https?:\/\//.test(ticket.url)}
 							<a
-								href={ticket.url}
+								href={withBase(ticket.url)}
 								target="_blank"
 								rel="noopener noreferrer"
 								class="font-medium text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink"

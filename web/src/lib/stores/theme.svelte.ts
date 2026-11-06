@@ -14,6 +14,7 @@
  */
 import { browser } from '$app/env';
 import { page } from '$app/state';
+import { routePath } from '#lib/paths.js';
 import { hostedStatusSlug } from '#lib/status-host.js';
 import { CONSOLE_THEME_KEY, parseConsoleTheme, resolveConsoleTheme, type ConsoleTheme } from './theme-choice.js';
 
@@ -84,13 +85,13 @@ class Theme {
 	/** False on a public status page, which keeps its own light; the console everywhere else. */
 	get console(): boolean {
 		if (!browser) return true;
-		return !hostedStatusSlug && !page.url.pathname.startsWith('/s/');
+		return !hostedStatusSlug && !routePath(page.url).startsWith('/s/');
 	}
 
 	/** Theme actually applied, once the preference is resolved. */
 	get resolved(): 'light' | 'dark' {
 		if (this.console) {
-			return resolveConsoleTheme(this.consoleChoice, this.#systemDark, browser ? page.url.pathname : '/');
+			return resolveConsoleTheme(this.consoleChoice, this.#systemDark, browser ? routePath(page.url) : '/');
 		}
 		if (this.preference === 'auto') return this.#systemDark ? 'dark' : 'light';
 		return this.preference;

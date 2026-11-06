@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * The live notice next to the form: what to prepare on the device itself.
@@ -193,7 +194,7 @@
 
 		{#if setup?.doc_url}
 			<a
-				href={localizedDocsUrl(setup.doc_url)}
+				href={withBase(localizedDocsUrl(setup.doc_url))}
 				target="_blank"
 				rel="noreferrer noopener"
 				class="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-signal-ink hover:underline"

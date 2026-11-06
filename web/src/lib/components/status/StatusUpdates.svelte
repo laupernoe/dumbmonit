@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * "Get updates" on a public page: the RSS feed always, and subscription by
 	 * email, SMS, signed webhook or Slack when the owner opened them. The answer
@@ -222,13 +223,13 @@
 		{/if}
 	{/if}
 	<p class={`${subscribe ? 'mt-3' : 'mt-2'} text-sm text-ink-2`}>
-		<a class="inline-flex items-center gap-1.5 font-semibold text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent" href={rss}>
+		<a class="inline-flex items-center gap-1.5 font-semibold text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent" href={withBase(rss)}>
 			<Rss class="size-4" aria-hidden="true" />
 			{m.status_updates_rss()}
 		</a>
 	</p>
 	<p class="mt-2 text-sm text-ink-2">
-		<a class="inline-flex items-center gap-1.5 font-semibold text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent" href={ical}>
+		<a class="inline-flex items-center gap-1.5 font-semibold text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent" href={withBase(ical)}>
 			<CalendarDays class="size-4" aria-hidden="true" />
 			{m.status_updates_ical()}
 		</a>

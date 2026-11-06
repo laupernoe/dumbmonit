@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * One monitor on a single dense line, for the compact view of /targets:
 	 * LED, product icon, name, kind, address, last seen and the state plate
@@ -50,7 +51,7 @@
 	<span class="grid min-w-0 flex-1 items-center gap-x-4 @lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,0.8fr)]">
 		<span class="flex min-w-0 items-baseline gap-2">
 			<a
-				href={`/targets/${target.id}`}
+				href={withBase(`/targets/${target.id}`)}
 				class="block min-w-0 truncate text-[0.875rem] font-semibold text-ink after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-signal"
 				aria-label={`${target.name}, ${STATE_LABEL[state]}`}
 			>{target.name}</a>

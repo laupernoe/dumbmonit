@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * One instrument readout: a big tabular figure over a small label, sitting
 	 * on a shared graticule rule. Three of them make the bulletin's right side.
@@ -25,7 +26,7 @@
 	};
 </script>
 
-<svelte:element this={href ? 'a' : 'div'} {href} class={`group flex min-w-0 flex-col gap-1 pb-2 ${href ? 'rounded-md' : ''}`}>
+<svelte:element this={href ? 'a' : 'div'} href={withBase(href)} class={`group flex min-w-0 flex-col gap-1 pb-2 ${href ? 'rounded-md' : ''}`}>
 	<span class={`display text-3xl sm:text-[2.5rem] ${TONE[tone]} ${href ? 'group-hover:underline decoration-1 underline-offset-4' : ''}`}>
 		{#if value === null}
 			<span class="text-ink-3">—</span>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * The services the agent looks for on this machine, found or not.
@@ -104,7 +105,7 @@
 						{/if}
 						<Plate tone={plate.tone} label={plate.label} />
 						{#if module.target_id !== null}
-							<a href={`/targets/${module.target_id}`} class="inline-flex min-h-10 items-center text-sm text-ink underline decoration-line-strong underline-offset-2 hover:text-signal-ink sm:min-h-0">
+							<a href={withBase(`/targets/${module.target_id}`)} class="inline-flex min-h-10 items-center text-sm text-ink underline decoration-line-strong underline-offset-2 hover:text-signal-ink sm:min-h-0">
 								{m.devices_agentmodules_open()}
 							</a>
 						{/if}

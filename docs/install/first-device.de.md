@@ -40,8 +40,6 @@ Switches, Router, NAS, USV und Drucker sind die üblichen Verdächtigen.
    Privacy-Passphrasen aus.
 5. Klicken Sie auf **Add monitor**.
 
-![Einen SNMP-Monitor hinzufügen: das Formular links, der Einrichtungshinweis rechts](../assets/screenshots/add-device-light.png){ loading=lazy }
-
 Das Erfassungsprofil wird automatisch im Hintergrund aus der
 `sysObjectID` des Geräts erkannt, sodass das Formular nie auf ein
 nicht erreichbares Gerät wartet. Schnittstellen, und auf Servern und

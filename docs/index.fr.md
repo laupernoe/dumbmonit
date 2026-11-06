@@ -12,8 +12,6 @@ liste ce qui a besoin de vous, avant toute autre chose. Les niveaux de gravité 
 l'échelle météorologique (info → avis → alerte), les prédictions sont des prévisions, et les fenêtres
 de maintenance sont planifiées.
 
-![La page de vue d'ensemble : la phrase du bulletin, la liste « Needs you » et les prévisions](assets/screenshots/overview-light.png){ loading=lazy }
-
 <div class="dm-links" markdown>
 <a href="install/docker/">Installer<small>Docker Compose, premier démarrage, sauvegardes</small></a>
 <a href="install/first-device/">Ajouter votre première surveillance<small>SNMP, scan réseau, la suite</small></a>

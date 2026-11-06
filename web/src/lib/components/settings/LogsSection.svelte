@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Settings → System → Logs (administrators): the server's own logs on disk
 	 * (retention, size cap), an export of the last days, and destinations that
@@ -225,7 +226,7 @@
 		<div class="grid gap-8">
 			<p class="text-sm text-ink-2">
 				{m.logsearch_section_hint()}
-				<a href="/targets?tab=logs" class="inline-flex min-h-10 items-center font-semibold text-signal-ink hover:underline">{m.logsearch_section_link()}</a>
+				<a href={withBase('/targets?tab=logs')} class="inline-flex min-h-10 items-center font-semibold text-signal-ink hover:underline">{m.logsearch_section_link()}</a>
 			</p>
 			<!-- Local storage -->
 			<Disclosure title={m.settings_logs_storage_title()}>

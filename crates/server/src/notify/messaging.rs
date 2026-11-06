@@ -670,7 +670,7 @@ mod tests {
         assert!(form.contains(&("to".to_string(), "33612345678".to_string())));
         assert!(form.contains(&("from".to_string(), "DumbMonit".to_string())));
         let text = &form.iter().find(|(n, _)| n == "text").unwrap().1;
-        assert!(!text.contains('⚠'), "no emoji in an SMS: {text}");
+        assert!(!text.contains("WARN"), "no state tag in an SMS: {text}");
 
         assert_eq!(Vonage::verify(r#"{"message-count":"1","messages":[{"status":"0"}]}"#), None);
         let refused =

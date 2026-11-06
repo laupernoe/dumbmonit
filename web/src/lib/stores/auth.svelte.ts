@@ -28,6 +28,7 @@ import {
 	type User
 } from '#lib/api/index.js';
 import { signInWithPasskey } from '#lib/api/passkeys.js';
+import { withBase } from '#lib/paths.js';
 
 /**
  * Minimum length required for a password.
@@ -188,7 +189,7 @@ class AuthStore {
 	selectClient(id: number | null, href?: string): void {
 		writeClientView(id);
 		setClientView(id);
-		if (href) globalThis.location?.assign(href);
+		if (href) globalThis.location?.assign(withBase(href));
 		else globalThis.location?.reload();
 	}
 

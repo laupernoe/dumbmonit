@@ -4,7 +4,7 @@
 	 * "Automation" tab of Alerts. `/actions#runbooks` becomes
 	 * `/alerts?tab=automation&view=runbooks`.
 	 */
-	import { goto } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import { page } from '$app/state';
 	import { tabUrl } from '#lib/tab-url.js';
 

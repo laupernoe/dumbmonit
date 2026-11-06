@@ -1,6 +1,6 @@
 <script lang="ts">
 	/** Moved: reports are the "Reports" tab of Status. Old links land there. */
-	import { goto } from '$app/navigation';
+	import { goto } from '#lib/navigation.js';
 	import { page } from '$app/state';
 	import { tabUrl } from '#lib/tab-url.js';
 

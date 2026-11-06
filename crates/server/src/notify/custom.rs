@@ -316,7 +316,7 @@ mod tests {
                 "severity": "warning",
                 "status": "firing",
                 "title": "nas — Disk full",
-                "text": "⚠️ Disk full — 95 % (threshold > 90 %)",
+                "text": "Warning · Disk full — 95 % (threshold > 90 %)",
                 "value": 95.0,
                 "threshold": 90.0,
                 "unit": "%",
@@ -440,7 +440,7 @@ mod tests {
         );
         assert_eq!(
             corps_rendu(&notifier, false),
-            "⚠️ nas — Disk full\n⚠️ Disk full — 95 % (threshold > 90 %)"
+            "WARN nas — Disk full\nWarning · Disk full — 95 % (threshold > 90 %)"
         );
     }
 

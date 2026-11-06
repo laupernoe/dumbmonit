@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { routePath, withBase } from '#lib/paths.js';
 	/**
 	 * The app shell. On the left a rail with the five destinations, folded to
 	 * icons by default (each name shows as a tooltip on hover or focus). The
@@ -101,7 +102,7 @@
 	const mainEntries = $derived(entries.filter((entry) => !entry.foot));
 	const footEntries = $derived(entries.filter((entry) => entry.foot));
 	const badge = $derived(alertsStore.available && !alertsStore.loading ? alertsStore.activeCount : 0);
-	const path = $derived(page.url.pathname);
+	const path = $derived(routePath(page.url));
 	const current = $derived(entries.find((entry) => isActive(entry, path)) ?? null);
 	const onOverview = $derived(path === '/');
 	const home = $derived(homeHref());
@@ -152,7 +153,7 @@
 
 {#snippet railLink(entry: NavEntry)}
 	{@const active = isActive(entry, path)}
-	<a href={entry.href} class={itemClass(active)} aria-current={active ? 'page' : undefined} data-tour={entry.tour}>
+	<a href={withBase(entry.href)} class={itemClass(active)} aria-current={active ? 'page' : undefined} data-tour={entry.tour}>
 		<entry.icon class="size-5 shrink-0" strokeWidth={1.75} aria-hidden="true" />
 		<span class={labelClass}>{entry.label()}</span>
 		{#if entry.badge && badge > 0}
@@ -192,7 +193,7 @@
 		{#if expanded}
 			<!-- Unfolded: the logo and the name lead home; the icon at the right folds the rail. -->
 			<a
-				href={home}
+				href={withBase(home)}
 				class="mb-3 flex h-10 w-[calc(100%-2.75rem)] min-w-0 shrink-0 items-center gap-2.5 rounded-[10px] px-1 transition-colors duration-150 hover:bg-surface-2"
 				aria-label={m.misc_nav_home()}
 			>
@@ -241,20 +242,20 @@
 			{/each}
 			{#if showWall}
 				<li>
-					<a href="/wall" class={itemClass(false)} data-tour="nav-wall" title={expanded ? m.misc_nav_wall_title() : undefined}>
+					<a href={withBase('/wall')} class={itemClass(false)} data-tour="nav-wall" title={expanded ? m.misc_nav_wall_title() : undefined}>
 						<Tv class="size-5 shrink-0" strokeWidth={1.75} aria-hidden="true" />
 						<span class={labelClass}>{m.misc_nav_wall()}</span>
 					</a>
 				</li>
 			{/if}
 			<li>
-				<a href={DOCS_URL} target="_blank" rel="noopener" class={itemClass(false)}>
+				<a href={withBase(DOCS_URL)} target="_blank" rel="noopener" class={itemClass(false)}>
 					<BookOpen class="size-5 shrink-0" strokeWidth={1.75} aria-hidden="true" />
 					<span class={labelClass}>{m.misc_nav_docs()}<span class="sr-only"> {m.shell_new_tab()}</span></span>
 				</a>
 			</li>
 			<li>
-				<a href={GITHUB_URL} target="_blank" rel="noopener" class={itemClass(false)}>
+				<a href={withBase(GITHUB_URL)} target="_blank" rel="noopener" class={itemClass(false)}>
 					<GithubMark class="size-5 shrink-0" />
 					<span class={labelClass}>GitHub<span class="sr-only"> {m.shell_new_tab()}</span></span>
 				</a>
@@ -273,7 +274,7 @@
 				{#if current || offRail}
 					<span aria-hidden="true" class="max-sm:hidden">/</span>
 					{#if current && leaf}
-						<a href={current.href} class="truncate hover:text-ink max-sm:hidden">{current.label()}</a>
+						<a href={withBase(current.href)} class="truncate hover:text-ink max-sm:hidden">{current.label()}</a>
 						<span aria-hidden="true" class="max-sm:hidden">/</span>
 						<span class="truncate font-medium text-ink" aria-current="page">{leaf}</span>
 					{:else}
@@ -300,7 +301,7 @@
 				<!-- MSP mode: which client every page shows (hidden when there is nothing to pick). -->
 				<div class="empty:hidden max-sm:hidden"><ClientSwitcher id="client-switcher-console" /></div>
 				{#if showClients}
-					<a href={CLIENTS_ENTRY.href} class={`${iconButton} max-sm:hidden`} aria-label={CLIENTS_ENTRY.label()} title={CLIENTS_ENTRY.label()}>
+					<a href={withBase(CLIENTS_ENTRY.href)} class={`${iconButton} max-sm:hidden`} aria-label={CLIENTS_ENTRY.label()} title={CLIENTS_ENTRY.label()}>
 						<Building2 class="size-[18px]" strokeWidth={1.75} aria-hidden="true" />
 					</a>
 				{/if}
@@ -329,7 +330,7 @@
 				<!-- Monitors and the add page carry their own "Add a monitor": no second one up here. -->
 				{#if auth.isAdmin && path !== '/targets' && !path.startsWith('/targets/new')}
 					<a
-						href="/targets/new"
+						href={withBase('/targets/new')}
 						use:sparkle
 						class="flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-semibold text-on-primary transition-[filter] duration-150 hover:brightness-110 max-sm:px-0"
 						aria-label={m.console_new_monitor()}
@@ -358,7 +359,7 @@
 			{@const active = isActive(entry, path)}
 			<li class="min-w-0">
 				<a
-					href={entry.href}
+					href={withBase(entry.href)}
 					aria-current={active ? 'page' : undefined}
 					data-tour={entry.tour}
 					class={`relative flex h-14 flex-col items-center justify-center gap-0.5 text-[0.6875rem] font-medium transition-colors duration-150 ${active ? 'text-ink' : 'text-ink-3'}`}

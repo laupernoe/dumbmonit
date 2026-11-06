@@ -1,7 +1,5 @@
 # Statusseiten
 
-![Die Status-Seite: Ihre Seiten, und die Ankündigungen darunter](../assets/screenshots/status-light.png){ loading=lazy }
-
 Eine Statusseite ist die öffentliche Seite Ihrer Überwachung: eine
 Seite, die jeder öffnen kann — kein Login, kein Cookie — die sagt, ob
 Ihre Dienste laufen, bis zu 90 Tage tägliche Historie für jeden zeigt,

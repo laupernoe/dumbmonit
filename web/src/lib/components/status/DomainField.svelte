@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * "Public domain" of a status page: a host name (`status.example.com`) that a
 	 * reverse proxy points at DumbMonit. On that name the server shows this page
@@ -71,7 +72,7 @@
 			</ol>
 			<p>
 				{m.status_domain_https({ scheme: 'https://' })}
-				<a class="font-semibold text-ink underline decoration-ink/30 underline-offset-2 hover:decoration-ink" href={DOCS_URL} target="_blank" rel="noreferrer">{m.status_domain_examples()}</a>
+				<a class="font-semibold text-ink underline decoration-ink/30 underline-offset-2 hover:decoration-ink" href={withBase(DOCS_URL)} target="_blank" rel="noreferrer">{m.status_domain_examples()}</a>
 			</p>
 		</div>
 	{/if}

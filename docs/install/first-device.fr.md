@@ -149,8 +149,6 @@ suspects habituels.
    surveillance ; les interfaces et, sur serveurs et NAS, CPU, mémoire et stockage
    apparaissent en moins d'une minute.
 
-![Ajouter un appareil SNMP : le formulaire à gauche, l'avis de configuration à droite](../assets/screenshots/add-device-light.png){ loading=lazy }
-
 Le profil de collecte est détecté automatiquement d'après le `sysObjectID`
 de la surveillance, en arrière-plan, le formulaire n'attend donc jamais une surveillance inaccessible. Les interfaces, et sur les serveurs et NAS le CPU, la
 mémoire et le stockage, apparaissent en moins d'une minute.

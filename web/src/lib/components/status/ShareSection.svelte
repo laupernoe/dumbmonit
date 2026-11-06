@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * "Show it elsewhere": the three ways to put a status page on another site,
 	 * one at a time behind tabs: a README badge, the iframe embed, and the
@@ -236,7 +237,7 @@
 							</Button>
 						{/if}
 						<a
-							href={websiteBannerDocsUrl()}
+							href={withBase(websiteBannerDocsUrl())}
 							target="_blank"
 							rel="noopener"
 							class="inline-flex min-h-10 w-fit items-center gap-1.5 text-sm text-signal-ink underline-offset-2 hover:underline"

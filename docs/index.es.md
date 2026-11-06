@@ -12,8 +12,6 @@ enumera lo que requiere tu atención, antes que nada. Las severidades siguen la 
 meteorológica (info → aviso → alerta), las predicciones son pronósticos y las ventanas
 de mantenimiento son programadas.
 
-![La página de resumen: la frase del parte, la lista «Needs you» y los pronósticos](assets/screenshots/overview-light.png){ loading=lazy }
-
 <div class="dm-links" markdown>
 <a href="install/docker/">Instalar<small>Docker Compose, primer inicio, copias de seguridad</small></a>
 <a href="install/first-device/">Añade tu primer monitor<small>SNMP, escaneo de red, qué ocurre después</small></a>

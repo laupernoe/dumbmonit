@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
 	 * A discreet counter of the network discovery's "To review" list, put on
@@ -40,7 +41,7 @@
 {#if review && review.to_review > 0}
 	<div class="mb-4 grid gap-2">
 		<a
-			href={SCAN_HREF}
+			href={withBase(SCAN_HREF)}
 			class="inline-flex min-h-10 w-fit max-w-full items-center gap-2 rounded-lg border border-advisory/50 bg-advisory-soft px-3 text-sm font-semibold text-ink transition-colors hover:border-advisory focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
 		>
 			<Radar class="size-4 shrink-0 text-advisory-ink" aria-hidden="true" />
@@ -49,7 +50,7 @@
 		{#if review.announce && !dismissed}
 			<div class="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-line bg-surface px-3.5 py-2 text-sm text-ink" role="status">
 				<span class="tnum min-w-0 flex-1">{m.discovery_review_notice({ count: review.batch_count })}</span>
-				<a href={SCAN_HREF} class="inline-flex min-h-10 items-center font-semibold text-signal-ink underline-offset-2 hover:underline">{m.discovery_review_notice_open()}</a>
+				<a href={withBase(SCAN_HREF)} class="inline-flex min-h-10 items-center font-semibold text-signal-ink underline-offset-2 hover:underline">{m.discovery_review_notice_open()}</a>
 				<button
 					type="button"
 					class="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-2 text-[0.8125rem] font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"

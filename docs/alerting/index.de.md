@@ -5,8 +5,6 @@ nachjustiert werden. Den Unterschied im Alltag macht, was den Lärm
 niedrig hält: Abhängigkeitsunterdrückung, Gruppierung nach Host,
 Wartungsfenster und eine Baseline, die lernt, bevor sie spricht.
 
-![Die Alerts-Seite: was gerade passiert, Wartung, Historie und die Regeln](../assets/screenshots/alerts-light.png){ loading=lazy }
-
 ## Schweregrade {#severities}
 
 Die Oberfläche spricht die Stufenleiter des Wetterberichts. Die API und der

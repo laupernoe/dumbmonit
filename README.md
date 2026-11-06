@@ -4,21 +4,10 @@
 
 <h3>Self-hosted monitoring for homelabs, small teams and mid-sized companies.</h3>
 
-<a href="https://dumbmonit.selfhostr.io"><img src="https://raw.githubusercontent.com/selfhostr/.github/main/profile/assets/btn-site.svg" alt="Website" height="40"></a>
-<a href="https://dumbmonit.selfhostr.io/docs/"><img src="https://raw.githubusercontent.com/selfhostr/.github/main/profile/assets/btn-docs.svg" alt="Documentation" height="40"></a>
-<a href="https://dumbmonit.selfhostr.io/demo/"><img src="https://raw.githubusercontent.com/selfhostr/.github/main/profile/assets/btn-demo.svg" alt="Live demo" height="40"></a>
-<a href="https://github.com/selfhostr/dumbmonit/releases"><img src="https://raw.githubusercontent.com/selfhostr/.github/main/profile/assets/btn-releases.svg" alt="Releases" height="40"></a>
-
-<br><br>
-
 [![CI](https://github.com/selfhostr/dumbmonit/actions/workflows/ci.yml/badge.svg)](https://github.com/selfhostr/dumbmonit/actions/workflows/ci.yml)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15486/badge)](https://www.bestpractices.dev/projects/15486)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/selfhostr/dumbmonit/badge)](https://scorecard.dev/viewer/?uri=github.com/selfhostr/dumbmonit)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
-<br><br>
-
-<img src="docs/assets/screenshots/overview.png" alt="DumbMonit console: fleet status, active alerts and monitors" width="100%">
 
 </div>
 
@@ -32,6 +21,8 @@ DumbMonit watches servers, network gear, hypervisors, storage, applications and 
 Free, for good. MIT licence, no paid edition.
 
 ## Quick start
+
+Try the [live demo](https://dumbmonit.selfhostr.io/demo/) first.
 
 ```bash
 mkdir dumbmonit && cd dumbmonit

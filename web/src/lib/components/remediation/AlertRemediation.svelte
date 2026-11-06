@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Under an unfolded alert: the runbooks that apply (rule, folder, device
 	 * type), the remediation actions an operator may run on the alert's device,
@@ -72,7 +73,7 @@
 						<Disclosure title={runbook.title} open={data.runbooks.length === 1}>
 							<div class="px-4 pb-3">
 								<Markdown source={runbook.body} />
-								<a href={`/runbooks/${runbook.id}`} class="mt-2 inline-flex min-h-10 items-center text-[0.8125rem] text-ink-2 underline underline-offset-2 hover:text-ink">
+								<a href={withBase(`/runbooks/${runbook.id}`)} class="mt-2 inline-flex min-h-10 items-center text-[0.8125rem] text-ink-2 underline underline-offset-2 hover:text-ink">
 									{m.remediation_runbooks_open()}
 								</a>
 							</div>

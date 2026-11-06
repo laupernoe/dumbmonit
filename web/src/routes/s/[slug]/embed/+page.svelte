@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Compact status view for an iframe — `/s/<slug>/embed`. The overall state
 	 * and one line per service (state word + label, a short history bar when
@@ -87,7 +88,7 @@
 			</div>
 			<a
 				class="inline-flex items-center gap-1 text-[0.8125rem] font-semibold text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
-				href={fullPage}
+				href={withBase(fullPage)}
 				target="_blank"
 				rel="noopener"
 			>

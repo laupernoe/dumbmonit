@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * `/alert-action#<token>` — the Acknowledge / Snooze / Dismiss link of a notification.
 	 *
@@ -148,7 +149,7 @@
 		{/if}
 
 		<p class="mt-6 text-sm">
-			<a class="inline-flex min-h-10 items-center font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink" href="/alerts">{m.alert_link_open_app()}</a>
+			<a class="inline-flex min-h-10 items-center font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink" href={withBase('/alerts')}>{m.alert_link_open_app()}</a>
 		</p>
 	</div>
 </main>

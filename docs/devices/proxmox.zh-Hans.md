@@ -21,8 +21,6 @@
 
 ## 客户面板 {#the-guests-panel}
 
-![客户面板：每个 VM 和容器一行，按节点分组](../assets/screenshots/device-proxmox-light.png){ loading=lazy }
-
 在节点下，**Guests** 面板：每个虚拟机和容器一行，按节点分组，回答管理员首先提出的问题 — 它在运行吗，它忙吗，它的磁盘满吗，它最后备份是什么时候。每行显示：
 
 | 列 | 来源 | 注释 |

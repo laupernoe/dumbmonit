@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Mail server reputation and IP range blocklist: the last check as the
 	 * probe stored it, list by list, then every listing with its lookup and
@@ -147,7 +148,7 @@
 			{/if}
 			{#if mxtoolbox}
 				<p class="border-t border-line px-4 py-1 sm:px-5">
-					<a class="inline-flex min-h-10 items-center gap-1 text-sm text-info-ink underline-offset-2 hover:underline" href={mxtoolbox} target="_blank" rel="noopener noreferrer">
+					<a class="inline-flex min-h-10 items-center gap-1 text-sm text-info-ink underline-offset-2 hover:underline" href={withBase(mxtoolbox)} target="_blank" rel="noopener noreferrer">
 						{m.devicesb_blacklist_mxtoolbox()}<ExternalLink class="size-3.5" aria-hidden="true" />
 					</a>
 				</p>
@@ -211,19 +212,19 @@
 									<p class="text-[0.8125rem] break-words text-ink-2">{check.reason}</p>
 								{/if}
 								{#if check.state === 'listed' && !mxtoolbox && mxtoolboxUrl(check.subject)}
-									<a class="inline-flex min-h-10 items-center gap-1 text-sm text-info-ink underline-offset-2 hover:underline" href={mxtoolboxUrl(check.subject) ?? ''} target="_blank" rel="noopener noreferrer">
+									<a class="inline-flex min-h-10 items-center gap-1 text-sm text-info-ink underline-offset-2 hover:underline" href={withBase(mxtoolboxUrl(check.subject) ?? '')} target="_blank" rel="noopener noreferrer">
 										{m.devicesb_blacklist_mxtoolbox()}<ExternalLink class="size-3.5" aria-hidden="true" />
 									</a>
 								{/if}
 								{#if check.lookup_url || check.delist_url}
 									<div class="flex flex-wrap gap-x-4">
 										{#if check.lookup_url}
-											<a class="inline-flex min-h-10 items-center gap-1 text-sm text-info-ink underline-offset-2 hover:underline" href={check.lookup_url} target="_blank" rel="noopener noreferrer">
+											<a class="inline-flex min-h-10 items-center gap-1 text-sm text-info-ink underline-offset-2 hover:underline" href={withBase(check.lookup_url)} target="_blank" rel="noopener noreferrer">
 												{m.devicesb_blacklist_lookup()}<ExternalLink class="size-3.5" aria-hidden="true" />
 											</a>
 										{/if}
 										{#if check.delist_url && check.delist_url !== check.lookup_url}
-											<a class="inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-info-ink underline-offset-2 hover:underline" href={check.delist_url} target="_blank" rel="noopener noreferrer">
+											<a class="inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-info-ink underline-offset-2 hover:underline" href={withBase(check.delist_url)} target="_blank" rel="noopener noreferrer">
 												{m.devicesb_blacklist_delist()}<ExternalLink class="size-3.5" aria-hidden="true" />
 											</a>
 										{:else if check.delist_url}
@@ -291,7 +292,7 @@
 							<span class="shrink-0 text-sm font-semibold text-ink sm:w-44">{provider.name}</span>
 							<span class="flex flex-wrap gap-x-4">
 								{#each provider.links as link (link.url)}
-									<a class="inline-flex min-h-10 items-center gap-1 text-sm text-info-ink underline-offset-2 hover:underline" href={link.url} target="_blank" rel="noopener noreferrer">
+									<a class="inline-flex min-h-10 items-center gap-1 text-sm text-info-ink underline-offset-2 hover:underline" href={withBase(link.url)} target="_blank" rel="noopener noreferrer">
 										{linkLabel(link)}<ExternalLink class="size-3.5" aria-hidden="true" />
 									</a>
 								{/each}

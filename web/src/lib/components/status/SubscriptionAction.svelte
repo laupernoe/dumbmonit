@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Confirm or cancel an email subscription from the link in a message. One
 	 * button, then a plain sentence saying what happened and a way back to the
@@ -85,7 +86,7 @@
 			{/if}
 		{/if}
 		<p class="mt-6 text-sm">
-			<a class="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink" href={back}>{m.status_action_back()}</a>
+			<a class="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink" href={withBase(back)}>{m.status_action_back()}</a>
 		</p>
 	</div>
 </main>

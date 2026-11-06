@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/** Page title row: the heading carries its own weight, no eyebrow above it. */
 	import type { Snippet } from 'svelte';
 	import BlurText from './effects/BlurText.svelte';
@@ -19,7 +20,7 @@
 <div class={`mb-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-2 sm:mb-6 sm:gap-y-3 ${className}`}>
 	<div class="min-w-0">
 		{#if back}
-			<a href={back.href} class="-mt-2 mb-1 inline-flex min-h-10 items-center gap-1 text-sm sm:mt-0 sm:min-h-0 text-ink-2 hover:text-ink hover:underline">← {back.label}</a>
+			<a href={withBase(back.href)} class="-mt-2 mb-1 inline-flex min-h-10 items-center gap-1 text-sm sm:mt-0 sm:min-h-0 text-ink-2 hover:text-ink hover:underline">← {back.label}</a>
 		{/if}
 		{#if reveal}
 			<BlurText tag="h1" text={title} class="display text-xl text-ink sm:text-3xl" />

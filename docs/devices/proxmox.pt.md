@@ -47,8 +47,6 @@ armazenamento de métricas.
 
 ## O painel de convidados {#the-guests-panel}
 
-![The Guests panel: one row per VM and container, grouped by node](../assets/screenshots/device-proxmox-light.png){ loading=lazy }
-
 Abaixo dos nós, o painel **Guests**: uma linha por máquina virtual e contentor,
 agrupadas por nó, que responde às perguntas que um administrador faz primeiro — está
 a correr, está ocupado, o disco está cheio, quando teve a última cópia de

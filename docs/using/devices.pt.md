@@ -1,7 +1,5 @@
 # A página de monitores {#the-devices-page}
 
-![O bastidor: uma placa frontal por monitor](../assets/screenshots/devices-light.png){ loading=lazy }
-
 ## O bastidor {#the-rack}
 
 Cada monitor é uma placa frontal de rack 1U: um LED de estado, o nome, o
@@ -25,8 +23,6 @@ monitor e uma barra flutuante em baixo com as ações em lote; **Done** ou
 Escape sai do modo.
 
 ## Um monitor {#a-device}
-
-![Página de um monitor: estado, ações, alertas, o painel específico do tipo, métricas](../assets/screenshots/device-light.png){ loading=lazy }
 
 A página do monitor mostra a sua placa de estado, endereço, tipo, perfil
 detetado, etiquetas, última verificação, e para serviços o estado do

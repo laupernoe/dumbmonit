@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * A device's security score as a small badge: shield, the letter and, when
 	 * there is room, the score — the letter is text, so the grade never rests
@@ -66,7 +67,7 @@
 {/snippet}
 
 {#if href}
-	<a {href} class={wrap} aria-label={label} title={label}>{@render plate()}</a>
+	<a href={withBase(href)} class={wrap} aria-label={label} title={label}>{@render plate()}</a>
 {:else}
 	<button type="button" class={wrap} aria-label={label} title={label} aria-expanded={expanded} aria-controls={controls} {onclick}>
 		{@render plate()}

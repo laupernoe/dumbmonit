@@ -88,7 +88,7 @@ pub const TEMPLATE_VARIABLES: &[(&str, &str)] = &[
     ("priority", "Priority from 1 (low) to 5 (high)"),
     ("color", "Accent color in hexadecimal without the hash sign, for example D98A00"),
     ("color_hex", "Accent color with the hash sign, for example #D98A00"),
-    ("emoji", "State glyph: 🔴, ⚠️, ℹ️ or ✅"),
+    ("emoji", "Short state tag: CRIT, WARN, INFO or OK"),
     ("link", "Link to DumbMonit, if \"base_url\" is set in the settings"),
     ("source", "Always \"dumbmonit\": identifies the sender"),
     ("token", "The channel's \"token\" secret, for services that expect it in the body"),
@@ -236,16 +236,16 @@ impl Message {
         }
     }
 
-    /// Pictogramme du message entier. Sur un téléphone, c'est souvent la seule
-    /// chose lue avant de déverrouiller.
+    /// Étiquette d'état du message entier (le nom `emoji` reste celui de la
+    /// variable de gabarit, que des gabarits existants utilisent).
     pub fn emoji(&self) -> &'static str {
         if self.resolved {
-            return "✅";
+            return "OK";
         }
         match self.severity {
-            Severity::Info => "ℹ️",
-            Severity::Warning => "⚠️",
-            Severity::Critical => "🔴",
+            Severity::Info => "INFO",
+            Severity::Warning => "WARN",
+            Severity::Critical => "CRIT",
         }
     }
 
@@ -274,21 +274,8 @@ impl Message {
     }
 }
 
-/// Pictogramme d'un état. Sur un téléphone, c'est souvent la seule chose lue.
-fn glyph(item: &GroupItem) -> &'static str {
-    match item.reason {
-        NotifyReason::Resolved => "✅",
-        NotifyReason::Flapping => "🔁",
-        _ => match item.severity {
-            Severity::Info => "ℹ️",
-            Severity::Warning => "⚠️",
-            Severity::Critical => "🔴",
-        },
-    }
-}
-
-/// Mot d'état accolé au pictogramme : un lecteur d'écran, un courriel en texte
-/// brut ou une montre monochrome ne voient pas la couleur du glyphe.
+/// Mot d'état en tête de ligne : un lecteur d'écran, un courriel en texte
+/// brut ou une montre monochrome ne voient pas la couleur.
 fn state_word(item: &GroupItem) -> &'static str {
     match item.reason {
         NotifyReason::Resolved => "Resolved",
@@ -459,7 +446,7 @@ pub fn format_duration(delta: TimeDelta) -> String {
 }
 
 fn line(item: &GroupItem, now: DateTime<Utc>) -> String {
-    let mut line = format!("{} {} · {}", glyph(item), state_word(item), item.rule_name);
+    let mut line = format!("{} · {}", state_word(item), item.rule_name);
 
     if let Some(series) = series_identity(&item.series_key) {
         line.push_str(&format!(" — {series}"));
@@ -771,9 +758,9 @@ pub fn sample_message(resolved: bool) -> Message {
     let title =
         if resolved { "Resolved — nas".to_string() } else { "nas — Disk full".to_string() };
     Message {
-        markdown: format!("**{title}**\n• ⚠️ Disk full"),
+        markdown: format!("**{title}**\n• Warning · Disk full"),
         title,
-        text: "⚠️ Disk full — 95 % (threshold > 90 %)".to_string(),
+        text: "Warning · Disk full — 95 % (threshold > 90 %)".to_string(),
         severity: Severity::Warning,
         resolved,
         target_name: "nas".to_string(),
@@ -832,7 +819,7 @@ mod tests {
         let message = render(&group(vec![web]));
         assert_eq!(
             message.text,
-            "ℹ️ Info · Website changed — /pricing, /contact and 2 more — 4 (threshold > 0), for 0 s"
+            "Info · Website changed — /pricing, /contact and 2 more — 4 (threshold > 0), for 0 s"
         );
     }
 
@@ -864,12 +851,12 @@ mod tests {
     fn la_ligne_porte_le_mot_de_severite_a_cote_du_pictogramme() {
         let text =
             |severity| render(&group(vec![item("Disk full", NotifyReason::Firing, severity)])).text;
-        assert!(text(Severity::Critical).starts_with("🔴 Critical · Disk full"));
-        assert!(text(Severity::Warning).starts_with("⚠️ Warning · Disk full"));
-        assert!(text(Severity::Info).starts_with("ℹ️ Info · Disk full"));
+        assert!(text(Severity::Critical).starts_with("Critical · Disk full"));
+        assert!(text(Severity::Warning).starts_with("Warning · Disk full"));
+        assert!(text(Severity::Info).starts_with("Info · Disk full"));
         let resolved =
             render(&group(vec![item("Disk full", NotifyReason::Resolved, Severity::Warning)]));
-        assert!(resolved.text.starts_with("✅ Resolved · Disk full"), "{}", resolved.text);
+        assert!(resolved.text.starts_with("Resolved · Disk full"), "{}", resolved.text);
     }
 
     #[test]
@@ -882,7 +869,7 @@ mod tests {
         let message = render(&group(vec![vm]));
         assert_eq!(
             message.text,
-            "⚠️ Warning · VM or container stopped — win11-desktop (101), for 1 h"
+            "Warning · VM or container stopped — win11-desktop (101), for 1 h"
         );
 
         let mut node = item("Proxmox node offline", NotifyReason::Firing, Severity::Critical);
@@ -904,7 +891,7 @@ mod tests {
         let mut host = item("Monitor unreachable", NotifyReason::Firing, Severity::Critical);
         host.series_key = r#"dumbmonit_up{host="nas",tag_site="cellar",target="1"}"#.to_string();
         assert!(
-            render(&group(vec![host])).text.starts_with("🔴 Critical · Monitor unreachable — 95 %")
+            render(&group(vec![host])).text.starts_with("Critical · Monitor unreachable — 95 %")
         );
     }
 
@@ -964,9 +951,9 @@ mod tests {
             it.unit = String::new();
             render(&group(vec![it])).text
         };
-        assert_eq!(boolean(1.0, ">", 0.0), "⚠️ Warning · UPS on battery, for 1 h");
-        assert_eq!(boolean(1.0, ">=", 1.0), "⚠️ Warning · UPS on battery, for 1 h");
-        assert_eq!(boolean(0.0, "<", 1.0), "⚠️ Warning · UPS on battery, for 1 h");
+        assert_eq!(boolean(1.0, ">", 0.0), "Warning · UPS on battery, for 1 h");
+        assert_eq!(boolean(1.0, ">=", 1.0), "Warning · UPS on battery, for 1 h");
+        assert_eq!(boolean(0.0, "<", 1.0), "Warning · UPS on battery, for 1 h");
         // Un état codé sur plusieurs valeurs reste chiffré : 5 n'est pas un booléen.
         assert!(boolean(5.0, ">", 0.0).contains("— 5 (threshold > 0)"));
         assert!(boolean(3.0, ">=", 3.0).contains("— 3 (threshold >= 3)"));
@@ -1081,7 +1068,7 @@ mod tests {
         assert_eq!(vars["unit"], "%");
         assert_eq!(vars["operator"], ">");
         assert_eq!(vars["color_hex"], "#D98A00");
-        assert_eq!(vars["emoji"], "⚠️");
+        assert_eq!(vars["emoji"], "WARN");
         assert_eq!(vars["source"], "dumbmonit");
         // Complétés par le canal, qui seul connaît son URL publique et son secret.
         assert_eq!(vars["link"], "");
@@ -1106,7 +1093,7 @@ mod tests {
                 .variables();
         assert_eq!(vars["status"], "resolved");
         assert_eq!(vars["status_fr"], "résolu");
-        assert_eq!(vars["emoji"], "✅");
+        assert_eq!(vars["emoji"], "OK");
     }
 
     #[test]
@@ -1238,7 +1225,7 @@ mod tests {
         let mut flapping = item("Service", NotifyReason::Flapping, Severity::Warning);
         flapping.note = Some("flapping: 4 changes in 30 min".to_string());
         let message = render(&group(vec![flapping]));
-        assert!(message.text.starts_with("🔁 Flapping · Service"), "{}", message.text);
+        assert!(message.text.starts_with("Flapping · Service"), "{}", message.text);
         assert!(message.text.contains("— flapping: 4 changes in 30 min"));
     }
 }

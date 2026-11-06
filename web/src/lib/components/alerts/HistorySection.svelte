@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * History as a log: phase transitions grouped by day, newest first. Each
 	 * line reads as a move from one phase to the next and says whether it
@@ -377,7 +378,7 @@
 										<span class="text-ink-3" aria-hidden="true"> · </span>
 										{#if targets.has(entry.target_id)}
 											<a
-												href={`/targets/${entry.target_id}`}
+												href={withBase(`/targets/${entry.target_id}`)}
 												class="text-[0.8125rem] text-ink-2 hover:text-ink hover:underline"
 												>{deviceName(entry.target_id)}</a
 											>

@@ -98,7 +98,7 @@ info:
     name: DumbMonit
     url: https://github.com/selfhostr/dumbmonit
 externalDocs:
-  description: HTTP API reference (Read the Docs)
+  description: HTTP API reference
   url: https://dumbmonit.selfhostr.io/docs/reference/api/
 servers:
   - url: /

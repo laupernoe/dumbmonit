@@ -1,7 +1,5 @@
 # Settings
 
-![Settings: siete pestañas, aquí Mi cuenta con apariencia, cuenta y seguridad y notificaciones push](../assets/screenshots/settings-light.png){ loading=lazy }
-
 Ajustes reúne lo administrativo: la propia instancia, tu cuenta, quién puede iniciar sesión y cómo, los agentes, los canales de notificación, la copia de seguridad de la instancia y la salud del servidor. Se divide en siete pestañas, cada una con su propia dirección. Un riel en pantalla ancha, una fila de chips en el teléfono y un buscador sobre los nombres de las secciones ayudan a encontrar una sección.
 
 | Pestaña | Dirección | Qué contiene |

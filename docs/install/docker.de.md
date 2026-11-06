@@ -119,8 +119,6 @@ im Speicher, ändert sich bei jedem Neustart, bis ein Admin existiert, und falsc
 Versuche werden durch ein Rate-Limit begrenzt. Für eine automatisierte Bereitstellung setzen Sie
 `DUMBMONIT_SETUP_CODE`, um ihn selbst zu wählen.
 
-![Der Anmeldebildschirm](../assets/screenshots/login-light.png){ loading=lazy }
-
 Fügen Sie dann Ihren ersten Monitor hinzu: siehe [Ersten Monitor hinzufügen](first-device.md).
 
 ## Umgebungsvariablen {#environment-variables}

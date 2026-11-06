@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { withBase } from '#lib/paths.js';
 	/**
 	 * Device page: this device's known vulnerabilities, compact. Renders nothing
 	 * while the feature is off, when the device has no inventoried component,
@@ -62,7 +63,7 @@
 			<ul class="m-0 mt-2 list-none divide-y divide-line p-0">
 				{#each top as f (f.cve_id + f.component)}
 					<li class="flex flex-wrap items-center gap-x-2 gap-y-1 py-2 text-sm">
-						<a href={f.link} target="_blank" rel="noopener" class="inline-flex min-h-10 items-center font-mono font-semibold text-ink hover:underline sm:min-h-0">{f.cve_id}</a>
+						<a href={withBase(f.link)} target="_blank" rel="noopener" class="inline-flex min-h-10 items-center font-mono font-semibold text-ink hover:underline sm:min-h-0">{f.cve_id}</a>
 						<Plate tone={stateTone(f.state)}>{STATE[f.state]()}</Plate>
 						{#if f.exploited}<Plate tone="warning">{m.security_cves_exploited()}</Plate>{/if}
 						{#if f.cvss !== null}<Plate tone={severityTone(f.severity)}>{m.security_cves_cvss({ score: f.cvss.toFixed(1) })}</Plate>{/if}
@@ -71,6 +72,6 @@
 				{/each}
 			</ul>
 		{/if}
-		<a href={`/targets?tab=security&target=${targetId}`} class="mt-1 inline-flex min-h-10 items-center text-sm font-semibold text-ink hover:underline">{m.security_cves_card_all()}</a>
+		<a href={withBase(`/targets?tab=security&target=${targetId}`)} class="mt-1 inline-flex min-h-10 items-center text-sm font-semibold text-ink hover:underline">{m.security_cves_card_all()}</a>
 	</section>
 {/if}

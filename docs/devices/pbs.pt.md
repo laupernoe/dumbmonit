@@ -9,8 +9,6 @@ um.
 
 ## A página do monitor {#the-device-page}
 
-![Um monitor PBS: falhas, o calendário de cópias de segurança de 30 dias, tarefas e saúde](../assets/screenshots/device-pbs-light.png){ loading=lazy }
-
 Além dos gráficos genéricos, um monitor PBS mostra seis painéis,
 lidos do que a verificação guardou — abrir a página nunca consulta o
 próprio PBS:
