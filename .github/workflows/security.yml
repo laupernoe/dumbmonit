@@ -41,7 +41,7 @@ jobs:
           docker run --rm -v "$PWD:/out" aquasec/trivy:0.75.0@sha256:af6acf9a6b85dfe389a1941505c0ce9efef52a4719635e1a962f022a3d855daa image \
             --format sarif --output /out/trivy-${{ matrix.name }}.sarif \
             --severity CRITICAL,HIGH --ignore-unfixed ${{ matrix.image }}
-      - uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+      - uses: github/codeql-action/upload-sarif@1fc58d04a4d4374f921bdac573c3811c240f9c26 # v4.39.2
         if: always() && hashFiles(format('trivy-{0}.sarif', matrix.name)) != ''
         with:
           sarif_file: trivy-${{ matrix.name }}.sarif
@@ -65,7 +65,7 @@ jobs:
           docker run --rm -v "$PWD:/src" -w /src \
             ghcr.io/google/osv-scanner:v2.7.0@sha256:4f3b7e2c64b9d38a5febc5a7e4a3dfef1d1362f726dea7a2ef4762b46469fcd0 \
             --recursive --format sarif --output-file /src/osv.sarif /src
-      - uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+      - uses: github/codeql-action/upload-sarif@1fc58d04a4d4374f921bdac573c3811c240f9c26 # v4.39.2
         if: always() && hashFiles('osv.sarif') != ''
         with:
           sarif_file: osv.sarif
