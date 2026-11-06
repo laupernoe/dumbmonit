@@ -114,7 +114,7 @@ COPY --from=builder /build/target/release/dumbmonit /dumbmonit
 # construits sur un exécuteur macOS et attachés à chaque version publiée
 # (.github/workflows/release.yml) ; le serveur explique où les prendre.
 # ---------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM ghcr.io/rust-cross/cargo-zigbuild:0.23.4@sha256:d8313491ec5798de0633fdc1c5753761bff79967bea69076020dc78121b2cca8 AS agent
+FROM --platform=$BUILDPLATFORM ghcr.io/rust-cross/cargo-zigbuild:0.24.1@sha256:3abe26afb5537ea225c223c6790c1bf056271ef51ea52d2c4e343c569c8f129a AS agent
 
 # L'image embarque un rustc plus ancien que ce qu'exigent nos dépendances
 # (sysinfo demande 1.95) : la chaîne est donc installée explicitement, à une
