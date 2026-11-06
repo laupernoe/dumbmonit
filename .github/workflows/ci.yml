@@ -92,7 +92,7 @@ jobs:
       # the crate does not compile at all. Build the real interface rather than
       # a placeholder, so the tests that serve pages see what users get.
       - if: env.RUN == 'true'
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: npm
@@ -108,7 +108,7 @@ jobs:
       # branch (and of main), its own would only evict theirs from the 10 GB the
       # repository gets. main always has a warm one for the dev -> main PR.
       - if: env.RUN == 'true'
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           save-if: ${{ github.event_name == 'push' }}
       - if: env.RUN == 'true'
@@ -133,7 +133,7 @@ jobs:
       - name: Free disk space
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL && df -h /
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: npm
@@ -143,8 +143,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
         with:
           components: llvm-tools-preview
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: taiki-e/install-action@b80e2bb2635f28eb98b9fce1e2f0887e1535c6b2 # v2.90.0
         with:
           tool: cargo-llvm-cov@0.9.1
       - run: cargo llvm-cov --workspace --all-features --no-report
@@ -199,7 +199,7 @@ jobs:
       - if: env.RUN == 'true'
         uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
       - if: env.RUN == 'true'
-        uses: taiki-e/install-action@5d880190e41a7608c29a5c91c6b5d24561d53850 # cargo-deny
+        uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # cargo-deny
       # Enforces the "100 % open source" promise: a dependency under a licence
       # that is not in deny.toml fails the build instead of being discovered
       # after publication.
@@ -227,7 +227,7 @@ jobs:
       - if: env.RUN == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - if: env.RUN == 'true'
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: npm
